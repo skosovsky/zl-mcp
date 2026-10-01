@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "properties": {
+    "plan_token": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One-time token issued by local approve-join CLI"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable UUID for retries",
+      "format": "uuid"
+    }
+  },
+  "required": [
+    "plan_token",
+    "request_id"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

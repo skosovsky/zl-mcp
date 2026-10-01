@@ -1,0 +1,9 @@
+state_dir = "./state"
+[collection]
+group_ids = []
+[permissions]
+allow_join = false
+[storage]
+retention_days = 90
+[logging]
+level = "info"

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "method",
+    "arguments"
+  ],
+  "properties": {
+    "method": {
+      "const": "cli_approve"
+    },
+    "arguments": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preview_id"
+      ],
+      "properties": {
+        "preview_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

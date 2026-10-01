@@ -1,0 +1,55 @@
+package api
+
+import (
+	"context"
+	"net/http"
+
+	"github.com/amrakk/zcago/errs"
+	"github.com/amrakk/zcago/internal/httpx"
+	"github.com/amrakk/zcago/internal/jsonx"
+	"github.com/amrakk/zcago/session"
+)
+
+type (
+	UpdateActiveStatusResponse struct {
+		Status bool `json:"status"`
+	}
+	UpdateActiveStatusFn = func(ctx context.Context, isActive bool) (*UpdateActiveStatusResponse, error)
+)
+
+func (a *api) UpdateActiveStatus(ctx context.Context, isActive bool) (*UpdateActiveStatusResponse, error) {
+	return a.e.UpdateActiveStatus(ctx, isActive)
+}
+
+var updateActiveStatusFactory = apiFactory[*UpdateActiveStatusResponse, UpdateActiveStatusFn]()(
+	func(a *api, sc session.Context, u factoryUtils[*UpdateActiveStatusResponse]) (UpdateActiveStatusFn, error) {
+		base := jsonx.FirstOr(sc.GetZpwService("profile"), "")
+		serviceURL := u.MakeURL(base+"/api/social/profile", nil, false)
+
+		return func(ctx context.Context, isActive bool) (*UpdateActiveStatusResponse, error) {
+			payload := map[string]any{
+				"status": jsonx.B2I(isActive),
+				"imei":   sc.IMEI(),
+			}
+
+			enc, err := u.EncodeAES(jsonx.Stringify(payload))
+			if err != nil {
+				return nil, errs.WrapZCA("failed to encrypt params", "api.UpdateActiveStatus", err)
+			}
+
+			targetBase := serviceURL + "/deactive"
+			if isActive {
+				targetBase = serviceURL + "/ping"
+			}
+
+			url := u.MakeURL(targetBase, map[string]any{"params": enc}, true)
+			resp, err := u.Request(ctx, url, &httpx.RequestOptions{Method: http.MethodGet})
+			if err != nil {
+				return nil, err
+			}
+			defer resp.Body.Close()
+
+			return u.Resolve(resp, true)
+		}, nil
+	},
+)

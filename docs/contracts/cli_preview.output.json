@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string"
+    },
+    "approval_required": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "group_id",
+    "name",
+    "approval_required"
+  ],
+  "additionalProperties": false
+}

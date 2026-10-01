@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Opaque identifier"
+    }
+  },
+  "required": [
+    "group_id"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

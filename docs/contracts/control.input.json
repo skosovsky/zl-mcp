@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "method": {
+          "const": "zalo_get_group"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "group_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Opaque identifier"
+            }
+          },
+          "required": [
+            "group_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        }
+      },
+      "required": [
+        "method",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "method": {
+          "const": "zalo_inspect_invite"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "invite_url": {
+              "type": "string",
+              "minLength": 1,
+              "description": "HTTPS Zalo group invitation, e.g. https://zalo.me/g/example",
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "invite_url"
+          ],
+          "additionalProperties": false,
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        }
+      },
+      "required": [
+        "method",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "method": {
+          "const": "zalo_join_group"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "plan_token": {
+              "type": "string",
+              "minLength": 1,
+              "description": "One-time token issued by local approve-join CLI"
+            },
+            "request_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Stable UUID for retries",
+              "format": "uuid"
+            }
+          },
+          "required": [
+            "plan_token",
+            "request_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        }
+      },
+      "required": [
+        "method",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "method": {
+          "const": "zalo_get_join_status"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "operation_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Opaque identifier"
+            }
+          },
+          "required": [
+            "operation_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        }
+      },
+      "required": [
+        "method",
+        "arguments"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

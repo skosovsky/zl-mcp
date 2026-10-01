@@ -1,0 +1,20 @@
+[extend]
+useDefault = true
+
+# Public upstream protocol constant; not an account credential.
+[[rules]]
+id = "generic-api-key"
+[[rules.allowlists]]
+description = "zcago public protocol constant"
+condition = "AND"
+paths = ['''(^|/)third_party/zcago/config/config\.go$''']
+regexTarget = "secret"
+regexes = ['''^3FC4F0D2AB50057BCE0D90D9187A22B1$''']
+
+# Fixed synthetic AES key in offline regression tests.
+[[rules.allowlists]]
+description = "synthetic login regression AES key"
+condition = "AND"
+paths = ['''(^|/)third_party/zcago/session/auth/login_errors_test\.go$''']
+regexTarget = "secret"
+regexes = ['''^0123456789abcdef$''']

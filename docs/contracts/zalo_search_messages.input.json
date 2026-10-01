@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Plain text search, e.g. ремонт кондиционера",
+      "maxLength": 500
+    },
+    "group_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Opaque identifier"
+    },
+    "sender_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Opaque identifier"
+    },
+    "since": {
+      "type": "string",
+      "minLength": 1,
+      "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+      "format": "date-time"
+    },
+    "until": {
+      "type": "string",
+      "minLength": 1,
+      "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+      "format": "date-time"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 20
+    },
+    "cursor": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Opaque identifier"
+    }
+  },
+  "required": [
+    "query"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
