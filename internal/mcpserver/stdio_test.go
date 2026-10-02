@@ -3,9 +3,12 @@ package mcpserver
 import (
 	"context"
 	"fmt"
+	"github.com/skosovsky/zl-mcp/internal/storage"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -23,9 +26,26 @@ func TestActualBinaryStdioLifecycle(t *testing.T) {
 	}
 	config := filepath.Join(dir, "config.toml")
 	state := filepath.Join(dir, "state")
-	if err := os.WriteFile(config, []byte(fmt.Sprintf("state_dir = %q\n[collection]\ngroup_ids = []\n", state)), 0600); err != nil {
+	token := strings.Repeat("t", 64)
+	tokenPath := filepath.Join(dir, "token")
+	if err := os.WriteFile(tokenPath, []byte(token), 0600); err != nil {
 		t.Fatal(err)
 	}
+	store, err := storage.Open(context.Background(), filepath.Join(dir, "messages.sqlite"), nil, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	httpService, err := NewHTTP(store, dir, token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	endpoint := httptest.NewServer(httpService)
+	defer endpoint.Close()
+	if err := os.WriteFile(config, []byte(fmt.Sprintf("state_dir = %q\n[collection]\ngroup_ids = []\n[mcp]\nlisten = %q\ntoken_file = %q\n", state, strings.TrimPrefix(endpoint.URL, "http://"), tokenPath)), 0600); err != nil {
+		t.Fatal(err)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	child := exec.Command(bin, "-config", config, "serve")
@@ -44,6 +64,13 @@ func TestActualBinaryStdioLifecycle(t *testing.T) {
 	// Assert
 	if err != nil || status.IsError || len(tools.Tools) != 8 {
 		t.Fatalf("stdio failed: %+v %v", status, err)
+	}
+	resource, err := session.ReadResource(ctx, &mcp.ReadResourceParams{URI: "zalo://capabilities"})
+	if err != nil || len(resource.Contents) != 1 || !strings.Contains(resource.Contents[0].Text, "Single personal account") {
+		t.Fatalf("STDIO resource forwarding failed: %v %v", resource, err)
+	}
+	if _, err := os.Stat(state); !os.IsNotExist(err) {
+		t.Fatal("STDIO bridge created its own state directory", err)
 	}
 	if err = session.Close(); err != nil {
 		t.Fatal(err)

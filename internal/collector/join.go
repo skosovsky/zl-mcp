@@ -73,6 +73,9 @@ func (j *JoinManager) Inspect(ctx context.Context, raw string) (map[string]any, 
 	}
 	v, e := j.API.Inspect(ctx, link)
 	if e != nil {
+		if errors.Is(e, domain.ErrAuthenticationRequired) {
+			return nil, safeError("NOT_AUTHENTICATED", "Zalo authentication is required.", "Stop service and run local login.")
+		}
 		return nil, safeError("UPSTREAM_UNAVAILABLE", "Could not inspect this invitation.", "Check the invitation or retry later.")
 	}
 	var id, expires *string

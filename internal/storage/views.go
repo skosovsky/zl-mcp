@@ -292,6 +292,13 @@ func (s *Store) SetState(ctx context.Context, state map[string]any) error {
 	_, e = s.DB.ExecContext(ctx, "INSERT INTO collector_state VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,heartbeat=excluded.heartbeat", string(b), now())
 	return e
 }
+
+// TouchHeartbeat updates liveness without overwriting collector transitions.
+func (s *Store) TouchHeartbeat(ctx context.Context) error {
+	_, err := s.DB.ExecContext(ctx, "UPDATE collector_state SET heartbeat=? WHERE id=1", now())
+	return err
+}
+
 func (s *Store) State(ctx context.Context) (map[string]any, error) {
 	var b, heartbeat string
 	e := s.DB.QueryRowContext(ctx, "SELECT payload,heartbeat FROM collector_state WHERE id=1").Scan(&b, &heartbeat)

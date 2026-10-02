@@ -31,7 +31,7 @@ func (c *Client) Call(ctx context.Context, method string, args any) (map[string]
 	req.Header.Set("Content-Type", "application/json")
 	resp, e := c.http.Do(req)
 	if e != nil {
-		return nil, &domain.Error{Code: "COLLECTOR_UNAVAILABLE", Message: "Collector is not reachable.", Retryable: true, NextAction: domain.NextAction{Instruction: "Start zl-mcp collect after login."}, Details: map[string]any{}}
+		return nil, &domain.Error{Code: "COLLECTOR_UNAVAILABLE", Message: "Collector is not reachable.", Retryable: true, NextAction: domain.NextAction{Instruction: "Start zl-mcp service after login."}, Details: map[string]any{}}
 	}
 	defer resp.Body.Close()
 	data, e := io.ReadAll(io.LimitReader(resp.Body, 1<<20))

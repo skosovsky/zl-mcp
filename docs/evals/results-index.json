@@ -1,5 +1,99 @@
 {
+  "accepted_runs": 65,
+  "checkpoint_pass": 65,
+  "review_pass": 65,
+  "trigger_cases": 20,
+  "scenario_phases": 45,
+  "tool_calls": 244,
+  "tool_errors": 7,
+  "intentional_argument_errors": 3,
+  "other_recovered_tool_errors": 4,
+  "usage": {
+    "input_tokens": 2520242,
+    "cached_input_tokens": 1906688,
+    "output_tokens": 36408,
+    "reasoning_output_tokens": 4608
+  },
+  "scope": "Historical synthetic fixtures only. Trigger reviews score skill selection only. Live acceptance is separate. Current skills were updated afterwards without model evaluations.",
   "historical": true,
-  "raw_traces_distributed": false,
-  "report": "report.md"
+  "current_skills_evaluated": false,
+  "raw_traces_published": false,
+  "model": "gpt-5.5",
+  "reasoning_effort": "low",
+  "client": "Codex CLI 0.137.0",
+  "verification_date": "2026-10-01",
+  "comparisons": {
+    "service-recommendation": {
+      "baseline": {
+        "runs": 3,
+        "mean_tool_calls": 5.67,
+        "mean_input_tokens": 40064.67,
+        "mean_output_tokens": 638.0,
+        "mean_answer_bytes": 1147.67,
+        "pass": 3
+      },
+      "skill": {
+        "runs": 3,
+        "mean_tool_calls": 7.33,
+        "mean_input_tokens": 70709.67,
+        "mean_output_tokens": 877.33,
+        "mean_answer_bytes": 1274.0,
+        "pass": 3
+      }
+    },
+    "coverage": {
+      "baseline": {
+        "runs": 3,
+        "mean_tool_calls": 1.33,
+        "mean_input_tokens": 20514.0,
+        "mean_output_tokens": 356.67,
+        "mean_answer_bytes": 703.33,
+        "pass": 3
+      },
+      "skill": {
+        "runs": 3,
+        "mean_tool_calls": 2.67,
+        "mean_input_tokens": 32594.33,
+        "mean_output_tokens": 413.67,
+        "mean_answer_bytes": 663.67,
+        "pass": 3
+      }
+    },
+    "adversarial": {
+      "baseline": {
+        "runs": 3,
+        "mean_tool_calls": 5.33,
+        "mean_input_tokens": 36317.33,
+        "mean_output_tokens": 546.0,
+        "mean_answer_bytes": 1107.67,
+        "pass": 3
+      },
+      "skill": {
+        "runs": 3,
+        "mean_tool_calls": 5.67,
+        "mean_input_tokens": 67879.33,
+        "mean_output_tokens": 789.33,
+        "mean_answer_bytes": 1431.67,
+        "pass": 3
+      }
+    },
+    "agreement-history": {
+      "baseline": {
+        "runs": 3,
+        "mean_tool_calls": 5.67,
+        "mean_input_tokens": 41620.0,
+        "mean_output_tokens": 778.67,
+        "mean_answer_bytes": 1392.0,
+        "pass": 3
+      },
+      "skill": {
+        "runs": 3,
+        "mean_tool_calls": 8.0,
+        "mean_input_tokens": 76251.33,
+        "mean_output_tokens": 995.33,
+        "mean_answer_bytes": 1416.33,
+        "pass": 3
+      }
+    }
+  }
 }

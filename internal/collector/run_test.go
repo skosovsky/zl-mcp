@@ -13,7 +13,6 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/config"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
-	"github.com/skosovsky/zl-mcp/internal/zalo"
 )
 
 type scriptedListener struct {
@@ -67,7 +66,7 @@ func TestSessionCollectsReplayAndStopsCleanly(t *testing.T) {
 		return ctx.Err()
 	}
 	// Act
-	err := runSession(ctx, c, s, client)
+	err := RunInternal(ctx, c, s, client, func(*JoinManager) error { return nil })
 	hits, _, _, searchErr := s.Search(context.Background(), storage.Search{Query: "ремонт"})
 	state, stateErr := s.State(context.Background())
 	coverage, coverageErr := s.Coverage(context.Background(), "g")
@@ -113,7 +112,7 @@ func TestStorageFailureRemainsVisibleDuringReconnect(t *testing.T) {
 	}
 	finished := make(chan error, 1)
 	// Act
-	go func() { finished <- runSession(ctx, c, s, client) }()
+	go func() { finished <- RunInternal(ctx, c, s, client, func(*JoinManager) error { return nil }) }()
 	select {
 	case <-reconnecting:
 	case <-time.After(5 * time.Second):
@@ -148,7 +147,7 @@ func TestAuthenticationFailureStopsReconnectAndPreservesState(t *testing.T) {
 		return fmt.Errorf("listener: %w", domain.ErrAuthenticationRequired)
 	}
 	// Act
-	err := runSession(context.Background(), c, s, client)
+	err := RunInternal(context.Background(), c, s, client, func(*JoinManager) error { return nil })
 	state, stateErr := s.State(context.Background())
 	coverage, coverageErr := s.Coverage(context.Background(), "g")
 	// Assert: cleanup must not overwrite the terminal auth_required state with stopped.
@@ -166,28 +165,36 @@ func TestAuthenticationFailureStopsReconnectAndPreservesState(t *testing.T) {
 	}
 }
 
-func TestStartupRestoreFailurePersistsCorrectRecoveryState(t *testing.T) {
-	for _, tc := range []struct {
-		name        string
-		failure     error
-		state, code string
-	}{
-		{"authentication", domain.ErrAuthenticationRequired, "auth_required", "NOT_AUTHENTICATED"},
-		{"network", &domain.Error{Code: "UPSTREAM_UNAVAILABLE", Message: "synthetic"}, "stopped", "UPSTREAM_UNAVAILABLE"},
-		{"storage", &domain.Error{Code: "STORAGE_ERROR", Message: "synthetic"}, "stopped", "STORAGE_ERROR"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			// Arrange: execute the real lock/database/startup lifecycle with a failed restore port.
-			c, s := sessionStore(t)
-			var calls int
-			restore := func(context.Context, string) (*zalo.Client, error) { calls++; return nil, tc.failure }
-			// Act
-			err := runWithRestore(context.Background(), c, restore)
-			state, stateErr := s.State(context.Background())
-			// Assert: only explicit authentication failure asks for a fresh local login.
-			if !errors.Is(err, tc.failure) || calls != 1 || stateErr != nil || state["collector_state"] != tc.state || state["last_error"].(map[string]any)["code"] != tc.code {
-				t.Fatalf("error=%v state=%+v read=%v calls=%d", err, state, stateErr, calls)
-			}
-		})
+func TestInternalCollectorHasNoControlListener(t *testing.T) {
+	// Arrange: unified service owns the store and injects a synthetic upstream.
+	c, store := sessionStore(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	client := &scriptedListener{fakeZalo: &fakeZalo{name: "Test group", joined: true}}
+	readyCalls := 0
+	client.listen = func(ctx context.Context, message func(domain.Message) error, _ func(string, string) error, connected func() error) error {
+		// Assert while the collector is active: it has no IPC listener of its own.
+		if _, err := os.Stat(filepath.Join(c.StateDir, "collector.sock")); !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("internal collector opened a socket: %v", err)
+		}
+		if err := connected(); err != nil {
+			return err
+		}
+		if err := message(domain.Message{GroupID: "g", ID: "internal", SenderID: "sender", SentAt: time.Now().UTC(), Text: "internal collector", Source: "live"}); err != nil {
+			return err
+		}
+		cancel()
+		return ctx.Err()
+	}
+	// Act: receive a direct membership port without opening collector IPC.
+	err := RunInternal(ctx, c, store, client, func(port *JoinManager) error {
+		readyCalls++
+		_, err := port.Call(ctx, "zalo_get_group", map[string]any{"group_id": "g"})
+		return err
+	})
+	_, readErr := store.Message(context.Background(), "g", "internal")
+	// Assert: collector ran once, persisted data, and left service-owned storage usable.
+	if err != nil || readErr != nil || readyCalls != 1 {
+		t.Fatalf("run=%v read=%v ready=%d", err, readErr, readyCalls)
 	}
 }

@@ -1,0 +1,10 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "type": "object",
+ "required": ["listen", "token_file"],
+ "additionalProperties": false,
+ "properties": {
+  "listen": {"type": "string", "minLength": 1, "maxLength": 128},
+  "token_file": {"type": "string", "minLength": 1, "maxLength": 4096}
+ }
+}

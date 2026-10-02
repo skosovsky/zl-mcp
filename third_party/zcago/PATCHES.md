@@ -13,3 +13,16 @@ The application adapter maps this sentinel to a safe domain authentication error
 Patch: session/auth/login.go preserves nonzero error_code from outer and decrypted login responses and the server-info response as typed ZaloAPIError, without retaining upstream message text. Explicit HTTP 401 returns the authentication sentinel. Server-info uses the wire envelope Response[T] so error_code is not discarded. Concurrent login rejection cancels server-info: makeServerInfoRequest no longer dereferences a nil response on request failure. Missing-response parser guards prevent panics. Regression coverage in session/auth/login_errors_test.go checks synthetic outer/decrypted/server-info codes, HTTP 401, omission of private response text, and cancellation without a response.
 
 The application interprets typed code 102 only during saved-session login, based on its live reproduction after logout; it does not classify arbitrary API errors or text containing 102 as authentication loss.
+
+## Upstream review, 2026-10-02
+
+Current upstream main still points to d4ff65b460577b2557e70220b68d08ce1f7431b4. Regression probes confirm the quote and login/server-info fixes are still required. The WebSocket 401 fix can instead be implemented at the application's supported HTTPClient/RoundTripper boundary; an offline probe verified that the original Dial preserves an injected typed cause. This migration has not been implemented. `errs/authentication.go` is an added local declaration used by the auth patches; it is absent upstream. Full evidence and limits: [zcago-upstream-review.md](../../docs/zcago-upstream-review.md).
+
+## Upstream issue tracking
+
+- [TQuote.UnmarshalJSON rejects decimal-string message IDs and timestamps](https://github.com/amrakk/zcago/issues/2)
+- [WebSocket Dial discards handshake HTTP status needed to classify authentication failures](https://github.com/amrakk/zcago/issues/3)
+- [Login ignores nonzero error_code in outer and decrypted response envelopes](https://github.com/amrakk/zcago/issues/4)
+- [Server-info parses the normalized response type and silently ignores wire error_code](https://github.com/amrakk/zcago/issues/5)
+- [Login and server-info ignore HTTP 401 and can return success for an unauthorized response](https://github.com/amrakk/zcago/issues/6)
+- [makeServerInfoRequest panics when transport fails without an HTTP response](https://github.com/amrakk/zcago/issues/7)

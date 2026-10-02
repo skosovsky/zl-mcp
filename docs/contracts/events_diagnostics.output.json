@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "generated_at",
+    "active_subscriptions",
+    "journal_pending",
+    "pending_payload_bytes",
+    "state_counts",
+    "reason_counts"
+  ],
+  "properties": {
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "active_subscriptions": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "journal_pending": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pending_payload_bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "state_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pending",
+        "sending",
+        "delivered",
+        "failed",
+        "cancelled",
+        "other"
+      ],
+      "properties": {
+        "pending": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sending": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "delivered": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cancelled": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "other": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "reason_counts": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "access_revoked",
+          "invalid_payload",
+          "deadline",
+          "queue_capacity",
+          "subscription_inactive",
+          "attempts",
+          "callback_gone",
+          "payload_too_large",
+          "http_rejected",
+          "http_transient",
+          "network",
+          "accepted",
+          "other",
+          "cancelled",
+          "record_deleted",
+          "retention"
+        ]
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "maxProperties": 16
+    }
+  }
+}

@@ -7,3 +7,9 @@ allow_join = false
 retention_days = 90
 [logging]
 level = "info"
+# service only; default file: ~/Library/Logs/zl-mcp/service.log
+max_size_mb = 5
+max_backups = 3
+[mcp]
+listen = "127.0.0.1:18765"
+# token_file defaults to state_dir/mcp-token; generated privately on first service start

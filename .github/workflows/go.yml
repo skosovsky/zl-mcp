@@ -1,8 +1,14 @@
 name: Go checks
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -12,5 +18,15 @@ jobs:
       - run: go test ./...
       - run: go test -race ./...
       - run: go vet ./...
+      - name: Test patched zcago module
+        working-directory: third_party/zcago
+        run: go test ./...
+      - name: Race-check patched zcago module
+        working-directory: third_party/zcago
+        run: go test -race ./...
+      - name: Vet patched zcago module
+        working-directory: third_party/zcago
+        run: go vet ./...
       - run: CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o bin/zl-mcp-darwin-arm64 ./cmd/zl-mcp
+      - run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bin/zl-mcp-darwin-amd64 ./cmd/zl-mcp
       - run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/zl-mcp-linux-amd64 ./cmd/zl-mcp

@@ -92,7 +92,10 @@ func (s *Store) migrate(ctx context.Context) error {
  CREATE TABLE IF NOT EXISTS join_approvals(token_hash TEXT PRIMARY KEY,preview_id TEXT NOT NULL,expires_at TEXT NOT NULL,request_id TEXT);
  CREATE TABLE IF NOT EXISTS join_requests(request_id TEXT PRIMARY KEY,operation_id TEXT UNIQUE NOT NULL,token_hash TEXT NOT NULL,payload TEXT NOT NULL,created_at TEXT NOT NULL);
  INSERT OR IGNORE INTO schema_migrations VALUES(1);`)
-	return err
+	if err != nil {
+		return err
+	}
+	return s.migrateEvents(ctx)
 }
 func (s *Store) BindAccount(ctx context.Context, account string) error {
 	h := sha256.Sum256([]byte(account))
@@ -139,9 +142,22 @@ func (s *Store) Put(ctx context.Context, m domain.Message) error {
 		return err
 	}
 	defer tx.Rollback()
-	_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO messages(group_id,message_id,sender_id,sender_name,sent_at,received_at,text,reply_id,attachments,source) VALUES(?,?,?,?,?,?,?,?,?,?)`, m.GroupID, m.ID, m.SenderID, m.SenderName, m.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), now(), m.Text, m.ReplyTo, string(a), m.Source)
+	result, err := tx.ExecContext(ctx, `INSERT OR IGNORE INTO messages(group_id,message_id,sender_id,sender_name,sent_at,received_at,text,reply_id,attachments,source) VALUES(?,?,?,?,?,?,?,?,?,?)`, m.GroupID, m.ID, m.SenderID, m.SenderName, m.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), now(), m.Text, m.ReplyTo, string(a), m.Source)
 	if err != nil {
 		return err
+	}
+	inserted, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if inserted != 0 {
+		seq, err := result.LastInsertId()
+		if err != nil {
+			return err
+		}
+		if err = appendMessageEvent(ctx, tx, seq, m); err != nil {
+			return err
+		}
 	}
 	_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO collection_started VALUES(?,?)`, m.GroupID, now())
 	if err != nil {
@@ -150,16 +166,37 @@ func (s *Store) Put(ctx context.Context, m domain.Message) error {
 	return tx.Commit()
 }
 func (s *Store) Delete(ctx context.Context, groupID, messageID string) error {
-	_, err := s.DB.ExecContext(ctx, "DELETE FROM messages WHERE group_id=? AND message_id=?", groupID, messageID)
-	return err
+	return s.removeMessages(ctx, "group_id=? AND message_id=?", "record_deleted", groupID, messageID)
 }
 func (s *Store) Retain(ctx context.Context) error {
 	if s.retention == 0 {
 		return nil
 	}
 	cut := time.Now().AddDate(0, 0, -s.retention).UTC().Format("2006-01-02T15:04:05.000000000Z")
-	_, err := s.DB.ExecContext(ctx, "DELETE FROM messages WHERE sent_at < ?", cut)
-	return err
+	return s.removeMessages(ctx, "sent_at < ?", "retention", cut)
+}
+
+// predicate is selected only by Delete/Retain, never supplied by a client.
+func (s *Store) removeMessages(ctx context.Context, predicate, reason string, args ...any) error {
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	selection := "SELECT seq FROM messages WHERE " + predicate
+	values := append([]any{now(), reason}, args...)
+	values = append(values, args...)
+	_, err = tx.ExecContext(ctx, `UPDATE event_deliveries SET payload=X'',state=CASE WHEN state IN ('pending','sending') THEN 'cancelled' ELSE state END,completed_at=COALESCE(completed_at,?),lease_until=NULL,last_reason=? WHERE message_seq IN (`+selection+`) OR event_id IN (SELECT event_id FROM message_events WHERE seq IN (`+selection+`))`, values...)
+	if err != nil {
+		return err
+	}
+	if _, err = tx.ExecContext(ctx, "DELETE FROM message_events WHERE seq IN ("+selection+")", args...); err != nil {
+		return err
+	}
+	if _, err = tx.ExecContext(ctx, "DELETE FROM messages WHERE "+predicate, args...); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 const messageColumns = "group_id,message_id,sender_id,sender_name,sent_at,text,reply_id,attachments,source"

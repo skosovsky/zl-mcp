@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "const": "zalo.message.created"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "delivery": {
+            "type": "array",
+            "items": {
+              "const": "webhook"
+            },
+            "minItems": 1,
+            "maxItems": 1
+          },
+          "inputSchema": {
+            "type": "object"
+          },
+          "payloadSchema": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "delivery",
+          "inputSchema",
+          "payloadSchema"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 1
+    }
+  },
+  "required": [
+    "events"
+  ],
+  "additionalProperties": false
+}

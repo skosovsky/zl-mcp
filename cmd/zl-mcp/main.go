@@ -5,6 +5,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/skosovsky/zl-mcp/internal/logging"
+	"io"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -13,37 +15,48 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/skosovsky/zl-mcp/internal/collector"
 	"github.com/skosovsky/zl-mcp/internal/config"
 	"github.com/skosovsky/zl-mcp/internal/control"
 	"github.com/skosovsky/zl-mcp/internal/local"
-	"github.com/skosovsky/zl-mcp/internal/mcpserver"
+	"github.com/skosovsky/zl-mcp/internal/service"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 	"github.com/skosovsky/zl-mcp/internal/zalo"
 )
 
 func main() {
 	if e := run(); e != nil {
-		fmt.Fprintln(os.Stderr, e)
+		if serviceInvocation() {
+			logging.ReportStartupFailure(e)
+			info, statErr := os.Stderr.Stat()
+			if statErr == nil && info.Mode()&os.ModeCharDevice != 0 {
+				fmt.Fprintln(os.Stderr, e)
+			}
+		} else {
+			fmt.Fprintln(os.Stderr, e)
+		}
 		os.Exit(1)
 	}
 }
 func run() error {
 	flags := flag.NewFlagSet("zl-mcp", flag.ContinueOnError)
+	if serviceInvocation() {
+		flags.SetOutput(io.Discard)
+	}
 	path := flags.String("config", "config.toml", "local TOML configuration")
 	if e := flags.Parse(os.Args[1:]); e != nil {
 		return e
 	}
 	if flags.NArg() < 1 {
-		return fmt.Errorf("usage: zl-mcp -config config.toml <login|collect|serve|approve-join preview_id>")
+		return fmt.Errorf("usage: zl-mcp -config config.toml <login|service|serve|approve-join preview_id>")
 	}
 	c, e := config.Load(*path)
 	if e != nil {
 		return e
 	}
-	if e = c.Prepare(); e != nil {
-		return e
+	if flags.Arg(0) != "serve" {
+		if e = c.Prepare(); e != nil {
+			return e
+		}
 	}
 	level := slog.LevelInfo
 	switch c.Logging.Level {
@@ -58,25 +71,17 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	switch flags.Arg(0) {
-	case "collect":
+	case "service":
 		if flags.NArg() != 1 {
-			return fmt.Errorf("collect takes no arguments")
+			return fmt.Errorf("service takes no arguments")
 		}
-		return collector.Run(ctx, c)
+		return service.Run(ctx, c)
+
 	case "serve":
 		if flags.NArg() != 1 {
 			return fmt.Errorf("serve takes no arguments")
 		}
-		store, e := storage.Open(ctx, filepath.Join(c.StateDir, "messages.sqlite"), c.Collection.GroupIDs, c.Storage.RetentionDays)
-		if e != nil {
-			return e
-		}
-		defer store.Close()
-		server, e := mcpserver.New(store, c.StateDir)
-		if e != nil {
-			return e
-		}
-		return server.Run(ctx, &mcp.StdioTransport{})
+		return service.BridgeStdio(ctx, c)
 	case "approve-join":
 		if flags.NArg() != 2 {
 			return fmt.Errorf("approve-join requires preview_id")
@@ -137,6 +142,8 @@ func run() error {
 		fmt.Fprintln(os.Stderr, "Session saved locally. QR image removed.")
 		return nil
 	default:
-		return fmt.Errorf("unknown command; available: login, collect, serve, approve-join")
+		return fmt.Errorf("unknown command; available: login, service, serve, approve-join")
 	}
 }
+
+func serviceInvocation() bool { return len(os.Args) > 1 && os.Args[len(os.Args)-1] == "service" }

@@ -7,22 +7,17 @@ import (
 	"errors"
 	"io"
 	"math/big"
-	"net"
 	"net/http"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 	"github.com/skosovsky/zl-mcp/internal/config"
 	"github.com/skosovsky/zl-mcp/internal/domain"
-	"github.com/skosovsky/zl-mcp/internal/local"
 	"github.com/skosovsky/zl-mcp/internal/storage"
-	"github.com/skosovsky/zl-mcp/internal/zalo"
 )
 
-type listenerUpstream interface {
+type ListenerUpstream interface {
 	Upstream
 	Listen(context.Context, func(domain.Message) error, func(string, string) error, func() error) error
 }
@@ -33,51 +28,18 @@ type storageFailure struct{ cause error }
 func (e *storageFailure) Error() string { return "collector storage failed" }
 func (e *storageFailure) Unwrap() error { return e.cause }
 
-func Run(ctx context.Context, c config.Config) error {
-	return runWithRestore(ctx, c, zalo.Restore)
+// RunInternal runs the collector inside a service which owns storage and account lock.
+// It opens no control socket; ready supplies the in-process membership port.
+func RunInternal(ctx context.Context, c config.Config, store *storage.Store, client ListenerUpstream, ready func(*JoinManager) error) error {
+	if ready == nil {
+		return errors.New("collector readiness callback is required")
+	}
+	guard := newSessionGuard(ctx, client)
+	defer guard.cancel()
+	return runSession(ctx, c, store, guard, ready)
 }
 
-func runWithRestore(ctx context.Context, c config.Config, restore func(context.Context, string) (*zalo.Client, error)) error {
-	if _, err := local.SocketPath(c.StateDir); err != nil {
-		return err
-	}
-	unlock, e := local.Lock(c.StateDir)
-	if e != nil {
-		return e
-	}
-	defer unlock()
-	store, e := storage.Open(ctx, filepath.Join(c.StateDir, "messages.sqlite"), c.Collection.GroupIDs, c.Storage.RetentionDays)
-	if e != nil {
-		return e
-	}
-	defer store.Close()
-	client, e := restore(ctx, c.StateDir)
-	if e != nil {
-		state, code, message := "stopped", "UPSTREAM_UNAVAILABLE", "Saved session could not be verified; check connectivity and retry collection."
-		if errors.Is(e, domain.ErrAuthenticationRequired) {
-			state, code, message = "auth_required", "NOT_AUTHENTICATED", "Run local login."
-		} else {
-			var typed *domain.Error
-			if errors.As(e, &typed) && typed.Code == "STORAGE_ERROR" {
-				code, message = "STORAGE_ERROR", "Cannot read private saved session."
-			}
-		}
-		if err := store.SetState(ctx, map[string]any{"authenticated": false, "collector_state": state, "last_connected_at": nil, "last_event_at": nil, "last_persisted_at": nil, "last_error": map[string]any{"code": code, "message": message}}); err != nil {
-			return err
-		}
-		return e
-	}
-	if e = store.BindAccount(ctx, client.AccountID()); e != nil {
-		return e
-	}
-	if e = client.Save(c.StateDir); e != nil {
-		return e
-	}
-	return runSession(ctx, c, store, client)
-}
-
-// runSession owns the actual listener/control lifecycle; ports keep it testable offline.
-func runSession(ctx context.Context, c config.Config, store *storage.Store, client listenerUpstream) error {
+func runSession(ctx context.Context, c config.Config, store *storage.Store, client ListenerUpstream, ready func(*JoinManager) error) error {
 	var e error
 	runCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -85,37 +47,12 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 	if e = joins.Recover(ctx); e != nil {
 		return e
 	}
-	defer joins.Wait()
-	sock, e := local.SocketPath(c.StateDir)
-	if e != nil {
-		return e
-	}
-	_ = os.Remove(sock)
-	ln, e := net.Listen("unix", sock)
-	if e != nil {
-		return e
-	}
-	defer os.Remove(sock)
-	if e = os.Chmod(sock, 0600); e != nil {
-		ln.Close()
-		return e
-	}
-	// Connection operations are serialized with membership mutations.
-	server := &http.Server{Handler: ControlHandler(joins), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second}
-	errs := make(chan error, 1)
-	go func() {
-		e := server.Serve(ln)
-		if e != nil && !errors.Is(e, http.ErrServerClosed) {
-			errs <- e
-			cancel()
+	defer func() { cancel(); joins.Wait() }()
+	if ready != nil {
+		if e = ready(joins); e != nil {
+			return e
 		}
-	}()
-	defer func() {
-		cancel()
-		shutdown, stop := context.WithTimeout(context.Background(), 5*time.Second)
-		defer stop()
-		server.Shutdown(shutdown)
-	}()
+	}
 	state := map[string]any{"authenticated": true, "collector_state": "connecting", "last_connected_at": nil, "last_event_at": nil, "last_persisted_at": nil, "last_error": nil}
 	var mu sync.Mutex
 	set := func(key string, value any) error {
@@ -215,11 +152,6 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 			}
 			return set("collector_state", "connected")
 		})
-		select {
-		case err := <-errs:
-			return err
-		default:
-		}
 		if runCtx.Err() != nil {
 			return nil
 		}
@@ -261,7 +193,7 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 // ControlHandler serves the contract-validated local collector protocol.
 // It is shared by the live collector and the offline model evaluation fixture.
 func ControlHandler(j *JoinManager) http.Handler {
-	schema, compileErr := contracts.Compile("control", "input")
+	_, compileErr := contracts.Compile("control", "input")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fail := func(err error) {
@@ -328,46 +260,66 @@ func ControlHandler(j *JoinManager) http.Handler {
 			json.NewEncoder(w).Encode(map[string]any{"plan_token": token})
 			return
 		}
-		var data any
-		if json.Unmarshal(b, &data) != nil || schema.Validate(data) != nil {
-			fail(domain.Invalid("Arguments do not match control schema."))
-			return
-		}
-		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-		defer cancel()
-		var result map[string]any
-		switch v.Method {
-		case "zalo_get_group":
-			if e = j.enter(ctx); e != nil {
-				fail(e)
-				return
-			}
-			g, d, err := j.API.Group(ctx, v.Arguments["group_id"].(string))
-			j.leave()
-			e = err
-			if e == nil {
-				g.CollectionEnabled = j.Store.Allowed(g.ID)
-				e = j.Store.UpsertGroup(ctx, g, d)
-				if e == nil {
-					result, e = j.Store.Group(ctx, g.ID)
-				}
-			}
-		case "zalo_inspect_invite":
-			if e = j.enter(ctx); e != nil {
-				fail(e)
-				return
-			}
-			result, e = j.Inspect(ctx, v.Arguments["invite_url"].(string))
-			j.leave()
-		case "zalo_join_group":
-			result, e = j.Start(ctx, v.Arguments["plan_token"].(string), v.Arguments["request_id"].(string))
-		case "zalo_get_join_status":
-			result, e = j.Operation(ctx, v.Arguments["operation_id"].(string))
-		}
+		result, e := j.Call(r.Context(), v.Method, v.Arguments)
 		if e != nil {
 			fail(e)
 			return
 		}
 		json.NewEncoder(w).Encode(result)
 	})
+}
+
+// Call exposes only contract-validated membership operations to the MCP service.
+// Trusted CLI approval routes remain confined to ControlHandler.
+func (j *JoinManager) Call(parent context.Context, method string, arguments any) (map[string]any, error) {
+	schema, err := contracts.Compile("control", "input")
+	if err != nil {
+		return nil, err
+	}
+	b, err := json.Marshal(map[string]any{"method": method, "arguments": arguments})
+	if err != nil {
+		return nil, domain.Invalid("Invalid membership arguments.")
+	}
+	var request map[string]any
+	if json.Unmarshal(b, &request) != nil || schema.Validate(request) != nil {
+		return nil, domain.Invalid("Arguments do not match control schema.")
+	}
+	if status, ok := j.API.(interface{ AuthenticationRequired() bool }); ok && status.AuthenticationRequired() && method != "zalo_get_join_status" {
+		return nil, safeError("NOT_AUTHENTICATED", "Zalo authentication is required.", "Stop service and run local login.")
+	}
+	args := request["arguments"].(map[string]any)
+	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+	defer cancel()
+	var result map[string]any
+	var e error
+	switch method {
+	case "zalo_get_group":
+		if e = j.enter(ctx); e != nil {
+			return nil, e
+		}
+		g, d, err := j.API.Group(ctx, args["group_id"].(string))
+		j.leave()
+		e = err
+		if e == nil {
+			g.CollectionEnabled = j.Store.Allowed(g.ID)
+			e = j.Store.UpsertGroup(ctx, g, d)
+			if e == nil {
+				result, e = j.Store.Group(ctx, g.ID)
+			}
+		}
+	case "zalo_inspect_invite":
+		if e = j.enter(ctx); e != nil {
+			return nil, e
+		}
+		result, e = j.Inspect(ctx, args["invite_url"].(string))
+		j.leave()
+	case "zalo_join_group":
+		result, e = j.Start(ctx, args["plan_token"].(string), args["request_id"].(string))
+	case "zalo_get_join_status":
+		result, e = j.Operation(ctx, args["operation_id"].(string))
+	}
+	if errors.Is(e, domain.ErrAuthenticationRequired) {
+		return nil, safeError("NOT_AUTHENTICATED", "Zalo authentication is required.", "Stop service and run local login.")
+	}
+	return result, e
 }

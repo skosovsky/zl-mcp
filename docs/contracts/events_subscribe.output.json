@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "refreshBefore": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "cursor": {
+      "type": "null"
+    },
+    "truncated": {
+      "const": false
+    }
+  },
+  "required": [
+    "id",
+    "refreshBefore",
+    "cursor",
+    "truncated"
+  ],
+  "additionalProperties": false
+}

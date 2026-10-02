@@ -2,6 +2,7 @@ package collector
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -73,5 +74,44 @@ func TestControlWorkflowContracts(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestInProcessMembershipPort(t *testing.T) {
+	// Arrange: same persistent approval ledger as the IPC path.
+	j, api := manager(t)
+	ctx := context.Background()
+	// Act: the MCP domain port can inspect but cannot grant approval.
+	preview, err := j.Call(ctx, "zalo_inspect_invite", map[string]any{"invite_url": "https://zalo.me/g/abc"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	previewID := *preview["preview_id"].(*string)
+	_, approvalErr := j.Call(ctx, "cli_approve", map[string]any{"preview_id": previewID})
+	_, invalidErr := j.Call(ctx, "zalo_get_group", map[string]any{"group_id": "g", "extra": true})
+	// Assert: caller-controlled routing cannot bypass the trusted CLI boundary.
+	if approvalErr == nil || invalidErr == nil || api.calls != 0 {
+		t.Fatal("membership port bypassed contract or approval")
+	}
+
+	// Arrange: a trusted local approval authorizes one operation.
+	token, err := j.Approve(ctx, previewID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	args := map[string]any{"plan_token": token, "request_id": uuid.NewString()}
+	// Act: invoke and retry through the injected domain port.
+	first, err := j.Call(ctx, "zalo_join_group", args)
+	if err != nil {
+		t.Fatal(err)
+	}
+	j.Wait()
+	repeated, err := j.Call(ctx, "zalo_join_group", args)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Assert: retries preserve the operation and perform one upstream mutation.
+	if first["operation_id"] != repeated["operation_id"] || api.calls != 1 {
+		t.Fatalf("unsafe retry: first=%v repeated=%v calls=%d", first, repeated, api.calls)
 	}
 }
