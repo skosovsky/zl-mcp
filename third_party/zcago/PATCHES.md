@@ -67,5 +67,7 @@ IDs remain errors. This compatibility change targets a live type mismatch on
 and live recovery are not established by the synthetic tests. Existing public
 `int` fields and their platform size limit are retained.
 
-These source fixes have not yet been deployed to the installed service. They do
-not establish restored collection or notification delivery.
+The fixes were subsequently installed after an authorized private-copy trial.
+Repeated startup and replay processing succeeded with no listener error. This
+does not establish reproduction of the original private reaction payload or
+end-to-end notification delivery; see the application acceptance report.
