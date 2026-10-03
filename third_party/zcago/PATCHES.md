@@ -111,3 +111,21 @@ messages and repeated cursor detection. Tests cover mixed and empty batches,
 large numeric IDs, malformed metadata, encoded request headers and the first
 flag. This is offline queue continuation, not an arbitrary historical-message
 API or a completeness guarantee. Installed live recovery remains unverified.
+
+## Group-cloud history page candidate
+
+An optional concrete API method `GetGroupHistoryPage` implements one bounded
+read of `/api/cm/getrecentv2` on the authenticated session's advertised
+`group_cloud_message` service. Protocol provenance is upstream JS PR #370,
+head `4eeceafad031ce4f594c4532e3363dbdf01450b0`, and the installed native
+client's endpoint inventory. This is an independent Go implementation; it does
+not copy the reference's float-based cursor conversion. The existing public
+API interface and endpoint initialization remain compatible.
+
+Encrypted loopback wire tests verify the exact numeric cursor beyond 2^53,
+GET route, request limits, account identifier, source flag, nested response
+string, filtering flags and raw message digits. Missing/null arrays, malformed
+continuation metadata, oversized pages and invalid requests are rejected;
+missing service metadata never guesses a domain. The extension returns raw
+protocol records only. It has not been live verified, installed or exposed as
+an MCP import tool. It creates no stored records, Events or completeness claim.

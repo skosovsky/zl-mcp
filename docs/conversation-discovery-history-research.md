@@ -82,3 +82,20 @@ The client has `/api/preloadconvers/get-last-msgs`, with a mapping of already kn
 Group cloud paths include `/api/cm/getrecentv2` and `/api/cm/getoldv2`, using the group-cloud domain. No direct-cloud counterpart was established. Static presence of an endpoint does not prove it currently succeeds; the native bundle also contains the previously failing old group-history endpoint. Native polling/socket logic keeps action IDs and backup queue state beyond the minimal first replay used by our adapter. This suggests a synchronization investigation, not an assertion that changing `lastId` alone recovers all missing personal history.
 
 Next protocol step: establish the target peer identity and compare supported catalogue/replay/preview/sync sources through the existing authenticated service, with bounded reads and retained continuation evidence. Keep live non-friend ingestion acceptance separate from historical recovery.
+
+## Bounded group-cloud candidate implementation
+
+PR #370 was rechecked on 2026-10-03 and remains open. The pinned proposal sends
+`globalMsgId` as the numeric cursor and uses `nretry=0`; its author-side live
+check remains external evidence, not acceptance for this account. The optional
+Go page extension now has encrypted local wire tests preserving IDs without
+float64, raw records and nullable filtering/continuation flags. It does not
+import or emit messages. The installed service is still the separately verified
+2699d2e checkpoint; the new history candidate is not live verified or installed.
+
+The Go pinned/hidden methods and JS archived-list method were also reviewed.
+They enumerate specific subsets; hidden-list responses additionally contain a
+PIN, which must never be passed into catalogue diagnostics or logs. None of
+these implementations demonstrates a full Strangers inbox enumerator. The
+archived response retains `items: unknown[]`, so its identity shape remains a
+protocol research dependency rather than a supported catalogue source.
