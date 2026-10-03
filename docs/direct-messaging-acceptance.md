@@ -169,3 +169,13 @@ Still open: actual client v2 discovery and incoming/first-filter event scenarios
 initiation to a peer absent from the collected corpus, installed skill reload,
 and diagnosis of an ambiguous acknowledgement if it recurs in an independently
 authorized send. No model evals or unapproved additional sends were performed.
+
+## Send acknowledgement decoder follow-up
+
+A local encrypted HTTP regression reproduces numeric `msgId` replies rejected by
+the pinned Go decoder on both plain and quote routes, yielding API code 0 and an
+ambiguous operation. An exact integer/string decoder now passes those cases and
+rejects invalid numeric values; root and nested race/test/vet passed. This fixes a
+verified contract mismatch. The original private API response was not retained,
+so its particular `unknown` is not retrospectively changed to `sent`. No further
+live messages were sent during this investigation.

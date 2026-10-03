@@ -104,6 +104,35 @@ type (
 	SendMessageFn = func(ctx context.Context, threadID string, threadType model.ThreadType, message MessageContent) (*SendMessageResponse, error)
 )
 
+// The wire acknowledgement can encode msgId as a JSON integer or a string.
+// Preserve integer digits directly: converting through float64 loses large IDs.
+func (r *SendMessageResult) UnmarshalJSON(data []byte) error {
+	var wire struct {
+		MsgID json.RawMessage `json:"msgId"`
+	}
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	r.MsgID = ""
+	if len(wire.MsgID) == 0 || string(wire.MsgID) == "null" {
+		return nil
+	}
+	if wire.MsgID[0] == '"' {
+		return json.Unmarshal(wire.MsgID, &r.MsgID)
+	}
+	id := strings.TrimSpace(string(wire.MsgID))
+	for _, digit := range id {
+		if digit < '0' || digit > '9' {
+			return fmt.Errorf("send response msgId must be a string or nonnegative decimal integer")
+		}
+	}
+	if id == "" {
+		return fmt.Errorf("send response msgId must not be empty")
+	}
+	r.MsgID = id
+	return nil
+}
+
 func (a *api) SendMessage(ctx context.Context, threadID string, threadType model.ThreadType, message MessageContent) (*SendMessageResponse, error) {
 	return a.e.SendMessage(ctx, threadID, threadType, message)
 }

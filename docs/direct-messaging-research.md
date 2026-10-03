@@ -235,3 +235,23 @@ log exposed only the decoding error class, field `data.rMsg.gMsgID` and expected
 `Start` calls to reject an already-started listener. Source cleanup and exact
 integer/string reaction ID parsing are patched; live recovery and callback
 delivery remain separate acceptance checks.
+
+## Quoted-send acknowledgement investigation
+
+The authorized quoted reply was independently observed in the corpus with its
+correct reference, while the send ledger remained `unknown`. The raw HTTP
+response/error was not retained, so a retrospective exact cause is unavailable.
+
+Source review found a concrete mismatch: Go `SendMessageResult.msgId` required a
+JSON string, whereas the maintained JavaScript reference declares a number.
+Encrypted `/sms` and `/quote` local receiver tests now supply an exact integer
+above 2^53. Both failed before the patch with `ZaloAPIError[0]`; the adapter maps
+that code to ambiguity. Both pass after an exact integer/string decoder patch.
+This verifies the failure mechanism without another live message. The previous
+wire fixture used a string for both routes and did not cover numeric replies.
+
+This supports the numeric reply as a plausible cause, not proof of the lost live
+response. No blanket success inference, text-based ledger reconciliation or new
+UUID retry was added. Root and nested race/test/vet passed. A future independently
+authorized quote can check the patched acknowledgement; the original operation
+and its evidence remain intact.

@@ -71,3 +71,24 @@ The fixes were subsequently installed after an authorized private-copy trial.
 Repeated startup and replay processing succeeded with no listener error. This
 does not establish reproduction of the original private reaction payload or
 end-to-end notification delivery; see the application acceptance report.
+
+## Numeric send acknowledgements
+
+The pinned upstream `api.SendMessageResult` declared `msgId` as `string` only.
+The maintained JavaScript reference declares a numeric result:
+[sendMessage.ts](https://github.com/RFS-ADRENO/zca-js/blob/dadfef18bcac53537741855c99f084152da1fad9/src/apis/sendMessage.ts).
+The encrypted local wire test now covers both numeric and string acknowledgements
+on `/sms` and `/quote`. Before the patch, numeric cases failed with
+`ZaloAPIError[0]: Failed to parse response data`; the application consequently
+reported an ambiguous send. The original string-only fixture missed this case.
+
+`SendMessageResult.UnmarshalJSON` now preserves string IDs and exact decimal
+integer digits without float64 or fixed-width integer conversion. Missing/null
+acknowledgements remain empty; fractional, exponent, negative and structured
+numeric alternatives remain decoding failures. A number above 2^53 is verified
+through the encrypted HTTP path, with larger integers covered by unit tests.
+
+This is a reproduced decoder defect and a plausible explanation of the live
+quoted-send acknowledgement. The actual response was not retained, so it cannot
+prove this was the exact cause of that operation. Its `unknown` ledger status must
+not be rewritten or retried automatically based on this patch.
