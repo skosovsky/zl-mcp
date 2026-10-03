@@ -179,3 +179,11 @@ rejects invalid numeric values; root and nested race/test/vet passed. This fixes
 verified contract mismatch. The original private API response was not retained,
 so its particular `unknown` is not retrospectively changed to `sent`. No further
 live messages were sent during this investigation.
+
+The numeric acknowledgement patch was published and installed in the existing
+single Go service with a verified private rollback binary. No further live send
+was performed. Post-update checks showed connected/authenticated collection,
+23 retained messages, unchanged sent/unknown operation records, two delivered
+callbacks and SQLite integrity `ok`. Sending remained disabled. No schema or
+MCP tool contract changed in this patch; send message IDs are still strings at
+the MCP boundary. New live numeric acknowledgement acceptance remains unverified.
