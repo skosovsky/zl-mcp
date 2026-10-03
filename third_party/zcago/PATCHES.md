@@ -49,3 +49,23 @@ JavaScript precision, quote owner/type/timestamp/TTL and encrypted acceptance.
 No real account or session key is used. The application separately classifies
 HTTP/decode errors conservatively because `ZaloAPIError` does not preserve their
 provenance; this is not a new dependency runtime patch.
+
+## Listener cleanup and reaction identifiers
+
+`listener.Stop` now clears the socket, cipher and request state after all workers
+exit. Previously cancellation could end `run` before it consumed the socket close
+notification, leaving `client` non-nil; the collector's next `Start` then failed
+with `Already started`. A cancellation regression fails on the previous cleanup
+and passes with the patch. A real loopback websocket regression also verifies
+two successful handshakes on the same listener after consumer-triggered stops;
+it passes ten repetitions with the race detector. Cleanup remains idempotent.
+
+`ReactionMessageRef.UnmarshalJSON` accepts numeric and decimal-string `gMsgID`
+and `cMsgID` without a float64 conversion. Invalid, fractional and overflowing
+IDs remain errors. This compatibility change targets a live type mismatch on
+`data.rMsg.gMsgID`; the private wire payload was not captured, so its exact form
+and live recovery are not established by the synthetic tests. Existing public
+`int` fields and their platform size limit are retained.
+
+These source fixes have not yet been deployed to the installed service. They do
+not establish restored collection or notification delivery.

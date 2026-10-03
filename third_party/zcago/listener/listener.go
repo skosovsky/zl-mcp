@@ -252,6 +252,10 @@ func (ln *listener) Stop() {
 	client.Close(ZaloManualClosure, "")
 
 	ln.wg.Wait()
+
+	// Cancellation can stop run before it consumes the socket's close event.
+	// Release the old client after all workers exit so Start can reconnect.
+	ln.reset()
 }
 
 func (ln *listener) reset() {

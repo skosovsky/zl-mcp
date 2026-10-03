@@ -1,6 +1,12 @@
 package model
 
-import "github.com/amrakk/zcago/config"
+import (
+	"encoding/json"
+	"errors"
+	"strconv"
+
+	"github.com/amrakk/zcago/config"
+)
 
 type ReactionIcon string
 
@@ -212,4 +218,42 @@ type ReactionMessageRef struct {
 	GMsgID  int `json:"gMsgID"`
 	CMsgID  int `json:"cMsgID"`
 	MsgType int `json:"msgType"`
+}
+
+// Accept integer and decimal-string reaction IDs without float64 conversion.
+func (r *ReactionMessageRef) UnmarshalJSON(data []byte) error {
+	var wire struct {
+		GMsgID  json.RawMessage `json:"gMsgID"`
+		CMsgID  json.RawMessage `json:"cMsgID"`
+		MsgType int             `json:"msgType"`
+	}
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	parse := func(raw json.RawMessage) (int, error) {
+		if len(raw) == 0 || string(raw) == "null" {
+			return 0, nil
+		}
+		text := string(raw)
+		if raw[0] == '"' {
+			if err := json.Unmarshal(raw, &text); err != nil {
+				return 0, errors.New("reaction ID must be a decimal integer")
+			}
+		}
+		value, err := strconv.Atoi(text)
+		if err != nil {
+			return 0, errors.New("reaction ID must fit a decimal integer")
+		}
+		return value, nil
+	}
+	global, err := parse(wire.GMsgID)
+	if err != nil {
+		return err
+	}
+	client, err := parse(wire.CMsgID)
+	if err != nil {
+		return err
+	}
+	*r = ReactionMessageRef{GMsgID: global, CMsgID: client, MsgType: wire.MsgType}
+	return nil
 }

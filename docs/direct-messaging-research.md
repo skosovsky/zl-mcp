@@ -217,3 +217,21 @@ authenticated discovery из-за ограничений его диагност
 расхождение каталогов, но не доказательство конкретной причины или ответа
 удалённого events/list. Ограничение/обновление discovery клиента остаётся
 следующим шагом; новые subscriptions и исходящие sends не выполнялись.
+
+## Discovery and listener follow-up, 2026-10-03
+
+The running endpoint was queried directly with its existing local token (never
+printed). It returned twelve tools, both legacy and conversation Events profiles,
+and Events capability in `server/discover`. The client initially displayed eight
+tools and only the legacy group event. After a tunnel-client restart and client
+refresh, the user confirmed discovery was working. This sequence establishes
+recovery, but does not isolate whether transport reconnect or metadata refresh
+caused it. No collector or subscription changes were made for that check.
+
+Collection still reported `reconnecting` / `UPSTREAM_UNAVAILABLE`. A private
+log exposed only the decoding error class, field `data.rMsg.gMsgID` and expected
+`int` type. Source review and a failing regression establish a cleanup defect:
+`Stop` could leave the socket assigned after cancellation, causing all later
+`Start` calls to reject an already-started listener. Source cleanup and exact
+integer/string reaction ID parsing are patched; live recovery and callback
+delivery remain separate acceptance checks.

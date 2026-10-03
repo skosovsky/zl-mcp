@@ -65,3 +65,33 @@ the installed service with a verified backup and rollback procedure. The user
 separately authorized committing and publishing the reviewed source before live
 acceptance; publication does not establish deployment or live compatibility.
 Preserve the account session, corpus and subscription state throughout.
+
+## Listener recovery follow-up
+
+A deterministic cancellation regression fails against the previous `Stop`
+implementation: the socket remains assigned and blocks the next start. The fix
+clears connection state after all workers exit. A separate loopback websocket
+regression performs two actual handshakes with the same listener after a consumer
+stops it on a synthetic parsing failure; ten race-enabled repetitions passed.
+Reaction reference IDs now accept integer numbers and decimal strings with no
+float64 conversion, and reject invalid/fractional/overflowing values.
+
+Root and nested module test/race/vet passed after these fixes. The macOS arm64
+no-CGO candidate was built. Installed service replacement, live reconnect recovery
+and callback delivery remain unverified and await the agreed live trial. No live
+messages were sent, subscriptions changed, or runtime state migrated.
+
+## Offline installed-state migration check
+
+A SQLite online backup of the installed database was opened twice through the
+candidate's `storage.OpenWithPolicy`, without session data or any network service.
+The private temporary directory used mode 0700 and database mode 0600; both the
+copy and probe source were deleted after verification. The installed DB was
+opened read-only and was not migrated.
+
+The copy advanced from versions 1–4 to 1–6. All existing rows and columns in 22
+application tables were compared exactly and remained unchanged: 21 messages,
+two subscription records, and empty event/delivery journals at the snapshot.
+`integrity_check` returned `ok`; `foreign_key_check` returned no violations.
+Repeated opening passed. This verifies the current installed snapshot's schema
+migration, not live callbacks, account-session recovery or send acceptance.
