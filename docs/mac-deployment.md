@@ -140,3 +140,13 @@ allow_send and optional send_recipient_ids explicitly after reviewing the intend
 recipients. Restart, verify tools/list and events/list, and refresh client discovery.
 Do not enable an automatic reply workflow until the client's rule/checkpoint handling
 is configured. See [direct messaging](direct-messaging.md).
+
+## Contact-directory upgrade
+
+The directory extension adds migration 7 without changing subscriptions, send
+operations or retained messages. Keep the existing single service session and
+back up the stopped service before replacement. Contact metadata refresh runs
+in the background every five minutes; it creates neither messages nor Events.
+Read `zalo://catalog/diagnostics` for the latest source result and refresh client
+discovery to expose `zalo_list_conversation_messages`. A successful short contacts
+page means source exhaustion, not a complete inbox or complete old history.

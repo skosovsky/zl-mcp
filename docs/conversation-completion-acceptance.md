@@ -16,7 +16,7 @@ Checkpoint commit `0079c5edbd9b62aa07f7664244435254518f02c3` was pushed to publi
 
 The subsequent [native-client static-code investigation](conversation-discovery-history-research.md#installed-native-client-static-code-follow-up) found local Strangers classification and a known-thread preview request candidate. It does not yet establish full inbox enumeration, a working direct-history API or recovery of the reported missing conversation. No installed runtime changed during this investigation.
 
-## Offline continuation and directory source checkpoint (not installed)
+## Offline continuation and directory source checkpoint (before installation)
 
 The native-client investigation identified response continuation fields omitted
 by the pinned Go listener. The new source patch preserves queue origin and
@@ -37,3 +37,15 @@ deployment and live acceptance are still pending; this checkpoint
 must not be described as a working complete inbox or complete history import.
 
 The source now includes a guarded contacts-page adapter and cancellable background refresh in the existing service session. Synthetic tests cover short/repeated/oversized pages, 20-page termination, partial-error retention and cancellation. The MCP diagnostics resource validates its safe payload against an embedded JSON schema; a real in-memory MCP client verifies alias discovery and metadata-only entries through the updated tools. This remains uninstalled source evidence.
+
+## Installed checkpoint: 2026-10-03, revision 2699d2e
+
+[CI](https://github.com/skosovsky/zl-mcp/actions/runs/37151538751) passed root and nested-module test/race/vet on Linux and native macOS, plus the configured CGO-free cross-builds. The installed arm64 Go binary SHA-256 is `b6f72e447ed104ca052f5f45bc2db5193d44d5f1932fe5f7fdaad2982d80b0b4`. The existing single LaunchAgent was retained. After bootout, installation waited for account-lock release, verified a private full-state/config/binary/plist backup outside iCloud, then replaced the binary atomically and bootstrapped the same agent. No login, message send or subscription mutation was performed.
+
+SQLite migrated from version 6 to 7. The collector is authenticated/connected. All 23 messages and permanent identities, first-incoming facts, both subscription rows and both send-operation rows match the stopped-service backup exactly. The existing ambiguous send remains `unknown`. The first contacts refresh observed/permitted 14 unique IDs and ended on a short page; the catalogue now contains 16 typed entries. This proves source refresh, not completeness of all dialogues.
+
+The installed authenticated HTTP endpoint advertises 15 tools, including keyword-free browse, and all three existing event profiles including v2. Actual browse returned two messages and a continuation page with the same snapshot; the diagnostics resource reported the completed contacts refresh. Token values and message bodies were neither logged nor published.
+
+Live queue metadata reported `queue_exhausted` after one page for both direct (12 records) and group (2 records) queues. All replayed records were duplicates, with no persistence/decoder error. This verifies the terminal metadata path only; a live `more=true` continuation has not been observed. The reported Hoài An dialogue still does not match exact/accent-normalized catalogue queries. Available replay and friends metadata did not recover that conversation or its September history.
+
+The currently exposed connected-client tool catalogue still lacks the new browse tool (and the send/status tools). Server-side discovery alone does not prove refreshed plugin discovery. Repository skills are structurally checked; no local copies of either project skill were found in the Codex skills directory. Remaining gates include client capability refresh, explicit history import, Strangers recovery and the uncompleted v2/new-recipient live scenarios. The goal remains in progress.
