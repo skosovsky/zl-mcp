@@ -68,10 +68,16 @@ func TestConversationMCPSearchContextCatalogueAndFullText(t *testing.T) {
 	contextResult := call("zalo_get_conversation_message_context", map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "message_id": "m/opaque%"})
 	catalog := call("zalo_list_conversations", map[string]any{})
 	metadata := call("zalo_get_conversation", map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID})
+	browsed := call("zalo_list_conversation_messages", map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID})
+	browseHit := browsed["messages"].([]any)[0].(map[string]any)
+	browseFull, browseErr := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: browseHit["text_resource_uri"].(string)})
 	full, err := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: contextResult["anchor"].(map[string]any)["text_resource_uri"].(string)})
 	// Assert
 	if err != nil || full.Contents[0].Text != text {
 		t.Fatal("escaped full-text resource failed")
+	}
+	if browseErr != nil || browseFull.Contents[0].Text != text || browseHit["conversation_type"] != "direct" || browsed["has_more"] != false || browseHit["direction"] != "incoming" {
+		t.Fatal("keyword-free browse/full resource contract failed", browseErr, browsed)
 	}
 	a := first["messages"].([]any)[0].(map[string]any)
 	b := second["messages"].([]any)[0].(map[string]any)

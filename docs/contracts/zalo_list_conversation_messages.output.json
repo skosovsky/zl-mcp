@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "messages": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "$ref": "#/$defs/Hit"
+      }
+    },
+    "has_more": {
+      "type": "boolean"
+    },
+    "next_cursor": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque identifier"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "empty_reason": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "unknown_conversation",
+            "no_collected_data",
+            "no_records_in_period"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "coverage": {
+      "$ref": "#/$defs/Coverage"
+    },
+    "snapshot_at": {
+      "type": "string",
+      "minLength": 1,
+      "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+      "format": "date-time"
+    },
+    "coverage_observed_at": {
+      "type": "string",
+      "minLength": 1,
+      "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+      "format": "date-time"
+    },
+    "requested_since": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC3339 instant; inclusive lower bound, e.g. 2026-10-01T00:00:00Z.",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "requested_until": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC3339 instant; exclusive upper bound, e.g. 2026-10-01T00:00:00Z.",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Coverage": {
+      "type": "object",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque identifier"
+        },
+        "collection_started_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "earliest_stored_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "latest_stored_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "known_gaps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Gap"
+          }
+        },
+        "history_complete": {
+          "const": false
+        },
+        "retention_days": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "conversation_type": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "group"
+          ]
+        }
+      },
+      "required": [
+        "conversation_id",
+        "collection_started_at",
+        "earliest_stored_at",
+        "latest_stored_at",
+        "known_gaps",
+        "history_complete",
+        "retention_days",
+        "conversation_type"
+      ],
+      "additionalProperties": false
+    },
+    "Gap": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+          "format": "date-time"
+        },
+        "to": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "to",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "Hit": {
+      "type": "object",
+      "properties": {
+        "conversation_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque identifier"
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque identifier"
+        },
+        "sender_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Opaque identifier"
+        },
+        "conversation_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sender_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sent_at": {
+          "type": "string",
+          "minLength": 1,
+          "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+          "format": "date-time"
+        },
+        "excerpt": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "text_truncated": {
+          "type": "boolean"
+        },
+        "conversation_type": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "group"
+          ]
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "incoming",
+            "outgoing",
+            "unknown"
+          ]
+        },
+        "text_resource_uri": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "conversation_id",
+        "message_id",
+        "sender_id",
+        "conversation_name",
+        "sender_name",
+        "sent_at",
+        "excerpt",
+        "text_truncated",
+        "conversation_type",
+        "direction",
+        "text_resource_uri"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "messages",
+    "has_more",
+    "next_cursor",
+    "empty_reason",
+    "coverage",
+    "snapshot_at",
+    "coverage_observed_at",
+    "requested_since",
+    "requested_until"
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "conversation_type": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "group"
+      ]
+    },
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Opaque identifier"
+    },
+    "since": {
+      "type": "string",
+      "minLength": 1,
+      "description": "RFC3339 instant; inclusive lower bound, e.g. 2026-10-01T00:00:00Z.",
+      "format": "date-time"
+    },
+    "until": {
+      "type": "string",
+      "minLength": 1,
+      "description": "RFC3339 instant; exclusive upper bound, e.g. 2026-10-01T00:00:00Z.",
+      "format": "date-time"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 20
+    },
+    "cursor": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Opaque identifier"
+    },
+    "order": {
+      "type": "string",
+      "enum": [
+        "asc",
+        "desc"
+      ],
+      "default": "desc",
+      "description": "Chronological order; default newest first. Cursor preserves the original order."
+    }
+  },
+  "required": [
+    "conversation_type",
+    "conversation_id"
+  ],
+  "additionalProperties": false
+}
