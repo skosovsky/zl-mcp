@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,6 +13,8 @@ import (
 	"github.com/amrakk/zcago/internal/jsonx"
 	"github.com/amrakk/zcago/session"
 )
+
+var ErrGroupHistorySourceUnavailable = errors.New("group cloud history source unavailable")
 
 // GroupHistoryPage is raw protocol evidence. Reading it does not import messages.
 // Nullable fields distinguish missing metadata from false or zero.
@@ -107,7 +110,7 @@ var groupHistoryPageFactory = apiFactory[*GroupHistoryPage, GroupHistoryPageFn](
 	func(a *api, sc session.Context, u factoryUtils[*GroupHistoryPage]) (GroupHistoryPageFn, error) {
 		base := jsonx.FirstOr(sc.GetZpwService("group_cloud_message"), "")
 		if base == "" {
-			return nil, fmt.Errorf("group cloud history source unavailable")
+			return nil, ErrGroupHistorySourceUnavailable
 		}
 		serviceURL := u.MakeURL(strings.TrimSuffix(base, "/")+"/api/cm/getrecentv2", nil, true)
 		return func(ctx context.Context, groupID, cursor string, count int) (*GroupHistoryPage, error) {

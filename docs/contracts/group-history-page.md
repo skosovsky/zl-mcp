@@ -9,3 +9,23 @@ One call uses the current authenticated API session and its advertised `group_cl
 The response retains at most the requested count of raw records and nullable continuation/filtering evidence: `hasMore`, exact `lastMsgId`, `isFiltered`, `isFilteredByPhase`, `isFilteredByTimeJoin`, `isOld`, join timestamp and internal error. Missing/null message arrays, oversized pages and malformed continuation types are errors rather than silent exhaustion. Cursor absence is distinct from zero. Raw records remain internal and must be normalized and validated against the requested typed identity before any persistence; a page read itself creates no messages, Events or first-incoming facts.
 
 This optional SDK extension does not broaden the existing public API interface or start another listener. There is no automatic paging, import, retry or complete-history claim in this layer. Upstream filtering, missing continuation or an empty page does not prove historical completeness. A later bounded import operation must separately define request identity, progress, cancellation, restart and compatible Events semantics before exposure as an MCP tool.
+
+## Domain normalization boundary
+
+The application adapter accepts only an exact typed `group` identity, count in
+1–50 and an exact decimal cursor. A direct identity returns an explicit
+unsupported-source result without network access. The SDK extension must be
+present; it never falls back to the old group endpoint or a guessed direct URL.
+
+Each raw record is decoded without float conversion. Decimal numeric IDs and
+millisecond timestamps are converted to their exact string representation for
+the pinned message model. Missing identity/time, invalid numeric alternatives,
+a different `idTo`, oversized raw/text content or a malformed record rejects the
+whole page. The adapter preserves nullable source flags and continuation and
+uses the existing account ID to classify direction. Message text remains data.
+
+Normalized messages deliberately have an empty persistence source. The current
+Store.Put rejects them, so a later import operation must explicitly select its
+separate ingestion policy rather than accidentally treating backfill as ordinary
+replay. This adapter itself has no storage or subscription dependency and starts
+no listener. Tests use a fake page reader and demonstrate this boundary.

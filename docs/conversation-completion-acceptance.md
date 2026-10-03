@@ -49,3 +49,23 @@ The installed authenticated HTTP endpoint advertises 15 tools, including keyword
 Live queue metadata reported `queue_exhausted` after one page for both direct (12 records) and group (2 records) queues. All replayed records were duplicates, with no persistence/decoder error. This verifies the terminal metadata path only; a live `more=true` continuation has not been observed. The reported Hoài An dialogue still does not match exact/accent-normalized catalogue queries. Available replay and friends metadata did not recover that conversation or its September history.
 
 The currently exposed connected-client tool catalogue still lacks the new browse tool (and the send/status tools). Server-side discovery alone does not prove refreshed plugin discovery. Repository skills are structurally checked; no local copies of either project skill were found in the Codex skills directory. Remaining gates include client capability refresh, explicit history import, Strangers recovery and the uncompleted v2/new-recipient live scenarios. The goal remains in progress.
+
+## History adapter checkpoint (source only)
+
+Revision 6a17fad introduced the bounded group-cloud page candidate; its
+[CI](https://github.com/skosovsky/zl-mcp/actions/runs/37152344493) passed.
+The subsequent domain adapter normalizes exact numeric identifiers/timestamps,
+checks the requested typed group identity, preserves nullable continuation and
+filtering evidence, and rejects a whole malformed/oversized page without yielding
+partly importable records. Direct history and missing advertised group-cloud
+sources produce an explicit unsupported result.
+
+Synthetic adapter tests verify own/incoming direction, exact IDs above 2^53,
+untrusted text preservation, invalid/mismatched records and unchanged empty
+storage. Normalized history records carry no ordinary persistence source;
+Store.Put rejects them. A session-guard regression verifies cancellation of an
+in-flight history request and rejection of another request after shared auth
+loss. Targeted root/nested race tests and root vet passed. This is not installed
+or live history acceptance and does not recover the reported Strangers dialogue.
+The user decision on notifications during explicit backfill remains pending;
+ordinary live/offline replay semantics have not changed.
