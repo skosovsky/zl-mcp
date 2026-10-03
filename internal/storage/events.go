@@ -23,11 +23,12 @@ func (s *Store) migrateEvents(ctx context.Context) error {
 CREATE TABLE IF NOT EXISTS message_events(seq INTEGER PRIMARY KEY,event_id TEXT UNIQUE NOT NULL,group_id TEXT NOT NULL,message_json TEXT NOT NULL,created_at TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS message_events_group ON message_events(group_id,seq);
 CREATE TABLE IF NOT EXISTS message_identities(group_id TEXT NOT NULL,message_id TEXT NOT NULL,first_seq INTEGER NOT NULL,PRIMARY KEY(group_id,message_id));
-INSERT OR IGNORE INTO message_identities SELECT group_id,message_id,seq FROM messages;
+INSERT OR IGNORE INTO message_identities(group_id,message_id,first_seq) SELECT group_id,message_id,seq FROM messages WHERE NOT EXISTS(SELECT 1 FROM schema_migrations WHERE version=4);
 CREATE TABLE IF NOT EXISTS event_subscription_revisions(id TEXT PRIMARY KEY,revision INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS event_subscriptions(id TEXT PRIMARY KEY,principal TEXT NOT NULL,group_id TEXT NOT NULL,callback TEXT NOT NULL,secret TEXT NOT NULL,active INTEGER NOT NULL,generation TEXT NOT NULL,start_seq INTEGER NOT NULL,expires_at TEXT,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS event_deliveries(id INTEGER PRIMARY KEY AUTOINCREMENT,event_id TEXT NOT NULL,subscription_id TEXT NOT NULL,generation TEXT NOT NULL,payload BLOB NOT NULL,state TEXT NOT NULL,attempts INTEGER NOT NULL DEFAULT 0,next_attempt_at TEXT NOT NULL,deadline TEXT NOT NULL,lease_until TEXT,last_reason TEXT,completed_at TEXT,UNIQUE(event_id,subscription_id,generation));
 CREATE INDEX IF NOT EXISTS event_deliveries_ready ON event_deliveries(state,next_attempt_at);
+CREATE INDEX IF NOT EXISTS event_deliveries_subscription_order ON event_deliveries(subscription_id,id,state);
 CREATE TABLE IF NOT EXISTS event_fanout(id INTEGER PRIMARY KEY CHECK(id=1),seq INTEGER NOT NULL);
 INSERT OR IGNORE INTO event_fanout VALUES(1,0);
 INSERT OR IGNORE INTO schema_migrations VALUES(2);`)
@@ -74,7 +75,7 @@ func eventRandomID() (string, error) {
 }
 
 func appendMessageEvent(ctx context.Context, tx *sql.Tx, seq int64, m domain.Message) error {
-	result, err := tx.ExecContext(ctx, "INSERT OR IGNORE INTO message_identities VALUES(?,?,?)", m.GroupID, m.ID, seq)
+	result, err := tx.ExecContext(ctx, "INSERT OR IGNORE INTO message_identities(group_id,conversation_type,message_id,first_seq) VALUES(?,?,?,?)", m.Ref().ID, m.Ref().Type, m.ID, seq)
 	if err != nil {
 		return err
 	}
@@ -93,19 +94,22 @@ func appendMessageEvent(ctx context.Context, tx *sql.Tx, seq int64, m domain.Mes
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, "INSERT INTO message_events VALUES(?,?,?,?,?)", seq, "evt_"+id, m.GroupID, string(body), now())
+	_, err = tx.ExecContext(ctx, "INSERT INTO message_events(seq,event_id,group_id,conversation_type,message_json,created_at) VALUES(?,?,?,?,?,?)", seq, "evt_"+id, m.Ref().ID, m.Ref().Type, string(body), now())
 	return err
 }
 
 type EventSubscription struct {
-	ID         string
-	Principal  string
-	GroupID    string
-	Callback   string
-	Secret     string
-	Generation string
-	StartSeq   int64
-	ExpiresAt  *time.Time
+	Profile          string
+	Scope            string
+	ConversationType string
+	ID               string
+	Principal        string
+	GroupID          string
+	Callback         string
+	Secret           string
+	Generation       string
+	StartSeq         int64
+	ExpiresAt        *time.Time
 }
 
 var ErrSubscriptionCancelled = errors.New("subscription cancelled during verification")
@@ -124,8 +128,13 @@ func (s *Store) SubscriptionRevision(ctx context.Context, id string) (int64, err
 // ActivateSubscription is called only after identity, callback and key checks.
 // Its transaction orders the activation boundary with the collector's Put.
 func (s *Store) ActivateSubscription(ctx context.Context, sub EventSubscription, revision int64, at time.Time) (EventSubscription, error) {
-	if !s.Allowed(sub.GroupID) {
-		return sub, subscriptionPermission("Group is not enabled for collection.")
+	var normalizeErr error
+	sub, normalizeErr = normalizeSubscription(sub)
+	if normalizeErr != nil {
+		return sub, normalizeErr
+	}
+	if sub.Scope == "conversation" && !s.AllowsConversation(domain.ConversationRef{Type: sub.ConversationType, ID: sub.GroupID}) {
+		return sub, subscriptionPermission("Conversation is not enabled for collection.")
 	}
 	if sub.ID == "" || sub.Principal == "" || sub.Callback == "" || sub.Secret == "" {
 		return sub, domain.Invalid("Subscription identity and delivery are required.")
@@ -142,15 +151,15 @@ func (s *Store) ActivateSubscription(ctx context.Context, sub EventSubscription,
 	if current != revision {
 		return sub, ErrSubscriptionCancelled
 	}
-	var principal, group, callback, generation string
+	var principal, group, callback, generation, profile, scope, kind string
 	var active int
 	var start int64
 	var expiry sql.NullString
-	err = tx.QueryRowContext(ctx, "SELECT principal,group_id,callback,active,generation,start_seq,expires_at FROM event_subscriptions WHERE id=?", sub.ID).Scan(&principal, &group, &callback, &active, &generation, &start, &expiry)
+	err = tx.QueryRowContext(ctx, "SELECT principal,group_id,callback,active,generation,start_seq,expires_at,profile,scope,conversation_type FROM event_subscriptions WHERE id=?", sub.ID).Scan(&principal, &group, &callback, &active, &generation, &start, &expiry, &profile, &scope, &kind)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return sub, err
 	}
-	if err == nil && (principal != sub.Principal || group != sub.GroupID || callback != sub.Callback) {
+	if err == nil && (principal != sub.Principal || group != sub.GroupID || callback != sub.Callback || profile != sub.Profile || scope != sub.Scope || kind != sub.ConversationType) {
 		return sub, subscriptionPermission("Subscription belongs to another identity.")
 	}
 	reuse := err == nil && active == 1
@@ -183,7 +192,7 @@ func (s *Store) ActivateSubscription(ctx context.Context, sub EventSubscription,
 	if sub.ExpiresAt != nil {
 		expires = sub.ExpiresAt.UTC().Format(time.RFC3339Nano)
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO event_subscriptions VALUES(?,?,?,?,?,1,?,?,?,?) ON CONFLICT(id) DO UPDATE SET secret=excluded.secret,active=1,generation=excluded.generation,start_seq=excluded.start_seq,expires_at=excluded.expires_at`, sub.ID, sub.Principal, sub.GroupID, sub.Callback, sub.Secret, sub.Generation, sub.StartSeq, expires, at.UTC().Format(time.RFC3339Nano))
+	_, err = tx.ExecContext(ctx, `INSERT INTO event_subscriptions(id,principal,group_id,callback,secret,active,generation,start_seq,expires_at,created_at,profile,scope,conversation_type) VALUES(?,?,?,?,?,1,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET secret=excluded.secret,active=1,generation=excluded.generation,start_seq=excluded.start_seq,expires_at=excluded.expires_at`, sub.ID, sub.Principal, sub.GroupID, sub.Callback, sub.Secret, sub.Generation, sub.StartSeq, expires, at.UTC().Format(time.RFC3339Nano), sub.Profile, sub.Scope, sub.ConversationType)
 	if err != nil {
 		return sub, err
 	}

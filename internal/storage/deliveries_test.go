@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
@@ -12,6 +13,121 @@ import (
 
 func queueEncoder(id string, m domain.Message) ([]byte, error) {
 	return json.Marshal(map[string]string{"eventId": id, "text": m.Text})
+}
+
+func TestBroadConversationFanoutCapacityPreservesCollectedCorpus(t *testing.T) {
+	// Arrange: overlapping all/direct scopes across newly discovered dialogues.
+	ctx := context.Background()
+	s, err := OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	at := time.Now().UTC()
+	for _, scope := range []string{"all", "direct"} {
+		revision, err := s.SubscriptionRevision(ctx, scope)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sub := EventSubscription{ID: scope, Principal: "owner", Profile: domain.ConversationMessageCreated, Scope: scope, Callback: "https://callback.example", Secret: "synthetic"}
+		if scope == "direct" {
+			sub.ConversationType = "direct"
+		}
+		if _, err := s.ActivateSubscription(ctx, sub, revision, at); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for n := range 10 {
+		for _, kind := range []string{"direct", "group"} {
+			if err := s.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: kind, ID: fmt.Sprint(n)}, ID: "m", SenderID: "peer", SentAt: at, Text: "synthetic", Source: "live"}); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	p := DefaultDeliveryPolicy()
+	p.MaxJobs = 3
+	// Act: twenty journal records fan out to thirty targets under one global quota.
+	n, err := s.FanoutProfileEvents(ctx, at, p, func(_ string, id string, m domain.Message) ([]byte, error) { return queueEncoder(id, m) })
+	if err != nil || n != 20 {
+		t.Fatalf("fanout=%d error=%v", n, err)
+	}
+	// Assert: every excess delivery is diagnosed; collection and watermark survive.
+	var pending, failed, messages, journal int
+	for query, target := range map[string]*int{
+		"SELECT COUNT(*) FROM event_deliveries WHERE state='pending'":                                                       &pending,
+		"SELECT COUNT(*) FROM event_deliveries WHERE state='failed' AND last_reason='queue_capacity' AND length(payload)=0": &failed,
+		"SELECT COUNT(*) FROM messages":       &messages,
+		"SELECT COUNT(*) FROM message_events": &journal,
+	} {
+		if err := s.DB.QueryRowContext(ctx, query).Scan(target); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if pending != 3 || failed != 27 || messages != 20 || journal != 0 {
+		t.Fatalf("pending=%d failed=%d messages=%d journal=%d", pending, failed, messages, journal)
+	}
+}
+
+func TestConversationDeliveryRevocationAfterRestart(t *testing.T) {
+	// Arrange: persist broad and exact subscriptions while both types are allowed.
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "messages.sqlite")
+	s, err := OpenWithPolicy(ctx, path, domain.CollectionPolicy{All: true}, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { s.Close() }()
+	at := time.Now().UTC()
+	for _, sub := range []EventSubscription{
+		{ID: "all", Profile: domain.ConversationMessageCreated, Scope: "all"},
+		{ID: "direct", Profile: domain.ConversationMessageCreated, Scope: "direct", ConversationType: "direct"},
+		{ID: "exact", Profile: domain.ConversationMessageCreated, Scope: "conversation", ConversationType: "direct", GroupID: "same"},
+	} {
+		sub.Principal, sub.Callback, sub.Secret = "owner", "https://callback.example", "synthetic"
+		revision, err := s.SubscriptionRevision(ctx, sub.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.ActivateSubscription(ctx, sub, revision, at); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, kind := range []string{"direct", "group"} {
+		if err := s.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: kind, ID: "same"}, ID: "m", SenderID: "peer", SentAt: at, Text: "synthetic", Source: "live"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	p := DefaultDeliveryPolicy()
+	if _, err := s.FanoutProfileEvents(ctx, at, p, func(_ string, id string, m domain.Message) ([]byte, error) { return queueEncoder(id, m) }); err != nil {
+		t.Fatal(err)
+	}
+	// Act: reopen with only the group permitted, retaining all durable queues.
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+	s, err = OpenWithPolicy(ctx, path, domain.CollectionPolicy{Selected: map[domain.ConversationRef]bool{{Type: "group", ID: "same"}: true}}, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	job, err := s.ClaimDelivery(ctx, at, p)
+	if err != nil || job == nil || job.SubscriptionID != "all" {
+		t.Fatalf("permitted job=%v error=%v", job, err)
+	}
+	if err := s.FinishDelivery(ctx, *job, DeliveryOutcome{State: "delivered"}, at); err != nil {
+		t.Fatal(err)
+	}
+	next, err := s.ClaimDelivery(ctx, at, p)
+	// Assert: neither broad nor exact scopes bypass revocation or type isolation.
+	if err != nil || next != nil {
+		t.Fatalf("revoked job=%v error=%v", next, err)
+	}
+	var cleared int
+	if err := s.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM event_deliveries WHERE state='cancelled' AND last_reason='access_revoked' AND length(payload)=0").Scan(&cleared); err != nil {
+		t.Fatal(err)
+	}
+	if cleared != 3 {
+		t.Fatalf("cleared revoked payloads=%d, want 3", cleared)
+	}
 }
 
 func queueSubscription(t *testing.T, s *Store, id string, at time.Time) EventSubscription {
@@ -218,5 +334,51 @@ func TestCancelledGenerationCannotBeResurrectedByResponse(t *testing.T) {
 	}
 	if active != 1 {
 		t.Fatal("stale response revoked new subscription")
+	}
+}
+
+func TestRetryPreservesSubscriptionOrderWithoutBlockingOtherSubscriptions(t *testing.T) {
+	// Arrange
+	s := openTest(t)
+	ctx := context.Background()
+	at := time.Now().UTC()
+	p := DefaultDeliveryPolicy()
+	queueSubscription(t, s, "a", at)
+	queueSubscription(t, s, "b", at)
+	putTest(t, s, "first", "g1", "one", at)
+	putTest(t, s, "second", "g1", "two", at.Add(time.Second))
+	if _, err := s.FanoutEvents(ctx, at, p, queueEncoder); err != nil {
+		t.Fatal(err)
+	}
+	first, err := s.ClaimDelivery(ctx, at, p)
+	if err != nil || first == nil {
+		t.Fatal("first job unavailable")
+	}
+	if err = s.FinishDelivery(ctx, *first, DeliveryOutcome{State: "pending", Reason: "network", RetryAt: at.Add(time.Minute)}, at); err != nil {
+		t.Fatal(err)
+	}
+	// Act: the other subscriber advances, but the retrying subscriber's second job cannot overtake its first.
+	other, err := s.ClaimDelivery(ctx, at, p)
+	if err != nil || other == nil || other.SubscriptionID == first.SubscriptionID {
+		t.Fatal("independent subscriber blocked")
+	}
+	if err = s.FinishDelivery(ctx, *other, DeliveryOutcome{State: "delivered"}, at); err != nil {
+		t.Fatal(err)
+	}
+	otherNext, err := s.ClaimDelivery(ctx, at, p)
+	if err != nil || otherNext == nil || otherNext.SubscriptionID == first.SubscriptionID {
+		t.Fatal("second independent job blocked")
+	}
+	if err = s.FinishDelivery(ctx, *otherNext, DeliveryOutcome{State: "delivered"}, at); err != nil {
+		t.Fatal(err)
+	}
+	blocked, err := s.ClaimDelivery(ctx, at, p)
+	// Assert
+	if err != nil || blocked != nil {
+		t.Fatal("later job overtook a pending retry")
+	}
+	retry, err := s.ClaimDelivery(ctx, at.Add(time.Minute), p)
+	if err != nil || retry == nil || retry.EventID != first.EventID {
+		t.Fatal("retry did not preserve first identity")
 	}
 }

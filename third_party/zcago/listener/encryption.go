@@ -158,5 +158,15 @@ func parseJSON[T any](data []byte) (*WSMessage[T], error) {
 	if err := json.Unmarshal(data, &result); err != nil {
 		return nil, errs.WrapZCA("failed to parse JSON data", "listener.parseJSON", err)
 	}
+	var shape map[string]json.RawMessage
+	if json.Unmarshal(data, &shape) == nil {
+		if _, ok := shape["data"]; ok {
+			result.DecodeShape = 1
+		} else if _, ok := shape["groupMsgs"]; ok {
+			result.DecodeShape = 2
+		} else if _, ok := shape["msgs"]; ok {
+			result.DecodeShape = 3
+		}
+	}
 	return &result, nil
 }

@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "properties": {
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Opaque identifier"
+    },
+    "message_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Opaque identifier"
+    },
+    "before": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 20,
+      "default": 5
+    },
+    "after": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 20,
+      "default": 5
+    },
+    "conversation_type": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "group"
+      ]
+    }
+  },
+  "required": [
+    "conversation_id",
+    "message_id",
+    "conversation_type"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

@@ -50,6 +50,8 @@ func (ln *listener) router(ctx context.Context, version, cmd, sub uint, body Bas
 		ln.handleDuplicateConnection()
 
 	default:
+		ln.diagnostics.unhandled.Add(1)
+		ln.diagnostics.lastUnhandledCommand.Store(uint64(cmd))
 	}
 }
 
@@ -62,8 +64,11 @@ func (ln *listener) handleCipherKey(ctx context.Context, body BaseWSMessage) {
 		return
 	}
 
+	ln.diagnostics.cipherKeys.Add(1)
 	ln.cipherKey = key
-	ln.ch.CipherKey <- key
+	if !emitDurable(ctx, ln.ch.CipherKey, key, &ln.diagnostics) {
+		return
+	}
 
 	if ln.pingStopper != nil {
 		(*ln.pingStopper)()
@@ -91,57 +96,76 @@ func (ln *listener) handleCipherKey(ctx context.Context, body BaseWSMessage) {
 }
 
 func (ln *listener) handleMessages(ctx context.Context, body BaseWSMessage) {
+	ln.diagnostics.directFrames.Add(1)
 	eventData, err := decodeEventData[events.MessageEventData](body, ln.cipherKey)
 	if err != nil {
+		ln.diagnostics.directErrors.Add(1)
 		err = errs.WrapZCA("Failed to decode event data:", "listener.handleMessages", err)
 		ln.emitError(ctx, err)
 		return
 	}
 
 	uid := ln.sc.UID()
+	ln.diagnostics.decodedDirect.Add(uint64(len(eventData.Data.Msgs)))
 	for _, msg := range eventData.Data.Msgs {
 		if msg.Undo != nil {
 			undo := model.NewUndo(uid, *msg.Undo, false)
 			if undo.IsSelf && !ln.selfListen {
 				continue
 			}
-			emit(ctx, ln.ch.Undo, undo)
+			if !emitDurable(ctx, ln.ch.Undo, undo, &ln.diagnostics) {
+				return
+			}
 		} else if msg.Message != nil {
 			message := model.NewUserMessage(uid, *msg.Message)
 			if message.IsSelf() && !ln.selfListen {
 				continue
 			}
-			emit(ctx, ln.ch.Message, model.Message(message))
+			if !emitDurable(ctx, ln.ch.Message, model.Message(message), &ln.diagnostics) {
+				return
+			}
+			ln.diagnostics.emittedDirect.Add(1)
 		}
 	}
 }
 
 func (ln *listener) handleOldMessages(ctx context.Context, body BaseWSMessage) {
+	ln.diagnostics.replayFrames.Add(1)
 	eventData, err := decodeEventData[events.OldMessagesEventData](body, ln.cipherKey)
 	if err != nil {
+		ln.diagnostics.replayErrors.Add(1)
 		err = errs.WrapZCA("Failed to decode event data:", "listener.handleOldMessages", err)
 		ln.emitError(ctx, err)
 		return
 	}
 
+	ln.diagnostics.replayShape.Store(uint64(eventData.DecodeShape))
+	ln.diagnostics.replayCode.Store(int64(eventData.ErrorCode))
+	ln.diagnostics.replayUsers.Add(uint64(len(eventData.Data.Msgs)))
+	ln.diagnostics.decodedDirect.Add(uint64(len(eventData.Data.Msgs)))
 	uid := ln.sc.UID()
-	threadType := model.ThreadTypeUser
-	messages := make([]model.Message, 0, len(eventData.Data.Msgs)+len(eventData.Data.GroupMsgs))
-
+	// Each envelope remains homogeneous for existing consumers, while a mixed
+	// server response emits both batches rather than discarding direct messages.
 	if len(eventData.Data.GroupMsgs) > 0 {
-		threadType = model.ThreadTypeGroup
-		messages = make([]model.Message, 0, len(eventData.Data.GroupMsgs))
-
+		ln.diagnostics.decodedGroups.Add(uint64(len(eventData.Data.GroupMsgs)))
+		messages := make([]model.Message, 0, len(eventData.Data.GroupMsgs))
 		for _, msg := range eventData.Data.GroupMsgs {
 			messages = append(messages, model.NewGroupMessage(uid, msg))
 		}
-	} else {
+		if !emitDurable(ctx, ln.ch.OldMessages, model.NewOldMessage(messages, model.ThreadTypeGroup), &ln.diagnostics) {
+			return
+		}
+	}
+	if len(eventData.Data.Msgs) > 0 || len(eventData.Data.GroupMsgs) == 0 {
+		messages := make([]model.Message, 0, len(eventData.Data.Msgs))
 		for _, msg := range eventData.Data.Msgs {
 			messages = append(messages, model.NewUserMessage(uid, msg))
 		}
+		if !emitDurable(ctx, ln.ch.OldMessages, model.NewOldMessage(messages, model.ThreadTypeUser), &ln.diagnostics) {
+			return
+		}
 	}
 
-	emit(ctx, ln.ch.OldMessages, model.NewOldMessage(messages, threadType))
 }
 
 func (ln *listener) handleMessagesStatus(ctx context.Context, body BaseWSMessage) {
@@ -170,26 +194,34 @@ func (ln *listener) handleMessagesStatus(ctx context.Context, body BaseWSMessage
 }
 
 func (ln *listener) handleGroupMessages(ctx context.Context, body BaseWSMessage) {
+	ln.diagnostics.groupFrames.Add(1)
 	eventData, err := decodeEventData[events.GroupMessageEventData](body, ln.cipherKey)
 	if err != nil {
+		ln.diagnostics.groupErrors.Add(1)
 		err = errs.WrapZCA("Failed to decode event data:", "listener.handleGroupMessages", err)
 		ln.emitError(ctx, err)
 		return
 	}
 
+	ln.diagnostics.decodedGroups.Add(uint64(len(eventData.Data.GroupMsgs)))
 	for _, msg := range eventData.Data.GroupMsgs {
 		if msg.Undo != nil {
 			undo := model.NewUndo(ln.sc.UID(), *msg.Undo, true)
 			if undo.IsSelf && !ln.selfListen {
 				continue
 			}
-			emit(ctx, ln.ch.Undo, undo)
+			if !emitDurable(ctx, ln.ch.Undo, undo, &ln.diagnostics) {
+				return
+			}
 		} else if msg.Message != nil {
 			message := model.NewGroupMessage(ln.sc.UID(), *msg.Message)
 			if message.IsSelf() && !ln.selfListen {
 				continue
 			}
-			emit(ctx, ln.ch.Message, model.Message(message))
+			if !emitDurable(ctx, ln.ch.Message, model.Message(message), &ln.diagnostics) {
+				return
+			}
+			ln.diagnostics.emittedGroups.Add(1)
 		}
 	}
 }

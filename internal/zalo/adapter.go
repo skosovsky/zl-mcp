@@ -251,12 +251,22 @@ func logStructuralFailure(message string, err error) {
 	slog.Warn(message, attrs...)
 }
 func Convert(m model.GroupMessage, source string) (domain.Message, error) {
-	d := m.Data.TMessage
+	return convertMessage(m.Data.TMessage, domain.ConversationRef{Type: domain.ConversationGroup, ID: m.ThreadID()}, source)
+}
+
+func ConvertDirect(m model.UserMessage, source string) (domain.Message, error) {
+	return convertMessage(m.Data, domain.ConversationRef{Type: domain.ConversationDirect, ID: m.ThreadID()}, source)
+}
+
+func convertMessage(d model.TMessage, ref domain.ConversationRef, source string) (domain.Message, error) {
 	ms, e := strconv.ParseInt(d.TS, 10, 64)
 	if e != nil || ms <= 0 {
 		return domain.Message{}, fmt.Errorf("unsupported Zalo message timestamp")
 	}
-	msg := domain.Message{GroupID: m.ThreadID(), ID: d.MsgID, SenderID: d.UIDFrom, SentAt: time.UnixMilli(ms).UTC(), AttachmentTypes: []string{}, Source: source}
+	msg := domain.Message{Conversation: ref, ID: d.MsgID, SenderID: d.UIDFrom, SentAt: time.UnixMilli(ms).UTC(), AttachmentTypes: []string{}, Source: source}
+	if ref.Type == domain.ConversationGroup {
+		msg.GroupID = ref.ID
+	}
 	if d.DName != "" {
 		name := d.DName
 		msg.SenderName = &name
@@ -271,7 +281,7 @@ func Convert(m model.GroupMessage, source string) (domain.Message, error) {
 		reply := strconv.FormatInt(d.Quote.GlobalMsgID, 10)
 		msg.ReplyTo = &reply
 	}
-	if msg.ID == "" || msg.GroupID == "" || msg.SenderID == "" {
+	if msg.ID == "" || !msg.Ref().Valid() || msg.SenderID == "" {
 		return domain.Message{}, fmt.Errorf("unsupported Zalo message identifiers")
 	}
 	return msg, nil

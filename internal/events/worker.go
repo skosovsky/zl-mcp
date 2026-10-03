@@ -158,7 +158,7 @@ func (w *Worker) Run(ctx context.Context) error {
 				return nil
 			}
 		case at := <-timer.C:
-			if _, err := w.Queue.FanoutEvents(runCtx, at.UTC(), w.Policy, w.Encoder.Encode); err != nil {
+			if _, err := w.fanout(runCtx, at.UTC()); err != nil {
 				if runCtx.Err() != nil {
 					select {
 					case err := <-errs:
@@ -175,4 +175,13 @@ func (w *Worker) Run(ctx context.Context) error {
 			}
 		}
 	}
+}
+
+func (w *Worker) fanout(ctx context.Context, at time.Time) (int, error) {
+	if q, ok := w.Queue.(interface {
+		FanoutProfileEvents(context.Context, time.Time, storage.DeliveryPolicy, func(string, string, domain.Message) ([]byte, error)) (int, error)
+	}); ok {
+		return q.FanoutProfileEvents(ctx, at, w.Policy, w.Encoder.EncodeProfile)
+	}
+	return w.Queue.FanoutEvents(ctx, at, w.Policy, w.Encoder.Encode)
 }

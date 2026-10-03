@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"math/big"
 	"net/http"
 	"sync"
@@ -95,6 +96,7 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 			case <-runCtx.Done():
 				return
 			case <-t.C:
+				slog.Info("zalo_persistence_diagnostics", "counts", store.IngestionDiagnostics())
 				mu.Lock()
 				_ = store.SetState(runCtx, state)
 				mu.Unlock()
@@ -120,7 +122,7 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 	delay := time.Second
 	for {
 		_ = set("collector_state", "connecting")
-		e = client.Listen(runCtx, func(m domain.Message) error {
+		e = listenConversations(client, runCtx, func(m domain.Message) error {
 			_ = set("last_event_at", time.Now().UTC().Format(time.RFC3339Nano))
 			err := store.Put(runCtx, m)
 			if err != nil {
@@ -128,15 +130,15 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 				_ = store.BeginGap(runCtx, "storage_error")
 				return &storageFailure{cause: err}
 			}
-			if store.Allowed(m.GroupID) {
+			if store.AllowsConversation(m.Ref()) {
 				return set("last_persisted_at", time.Now().UTC().Format(time.RFC3339Nano))
 			}
 			return nil
-		}, func(g, id string) error {
-			if !store.Allowed(g) {
+		}, func(ref domain.ConversationRef, id string) error {
+			if !store.AllowsConversation(ref) {
 				return nil
 			}
-			if err := store.Delete(runCtx, g, id); err != nil {
+			if err := store.DeleteConversation(runCtx, ref, id); err != nil {
 				_ = set("last_error", map[string]any{"code": "STORAGE_ERROR", "message": "A deletion could not be persisted."})
 				_ = store.BeginGap(runCtx, "storage_error")
 				return &storageFailure{cause: err}
@@ -144,9 +146,7 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 			return nil
 		}, func() error {
 			delay = time.Second
-			if e := store.EndGaps(runCtx); e != nil {
-				return e
-			}
+			// Connection readiness cannot establish replay/history completeness.
 			if e := set("last_connected_at", time.Now().UTC().Format(time.RFC3339Nano)); e != nil {
 				return e
 			}

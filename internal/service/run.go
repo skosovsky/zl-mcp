@@ -118,7 +118,10 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	}
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
-	store, err := storage.Open(ctx, filepath.Join(c.StateDir, "messages.sqlite"), c.Collection.GroupIDs, c.Storage.RetentionDays)
+	if c.Collection.Mode == "" {
+		slog.Warn("legacy_collection_config", "format", "group_ids", "next_action", "Use explicit selected mode with typed conversations to preserve the group-only scope; all mode widens collection.")
+	}
+	store, err := storage.OpenWithPolicy(ctx, filepath.Join(c.StateDir, "messages.sqlite"), c.Policy(), c.Storage.RetentionDays)
 	if err != nil {
 		return err
 	}

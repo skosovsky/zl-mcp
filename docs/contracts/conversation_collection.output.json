@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": [
+        "all",
+        "selected"
+      ]
+    },
+    "conversation_counts": {
+      "type": "object",
+      "properties": {
+        "direct": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "group": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "direct",
+        "group"
+      ],
+      "additionalProperties": false
+    },
+    "message_counts": {
+      "type": "object",
+      "properties": {
+        "direct": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "group": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "direct",
+        "group"
+      ],
+      "additionalProperties": false
+    },
+    "catalog_complete": {
+      "const": false
+    },
+    "history_complete": {
+      "const": false
+    }
+  },
+  "required": [
+    "mode",
+    "conversation_counts",
+    "message_counts",
+    "catalog_complete",
+    "history_complete"
+  ],
+  "additionalProperties": false
+}

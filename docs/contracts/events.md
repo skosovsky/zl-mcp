@@ -6,7 +6,13 @@
 
 ## Событие и фильтр
 
-Единственный event name — `zalo.message.created`. Аргумент `group_id` выбирает одну явно разрешённую группу; несколько групп требуют отдельных подписок. Каталог возвращает определение только владельцу аккаунта. `_meta` допускается как протокольное поле; неизвестные прикладные поля запрещены. Principal выводится из проверенного подключения, не из параметров запроса. ID подписки детерминирован по аккаунту/principal, callback URL, event name и canonical arguments; secret в идентификатор не входит.
+Legacy event name — `zalo.message.created`. Аргумент `group_id` выбирает одну явно разрешённую группу; несколько групп требуют отдельных подписок. Его формат и существующие идентификаторы подписок сохраняются.
+
+Новый профиль — `zalo.conversation.message.created`, с исполняемыми входами `conversation_events_subscribe.input.json` и `conversation_events_unsubscribe.input.json`, payload `conversation_message_created.payload.json` и envelope `conversation_event.delivery.json`. Аргументы выбирают `scope: all | direct | group | conversation`; для последнего обязательны `conversation_type` и `conversation_id`, для остальных поля конкретного диалога запрещены. Широкая подписка включает новые обнаруженные диалоги, но только в пределах действующей политики сбора. Сбор всех диалогов не расширяет старые подписки.
+
+Новый payload содержит `schema_version: 1`, `conversation_type`, `conversation_id`, доступное `conversation_name` и общие поля сообщения. Обрезанный текст читается через `zalo://conversations/{type}/{escaped-id}/messages/{escaped-message-id}`; лимит остаётся 2048 Unicode code points. Тексты и имена недоверенные. Legacy payload не получает новых полей.
+
+Каталог возвращает оба определения только владельцу аккаунта. `_meta` допускается как протокольное поле; неизвестные прикладные поля запрещены. Principal выводится из проверенного подключения, не из параметров запроса. ID подписки детерминирован по аккаунту/principal, callback URL, event name и canonical arguments; secret в идентификатор не входит. Один journal event имеет постоянный eventId при доставке в несколько совпадающих подписок/профилей. Обычно receiver устраняет повтор по eventId; если он отдельно обрабатывает оба формата, ключ дедупликации — (name, eventId). ID подписки не передаётся в envelope.
 
 `data` содержит group_id, message_id, sender_id, доступное sender_name, sent_at, text, text_truncated и text_resource_uri. Лимит text — 2048 Unicode code points, а не байтов; UTF-8 не разрывается. При обрезке URI обязателен, полная запись читается через resources/read с обычными allowlist/retention ограничениями. Текст остаётся недоверенными данными. Предел тела доставки — 256 КиБ, независимо от текстового лимита. Envelope содержит eventId, name, timestamp, data и cursor=null; eventId постоянен при повторе.
 
@@ -43,6 +49,8 @@ Retention корпуса не должен сбрасывать факт пер�
 До отправки применяется [контракт callback](callback.md): HTTPS, проверка подписанного challenge, секрет whsec_ с 24–64 байтами ключа, Standard Webhooks, запрет redirect и непубличных адресов, DNS pinning при каждом соединении. Тестовый receiver использует внедряемый transport для автономных проверок; production-политика адресов не ослабляется. Сеть, туннели и публикация endpoint остаются вне приложения.
 
 ## MCP HTTP endpoint
+
+Очередь сохраняет порядок заданий внутри подписки: задержанный retry блокирует её следующие задания, но не другие подписки. После terminal failure очередь продолжает работу, сохраняя диагностический факт недоставки. Политика сбора проверяется повторно перед отправкой по фактическому типу/ID сообщения, включая широкие scopes. Постоянный журнал идентичностей также разделяет типы диалога.
 
 Основной endpoint `/mcp`, Streamable HTTP в stateless JSON-режиме. Bearer token не короче 32 байт хранится в private state file, передаётся клиентом в Authorization; все tools/resources/Events используют одну проверку доступа владельца локального аккаунта. Principal не выбирается запросом. Bind по умолчанию loopback; HTTP Host допускает только loopback/localhost, Origin из браузера по умолчанию отклоняется. Публикующий reverse proxy обязан обращаться к локальному endpoint с его локальным Host. Приложение не создаёт внешний ingress.
 

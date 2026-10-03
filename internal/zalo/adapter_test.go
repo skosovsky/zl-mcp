@@ -3,9 +3,29 @@ package zalo
 import (
 	"encoding/json"
 	"github.com/amrakk/zcago/model"
+	"github.com/skosovsky/zl-mcp/internal/domain"
 	"testing"
 	"time"
 )
+
+func TestDirectNormalizationUsesPeerInBothDirections(t *testing.T) {
+	for _, tc := range []struct{ from, to, wantSender string }{
+		{"peer", "0", "peer"}, {"0", "peer", "owner"},
+	} {
+		// Arrange
+		text := "synthetic"
+		raw := model.NewUserMessage("owner", model.TMessage{MsgID: "9007199254740993", UIDFrom: tc.from, IDTo: tc.to, TS: "1790812800123", Content: model.Content{String: &text}})
+		// Act
+		result, err := ConvertDirect(raw, "replay")
+		// Assert
+		if err != nil {
+			t.Fatal(err)
+		}
+		if result.Ref() != (domain.ConversationRef{Type: domain.ConversationDirect, ID: "peer"}) || result.SenderID != tc.wantSender || result.GroupID != "" || result.ID != "9007199254740993" || result.Text != text {
+			t.Fatal("direct identity/direction lost")
+		}
+	}
+}
 
 func TestNormalizeGroupTextAndReply(t *testing.T) {
 	// Arrange
@@ -22,6 +42,20 @@ func TestNormalizeGroupTextAndReply(t *testing.T) {
 	}
 	if !result.SentAt.Equal(time.UnixMilli(1790812800123)) {
 		t.Fatal("timestamp lost precision")
+	}
+}
+
+func TestGroupNormalizationPreservesConversationAndAuthorInBothDirections(t *testing.T) {
+	for _, tc := range []struct{ from, sender string }{{"peer", "peer"}, {"0", "owner"}} {
+		// Arrange: incoming/self wire messages target the same group.
+		text := "synthetic"
+		raw := model.NewGroupMessage("owner", model.TGroupMessage{TMessage: model.TMessage{MsgID: "m", UIDFrom: tc.from, IDTo: "same-group", TS: "1790812800123", Content: model.Content{String: &text}}})
+		// Act.
+		m, err := Convert(raw, "live")
+		// Assert: the normalized sender changes, while the group identity does not.
+		if err != nil || m.Ref() != (domain.ConversationRef{Type: "group", ID: "same-group"}) || m.SenderID != tc.sender {
+			t.Fatalf("normalization error=%v", err)
+		}
 	}
 }
 

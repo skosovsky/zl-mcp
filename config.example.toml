@@ -1,6 +1,10 @@
 state_dir = "./state"
 [collection]
-group_ids = []
+# all: collect accessible direct chats and groups, including newly discovered ones
+mode = "all"
+# For a restricted installation use mode = "selected" and conversations = []
+# Example entry: { type = "direct", id = "PEER_ID" }
+# Do not combine mode/conversations with legacy group_ids.
 [permissions]
 allow_join = false
 [storage]

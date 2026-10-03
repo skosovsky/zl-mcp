@@ -54,7 +54,8 @@ type Listener interface {
 }
 
 type listener struct {
-	mu sync.RWMutex
+	mu          sync.RWMutex
+	diagnostics diagnosticCounters
 
 	ch    channels
 	reqID uint64

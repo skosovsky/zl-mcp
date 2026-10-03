@@ -9,27 +9,32 @@ type Group struct {
 	CollectionEnabled bool   `json:"collection_enabled"`
 }
 type Message struct {
-	GroupID         string    `json:"group_id"`
-	ID              string    `json:"message_id"`
-	SenderID        string    `json:"sender_id"`
-	SenderName      *string   `json:"sender_name"`
-	SentAt          time.Time `json:"sent_at"`
-	Text            string    `json:"text"`
-	ReplyTo         *string   `json:"reply_to_message_id"`
-	AttachmentTypes []string  `json:"attachment_types"`
-	Source          string    `json:"source"`
-	TextTruncated   bool      `json:"text_truncated"`
-	TextResourceURI *string   `json:"text_resource_uri"`
+	ConversationName *string `json:"-"`
+	// Conversation is the internal typed identity. Legacy JSON remains group-only;
+	// conversation tools/events use their dedicated response contracts.
+	Conversation    ConversationRef `json:"-"`
+	GroupID         string          `json:"group_id"`
+	ID              string          `json:"message_id"`
+	SenderID        string          `json:"sender_id"`
+	SenderName      *string         `json:"sender_name"`
+	SentAt          time.Time       `json:"sent_at"`
+	Text            string          `json:"text"`
+	ReplyTo         *string         `json:"reply_to_message_id"`
+	AttachmentTypes []string        `json:"attachment_types"`
+	Source          string          `json:"source"`
+	TextTruncated   bool            `json:"text_truncated"`
+	TextResourceURI *string         `json:"text_resource_uri"`
 }
 type SearchHit struct {
-	GroupID       string    `json:"group_id"`
-	ID            string    `json:"message_id"`
-	SenderID      string    `json:"sender_id"`
-	GroupName     *string   `json:"group_name"`
-	SenderName    *string   `json:"sender_name"`
-	SentAt        time.Time `json:"sent_at"`
-	Excerpt       string    `json:"excerpt"`
-	TextTruncated bool      `json:"text_truncated"`
+	Conversation  ConversationRef `json:"-"`
+	GroupID       string          `json:"group_id"`
+	ID            string          `json:"message_id"`
+	SenderID      string          `json:"sender_id"`
+	GroupName     *string         `json:"group_name"`
+	SenderName    *string         `json:"sender_name"`
+	SentAt        time.Time       `json:"sent_at"`
+	Excerpt       string          `json:"excerpt"`
+	TextTruncated bool            `json:"text_truncated"`
 }
 type NextAction struct {
 	Tool        *string        `json:"tool"`

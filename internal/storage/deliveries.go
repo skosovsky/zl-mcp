@@ -31,13 +31,21 @@ func (p DeliveryPolicy) validate() error {
 }
 
 type pendingMessageEvent struct {
-	seq                      int64
-	id, group, body, created string
+	seq                            int64
+	id, group, kind, body, created string
 }
 
 // FanoutEvents commits tasks and its watermark together. Encoding is a pure
 // application port; no network calls or event transport types enter storage.
 func (s *Store) FanoutEvents(ctx context.Context, at time.Time, p DeliveryPolicy, encode func(string, domain.Message) ([]byte, error)) (int, error) {
+	return s.FanoutProfileEvents(ctx, at, p, func(profile, id string, m domain.Message) ([]byte, error) {
+		if profile != domain.LegacyMessageCreated {
+			return nil, fmt.Errorf("profile encoder required")
+		}
+		return encode(id, m)
+	})
+}
+func (s *Store) FanoutProfileEvents(ctx context.Context, at time.Time, p DeliveryPolicy, encode func(string, string, domain.Message) ([]byte, error)) (int, error) {
 	if err := p.validate(); err != nil {
 		return 0, err
 	}
@@ -46,14 +54,14 @@ func (s *Store) FanoutEvents(ctx context.Context, at time.Time, p DeliveryPolicy
 		return 0, err
 	}
 	defer tx.Rollback()
-	rows, err := tx.QueryContext(ctx, "SELECT seq,event_id,group_id,message_json,created_at FROM message_events WHERE seq>(SELECT seq FROM event_fanout WHERE id=1) ORDER BY seq LIMIT 32")
+	rows, err := tx.QueryContext(ctx, "SELECT seq,event_id,group_id,conversation_type,message_json,created_at FROM message_events WHERE seq>(SELECT seq FROM event_fanout WHERE id=1) ORDER BY seq LIMIT 32")
 	if err != nil {
 		return 0, err
 	}
 	var batch []pendingMessageEvent
 	for rows.Next() {
 		var e pendingMessageEvent
-		if err := rows.Scan(&e.seq, &e.id, &e.group, &e.body, &e.created); err != nil {
+		if err := rows.Scan(&e.seq, &e.id, &e.group, &e.kind, &e.body, &e.created); err != nil {
 			rows.Close()
 			return 0, err
 		}
@@ -79,19 +87,21 @@ func (s *Store) FanoutEvents(ctx context.Context, at time.Time, p DeliveryPolicy
 		}
 		var message domain.Message
 		encodeErr := json.Unmarshal([]byte(event.body), &message)
-		var payload []byte
+		message.Conversation = domain.ConversationRef{Type: event.kind, ID: event.group}
 		if encodeErr == nil {
-			payload, encodeErr = encode(event.id, message)
+			if err := tx.QueryRowContext(ctx, "SELECT name FROM conversations WHERE conversation_type=? AND conversation_id=?", event.kind, event.group).Scan(&message.ConversationName); err != nil && !errors.Is(err, sql.ErrNoRows) {
+				return 0, err
+			}
 		}
-		rows, err := tx.QueryContext(ctx, "SELECT id,generation FROM event_subscriptions WHERE active=1 AND group_id=? AND start_seq<? AND (expires_at IS NULL OR julianday(expires_at)>julianday(?))", event.group, event.seq, at.UTC().Format(time.RFC3339Nano))
+		rows, err := tx.QueryContext(ctx, "SELECT id,generation,profile FROM event_subscriptions WHERE active=1 AND (scope='all' OR scope=? OR (scope='conversation' AND group_id=? AND conversation_type=?)) AND start_seq<? AND (expires_at IS NULL OR julianday(expires_at)>julianday(?))", event.kind, event.group, event.kind, event.seq, at.UTC().Format(time.RFC3339Nano))
 		if err != nil {
 			return 0, err
 		}
-		type target struct{ id, generation string }
+		type target struct{ id, generation, profile string }
 		var targets []target
 		for rows.Next() {
 			var target target
-			if err := rows.Scan(&target.id, &target.generation); err != nil {
+			if err := rows.Scan(&target.id, &target.generation, &target.profile); err != nil {
 				rows.Close()
 				return 0, err
 			}
@@ -103,13 +113,18 @@ func (s *Store) FanoutEvents(ctx context.Context, at time.Time, p DeliveryPolicy
 		}
 		rows.Close()
 		for _, target := range targets {
+			var payload []byte
+			payloadErr := encodeErr
+			if payloadErr == nil {
+				payload, payloadErr = encode(target.profile, event.id, message)
+			}
 			state := "pending"
 			var reason, completed any
 			body := payload
 			switch {
-			case !s.Allowed(event.group):
+			case !s.AllowsConversation(message.Ref()):
 				state, reason = "cancelled", "access_revoked"
-			case encodeErr != nil:
+			case payloadErr != nil:
 				state, reason = "failed", "invalid_payload"
 			case !at.Before(created.Add(p.MaxAge)):
 				state, reason = "failed", "deadline"
@@ -184,8 +199,9 @@ func (s *Store) ClaimDelivery(ctx context.Context, at time.Time, p DeliveryPolic
 	}
 	for {
 		var d EventDelivery
-		var deadline string
-		err := tx.QueryRowContext(ctx, `SELECT d.id,d.event_id,d.subscription_id,d.generation,d.payload,d.attempts,d.deadline,s.callback,s.secret,s.principal,s.group_id FROM event_deliveries d JOIN event_subscriptions s ON s.id=d.subscription_id WHERE d.state='pending' AND julianday(d.next_attempt_at)<=julianday(?) AND NOT EXISTS(SELECT 1 FROM event_deliveries busy WHERE busy.subscription_id=d.subscription_id AND busy.state='sending') ORDER BY d.id LIMIT 1`, ts).Scan(&d.ID, &d.EventID, &d.SubscriptionID, &d.Generation, &d.Payload, &d.Attempts, &deadline, &d.Callback, &d.Secret, &d.Principal, &d.GroupID)
+		var deadline, profile, scope, kind string
+		var ref domain.ConversationRef
+		err := tx.QueryRowContext(ctx, `SELECT d.id,d.event_id,d.subscription_id,d.generation,d.payload,d.attempts,d.deadline,s.callback,s.secret,s.principal,s.group_id,s.profile,s.scope,s.conversation_type,COALESCE(m.conversation_type,s.conversation_type),COALESCE(m.conversation_id,s.group_id) FROM event_deliveries d JOIN event_subscriptions s ON s.id=d.subscription_id LEFT JOIN messages m ON m.seq=d.message_seq WHERE d.state='pending' AND julianday(d.next_attempt_at)<=julianday(?) AND NOT EXISTS(SELECT 1 FROM event_deliveries busy WHERE busy.subscription_id=d.subscription_id AND busy.state='sending') AND NOT EXISTS(SELECT 1 FROM event_deliveries earlier WHERE earlier.subscription_id=d.subscription_id AND earlier.id<d.id AND earlier.state IN ('pending','sending')) ORDER BY d.id LIMIT 1`, ts).Scan(&d.ID, &d.EventID, &d.SubscriptionID, &d.Generation, &d.Payload, &d.Attempts, &deadline, &d.Callback, &d.Secret, &d.Principal, &d.GroupID, &profile, &scope, &kind, &ref.Type, &ref.ID)
 		if errors.Is(err, sql.ErrNoRows) {
 			if err := tx.Commit(); err != nil {
 				return nil, err
@@ -195,7 +211,7 @@ func (s *Store) ClaimDelivery(ctx context.Context, at time.Time, p DeliveryPolic
 		if err != nil {
 			return nil, err
 		}
-		if !s.Allowed(d.GroupID) {
+		if !s.AllowsConversation(ref) || !subscriptionMatches(profile, scope, kind, d.GroupID, ref) {
 			if _, err := tx.ExecContext(ctx, "UPDATE event_deliveries SET state='cancelled',last_reason='access_revoked',completed_at=?,payload=X'' WHERE id=?", ts, d.ID); err != nil {
 				return nil, err
 			}

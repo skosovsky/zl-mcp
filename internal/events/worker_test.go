@@ -125,8 +125,8 @@ func TestDeliveryTerminalHTTPResponses(t *testing.T) {
 	}
 }
 
-func TestRetryDoesNotBlockLaterMessages(t *testing.T) {
-	// Arrange: the first message fails once; the receiver accepts the next one.
+func TestRetryPreservesSubscriptionOrder(t *testing.T) {
+	// Arrange: the first message fails once; later messages must wait for its retry.
 	ctx := context.Background()
 	var received []string
 	w, s, at := readyWorker(t, callbackRoundTrip(func(r *http.Request) (*http.Response, error) {
@@ -147,15 +147,15 @@ func TestRetryDoesNotBlockLaterMessages(t *testing.T) {
 	if _, err := s.FanoutEvents(ctx, at, w.Policy, w.Encoder.Encode); err != nil {
 		t.Fatal(err)
 	}
-	// Act: deliver the next ready job while the earlier job waits for its retry.
-	for _, offset := range []time.Duration{0, time.Second, 61 * time.Second} {
+	// Act: the delayed retry blocks only later jobs belonging to this subscription.
+	for _, offset := range []time.Duration{0, time.Second, 61 * time.Second, 62 * time.Second} {
 		delivered, err := w.DeliverOne(ctx, at.Add(offset))
-		if err != nil || !delivered {
+		if err != nil || delivered != (offset != time.Second) {
 			t.Fatalf("delivery at %v: worked=%v error=%v", offset, delivered, err)
 		}
 	}
-	// Assert: out-of-order receipt is supported, and the retried event keeps its ID.
-	if len(received) != 3 || received[0] == received[1] || received[0] != received[2] {
+	// Assert: the retry retains its ID and precedes the second message.
+	if len(received) != 3 || received[0] != received[1] || received[0] == received[2] {
 		t.Fatalf("unexpected receipt order: %v", received)
 	}
 	var completed int

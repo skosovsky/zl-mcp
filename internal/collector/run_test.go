@@ -71,13 +71,14 @@ func TestSessionCollectsReplayAndStopsCleanly(t *testing.T) {
 	state, stateErr := s.State(context.Background())
 	coverage, coverageErr := s.Coverage(context.Background(), "g")
 	// Assert: cancellation drains lifecycle; one permitted message remains searchable.
+	// A connected listener does not establish history completeness or close its gap.
 	if err != nil || searchErr != nil || stateErr != nil || coverageErr != nil {
 		t.Fatalf("session=%v search=%v state=%v coverage=%v", err, searchErr, stateErr, coverageErr)
 	}
-	if len(hits) != 1 || state["collector_state"] != "stopped" || len(coverage.KnownGaps) != 2 {
+	if len(hits) != 1 || state["collector_state"] != "stopped" || len(coverage.KnownGaps) != 1 {
 		t.Fatalf("hits=%+v state=%+v coverage=%+v", hits, state, coverage)
 	}
-	if coverage.KnownGaps[0].To == nil || coverage.KnownGaps[1].To != nil || coverage.HistoryComplete {
+	if coverage.KnownGaps[0].To != nil || coverage.HistoryComplete {
 		t.Fatalf("incorrect coverage: %+v", coverage)
 	}
 	if _, err = s.Message(context.Background(), "outside", "m"); err == nil {
@@ -129,7 +130,7 @@ func TestStorageFailureRemainsVisibleDuringReconnect(t *testing.T) {
 		t.Fatalf("state=%v coverage=%v run=%v", err, coverageErr, runErr)
 	}
 	last := state["last_error"].(map[string]any)
-	if last["code"] != "STORAGE_ERROR" || len(coverage.KnownGaps) != 2 || coverage.KnownGaps[1].Reason != "storage_error" || coverage.KnownGaps[1].To != nil {
+	if last["code"] != "STORAGE_ERROR" || len(coverage.KnownGaps) != 1 || coverage.KnownGaps[0].Reason != "collector_start_or_restart" || coverage.KnownGaps[0].To != nil {
 		t.Fatalf("state=%+v coverage=%+v", state, coverage)
 	}
 }
@@ -157,7 +158,7 @@ func TestAuthenticationFailureStopsReconnectAndPreservesState(t *testing.T) {
 	if state["authenticated"] != false || state["collector_state"] != "auth_required" || state["last_error"].(map[string]any)["code"] != "NOT_AUTHENTICATED" {
 		t.Fatalf("incorrect auth state: %+v", state)
 	}
-	if len(coverage.KnownGaps) != 2 || coverage.KnownGaps[1].Reason != "auth_required" || coverage.KnownGaps[1].To != nil {
+	if len(coverage.KnownGaps) != 1 || coverage.KnownGaps[0].Reason != "collector_start_or_restart" || coverage.KnownGaps[0].To != nil {
 		t.Fatalf("missing authentication gap: %+v", coverage)
 	}
 	if _, err := os.Stat(filepath.Join(c.StateDir, "collector.sock")); !errors.Is(err, os.ErrNotExist) {

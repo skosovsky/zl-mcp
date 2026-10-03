@@ -120,7 +120,13 @@ func (s *Store) ReplaceCatalog(ctx context.Context, groups []domain.Group) error
 		return e
 	}
 	at := now()
+	if _, e = tx.ExecContext(ctx, "UPDATE conversations SET availability='unknown' WHERE conversation_type='group'"); e != nil {
+		return e
+	}
 	for _, g := range groups {
+		if _, e = tx.ExecContext(ctx, `INSERT INTO conversations(conversation_type,conversation_id,name,metadata_source,availability,first_discovered_at,updated_at) VALUES('group',?,?,'group_catalog','member',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=excluded.name,metadata_source='group_catalog',availability='member',updated_at=excluded.updated_at`, g.ID, g.Name, at, at); e != nil {
+			return e
+		}
 		if _, e = tx.ExecContext(ctx, `INSERT INTO groups(group_id,name,member_count,updated_at) VALUES(?,?,?,?) ON CONFLICT(group_id) DO UPDATE SET name=excluded.name,member_count=excluded.member_count,updated_at=excluded.updated_at,membership='member'`, g.ID, g.Name, g.MemberCount, at); e != nil {
 			return e
 		}
@@ -131,13 +137,17 @@ func (s *Store) ReplaceCatalog(ctx context.Context, groups []domain.Group) error
 	return tx.Commit()
 }
 func (s *Store) Coverage(ctx context.Context, id string) (domain.Coverage, error) {
+	return s.conversationCoverage(ctx, domain.ConversationRef{Type: domain.ConversationGroup, ID: id})
+}
+func (s *Store) conversationCoverage(ctx context.Context, ref domain.ConversationRef) (domain.Coverage, error) {
+	id := ref.ID
 	c := domain.Coverage{GroupID: id, KnownGaps: []domain.Gap{}}
 	if s.retention > 0 {
 		v := s.retention
 		c.RetentionDays = &v
 	}
 	var start sql.NullString
-	e := s.DB.QueryRowContext(ctx, "SELECT started_at FROM collection_started WHERE group_id=?", id).Scan(&start)
+	e := s.DB.QueryRowContext(ctx, "SELECT started_at FROM collection_started WHERE conversation_type=? AND group_id=?", ref.Type, id).Scan(&start)
 	if e != nil && !errors.Is(e, sql.ErrNoRows) {
 		return c, e
 	}
@@ -153,12 +163,12 @@ func (s *Store) Coverage(ctx context.Context, id string) (domain.Coverage, error
 	}
 	c.CollectionStartedAt = parse(start)
 	var earliest, latest sql.NullString
-	if e = s.DB.QueryRowContext(ctx, "SELECT min(sent_at),max(sent_at) FROM messages WHERE group_id=?", id).Scan(&earliest, &latest); e != nil {
+	if e = s.DB.QueryRowContext(ctx, "SELECT min(sent_at),max(sent_at) FROM messages WHERE conversation_type=? AND group_id=?", ref.Type, id).Scan(&earliest, &latest); e != nil {
 		return c, e
 	}
 	c.EarliestStoredAt = parse(earliest)
 	c.LatestStoredAt = parse(latest)
-	rows, e := s.DB.QueryContext(ctx, "SELECT started_at,ended_at,reason FROM collection_gaps WHERE group_id=? ORDER BY started_at", id)
+	rows, e := s.DB.QueryContext(ctx, "SELECT started_at,ended_at,reason FROM collection_gaps WHERE conversation_type=? AND group_id=? ORDER BY started_at", ref.Type, id)
 	if e != nil {
 		return c, e
 	}
@@ -180,17 +190,22 @@ func (s *Store) Coverage(ctx context.Context, id string) (domain.Coverage, error
 	return c, rows.Err()
 }
 func (s *Store) Summary(ctx context.Context) (map[string]any, error) {
-	count := 0
-	for id := range s.allowed {
-		var n int
-		if e := s.DB.QueryRowContext(ctx, "SELECT count(*) FROM collection_gaps WHERE group_id=?", id).Scan(&n); e != nil {
-			return nil, e
-		}
-		if n > 0 {
-			count++
-		}
+	refs, err := s.collectionRefs(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return map[string]any{"group_count": len(s.allowed), "history_complete": false, "groups_with_known_gaps": count}, nil
+	gaps, err := s.conversationGapCounts(ctx)
+	if err != nil {
+		return nil, err
+	}
+	groups := 0
+	for _, ref := range refs {
+		if ref.Type != domain.ConversationGroup {
+			continue
+		}
+		groups++
+	}
+	return map[string]any{"group_count": groups, "history_complete": false, "groups_with_known_gaps": gaps["group"]}, nil
 }
 func display(m domain.Message) domain.Message { return clip(m, 8000) }
 func clip(m domain.Message, limit int) domain.Message {
@@ -198,17 +213,32 @@ func clip(m domain.Message, limit int) domain.Message {
 		m.Text = string([]rune(m.Text)[:limit])
 		m.TextTruncated = true
 		v := "zalo://groups/" + url.PathEscape(m.GroupID) + "/messages/" + url.PathEscape(m.ID)
+		if m.Conversation.Valid() {
+			v = ConversationMessageURI(m.Conversation, m.ID)
+		}
 		m.TextResourceURI = &v
 	}
 	return m
 }
 func (s *Store) Context(ctx context.Context, g, id string, before, after int) (map[string]any, error) {
-	anchor, e := s.Message(ctx, g, id)
+	return s.context(ctx, domain.ConversationRef{Type: domain.ConversationGroup, ID: g}, id, before, after, false)
+}
+func (s *Store) context(ctx context.Context, ref domain.ConversationRef, id string, before, after int, general bool) (map[string]any, error) {
+	if before < 0 || before > 20 || after < 0 || after > 20 {
+		return nil, domain.Invalid("Context window must be between 0 and 20.")
+	}
+	read := func(id string) (domain.Message, error) {
+		if general {
+			return s.ConversationMessage(ctx, ref, id)
+		}
+		return s.Message(ctx, ref.ID, id)
+	}
+	anchor, e := read(id)
 	if e != nil {
 		return nil, e
 	}
 	get := func(operator, direction string, limit int) ([]domain.Message, error) {
-		rows, e := s.DB.QueryContext(ctx, "SELECT "+messageColumns+" FROM messages WHERE group_id=? AND (sent_at "+operator+" ? OR (sent_at=? AND message_id "+operator+" ?)) ORDER BY sent_at "+direction+",message_id "+direction+" LIMIT ?", g, anchor.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), anchor.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), id, limit)
+		rows, e := s.DB.QueryContext(ctx, "SELECT "+messageColumns+" FROM messages WHERE conversation_type=? AND group_id=? AND (sent_at "+operator+" ? OR (sent_at=? AND message_id "+operator+" ?)) ORDER BY sent_at "+direction+",message_id "+direction+" LIMIT ?", ref.Type, ref.ID, anchor.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), anchor.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), id, limit)
 		if e != nil {
 			return nil, e
 		}
@@ -218,6 +248,12 @@ func (s *Store) Context(ctx context.Context, g, id string, before, after int) (m
 			m, e := scanMessage(rows)
 			if e != nil {
 				return nil, e
+			}
+			if general {
+				m.Conversation = ref
+				if ref.Type == domain.ConversationDirect {
+					m.GroupID = ""
+				}
 			}
 			msgs = append(msgs, display(m))
 		}
@@ -236,7 +272,7 @@ func (s *Store) Context(ctx context.Context, g, id string, before, after int) (m
 	}
 	var reply *domain.Message
 	if anchor.ReplyTo != nil {
-		r, e := s.Message(ctx, g, *anchor.ReplyTo)
+		r, e := read(*anchor.ReplyTo)
 		if e == nil {
 			v := display(r)
 			reply = &v
@@ -244,7 +280,7 @@ func (s *Store) Context(ctx context.Context, g, id string, before, after int) (m
 			return nil, e
 		}
 	}
-	coverage, e := s.Coverage(ctx, g)
+	coverage, e := s.conversationCoverage(ctx, ref)
 	if e != nil {
 		return nil, e
 	}
@@ -320,16 +356,13 @@ func (s *Store) State(ctx context.Context) (map[string]any, error) {
 	} else {
 		return nil, e
 	}
-	state["enabled_group_count"] = len(s.allowed)
-	var count int
-	for id := range s.allowed {
-		var n int
-		if e = s.DB.QueryRowContext(ctx, "SELECT count(*) FROM messages WHERE group_id=?", id).Scan(&n); e != nil {
-			return nil, e
-		}
-		count += n
+	collection, err := s.CollectionStatus(ctx)
+	if err != nil {
+		return nil, err
 	}
-	state["stored_message_count"] = count
+	counts := collection["message_counts"].(map[string]int)
+	state["enabled_group_count"] = collection["conversation_counts"].(map[string]int)["group"]
+	state["stored_message_count"] = counts["direct"] + counts["group"]
 	summary, e := s.Summary(ctx)
 	state["coverage_summary"] = summary
 	return state, e
@@ -345,13 +378,17 @@ func (s *Store) BeginGap(ctx context.Context, reason string) error {
 			return err
 		}
 	}
+	refs, e := s.collectionRefs(ctx)
+	if e != nil {
+		return e
+	}
 	tx, e := s.DB.BeginTx(ctx, nil)
 	if e != nil {
 		return e
 	}
 	defer tx.Rollback()
-	for id := range s.allowed {
-		if _, e = tx.ExecContext(ctx, `INSERT INTO collection_gaps(group_id,started_at,reason) SELECT ?,?,? WHERE NOT EXISTS(SELECT 1 FROM collection_gaps WHERE group_id=? AND ended_at IS NULL)`, id, from, reason, id); e != nil {
+	for _, ref := range refs {
+		if _, e = tx.ExecContext(ctx, `INSERT INTO collection_gaps(group_id,conversation_type,started_at,reason) SELECT ?,?,?,? WHERE NOT EXISTS(SELECT 1 FROM collection_gaps WHERE conversation_type=? AND conversation_id=? AND ended_at IS NULL)`, ref.ID, ref.Type, from, reason, ref.Type, ref.ID); e != nil {
 			return e
 		}
 	}

@@ -22,13 +22,23 @@ import (
 )
 
 type Store struct {
-	DB        *sql.DB
-	allowed   map[string]bool
-	retention int
-	key       []byte
+	DB                              *sql.DB
+	allowed                         map[string]bool
+	policy                          domain.CollectionPolicy
+	retention                       int
+	key                             []byte
+	directIngestion, groupIngestion ingestionCounters
 }
 
 func Open(ctx context.Context, path string, groupIDs []string, retention int) (*Store, error) {
+	policy := domain.CollectionPolicy{Selected: map[domain.ConversationRef]bool{}}
+	for _, id := range groupIDs {
+		policy.Selected[domain.ConversationRef{Type: domain.ConversationGroup, ID: id}] = true
+	}
+	return OpenWithPolicy(ctx, path, policy, retention)
+}
+
+func OpenWithPolicy(ctx context.Context, path string, policy domain.CollectionPolicy, retention int) (*Store, error) {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		return nil, err
@@ -42,9 +52,20 @@ func Open(ctx context.Context, path string, groupIDs []string, retention int) (*
 		return nil, err
 	}
 	db.SetMaxOpenConns(1)
-	s := &Store{DB: db, allowed: map[string]bool{}, retention: retention}
-	for _, id := range groupIDs {
-		s.allowed[id] = true
+	selected := map[domain.ConversationRef]bool{}
+	for ref, enabled := range policy.Selected {
+		if !ref.Valid() {
+			db.Close()
+			return nil, domain.Invalid("Invalid collection reference.")
+		}
+		selected[ref] = enabled
+	}
+	policy.Selected = selected
+	s := &Store{DB: db, allowed: map[string]bool{}, policy: policy, retention: retention}
+	for ref, enabled := range selected {
+		if ref.Type == domain.ConversationGroup && enabled {
+			s.allowed[ref.ID] = true
+		}
 	}
 	if err = s.migrate(ctx); err != nil {
 		db.Close()
@@ -71,8 +92,10 @@ func Open(ctx context.Context, path string, groupIDs []string, retention int) (*
 	s.key, err = hex.DecodeString(key)
 	return s, err
 }
-func (s *Store) Close() error           { return s.DB.Close() }
-func (s *Store) Allowed(id string) bool { return s.allowed[id] }
+func (s *Store) Close() error { return s.DB.Close() }
+func (s *Store) Allowed(id string) bool {
+	return s.AllowsConversation(domain.ConversationRef{Type: domain.ConversationGroup, ID: id})
+}
 func (s *Store) migrate(ctx context.Context) error {
 	_, err := s.DB.ExecContext(ctx, `
  CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY);
@@ -95,7 +118,10 @@ func (s *Store) migrate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return s.migrateEvents(ctx)
+	if err = s.migrateEvents(ctx); err != nil {
+		return err
+	}
+	return s.migrateConversations(ctx)
 }
 func (s *Store) BindAccount(ctx context.Context, account string) error {
 	h := sha256.Sum256([]byte(account))
@@ -114,11 +140,37 @@ func (s *Store) BindAccount(ctx context.Context, account string) error {
 }
 func now() string { return time.Now().UTC().Format(time.RFC3339Nano) }
 func (s *Store) UpsertGroup(ctx context.Context, g domain.Group, description *string) error {
-	_, err := s.DB.ExecContext(ctx, `INSERT INTO groups(group_id,name,description,member_count,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(group_id) DO UPDATE SET name=excluded.name,description=excluded.description,member_count=excluded.member_count,updated_at=excluded.updated_at,membership='member'`, g.ID, g.Name, description, g.MemberCount, now())
-	return err
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	at := now()
+	if _, err = tx.ExecContext(ctx, `INSERT INTO groups(group_id,name,description,member_count,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(group_id) DO UPDATE SET name=excluded.name,description=excluded.description,member_count=excluded.member_count,updated_at=excluded.updated_at,membership='member'`, g.ID, g.Name, description, g.MemberCount, at); err != nil {
+		return err
+	}
+	if _, err = tx.ExecContext(ctx, `INSERT INTO conversations(conversation_type,conversation_id,name,metadata_source,availability,first_discovered_at,updated_at) VALUES('group',?,?,'group_catalog','member',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=excluded.name,metadata_source='group_catalog',availability='member',updated_at=excluded.updated_at`, g.ID, g.Name, at, at); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
-func (s *Store) Put(ctx context.Context, m domain.Message) error {
-	if !s.allowed[m.GroupID] {
+func (s *Store) Put(ctx context.Context, m domain.Message) (err error) {
+	ref := m.Ref()
+	if !ref.Valid() {
+		return domain.Invalid("Typed conversation identity is required.")
+	}
+	counters := &s.groupIngestion
+	if ref.Type == domain.ConversationDirect {
+		counters = &s.directIngestion
+	}
+	counters.received.Add(1)
+	defer func() {
+		if err != nil {
+			counters.errors.Add(1)
+		}
+	}()
+	if !s.AllowsConversation(ref) {
+		counters.excluded.Add(1)
 		return nil
 	}
 	if m.ID == "" || m.SenderID == "" || m.SentAt.IsZero() {
@@ -142,7 +194,7 @@ func (s *Store) Put(ctx context.Context, m domain.Message) error {
 		return err
 	}
 	defer tx.Rollback()
-	result, err := tx.ExecContext(ctx, `INSERT OR IGNORE INTO messages(group_id,message_id,sender_id,sender_name,sent_at,received_at,text,reply_id,attachments,source) VALUES(?,?,?,?,?,?,?,?,?,?)`, m.GroupID, m.ID, m.SenderID, m.SenderName, m.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), now(), m.Text, m.ReplyTo, string(a), m.Source)
+	result, err := tx.ExecContext(ctx, `INSERT OR IGNORE INTO messages(group_id,conversation_type,message_id,sender_id,sender_name,sent_at,received_at,text,reply_id,attachments,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, ref.ID, ref.Type, m.ID, m.SenderID, m.SenderName, m.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), now(), m.Text, m.ReplyTo, string(a), m.Source)
 	if err != nil {
 		return err
 	}
@@ -159,14 +211,29 @@ func (s *Store) Put(ctx context.Context, m domain.Message) error {
 			return err
 		}
 	}
-	_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO collection_started VALUES(?,?)`, m.GroupID, now())
+	_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO collection_started(group_id,conversation_type,started_at) VALUES(?,?,?)`, ref.ID, ref.Type, now())
 	if err != nil {
 		return err
 	}
-	return tx.Commit()
+	var peerName *string
+	if ref.Type == domain.ConversationDirect && m.SenderID == ref.ID {
+		peerName = m.SenderName
+	}
+	if _, err = tx.ExecContext(ctx, `INSERT INTO conversations(conversation_type,conversation_id,name,metadata_source,availability,first_discovered_at,updated_at) VALUES(?,?,?,?,'observed',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=COALESCE(excluded.name,conversations.name),updated_at=excluded.updated_at`, ref.Type, ref.ID, peerName, m.Source, now(), now()); err != nil {
+		return err
+	}
+	err = tx.Commit()
+	if err == nil {
+		if inserted != 0 {
+			counters.inserted.Add(1)
+		} else {
+			counters.duplicates.Add(1)
+		}
+	}
+	return err
 }
 func (s *Store) Delete(ctx context.Context, groupID, messageID string) error {
-	return s.removeMessages(ctx, "group_id=? AND message_id=?", "record_deleted", groupID, messageID)
+	return s.removeMessages(ctx, "conversation_type='group' AND group_id=? AND message_id=?", "record_deleted", groupID, messageID)
 }
 func (s *Store) Retain(ctx context.Context) error {
 	if s.retention == 0 {
@@ -219,19 +286,23 @@ func (s *Store) Message(ctx context.Context, g, id string) (domain.Message, erro
 	if !s.Allowed(g) {
 		return domain.Message{}, &domain.Error{Code: "PERMISSION_DENIED", Message: "Group is outside the configured collection allowlist.", NextAction: domain.NextAction{Instruction: "Update the local collection allowlist if access is intended."}, Details: map[string]any{}}
 	}
-	return scanMessage(s.DB.QueryRowContext(ctx, "SELECT "+messageColumns+" FROM messages WHERE group_id=? AND message_id=?", g, id))
+	return scanMessage(s.DB.QueryRowContext(ctx, "SELECT "+messageColumns+" FROM messages WHERE conversation_type='group' AND group_id=? AND message_id=?", g, id))
 }
 
 type Search struct {
-	Query    string `json:"query"`
-	GroupID  string `json:"group_id,omitempty"`
-	SenderID string `json:"sender_id,omitempty"`
-	Since    string `json:"since,omitempty"`
-	Until    string `json:"until,omitempty"`
-	Limit    int    `json:"limit,omitempty"`
-	Cursor   string `json:"cursor,omitempty"`
+	General          bool   `json:"general,omitempty"`
+	ConversationType string `json:"conversation_type,omitempty"`
+	ConversationID   string `json:"conversation_id,omitempty"`
+	Query            string `json:"query"`
+	GroupID          string `json:"group_id,omitempty"`
+	SenderID         string `json:"sender_id,omitempty"`
+	Since            string `json:"since,omitempty"`
+	Until            string `json:"until,omitempty"`
+	Limit            int    `json:"limit,omitempty"`
+	Cursor           string `json:"cursor,omitempty"`
 }
 type cursor struct {
+	Kind        string `json:"k,omitempty"`
 	Fingerprint string `json:"f"`
 	Snapshot    int64  `json:"s"`
 	At          string `json:"a"`
@@ -331,20 +402,38 @@ func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *
 		}
 	}
 	clauses := []string{"messages_fts MATCH ?", "m.seq<=?"}
+	if !q.General {
+		clauses = append(clauses, "m.conversation_type='group'")
+	}
+	if q.General && ((q.ConversationType != "" && q.ConversationType != "group" && q.ConversationType != "direct") || (q.ConversationID != "" && q.ConversationType == "")) {
+		return nil, nil, "", cursor{}, domain.Invalid("A concrete conversation requires its type.")
+	}
+	if q.General && q.ConversationID != "" && !s.AllowsConversation(domain.ConversationRef{Type: q.ConversationType, ID: q.ConversationID}) {
+		return nil, nil, "", cursor{}, subscriptionPermission("Conversation is outside the collection policy.")
+	}
+
 	args := []any{query, c.Snapshot}
-	allowed := []string{}
-	for id := range s.allowed {
-		allowed = append(allowed, id)
+	if !s.policy.All {
+		permitted := []string{}
+		for ref, enabled := range s.policy.Selected {
+			if enabled {
+				permitted = append(permitted, "(m.conversation_type=? AND m.conversation_id=?)")
+				args = append(args, ref.Type, ref.ID)
+			}
+		}
+		if len(permitted) == 0 {
+			return []domain.SearchHit{}, nil, c.SnapshotAt, c, nil
+		}
+		clauses = append(clauses, "("+strings.Join(permitted, " OR ")+")")
 	}
-	if len(allowed) == 0 {
-		return []domain.SearchHit{}, nil, c.SnapshotAt, c, nil
+	if q.General && q.ConversationType != "" {
+		clauses = append(clauses, "m.conversation_type=?")
+		args = append(args, q.ConversationType)
 	}
-	placeholders := []string{}
-	for _, id := range allowed {
-		placeholders = append(placeholders, "?")
-		args = append(args, id)
+	if q.General && q.ConversationID != "" {
+		clauses = append(clauses, "m.conversation_id=?")
+		args = append(args, q.ConversationID)
 	}
-	clauses = append(clauses, "m.group_id IN ("+strings.Join(placeholders, ",")+")")
 	if q.GroupID != "" {
 		clauses = append(clauses, "m.group_id=?")
 		args = append(args, q.GroupID)
@@ -362,11 +451,15 @@ func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *
 		args = append(args, until.UTC().Format("2006-01-02T15:04:05.000000000Z"))
 	}
 	if c.At != "" {
-		clauses = append(clauses, "(m.sent_at<? OR (m.sent_at=? AND (m.group_id>? OR (m.group_id=? AND m.message_id>?))))")
-		args = append(args, c.At, c.At, c.Group, c.Group, c.ID)
+		clauses = append(clauses, "(m.sent_at<? OR (m.sent_at=? AND (m.conversation_type>? OR (m.conversation_type=? AND (m.group_id>? OR (m.group_id=? AND m.message_id>?))))))")
+		kind := c.Kind
+		if kind == "" {
+			kind = domain.ConversationGroup
+		}
+		args = append(args, c.At, c.At, kind, kind, c.Group, c.Group, c.ID)
 	}
 	args = append(args, q.Limit+1)
-	rows, err := s.DB.QueryContext(ctx, `SELECT m.group_id,m.message_id,m.sender_id,g.name,m.sender_name,m.sent_at,m.text FROM messages m JOIN messages_fts ON messages_fts.rowid=m.seq LEFT JOIN groups g ON g.group_id=m.group_id WHERE `+strings.Join(clauses, " AND ")+` ORDER BY m.sent_at DESC,m.group_id,m.message_id LIMIT ?`, args...)
+	rows, err := s.DB.QueryContext(ctx, `SELECT m.conversation_type,m.group_id,m.message_id,m.sender_id,g.name,m.sender_name,m.sent_at,m.text FROM messages m JOIN messages_fts ON messages_fts.rowid=m.seq LEFT JOIN conversations g ON g.conversation_type=m.conversation_type AND g.conversation_id=m.group_id WHERE `+strings.Join(clauses, " AND ")+` ORDER BY m.sent_at DESC,m.conversation_type,m.group_id,m.message_id LIMIT ?`, args...)
 	if err != nil {
 		return nil, nil, "", cursor{}, err
 	}
@@ -375,10 +468,11 @@ func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *
 	for rows.Next() {
 		var h domain.SearchHit
 		var ts, txt string
-		if err = rows.Scan(&h.GroupID, &h.ID, &h.SenderID, &h.GroupName, &h.SenderName, &ts, &txt); err != nil {
+		if err = rows.Scan(&h.Conversation.Type, &h.GroupID, &h.ID, &h.SenderID, &h.GroupName, &h.SenderName, &ts, &txt); err != nil {
 			rows.Close()
 			return nil, nil, "", cursor{}, err
 		}
+		h.Conversation.ID = h.GroupID
 		h.SentAt, err = time.Parse(time.RFC3339Nano, ts)
 		if err != nil {
 			rows.Close()
@@ -403,7 +497,8 @@ func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *
 		hits = hits[:q.Limit]
 		last := hits[len(hits)-1]
 		c.At = times[q.Limit-1]
-		c.Group = last.GroupID
+		c.Group = last.Conversation.ID
+		c.Kind = last.Conversation.Type
 		c.ID = last.ID
 		v, e := s.EncodeCursor(c)
 		if e != nil {
@@ -443,7 +538,8 @@ func (s *Store) ShortenPage(p *SearchPage, n int) error {
 	last := p.Hits[n-1]
 	c := p.continuation
 	c.At = last.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z")
-	c.Group = last.GroupID
+	c.Group = last.Conversation.ID
+	c.Kind = last.Conversation.Type
 	c.ID = last.ID
 	token, err := s.EncodeCursor(c)
 	if err != nil {

@@ -87,11 +87,33 @@ func (ln *listener) Group() <-chan model.GroupEvent                  { return ln
 func (ln *listener) CipherKey() <-chan string                        { return ln.ch.CipherKey }
 
 func (ln *listener) emitError(ctx context.Context, err error) {
+	ln.diagnostics.errors.Add(1)
 	select {
 	case <-ctx.Done():
 		return
 	case ln.ch.Error <- err:
+	}
+}
+
+// emitDurable applies bounded backpressure instead of overwriting message data.
+// Cancellation releases the producer during Stop; the collector records a gap
+// across reconnects because upstream replay completeness is not guaranteed.
+func emitDurable[T any](ctx context.Context, ch chan T, obj T, counters *diagnosticCounters) bool {
+	if ctx.Err() != nil {
+		return false
+	}
+	select {
+	case ch <- obj:
+		return true
 	default:
+		counters.backpressure.Add(1)
+	}
+	select {
+	case ch <- obj:
+		return true
+	case <-ctx.Done():
+		counters.cancelledEmissions.Add(1)
+		return false
 	}
 }
 

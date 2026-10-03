@@ -26,3 +26,15 @@ Current upstream main still points to d4ff65b460577b2557e70220b68d08ce1f7431b4. 
 - [Server-info parses the normalized response type and silently ignores wire error_code](https://github.com/amrakk/zcago/issues/5)
 - [Login and server-info ignore HTTP 401 and can return success for an unauthorized response](https://github.com/amrakk/zcago/issues/6)
 - [makeServerInfoRequest panics when transport fails without an HTTP response](https://github.com/amrakk/zcago/issues/7)
+
+## Ingestion diagnostics
+
+`groupMessageOrUndo.UnmarshalJSON` now returns malformed-message decoding errors rather than accepting a nil message/undo pair. Synthetic regression tests cover valid messages, numeric timestamps rejected by upstream string types, malformed quote IDs and missing identifiers. This exposes rejection without guessing unsupported wire conversions.
+
+An optional `Diagnostics()` extension reports per-listener atomic counters for incoming frames, ignored text frames, unmatched commands, key exchanges, direct/group/replay frames, decoded messages, successfully queued live messages and errors (direct/group live and separately attributed mixed replay failures). It contains no payloads, account/message IDs, URLs or key values. Replay envelope shape is classified as other=0, wrapped=1, unwrapped-group=2 or unwrapped-user=3. The application logs snapshots every 15 seconds to its existing private rotating sink. Successful enqueue does not prove persistence or upstream completeness.
+
+Raw WebSocket frames now wait for space in the bounded receive queue rather than evicting older frames. Listener message, replay, undo and cipher-key channels use cancellable backpressure; parsing errors also wait for a consumer. Nonessential reaction/typing/status notifications retain the upstream best-effort policy. Listener diagnostics count queue pressure and cancelled emissions. Shutdown releases blocked producers. Synthetic burst tests verify frame/message ordering and cancellation; backpressure does not guarantee recovery of messages upstream withheld or lost during disconnection.
+
+## Direct and mixed replay ingestion
+
+The direct-message union decoder now returns invalid JSON/type/missing-ID failures and clears reused values. Mixed old-message responses emit both direct and group batches rather than discarding the direct array. Batch type remains homogeneous for existing consumers. Regression tests cover mixed responses, invalid timestamps/quotes, missing IDs and message-to-undo reuse.

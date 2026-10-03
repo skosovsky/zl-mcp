@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/skosovsky/zl-mcp/docs/contracts"
+	"github.com/skosovsky/zl-mcp/internal/domain"
 	"net"
 	"os"
 	"path/filepath"
@@ -18,7 +19,9 @@ type Config struct {
 		TokenFile string `toml:"token_file"`
 	} `toml:"mcp"`
 	Collection struct {
-		GroupIDs []string `toml:"group_ids"`
+		GroupIDs      []string                 `toml:"group_ids"`
+		Mode          string                   `toml:"mode"`
+		Conversations []domain.ConversationRef `toml:"conversations"`
 	} `toml:"collection"`
 	Permissions struct {
 		AllowJoin bool `toml:"allow_join"`
@@ -115,15 +118,52 @@ func Load(path string) (Config, error) {
 		}
 		seen[id] = true
 	}
+	if err := c.validateCollection(); err != nil {
+		return c, err
+	}
 	return c, nil
 }
 func (c Config) Allowed(id string) bool {
-	for _, v := range c.Collection.GroupIDs {
-		if v == id {
-			return true
-		}
+	return c.Policy().Allows(domain.ConversationRef{Type: domain.ConversationGroup, ID: id})
+}
+
+func (c Config) Policy() domain.CollectionPolicy {
+	p := domain.CollectionPolicy{All: c.Collection.Mode == "all", Selected: map[domain.ConversationRef]bool{}}
+	for _, id := range c.Collection.GroupIDs {
+		p.Selected[domain.ConversationRef{Type: domain.ConversationGroup, ID: id}] = true
 	}
-	return false
+	for _, ref := range c.Collection.Conversations {
+		p.Selected[ref] = true
+	}
+	return p
+}
+
+func (c Config) validateCollection() error {
+	if c.Collection.Mode == "" {
+		if c.Collection.Conversations != nil {
+			return fmt.Errorf("collection.conversations requires an explicit mode")
+		}
+		return nil // Existing configs, including an empty group allowlist, keep their meaning.
+	}
+	if c.Collection.GroupIDs != nil {
+		return fmt.Errorf("collection.mode cannot be combined with legacy group_ids")
+	}
+	args := map[string]any{"mode": c.Collection.Mode}
+	if c.Collection.Conversations != nil {
+		refs := make([]any, 0, len(c.Collection.Conversations))
+		for _, r := range c.Collection.Conversations {
+			refs = append(refs, map[string]any{"type": r.Type, "id": r.ID})
+		}
+		args["conversations"] = refs
+	}
+	s, err := contracts.Compile("collection_policy", "input")
+	if err != nil {
+		return err
+	}
+	if err = s.Validate(args); err != nil {
+		return fmt.Errorf("invalid collection policy: %w", err)
+	}
+	return nil
 }
 func (c Config) Prepare() error {
 	if err := os.MkdirAll(c.StateDir, 0700); err != nil {

@@ -112,6 +112,8 @@ func (ln *listener) addRequestID(p *WSPayload) {
 // ----------------------------------------
 
 type WSMessage[T any] struct {
+	// DecodeShape is a safe classification of the decoded JSON envelope.
+	DecodeShape  uint    `json:"-"`
 	Key          *string `json:"key"`
 	Encrypt      uint    `json:"encrypt"`
 	ErrorCode    int     `json:"error_code"`
@@ -122,7 +124,9 @@ type WSMessage[T any] struct {
 type BaseWSMessage = WSMessage[string]
 
 func (ln *listener) handleWebSocketMessage(ctx context.Context, msg websocketx.Message) {
+	ln.diagnostics.frames.Add(1)
 	if msg.Type != websocketx.BinaryMessage {
+		ln.diagnostics.nonBinary.Add(1)
 		return
 	}
 
@@ -132,6 +136,9 @@ func (ln *listener) handleWebSocketMessage(ctx context.Context, msg websocketx.M
 		return
 	}
 
+	ln.diagnostics.lastVersion.Store(uint64(version))
+	ln.diagnostics.lastCommand.Store(uint64(cmd))
+	ln.diagnostics.lastSubcommand.Store(uint64(subCMD))
 	var parsed BaseWSMessage
 	if err := json.Unmarshal(data, &parsed); err != nil {
 		ln.emitError(ctx, errs.WrapZCA("failed to parse message JSON", "listener.handleWebSocketMessage", err))

@@ -1,6 +1,7 @@
 package contracts
 
 import (
+	"encoding/base64"
 	"strings"
 	"testing"
 )
@@ -63,7 +64,9 @@ func TestEventsInputsRejectProtocolAndFilterAmbiguity(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, ttl := range []any{nil, float64(60000), float64(59999), "forever"} {
-		args := map[string]any{"name": "zalo.message.created", "arguments": map[string]any{"group_id": "group"}, "delivery": map[string]any{"mode": "webhook", "url": "https://callback.example/events", "secret": "whsec_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}, "ttlMs": ttl, "cursor": nil}
+		// Synthetic zero bytes, constructed at runtime; never a receiver credential.
+		secret := "whsec_" + base64.StdEncoding.EncodeToString(make([]byte, 32))
+		args := map[string]any{"name": "zalo.message.created", "arguments": map[string]any{"group_id": "group"}, "delivery": map[string]any{"mode": "webhook", "url": "https://callback.example/events", "secret": secret}, "ttlMs": ttl, "cursor": nil}
 		// Act.
 		err := schema.Validate(args)
 		// Assert.

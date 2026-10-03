@@ -33,6 +33,16 @@ CI runs these checks on Linux and native macOS, and builds without CGO for macOS
 
 The test suite uses temporary directories, synthetic upstreams, and local HTTP/TLS receivers. It covers search and context, contract validation, permissions and locking, service shutdown and restart, authentication-required state, event delivery retries, subscription boundaries, cancellation, and log rotation. These checks do not require Zalo credentials or an active account and do not run model evals.
 
+Conversation tests cover direct/group identity collisions, incoming/self normalization, mixed replay, discovery, policy reduction, migration boundaries, both Events profiles and typed full-text resources. The bounded socket/listener queues apply cancellable backpressure to message data rather than evicting it; synthetic burst tests cover this path.
+
+Run the isolated corpus load check separately:
+
+```sh
+go test ./internal/storage -run '^$' -bench BenchmarkManyConversations -benchtime=3x -count=1
+```
+
+It persists 8,000 synthetic messages in 4,000 conversations through the production Put path and checks catalogue pagination, aggregate status, search with coverage and context. Report timings as measurements of the machine and build, not as a fixed SLA. No live Zalo account or installed state is used.
+
 The synthetic fixture command and `docs/evals/fixtures.json` support isolated development. Some unit tests also read the project skill files, so keep these fixtures and references when removing generated evaluation output. Optional model-evaluation scripts require a separate explicit run; they are not CI acceptance checks.
 
 ## Dependency maintenance
@@ -48,3 +58,8 @@ Before publication, validate a fresh checkout with the same application and nest
 ## Secret scanning
 
 Before publication, scan the complete Git history with `gitleaks git --config .gitleaks.toml --redact .`. The configuration extends default rules and excludes only the public upstream protocol constant and fixed synthetic regression key in their specific source files. Never add an account credential to these exceptions.
+
+Webhook tests construct synthetic signing keys from test bytes at runtime. Avoid
+embedding complete `whsec_` tokens in fixtures: GitHub can classify Standard Webhooks
+test values as Stripe signing secrets. Inspect an alert's source and provenance
+before resolving it as a false positive; real exposed credentials require revocation.

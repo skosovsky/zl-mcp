@@ -44,10 +44,23 @@ Events require a client that implements the pinned `2026-07-28` webhook profile,
 ## Verify the connection
 
 1. Call `zalo_get_status` with no arguments. A signed-in, connected collector should report `authenticated=true` and `collector_state=connected`.
-2. Call `zalo_list_groups` and select the IDs you want to collect. Add them to `collection.group_ids` in the private config and restart the service.
-3. After a message arrives in a selected group, search for a distinctive word with `zalo_search_messages` and inspect a result with `zalo_get_message_context`.
+2. Read `zalo://collection` to confirm the mode and counts by type. Call `zalo_list_conversations` for discovered dialogues; `zalo_list_groups` remains a group catalogue view. Configure explicit `collection.mode = "all"` or typed selected entries as described in [conversation collection](conversations.md), then restart the service.
+3. Search a distinctive word with `zalo_search_conversation_messages` and inspect a hit with `zalo_get_conversation_message_context`, preserving both its conversation type and ID. Legacy `zalo_search_messages`/`zalo_get_message_context` remain group-only. An old sent_at does not exclude a record recovered on first insertion after subscription activation.
 4. Read `zalo://capabilities` for current capabilities and `zalo://events/diagnostics` for delivery queue diagnostics.
 
-An empty allowlist means no collection. An empty corpus is not a failed MCP connection. During `auth_required` or reconnection, saved messages remain readable; collection resumes only when the upstream is available. Status and gap information describe observed coverage, not a complete Zalo archive.
+An empty selected policy means no collection; `all` dynamically includes newly discovered conversations. An empty corpus is not a failed MCP connection. During `auth_required` or reconnection, saved messages remain readable; collection resumes only when the upstream is available. Status and gap information describe observed coverage, not a complete Zalo archive.
 
 Optional [skills](skills.md) provide research and event-processing instructions after the relevant client capabilities are available.
+
+## Conversation Events
+
+Discovery includes the additive `zalo.conversation.message.created` version 1 and unchanged group-only `zalo.message.created`. Subscribe with `arguments: {"scope":"all"}`, `{"scope":"direct"}`, `{"scope":"group"}`, or `{"scope":"conversation","conversation_type":"direct","conversation_id":"PEER_ID"}`. Supply the standard delivery settings through the trusted receiver; scopes are always limited by the current collection policy. Existing group subscriptions do not expand after a collection-mode change.
+
+The new payload includes typed identity, message ID, author, time, at most 2048 Unicode code points, and a full-text URI when truncated. Both profiles use the same verification, signature, persistence, retry and cancellation rules in the [Events contract](contracts/events.md). Receiver acceptance and an agent notification remain separately verifiable outcomes.
+
+For migration, activate the new all-scope subscription with `ttlMs: null`, then
+cancel the legacy group subscription by its ID. Obtain delivery settings from the
+trusted client integration rather than copying credentials into documentation or
+chat. Handle overlapping group deliveries by event ID and the agreed processing
+rule. Previously stored messages remain available through reads and are not sent
+automatically. See [subscription migration](conversations.md#replacing-a-legacy-group-subscription).

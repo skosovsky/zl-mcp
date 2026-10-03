@@ -1,0 +1,110 @@
+{
+  "type": "object",
+  "properties": {
+    "conversations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "conversation_type": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "group"
+            ]
+          },
+          "conversation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "metadata_source": {
+            "type": "string"
+          },
+          "availability": {
+            "type": "string",
+            "enum": [
+              "member",
+              "unknown",
+              "observed"
+            ]
+          },
+          "first_discovered_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "collection_enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "conversation_type",
+          "conversation_id",
+          "name",
+          "metadata_source",
+          "availability",
+          "first_discovered_at",
+          "updated_at",
+          "collection_enabled"
+        ],
+        "additionalProperties": false,
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      }
+    },
+    "has_more": {
+      "type": "boolean"
+    },
+    "next_cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "catalog_complete": {
+      "const": false
+    },
+    "catalog_sources": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "group_catalog",
+          "live",
+          "replay",
+          "stored_message"
+        ]
+      }
+    },
+    "empty_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "no_discovered_conversations",
+        "no_matching_conversations",
+        null
+      ]
+    }
+  },
+  "required": [
+    "conversations",
+    "has_more",
+    "next_cursor",
+    "catalog_complete",
+    "catalog_sources",
+    "empty_reason"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

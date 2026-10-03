@@ -128,7 +128,7 @@ func run() error {
 		if e != nil {
 			return e
 		}
-		store, e := storage.Open(ctx, filepath.Join(c.StateDir, "messages.sqlite"), c.Collection.GroupIDs, c.Storage.RetentionDays)
+		store, e := storage.OpenWithPolicy(ctx, filepath.Join(c.StateDir, "messages.sqlite"), c.Policy(), c.Storage.RetentionDays)
 		if e != nil {
 			return e
 		}

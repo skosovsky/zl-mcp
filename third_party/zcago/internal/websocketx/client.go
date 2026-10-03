@@ -222,15 +222,8 @@ func (c *client) shutdown(ci CloseInfo, sendCloseFrame bool) {
 func (c *client) handleMsg(m Message) {
 	select {
 	case c.msgChan <- m:
-	default:
-		select { // drop oldest
-		case <-c.msgChan:
-		default:
-		}
-		select { // retry once, non-blocking
-		case c.msgChan <- m:
-		default:
-		}
+	case <-c.done:
+	case <-c.connCtx.Done():
 	}
 }
 
