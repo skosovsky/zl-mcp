@@ -127,7 +127,8 @@ func (s *Store) migrate(ctx context.Context) error {
 	if err = s.migrateSending(ctx); err != nil {
 		return err
 	}
-	return s.migrateIncoming(ctx)
+	if err=s.migrateIncoming(ctx);err!=nil {return err}
+	return s.migrateContacts(ctx)
 }
 func (s *Store) BindAccount(ctx context.Context, account string) error {
 	h := sha256.Sum256([]byte(account))
@@ -233,7 +234,7 @@ func (s *Store) Put(ctx context.Context, m domain.Message) (err error) {
 	if ref.Type == domain.ConversationDirect && m.SenderID == ref.ID {
 		peerName = m.SenderName
 	}
-	if _, err = tx.ExecContext(ctx, `INSERT INTO conversations(conversation_type,conversation_id,name,metadata_source,availability,first_discovered_at,updated_at) VALUES(?,?,?,?,'observed',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=COALESCE(excluded.name,conversations.name),updated_at=excluded.updated_at`, ref.Type, ref.ID, peerName, m.Source, now(), now()); err != nil {
+	if _, err = tx.ExecContext(ctx, `INSERT INTO conversations(conversation_type,conversation_id,name,metadata_source,availability,first_discovered_at,updated_at) VALUES(?,?,?,?,'observed',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=COALESCE(excluded.name,conversations.name),availability=CASE WHEN excluded.conversation_type='direct' THEN 'observed' ELSE conversations.availability END,updated_at=excluded.updated_at`, ref.Type, ref.ID, peerName, m.Source, now(), now()); err != nil {
 		return err
 	}
 	err = tx.Commit()

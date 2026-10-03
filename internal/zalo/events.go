@@ -41,6 +41,7 @@ func (c *Client) listenConversations(ctx context.Context, onMessage func(domain.
 	defer ln.Stop()
 	diagnostics := time.NewTicker(15 * time.Second)
 	defer diagnostics.Stop()
+	pager := newReplayPager(includeDirect)
 	for {
 		select {
 		case <-diagnostics.C:
@@ -79,6 +80,9 @@ func (c *Client) listenConversations(ctx context.Context, onMessage func(domain.
 					return e
 				}
 			}
+			if e := pager.Continue(ctx, ln, old.Replay); e != nil {
+				return listenerFailure(e, "replay continuation failed")
+			}
 		case undo := <-ln.Undo():
 			kind := domain.ConversationDirect
 			if undo.IsGroup {
@@ -96,6 +100,7 @@ func (c *Client) listenConversations(ctx context.Context, onMessage func(domain.
 		case <-ln.SeenMessages():
 		case <-ln.UploadAttachment():
 		case <-ln.CipherKey():
+			pager = newReplayPager(includeDirect)
 			types := []model.ThreadType{model.ThreadTypeGroup}
 			if includeDirect {
 				types = append(types, model.ThreadTypeUser)

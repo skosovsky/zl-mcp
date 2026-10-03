@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_attempted",
+        "running",
+        "exhausted",
+        "partial",
+        "unsupported"
+      ]
+    },
+    "last_attempt_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "last_success_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "observed_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "permitted_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "stop_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        null,
+        "short_page",
+        "source_unsupported",
+        "auth_required",
+        "upstream_unavailable",
+        "cancelled_or_deadline",
+        "oversized_page",
+        "storage_or_metadata_error",
+        "repeated_page",
+        "page_limit"
+      ]
+    }
+  },
+  "required": [
+    "status",
+    "last_attempt_at",
+    "last_success_at",
+    "observed_count",
+    "permitted_count",
+    "stop_reason"
+  ],
+  "additionalProperties": false
+}

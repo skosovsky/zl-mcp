@@ -45,6 +45,31 @@
           },
           "collection_enabled": {
             "type": "boolean"
+          },
+          "aliases": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          "friendship": {
+            "type": "string",
+            "enum": [
+              "friend",
+              "non_friend",
+              "unknown"
+            ]
+          },
+          "has_stored_messages": {
+            "type": "boolean"
+          },
+          "metadata_sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -81,7 +106,8 @@
           "group_catalog",
           "live",
           "replay",
-          "stored_message"
+          "stored_message",
+          "contacts_catalog"
         ]
       }
     },

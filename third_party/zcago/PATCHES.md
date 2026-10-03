@@ -92,3 +92,22 @@ This is a reproduced decoder defect and a plausible explanation of the live
 quoted-send acknowledgement. The actual response was not retained, so it cannot
 prove this was the exact cause of that operation. Its `unknown` ledger status must
 not be rewritten or retried automatically based on this patch.
+
+## Bounded offline queue continuation
+
+The installed native client static-code review found that an offline response with
+`more` requests the same queue again using `first=false` and `lastActionId`.
+Previously this dependency discarded these response fields and only exposed the
+first-page request. The response model now retains raw continuation metadata,
+validates boolean/0-or-1 flags and decimal action IDs without float conversion,
+and attaches it once to the final homogeneous batch of a response. Queue origin
+is preserved independently of the direct/group message arrays. Malformed
+continuation metadata does not discard otherwise valid messages.
+
+`RequestReplayPage` is an optional concrete-listener extension; existing
+`RequestOldMessages` and the public Listener interface remain compatible. The
+application continues only after persistence and bounds each queue by pages,
+messages and repeated cursor detection. Tests cover mixed and empty batches,
+large numeric IDs, malformed metadata, encoded request headers and the first
+flag. This is offline queue continuation, not an arbitrary historical-message
+API or a completeness guarantee. Installed live recovery remains unverified.

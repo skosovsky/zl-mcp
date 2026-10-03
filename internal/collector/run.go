@@ -84,6 +84,11 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 	if e = refresh(); e != nil {
 		_ = set("last_error", map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": "Group catalog refresh failed."})
 	}
+	if source, ok := client.(domain.ContactSource); ok {
+		done := make(chan struct{})
+		go func() { defer close(done); contactsLoop(runCtx, store, source) }()
+		defer func() { cancel(); <-done }()
+	}
 	heartbeatDone := make(chan struct{})
 	go func() {
 		defer close(heartbeatDone)

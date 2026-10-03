@@ -105,6 +105,25 @@ func TestConversationMCPSearchContextCatalogueAndFullText(t *testing.T) {
 	if observed["mode"] != "all" || counts["direct"] != float64(1) || counts["group"] != float64(1) || observed["catalog_complete"] != false {
 		t.Fatal("collection diagnostics mismatch")
 	}
+	// Act: metadata-only discovery must work through the actual MCP schemas.
+	if _, err = store.PutContacts(ctx, []domain.Contact{{ID: "directory-only", Name: "Đặng", Aliases: []string{"Hoài An"}, Friendship: "unknown"}}); err != nil {
+		t.Fatal(err)
+	}
+	directory := call("zalo_list_conversations", map[string]any{"query": "hoai an"})
+	details := call("zalo_get_conversation", map[string]any{"conversation_type": "direct", "conversation_id": "directory-only"})
+	diagnostics, err := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: "zalo://catalog/diagnostics"})
+	// Assert
+	if err != nil {
+		t.Fatal(err)
+	}
+	var catalogStatus map[string]any
+	if err = json.Unmarshal([]byte(diagnostics.Contents[0].Text), &catalogStatus); err != nil {
+		t.Fatal(err)
+	}
+	entries := directory["conversations"].([]any)
+	if len(entries) != 1 || entries[0].(map[string]any)["has_stored_messages"] != false || details["conversation"].(map[string]any)["availability"] != "unknown" || catalogStatus["status"] != "not_attempted" {
+		t.Fatal("metadata-only MCP contract failed")
+	}
 	// Act / Assert: a general cursor is bound to the original filters.
 	invalid, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_search_conversation_messages", Arguments: map[string]any{"query": "synthetic", "conversation_type": "group", "cursor": first["next_cursor"]}})
 	if err != nil || !invalid.IsError {

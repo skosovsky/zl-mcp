@@ -45,13 +45,19 @@ func (ln *listener) SendWS(ctx context.Context, p WSPayload, requireID bool) err
 }
 
 func (ln *listener) RequestOldMessages(ctx context.Context, tt model.ThreadType, lastMsgID *string) error {
+	return ln.RequestReplayPage(ctx, tt, true, lastMsgID)
+}
+
+// RequestReplayPage continues the existing offline queue on the same socket.
+// The lastId cursor is the response lastActionId, not a global message ID.
+func (ln *listener) RequestReplayPage(ctx context.Context, tt model.ThreadType, first bool, lastActionID *string) error {
 	cmd := uint16(510)
 	if tt == model.ThreadTypeGroup {
 		cmd = 511
 	}
 	data := map[string]any{
-		"first":  true,
-		"lastId": lastMsgID,
+		"first":  first,
+		"lastId": lastActionID,
 		"preIds": []string{},
 	}
 

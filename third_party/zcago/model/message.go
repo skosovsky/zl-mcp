@@ -84,6 +84,16 @@ func (m GroupMessage) IsSelf() bool     { return m.isSelf }
 type OldMessages struct {
 	Messages   []Message
 	ThreadType ThreadType
+	// Replay is present only on the last homogeneous batch of one response.
+	Replay *ReplayContinuation
+}
+
+type ReplayContinuation struct {
+	Queue        ThreadType
+	More         *bool
+	LastActionID string
+	Valid        bool
+	MessageCount int
 }
 
 func NewOldMessage(messages []Message, threadType ThreadType) OldMessages {

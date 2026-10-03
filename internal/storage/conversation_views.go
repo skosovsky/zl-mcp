@@ -8,7 +8,6 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"net/url"
 	"sort"
-	"strings"
 )
 
 func ConversationMessageURI(ref domain.ConversationRef, id string) string {
@@ -156,7 +155,7 @@ func (s *Store) Conversations(ctx context.Context, kind, query string, limit int
 			return nil, domain.Invalid("Cursor filters differ from the original query.")
 		}
 	}
-	rows, err := s.DB.QueryContext(ctx, "SELECT conversation_type,conversation_id,name,metadata_source,availability,first_discovered_at,updated_at FROM conversations ORDER BY conversation_type,conversation_id")
+	rows, err := s.DB.QueryContext(ctx, directorySelect+" ORDER BY c.conversation_type,c.conversation_id")
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +166,9 @@ func (s *Store) Conversations(ctx context.Context, kind, query string, limit int
 		var ref domain.ConversationRef
 		var name *string
 		var source, availability, first, updated string
-		if err = rows.Scan(&ref.Type, &ref.ID, &name, &source, &availability, &first, &updated); err != nil {
+		var aliasesJSON, friendship string
+		var hasMessages bool
+		if err = rows.Scan(&ref.Type, &ref.ID, &name, &source, &availability, &first, &updated, &aliasesJSON, &friendship, &hasMessages); err != nil {
 			rows.Close()
 			return nil, err
 		}
@@ -176,17 +177,25 @@ func (s *Store) Conversations(ctx context.Context, kind, query string, limit int
 		}
 		discovered++
 		sources[source] = true
+		aliases, metadataSources, err := directoryMetadata(aliasesJSON, source)
+		if err != nil {
+			rows.Close()
+			return nil, err
+		}
+		for _, metadataSource := range metadataSources {
+			sources[metadataSource] = true
+		}
 		if kind != "" && kind != ref.Type {
 			continue
 		}
-		if query != "" && (name == nil || !strings.Contains(folded(*name), folded(query))) {
+		if query != "" && !directoryNameMatches(name, aliases, query) {
 			continue
 		}
 		if ref.Type < c.Kind || (ref.Type == c.Kind && ref.ID <= c.ID) {
 			continue
 		}
 		if len(values) <= limit {
-			values = append(values, map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "name": name, "metadata_source": source, "availability": availability, "first_discovered_at": first, "updated_at": updated, "collection_enabled": true})
+			values = append(values, map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "name": name, "metadata_source": source, "availability": availability, "first_discovered_at": first, "updated_at": updated, "collection_enabled": true, "aliases": aliases, "friendship": friendship, "has_stored_messages": hasMessages, "metadata_sources": metadataSources})
 		}
 	}
 	err = rows.Err()
@@ -229,7 +238,9 @@ func (s *Store) Conversation(ctx context.Context, ref domain.ConversationRef) (m
 	}
 	var name *string
 	var source, availability, first, updated string
-	err := s.DB.QueryRowContext(ctx, "SELECT name,metadata_source,availability,first_discovered_at,updated_at FROM conversations WHERE conversation_type=? AND conversation_id=?", ref.Type, ref.ID).Scan(&name, &source, &availability, &first, &updated)
+	var aliasesJSON, friendship string
+	var hasMessages bool
+	err := s.DB.QueryRowContext(ctx, directorySelect+" WHERE c.conversation_type=? AND c.conversation_id=?", ref.Type, ref.ID).Scan(&ref.Type, &ref.ID, &name, &source, &availability, &first, &updated, &aliasesJSON, &friendship, &hasMessages)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +248,11 @@ func (s *Store) Conversation(ctx context.Context, ref domain.ConversationRef) (m
 	if err != nil {
 		return nil, err
 	}
-	return map[string]any{"conversation": map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "name": name, "metadata_source": source, "availability": availability, "first_discovered_at": first, "updated_at": updated, "collection_enabled": true}, "coverage": coverage, "catalog_complete": false}, nil
+	aliases, sources, err := directoryMetadata(aliasesJSON, source)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"conversation": map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "name": name, "metadata_source": source, "availability": availability, "first_discovered_at": first, "updated_at": updated, "collection_enabled": true, "aliases": aliases, "friendship": friendship, "has_stored_messages": hasMessages, "metadata_sources": sources}, "coverage": coverage, "catalog_complete": false}, nil
 }
 
 func (s *Store) CollectionStatus(ctx context.Context) (map[string]any, error) {

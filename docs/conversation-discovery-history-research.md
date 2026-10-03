@@ -71,3 +71,14 @@ Historical import needs an explicit Events decision before implementation. Curre
 - [Archived subset API](https://github.com/RFS-ADRENO/zca-js/blob/dadfef18bcac53537741855c99f084152da1fad9/src/apis/getArchivedChatList.ts).
 - [Pinned Go API inventory](https://github.com/amrakk/zcago/blob/d4ff65b460577b2557e70220b68d08ce1f7431b4/apis.go).
 
+## Installed native-client static-code follow-up
+
+After the internet/source review, the installed Zalo PC static bundle was examined read-only: version 26.9.10, build 26.9.10.2959; ASAR SHA-256 `0ba19f3f0f96dcce45493e7e4f259d7599836ec3b01543c2ae33d7ea4bf76777`. This is executable-client implementation evidence, not a documented public API. No runtime/session files or native message database were accessed; no login, conversation opening, settings change or second listener was performed. Extracted temporary static files are outside the repository; vendor source is not included here.
+
+The bundle contains a local Strangers predicate for a direct conversation based on friendship/OA status, whether the account has responded, and conversation display state, alongside a setting controlling direct display of stranger messages. This supports treating Strangers as a conversation category, not assuming a separately missing message stream. It does not prove which stream our particular missing conversation uses or historical availability.
+
+The client has `/api/preloadconvers/get-last-msgs`, with a mapping of already known thread IDs/local message IDs and the existing client identifier. This is a bounded preview candidate; it is not a complete inbox enumerator or per-peer historical paging API. Its response, permissions and request semantics must be established before implementing an adapter. Do not send a request that changes read/seen state as a discovery shortcut.
+
+Group cloud paths include `/api/cm/getrecentv2` and `/api/cm/getoldv2`, using the group-cloud domain. No direct-cloud counterpart was established. Static presence of an endpoint does not prove it currently succeeds; the native bundle also contains the previously failing old group-history endpoint. Native polling/socket logic keeps action IDs and backup queue state beyond the minimal first replay used by our adapter. This suggests a synchronization investigation, not an assertion that changing `lastId` alone recovers all missing personal history.
+
+Next protocol step: establish the target peer identity and compare supported catalogue/replay/preview/sync sources through the existing authenticated service, with bounded reads and retained continuation evidence. Keep live non-friend ingestion acceptance separate from historical recovery.

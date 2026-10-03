@@ -94,6 +94,9 @@ func NewWithControl(store *storage.Store, backend ControlPort) (*mcp.Server, err
 	if err := s.addDeliveryDiagnostics(server); err != nil {
 		return nil, err
 	}
+	if err := s.addCatalogDiagnostics(server); err != nil {
+		return nil, err
+	}
 	server.AddResource(&mcp.Resource{URI: "zalo://capabilities", Name: "Zalo local corpus capabilities", MIMEType: "text/plain"}, func(ctx context.Context, r *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		allowed, err := s.Store.AllowRead(ctx)
 		if err != nil {

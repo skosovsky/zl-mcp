@@ -25,8 +25,10 @@ func (ln *listener) router(ctx context.Context, version, cmd, sub uint, body Bas
 	case "1_502_0":
 		ln.handleMessagesStatus(ctx, body)
 
-	case "1_510_1", "1_511_1":
-		ln.handleOldMessages(ctx, body)
+	case "1_510_1":
+		ln.handleOldMessagesFor(ctx, body, model.ThreadTypeUser)
+	case "1_511_1":
+		ln.handleOldMessagesFor(ctx, body, model.ThreadTypeGroup)
 
 	case "1_521_0":
 		ln.handleGroupMessages(ctx, body)
@@ -130,6 +132,10 @@ func (ln *listener) handleMessages(ctx context.Context, body BaseWSMessage) {
 }
 
 func (ln *listener) handleOldMessages(ctx context.Context, body BaseWSMessage) {
+	ln.handleOldMessagesFor(ctx, body, model.ThreadTypeUser)
+}
+
+func (ln *listener) handleOldMessagesFor(ctx context.Context, body BaseWSMessage, queue model.ThreadType) {
 	ln.diagnostics.replayFrames.Add(1)
 	eventData, err := decodeEventData[events.OldMessagesEventData](body, ln.cipherKey)
 	if err != nil {
@@ -144,6 +150,8 @@ func (ln *listener) handleOldMessages(ctx context.Context, body BaseWSMessage) {
 	ln.diagnostics.replayUsers.Add(uint64(len(eventData.Data.Msgs)))
 	ln.diagnostics.decodedDirect.Add(uint64(len(eventData.Data.Msgs)))
 	uid := ln.sc.UID()
+	more, actionID, valid := eventData.Data.ContinuationMetadata()
+	metadata := &model.ReplayContinuation{Queue: queue, More: more, LastActionID: actionID, Valid: valid, MessageCount: len(eventData.Data.Msgs) + len(eventData.Data.GroupMsgs)}
 	// Each envelope remains homogeneous for existing consumers, while a mixed
 	// server response emits both batches rather than discarding direct messages.
 	if len(eventData.Data.GroupMsgs) > 0 {
@@ -152,7 +160,11 @@ func (ln *listener) handleOldMessages(ctx context.Context, body BaseWSMessage) {
 		for _, msg := range eventData.Data.GroupMsgs {
 			messages = append(messages, model.NewGroupMessage(uid, msg))
 		}
-		if !emitDurable(ctx, ln.ch.OldMessages, model.NewOldMessage(messages, model.ThreadTypeGroup), &ln.diagnostics) {
+		batch := model.NewOldMessage(messages, model.ThreadTypeGroup)
+		if len(eventData.Data.Msgs) == 0 {
+			batch.Replay = metadata
+		}
+		if !emitDurable(ctx, ln.ch.OldMessages, batch, &ln.diagnostics) {
 			return
 		}
 	}
@@ -161,7 +173,13 @@ func (ln *listener) handleOldMessages(ctx context.Context, body BaseWSMessage) {
 		for _, msg := range eventData.Data.Msgs {
 			messages = append(messages, model.NewUserMessage(uid, msg))
 		}
-		if !emitDurable(ctx, ln.ch.OldMessages, model.NewOldMessage(messages, model.ThreadTypeUser), &ln.diagnostics) {
+		kind := model.ThreadTypeUser
+		if len(messages) == 0 {
+			kind = queue
+		}
+		batch := model.NewOldMessage(messages, kind)
+		batch.Replay = metadata
+		if !emitDurable(ctx, ln.ch.OldMessages, batch, &ln.diagnostics) {
 			return
 		}
 	}
