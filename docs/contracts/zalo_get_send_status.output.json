@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "recipient_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "sending",
+        "sent",
+        "failed",
+        "unknown"
+      ]
+    },
+    "message_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "reason": {
+      "enum": [
+        null,
+        "interrupted",
+        "upstream_rejected",
+        "upstream_ambiguous",
+        "quote_unavailable",
+        "not_authenticated",
+        "permission_denied"
+      ]
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "retry_safe": {
+      "const": false
+    }
+  },
+  "required": [
+    "request_id",
+    "recipient_id",
+    "status",
+    "message_id",
+    "reason",
+    "updated_at",
+    "retry_safe"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "sent"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "message_id": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ]
+}

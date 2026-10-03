@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "name": {
+      "const": "zalo.conversation.message.created.v2"
+    },
+    "arguments": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": [
+            "all",
+            "direct",
+            "group",
+            "conversation"
+          ]
+        },
+        "conversation_type": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "group"
+          ]
+        },
+        "conversation_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "direction": {
+          "enum": [
+            "incoming",
+            "outgoing",
+            "all"
+          ],
+          "default": "all"
+        },
+        "first_incoming_only": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "scope"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "scope": {
+              "enum": [
+                "all",
+                "direct",
+                "group"
+              ]
+            }
+          },
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "conversation_type"
+                ]
+              },
+              {
+                "required": [
+                  "conversation_id"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "properties": {
+            "scope": {
+              "const": "conversation"
+            }
+          },
+          "required": [
+            "conversation_type",
+            "conversation_id"
+          ]
+        }
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "first_incoming_only": {
+                "const": true
+              }
+            },
+            "required": [
+              "first_incoming_only"
+            ]
+          },
+          "then": {
+            "required": [
+              "direction"
+            ],
+            "properties": {
+              "direction": {
+                "const": "incoming"
+              }
+            },
+            "oneOf": [
+              {
+                "properties": {
+                  "scope": {
+                    "const": "direct"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "scope": {
+                    "const": "conversation"
+                  },
+                  "conversation_type": {
+                    "const": "direct"
+                  }
+                },
+                "required": [
+                  "conversation_type"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "delivery": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "const": "webhook"
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uri",
+          "pattern": "^https://",
+          "maxLength": 4096
+        }
+      },
+      "required": [
+        "mode",
+        "url"
+      ],
+      "additionalProperties": false
+    },
+    "_meta": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "name",
+    "arguments",
+    "delivery"
+  ],
+  "additionalProperties": false
+}

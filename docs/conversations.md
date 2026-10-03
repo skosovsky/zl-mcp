@@ -103,3 +103,21 @@ marks, identities, gaps, subscriptions, generations, watermark and queued bytes.
 Old records do not generate historical events. Always make a consistent private
 stopped-service backup before deployment; rollback requires a compatible database
 backup as well as the old binary. See [macOS lifecycle](mac-deployment.md).
+
+## Incoming filters and direct sends
+
+The new source implementation adds `zalo.conversation.message.created.v2`,
+schema_version=2. Version 1 and the legacy group profile remain unchanged. Arguments
+retain the same scopes and add direction (all/incoming/outgoing, default all) and
+first_incoming_only (default false). First-only requires direct incoming scope,
+including an exact direct conversation. It means first incoming insertion known to
+this service, not first ever in Zalo. Unknown historical evidence is nullable and
+does not match a positive first-only filter. Outgoing messages do not consume the
+first-incoming marker; deletion/retention does not reset it.
+
+`zalo_send_direct_message` and `zalo_get_send_status` provide explicit text sends and
+retained-message quotes, protected by separate allow_send/send_recipient_ids settings.
+See [the executable sending contract](contracts/direct-messaging.md). Unknown send
+results must not be retried with a new UUID. These source changes require rebuilding
+and migrating the service; they do not update an already installed binary or client
+discovery automatically. Live acceptance is tracked in [the extension task](task-direct-messaging.md).

@@ -129,3 +129,14 @@ Linux builds are checked, but this LaunchAgent setup applies only to macOS. Ther
 The conversation migration is transactional and preserves old messages as `group`, sequence numbers, identities, gaps, subscription boundaries/generations, queued payload bytes and the fanout checkpoint. Do not restore an old binary onto the upgraded schema. A compatible rollback restores the matching stopped-service backup of binary/config and the entire database state, retaining the newer state privately for later recovery. No source checkout or Zalo session reset is required.
 
 Legacy configs containing only `collection.group_ids` retain their group-only meaning. To enable all conversations, remove `group_ids` and set `mode = "all"` under `[collection]`; do not combine the two forms. Collection changes do not expand existing callback scopes. The subscription start boundary is preserved, so newly recovered messages may be delivered only if they match that subscription. See [conversation collection](conversations.md).
+
+## Direct messaging upgrade
+
+The direct-messaging extension adds SQLite migrations 5 and 6. Use the existing
+binary/config/state/log locations and the same single LaunchAgent. Back up the
+stopped service before installing; do not launch another collector for sending.
+allow_send defaults to false, including for an existing configuration. Configure
+allow_send and optional send_recipient_ids explicitly after reviewing the intended
+recipients. Restart, verify tools/list and events/list, and refresh client discovery.
+Do not enable an automatic reply workflow until the client's rule/checkpoint handling
+is configured. See [direct messaging](direct-messaging.md).

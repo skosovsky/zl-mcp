@@ -8,10 +8,11 @@ type ConversationRef struct {
 }
 
 const (
-	ConversationDirect         = "direct"
-	ConversationGroup          = "group"
-	LegacyMessageCreated       = "zalo.message.created"
-	ConversationMessageCreated = "zalo.conversation.message.created"
+	ConversationDirect           = "direct"
+	ConversationGroup            = "group"
+	LegacyMessageCreated         = "zalo.message.created"
+	ConversationMessageCreated   = "zalo.conversation.message.created"
+	ConversationMessageCreatedV2 = "zalo.conversation.message.created.v2"
 )
 
 func (r ConversationRef) Valid() bool {

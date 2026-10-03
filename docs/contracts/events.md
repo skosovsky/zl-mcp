@@ -6,6 +6,17 @@
 
 ## Событие и фильтр
 
+Фильтрованный профиль v2 — `zalo.conversation.message.created.v2`, схемы
+conversation_v2_events_subscribe/unsubscribe.input.json,
+conversation_v2_message_created.payload.json и conversation_v2_event.delivery.json.
+Он добавляет direction (all/incoming/outgoing) и first_incoming_only. First-only
+требует incoming/direct scope или exact direct. Payload schema_version=2 содержит
+direction и nullable first_incoming. Unknown не совпадает с положительным фильтром;
+первое локальное входящее не доказывает первое обращение во всей истории. Фильтры
+входят в canonical ID с нормализованными defaults. Старые профили и очереди сохраняют
+формат. Постоянный маркер и факты события сохраняются транзакционно; retention не
+порождает нового первого обращения. Детали: [direct-messaging.md](direct-messaging.md).
+
 Legacy event name — `zalo.message.created`. Аргумент `group_id` выбирает одну явно разрешённую группу; несколько групп требуют отдельных подписок. Его формат и существующие идентификаторы подписок сохраняются.
 
 Новый профиль — `zalo.conversation.message.created`, с исполняемыми входами `conversation_events_subscribe.input.json` и `conversation_events_unsubscribe.input.json`, payload `conversation_message_created.payload.json` и envelope `conversation_event.delivery.json`. Аргументы выбирают `scope: all | direct | group | conversation`; для последнего обязательны `conversation_type` и `conversation_id`, для остальных поля конкретного диалога запрещены. Широкая подписка включает новые обнаруженные диалоги, но только в пределах действующей политики сбора. Сбор всех диалогов не расширяет старые подписки.

@@ -64,3 +64,8 @@ trusted client integration rather than copying credentials into documentation or
 chat. Handle overlapping group deliveries by event ID and the agreed processing
 rule. Previously stored messages remain available through reads and are not sent
 automatically. See [subscription migration](conversations.md#replacing-a-legacy-group-subscription).
+
+Current source also advertises `zalo.conversation.message.created.v2`: direction
+filters and first_incoming_only for direct incoming scopes. Version 1 remains unchanged.
+See [incoming subscriptions and direct sending](direct-messaging.md) for examples,
+discovery verification, separate send permissions and handling an unknown send result.

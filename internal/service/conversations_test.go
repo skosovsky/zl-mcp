@@ -100,6 +100,17 @@ func serviceConversationRPC(t *testing.T, endpoint, token, method string, params
 }
 
 func TestUnifiedConversationServiceCollectionMCPEventsRestartAndCancel(t *testing.T) {
+	for _, profile := range []struct {
+		name    string
+		version int
+	}{
+		{events.ConversationMessageCreated, 1}, {domain.ConversationMessageCreatedV2, 2},
+	} {
+		t.Run(profile.name, func(t *testing.T) { testConversationServiceProfile(t, profile.name, profile.version) })
+	}
+}
+
+func testConversationServiceProfile(t *testing.T, profile string, version int) {
 	// Arrange: real service/storage/HTTP/worker, a synthetic Zalo source and an
 	// independently verifying TLS receiver. No account or installed state is used.
 	dir, err := os.MkdirTemp("/tmp", "zl-conversation-service-")
@@ -193,18 +204,24 @@ func TestUnifiedConversationServiceCollectionMCPEventsRestartAndCancel(t *testin
 		}
 	}()
 	args := map[string]any{"scope": "all"}
+	if version == 2 {
+		args["direction"] = "incoming"
+	}
 	delivery := map[string]any{"mode": "webhook", "url": "https://receiver.example/events", "secret": "whsec_" + base64.StdEncoding.EncodeToString(key)}
 	// Act: activate through MCP, then ingest both types through the collector.
-	sub := serviceConversationRPC(t, endpoint, token, "events/subscribe", map[string]any{"name": events.ConversationMessageCreated, "arguments": args, "delivery": delivery})
+	sub := serviceConversationRPC(t, endpoint, token, "events/subscribe", map[string]any{"name": profile, "arguments": args, "delivery": delivery})
 	text := "searchable " + strings.Repeat("界", 2049)
 	at := time.Now().UTC().Add(-time.Hour)
 	emit := func(id, sourceName string) {
 		for _, kind := range []string{"direct", "group"} {
-			source.input <- domain.Message{Conversation: domain.ConversationRef{Type: kind, ID: "same"}, ID: id, SenderID: "owner", SentAt: at, Text: text, Source: sourceName}
+			source.input <- domain.Message{Conversation: domain.ConversationRef{Type: kind, ID: "same"}, ID: id, SenderID: "owner", SentAt: at, Text: text, Source: sourceName, Direction: "incoming"}
+		}
+		if version == 2 {
+			source.input <- domain.Message{Conversation: domain.ConversationRef{Type: "direct", ID: "same"}, ID: "own-" + id, SenderID: "owner", SentAt: at, Text: "outgoing filtered", Source: sourceName, Direction: "outgoing"}
 		}
 	}
 	emit("first", "live")
-	readEvents := func() {
+	readEvents := func(firstIncoming bool) {
 		t.Helper()
 		seen := map[string]bool{}
 		for range 2 {
@@ -212,8 +229,19 @@ func TestUnifiedConversationServiceCollectionMCPEventsRestartAndCancel(t *testin
 			case event := <-received:
 				data := event["data"].(map[string]any)
 				kind := data["conversation_type"].(string)
-				if seen[kind] || event["name"] != events.ConversationMessageCreated || data["text_truncated"] != true {
+				if seen[kind] || event["name"] != profile || data["text_truncated"] != true {
 					t.Fatal("invalid typed callback")
+				}
+				if data["schema_version"] != float64(version) {
+					t.Fatal("incorrect schema version")
+				}
+				if version == 2 {
+					if data["direction"] != "incoming" {
+						t.Fatal("outgoing passed incoming filter")
+					}
+					if kind == "direct" && data["first_incoming"] != firstIncoming {
+						t.Fatal("first incoming fact lost across restart")
+					}
 				}
 				seen[kind] = true
 				full := serviceConversationRPC(t, endpoint, token, "resources/read", map[string]any{"uri": data["text_resource_uri"]})
@@ -233,7 +261,7 @@ func TestUnifiedConversationServiceCollectionMCPEventsRestartAndCancel(t *testin
 		}
 	}
 	// Assert: source -> collector -> storage -> worker -> TLS -> MCP full reads.
-	readEvents()
+	readEvents(true)
 	hits := serviceConversationRPC(t, endpoint, token, "tools/call", map[string]any{"name": "zalo_search_conversation_messages", "arguments": map[string]any{"query": "searchable"}})["structuredContent"].(map[string]any)["messages"].([]any)
 	if len(hits) != 2 || sub["refreshBefore"] != nil {
 		t.Fatal("search or indefinite subscription failed")
@@ -246,13 +274,13 @@ func TestUnifiedConversationServiceCollectionMCPEventsRestartAndCancel(t *testin
 	emit("first", "replay")
 	emit("second", "replay")
 	// Assert: durable subscription delivers only new typed identities after restart.
-	readEvents()
+	readEvents(false)
 	hits = serviceConversationRPC(t, endpoint, token, "tools/call", map[string]any{"name": "zalo_search_conversation_messages", "arguments": map[string]any{"query": "searchable"}})["structuredContent"].(map[string]any)["messages"].([]any)
 	if len(hits) != 4 {
 		t.Fatal("restart lost messages or generated duplicates")
 	}
 	// Act: cancel over MCP, then continue collecting both types.
-	serviceConversationRPC(t, endpoint, token, "events/unsubscribe", map[string]any{"name": events.ConversationMessageCreated, "arguments": args, "delivery": map[string]any{"mode": "webhook", "url": "https://receiver.example/events"}})
+	serviceConversationRPC(t, endpoint, token, "events/unsubscribe", map[string]any{"name": profile, "arguments": args, "delivery": map[string]any{"mode": "webhook", "url": "https://receiver.example/events"}})
 	emit("after-cancel", "live")
 	deadline := time.Now().Add(5 * time.Second)
 	for {

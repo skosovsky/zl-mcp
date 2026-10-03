@@ -121,7 +121,13 @@ func (s *Store) migrate(ctx context.Context) error {
 	if err = s.migrateEvents(ctx); err != nil {
 		return err
 	}
-	return s.migrateConversations(ctx)
+	if err = s.migrateConversations(ctx); err != nil {
+		return err
+	}
+	if err = s.migrateSending(ctx); err != nil {
+		return err
+	}
+	return s.migrateIncoming(ctx)
 }
 func (s *Store) BindAccount(ctx context.Context, account string) error {
 	h := sha256.Sum256([]byte(account))
@@ -208,6 +214,14 @@ func (s *Store) Put(ctx context.Context, m domain.Message) (err error) {
 			return err
 		}
 		if err = appendMessageEvent(ctx, tx, seq, m); err != nil {
+			return err
+		}
+	}
+	// A matching replay may restore missing protocol quote identifiers without
+	// changing retained text, permanent identity or event eligibility.
+	if m.QuoteMetadata != nil && ref.Type == domain.ConversationDirect {
+		q := m.QuoteMetadata
+		if _, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO message_quote_metadata(message_seq,client_message_id,message_type,timestamp,ttl) SELECT seq,?,?,?,? FROM messages WHERE conversation_type='direct' AND group_id=? AND message_id=? AND sender_id=? AND text=? AND sent_at=?`, q.ClientMessageID, q.MessageType, q.Timestamp, q.TTL, ref.ID, m.ID, m.SenderID, m.Text, m.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z")); err != nil {
 			return err
 		}
 	}

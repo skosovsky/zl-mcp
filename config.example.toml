@@ -7,6 +7,9 @@ mode = "all"
 # Do not combine mode/conversations with legacy group_ids.
 [permissions]
 allow_join = false
+allow_send = false
+# Optional restriction when allow_send = true; empty/omitted permits any peer ID.
+# send_recipient_ids = ["PEER_ID"]
 [storage]
 retention_days = 90
 [logging]

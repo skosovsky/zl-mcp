@@ -1,0 +1,15 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "type": "object",
+ "additionalProperties": false,
+ "required": ["allow_join", "allow_send", "send_recipient_ids"],
+ "properties": {
+  "allow_join": {"type": "boolean"},
+  "allow_send": {"type": "boolean"},
+  "send_recipient_ids": {
+   "type": "array",
+   "uniqueItems": true,
+   "items": {"type": "string", "minLength": 1, "maxLength": 256}
+  }
+ }
+}

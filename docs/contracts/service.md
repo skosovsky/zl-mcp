@@ -1,5 +1,19 @@
 # Основной режим service, версия 1
 
+Расширение личной отправки сохраняет этот lifecycle: Sender использует восстановленную
+сессию внутреннего collector. allow_send по умолчанию false; send_recipient_ids отдельно
+ограничивает адресатов. При старте под account lock прерванные sending переходят в
+unknown до открытия MCP endpoint. HTTP и STDIO предоставляют tools отправки/статуса,
+Events остаются HTTP. Миграции 5/6 добавляют журнал без текста, quote metadata,
+постоянные признаки входящих и фильтры подписок. Не создавать вторую сессию или процесс.
+Контракт: [direct-messaging.md](direct-messaging.md).
+
+Отправка ограничена 30 секундами upstream-вызова и 3 секундами независимой записи
+результата; MCP call budget — 35 секунд. STDIO HTTP-мост ждёт до 40 секунд, HTTP
+write timeout сервиса — 45 секунд. Контекст HTTP-запросов наследует lifecycle
+сервиса: остановка отменяет upstream-вызов, а запись неоднозначного результата
+завершается до закрытия SQLite. Ошибка транспорта не разрешает повтор с новым UUID.
+
 Команда: `zl-mcp -config CONFIG service`, без позиционных аргументов.
 Процесс владеет account lock, SQLite, MCP listener, внутренним collector и delivery worker. Второй service или login с тем же state_dir отклоняется до восстановления сессии.
 
@@ -45,6 +59,15 @@ LaunchAgent направляет stderr в `startup.log`. Штатные оши�
 
 Service открывает SQLite с единой typed политикой из `[collection]`: `mode = "all"` либо `mode = "selected"` с `conversations = [{type, id}]`. Старый group_ids без mode сохраняет значение; смешение форм отклоняется. Нормализованный контракт — collection_policy.input.json. Политика одинакова для collector, read tools и delivery claim.
 
-Collector слушает direct/group live и replay, включая self-сообщения, и обнаруживает диалоги при записи. Connected не закрывает gaps: полнота replay неизвестна. Нормализация личного чата сохраняет ID собеседника, автор независим. Широкий сбор не создаёт и не расширяет подписки. Общие инструменты и zalo://collection доступны также через STDIO bridge; оба Events профиля вызываются непосредственно через HTTP.
+Collector слушает direct/group live и replay, включая self-сообщения, и обнаруживает диалоги при записи. Connected не закрывает gaps: полнота replay неизвестна. Нормализация личного чата сохраняет ID собеседника, автор независим. Широкий сбор не создаёт и не расширяет подписки. Общие инструменты и zalo://collection доступны также через STDIO bridge; все Events профили вызываются непосредственно через HTTP.
 
 Миграция SQLite сохраняет seq, identities, FTS, gaps, подписки/границы/поколения и payload очереди. Один владелец state по-прежнему обязателен. Вернуть прежний бинарник после миграции можно только с совместимой резервной копией state.
+
+## Sending permissions
+
+The executable [permissions schema](service_permissions.input.json) validates
+`allow_join`, `allow_send` and `send_recipient_ids` after TOML defaults are applied.
+Recipient IDs are unique opaque strings of 1–256 Unicode characters. An omitted
+or empty recipient list imposes no recipient restriction when `allow_send=true`;
+`allow_send=false` still disables every send. Configuring a recipient list while
+sending is disabled is allowed. These permissions do not expand collection policy.

@@ -1,6 +1,6 @@
 # zl-mcp
 
-A Go MCP service for a personal Zalo account: collect incoming and self-sent messages from accessible direct chats and groups, search a local SQLite corpus, read message context, and join groups through invitations with local approval.
+A Go MCP service for a personal Zalo account: collect incoming and self-sent messages from accessible direct chats and groups, search a local SQLite corpus, read message context, send explicitly authorized direct text, and join groups through invitations with local approval.
 
 One persistent `service` process owns the Zalo listener, SQLite database, MCP endpoint, subscriptions, and delivery queue. An optional `serve` process bridges STDIO clients to that service. SQLite is built in; CGO and Python are not runtime dependencies.
 
@@ -39,7 +39,18 @@ Events use a pinned webhook draft profile, requiring a compatible HTTP client an
 
 The legacy group-only event `zalo.message.created` retains its original payload and subscription scope. Collecting all conversations does not widen callback subscriptions.
 
-This service uses unofficial Zalo APIs, which can change or result in account restrictions. It does not search for public groups, fetch a complete historical archive, send messages, or administer groups. Collection depends on the machine being awake and connected; `connected` does not prove corpus completeness, and upstream replay is bounded and can be empty. Local message buffers apply cancellable backpressure; successful enqueue does not prove persistence or a complete upstream archive. Opening Zalo Web can interrupt the account's web listener.
+`zalo.conversation.message.created.v2` preserves these scopes and adds incoming/outgoing
+filters and first locally known incoming evidence. Unknown historical evidence is
+not a confirmed new correspondent. Existing profiles remain unchanged.
+
+For direct text, use `zalo_send_direct_message` with an exact recipient ID, stable
+UUID request_id and optional reply_to_message_id. Sending defaults to disabled;
+configure allow_send separately from collection. Read `zalo_get_send_status` after
+an uncertain outcome. Never create a new request to retry unknown. Quotes require
+retained source text and protocol metadata from the same direct conversation.
+See [direct messaging](docs/direct-messaging.md).
+
+This service uses unofficial Zalo APIs, which can change or result in account restrictions. It does not search for public groups, fetch a complete historical archive, send attachments or group messages, or administer groups. Collection depends on the machine being awake and connected; `connected` does not prove corpus completeness, and upstream replay is bounded and can be empty. Local message buffers apply cancellable backpressure; successful enqueue does not prove persistence or a complete upstream archive. Opening Zalo Web can interrupt the account's web listener.
 
 One account uses one state directory. Private file permissions restrict local access but do not encrypt stored messages or credentials. The local OS user is the trust boundary for CLI approvals.
 
@@ -50,6 +61,7 @@ One account uses one state directory. Private file permissions restrict local ac
 - [Optional agent skills and their boundaries](docs/skills.md)
 - [Technical specification](docs/technical-spec.md) and [service contract](docs/contracts/service.md)
 - [Conversation collection, compatibility and recovery](docs/conversations.md) and [extension task](docs/task-all-conversations.md) and [acceptance evidence](docs/all-conversations-acceptance.md)
+- [Planned incoming-message filters and direct messaging](docs/task-direct-messaging.md)
 - [Development and checks](docs/development.md)
 - [Historical records](docs/archive/README.md)
 - [Third-party licenses](THIRD_PARTY.md)

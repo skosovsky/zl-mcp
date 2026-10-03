@@ -9,6 +9,10 @@
 
 ## Актуальное расширение direct/group
 
+Расширение личной отправки и filtered Events реализуется по [task-direct-messaging.md](task-direct-messaging.md). Контракты — [contracts/direct-messaging.md](contracts/direct-messaging.md), инструкция — [direct-messaging.md](direct-messaging.md), доказательства — [direct-messaging-research.md](direct-messaging-research.md). Развёртывание и live-приёмка этого расширения ещё не подтверждены.
+
+Добавляются zalo_send_direct_message / zalo_get_send_status, UUID request_id, отдельные allow_send/send_recipient_ids и постоянный журнал без текста. Unknown не повторяется автоматически; sent означает принятие Zalo, не прочтение. Цитата требует сохранённого сообщения того же direct-диалога и protocol metadata. Лимит отправки — 2048 Unicode code points, предел приложения. Events v2 — zalo.conversation.message.created.v2, schema_version=2, с direction/first_incoming_only; first-only требует incoming direct. Nullable first_incoming означает первую локально известную входящую вставку, а не первое обращение за всю историю. Маркер не сбрасывается retention/undo; неполные сведения остаются unknown. Старые профили, подписки и queued bytes сохраняются.
+
 Идентичность диалога — `(conversation_type, conversation_id)`, сообщения — эта пара плюс `message_id`. Личный ID обозначает собеседника независимо от направления; автор хранится отдельно. Одинаковые ID разных типов не смешиваются в FTS, контексте, URI, курсорах и доставке. Single-account state не допускает объединения разных аккаунтов.
 
 Общие read tools: `zalo_list_conversations`, `zalo_get_conversation`, `zalo_search_conversation_messages`, `zalo_get_conversation_message_context`; исполняемые схемы — одноимённые input/output JSON. Старые group tools/URI и их формы остаются групповыми совместимыми фасадами. Ресурс `zalo://collection` сообщает режим и числа по типам без изменения строгой legacy status-схемы. Контракт ресурса — `conversation_collection.output.json`.
@@ -42,12 +46,13 @@ SQLite migration 4 сохраняет seq/high-water mark, identities, FTS, cove
 - Постоянные подписки на новые сообщения и устойчивая очередь доставок; webhook-профиль с HTTPS callback, verification и подписью.
 - Прямой запуск Go-бинарника через один LaunchAgent, ротация логов и ожидание при auth_required без Python-обвязки.
 - Диагностика авторизации, подключения и полноты локальных данных.
+- Явно порученная отправка личного текста и ответа с цитатой; фильтры направления и первого локального входящего.
 
 Не входит:
 
 - Глобальный поиск публичных групп Zalo по теме.
 - Гарантированное получение полной истории до начала сбора.
-- Отправка сообщений, приглашение участников, администрирование групп.
+- Отправка сообщений в группы, вложения, приглашение участников, администрирование групп.
 - Работа с Official Account и несколькими аккаунтами.
 - Туннели, reverse proxy, внешний ingress, DNS и публикация HTTPS endpoint; это инфраструктура вне приложения.
 - Проверка совместимости конкретного агента как условие разработки: клиент считается совместимым с зафиксированным контрактом MCP Events.

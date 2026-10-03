@@ -37,7 +37,7 @@ func BridgeStdio(ctx context.Context, c config.Config) error {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.Proxy = nil
 	defer transport.CloseIdleConnections()
-	httpClient := &http.Client{Timeout: 30 * time.Second, Transport: bearerTransport{token: token, base: transport}, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	httpClient := &http.Client{Timeout: 40 * time.Second, Transport: bearerTransport{token: token, base: transport}, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	client := mcp.NewClient(&mcp.Implementation{Name: "zl-mcp-stdio-bridge", Version: "0.1.0-dev"}, nil)
 	session, err := client.Connect(ctx, &mcp.StreamableClientTransport{Endpoint: "http://" + c.MCP.Listen + "/mcp", HTTPClient: httpClient, DisableStandaloneSSE: true, MaxRetries: -1}, nil)
 	if err != nil {

@@ -33,6 +33,8 @@ func (p DeliveryPolicy) validate() error {
 type pendingMessageEvent struct {
 	seq                            int64
 	id, group, kind, body, created string
+	direction                      string
+	firstIncoming                  *bool
 }
 
 // FanoutEvents commits tasks and its watermark together. Encoding is a pure
@@ -54,14 +56,14 @@ func (s *Store) FanoutProfileEvents(ctx context.Context, at time.Time, p Deliver
 		return 0, err
 	}
 	defer tx.Rollback()
-	rows, err := tx.QueryContext(ctx, "SELECT seq,event_id,group_id,conversation_type,message_json,created_at FROM message_events WHERE seq>(SELECT seq FROM event_fanout WHERE id=1) ORDER BY seq LIMIT 32")
+	rows, err := tx.QueryContext(ctx, "SELECT seq,event_id,group_id,conversation_type,message_json,created_at,direction,first_incoming FROM message_events WHERE seq>(SELECT seq FROM event_fanout WHERE id=1) ORDER BY seq LIMIT 32")
 	if err != nil {
 		return 0, err
 	}
 	var batch []pendingMessageEvent
 	for rows.Next() {
 		var e pendingMessageEvent
-		if err := rows.Scan(&e.seq, &e.id, &e.group, &e.kind, &e.body, &e.created); err != nil {
+		if err := rows.Scan(&e.seq, &e.id, &e.group, &e.kind, &e.body, &e.created, &e.direction, &e.firstIncoming); err != nil {
 			rows.Close()
 			return 0, err
 		}
@@ -88,12 +90,14 @@ func (s *Store) FanoutProfileEvents(ctx context.Context, at time.Time, p Deliver
 		var message domain.Message
 		encodeErr := json.Unmarshal([]byte(event.body), &message)
 		message.Conversation = domain.ConversationRef{Type: event.kind, ID: event.group}
+		message.Direction = event.direction
+		message.FirstIncoming = event.firstIncoming
 		if encodeErr == nil {
 			if err := tx.QueryRowContext(ctx, "SELECT name FROM conversations WHERE conversation_type=? AND conversation_id=?", event.kind, event.group).Scan(&message.ConversationName); err != nil && !errors.Is(err, sql.ErrNoRows) {
 				return 0, err
 			}
 		}
-		rows, err := tx.QueryContext(ctx, "SELECT id,generation,profile FROM event_subscriptions WHERE active=1 AND (scope='all' OR scope=? OR (scope='conversation' AND group_id=? AND conversation_type=?)) AND start_seq<? AND (expires_at IS NULL OR julianday(expires_at)>julianday(?))", event.kind, event.group, event.kind, event.seq, at.UTC().Format(time.RFC3339Nano))
+		rows, err := tx.QueryContext(ctx, "SELECT id,generation,profile FROM event_subscriptions WHERE active=1 AND (scope='all' OR scope=? OR (scope='conversation' AND group_id=? AND conversation_type=?)) AND (direction='all' OR direction=?) AND (first_incoming_only=0 OR ?=1) AND start_seq<? AND (expires_at IS NULL OR julianday(expires_at)>julianday(?))", event.kind, event.group, event.kind, event.direction, event.firstIncoming, event.seq, at.UTC().Format(time.RFC3339Nano))
 		if err != nil {
 			return 0, err
 		}

@@ -16,7 +16,7 @@ func normalizeSubscription(s EventSubscription) (EventSubscription, error) {
 		if s.Scope != "conversation" || s.ConversationType != domain.ConversationGroup {
 			return s, domain.Invalid("Legacy event requires one group.")
 		}
-	} else if s.Profile != domain.ConversationMessageCreated {
+	} else if s.Profile != domain.ConversationMessageCreated && s.Profile != domain.ConversationMessageCreatedV2 {
 		return s, domain.Invalid("Unknown event profile.")
 	}
 	switch s.Scope {
@@ -34,6 +34,18 @@ func normalizeSubscription(s EventSubscription) (EventSubscription, error) {
 		}
 	default:
 		return s, domain.Invalid("Unknown subscription scope.")
+	}
+	if s.Direction == "" {
+		s.Direction = "all"
+	}
+	if s.Direction != "all" && s.Direction != "incoming" && s.Direction != "outgoing" {
+		return s, domain.Invalid("Invalid direction filter.")
+	}
+	if s.Profile != domain.ConversationMessageCreatedV2 && (s.Direction != "all" || s.FirstIncomingOnly) {
+		return s, domain.Invalid("Filtered Events require version 2.")
+	}
+	if s.FirstIncomingOnly && (s.Direction != "incoming" || !(s.Scope == "direct" || (s.Scope == "conversation" && s.ConversationType == domain.ConversationDirect))) {
+		return s, domain.Invalid("First incoming requires a direct incoming scope.")
 	}
 	return s, nil
 }

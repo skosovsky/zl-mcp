@@ -45,3 +45,16 @@ Changing a group-only notification workflow requires a new subscription through
 the trusted client; see [migration](conversations.md#replacing-a-legacy-group-subscription).
 Updating or installing the skill itself does not change that subscription. Research
 can retrieve previously stored messages regardless of whether an Event was sent.
+
+Version 2 Events add direction and nullable first_incoming; the Events skill routes
+by event name/version and distinguishes first locally known from first ever. An
+explicitly instructed direct reply uses zalo_send_direct_message/zalo_get_send_status
+only with a persistent client UUID and an agreed recipient/text rule. Sending defaults
+to disabled in the service. Unknown results do not trigger a new send. The research
+skill remains read-only. See [direct messaging](direct-messaging.md).
+
+After updating source, replace the corresponding installed skill directories using
+the client's supported procedure; back up existing customizations first. Reload
+skill discovery and verify the loaded version. Updating this repository does not
+change a client's copied skills automatically. Structural checks and synthetic MCP
+tests are evidence for the contract, not model behavior; no new model evals are run.

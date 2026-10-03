@@ -153,7 +153,7 @@ func TestHTTPEventsLifecycleWithSignedTLSReceiverAndFullText(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Assert: only the newly inserted record in the subscribed group arrived.
-	if _, ok := discovery["capabilities"].(map[string]any)["events"]; !ok || len(catalog["events"].([]any)) != 2 || sub["refreshBefore"] != nil {
+	if _, ok := discovery["capabilities"].(map[string]any)["events"]; !ok || len(catalog["events"].([]any)) != 3 || sub["refreshBefore"] != nil {
 		t.Fatal("discovery or subscription contract mismatch")
 	}
 	var event events.MessageEvent

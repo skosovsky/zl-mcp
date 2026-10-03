@@ -33,7 +33,15 @@ CI runs these checks on Linux and native macOS, and builds without CGO for macOS
 
 The test suite uses temporary directories, synthetic upstreams, and local HTTP/TLS receivers. It covers search and context, contract validation, permissions and locking, service shutdown and restart, authentication-required state, event delivery retries, subscription boundaries, cancellation, and log rotation. These checks do not require Zalo credentials or an active account and do not run model evals.
 
-Conversation tests cover direct/group identity collisions, incoming/self normalization, mixed replay, discovery, policy reduction, migration boundaries, both Events profiles and typed full-text resources. The bounded socket/listener queues apply cancellable backpressure to message data rather than evicting it; synthetic burst tests cover this path.
+Conversation tests cover direct/group identity collisions, incoming/self normalization, mixed replay, discovery, policy reduction, migration boundaries, legacy and versioned Events profiles and typed full-text resources. The bounded socket/listener queues apply cancellable backpressure to message data rather than evicting it; synthetic burst tests cover this path.
+
+Direct-messaging tests cover incoming/outgoing filters, first locally known incoming messages, unknown migration history, retained quote metadata, send permissions, concurrent request claims and ambiguous send recovery. The service integration test exercises quoted sending through HTTP MCP using the collector's session and verifies that an exact repeat after restart returns the stored result without another upstream send. These synthetic checks do not establish live Zalo acceptance or discovery in ChatGPT; record those separately. See the [task and acceptance requirements](task-direct-messaging.md) and [executable contract](contracts/direct-messaging.md).
+
+Run the focused checks while changing this extension:
+
+```sh
+go test -race ./internal/messaging ./internal/storage ./internal/events ./internal/service ./internal/mcpserver ./docs/contracts
+```
 
 Run the isolated corpus load check separately:
 

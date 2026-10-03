@@ -38,3 +38,14 @@ Raw WebSocket frames now wait for space in the bounded receive queue rather than
 ## Direct and mixed replay ingestion
 
 The direct-message union decoder now returns invalid JSON/type/missing-ID failures and clears reused values. Mixed old-message responses emit both direct and group batches rather than discarding the direct array. Batch type remains homogeneous for existing consumers. Regression tests cover mixed responses, invalid timestamps/quotes, missing IDs and message-to-undo reuse.
+
+## Direct sending contract verification
+
+`api/send_message_contract_test.go` adds synthetic wire-contract tests without
+modifying the upstream send implementation. A local HTTP receiver decrypts the
+actual form payload and verifies plain `/api/message/sms` and quoted
+`/api/message/quote`, Unicode text, peer routing, decimal-string quote IDs above
+JavaScript precision, quote owner/type/timestamp/TTL and encrypted acceptance.
+No real account or session key is used. The application separately classifies
+HTTP/decode errors conservatively because `ZaloAPIError` does not preserve their
+provenance; this is not a new dependency runtime patch.

@@ -24,7 +24,9 @@ type Config struct {
 		Conversations []domain.ConversationRef `toml:"conversations"`
 	} `toml:"collection"`
 	Permissions struct {
-		AllowJoin bool `toml:"allow_join"`
+		AllowJoin        bool     `toml:"allow_join"`
+		AllowSend        bool     `toml:"allow_send"`
+		SendRecipientIDs []string `toml:"send_recipient_ids"`
 	} `toml:"permissions"`
 	Storage struct {
 		RetentionDays int `toml:"retention_days"`
@@ -121,7 +123,25 @@ func Load(path string) (Config, error) {
 	if err := c.validateCollection(); err != nil {
 		return c, err
 	}
+	if err := c.validatePermissions(); err != nil {
+		return c, err
+	}
 	return c, nil
+}
+
+func (c Config) validatePermissions() error {
+	schema, err := contracts.Compile("service_permissions", "input")
+	if err != nil {
+		return err
+	}
+	ids := make([]any, 0, len(c.Permissions.SendRecipientIDs))
+	for _, id := range c.Permissions.SendRecipientIDs {
+		ids = append(ids, id)
+	}
+	if err = schema.Validate(map[string]any{"allow_join": c.Permissions.AllowJoin, "allow_send": c.Permissions.AllowSend, "send_recipient_ids": ids}); err != nil {
+		return fmt.Errorf("invalid sending permission configuration: %w", err)
+	}
+	return nil
 }
 func (c Config) Allowed(id string) bool {
 	return c.Policy().Allows(domain.ConversationRef{Type: domain.ConversationGroup, ID: id})

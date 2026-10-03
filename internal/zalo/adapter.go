@@ -251,11 +251,24 @@ func logStructuralFailure(message string, err error) {
 	slog.Warn(message, attrs...)
 }
 func Convert(m model.GroupMessage, source string) (domain.Message, error) {
-	return convertMessage(m.Data.TMessage, domain.ConversationRef{Type: domain.ConversationGroup, ID: m.ThreadID()}, source)
+	d, err := convertMessage(m.Data.TMessage, domain.ConversationRef{Type: domain.ConversationGroup, ID: m.ThreadID()}, source)
+	d.Direction = "incoming"
+	if m.IsSelf() {
+		d.Direction = "outgoing"
+	}
+	return d, err
 }
 
 func ConvertDirect(m model.UserMessage, source string) (domain.Message, error) {
-	return convertMessage(m.Data, domain.ConversationRef{Type: domain.ConversationDirect, ID: m.ThreadID()}, source)
+	d, err := convertMessage(m.Data, domain.ConversationRef{Type: domain.ConversationDirect, ID: m.ThreadID()}, source)
+	d.Direction = "incoming"
+	if m.IsSelf() {
+		d.Direction = "outgoing"
+	}
+	if err == nil && m.Data.Content.String != nil && m.Data.MsgType == "webchat" && m.Data.CliMsgID != "" {
+		d.QuoteMetadata = &domain.QuoteMetadata{ClientMessageID: m.Data.CliMsgID, MessageType: m.Data.MsgType, Timestamp: m.Data.TS, TTL: m.Data.TTL}
+	}
+	return d, err
 }
 
 func convertMessage(d model.TMessage, ref domain.ConversationRef, source string) (domain.Message, error) {

@@ -10,7 +10,8 @@
           "name": {
             "enum": [
               "zalo.message.created",
-              "zalo.conversation.message.created"
+              "zalo.conversation.message.created",
+              "zalo.conversation.message.created.v2"
             ]
           },
           "description": {
@@ -41,7 +42,7 @@
         ],
         "additionalProperties": false
       },
-      "maxItems": 2
+      "maxItems": 3
     }
   },
   "required": [

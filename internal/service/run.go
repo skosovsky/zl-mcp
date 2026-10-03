@@ -22,6 +22,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/events"
 	"github.com/skosovsky/zl-mcp/internal/local"
 	"github.com/skosovsky/zl-mcp/internal/mcpserver"
+	"github.com/skosovsky/zl-mcp/internal/messaging"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 	"github.com/skosovsky/zl-mcp/internal/zalo"
 )
@@ -41,15 +42,35 @@ func Run(ctx context.Context, c config.Config) error {
 // membershipPort blocks network operations while the collector lacks a session.
 // Reading a saved operation needs no upstream client.
 type membershipPort struct {
-	mu      sync.RWMutex
-	current *collector.JoinManager
-	store   *storage.Store
+	mu         sync.RWMutex
+	current    *collector.JoinManager
+	store      *storage.Store
+	sender     messaging.Sender
+	allowSend  bool
+	recipients map[string]bool
+	lifecycle  context.Context
 }
 
 func (p *membershipPort) set(j *collector.JoinManager) { p.mu.Lock(); p.current = j; p.mu.Unlock() }
+func (p *membershipPort) setSender(s messaging.Sender) { p.mu.Lock(); p.sender = s; p.mu.Unlock() }
 func (p *membershipPort) Call(ctx context.Context, method string, args any) (map[string]any, error) {
+	// SDK request contexts can outlive the originating HTTP request. The domain
+	// port must also follow service shutdown before it acquires session ownership.
+	if p.lifecycle != nil {
+		operation, cancel := context.WithCancel(ctx)
+		stop := context.AfterFunc(p.lifecycle, cancel)
+		defer stop()
+		defer cancel()
+		if p.lifecycle.Err() != nil {
+			cancel()
+		}
+		ctx = operation
+	}
 	p.mu.RLock()
 	defer p.mu.RUnlock()
+	if method == "zalo_send_direct_message" || method == "zalo_get_send_status" {
+		return (&messaging.Manager{Store: p.store, Sender: p.sender, Enabled: p.allowSend, Recipients: p.recipients}).Call(ctx, method, args)
+	}
 	if p.current != nil {
 		return p.current.Call(ctx, method, args)
 	}
@@ -126,6 +147,9 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 		return err
 	}
 	defer store.Close()
+	if err = store.RecoverInterruptedSends(ctx); err != nil {
+		return err
+	}
 	if err = store.Retain(ctx); err != nil {
 		return err
 	}
@@ -133,7 +157,11 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	if err != nil {
 		return err
 	}
-	port := &membershipPort{store: store}
+	recipients := map[string]bool{}
+	for _, id := range c.Permissions.SendRecipientIDs {
+		recipients[id] = true
+	}
+	port := &membershipPort{store: store, allowSend: c.Permissions.AllowSend, recipients: recipients, lifecycle: ctx}
 	handler, err := mcpserver.NewHTTPWithControl(store, c.StateDir, token, port)
 	if err != nil {
 		return err
@@ -166,7 +194,9 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	if err = os.Chmod(socket, 0600); err != nil {
 		return err
 	}
-	httpServer := &http.Server{Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 30 * time.Second}
+	// Allow the 30s upstream send plus independent result persistence to finish.
+	// Shutdown cancels requests before waiting for session ports and closing SQLite.
+	httpServer := &http.Server{Handler: handler, BaseContext: func(net.Listener) context.Context { return ctx }, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 45 * time.Second, IdleTimeout: 30 * time.Second}
 	cliServer := &http.Server{Handler: port.cliHandler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second}
 	errorsCh := make(chan error, 6)
 	var wg sync.WaitGroup
@@ -291,7 +321,14 @@ func collectSession(ctx context.Context, c config.Config, store *storage.Store, 
 			if err = save(client); err != nil {
 				return err
 			}
-			err = collector.RunInternal(ctx, c, store, client, func(j *collector.JoinManager) error { port.set(j); return nil })
+			err = collector.RunInternal(ctx, c, store, client, func(j *collector.JoinManager) error {
+				port.set(j)
+				if sender, ok := client.(messaging.Sender); ok {
+					port.setSender(sender)
+				}
+				return nil
+			})
+			port.setSender(nil)
 			port.set(nil)
 			if ctx.Err() != nil {
 				return nil

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -52,7 +53,7 @@ func NewSubscriptionManager(store Subscriptions, namespace string) (*Subscriptio
 			target[name] = schema
 		}
 	}
-	for _, name := range []string{"conversation_events_subscribe", "conversation_events_unsubscribe"} {
+	for _, name := range []string{"conversation_events_subscribe", "conversation_events_unsubscribe", "conversation_v2_events_subscribe", "conversation_v2_events_unsubscribe"} {
 		schema, err := contracts.Compile(name, "input")
 		if err != nil {
 			return nil, err
@@ -65,10 +66,12 @@ func NewSubscriptionManager(store Subscriptions, namespace string) (*Subscriptio
 type subscriptionRequest struct {
 	Name      string `json:"name"`
 	Arguments struct {
-		GroupID          string `json:"group_id"`
-		Scope            string `json:"scope"`
-		ConversationType string `json:"conversation_type"`
-		ConversationID   string `json:"conversation_id"`
+		GroupID           string `json:"group_id"`
+		Scope             string `json:"scope"`
+		ConversationType  string `json:"conversation_type"`
+		ConversationID    string `json:"conversation_id"`
+		Direction         string `json:"direction"`
+		FirstIncomingOnly bool   `json:"first_incoming_only"`
 	} `json:"arguments"`
 	Delivery struct {
 		Mode   string `json:"mode"`
@@ -80,8 +83,14 @@ type subscriptionRequest struct {
 
 func (m *SubscriptionManager) subscriptionID(principal string, p subscriptionRequest) string {
 	parts := []string{m.namespace, principal, p.Delivery.URL, p.Name, p.Arguments.GroupID}
-	if p.Name == ConversationMessageCreated {
+	if p.Name == ConversationMessageCreated || p.Name == domain.ConversationMessageCreatedV2 {
 		parts = []string{m.namespace, principal, p.Delivery.URL, p.Name, p.Arguments.Scope, p.Arguments.ConversationType, p.Arguments.ConversationID}
+	}
+	if p.Name == domain.ConversationMessageCreatedV2 {
+		if p.Arguments.Direction == "" {
+			p.Arguments.Direction = "all"
+		}
+		parts = append(parts, p.Arguments.Direction, fmt.Sprint(p.Arguments.FirstIncomingOnly))
 	}
 	identity, _ := json.Marshal(parts)
 	digest := sha256.Sum256(identity)
@@ -118,12 +127,16 @@ func (m *SubscriptionManager) Call(ctx context.Context, method, principal string
 		Name string `json:"name"`
 	}
 	_ = json.Unmarshal(raw, &selector)
-	if selector.Name == ConversationMessageCreated {
+	if selector.Name == ConversationMessageCreated || selector.Name == domain.ConversationMessageCreatedV2 {
+		prefix := "conversation_events_"
+		if selector.Name == domain.ConversationMessageCreatedV2 {
+			prefix = "conversation_v2_events_"
+		}
 		if method == "events/subscribe" {
-			schema = m.input["conversation_events_subscribe"]
+			schema = m.input[prefix+"subscribe"]
 		}
 		if method == "events/unsubscribe" {
-			schema = m.input["conversation_events_unsubscribe"]
+			schema = m.input[prefix+"unsubscribe"]
 		}
 	}
 	if json.Unmarshal(raw, &value) != nil || schema.Validate(value) != nil {
@@ -139,6 +152,9 @@ func (m *SubscriptionManager) Call(ctx context.Context, method, principal string
 		generalPayload, _ := contracts.Document("conversation_message_created", "payload")
 		entries := result.(map[string]any)["events"].([]any)
 		entries = append(entries, map[string]any{"name": ConversationMessageCreated, "description": "First locally stored messages after activation from one typed conversation, all direct chats, all groups or all permitted conversations, including newly discovered chats. Text limit is 2048 Unicode code points; full text has a resource URI when truncated. Catalogue and history may be incomplete.", "delivery": []string{"webhook"}, "inputSchema": general["properties"].(map[string]any)["arguments"], "payloadSchema": generalPayload})
+		v2, _ := contracts.Document("conversation_v2_events_subscribe", "input")
+		v2Payload, _ := contracts.Document("conversation_v2_message_created", "payload")
+		entries = append(entries, map[string]any{"name": domain.ConversationMessageCreatedV2, "description": "New locally collected messages with explicit direction and first locally known incoming evidence. Supports incoming/outgoing filters and first_incoming_only for direct incoming chats. First known is not first ever in Zalo history.", "delivery": []string{"webhook"}, "inputSchema": v2["properties"].(map[string]any)["arguments"], "payloadSchema": v2Payload})
 		result.(map[string]any)["events"] = entries
 
 	} else {
@@ -147,7 +163,7 @@ func (m *SubscriptionManager) Call(ctx context.Context, method, principal string
 			return nil, eventRPCError(-32602, "Invalid event parameters.", "invalid_params")
 		}
 		permitted := m.Store.Allowed(p.Arguments.GroupID)
-		if p.Name == ConversationMessageCreated {
+		if p.Name == ConversationMessageCreated || p.Name == domain.ConversationMessageCreatedV2 {
 			permitted = true
 			if p.Arguments.Scope == "conversation" {
 				port, ok := m.Store.(interface {
@@ -197,7 +213,9 @@ func (m *SubscriptionManager) Call(ctx context.Context, method, principal string
 			}
 			at := time.Now().UTC()
 			sub := storage.EventSubscription{ID: id, Principal: principal, GroupID: p.Arguments.GroupID, Callback: p.Delivery.URL, Secret: p.Delivery.Secret}
-			if p.Name == ConversationMessageCreated {
+			if p.Name == ConversationMessageCreated || p.Name == domain.ConversationMessageCreatedV2 {
+				sub.Direction = p.Arguments.Direction
+				sub.FirstIncomingOnly = p.Arguments.FirstIncomingOnly
 				sub.Profile = p.Name
 				sub.Scope = p.Arguments.Scope
 				sub.ConversationType = p.Arguments.ConversationType

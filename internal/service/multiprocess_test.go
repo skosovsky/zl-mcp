@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -18,6 +19,19 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"net"
 )
+
+type bridgeSendSource struct {
+	replayListener
+	sends atomic.Int32
+}
+
+func (s *bridgeSendSource) SendDirect(_ context.Context, peer, text string, quote *domain.SendQuote) (string, error) {
+	if peer != "synthetic-peer" || text != "SYNTHETIC_DIRECT_TEXT_MUST_NOT_BE_LOGGED" || quote != nil {
+		return "", fmt.Errorf("unexpected synthetic send")
+	}
+	s.sends.Add(1)
+	return "synthetic-accepted", nil
+}
 
 func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 	// Arrange: two real STDIO bridge processes and one unified HTTP service; only Zalo delivery is synthetic.
@@ -31,6 +45,8 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 	c.Collection.GroupIDs = []string{"g"}
 	c.Storage.RetentionDays = 90
 	c.Permissions.AllowJoin = true
+	c.Permissions.AllowSend = true
+	c.Permissions.SendRecipientIDs = []string{"synthetic-peer"}
 	c.MCP.Listen = "127.0.0.1:0"
 	c.MCP.TokenFile = filepath.Join(dir, "token")
 	c.Logging.File = filepath.Join(dir, "logs", "service.log")
@@ -50,7 +66,7 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	serviceCtx, stopService := context.WithCancel(ctx)
-	client := &replayListener{messages: make(chan messageCommand)}
+	client := &bridgeSendSource{replayListener: replayListener{messages: make(chan messageCommand)}}
 	bound := make(chan net.Addr, 1)
 	finished := make(chan error, 1)
 	go func() {
@@ -155,6 +171,13 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 		if group["group"].(map[string]any)["name"] != "Test group" {
 			t.Fatalf("control group=%+v", group)
 		}
+		// Two independent STDIO clients share a durable send identity in the service.
+		args := map[string]any{"recipient_id": "synthetic-peer", "text": "SYNTHETIC_DIRECT_TEXT_MUST_NOT_BE_LOGGED", "request_id": "c0000000-0000-4000-8000-00000000000c"}
+		sent := call(session, "zalo_send_direct_message", args)
+		status := call(session, "zalo_get_send_status", map[string]any{"request_id": args["request_id"]})
+		if sent["status"] != "sent" || sent["message_id"] != "synthetic-accepted" || status["message_id"] != sent["message_id"] {
+			t.Fatal("STDIO bridge lost send result")
+		}
 	}
 	// Close waits for the subprocess streams before inspecting captured logs.
 	for i, session := range sessions {
@@ -162,7 +185,7 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 			t.Fatal(err)
 		}
 		logText := logs[i].String()
-		for _, forbidden := range []string{"SYNTHETIC_TOKEN_MUST_NOT_BE_LOGGED", "Ремонт кондиционера подтверждён", "live-message"} {
+		for _, forbidden := range []string{"SYNTHETIC_TOKEN_MUST_NOT_BE_LOGGED", "SYNTHETIC_DIRECT_TEXT_MUST_NOT_BE_LOGGED", "Ремонт кондиционера подтверждён", "live-message"} {
 			if strings.Contains(logText, forbidden) {
 				t.Fatalf("reader %d leaked synthetic private value", i)
 			}
@@ -202,5 +225,8 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 	}
 	if client.calls.Load() != 1 {
 		t.Fatal("two bridges created multiple Zalo listeners")
+	}
+	if client.sends.Load() != 1 || strings.Contains(string(logData), "SYNTHETIC_DIRECT_TEXT_MUST_NOT_BE_LOGGED") {
+		t.Fatal("bridges duplicated sending or logged text")
 	}
 }
