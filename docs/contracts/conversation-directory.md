@@ -1,6 +1,6 @@
 # Contact and conversation directory
 
-Status: additive contract and source implementation in the worktree; installed acceptance pending.
+Status: contacts-page catalogue installed at revision 2699d2e; known-ID profile enrichment implemented in the worktree, with installed acceptance pending.
 
 `zalo_list_conversations` and `zalo_get_conversation` keep their current inputs and required output fields. The directory merges group metadata, observed messages and the supported upstream contacts catalogue by typed ID. A contact entry does not claim that a message exists. Collection policy continues to restrict exposed entries.
 
@@ -12,6 +12,33 @@ Refresh uses the current guarded upstream session in the existing service. Conta
 
 Expose safe current source status through `zalo://catalog/diagnostics`: status, last attempt/success times, observed/permitted counts and stop reason, without personal IDs, names, profile details or credentials. Do not silently reset records or declare a non-friend a friend because it appears in a response. Repeated metadata pages/duplicates are bounded; report partial rather than claiming source exhaustion at a client limit. No phone numbers, avatars, birth dates or other unnecessary profile fields are persisted.
 
-All requests and persistence remain independent of broadening Events or sending permissions. Contacts refresh does not discover every Strangers conversation. Supported pinned/hidden/archived sources and known-ID profile enrichment require separate protocol validation before inclusion; do not describe them as implemented merely because upstream methods exist.
+All requests and persistence remain independent of broadening Events or sending permissions. Contacts refresh does not discover every Strangers conversation. Pinned/hidden/archived catalogue candidates require separate protocol validation before inclusion; do not describe them as implemented merely because upstream methods exist. Known-ID profile enrichment has the source contract below; it does not enumerate unknown Strangers identities.
 
 The pinned contacts decoder does not distinguish absent `isFr` from zero. The adapter therefore maps only `isFr=1` to `friend`; zero/other values remain `unknown`. Source status `exhausted` means a successful short contact page, never inbox/history completeness. Counts are unique IDs observed/permitted in the latest refresh, not total catalogue size.
+
+## Known-ID profile enrichment
+
+An optional `ContactProfileSource` reads profile metadata for at most 100 exact,
+unique, nonempty peer IDs in one call through the existing authenticated session.
+This is enrichment of known identities, not discovery of arbitrary users by
+name/phone and not a complete Strangers list. The current pinned profile API
+requests explicit IDs with version zero. A response record must match a requested
+ID (including its documented `_0` version key); a conflicting or unsolicited
+identity rejects the batch. Missing/unchanged profiles remain absent rather than
+creating fabricated contacts. Only ID, display name, Zalo-name alias and supported
+friendship evidence cross the domain boundary. Phone, avatar, birthday, credential
+and other upstream fields are not retained. Typed authentication loss shares the
+same service-session cancellation. Reads alone create no stored messages or Events.
+Background scheduling and installed acceptance must be recorded separately.
+
+Known-ID enrichment runs after the contacts refresh in the same background
+worker. It considers only permitted direct entries which have no cached directory
+metadata or metadata older than one hour, in stable ID order, at most 20 batches of 100 and 30 seconds per run.
+Missing profiles remain pending for a later refresh; the scan advances within
+the current run and cannot repeatedly request one missing batch forever.
+A separate optional `profiles` object in catalogue diagnostics reports requested,
+returned and missing counts, attempt/success times and a bounded stop reason.
+Completing this known-ID scan does not establish full inbox discovery.
+`contacts_catalog` denotes the composite local directory metadata source (friends
+and exact known-ID profiles), not proof of friendship; profile-source counters
+remain separate from friends-page counters.

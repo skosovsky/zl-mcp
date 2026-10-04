@@ -107,6 +107,9 @@ func contactsLoop(ctx context.Context, store *storage.Store, source domain.Conta
 	defer ticker.Stop()
 	for {
 		_ = refreshContacts(ctx, store, source)
+		if profiles, ok := source.(domain.ContactProfileSource); ok && ctx.Err() == nil {
+			_ = refreshContactProfiles(ctx, store, profiles)
+		}
 		select {
 		case <-ctx.Done():
 			return

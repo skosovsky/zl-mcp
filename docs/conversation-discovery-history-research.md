@@ -99,3 +99,22 @@ PIN, which must never be passed into catalogue diagnostics or logs. None of
 these implementations demonstrates a full Strangers inbox enumerator. The
 archived response retains `items: unknown[]`, so its identity shape remains a
 protocol research dependency rather than a supported catalogue source.
+
+## Native UI and cache-format verification
+
+A subsequent read-only UI inspection confirmed that the reported conversation
+is still visible in the native Strangers list and is unread. The row's menu was
+opened and dismissed; the conversation itself was not opened, no read/seen
+state was changed, and no message was sent. This corroborates a catalogue
+mismatch independently of the installed service's exact/normalized name search.
+The accessibility row contains a display name and preview, not a verified
+protocol peer ID; these values are not imported into the service by guesswork.
+
+Only file-format metadata was examined under the native client's ZaloData
+support directory. A `stranger_box.db` file exists but has no ordinary SQLite
+header, and an immutable read-only schema query returns `SQLITE_NOTADB`.
+This establishes that the file is not directly readable by standard SQLite,
+not whether it is encrypted, compressed or another proprietary format.
+No credential/session values or decryption keys were inspected, and no native
+message corpus was copied, decrypted or imported. Native cache parsing is not
+an implemented historical-recovery source.

@@ -46,7 +46,7 @@ SQLite migrated from version 6 to 7. The collector is authenticated/connected. A
 
 The installed authenticated HTTP endpoint advertises 15 tools, including keyword-free browse, and all three existing event profiles including v2. Actual browse returned two messages and a continuation page with the same snapshot; the diagnostics resource reported the completed contacts refresh. Token values and message bodies were neither logged nor published.
 
-Live queue metadata reported `queue_exhausted` after one page for both direct (12 records) and group (2 records) queues. All replayed records were duplicates, with no persistence/decoder error. This verifies the terminal metadata path only; a live `more=true` continuation has not been observed. The reported Hoài An dialogue still does not match exact/accent-normalized catalogue queries. Available replay and friends metadata did not recover that conversation or its September history.
+Live queue metadata reported `queue_exhausted` after one page for both direct (12 records) and group (2 records) queues. All replayed records were duplicates, with no persistence/decoder error. This verifies the terminal metadata path only; a live `more=true` continuation has not been observed. The reported Strangers dialogue still does not match exact/accent-normalized catalogue queries. Available replay and friends metadata did not recover that conversation or its September history.
 
 The currently exposed connected-client tool catalogue still lacks the new browse tool (and the send/status tools). Server-side discovery alone does not prove refreshed plugin discovery. Repository skills are structurally checked; no local copies of either project skill were found in the Codex skills directory. Remaining gates include client capability refresh, explicit history import, Strangers recovery and the uncompleted v2/new-recipient live scenarios. The goal remains in progress.
 
@@ -69,3 +69,69 @@ loss. Targeted root/nested race tests and root vet passed. This is not installed
 or live history acceptance and does not recover the reported Strangers dialogue.
 The user decision on notifications during explicit backfill remains pending;
 ordinary live/offline replay semantics have not changed.
+
+The next directory source checkpoint adds bounded known-ID profile reads behind
+the shared session guard. Pure/stub regressions reject foreign or conflicting
+response identities, duplicate/ambiguous version keys and invalid batch sizes;
+verify that missing/unchanged profiles are not fabricated; and protect the
+caller's exact IDs from the pinned SDK's mutation of its variadic argument slice.
+Only directory fields cross the domain boundary. Targeted root race tests passed.
+At that adapter-only checkpoint, background scheduling and installed acceptance
+were pending; it does not establish discovery of unknown Strangers IDs.
+
+Known-ID profile enrichment is now wired into the same background directory
+worker, with a separate diagnostic profile result. It scans at most 20 batches
+of 100, preserves policy exclusions, advances past missing/excluded pages and
+does not fabricate records for unchanged/missing upstream profiles. Storage
+regressions exercise excluded-page continuation and cached-ID suppression;
+collector regressions exercise completed/missing/foreign responses and the
+2,000-ID limit. Root storage/collector/Zalo/MCP/contracts race checks passed.
+This worktree checkpoint remains uninstalled and unpublished while the prepared
+Git commit is waiting for its configured SSH signer.
+
+Known profiles older than one hour become refresh candidates without deleting
+identity or message history; a regression checks fresh-cache suppression and
+stale-cache eligibility. Both repository skills now distinguish profile metadata
+from messages/Events and interpret the separate profile-source diagnostics.
+Structural validation passed for both; no model evals were run.
+
+An additional cancellation regression stops profile refresh after the upstream
+response but before persistence. It verifies that no profile is written and the
+final diagnostic reports `cancelled_or_deadline`, rather than a storage fault or
+a lingering `running` state. Root tests/race/vet and nested zcago race tests/vet
+passed on this worktree. CGO-free builds produced a macOS arm64 Mach-O binary
+and a Linux amd64 static ELF binary. The redacted tree secret scan found
+no leaks. These checks do not establish installed or connected-client acceptance.
+
+A worker-level race regression exercises `contactsLoop` with the guarded source,
+then causes shared authentication loss while a profile request is in flight.
+It verifies final `partial/auth_required` diagnostics, rejects a subsequent
+profile read before it reaches upstream, persists no profile and stops the
+worker on shutdown. This proves the synthetic lifecycle/authentication boundary,
+not a real-account profile lookup or unknown-Strangers discovery.
+
+The [explicit history-import design draft](contracts/history-import-operation.md)
+now separates the page adapter from a durable MCP operation: request conflicts,
+account/policy boundaries, atomic page checkpoints, restart/cancellation,
+continuation evidence and honest coverage are specified as implementation gates.
+Notification/novelty semantics remain a pending decision. No executable import
+schema, MCP import tool or historical persistence capability is claimed.
+
+## Natural incoming acceptance: 2026-10-04
+
+The user's client screenshot confirms assistant notifications from a peer outside
+the previous list. A read-only database check matched that dialogue without
+publishing its identity or message bodies: six records arrived through `live`
+between 06:24 and 06:28 UTC, five incoming and one outgoing. All six corresponding
+delivery rows are `delivered/accepted`; the first required two attempts and the
+others one. The screenshot independently confirms assistant handling, rather
+than relying only on callback acceptance. One known first-incoming fact is
+retained for the dialogue.
+
+The effective subscription remains v1 `zalo.conversation.message.created` with
+`scope=direct`, `direction=all` and no first-incoming-only filter. This establishes
+natural direct ingestion and delivery beyond the old recipient list, not live
+v2 incoming-only/first-incoming filtering or discovery of all old Strangers
+history. No subscriptions, send permissions or service state were changed for
+this inspection. The prepared history-normalization commit completed as 8208b39
+after the user confirmed its configured SSH signature.

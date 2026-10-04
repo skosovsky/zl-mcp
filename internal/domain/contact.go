@@ -15,3 +15,8 @@ type Contact struct {
 type ContactSource interface {
 	ContactsPage(ctx context.Context, page, limit int) ([]Contact, error)
 }
+
+// ContactProfileSource enriches only exact known peer IDs, never a name search.
+type ContactProfileSource interface {
+	ContactProfiles(context.Context, []string) ([]Contact, error)
+}

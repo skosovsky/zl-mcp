@@ -51,6 +51,74 @@
         "repeated_page",
         "page_limit"
       ]
+    },
+    "profiles": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_attempted",
+            "running",
+            "completed",
+            "partial",
+            "unsupported"
+          ]
+        },
+        "last_attempt_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "last_success_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "requested_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "returned_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "missing_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stop_reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            null,
+            "known_ids_processed",
+            "missing_profiles",
+            "source_unsupported",
+            "auth_required",
+            "upstream_unavailable",
+            "cancelled_or_deadline",
+            "storage_or_metadata_error",
+            "page_limit"
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "last_attempt_at",
+        "last_success_at",
+        "requested_count",
+        "returned_count",
+        "missing_count",
+        "stop_reason"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
