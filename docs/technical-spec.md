@@ -25,6 +25,23 @@ Additive профиль `zalo.conversation.message.created` имеет `schema_v
 
 SQLite migration 4 сохраняет seq/high-water mark, identities, FTS, coverage/gaps, subscriptions/start_seq/generation, fanout и исходные байты очереди. Backup и откат охватывают БД и бинарник. Production-проверка должна отдельно подтвердить существующие пропущенные сообщения через общий MCP, restart и Events; новые сообщения не заменяют проверку старых. Установка и примеры config — [conversations.md](conversations.md).
 
+## Расширение: явный исторический импорт
+
+В исходниках реализованы `zalo_import_conversation_history`,
+`zalo_get_history_import_status`, `zalo_cancel_history_import`: ограниченная
+фоновая операция через существующую guarded-сессию collector. SQLite migration 8
+сохраняет UUID, account binding, ревизии, точные курсоры и атомарный checkpoint
+страницы вместе с сообщениями. Исторические записи имеют source=history,
+notification_policy=none; Events и задания доставки не создаются. Постоянные
+typed identities подавляют уведомление позднего live/replay-дубликата.
+
+Подтверждённый кандидат источника — только group cloud. Direct/Strangers history
+возвращает unsupported. Completed означает исчерпание доступного источника;
+history_complete=false, фильтры/лимиты/разрывы остаются видимыми. Полные правила
+и исполняемые схемы: [контракт импорта](contracts/history-import-operation.md).
+Установленная live-проверка и обновление каталога клиента учитываются отдельно
+от реализации. [Инструкция](history-import.md) описывает запуск, статус и отмену.
+
 ## 1. Цель
 
 Предоставить совместимому MCP-клиенту доступ к личному аккаунту Zalo для вступления в группы по приглашению, поиска информации и подписки на новые сообщения разрешённых личных чатов и групп. Один постоянный Go-сервис объединяет collector, MCP, хранилище подписок и надёжную доставку событий.

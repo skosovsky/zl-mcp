@@ -387,7 +387,8 @@
           "type": "string",
           "enum": [
             "live",
-            "replay"
+            "replay",
+            "history"
           ]
         },
         "text_truncated": {

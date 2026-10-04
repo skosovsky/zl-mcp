@@ -150,3 +150,17 @@ in the background every five minutes; it creates neither messages nor Events.
 Read `zalo://catalog/diagnostics` for the latest source result and refresh client
 discovery to expose `zalo_list_conversation_messages`. A successful short contacts
 page means source exhaustion, not a complete inbox or complete old history.
+
+## History-import upgrade
+
+Migration 8 adds an account-bound operation journal, durable work reservations
+and exact cursor checkpoints. Back up the stopped service and verify the snapshot
+before installing. Preserve the current session, corpus, subscription boundaries
+and send journal. Keep the same LaunchAgent and state directory.
+
+Verify all three history tools in the actual client's catalogue after refresh.
+Start only explicitly requested bounded group imports; direct history remains
+unsupported. Check saved operation status and read imported records through MCP.
+History creates no Events or notification deliveries. See the
+[history workflow](history-import.md). Source registration and synthetic tests do
+not prove upstream pages are available for a particular account.

@@ -127,8 +127,13 @@ func (s *Store) migrate(ctx context.Context) error {
 	if err = s.migrateSending(ctx); err != nil {
 		return err
 	}
-	if err=s.migrateIncoming(ctx);err!=nil {return err}
-	return s.migrateContacts(ctx)
+	if err = s.migrateIncoming(ctx); err != nil {
+		return err
+	}
+	if err = s.migrateContacts(ctx); err != nil {
+		return err
+	}
+	return s.migrateHistoryOperations(ctx)
 }
 func (s *Store) BindAccount(ctx context.Context, account string) error {
 	h := sha256.Sum256([]byte(account))
@@ -192,30 +197,54 @@ func (s *Store) Put(ctx context.Context, m domain.Message) (err error) {
 	if m.AttachmentTypes == nil {
 		m.AttachmentTypes = []string{}
 	}
-	a, err := json.Marshal(m.AttachmentTypes)
-	if err != nil {
-		return err
-	}
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-	result, err := tx.ExecContext(ctx, `INSERT OR IGNORE INTO messages(group_id,conversation_type,message_id,sender_id,sender_name,sent_at,received_at,text,reply_id,attachments,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, ref.ID, ref.Type, m.ID, m.SenderID, m.SenderName, m.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), now(), m.Text, m.ReplyTo, string(a), m.Source)
+	inserted, err := s.putMessageTx(ctx, tx, m, false)
 	if err != nil {
 		return err
 	}
+	err = tx.Commit()
+	if err == nil {
+		if inserted {
+			counters.inserted.Add(1)
+		} else {
+			counters.duplicates.Add(1)
+		}
+	}
+	return err
+}
+
+// putMessageTx is shared by ordinary collection and silent historical pages.
+// The caller validates the complete request and owns the transaction/checkpoint.
+func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, historical bool) (bool, error) {
+	ref := m.Ref()
+	a, err := json.Marshal(m.AttachmentTypes)
+	if err != nil {
+		return false, err
+	}
+	result, err := tx.ExecContext(ctx, `INSERT OR IGNORE INTO messages(group_id,conversation_type,message_id,sender_id,sender_name,sent_at,received_at,text,reply_id,attachments,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, ref.ID, ref.Type, m.ID, m.SenderID, m.SenderName, m.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), now(), m.Text, m.ReplyTo, string(a), m.Source)
+	if err != nil {
+		return false, err
+	}
 	inserted, err := result.RowsAffected()
 	if err != nil {
-		return err
+		return false, err
 	}
 	if inserted != 0 {
 		seq, err := result.LastInsertId()
 		if err != nil {
-			return err
+			return false, err
 		}
-		if err = appendMessageEvent(ctx, tx, seq, m); err != nil {
-			return err
+		if historical {
+			err = appendHistoryIdentity(ctx, tx, seq, m)
+		} else {
+			err = appendMessageEvent(ctx, tx, seq, m)
+		}
+		if err != nil {
+			return false, err
 		}
 	}
 	// A matching replay may restore missing protocol quote identifiers without
@@ -223,29 +252,27 @@ func (s *Store) Put(ctx context.Context, m domain.Message) (err error) {
 	if m.QuoteMetadata != nil && ref.Type == domain.ConversationDirect {
 		q := m.QuoteMetadata
 		if _, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO message_quote_metadata(message_seq,client_message_id,message_type,timestamp,ttl) SELECT seq,?,?,?,? FROM messages WHERE conversation_type='direct' AND group_id=? AND message_id=? AND sender_id=? AND text=? AND sent_at=?`, q.ClientMessageID, q.MessageType, q.Timestamp, q.TTL, ref.ID, m.ID, m.SenderID, m.Text, m.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z")); err != nil {
-			return err
+			return false, err
 		}
 	}
-	_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO collection_started(group_id,conversation_type,started_at) VALUES(?,?,?)`, ref.ID, ref.Type, now())
-	if err != nil {
-		return err
+	if !historical {
+		_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO collection_started(group_id,conversation_type,started_at) VALUES(?,?,?)`, ref.ID, ref.Type, now())
+		if err != nil {
+			return false, err
+		}
 	}
 	var peerName *string
 	if ref.Type == domain.ConversationDirect && m.SenderID == ref.ID {
 		peerName = m.SenderName
 	}
-	if _, err = tx.ExecContext(ctx, `INSERT INTO conversations(conversation_type,conversation_id,name,metadata_source,availability,first_discovered_at,updated_at) VALUES(?,?,?,?,'observed',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=COALESCE(excluded.name,conversations.name),availability=CASE WHEN excluded.conversation_type='direct' THEN 'observed' ELSE conversations.availability END,updated_at=excluded.updated_at`, ref.Type, ref.ID, peerName, m.Source, now(), now()); err != nil {
-		return err
+	metadataSource := m.Source
+	if historical {
+		metadataSource = "stored_message"
 	}
-	err = tx.Commit()
-	if err == nil {
-		if inserted != 0 {
-			counters.inserted.Add(1)
-		} else {
-			counters.duplicates.Add(1)
-		}
+	if _, err = tx.ExecContext(ctx, `INSERT INTO conversations(conversation_type,conversation_id,name,metadata_source,availability,first_discovered_at,updated_at) VALUES(?,?,?,?,'observed',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=COALESCE(excluded.name,conversations.name),availability=CASE WHEN excluded.conversation_type='direct' THEN 'observed' ELSE conversations.availability END,updated_at=excluded.updated_at`, ref.Type, ref.ID, peerName, metadataSource, now(), now()); err != nil {
+		return false, err
 	}
-	return err
+	return inserted != 0, nil
 }
 func (s *Store) Delete(ctx context.Context, groupID, messageID string) error {
 	return s.removeMessages(ctx, "conversation_type='group' AND group_id=? AND message_id=?", "record_deleted", groupID, messageID)

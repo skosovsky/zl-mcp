@@ -135,3 +135,78 @@ v2 incoming-only/first-incoming filtering or discovery of all old Strangers
 history. No subscriptions, send permissions or service state were changed for
 this inspection. The prepared history-normalization commit completed as 8208b39
 after the user confirmed its configured SSH signature.
+
+## Silent historical import checkpoint: 2026-10-04 (worktree only)
+
+The user selected explicit old-history ingestion without Events/notifications.
+Executable request, lookup and status schemas now enforce fixed silent policy,
+bounded pages/records and typed operation identities, preserving nullable source
+evidence and `history_complete=false`. Schema regressions reject callback/cursor
+injection, notification overrides, ambiguous dates and over-limit requests. The
+schemas are deliberately not advertised as unimplemented tools.
+
+The storage page port validates a whole normalized page and commits it
+atomically with permanent typed identities. It uses shared message persistence,
+retains `history` provenance, creates no Events/delivery jobs and does not invent
+a collector start time. Historical direct identities seed unknown novelty while
+preserving any existing known fact. Regressions verify malformed-page and SQL
+failure rollback, retained live text/facts, duplicate counts, readable historical
+text, and no new Event when replay restores a historical identity after
+retention/reopening. Storage/contracts race checks passed. Both skills describe
+silent import without claiming client availability.
+
+The durable operation journal, checkpoint worker and MCP handlers are not yet
+implemented. This port is not installed/live import acceptance and does not
+establish support for direct or Strangers history.
+
+The next worktree checkpoint adds SQLite migration 8 and a durable history
+ledger. Request normalization preserves exact typed IDs, canonicalizes UUID/date
+instants and applies the executable limits before fingerprinting. Equivalent
+retries return the saved operation; conflicts and concurrent active work for the
+same conversation are rejected. The journal binds operations to the stored
+account, retains exact decimal cursors, accumulated work duration and revisions,
+and keeps terminal cancellation/unsupported outcomes on retry.
+
+Page records, permanent identities, progress, nullable source evidence and cursor
+history commit in one transaction. Regressions cover failure of the final
+checkpoint update after message insertion, restart on a committed checkpoint,
+stale revisions, cancellation, repeated/missing cursors, filtering and page/record
+limits. Auth pause preserves work budget; explicit account-locked recovery (not
+ordinary Store.Open) requeues interrupted work and cancels revoked scopes.
+Migration failure rolls back its DDL and version marker. Storage/domain/contracts
+race checks and targeted vet passed. Typed status results validate against the
+executable output schema. No historical Events are emitted.
+
+This is uninstalled source evidence. The worker and MCP registration still need
+implementation and installed/live verification; schema 8 has not been applied
+to the running service by these tests.
+
+## Guarded worker and MCP checkpoint: 2026-10-04 (uninstalled source)
+
+The import worker and three explicit MCP tools are now implemented. One sequential
+worker shares the collector's guarded authenticated session and resumes the
+account-bound journal. Synthetic tests cover exact continuation, remaining-record
+fetch bounds, auth pause/resume and cancellation while an upstream page is in
+flight; the late result cannot persist. The production HTTP service test uses
+one restore/listener, imports a synthetic group page, reads its context and
+repeats the UUID without a second fetch. Events diagnostics remain empty.
+
+A real in-memory MCP client verifies discovery, flat contracts, annotations,
+status, context and full-text resources. This exposed a missing `history` value
+in shared Message output schemas; all affected Message enums were synchronized
+without widening catalogue metadata enums. Import is a non-destructive,
+idempotent local write with upstream access; status is a local read and cancel
+is a local idempotent write. Targeted history/service race tests passed.
+
+Earlier paragraphs record earlier checkpoints, not the current capability
+catalogue. Source registration is now 18 tools. Deployment, actual client
+refresh, live group-cloud acceptance, v2 filter checks and remaining authorized
+send acceptance are still separate gates. Direct/Strangers historical recovery
+remains unsupported; natural incoming delivery does not prove old-history
+recovery. No installed state or subscription was changed by these tests.
+
+The pre-request journal also reserves bounded source work. Regression tests
+simulate four interrupted 30-second reservations across reopen/recovery and
+require terminal time_limit without invented records. A normal auth pause
+reconciles actual work and releases unused reservation rather than charging
+authentication waiting. This closes the crash-before-checkpoint budget gap.

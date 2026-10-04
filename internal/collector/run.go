@@ -15,6 +15,7 @@ import (
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 	"github.com/skosovsky/zl-mcp/internal/config"
 	"github.com/skosovsky/zl-mcp/internal/domain"
+	"github.com/skosovsky/zl-mcp/internal/historyimport"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
@@ -35,15 +36,39 @@ func RunInternal(ctx context.Context, c config.Config, store *storage.Store, cli
 	if ready == nil {
 		return errors.New("collector readiness callback is required")
 	}
+	if err := store.BindAccount(ctx, client.AccountID()); err != nil {
+		return err
+	}
 	guard := newSessionGuard(ctx, client)
 	defer guard.cancel()
 	return runSession(ctx, c, store, guard, ready)
 }
 
-func runSession(ctx context.Context, c config.Config, store *storage.Store, client ListenerUpstream, ready func(*JoinManager) error) error {
+func runSession(ctx context.Context, c config.Config, store *storage.Store, client ListenerUpstream, ready func(*JoinManager) error) (resultErr error) {
 	var e error
 	runCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	if source, ok := client.(domain.HistorySource); ok {
+		done := make(chan error, 1)
+		go func() {
+			err := historyimport.Run(runCtx, store, source)
+			done <- err
+			if err != nil {
+				cancel()
+			}
+		}()
+		defer func() {
+			cancel()
+			err := <-done
+			if resultErr == nil && err != nil {
+				if errors.Is(err, domain.ErrAuthenticationRequired) {
+					resultErr = err
+				} else {
+					resultErr = &storageFailure{cause: err}
+				}
+			}
+		}()
+	}
 	joins := NewJoin(runCtx, store, client, c.Permissions.AllowJoin)
 	if e = joins.Recover(ctx); e != nil {
 		return e

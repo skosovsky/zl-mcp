@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "conversation_type": {
+      "enum": [
+        "direct",
+        "group"
+      ]
+    },
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "since": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64
+    },
+    "until": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64
+    },
+    "page_size": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 50
+    },
+    "max_pages": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 20
+    },
+    "max_messages": {
+      "description": "Maximum source records examined, including duplicates and records outside the requested interval.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5000,
+      "default": 1000
+    }
+  },
+  "required": [
+    "conversation_type",
+    "conversation_id",
+    "request_id",
+    "since",
+    "until"
+  ]
+}

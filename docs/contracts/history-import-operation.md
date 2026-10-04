@@ -1,8 +1,15 @@
-# Explicit history import operation (design draft)
+# Explicit history import operation
 
-Status: design draft, not an advertised MCP capability or installed feature.
-Executable input/output schemas and implementation must follow the notification
-policy decision below. Existing offline replay and subscriptions are unchanged.
+Status: implemented in source with executable schemas, a durable SQLite journal,
+a guarded worker and HTTP/STDIO MCP tools. Installed/live acceptance remains
+pending. Existing offline replay and subscriptions are unchanged. The user
+selected silent historical import on 2026-10-04.
+
+Schemas: `history_import_request.input.json`,
+`history_import_operation.input.json` (status/cancel identity), and
+`history_import_operation.output.json`. The contract package maps the three
+explicit tool names to these shared schemas and advertises flat input/output
+documents; clients do not need to resolve external schema references.
 
 ## Boundary and inputs
 
@@ -12,15 +19,23 @@ listener, login or native-client database reader. The currently implemented page
 candidate supports group cloud history only. Direct history must report
 `unsupported`; known-ID profile enrichment is not a history source.
 
-Proposed tools are `zalo_import_conversation_history`,
+Tools are `zalo_import_conversation_history`,
 `zalo_get_history_import_status` and `zalo_cancel_history_import`. Their contracts
-must use the same flat `conversation_type` and `conversation_id` fields as
+use the same flat `conversation_type` and `conversation_id` fields as
 browse, rather than a generic action/payload tool. Start additionally requires
 `request_id` (UUID), `since` and `until` (RFC3339 instants, half-open interval),
-with bounded `page_size`, `max_pages` and `max_messages`. Numerical limits and
-defaults must be fixed in schemas before implementation; the source page size
-cannot exceed 50. Reversed/equal dates, malformed IDs and unsupported types must
+with bounded `page_size` (1–50, default 50), `max_pages` (1–100, default 20) and
+`max_messages` (1–5,000, default 1,000). An operation has a 120-second work budget;
+source requests share session cancellation. Reversed/equal dates, malformed IDs and unsupported types must
 be rejected before upstream access. Calendar interpretations must not be guessed.
+
+`max_messages` bounds source records examined, including duplicates and records
+outside the requested interval; it is not a target number of newly inserted
+messages. Each fetch is bounded by the remaining record budget. Work time is
+accumulated durably across restart/auth pauses; time spent waiting for restored
+authentication is not active work. The ledger admits at most 100 active and
+100,000 total operations. Request identities and cursor checkpoints are retained;
+capacity exhaustion is explicit rather than deleting idempotency evidence.
 
 The caller never supplies a raw upstream cursor, storage path, account ID or
 Events callback. Source cursors are exact decimal strings in the internal
@@ -96,21 +111,29 @@ No message bodies, profile details, tokens, raw source responses or signing keys
 belong in progress logs. Full imported text is read through existing conversation
 message resources; status is not an alternative corpus dump.
 
-## Pending Events decision
+## Events and novelty policy (selected)
 
-The user has been asked whether explicit backfill should persist without
-notifications or notify matching subscribers about first-persisted historical
-records. This remains unanswered. Do not select a default or implement the
-dependent ingestion/outbox path while that decision is pending.
+Explicit backfill has immutable `notification_policy=none`. New historical
+records use internal persistence provenance `history` and create no
+`message_events` or delivery jobs. They remain available to browse, search,
+context and full-text resources. There is no caller switch to enable historical
+notifications. Ordinary live/offline replay keeps its existing behavior.
 
-Either decision must retain the effective policy in the operation and preserve
-ordinary live/offline replay behavior. Historical import must not fabricate a
-first incoming contact, shift a subscription's activation boundary, clear
-existing novelty facts or enqueue an event for an already-known message.
-Contracts must specify historical provenance and novelty semantics before
-implementation, including how a later live/replay duplicate is treated. A
-message first observed through backfill must not later become a newly discovered
-peer merely because a live duplicate arrives.
+Register permanent typed message identities in the same transaction as the
+import. A later live/replay duplicate must not create an Event, including after
+retention removes the imported text. Import never shifts subscription activation
+or modifies an existing first-incoming fact. For a direct peer without a fact,
+seed `certainty=unknown`, `first_seq=null`: historical evidence establishes that
+the peer was already known, but does not prove a complete history or the actual
+first incoming. Later incoming events retain nullable novelty; unknown never
+matches `first_incoming_only`. Existing known facts remain known. This rule also
+applies to historical outgoing records; neither an outgoing import nor a later
+live duplicate may fabricate a newly discovered peer.
+
+The confirmed source candidate is group-only; the direct novelty rule is a
+storage invariant for any later supported direct source, not an announcement
+that direct history is currently available. Historical insertion does not
+fabricate collector collection-start times or close known collector gaps.
 
 ## Required acceptance evidence
 
@@ -118,10 +141,15 @@ Before exposure, executable schemas and AAA regressions must cover UUID
 conflicts, typed/account identity, permissions/revocation, time boundaries,
 decimal cursor precision, malformed whole pages, duplicate/live concurrency,
 missing/repeated continuation, filtering, bounds, cancellation, auth loss and
-restart at both sides of the atomic page commit. Events tests depend on the
-selected policy and must include historical first-contact behavior.
+restart at both sides of the atomic page commit. Events tests must verify silent
+import, unchanged live/replay behavior and historical first-contact handling.
 
 An installed live check must separately establish advertised source support,
 actual page results, durable imports and client discovery. Group-only source
 evidence cannot close direct/Strangers history acceptance. Existing sends and
 subscriptions must remain unchanged throughout this check.
+
+Before each source request, the journal reserves up to 30 seconds of remaining
+work. A normal result reconciles actual elapsed work. Crash recovery charges the
+reservation conservatively; repeated crashes cannot reset the time bound.
+Authentication waiting remains outside active work.

@@ -27,9 +27,26 @@ Build from the complete checkout. The project uses a local replacement for patch
 
 See [client connection examples](docs/local-connection.md). Connecting a client does not start the collector or sign in to Zalo.
 
-General read tools: `zalo_list_conversations`, `zalo_get_conversation`, `zalo_search_conversation_messages`, `zalo_get_conversation_message_context`. Legacy group and membership tools remain compatible: `zalo_get_status`, `zalo_list_groups`, `zalo_get_group`, `zalo_inspect_invite`, `zalo_join_group`, `zalo_get_join_status`, `zalo_search_messages`, `zalo_get_message_context`. Resources include `zalo://capabilities`, `zalo://collection`, `zalo://events/diagnostics`, and full-message URIs returned by the server.
+General read tools: `zalo_list_conversations`, `zalo_get_conversation`, `zalo_search_conversation_messages`, `zalo_get_conversation_message_context`, `zalo_list_conversation_messages`. Legacy group and membership tools remain compatible: `zalo_get_status`, `zalo_list_groups`, `zalo_get_group`, `zalo_inspect_invite`, `zalo_join_group`, `zalo_get_join_status`, `zalo_search_messages`, `zalo_get_message_context`. Resources include `zalo://capabilities`, `zalo://collection`, `zalo://events/diagnostics`, and full-message URIs returned by the server.
 
 For joining, inspect an invitation, approve its preview in an interactive local terminal with `zl-mcp -config CONFIG approve-join PREVIEW_ID`, then call `zalo_join_group` with the resulting token and a UUID request ID. Reuse the original arguments when retrying; check `zalo_get_join_status` rather than issuing another join for an uncertain result. Joining does not add the group to a selected collection policy; all mode admits accessible discovered groups.
+
+## Browsing and available history
+
+Use `zalo_list_conversation_messages` to page through one typed conversation over
+an explicit `[since, until)` interval without a search word. Its cursor binds the
+filters and a local snapshot. It reads collected data, not Zalo history.
+
+For explicitly requested historical recovery, start
+`zalo_import_conversation_history` with an exact conversation identity, RFC3339
+interval and stable UUID request ID. Poll `zalo_get_history_import_status`; use
+`zalo_cancel_history_import` to stop it. The single service imports available
+group-cloud pages within page, record and time limits. Direct/Strangers history
+returns `unsupported`. Imported records appear in ordinary reads without Events
+or notifications; later duplicates do not notify either. Completion describes
+the available bounded source, never a complete archive. Inspect counts, nullable
+filtering evidence, stop reason and newly imported time bounds. See the
+[history workflow](docs/history-import.md) and [operation contract](docs/contracts/history-import-operation.md).
 
 ## Events and limitations
 

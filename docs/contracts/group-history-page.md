@@ -1,6 +1,6 @@
 # Group cloud history page candidate
 
-Status: SDK page candidate published at revision 6a17fad; domain normalization implemented in the worktree. Installed/live acceptance and explicit import remain pending.
+Status: SDK page candidate and domain normalization are published; the durable import worker and MCP interface are implemented in source. Installed/live acceptance remains pending.
 
 The candidate follows [upstream PR #370](https://github.com/RFS-ADRENO/zca-js/pull/370), head `4eeceafad031ce4f594c4532e3363dbdf01450b0`, and the installed native client's group-cloud endpoint inventory. It is a group-only read, not a direct-history fallback or full inbox source. No read/seen mutation or message sending is part of the request.
 
@@ -8,11 +8,12 @@ One call uses the current authenticated API session and its advertised `group_cl
 
 The response retains at most the requested count of raw records and nullable continuation/filtering evidence: `hasMore`, exact `lastMsgId`, `isFiltered`, `isFilteredByPhase`, `isFilteredByTimeJoin`, `isOld`, join timestamp and internal error. Missing/null message arrays, oversized pages and malformed continuation types are errors rather than silent exhaustion. Cursor absence is distinct from zero. Raw records remain internal and must be normalized and validated against the requested typed identity before any persistence; a page read itself creates no messages, Events or first-incoming facts.
 
-This optional SDK extension does not broaden the existing public API interface or start another listener. There is no automatic paging, import, retry or complete-history claim in this layer. Upstream filtering, missing continuation or an empty page does not prove historical completeness. A later bounded import operation must separately define request identity, progress, cancellation, restart and compatible Events semantics before exposure as an MCP tool.
+This optional SDK extension does not broaden the existing public API interface or start another listener. There is no automatic paging, import, retry or complete-history claim in this layer. Upstream filtering, missing continuation or an empty page does not prove historical completeness. The separate bounded import operation defines request identity, progress, cancellation, restart and silent Events semantics.
 
-The [explicit import operation draft](history-import-operation.md) records those
-requirements separately. It is not an executable contract or exposed capability;
-the historical notification decision remains pending.
+The [explicit import operation contract](history-import-operation.md) records
+those requirements separately, with executable request/status schemas. Silent
+historical import was selected on 2026-10-04. The import worker uses this page
+port through the existing guarded session; it creates no second listener.
 
 ## Domain normalization boundary
 
@@ -29,7 +30,7 @@ whole page. The adapter preserves nullable source flags and continuation and
 uses the existing account ID to classify direction. Message text remains data.
 
 Normalized messages deliberately have an empty persistence source. The current
-Store.Put rejects them, so a later import operation must explicitly select its
-separate ingestion policy rather than accidentally treating backfill as ordinary
-replay. This adapter itself has no storage or subscription dependency and starts
+Store.Put rejects them. The import journal uses its explicit historical page
+transaction to assign `history` provenance and commit without Events, rather than
+treating backfill as ordinary replay. This adapter itself has no storage or subscription dependency and starts
 no listener. Tests use a fake page reader and demonstrate this boundary.

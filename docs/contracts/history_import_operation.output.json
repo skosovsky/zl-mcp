@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "operation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "conversation_type": {
+      "enum": [
+        "direct",
+        "group"
+      ]
+    },
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "since": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64
+    },
+    "until": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64
+    },
+    "notification_policy": {
+      "const": "none"
+    },
+    "source_kind": {
+      "enum": [
+        "group_cloud",
+        "unsupported"
+      ]
+    },
+    "state": {
+      "enum": [
+        "queued",
+        "running",
+        "paused",
+        "completed",
+        "partial",
+        "cancelled",
+        "failed",
+        "unsupported"
+      ]
+    },
+    "page_size": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 50
+    },
+    "max_pages": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 20
+    },
+    "max_messages": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5000,
+      "default": 1000
+    },
+    "pages_observed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "records_observed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "inserted_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "duplicate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "out_of_interval_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64
+    },
+    "earliest_imported_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 64
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "latest_imported_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 64
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_has_more": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "is_filtered": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "is_filtered_by_phase": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "is_filtered_by_time_join": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "is_old": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "join_timestamp_millis": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,127})$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "history_complete": {
+      "const": false
+    },
+    "stop_reason": {
+      "enum": [
+        null,
+        "available_source_exhausted",
+        "page_limit",
+        "message_limit",
+        "time_limit",
+        "missing_continuation",
+        "repeated_cursor",
+        "empty_continuing_page",
+        "source_filtered",
+        "auth_required",
+        "source_unsupported",
+        "upstream_unavailable",
+        "invalid_source_page",
+        "storage_error",
+        "cancelled",
+        "access_revoked"
+      ]
+    }
+  },
+  "required": [
+    "operation_id",
+    "request_id",
+    "conversation_type",
+    "conversation_id",
+    "since",
+    "until",
+    "notification_policy",
+    "source_kind",
+    "state",
+    "page_size",
+    "max_pages",
+    "max_messages",
+    "pages_observed",
+    "records_observed",
+    "inserted_count",
+    "duplicate_count",
+    "out_of_interval_count",
+    "created_at",
+    "updated_at",
+    "earliest_imported_at",
+    "latest_imported_at",
+    "source_has_more",
+    "is_filtered",
+    "is_filtered_by_phase",
+    "is_filtered_by_time_join",
+    "is_old",
+    "join_timestamp_millis",
+    "history_complete",
+    "stop_reason"
+  ]
+}

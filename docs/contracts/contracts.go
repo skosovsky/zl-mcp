@@ -14,6 +14,14 @@ import (
 //go:embed *.json
 var Files embed.FS
 
+// Shared history schemas stay flat for MCP clients while avoiding three copies
+// of the same operation status contract.
+var toolAliases = map[string][2]string{
+	"zalo_import_conversation_history": {"history_import_request", "history_import_operation"},
+	"zalo_get_history_import_status":   {"history_import_operation", "history_import_operation"},
+	"zalo_cancel_history_import":       {"history_import_operation", "history_import_operation"},
+}
+
 func Names() []string {
 	entries, _ := Files.ReadDir(".")
 	names := []string{}
@@ -22,10 +30,20 @@ func Names() []string {
 			names = append(names, strings.TrimSuffix(e.Name(), ".input.json"))
 		}
 	}
+	for name := range toolAliases {
+		names = append(names, name)
+	}
 	sort.Strings(names)
 	return names
 }
 func Document(name, suffix string) (map[string]any, error) {
+	if alias, ok := toolAliases[name]; ok {
+		if suffix == "input" {
+			name = alias[0]
+		} else if suffix == "output" {
+			name = alias[1]
+		}
+	}
 	b, e := Files.ReadFile(name + "." + suffix + ".json")
 	if e != nil {
 		return nil, e

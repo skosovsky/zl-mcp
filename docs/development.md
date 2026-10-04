@@ -71,3 +71,21 @@ Webhook tests construct synthetic signing keys from test bytes at runtime. Avoid
 embedding complete `whsec_` tokens in fixtures: GitHub can classify Standard Webhooks
 test values as Stripe signing secrets. Inspect an alert's source and provenance
 before resolving it as a false positive; real exposed credentials require revocation.
+
+## Historical import checks
+
+History operations have shared flat executable schemas and three explicit MCP
+names. Update the schema alias map with registration; validate both HTTP and
+STDIO discovery. The worker uses the collector's guarded session under the
+existing account lock. Synthetic service tests prove one restore/listener,
+readable imported records, stable request retries and an empty Events queue.
+
+```sh
+go test -race ./internal/historyimport ./internal/storage ./internal/service ./internal/mcpserver ./docs/contracts
+```
+
+Regressions cover exact decimal cursors, whole-page rollback, checkpoint/restart,
+auth pause, cancellation of late responses, account/policy revocation, durable
+work limits and retention-safe silent identities. All Message output schemas
+accept `source=history`; catalogue metadata provenance remains a separate enum.
+These checks do not establish live source availability or direct history.

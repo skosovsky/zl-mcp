@@ -20,6 +20,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/config"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/events"
+	"github.com/skosovsky/zl-mcp/internal/historyimport"
 	"github.com/skosovsky/zl-mcp/internal/local"
 	"github.com/skosovsky/zl-mcp/internal/mcpserver"
 	"github.com/skosovsky/zl-mcp/internal/messaging"
@@ -68,6 +69,9 @@ func (p *membershipPort) Call(ctx context.Context, method string, args any) (map
 	}
 	p.mu.RLock()
 	defer p.mu.RUnlock()
+	if method == "zalo_import_conversation_history" || method == "zalo_get_history_import_status" || method == "zalo_cancel_history_import" {
+		return (&historyimport.Manager{Store: p.store}).Call(ctx, method, args)
+	}
 	if method == "zalo_send_direct_message" || method == "zalo_get_send_status" {
 		return (&messaging.Manager{Store: p.store, Sender: p.sender, Enabled: p.allowSend, Recipients: p.recipients}).Call(ctx, method, args)
 	}
