@@ -210,3 +210,47 @@ simulate four interrupted 30-second reservations across reopen/recovery and
 require terminal time_limit without invented records. A normal auth pause
 reconciles actual work and releases unused reservation rather than charging
 authentication waiting. This closes the crash-before-checkpoint budget gap.
+
+## Installed checkpoint: 2026-10-04, revision b27ee34
+
+Revision `b27ee340a769597d40210aa4369354ddaabfe145` is published. Its
+[CI run](https://github.com/skosovsky/zl-mcp/actions/runs/37199168176) passed on
+Linux and native macOS. Root and nested-module race/vet checks, no-CGO macOS
+arm64/Linux amd64 builds, a clean-checkout test/build, skill validation and local
+Markdown links passed. Gitleaks found no secrets in the tree or all 16 published
+commits. The clean installed build reports that revision with `vcs.modified=false`.
+
+The sole installed LaunchAgent was stopped, its account lock was acquired with a
+bounded wait, and a full private state/config/plist/binary snapshot was copied
+and hash/integrity verified before replacement. The service restarted with the
+same session/config/token. SQLite migration 8 completed. Comparison against the
+stopped snapshot confirms retention of all 47 messages and message identities,
+both subscription rows and both send-operation rows. No send permission or
+subscription was changed by deployment.
+
+Installed local HTTP MCP advertises 18 tools and all three Events profiles. Typed
+context and keyword-free browse work on retained direct messages. The connected
+client's existing `zalo_get_status` tool independently reports authenticated and
+connected, with 47 records. Its actual `zalo_list_conversations` resolved one
+requested direct conversation, and `zalo_list_conversation_messages` returned
+five records with has_more=true without a search word. Identities and bodies
+were not included in this report. This verifies client browse access in addition
+to local HTTP. This session's external catalogue still lacks the
+three new import tools: local discovery is not evidence of external refresh.
+
+A bounded import of the existing authorized test group used one page and at most
+five source records. Its durable result is `failed/upstream_unavailable`, zero
+pages/records/insertions; no historical messages were added. One diagnostic
+retry and a later status read hit the diagnostic client's 10-second timeout;
+a read-only SQLite check confirmed the saved terminal operation and unchanged
+corpus. Repeating the status/start reads with a 40-second diagnostic deadline
+then completed in 2.69 seconds and returned the same operation/state. No
+replacement UUID or extra page was requested. This establishes installed
+operation persistence and exact live retry, not live history source success. The safe stop category does not distinguish transport,
+API or response-normalization errors yet; the actual failure needs further
+source diagnosis. The collector remains connected.
+
+Remaining gates include upstream page diagnosis and successful available-history
+acceptance, external import discovery, v2 filters and remaining explicitly
+authorized send checks. Older Strangers history remains unresolved. The goal is
+not complete.

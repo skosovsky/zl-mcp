@@ -118,3 +118,28 @@ not whether it is encrypted, compressed or another proprietary format.
 No credential/session values or decryption keys were inspected, and no native
 message corpus was copied, decrypted or imported. Native cache parsing is not
 an implemented historical-recovery source.
+
+## Additional preload candidate: 2026-10-04
+
+A fresh primary-source review found another Go implementation,
+[diepxuan/zcloud](https://github.com/diepxuan/zcloud/blob/10f752b431102b71e3185a2077041efff907ed3e/src/zcloud/internal/core/chat.go),
+commit `10f752b431102b71e3185a2077041efff907ed3e`. Its `GetConversations` calls
+`/api/preloadconvers/get-last-msgs` with encrypted `threadIdLocalMsgId="{}"`
+and the current IMEI using the account's conversation service. It treats
+`data.clearUnreads` as typed conversation metadata and retains recent `msgs` and
+`groupMsgs`. Comments claim 156 metadata entries and about 15–18 recent messages;
+those are the author's observations, not our live evidence or guaranteed bounds.
+
+This revises the earlier narrow hypothesis that the preload endpoint necessarily
+requires an existing thread mapping. The installed native client confirms the
+endpoint and serializes the supplied map; it handles returned clear-unread data
+locally. Neither source proves exhaustive Strangers enumeration, a stable
+retention window, per-peer older history or absence of server-side read effects.
+The candidate needs bounded, account-bound protocol validation before production
+use. Its fallback service domain and float-based ID decoding must not be copied:
+our implementation requires an advertised account service and exact decimal IDs.
+
+Potential value is metadata discovery beyond friends plus available recent
+records, not a complete history source. No new native database access, remote
+request to this endpoint, unread mutation or production import was performed for
+this source review. Direct history remains unsupported pending stronger evidence.
