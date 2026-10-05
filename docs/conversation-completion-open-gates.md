@@ -22,7 +22,7 @@ their recorded versions, not a description of the current installation.
 | STDIO transport | Current installed bridge initialized a real STDIO client at `2025-11-25`, listed 18 tools and read connected status; no Events advertised | Final publication consistency; STDIO does not replace HTTP Events acceptance |
 | First direct send outside catalogue/corpus | Synthetic authorization/acknowledgement tests and preserved send ledger | A user-selected recipient and separately approved exact send |
 | Numeric acknowledgement plain/quote routes | Synthetic encrypted-wire tests; earlier two-send acceptance retained | Separately approved fresh live sends; unknown operations must not be resent |
-| Deployment/publication | Root/nested race and vet, exact isolated-source builds and secret scan passed. Checked schema-11 candidate installed through the existing agent with a verified cold full-state backup; local and connected-client status authenticated/connected; preserved records verified | Remaining feature/client/live gates, SSH signature accepted by Secretive, signed commits/push and new CI |
+| Deployment/publication | Checked schema-11 candidate installed with a verified cold full-state backup; preserved records verified. Signed `fc88336` published with successful Linux/macOS CI; clean-checkout race/vet, cross-builds, plist/links and full main history secret scan pass | Remaining feature/client/live gates and final implementation publication |
 
 The installed binary now uses schema 11. Experimental mobile ports are present
 but have no public archive dispatch/import route and no real-archive acceptance.
@@ -86,3 +86,14 @@ testing in a new enabled conversation (see [connection guide](local-connection.m
 The available controlled browser account has no Zalo personal plugin, so no
 refresh was applied there. Verification must use the owning account/workspace;
 this observation is not proof of a tunnel or server cache failure.
+
+Publication checkpoint: SSH signature verification passed for
+[`fc88336`](https://github.com/skosovsky/zl-mcp/commit/fc8833646f502357ea5a2bccd85bb53c999ede48),
+and remote `main` matches it. Clean-checkout checks passed for root and nested
+race/vet, CGO-free macOS arm64/Linux amd64 builds, LaunchAgent plist and 173
+relative documentation/skill links. Gitleaks 8.30.1 found no secrets in the entire
+published `main` history. All 468 Go/module files in the installed candidate's
+source manifest match this published commit.
+[Its Linux/macOS CI run](https://github.com/skosovsky/zl-mcp/actions/runs/37316075019)
+completed successfully for both jobs and the exact commit SHA. This checkpoint does not close the remaining
+archive/import, client Events or fresh-send requirements.

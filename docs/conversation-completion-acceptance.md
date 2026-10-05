@@ -9,7 +9,10 @@ The latest candidate was built with `-trimpath` from a hash-verified isolated
 the snapshot; CGO-free macOS arm64 and Linux amd64 builds succeeded, and the
 snapshot secret scan found no leaks. The installed arm64 SHA-256 is
 `0d21c0dc17ad04b967b0e361a375a8c1f2515d111cb3f06e74582af399cd8646`.
-This is an uncommitted source checkpoint, not a published release.
+This binary was built from an isolated source snapshot before signing
+[`fc88336`](https://github.com/skosovsky/zl-mcp/commit/fc8833646f502357ea5a2bccd85bb53c999ede48).
+Its 468 Go/module source files match that published commit; it is not a release
+artifact built with committed VCS metadata.
 
 A private-copy migration 8→11 passed before installation. The existing agent
 was then stopped, account-lock release verified, and the full state, config,
@@ -26,7 +29,7 @@ An actual connected-client status call returned authenticated/connected with
 event profiles. External tool availability still lists only 15 tools, omitting
 history import/status/cancel. Experimental mobile ports remain unavailable as a
 production import route; real Strangers archive, v2 scenarios, fresh approved
-sends and signed publication are still open in
+sends and final full-scope acceptance are still open in
 [the current gate report](conversation-completion-open-gates.md).
 
 Follow-up on that same installed candidate: a real STDIO client initialized
