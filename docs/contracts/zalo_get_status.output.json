@@ -65,6 +65,7 @@
       "$ref": "#/$defs/Summary"
     },
     "last_error": {
+      "description": "Last collector error. A successful listener reconnect clears only its previous listener-unavailable error; storage or catalogue failures are not cleared by connection readiness. This is distinct from MCP transport connectivity.",
       "anyOf": [
         {
           "type": "object",

@@ -268,6 +268,8 @@ FTS5 использует `unicode61` с удалением диакритики
 
 Результат: `authenticated: boolean`, `collector_state: "stopped"|"connecting"|"connected"|"reconnecting"|"auth_required"`, `last_connected_at: string|null`, `last_event_at: string|null`, `last_persisted_at: string|null`, `enabled_group_count: integer`, `stored_message_count: integer`, `coverage_summary: {group_count, history_complete: false, groups_with_known_gaps}`, `last_error: {code, message}|null`.
 
+Успешное восстановление listener атомарно обновляет `connected` и `last_connected_at` и очищает только прежнюю ошибку недоступности этого listener. Ошибки хранения или обновления каталога не исчезают только от подключения. `last_error` описывает неустранённую ошибку collector, а не доступность MCP-транспорта; известные gaps при переподключении не закрываются автоматически.
+
 Не выполняет мутаций и не возвращает идентификатор аккаунта, секреты либо текст сообщений. Отсутствие новых событий само по себе не считается обрывом соединения.
 
 ## 7. Полнота данных

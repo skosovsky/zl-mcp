@@ -135,6 +135,90 @@ func TestStorageFailureRemainsVisibleDuringReconnect(t *testing.T) {
 	}
 }
 
+func TestConnectedListenerResolvesOnlyListenerFailure(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		storage bool
+	}{
+		{name: "listener failure clears"},
+		{name: "storage failure remains", storage: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange: interrupt the first connected session, then reconnect.
+			c, s := sessionStore(t)
+			if tc.storage {
+				if _, err := s.DB.Exec(`CREATE TRIGGER fail_message BEFORE INSERT ON messages BEGIN SELECT RAISE(FAIL,'synthetic write failure'); END`); err != nil {
+					t.Fatal(err)
+				}
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+			finished := make(chan error, 1)
+			observed := make(chan [2]map[string]any, 1)
+			var attempts int
+			client := &scriptedListener{fakeZalo: &fakeZalo{name: "Test group", joined: true}}
+			client.listen = func(ctx context.Context, message func(domain.Message) error, _ func(string, string) error, connected func() error) error {
+				attempts++
+				if attempts == 1 {
+					if err := connected(); err != nil {
+						return err
+					}
+					if tc.storage {
+						return message(domain.Message{GroupID: "g", ID: "m", SenderID: "sender", SentAt: time.Now().UTC(), Text: "test", Source: "live"})
+					}
+					return errors.New("synthetic listener interruption")
+				}
+				before, err := s.State(ctx)
+				if err != nil {
+					return err
+				}
+				if err = connected(); err != nil {
+					return err
+				}
+				after, err := s.State(ctx)
+				if err != nil {
+					return err
+				}
+				observed <- [2]map[string]any{before, after}
+				<-ctx.Done()
+				return ctx.Err()
+			}
+			// Act: run the production reconnect loop and read its durable state.
+			go func() { finished <- RunInternal(ctx, c, s, client, func(*JoinManager) error { return nil }) }()
+			var states [2]map[string]any
+			select {
+			case states = <-observed:
+				cancel()
+				if err := <-finished; err != nil {
+					t.Fatal(err)
+				}
+			case err := <-finished:
+				cancel()
+				t.Fatalf("collector stopped before reconnect: %v", err)
+			case <-time.After(10 * time.Second):
+				cancel()
+				<-finished
+				t.Fatal("listener did not reconnect")
+			}
+			// Assert: readiness resolves transport failure, not persistence failure.
+			if states[0]["collector_state"] != "connecting" || states[1]["collector_state"] != "connected" || states[1]["last_connected_at"] == nil {
+				t.Fatalf("unexpected reconnect states: %+v", states)
+			}
+			before, ok := states[0]["last_error"].(map[string]any)
+			if !ok {
+				t.Fatal("reconnect cause missing")
+			}
+			if tc.storage {
+				after, ok := states[1]["last_error"].(map[string]any)
+				if !ok || before["code"] != "STORAGE_ERROR" || after["code"] != "STORAGE_ERROR" {
+					t.Fatalf("storage cause was cleared: %+v", states)
+				}
+			} else if before["code"] != "UPSTREAM_UNAVAILABLE" || states[1]["last_error"] != nil {
+				t.Fatalf("recovered listener error remains: %+v", states)
+			}
+		})
+	}
+}
+
 func TestAuthenticationFailureStopsReconnectAndPreservesState(t *testing.T) {
 	// Arrange: the listener reports an explicit authentication rejection after connecting.
 	c, s := sessionStore(t)

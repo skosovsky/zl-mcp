@@ -24,6 +24,8 @@ type ListenerUpstream interface {
 	Listen(context.Context, func(domain.Message) error, func(string, string) error, func() error) error
 }
 
+const listenerUnavailableMessage = "Listener unavailable; reconnecting."
+
 // storageFailure preserves the cause across the listener boundary without exposing SQL.
 type storageFailure struct{ cause error }
 
@@ -182,10 +184,14 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 		}, func() error {
 			delay = time.Second
 			// Connection readiness cannot establish replay/history completeness.
-			if e := set("last_connected_at", time.Now().UTC().Format(time.RFC3339Nano)); e != nil {
-				return e
+			mu.Lock()
+			defer mu.Unlock()
+			state["last_connected_at"] = time.Now().UTC().Format(time.RFC3339Nano)
+			state["collector_state"] = "connected"
+			if last, ok := state["last_error"].(map[string]any); ok && last["code"] == "UPSTREAM_UNAVAILABLE" && last["message"] == listenerUnavailableMessage {
+				state["last_error"] = nil
 			}
-			return set("collector_state", "connected")
+			return store.SetState(runCtx, state)
 		})
 		if runCtx.Err() != nil {
 			return nil
@@ -207,7 +213,7 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 		_ = set("collector_state", "reconnecting")
 		var storageErr *storageFailure
 		if !errors.As(e, &storageErr) {
-			_ = set("last_error", map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": "Listener unavailable; reconnecting."})
+			_ = set("last_error", map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": listenerUnavailableMessage})
 		}
 		jitter, _ := rand.Int(rand.Reader, big.NewInt(int64(delay/2)+1))
 		wait := delay
