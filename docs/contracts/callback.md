@@ -10,3 +10,32 @@ Production contract for subscription verification and event delivery. Design sou
 6. A 2xx delivery response acknowledges receipt, not agent processing. Persistent subscriptions, retry, deadlines, cancellation and capacity limits are described in [events.md](events.md). Receivers must verify signatures and deduplicate event IDs.
 
 Synthetic receiver tests exercise this contract. Compatibility with a specific agent has not been verified. Endpoint publication and tunnels are external infrastructure. Test-only injected transports do not relax the production address policy.
+
+## Delivery observability
+
+Each claimed delivery emits `mcp_event_delivery_started` and
+`mcp_event_delivery_finished` through the service logger. Both carry event and
+subscription IDs, queue delivery ID, attempt, body byte count and SHA-256 of the
+exact persisted body. The finish record adds elapsed milliseconds, HTTP status
+(zero when no response), bounded ASCII `x-request-id` / `openai-request-id`
+values when present, categorized outcome, and whether the outcome was persisted.
+A start without finish requires checking lease recovery. HTTP acceptance remains
+distinct from model-visible event processing.
+
+Logs never include body text, sender/conversation IDs, callback URL, signing
+headers/secrets, response bodies or raw transport errors. Request IDs accept only
+ASCII letters, digits, dot, underscore and hyphen, at most 128 characters; other
+values are omitted. Existing private log permissions and rotation apply.
+
+### Opt-in full diagnostic trace
+
+`logging.event_trace_file` is disabled by default. A nonempty absolute path,
+separate from `logging.file`, enables a private rotating JSON log. It records the
+full outbound event body, response status, bounded receiver request IDs, and the
+response body up to 64 KiB with truncation/read-failure indicators. Known callback
+URL and signing key values are redacted from responses. Authentication/signature
+headers and cookies are never recorded. This trace contains private conversation
+text and IDs: keep it outside the repository/iCloud and disable after diagnosis.
+The file and archives are 0600 in a 0700 directory, using the existing size/backup
+limits; write failures stop the service rather than silently losing diagnostics.
+An empty trace is expected until the next naturally collected matching event.

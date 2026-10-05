@@ -56,6 +56,7 @@ func TestServicePreservesMCPWhenAuthenticationIsRequired(t *testing.T) {
 			c.MCP.Listen = "127.0.0.1:0"
 			c.MCP.TokenFile = filepath.Join(dir, "token")
 			c.Logging.File = filepath.Join(dir, "logs", "service.log")
+			c.Logging.EventTraceFile = filepath.Join(dir, "logs", "events-trace.jsonl")
 			c.Logging.MaxSizeMB = 5
 			c.Logging.MaxBackups = 3
 			token := strings.Repeat("a", 64)
@@ -159,6 +160,10 @@ func TestServicePreservesMCPWhenAuthenticationIsRequired(t *testing.T) {
 				}
 			case <-time.After(5 * time.Second):
 				t.Fatal("shutdown hung")
+			}
+			info, err := os.Stat(c.Logging.EventTraceFile)
+			if err != nil || info.Mode().Perm() != 0600 {
+				t.Fatal("full trace is missing or not private")
 			}
 			logData, err := os.ReadFile(c.Logging.File)
 			if err != nil {

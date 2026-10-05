@@ -32,10 +32,11 @@ type Config struct {
 		RetentionDays int `toml:"retention_days"`
 	} `toml:"storage"`
 	Logging struct {
-		Level      string `toml:"level"`
-		File       string `toml:"file"`
-		MaxSizeMB  int    `toml:"max_size_mb"`
-		MaxBackups int    `toml:"max_backups"`
+		Level          string `toml:"level"`
+		EventTraceFile string `toml:"event_trace_file"`
+		File           string `toml:"file"`
+		MaxSizeMB      int    `toml:"max_size_mb"`
+		MaxBackups     int    `toml:"max_backups"`
 	} `toml:"logging"`
 }
 
@@ -102,8 +103,11 @@ func Load(path string) (Config, error) {
 	if err != nil {
 		return c, err
 	}
-	if err = logSchema.Validate(map[string]any{"file": c.Logging.File, "max_size_mb": c.Logging.MaxSizeMB, "max_backups": c.Logging.MaxBackups}); err != nil {
+	if err = logSchema.Validate(map[string]any{"file": c.Logging.File, "max_size_mb": c.Logging.MaxSizeMB, "max_backups": c.Logging.MaxBackups, "event_trace_file": c.Logging.EventTraceFile}); err != nil {
 		return c, fmt.Errorf("invalid service logging configuration: %w", err)
+	}
+	if c.Logging.EventTraceFile != "" && (!filepath.IsAbs(c.Logging.EventTraceFile) || filepath.Clean(c.Logging.EventTraceFile) == filepath.Clean(c.Logging.File)) {
+		return c, fmt.Errorf("event_trace_file must be absolute and separate from the service log")
 	}
 	if c.Storage.RetentionDays < 0 {
 		return c, fmt.Errorf("retention_days must be nonnegative")

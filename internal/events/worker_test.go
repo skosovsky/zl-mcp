@@ -1,12 +1,15 @@
 package events
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -164,5 +167,80 @@ func TestRetryPreservesSubscriptionOrder(t *testing.T) {
 	}
 	if completed != 2 {
 		t.Fatalf("completed deliveries=%d, want 2", completed)
+	}
+}
+
+func TestDeliveryTraceCorrelatesBodyWithoutPrivateContent(t *testing.T) {
+	// Arrange: the receiver returns a useful trace ID and an unsafe header.
+	var logs bytes.Buffer
+	var sent []byte
+	w, _, at := readyWorker(t, callbackRoundTrip(func(r *http.Request) (*http.Response, error) {
+		sent, _ = io.ReadAll(r.Body)
+		return &http.Response{StatusCode: 202, Header: http.Header{"X-Request-Id": []string{"req_synthetic-123"}, "Openai-Request-Id": []string{"private value must not leak"}}, Body: io.NopCloser(strings.NewReader("private response body"))}, nil
+	}))
+	w.Logger = slog.New(slog.NewJSONHandler(&logs, nil))
+	// Act.
+	handled, err := w.DeliverOne(context.Background(), at)
+	// Assert: persisted receipt can be correlated with the exact outbound body.
+	if err != nil || !handled {
+		t.Fatalf("delivery failed: %v", err)
+	}
+	lines := strings.Split(strings.TrimSpace(logs.String()), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("expected start and finish: %d", len(lines))
+	}
+	digest := sha256.Sum256(sent)
+	for i, line := range lines {
+		var v map[string]any
+		if err := json.Unmarshal([]byte(line), &v); err != nil {
+			t.Fatal(err)
+		}
+		if v["body_sha256"] != fmt.Sprintf("%x", digest) || v["body_bytes"] != float64(len(sent)) || v["event_id"] == "" || v["subscription_id"] != "subscription" {
+			t.Fatal("missing correlation metadata")
+		}
+		if i == 1 && (v["http_status"] != float64(202) || v["request_id"] != "req_synthetic-123" || v["openai_request_id"] != "" || v["receipt_persisted"] != true || v["outcome"] != "delivered") {
+			t.Fatal("missing receipt metadata")
+		}
+	}
+	for _, private := range []string{"界", "callback.example", "whsec_", "synthetic-key", "private response", "private value"} {
+		if strings.Contains(logs.String(), private) {
+			t.Fatalf("private content logged: %q", private)
+		}
+	}
+}
+
+func TestFullTraceRetainsEventAndBoundsRedactedReceiverBody(t *testing.T) {
+	// Arrange.
+	var trace bytes.Buffer
+	w, _, at := readyWorker(t, callbackRoundTrip(func(r *http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader("whsec_" + base64.StdEncoding.EncodeToString([]byte("synthetic-key-for-webhook-32bytes!")) + " https://callback.example/events " + strings.Repeat("x", 70000)))}, nil
+	}))
+	w.Logger = slog.New(slog.NewJSONHandler(io.Discard, nil))
+	w.TraceLogger = slog.New(slog.NewJSONHandler(&trace, nil))
+	// Act.
+	_, err := w.DeliverOne(context.Background(), at)
+	// Assert.
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimSpace(trace.String()), "\n")
+	if len(lines) != 3 {
+		t.Fatal("missing full request/response/receipt trace")
+	}
+	var request, response map[string]any
+	if json.Unmarshal([]byte(lines[0]), &request) != nil || json.Unmarshal([]byte(lines[1]), &response) != nil {
+		t.Fatal("invalid trace JSON")
+	}
+	body := request["body"].(map[string]any)
+	if body["data"].(map[string]any)["text"] != strings.Repeat("界", 2048) || body["eventId"] != request["event_id"] {
+		t.Fatal("request trace lost exact event data")
+	}
+	if response["body_truncated"] != true || response["body_read_failed"] != false || response["http_status"] != float64(200) {
+		t.Fatal("missing bounded response evidence")
+	}
+	for _, private := range []string{"whsec_", "callback.example", "synthetic-key-for-webhook"} {
+		if strings.Contains(trace.String(), private) {
+			t.Fatalf("credential material logged: %s", private)
+		}
 	}
 }

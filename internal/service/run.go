@@ -181,6 +181,15 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	if err != nil {
 		return err
 	}
+	var eventTrace *logging.File
+	if c.Logging.EventTraceFile != "" {
+		eventTrace, err = logging.Open(c.Logging.EventTraceFile, c.Logging.MaxSizeMB, c.Logging.MaxBackups, os.Stderr)
+		if err != nil {
+			return err
+		}
+		defer eventTrace.Close()
+		worker.TraceLogger = slog.New(slog.NewJSONHandler(eventTrace, nil))
+	}
 	if configure != nil {
 		configure(handler, worker)
 	}
@@ -209,7 +218,7 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	// Shutdown cancels requests before waiting for session ports and closing SQLite.
 	httpServer := &http.Server{Handler: handler, BaseContext: func(net.Listener) context.Context { return ctx }, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 45 * time.Second, IdleTimeout: 30 * time.Second}
 	cliServer := &http.Server{Handler: port.cliHandler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 40 * time.Second}
-	errorsCh := make(chan error, 6)
+	errorsCh := make(chan error, 7)
 	var wg sync.WaitGroup
 	launch := func(fn func() error) {
 		wg.Add(1)
@@ -230,6 +239,16 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 				return nil
 			case <-logFile.Failed():
 				return logFile.Err()
+			}
+		})
+	}
+	if eventTrace != nil {
+		launch(func() error {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-eventTrace.Failed():
+				return eventTrace.Err()
 			}
 		})
 	}

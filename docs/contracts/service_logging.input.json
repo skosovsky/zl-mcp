@@ -1,10 +1,32 @@
 {
- "$schema":"https://json-schema.org/draft/2020-12/schema",
- "type":"object", "additionalProperties":false,
- "required":["file","max_size_mb","max_backups"],
- "properties":{
-  "file":{"type":"string","minLength":1,"maxLength":4096},
-  "max_size_mb":{"type":"integer","minimum":1,"maximum":1024},
-  "max_backups":{"type":"integer","minimum":1,"maximum":20}
- }
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "file",
+    "max_size_mb",
+    "max_backups"
+  ],
+  "properties": {
+    "file": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "max_size_mb": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1024
+    },
+    "max_backups": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20
+    },
+    "event_trace_file": {
+      "type": "string",
+      "maxLength": 4096,
+      "description": "Optional absolute path to a private rotating diagnostic log containing full MCP Event bodies. Empty disables it."
+    }
+  }
 }
