@@ -133,7 +133,16 @@ func (s *Store) migrate(ctx context.Context) error {
 	if err = s.migrateContacts(ctx); err != nil {
 		return err
 	}
-	return s.migrateHistoryOperations(ctx)
+	if err = s.migrateHistoryOperations(ctx); err != nil {
+		return err
+	}
+	if err = s.migrateMobileBackup(ctx); err != nil {
+		return err
+	}
+	if err = s.migrateHistoryExpiry(ctx); err != nil {
+		return err
+	}
+	return s.migrateTombstones(ctx)
 }
 func (s *Store) BindAccount(ctx context.Context, account string) error {
 	h := sha256.Sum256([]byte(account))
@@ -221,6 +230,20 @@ func (s *Store) Put(ctx context.Context, m domain.Message) (err error) {
 // The caller validates the complete request and owns the transaction/checkpoint.
 func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, historical bool) (bool, error) {
 	ref := m.Ref()
+	var deleted int
+	if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM message_tombstones WHERE conversation_type=? AND conversation_id=? AND message_id=?", ref.Type, ref.ID, m.ID).Scan(&deleted); err != nil {
+		return false, err
+	}
+	if deleted > 0 {
+		return false, nil
+	}
+	var expired int
+	if err := tx.QueryRowContext(ctx, `SELECT count(*) FROM history_message_expiry WHERE conversation_type=? AND conversation_id=? AND message_id=? AND (expired=1 OR expires_ms<=?)`, ref.Type, ref.ID, m.ID, time.Now().UnixMilli()).Scan(&expired); err != nil {
+		return false, err
+	}
+	if expired > 0 {
+		return false, nil
+	}
 	a, err := json.Marshal(m.AttachmentTypes)
 	if err != nil {
 		return false, err
@@ -275,9 +298,12 @@ func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, 
 	return inserted != 0, nil
 }
 func (s *Store) Delete(ctx context.Context, groupID, messageID string) error {
-	return s.removeMessages(ctx, "conversation_type='group' AND group_id=? AND message_id=?", "record_deleted", groupID, messageID)
+	return s.DeleteConversation(ctx, domain.ConversationRef{Type: domain.ConversationGroup, ID: groupID}, messageID)
 }
 func (s *Store) Retain(ctx context.Context) error {
+	if err := s.ExpireHistoryAt(ctx, time.Now()); err != nil {
+		return err
+	}
 	if s.retention == 0 {
 		return nil
 	}
@@ -292,10 +318,16 @@ func (s *Store) removeMessages(ctx context.Context, predicate, reason string, ar
 		return err
 	}
 	defer tx.Rollback()
+	if err = s.removeMessagesTx(ctx, tx, predicate, reason, args...); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+func (s *Store) removeMessagesTx(ctx context.Context, tx *sql.Tx, predicate, reason string, args ...any) error {
 	selection := "SELECT seq FROM messages WHERE " + predicate
 	values := append([]any{now(), reason}, args...)
 	values = append(values, args...)
-	_, err = tx.ExecContext(ctx, `UPDATE event_deliveries SET payload=X'',state=CASE WHEN state IN ('pending','sending') THEN 'cancelled' ELSE state END,completed_at=COALESCE(completed_at,?),lease_until=NULL,last_reason=? WHERE message_seq IN (`+selection+`) OR event_id IN (SELECT event_id FROM message_events WHERE seq IN (`+selection+`))`, values...)
+	_, err := tx.ExecContext(ctx, `UPDATE event_deliveries SET payload=X'',state=CASE WHEN state IN ('pending','sending') THEN 'cancelled' ELSE state END,completed_at=COALESCE(completed_at,?),lease_until=NULL,last_reason=? WHERE message_seq IN (`+selection+`) OR event_id IN (SELECT event_id FROM message_events WHERE seq IN (`+selection+`))`, values...)
 	if err != nil {
 		return err
 	}
@@ -305,7 +337,7 @@ func (s *Store) removeMessages(ctx context.Context, predicate, reason string, ar
 	if _, err = tx.ExecContext(ctx, "DELETE FROM messages WHERE "+predicate, args...); err != nil {
 		return err
 	}
-	return tx.Commit()
+	return nil
 }
 
 const messageColumns = "group_id,message_id,sender_id,sender_name,sent_at,text,reply_id,attachments,source"
@@ -328,7 +360,7 @@ func (s *Store) Message(ctx context.Context, g, id string) (domain.Message, erro
 	if !s.Allowed(g) {
 		return domain.Message{}, &domain.Error{Code: "PERMISSION_DENIED", Message: "Group is outside the configured collection allowlist.", NextAction: domain.NextAction{Instruction: "Update the local collection allowlist if access is intended."}, Details: map[string]any{}}
 	}
-	return scanMessage(s.DB.QueryRowContext(ctx, "SELECT "+messageColumns+" FROM messages WHERE conversation_type='group' AND group_id=? AND message_id=?", g, id))
+	return scanMessage(s.DB.QueryRowContext(ctx, "SELECT "+messageColumns+" FROM visible_messages WHERE conversation_type='group' AND group_id=? AND message_id=?", g, id))
 }
 
 type Search struct {
@@ -501,7 +533,7 @@ func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *
 		args = append(args, c.At, c.At, kind, kind, c.Group, c.Group, c.ID)
 	}
 	args = append(args, q.Limit+1)
-	rows, err := s.DB.QueryContext(ctx, `SELECT m.conversation_type,m.group_id,m.message_id,m.sender_id,g.name,m.sender_name,m.sent_at,m.text FROM messages m JOIN messages_fts ON messages_fts.rowid=m.seq LEFT JOIN conversations g ON g.conversation_type=m.conversation_type AND g.conversation_id=m.group_id WHERE `+strings.Join(clauses, " AND ")+` ORDER BY m.sent_at DESC,m.conversation_type,m.group_id,m.message_id LIMIT ?`, args...)
+	rows, err := s.DB.QueryContext(ctx, `SELECT m.conversation_type,m.group_id,m.message_id,m.sender_id,g.name,m.sender_name,m.sent_at,m.text FROM visible_messages m JOIN messages_fts ON messages_fts.rowid=m.seq LEFT JOIN conversations g ON g.conversation_type=m.conversation_type AND g.conversation_id=m.group_id WHERE `+strings.Join(clauses, " AND ")+` ORDER BY m.sent_at DESC,m.conversation_type,m.group_id,m.message_id LIMIT ?`, args...)
 	if err != nil {
 		return nil, nil, "", cursor{}, err
 	}

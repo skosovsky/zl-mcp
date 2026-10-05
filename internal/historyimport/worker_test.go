@@ -184,3 +184,133 @@ func TestWorkerCannotPersistPageAfterCancellation(t *testing.T) {
 	}
 	awaitState(t, s, op.Status.OperationID, "cancelled")
 }
+
+func TestWorkerDistinguishesInvalidSourcePageFromUnavailableSource(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		failure error
+		reason  string
+	}{
+		{"malformed", domain.ErrHistoryInvalidPage, "invalid_source_page"},
+		{"unavailable", errors.New("private transport detail"), "upstream_unavailable"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange
+			s, op := prepare(t)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			done := make(chan error, 1)
+			source := pageSource(func(context.Context, domain.ConversationRef, string, int) (domain.HistoryPage, error) {
+				return domain.HistoryPage{}, tc.failure
+			})
+			// Act
+			go func() { done <- historyimport.Run(ctx, s, source) }()
+			result := awaitState(t, s, op.Status.OperationID, "failed")
+			cancel()
+			if err := <-done; err != nil {
+				t.Fatal(err)
+			}
+			// Assert
+			if result.Status.StopReason == nil || *result.Status.StopReason != tc.reason || result.Status.InsertedCount != 0 || result.Status.PagesObserved != 0 {
+				t.Fatalf("source failure classification lost: %#v", result.Status)
+			}
+		})
+	}
+}
+
+type snapshotSource struct{ calls atomic.Int32 }
+
+func (s *snapshotSource) HistoryPage(context.Context, domain.ConversationRef, string, int) (domain.HistoryPage, error) {
+	return domain.HistoryPage{}, errors.New("wrong group fallback")
+}
+func (s *snapshotSource) PreloadHistoryPage(_ context.Context, ref domain.ConversationRef, limit int) (domain.HistoryPage, error) {
+	s.calls.Add(1)
+	if limit != 2 {
+		return domain.HistoryPage{}, domain.Invalid("record limit lost")
+	}
+	return domain.HistoryPage{Messages: []domain.Message{message(ref, "snapshot-message")}, LimitedSnapshot: true}, nil
+}
+
+func TestWorkerExplicitPreloadSourceUsesDurableSilentImportAndNoFallback(t *testing.T) {
+	// Arrange
+	store, _ := prepare(t)
+	request := domain.HistoryImportRequest{Source: "conversation_preload", ConversationType: "direct", ConversationID: "synthetic-peer", RequestID: "00000000-0000-4000-8000-000000000042", Since: "2026-09-01T00:00:00Z", Until: "2026-11-01T00:00:00Z", PageSize: 2}
+	op, err := store.PrepareHistoryOperation(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Cancel the unrelated prepared group operation so this test uses only the selected source.
+	pending, err := store.PendingHistoryOperations(context.Background(), 20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range pending {
+		if p.Status.OperationID != op.Status.OperationID {
+			if _, err = store.CancelHistoryOperation(context.Background(), p.Status.OperationID); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	source := &snapshotSource{}
+	done := make(chan error, 1)
+	go func() { done <- historyimport.Run(ctx, store, source) }()
+	// Act
+	finished := awaitState(t, store, op.Status.OperationID, "partial")
+	retry, err := store.PrepareHistoryOperation(context.Background(), request)
+	cancel()
+	workerErr := <-done
+	// Assert
+	if err != nil || workerErr != nil || retry.Status.OperationID != op.Status.OperationID || source.calls.Load() != 1 || finished.Status.InsertedCount != 1 || finished.Status.SourceKind != "conversation_preload" || finished.Status.StopReason == nil || *finished.Status.StopReason != "source_window_limited" || finished.Status.HistoryComplete || finished.Status.SourceHasMore != nil {
+		t.Fatal("snapshot journal, source selection or coverage failed")
+	}
+	for _, table := range []string{"message_events", "event_deliveries"} {
+		var n int
+		if err = store.DB.QueryRow("SELECT count(*) FROM " + table).Scan(&n); err != nil || n != 0 {
+			t.Fatal("snapshot import notified")
+		}
+	}
+	var provenance string
+	if err = store.DB.QueryRow("SELECT source FROM messages WHERE message_id='snapshot-message'").Scan(&provenance); err != nil || provenance != "history" {
+		t.Fatal("historical provenance lost", err)
+	}
+}
+
+type phasedPageSource func(context.Context, domain.ConversationRef, string, *bool, int) (domain.HistoryPage, error)
+
+func (f phasedPageSource) HistoryPage(context.Context, domain.ConversationRef, string, int) (domain.HistoryPage, error) {
+	return domain.HistoryPage{}, errors.New("legacy route must not run")
+}
+func (f phasedPageSource) HistoryPageWithPhase(ctx context.Context, ref domain.ConversationRef, cursor string, old *bool, limit int) (domain.HistoryPage, error) {
+	return f(ctx, ref, cursor, old, limit)
+}
+func (f phasedPageSource) HistoryPhaseRequired() bool { return true }
+
+func TestWorkerPropagatesDurableSourcePhase(t *testing.T) {
+	// Arrange
+	s, op := prepare(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var calls atomic.Int32
+	source := phasedPageSource(func(ctx context.Context, ref domain.ConversationRef, cursor string, old *bool, limit int) (domain.HistoryPage, error) {
+		n := calls.Add(1)
+		if n == 1 && (cursor != "0" || old != nil) {
+			return domain.HistoryPage{}, domain.Invalid("initial phase incorrect")
+		}
+		if n == 2 && (cursor != "0" || old == nil || !*old) {
+			return domain.HistoryPage{}, domain.Invalid("saved phase lost")
+		}
+		more, nextOld, next := n == 1, true, "0"
+		return domain.HistoryPage{PhaseRequired: true, Messages: []domain.Message{message(ref, "phase")}, HasMore: &more, Cursor: &next, IsOld: &nextOld}, nil
+	})
+	done := make(chan error, 1)
+	// Act
+	go func() { done <- historyimport.Run(ctx, s, source) }()
+	finished := awaitState(t, s, op.Status.OperationID, "completed")
+	cancel()
+	// Assert
+	if err := <-done; err != nil || calls.Load() != 2 || finished.Status.InsertedCount != 1 || finished.Status.DuplicateCount != 1 {
+		t.Fatal("phase worker failed", err)
+	}
+}

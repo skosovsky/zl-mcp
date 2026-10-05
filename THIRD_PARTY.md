@@ -20,3 +20,14 @@ Upstream tracking:
 Remove a local patch only after a pinned upstream version provides equivalent behavior and its regression tests pass. Updating the upstream pin alone does not remove the local replacement.
 
 This is an unofficial integration using a third-party Zalo client. It is not affiliated with or endorsed by Zalo.
+
+## Offline XZ reader
+
+The internal offline mobile-backup candidate uses
+`github.com/ulikunitz/xz` v0.5.17, upstream commit
+`6ead826b4d3c7c9856f2daa905cf06403b9daddc`, fetched as a Go module without
+vendoring or modifying its code. Its BSD-3-Clause copyright, conditions and
+disclaimer are retained in [the license notice](docs/licenses/xz-BSD-3-Clause.txt).
+Include that notice with any distribution containing this dependency.
+The separate preflight is original project code; real mobile archive support
+is not established by the offline decoder alone.

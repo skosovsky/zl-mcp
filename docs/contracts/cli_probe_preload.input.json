@@ -1,0 +1,6 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema",
+ "type":"object",
+ "properties":{"method":{"const":"cli_probe_preload"},"arguments":{"type":"object","properties":{},"additionalProperties":false}},
+ "required":["method","arguments"],"additionalProperties":false
+}

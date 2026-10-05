@@ -153,7 +153,9 @@ func (s *Store) PrepareHistoryOperation(ctx context.Context, request domain.Hist
 	}
 	stamp := now()
 	status := domain.HistoryImportStatus{HistoryImportRequest: r, OperationID: uuid.NewString(), NotificationPolicy: "none", SourceKind: "group_cloud", State: "queued", CreatedAt: stamp, UpdatedAt: stamp}
-	if r.ConversationType == domain.ConversationDirect {
+	if r.Source == "conversation_preload" {
+		status.SourceKind = "conversation_preload"
+	} else if r.ConversationType == domain.ConversationDirect {
 		status.State, status.SourceKind = "unsupported", "unsupported"
 		reason := "source_unsupported"
 		status.StopReason = &reason
@@ -261,6 +263,9 @@ func (s *Store) CommitHistoryOperationPage(ctx context.Context, id string, revis
 	if !s.AllowsConversation(op.Status.Ref()) {
 		historyStopped(&op, "cancelled", "access_revoked")
 	} else {
+		if (op.Status.Source == "conversation_preload") != page.LimitedSnapshot {
+			return op, domain.Invalid("History source evidence does not match selected source.")
+		}
 		if err = s.validateHistoryPage(op.Status.Ref(), page.Messages); err != nil {
 			return op, err
 		}
@@ -325,13 +330,20 @@ func (s *Store) commitHistoryRecords(ctx context.Context, tx *sql.Tx, op *Histor
 	status.IsFilteredByPhase, status.IsFilteredByTimeJoin = page.IsFilteredByPhase, page.IsFilteredByTimeJoin
 	status.IsOld, status.JoinTimestampMillis = page.IsOld, page.JoinTimestampMillis
 	var seen int
+	continuation := ""
 	if page.Cursor != nil {
-		if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM history_cursors WHERE operation_id=? AND cursor=?", status.OperationID, *page.Cursor).Scan(&seen); err != nil {
+		continuation = *page.Cursor
+		if page.PhaseRequired && page.IsOld != nil && *page.IsOld {
+			continuation = "old:" + continuation
+		}
+		if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM history_cursors WHERE operation_id=? AND cursor=?", status.OperationID, continuation).Scan(&seen); err != nil {
 			return err
 		}
 	}
 	positive := func(v *bool) bool { return v != nil && *v }
 	switch {
+	case page.LimitedSnapshot:
+		historyStopped(op, "partial", "source_window_limited")
 	case positive(page.IsFiltered) || positive(page.IsFilteredByPhase) || positive(page.IsFilteredByTimeJoin):
 		historyStopped(op, "partial", "source_filtered")
 	case page.HasMore == nil:
@@ -342,11 +354,13 @@ func (s *Store) commitHistoryRecords(ctx context.Context, tx *sql.Tx, op *Histor
 		historyStopped(op, "partial", "empty_continuing_page")
 	case page.Cursor == nil:
 		historyStopped(op, "partial", "missing_continuation")
+	case page.PhaseRequired && page.IsOld == nil:
+		historyStopped(op, "partial", "missing_continuation")
 	case seen > 0:
 		historyStopped(op, "partial", "repeated_cursor")
 	default:
 		op.Cursor = *page.Cursor
-		if _, err = tx.ExecContext(ctx, "INSERT INTO history_cursors VALUES(?,?)", status.OperationID, op.Cursor); err != nil {
+		if _, err = tx.ExecContext(ctx, "INSERT INTO history_cursors VALUES(?,?)", status.OperationID, continuation); err != nil {
 			return err
 		}
 		switch {

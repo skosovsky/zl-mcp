@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Internal mobile attempt selection, not an exposed MCP tool.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "conversation_type": {
+      "enum": [
+        "direct",
+        "group"
+      ]
+    },
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "since": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64
+    },
+    "until": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 64
+    },
+    "max_messages": {
+      "description": "Maximum source records examined, including duplicates and records outside the requested interval.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5000,
+      "default": 1000
+    },
+    "max_archive_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 536870912,
+      "default": 67108864
+    }
+  },
+  "required": [
+    "request_id",
+    "conversation_type",
+    "conversation_id",
+    "since",
+    "until"
+  ]
+}

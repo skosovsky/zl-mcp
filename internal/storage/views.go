@@ -163,7 +163,7 @@ func (s *Store) conversationCoverage(ctx context.Context, ref domain.Conversatio
 	}
 	c.CollectionStartedAt = parse(start)
 	var earliest, latest sql.NullString
-	if e = s.DB.QueryRowContext(ctx, "SELECT min(sent_at),max(sent_at) FROM messages WHERE conversation_type=? AND group_id=?", ref.Type, id).Scan(&earliest, &latest); e != nil {
+	if e = s.DB.QueryRowContext(ctx, "SELECT min(sent_at),max(sent_at) FROM visible_messages WHERE conversation_type=? AND group_id=?", ref.Type, id).Scan(&earliest, &latest); e != nil {
 		return c, e
 	}
 	c.EarliestStoredAt = parse(earliest)
@@ -238,7 +238,7 @@ func (s *Store) context(ctx context.Context, ref domain.ConversationRef, id stri
 		return nil, e
 	}
 	get := func(operator, direction string, limit int) ([]domain.Message, error) {
-		rows, e := s.DB.QueryContext(ctx, "SELECT "+messageColumns+" FROM messages WHERE conversation_type=? AND group_id=? AND (sent_at "+operator+" ? OR (sent_at=? AND message_id "+operator+" ?)) ORDER BY sent_at "+direction+",message_id "+direction+" LIMIT ?", ref.Type, ref.ID, anchor.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), anchor.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), id, limit)
+		rows, e := s.DB.QueryContext(ctx, "SELECT "+messageColumns+" FROM visible_messages WHERE conversation_type=? AND group_id=? AND (sent_at "+operator+" ? OR (sent_at=? AND message_id "+operator+" ?)) ORDER BY sent_at "+direction+",message_id "+direction+" LIMIT ?", ref.Type, ref.ID, anchor.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), anchor.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), id, limit)
 		if e != nil {
 			return nil, e
 		}

@@ -2,9 +2,11 @@ package api
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -42,7 +44,7 @@ func TestGroupHistoryPageWirePreservesNumericCursorAndFlags(t *testing.T) {
 				if payload["groupId"] != "synthetic-group" || payload["globalMsgId"] != json.Number("9007199254740993") || payload["count"] != json.Number("2") || payload["src"] != json.Number("3") || payload["imei"] != "synthetic-imei" || len(payload["msgIds"].([]any)) != 0 {
 					t.Errorf("wrong request: %#v", payload)
 				}
-				data := json.RawMessage(`{"groupMsgs":[{"msgId":9007199254740995}],"lastMsgId":9007199254740997,"hasMore":true,"isFiltered":false,"isFilteredByTimeJoin":true,"error":0}`)
+				data := json.RawMessage(`{"groupMsgs":[{"msgId":9007199254740995}],"lastMsgId":9007199254740997,"hasMore":1,"isFiltered":false,"isFilteredByTimeJoin":true,"error":0}`)
 				var inner any = data
 				if wrapped {
 					inner = string(data)
@@ -94,7 +96,7 @@ func TestGroupHistoryPageWirePreservesNumericCursorAndFlags(t *testing.T) {
 }
 
 func TestGroupHistoryPageRejectsInvalidEvidence(t *testing.T) {
-	for _, body := range []string{`{}`, `{"groupMsgs":null}`, `{"groupMsgs":[],"hasMore":1}`, `{"groupMsgs":[],"lastMsgId":1.5}`, `{"groupMsgs":[],"lastMsgId":1e5}`, `{"groupMsgs":[],"lastMsgId":{}}`} {
+	for _, body := range []string{`{}`, `{"groupMsgs":null}`, `{"groupMsgs":[],"hasMore":2}`, `{"groupMsgs":[],"lastMsgId":1.5}`, `{"groupMsgs":[],"lastMsgId":1e5}`, `{"groupMsgs":[],"lastMsgId":{}}`} {
 		// Arrange / Act
 		var page GroupHistoryPage
 		err := json.Unmarshal([]byte(body), &page)
@@ -141,5 +143,128 @@ func TestGroupHistoryPageLimitsAndMissingSource(t *testing.T) {
 	// Assert
 	if err == nil {
 		t.Fatal("missing history source accepted")
+	}
+}
+
+func TestGroupHistoryInvalidFlagHasSafeFieldEvidence(t *testing.T) {
+	// Arrange / Act: invalid private text is never retained as a decode reason.
+	for _, field := range []string{"hasMore", "isOld", "isFiltered", "isFilteredByPhase", "isFilteredByTimeJoin"} {
+		var page GroupHistoryPage
+		err := json.Unmarshal([]byte(`{"groupMsgs":[],"`+field+`":"private-body-marker"}`), &page)
+		// Assert
+		var invalid *GroupHistoryPageDecodeError
+		if !errors.As(err, &invalid) || invalid.Field != field || strings.Contains(err.Error(), "private-") {
+			t.Fatal("decode reason lost or unsafe")
+		}
+	}
+}
+
+func TestGroupHistoryNormalizesOnlyBinaryIntegerFlags(t *testing.T) {
+	// Arrange / Act
+	var page GroupHistoryPage
+	err := json.Unmarshal([]byte(`{"groupMsgs":[],"hasMore":1,"isOld":0,"isFiltered":true,"isFilteredByPhase":false}`), &page)
+	// Assert
+	if err != nil || page.HasMore == nil || !*page.HasMore || page.IsOld == nil || *page.IsOld || page.IsFiltered == nil || !*page.IsFiltered || page.IsFilteredByPhase == nil || *page.IsFilteredByPhase || page.IsFilteredByTimeJoin != nil {
+		t.Fatal("binary flag normalization lost unknown/false")
+	}
+	for _, raw := range []string{`2`, `-1`, `1.0`, `"1"`, `"true"`, `{}`, `[]`} {
+		err = json.Unmarshal([]byte(`{"groupMsgs":[],"hasMore":`+raw+`}`), &page)
+		if err == nil {
+			t.Fatal("noncanonical source flag accepted")
+		}
+	}
+}
+
+func TestGroupHistoryBoundsWireAndExpandedJSON(t *testing.T) {
+	for _, padding := range []bool{false, true} {
+		for _, compressed := range []bool{false, true} {
+			t.Run(map[bool]string{false: "oversized_envelope/", true: "valid_prefix_padding/"}[padding]+map[bool]string{false: "plain", true: "gzip"}[compressed], func(t *testing.T) {
+				// Arrange: an oversized envelope must not reach decrypted-page parsing.
+				raw := []byte(`{"error_code":0,"data":"` + strings.Repeat("x", 9<<20) + `"}`)
+				if padding {
+					key := []byte(strings.Repeat("k", 32))
+					encrypted, err := cryptox.EncodeAESCBC(key, `{"error_code":0,"data":{"groupMsgs":[],"hasMore":false}}`, cryptox.EncryptTypeBase64)
+					if err != nil {
+						t.Fatal(err)
+					}
+					raw, err = json.Marshal(map[string]any{"error_code": 0, "data": encrypted})
+					if err != nil {
+						t.Fatal(err)
+					}
+					raw = append(raw, bytes.Repeat([]byte(" "), 9<<20)...)
+				}
+				header := http.Header{}
+				if compressed {
+					var packed bytes.Buffer
+					writer := gzip.NewWriter(&packed)
+					if _, err := writer.Write(raw); err != nil {
+						t.Fatal(err)
+					}
+					if err := writer.Close(); err != nil {
+						t.Fatal(err)
+					}
+					raw = packed.Bytes()
+					header.Set("Content-Encoding", "gzip")
+				}
+				body := &preloadCountedBody{Reader: bytes.NewReader(raw)}
+				client := &http.Client{Transport: preloadTransport(func(r *http.Request) (*http.Response, error) {
+					return &http.Response{StatusCode: 200, Header: header, Body: body, Request: r}, nil
+				})}
+				sc := session.NewContext(session.WithHTTPClient(client), session.WithLogging(false))
+				sc.SealLogin(session.Seal{UID: "owner", UserAgent: "synthetic", IMEI: "synthetic-imei", SecretKey: session.SecretKey(base64.StdEncoding.EncodeToString([]byte(strings.Repeat("k", 32)))), Settings: &session.Settings{}, LoginInfo: &session.LoginInfo{ZpwServiceMapV3: session.ZpwServiceMapV3{GroupCloudMessage: []string{"https://synthetic.invalid"}}}})
+				fn, err := groupHistoryPageFactory(sc, &api{sc: sc})
+				if err != nil {
+					t.Fatal(err)
+				}
+				// Act
+				page, err := fn(context.Background(), "synthetic-group", "0", 1)
+				// Assert: truncation is not source exhaustion or a usable page.
+				if err == nil || page != nil || body.read > (8<<20)+1 {
+					t.Fatal("history response bound bypassed")
+				}
+			})
+		}
+	}
+}
+
+func TestGroupHistoryExplicitPhaseSelectsOldRoute(t *testing.T) {
+	// Arrange
+	key := []byte(strings.Repeat("k", 32))
+	paths := []string{}
+	receiver := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.URL.Path)
+		plain, err := cryptox.DecodeAESCBC(key, r.URL.Query().Get("params"))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		var payload map[string]json.RawMessage
+		if err = json.Unmarshal(plain, &payload); err != nil {
+			t.Error(err)
+			return
+		}
+		if string(payload["globalMsgId"]) != "9007199254740993" {
+			t.Error("cursor precision lost")
+		}
+		encrypted, err := cryptox.EncodeAESCBC(key, `{"error_code":0,"data":{"groupMsgs":[],"hasMore":0,"isOld":1}}`, cryptox.EncryptTypeBase64)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]any{"error_code": 0, "data": encrypted})
+	}))
+	defer receiver.Close()
+	sc := session.NewContext(session.WithHTTPClient(receiver.Client()), session.WithLogging(false))
+	sc.SealLogin(session.Seal{UID: "owner", UserAgent: "synthetic", IMEI: "synthetic-imei", SecretKey: session.SecretKey(base64.StdEncoding.EncodeToString(key)), Settings: &session.Settings{}, LoginInfo: &session.LoginInfo{ZpwServiceMapV3: session.ZpwServiceMapV3{GroupCloudMessage: []string{receiver.URL}}}})
+	client := &api{sc: sc}
+	// Act: a nonzero cursor alone stays recent; explicit phase changes the route.
+	_, err := client.GetGroupHistoryPage(context.Background(), "synthetic-group", "9007199254740993", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	page, err := client.GetGroupHistoryPageWithPhase(context.Background(), "synthetic-group", "9007199254740993", true, 1)
+	// Assert
+	if err != nil || len(paths) != 2 || paths[0] != "/api/cm/getrecentv2" || paths[1] != "/api/cm/getoldv2" || page.IsOld == nil || !*page.IsOld {
+		t.Fatal("phase routing failed", err)
 	}
 }

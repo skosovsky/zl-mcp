@@ -127,5 +127,104 @@ GET route, request limits, account identifier, source flag, nested response
 string, filtering flags and raw message digits. Missing/null arrays, malformed
 continuation metadata, oversized pages and invalid requests are rejected;
 missing service metadata never guesses a domain. The extension returns raw
-protocol records only. It has not been live verified, installed or exposed as
-an MCP import tool. It creates no stored records, Events or completeness claim.
+protocol records only. A bounded page was live verified on the installed local
+candidate through the silent import worker; external-client import discovery
+and deeper phase traversal remain open. The SDK read itself creates no stored
+records, Events or completeness claim.
+
+## Conversation preload page candidate
+
+An optional concrete `GetConversationPreload` reads the existing advertised
+conversation service with an empty thread mapping. It preserves exact raw
+records, bounds encrypted input/record counts and distinguishes missing message
+categories from observed empty arrays. It never guesses a domain, starts a
+listener or persists data. Primary reference: zcloud commit
+`10f752b431102b71e3185a2077041efff907ed3e` and the reviewed native endpoint.
+Synthetic wire tests cover encryption, route, precision, nullable categories,
+whole-page rejection and missing source. The installed local candidate uses
+this source for catalogue metadata and explicitly selected snapshot imports.
+Live catalogue and snapshot reads passed; recovery of the requested older
+Strangers message remains unproven.
+
+Both preload wire and expanded response reads now use an 8 MiB budget plus one
+overflow sentinel byte before decoding. A valid encrypted JSON prefix followed
+by excessive whitespace is rejected, for plain and gzip responses alike.
+This closes a truncation loophole in the earlier LimitReader-only guard.
+Regression tests check whole-page rejection and bounded reads. This update is
+not yet installed; the current service remains the earlier phase-aware build.
+
+## Optional mobile synchronization controls (candidate)
+
+The existing listener now has an optional `SubscribeMobileSync` extension,
+without adding requirements to the public Listener interface. It accepts one
+bounded receiver correlated by current account, exact request key and host.
+Native syncmsgmb controls preserve confirmation states and exact metadata IDs;
+unknown actions are ignored. Sensitive event fields are excluded from JSON and
+redacted in default formatting. Overflow or malformed controls fail only an
+active receiver, without blocking ordinary collection or losing other controls.
+Synthetic router/precision/bounds/redaction/cancellation race tests cover this
+boundary. No mobile HTTP request, archive download/import or live capability
+is enabled by this patch. The service has not registered this receiver and the
+patch is not installed. Primary protocol evidence is recorded in the project
+research report and mobile-sync-control contract.
+
+## Initial mobile request and cancellation (candidate)
+
+Optional concrete `RequestMobileBackup`/`CancelMobileBackup` methods use only
+the authenticated advertised file service. Initial sequence/retry values are
+fixed at zero. Native RSA-2048 SPKI DER/base64 public keys are validated before
+dispatch. A separate authenticated `RequestOnce` helper disables application
+redirect traversal for these side-effecting GETs, without changing existing API
+calls. Each acknowledgement has independent 64 KiB wire/expanded limits and
+strict error-code presence; HTTP 401 remains authentication-required and errors
+omit source bodies/URLs. Network/server/redirect ambiguity remains unknown,
+without automatic application retry or an exactly-once transport claim.
+Synthetic encrypted-wire, cancellation, invalid-input, redirect, auth/error and
+overflow tests cover this layer. The service does not invoke it yet; no real
+phone transfer or archive recovery was performed and the patch is not installed.
+
+The optional group-history candidate resolves encrypted envelope and group leaf
+separately so local normalization failures retain a typed safe field reason
+rather than a synthetic upstream code zero. Source flags accept boolean or exact
+integer 0/1 only; missing/null remains unknown. Tests retain exact cursors and
+reject noncanonical flags. A bounded local live read passed after the flag fix;
+this is not proof of complete upstream history or ordinary direct-cloud support.
+
+The group SDK reader bounds both wire and decompressed response bodies to 8 MiB
+before envelope decoding. A one-byte overflow sentinel rejects oversized input,
+including otherwise valid JSON followed by excessive padding. Synthetic plain
+and compressed oversized-envelope tests cover this resource boundary. This
+hardening remains pending installation until the next checked candidate.
+
+The optional phase-aware group method uses the advertised service's getoldv2
+only when the caller explicitly supplies the old phase. The original method
+retains recent routing. Native getCM/client-retry code is the phase provenance;
+encrypted synthetic wire tests verify route selection and exact numeric cursor.
+This extension is pending installed/live phase acceptance.
+
+
+### Optional mobile identity mapping request (offline candidate)
+
+GetMobileIdentityMapping issues one encrypted form POST to the statically observed
+zwid.api.zalo.me/api/znoise route through the current session. Exact uint64 JSON
+integers avoid native JS parseInt rounding; requests are capped at 1000 typed IDs.
+RequestOnce prevents application redirect/retry, total timeout is 10 seconds,
+wire/expanded limits are 512 KiB and decrypted data is capped at 256 KiB. Explicit
+outer/inner success codes are required and duplicate envelope fields rejected.
+HTTP 401 preserves the shared authentication sentinel; other errors are fixed.
+The response is bounded plaintext requiring caller-side typed positional codec
+validation. No endpoint initialization/interface expansion or live request is
+introduced. Native route evidence is documented in the repository research file;
+real mapping reply compatibility and production wiring remain unverified.
+
+### Current-session archive transport candidate
+
+`ConsumeMobileArchive` is an optional API method using the existing account's
+URL-scoped cookie jar with a caller-supplied validated HTTP transport and bounded
+body consumer. It rejects injected credential headers, never falls back to the
+ordinary SDK transport or follows redirects, ignores archive Set-Cookie, closes
+the response and clears late/failed results. This is original Go implementation;
+no code from the experimental zca-js synchronization PR was copied. Root session
+guards keep body consumption inside revocation ownership. Real archive hosts and
+phone/archive acceptance remain unverified; HTTP 401 here is not an account-auth
+sentinel. No public API interface method or additional listener is required.

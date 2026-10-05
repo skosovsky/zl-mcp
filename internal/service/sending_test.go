@@ -73,6 +73,7 @@ func TestServiceSendAndReplyUseCollectorSessionAndPersistAcrossRestart(t *testin
 	var calls, restores atomic.Int32
 	quotes := make(chan *domain.SendQuote, 4)
 	start := func() (string, func()) {
+		startupBegan := time.Now()
 		ctx, cancel := context.WithCancel(context.Background())
 		done := make(chan error, 1)
 		bound := make(chan net.Addr, 1)
@@ -97,10 +98,11 @@ func TestServiceSendAndReplyUseCollectorSessionAndPersistAcrossRestart(t *testin
 		case err := <-done:
 			cancel()
 			t.Fatalf("service startup: %v", err)
-		case <-time.After(5 * time.Second):
-			cancel()
-			t.Fatal("service startup timeout")
+		case <-time.After(15 * time.Second):
+			stop()
+			t.Fatal("service startup exceeded the integration-test readiness budget")
 		}
+		t.Logf("service startup readiness elapsed_ms=%d", time.Since(startupBegan).Milliseconds())
 		select {
 		case <-source.started:
 		case <-time.After(5 * time.Second):

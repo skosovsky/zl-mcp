@@ -11,8 +11,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/skosovsky/zl-mcp/internal/netpolicy"
 	"io"
-	"net"
 	"net/http"
 	"net/netip"
 	"net/url"
@@ -40,72 +40,14 @@ func callbackURL(raw string) (*url.URL, error) {
 	return u, nil
 }
 
-var blockedCallbackPrefixes = []netip.Prefix{
-	netip.MustParsePrefix("0.0.0.0/8"), netip.MustParsePrefix("100.64.0.0/10"),
-	netip.MustParsePrefix("192.0.0.0/24"), netip.MustParsePrefix("192.0.2.0/24"),
-	netip.MustParsePrefix("198.18.0.0/15"), netip.MustParsePrefix("198.51.100.0/24"),
-	netip.MustParsePrefix("203.0.113.0/24"), netip.MustParsePrefix("240.0.0.0/4"),
-	netip.MustParsePrefix("::/96"), netip.MustParsePrefix("64:ff9b::/96"),
-	netip.MustParsePrefix("64:ff9b:1::/48"), netip.MustParsePrefix("100::/64"),
-	netip.MustParsePrefix("2001::/23"), netip.MustParsePrefix("2001:db8::/32"),
-	netip.MustParsePrefix("2002::/16"),
-}
+type callbackLookup = netpolicy.Lookup
+type callbackDial = netpolicy.Dial
 
-func publicIP(ip netip.Addr) bool {
-	if ip.Zone() != "" {
-		return false
-	}
-	ip = ip.Unmap()
-	if !ip.IsGlobalUnicast() || ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() {
-		return false
-	}
-	for _, prefix := range blockedCallbackPrefixes {
-		if prefix.Contains(ip) {
-			return false
-		}
-	}
-	return true
-}
-
-type callbackLookup func(context.Context, string) ([]netip.Addr, error)
-type callbackDial func(context.Context, string, string) (net.Conn, error)
-
+func publicIP(ip netip.Addr) bool { return netpolicy.PublicIP(ip) }
 func validatedDial(lookup callbackLookup, dial callbackDial) callbackDial {
-	return func(ctx context.Context, network, address string) (net.Conn, error) {
-		host, port, err := net.SplitHostPort(address)
-		if err != nil {
-			return nil, errCallback
-		}
-		ips, err := lookup(ctx, host)
-		if err != nil || len(ips) == 0 {
-			return nil, errCallback
-		}
-		for _, ip := range ips {
-			if !publicIP(ip) {
-				return nil, errors.New("callback DNS resolves to a non-public address")
-			}
-		}
-		for _, ip := range ips {
-			conn, err := dial(ctx, network, net.JoinHostPort(ip.Unmap().String(), port))
-			if err == nil {
-				return conn, nil
-			}
-		}
-		return nil, errCallback
-	}
+	return netpolicy.ValidatedDial(lookup, dial)
 }
-
-func newCallbackClient() *http.Client {
-	dialer := &net.Dialer{Timeout: 5 * time.Second}
-	transport := &http.Transport{
-		DialContext: validatedDial(func(ctx context.Context, host string) ([]netip.Addr, error) {
-			return net.DefaultResolver.LookupNetIP(ctx, "ip", host)
-		}, dialer.DialContext),
-		TLSHandshakeTimeout: 5 * time.Second, ResponseHeaderTimeout: 5 * time.Second,
-		DisableKeepAlives: true,
-	}
-	return &http.Client{Transport: transport, Timeout: 10 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return errCallback }}
-}
+func newCallbackClient() *http.Client { return netpolicy.NewClient(10 * time.Second) }
 
 func callbackKey(secret string) ([]byte, error) {
 	if !strings.HasPrefix(secret, "whsec_") {

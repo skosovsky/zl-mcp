@@ -109,6 +109,11 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 	if e = refresh(); e != nil {
 		_ = set("last_error", map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": "Group catalog refresh failed."})
 	}
+	if source, ok := client.(domain.ConversationPreloadSource); ok {
+		done := make(chan struct{})
+		go func() { defer close(done); preloadCatalogLoop(runCtx, store, source) }()
+		defer func() { cancel(); <-done }()
+	}
 	if source, ok := client.(domain.ContactSource); ok {
 		done := make(chan struct{})
 		go func() { defer close(done); contactsLoop(runCtx, store, source) }()
@@ -257,6 +262,23 @@ func ControlHandler(j *JoinManager) http.Handler {
 			return
 		}
 		// CLI-only operations are never registered as MCP tools.
+		if v.Method == "cli_probe_preload" {
+			input, schemaErr := contracts.Compile(v.Method, "input")
+			var raw any
+			if schemaErr != nil || json.Unmarshal(b, &raw) != nil || input.Validate(raw) != nil {
+				fail(domain.Invalid("Probe request does not match its contract."))
+				return
+			}
+			source, _ := j.API.(domain.ConversationPreloadSource)
+			result := probePreload(r.Context(), source)
+			output, schemaErr := contracts.Compile(v.Method, "output")
+			if schemaErr != nil || output.Validate(result) != nil {
+				fail(domain.Invalid("Probe result does not match its contract."))
+				return
+			}
+			json.NewEncoder(w).Encode(result)
+			return
+		}
 		if v.Method == "cli_preview" || v.Method == "cli_approve" {
 			cliSchema, schemaErr := contracts.Compile(v.Method, "input")
 			var rawCLI any

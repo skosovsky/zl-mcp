@@ -392,3 +392,91 @@ func TestHistoryOperationReservationReconcilesActualSourceWork(t *testing.T) {
 		t.Fatalf("normal stop charged unused reservation: %#v", op)
 	}
 }
+
+func TestHistorySourceSelectionPreservesLegacyRequestIdentity(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	store := historyOperationStore(t, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true})
+	defer store.Close()
+	request := historyRequest()
+	original, err := store.PrepareHistoryOperation(ctx, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Act: explicit default is the same effective legacy request.
+	request.Source = "group_cloud"
+	retry, err := store.PrepareHistoryOperation(ctx, request)
+	// Assert
+	if err != nil || retry.Status.OperationID != original.Status.OperationID {
+		t.Fatal("legacy fingerprint changed")
+	}
+	request.Source = "conversation_preload"
+	if _, err = store.PrepareHistoryOperation(ctx, request); !errors.Is(err, ErrHistoryConflict) {
+		t.Fatal("source change reused request identity")
+	}
+}
+
+func TestHistoryPhaseIdentitySurvivesReopen(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "messages.sqlite")
+	s := historyOperationStore(t, path, domain.CollectionPolicy{All: true})
+	defer func() { s.Close() }()
+	op, err := s.PrepareHistoryOperation(ctx, historyRequest())
+	if err != nil {
+		t.Fatal(err)
+	}
+	op, err = s.ClaimHistoryOperation(ctx, op.Status.OperationID, op.Revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	more, old, cursor := true, true, "0"
+	page := domain.HistoryPage{PhaseRequired: true, Messages: []domain.Message{historicalFixture(historyRequest().Ref(), "phase")}, HasMore: &more, Cursor: &cursor, IsOld: &old}
+	// Act: initial recent/0 and next old/0 are different continuations.
+	op, err = s.CommitHistoryOperationPage(ctx, op.Status.OperationID, op.Revision, page, time.Millisecond)
+	// Assert
+	if err != nil || op.Status.State != "running" || op.Status.IsOld == nil || !*op.Status.IsOld {
+		t.Fatal("phase transition rejected", err)
+	}
+	if err = s.Close(); err != nil {
+		t.Fatal(err)
+	}
+	s = historyOperationStore(t, path, domain.CollectionPolicy{All: true})
+	op, err = s.HistoryOperation(ctx, op.Status.OperationID)
+	if err != nil || op.Cursor != "0" || op.Status.IsOld == nil || !*op.Status.IsOld {
+		t.Fatal("phase lost on reopen", err)
+	}
+	// Act: repeating old/0 must stop without creating an event.
+	op, err = s.CommitHistoryOperationPage(ctx, op.Status.OperationID, op.Revision, page, time.Millisecond)
+	// Assert
+	if err != nil || op.Status.State != "partial" || op.Status.StopReason == nil || *op.Status.StopReason != "repeated_cursor" {
+		t.Fatal("same-phase repetition accepted", err)
+	}
+	assertHistoryStatusSchema(t, op)
+	var events int
+	if err = s.DB.QueryRow("SELECT count(*) FROM message_events").Scan(&events); err != nil || events != 0 {
+		t.Fatal("history generated events", err)
+	}
+}
+
+func TestHistoryContinuingProductionPageRequiresPhase(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	s := historyOperationStore(t, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true})
+	defer s.Close()
+	op, err := s.PrepareHistoryOperation(ctx, historyRequest())
+	if err != nil {
+		t.Fatal(err)
+	}
+	op, err = s.ClaimHistoryOperation(ctx, op.Status.OperationID, op.Revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	more, cursor := true, "1"
+	// Act
+	op, err = s.CommitHistoryOperationPage(ctx, op.Status.OperationID, op.Revision, domain.HistoryPage{PhaseRequired: true, Messages: []domain.Message{historicalFixture(historyRequest().Ref(), "phase")}, HasMore: &more, Cursor: &cursor}, time.Millisecond)
+	// Assert
+	if err != nil || op.Status.State != "partial" || op.Status.StopReason == nil || *op.Status.StopReason != "missing_continuation" {
+		t.Fatal("missing phase guessed", err)
+	}
+}

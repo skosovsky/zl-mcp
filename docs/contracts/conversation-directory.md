@@ -42,3 +42,29 @@ Completing this known-ID scan does not establish full inbox discovery.
 `contacts_catalog` denotes the composite local directory metadata source (friends
 and exact known-ID profiles), not proof of friendship; profile-source counters
 remain separate from friends-page counters.
+
+## Preload catalogue candidate
+
+`preload_catalog` is an additional compatible source-summary value for the
+validated metadata merge port. New entries have availability=unknown and do not
+claim retained messages or friendship. Stronger existing names and preferred
+provenance remain intact. The optional account-bound preload source/guard and
+atomic merge are tested in source; a production refresh loop is not enabled.
+See [the raw page contract](conversation-preload-page.md). No claim of exhaustive
+Strangers discovery or historical recovery follows from these tests.
+
+## Verified preload catalogue refresh
+
+The collector refreshes one bounded preload snapshot after session startup and
+every five minutes, through the same authenticated session guard. Only permitted
+typed dialogue metadata is merged. Source messages are deliberately not imported
+by catalogue refresh: new-message subscription delivery stays on live/replay.
+Existing stronger names/provenance are retained; absence from a partial snapshot
+does not delete a conversation. This source does not establish friendship or a
+Strangers classification and never claims a complete inbox.
+
+The existing `zalo://catalog/diagnostics` resource includes a `preload` object
+with attempt/success time, observed/permitted metadata counts and a fixed stop
+reason. `catalog_complete` and `messages_imported` are always false. Transient
+source failure keeps earlier metadata; collection policy is enforced before
+merging. No second listener, login or public network endpoint is introduced.

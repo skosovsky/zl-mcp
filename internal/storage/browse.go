@@ -81,7 +81,7 @@ func (s *Store) Browse(ctx context.Context, ref domain.ConversationRef, since, u
 		args = append(args, c.At, c.At, c.ID)
 	}
 	args = append(args, limit+1)
-	rows, err := s.DB.QueryContext(ctx, `SELECT m.message_id,m.sender_id,m.sender_name,g.name,m.sent_at,m.text FROM messages m LEFT JOIN conversations g ON g.conversation_type=m.conversation_type AND g.conversation_id=m.group_id WHERE `+strings.Join(clauses, " AND ")+" ORDER BY m.sent_at "+order+",m.message_id "+order+" LIMIT ?", args...)
+	rows, err := s.DB.QueryContext(ctx, `SELECT m.message_id,m.sender_id,m.sender_name,g.name,m.sent_at,m.text FROM visible_messages m LEFT JOIN conversations g ON g.conversation_type=m.conversation_type AND g.conversation_id=m.group_id WHERE `+strings.Join(clauses, " AND ")+" ORDER BY m.sent_at "+order+",m.message_id "+order+" LIMIT ?", args...)
 	if err != nil {
 		return nil, err
 	}

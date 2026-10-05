@@ -43,7 +43,7 @@ func (s *Store) SendQuote(ctx context.Context, peer, id string) (*domain.SendQuo
 		return nil, domain.Invalid("Reply source is outside collection policy.")
 	}
 	var q domain.SendQuote
-	err := s.DB.QueryRowContext(ctx, `SELECT m.message_id,m.sender_id,m.text,q.client_message_id,q.message_type,q.timestamp,q.ttl FROM messages m JOIN message_quote_metadata q ON q.message_seq=m.seq WHERE m.conversation_type='direct' AND m.group_id=? AND m.message_id=?`, peer, id).Scan(&q.MessageID, &q.SenderID, &q.Text, &q.Metadata.ClientMessageID, &q.Metadata.MessageType, &q.Metadata.Timestamp, &q.Metadata.TTL)
+	err := s.DB.QueryRowContext(ctx, `SELECT m.message_id,m.sender_id,m.text,q.client_message_id,q.message_type,q.timestamp,q.ttl FROM visible_messages m JOIN message_quote_metadata q ON q.message_seq=m.seq WHERE m.conversation_type='direct' AND m.group_id=? AND m.message_id=?`, peer, id).Scan(&q.MessageID, &q.SenderID, &q.Text, &q.Metadata.ClientMessageID, &q.Metadata.MessageType, &q.Metadata.Timestamp, &q.Metadata.TTL)
 	if err != nil {
 		return nil, err
 	}

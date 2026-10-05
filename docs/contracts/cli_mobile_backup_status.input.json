@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Trusted local ledger operation only; no phone request, download, import or Events.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "method": {
+      "const": "cli_mobile_backup_status"
+    },
+    "arguments": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "operation_id"
+      ]
+    }
+  },
+  "required": [
+    "method",
+    "arguments"
+  ]
+}

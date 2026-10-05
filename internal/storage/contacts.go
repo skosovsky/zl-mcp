@@ -117,7 +117,7 @@ func (s *Store) ContactStatus(ctx context.Context) (map[string]any, error) {
 
 // The join keeps one SQLite read per catalogue traversal. In particular it must
 // not acquire a second connection while the result rows hold our single handle.
-const directorySelect = `SELECT c.conversation_type,c.conversation_id,c.name,c.metadata_source,c.availability,c.first_discovered_at,c.updated_at,COALESCE(d.aliases,''),COALESCE(d.friendship,'unknown'),EXISTS(SELECT 1 FROM messages m WHERE m.conversation_type=c.conversation_type AND m.conversation_id=c.conversation_id) FROM conversations c LEFT JOIN directory_contacts d ON c.conversation_type='direct' AND d.peer_id=c.conversation_id`
+const directorySelect = `SELECT c.conversation_type,c.conversation_id,c.name,c.metadata_source,c.availability,c.first_discovered_at,c.updated_at,COALESCE(d.aliases,''),COALESCE(d.friendship,'unknown'),EXISTS(SELECT 1 FROM visible_messages m WHERE m.conversation_type=c.conversation_type AND m.conversation_id=c.conversation_id) FROM conversations c LEFT JOIN directory_contacts d ON c.conversation_type='direct' AND d.peer_id=c.conversation_id`
 
 func directoryMetadata(raw, source string) ([]string, []string, error) {
 	aliases := []string{}

@@ -41,8 +41,10 @@ For explicitly requested historical recovery, start
 `zalo_import_conversation_history` with an exact conversation identity, RFC3339
 interval and stable UUID request ID. Poll `zalo_get_history_import_status`; use
 `zalo_cancel_history_import` to stop it. The single service imports available
-group-cloud pages within page, record and time limits. Direct/Strangers history
-returns `unsupported`. Imported records appear in ordinary reads without Events
+group-cloud pages within page, record and time limits. Explicit
+`source=conversation_preload` imports a bounded available snapshot for a typed
+direct/group dialogue and reports `partial/source_window_limited`; deeper
+direct/Strangers history remains unverified. Imported records appear in ordinary reads without Events
 or notifications; later duplicates do not notify either. Completion describes
 the available bounded source, never a complete archive. Inspect counts, nullable
 filtering evidence, stop reason and newly imported time bounds. See the

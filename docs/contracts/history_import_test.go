@@ -23,6 +23,9 @@ func TestHistoryImportRequestBoundsAndSilentPolicy(t *testing.T) {
 		valid       bool
 	}{
 		{"default limits", "", nil, true},
+		{"snapshot source", "source", "conversation_preload", true},
+		{"legacy source", "source", "group_cloud", true},
+		{"arbitrary source", "source", "private-endpoint", false},
 		{"maximum page", "page_size", 50, true},
 		{"oversized page", "page_size", 51, false},
 		{"zero pages", "max_pages", 0, false},

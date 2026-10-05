@@ -89,3 +89,21 @@ auth pause, cancellation of late responses, account/policy revocation, durable
 work limits and retention-safe silent identities. All Message output schemas
 accept `source=history`; catalogue metadata provenance remains a separate enum.
 These checks do not establish live source availability or direct history.
+
+History failure diagnostics log fixed categories and optional numeric API codes.
+Tests deliberately put a private marker in the underlying error and require its
+absence from logs and the exported safe error. Original causes remain available
+for typed authentication/cancellation handling; never print them in production.
+
+The owner-only `probe-preload` command is for bounded source verification through
+an already running service. It emits counts/safe categories and never imports
+records. It cannot use arbitrary endpoints or bypass the account guard. This
+command is separate from MCP tools and requires both CLI and service versions
+supporting its executable private contract. Do not run a second login/listener
+for source investigation. The command does not prove read-effect absence,
+Strangers catalogue completeness or old-history recovery.
+
+The mobile backup candidate has a trusted local attempt ledger, not an exposed
+mobile-history MCP source. See [mobile diagnostics](mobile-backup-diagnostics.md)
+for preparation/status/prepared-only cancellation. These commands do not authorize
+or execute a phone request and require the already running single service.

@@ -119,6 +119,73 @@
         "stop_reason"
       ],
       "additionalProperties": false
+    },
+    "preload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "not_attempted",
+            "running",
+            "observed",
+            "partial",
+            "unsupported"
+          ]
+        },
+        "last_attempt_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "last_success_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "observed_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        },
+        "permitted_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000
+        },
+        "catalog_complete": {
+          "const": false
+        },
+        "messages_imported": {
+          "const": false
+        },
+        "stop_reason": {
+          "enum": [
+            null,
+            "observed_snapshot",
+            "source_unsupported",
+            "auth_required",
+            "invalid_source_page",
+            "upstream_unavailable",
+            "cancelled_or_deadline",
+            "storage_or_metadata_error"
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "last_attempt_at",
+        "last_success_at",
+        "observed_count",
+        "permitted_count",
+        "catalog_complete",
+        "messages_imported",
+        "stop_reason"
+      ]
     }
   },
   "required": [

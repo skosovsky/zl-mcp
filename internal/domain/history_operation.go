@@ -11,6 +11,7 @@ import (
 )
 
 type HistoryImportRequest struct {
+	Source           string `json:"source,omitempty"`
 	ConversationType string `json:"conversation_type"`
 	ConversationID   string `json:"conversation_id"`
 	RequestID        string `json:"request_id"`
@@ -26,6 +27,12 @@ func (r HistoryImportRequest) Ref() ConversationRef {
 }
 
 func (r HistoryImportRequest) Normalize() (HistoryImportRequest, error) {
+	if r.Source == "group_cloud" {
+		r.Source = ""
+	}
+	if r.Source != "" && r.Source != "conversation_preload" {
+		return r, Invalid("Unsupported history source selection.")
+	}
 	id, err := uuid.Parse(r.RequestID)
 	if err != nil || len(r.RequestID) != 36 {
 		return r, Invalid("request_id must be a UUID.")

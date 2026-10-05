@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "clearUnreads": {"type": "array", "maxItems": 5000, "items": {"type": "object"}},
+    "msgs": {"type": ["array", "null"], "maxItems": 1000, "items": {"type": "object"}},
+    "groupMsgs": {"type": ["array", "null"], "maxItems": 1000, "items": {"type": "object"}},
+    "pageMsgs": {"type": ["array", "null"], "maxItems": 1000, "items": {"type": "object"}}
+  },
+  "required": ["clearUnreads"],
+  "additionalProperties": true
+}

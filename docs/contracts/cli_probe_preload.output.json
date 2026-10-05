@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "source_status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "unsupported",
+        "auth_required",
+        "failed"
+      ]
+    },
+    "error_category": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        null,
+        "source_unsupported",
+        "auth_required",
+        "invalid_source_page",
+        "timeout",
+        "cancelled",
+        "api_error",
+        "network",
+        "unknown"
+      ]
+    },
+    "source_code": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "metadata_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5000
+    },
+    "direct_message_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "group_message_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "unsupported_message_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "direct_messages_available": {
+      "type": "boolean"
+    },
+    "group_messages_available": {
+      "type": "boolean"
+    },
+    "metadata_persisted": {
+      "const": false
+    },
+    "messages_persisted": {
+      "const": false
+    },
+    "catalog_complete": {
+      "const": false
+    },
+    "history_complete": {
+      "const": false
+    },
+    "error_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        null,
+        "unknown",
+        "ambiguous_preload_outgoing_peer",
+        "duplicate_preload_dialogue_identity",
+        "history_page_exceeds_normalization_budget",
+        "history_record_does_not_match_requested_conversation",
+        "history_source_returned_internal_error",
+        "history_text_exceeds_supported_size",
+        "invalid_decimal_metadata",
+        "invalid_history_join_timestamp",
+        "invalid_history_message",
+        "invalid_history_message_shape",
+        "invalid_history_numeric_identifier",
+        "invalid_history_page_records",
+        "invalid_preload_dialogue_identity",
+        "invalid_preload_identifier",
+        "invalid_preload_message",
+        "invalid_preload_message_conversation",
+        "invalid_preload_message_fields",
+        "invalid_preload_message_metadata",
+        "invalid_preload_message_shape",
+        "invalid_preload_metadata",
+        "invalid_preload_numeric_identifier",
+        "invalid_preload_page_bounds",
+        "missing_preload_account_binding",
+        "preload_message_belongs_to_a_foreign_account",
+        "preload_normalization_exceeds_bounds",
+        "preload_record_exceeds_bounds",
+        "unknown_preload_dialogue_classification",
+        "unsupported_history_message_fields",
+        "unsupported_history_message_metadata",
+        "invalid_preload_last_message_identifier",
+        "invalid_preload_message_identifier_actionId",
+        "invalid_preload_message_identifier_msgId",
+        "invalid_preload_message_identifier_cliMsgId",
+        "invalid_preload_message_identifier_uidFrom",
+        "invalid_preload_message_identifier_idTo",
+        "invalid_preload_message_identifier_ts",
+        "invalid_preload_message_identifier_userId",
+        "invalid_preload_message_identifier_realMsgId",
+        "invalid_group_history_shape",
+        "invalid_group_history_records",
+        "invalid_group_history_hasMore",
+        "invalid_group_history_isFiltered",
+        "invalid_group_history_isFilteredByPhase",
+        "invalid_group_history_isFilteredByTimeJoin",
+        "invalid_group_history_isOld"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "source_status",
+    "error_category",
+    "source_code",
+    "metadata_count",
+    "direct_message_count",
+    "group_message_count",
+    "unsupported_message_count",
+    "direct_messages_available",
+    "group_messages_available",
+    "metadata_persisted",
+    "messages_persisted",
+    "catalog_complete",
+    "history_complete",
+    "error_reason"
+  ]
+}

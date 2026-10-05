@@ -23,9 +23,11 @@ type ControlContent struct {
 }
 
 type controlData struct {
-	UploadAttachment *uploadFileInfo
-	GroupEvent       model.TGroupEvent
-	FriendEvent      model.TFriendEvent
+	MobileSync        *model.MobileSyncEvent
+	MobileSyncInvalid bool
+	UploadAttachment  *uploadFileInfo
+	GroupEvent        model.TGroupEvent
+	FriendEvent       model.TFriendEvent
 }
 
 type uploadFileInfo struct {
@@ -45,6 +47,7 @@ func (d *ControlEventData) UnmarshalJSON(data []byte) error {
 }
 
 func (c *ControlContent) UnmarshalJSON(data []byte) error {
+	*c = ControlContent{}
 	var raw struct {
 		ActionType string          `json:"act_type"`
 		Action     string          `json:"act"`
@@ -58,11 +61,23 @@ func (c *ControlContent) UnmarshalJSON(data []byte) error {
 	c.ActionType = raw.ActionType
 	c.Action = raw.Action
 	c.FileID = raw.FileID
+	if c.ActionType == "syncmsgmb" && c.Action != "user_confirm" && c.Action != "syncmsg_info" && c.Action != "transfer_error" {
+		c.Data = controlData{}
+		return nil
+	}
+	if c.ActionType == "syncmsgmb" && len(raw.Data) > 64<<10 {
+		c.Data.MobileSyncInvalid = true
+		return nil
+	}
 
 	payload := raw.Data
 	if len(payload) > 0 && payload[0] == '"' {
 		var s string
 		if err := json.Unmarshal(payload, &s); err != nil {
+			if c.ActionType == "syncmsgmb" {
+				c.Data.MobileSyncInvalid = true
+				return nil
+			}
 			return err
 		}
 		payload = []byte(s)
@@ -70,6 +85,15 @@ func (c *ControlContent) UnmarshalJSON(data []byte) error {
 
 	var cd controlData
 	switch c.ActionType {
+	case "syncmsgmb":
+		ev, err := decodeMobileSync(c.Action, payload)
+		if err != nil {
+			c.Data.MobileSyncInvalid = true
+			return nil
+		}
+		cd.MobileSync = ev
+		c.Data = cd
+		return nil
 	case "file_done":
 		var ul uploadFileInfo
 		if err := json.Unmarshal(payload, &ul); err == nil && ul.URL != "" {

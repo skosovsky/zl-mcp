@@ -50,6 +50,12 @@ The JS main branch still implements group history through `/api/group/history`. 
 
 [Open PR #370](https://github.com/RFS-ADRENO/zca-js/pull/370), head `4eeceafad031ce4f594c4532e3363dbdf01450b0`, proposes `group_cloud_message/api/cm/getrecentv2`, a message cursor, `hasMore` and deduplication. Its author reports a live 120-message check. The PR was unmerged at inspection. It is a concrete candidate for an isolated Go implementation and bounded read-only verification using the existing session; it is not proof that our account can fetch all group history or any direct history. Preserve IDs exactly rather than copying the JS numeric conversion.
 
+Rechecked on 2026-10-05: the PR page still reports Open and describes group
+history only. Our optional group adapter already uses `/api/cm/getrecentv2`
+and a separate `/api/cm/getoldv2` phase. This upstream proposal does not establish
+a deeper direct/Strangers history endpoint or remove the real mobile-archive
+compatibility gate.
+
 No established per-peer direct-history endpoint or complete Strangers catalogue was found in the reviewed Go/JS API inventories. Do not derive a personal endpoint by renaming the group endpoint. Mobile synchronization is a separate, unfinished upstream approach ([PR #269](https://github.com/RFS-ADRENO/zca-js/pull/269)), not a production-ready fallback.
 
 Recommended history contract: explicit bounded operation with stable request ID, typed conversation, requested interval, page/message limits and progress/status. Run through the existing authenticated service and sole listener; persist/deduplicate results transactionally. Record source and server continuation/filtering evidence. Stop on exhausted cursor, repeated cursor, limits or upstream errors. Expose `unsupported`, `partial`, `upstream_unavailable` and obtained record bounds without claiming completeness from an empty page.
@@ -143,3 +149,465 @@ Potential value is metadata discovery beyond friends plus available recent
 records, not a complete history source. No new native database access, remote
 request to this endpoint, unread mutation or production import was performed for
 this source review. Direct history remains unsupported pending stronger evidence.
+
+## Native cloud routing and group decode follow-up — 2026-10-04
+
+The upstream group-history PR #370 remains open/unmerged at head
+4eeceafad031ce4f594c4532e3363dbdf01450b0 (GitHub API rechecked). Its proposed
+route/payload still matches the reviewed candidate. This does not establish
+per-peer direct history or independent live correctness for this account.
+
+A fresh bounded group read failed with SDK API code zero. Reviewing the common
+response resolver proved zero is also manufactured for local parse failures.
+The group endpoint now resolves the encrypted envelope as raw JSON and decodes
+the group leaf separately, exposing only typed allowlisted field reasons. The
+next real read identified hasMore as the rejected field. The source contract now
+normalizes only boolean or exact numeric 0/1 flags, retaining missing/null as
+unknown; nonbinary numeric/string/container shapes remain errors. No raw live
+response or message value was logged or retained in public evidence.
+
+Static analysis of the already inspected native Zalo 26.9.10.2959 bundle found
+getCM selects getrecentv2 or getoldv2 under the group-cloud domain. Crucially,
+its apiEnable gate requires the group-ID prefix or a separately enabled Send to
+Me/cloud OA path. Ordinary direct peers do not pass that gate. This is concrete
+native routing evidence against renaming/reusing group cloud APIs for a personal
+peer. It is not a universal proof that no other direct-history protocol exists.
+The same native module exposes pull_mobile_msg/get_crossdb with mobile sync
+sequence/key/session parameters, consistent with the previously identified
+unfinished upstream synchronization path. No mobile handshake, key exchange,
+second authorization or private native database import was started.
+
+## Mobile synchronization source audit — 2026-10-04
+
+[Upstream PR #269](https://github.com/RFS-ADRENO/zca-js/pull/269) remains
+open/unmerged at 29d01c4732391cf1b68a6630cd715199ef46348a. Its transport requests
+pull_mobile_msg using a generated RSA public key, then handles USER_CONFIRM,
+SYNCMSG_INFO and transfer failure. It downloads an authenticated encrypted
+archive and reports metadata; it does not establish a usable complete message
+import. The author identifies unresolved db.crypt processing. Its example starts
+a separate login/listener and logs encrypted-key metadata; neither pattern is
+adopted in this service.
+
+The inspected native startup bundle has more concrete archive handling: it
+creates a 2048-bit RSA session keypair, decrypts the supplied archive key with
+PKCS#1 padding, distinguishes backup format 0 versus 1, and dispatches
+DECRYPT_BACKUP followed by RESTORE_CONVERSATIONS/RESTORE_MESSAGES tasks. Static
+resource inventory also identifies db-cross-v4's platform-specific Electron
+addon and a backup-format WebAssembly library. The binding loader only exports
+that native addon; it is not an independently documented portable Go decoder.
+These findings identify the next source boundary, not a verified implementation.
+No native addon/worker was executed, phone transfer was initiated, key material
+was obtained or private backup archive was downloaded.
+
+Before enabling this source, its archive decoder/message schema and phone
+confirmation need a reproducible check using the existing guarded session and
+bounded silent ingestion. A downloaded file, successful RSA step or message
+count in its metadata is insufficient evidence of usable historical coverage.
+The missing direct-message case remains open. Existing preload snapshots remain
+useful but do not close this source audit.
+
+## Native backward continuation audit — 2026-10-04
+
+The inspected static startup bundle's cloud control passes response `lastMsgId`
+and `isOld` together into the next `getCloudMessage` request. The `getCM` call
+uses that phase to choose `getrecentv2` versus `getoldv2`; it does not infer the
+phase from a nonzero cursor. Source evidence is the same Zalo 26.9.10.2959 static
+bundle (SHA-256 ef48521fcca4894c9894ceeeb94a2b7ebc7419af001a696285c9af3ec23dd88a),
+at the cloud control's client-retry and `getCM` routing boundaries. This was a
+static read, without native code execution or access to the private corpus.
+
+Our decimal continuation currently omits that phase and always reads the recent
+route. Successful one-page acceptance therefore does not prove traversal of old
+pages. The next implementation must persist phase with the operation cursor,
+retain compatibility for saved operations, and prove the old-route transition
+without treating absent phase metadata as false or guessing from message IDs.
+
+The available Chrome account was also inspected through the personal plugins
+UI: its personal-plugin list is empty and its installed sidebar contains Figma
+and Sites, not Zalo. No plugin, permission, subscription or connection was
+changed. This surface cannot establish discovery for the existing Zalo client;
+an authenticated account containing that connection is still needed.
+
+## Native archive decoder boundary — 2026-10-04
+
+Static inspection of the installed darwin/arm64 db-cross-v4 addon identifies
+two exported JavaScript entrypoint names: decompressAndDecryptDb and
+decompressAndDecryptDb_V2. This is more specific than the binding loader: the
+archive decompression/decryption boundary resides in a platform-specific
+Electron addon. The inspected sync and mainless worker bundles did not expose a
+portable implementation or a verified parameter/schema contract for those
+entrypoints. String inventory is evidence of entrypoint names only, not proof
+of algorithm, format compatibility or a callable Go integration. The addon was
+not loaded or executed; no real archive/key was read.
+
+Next source evidence must establish the two formats' parameters, encrypted
+container/decompression limits and decoded message schema before a bounded
+portable decoder can be implemented. Merely launching the addon or using its
+name as a capability claim would not satisfy the single Go-service contract.
+
+## Archive call sites and decoded database boundary — 2026-10-04
+
+The native shared worker (SHA-256
+7a83866c905956cfb122571b2f28cf00a8b61e0f362c40a82010a9947a7d6ff7)
+provides the actual call sites missing from the earlier worker sample. Format 0
+passes input path, output path and decrypted key to decompressAndDecryptDb;
+format 1 additionally uppercases the key and supplies a progress callback to
+decompressAndDecryptDb_V2. This confirms the wrapper contract, not the cipher.
+
+Restoration distinguishes a single SQLite database containing threads/chats
+(format 0) from a directory of per-conversation .db files (format 1). The latter
+uses group-prefixed filenames and message fields including SenderId, GlbMsgId,
+CliMsgId, MsgContent, TimeStamp, TTL and MsgType. Attachments/quotes require the
+separate native parseBinNet boundary. Both restore flows also translate backup
+plain/noise conversation identities before insertion. Copying IDs or rows
+without that mapping would violate the exact typed/account ownership contract.
+No real database was opened and no decoder was executed.
+
+A [public decoder analysis](https://github.com/s36-technology/zalo-linux/blob/master/COMPREHENSIVE_ANALYSIS.md)
+is a candidate reference only. At inspected commit
+4a6bb86d270d8df8d371528ec7136a8d9c8d940b the complete Git tree has no cited
+generate-addon.py or offline_decrypt_check.py and no declared license. The
+current tree therefore does not substantiate that document's source-code claim;
+no code/binary was adopted. Further commit-history inspection hit GitHub's
+anonymous API rate limit. This does not prove that a portable decoder is
+impossible, nor justify claiming its algorithm implemented.
+
+## Pinned decoder reference and native integrity check — 2026-10-04
+
+The candidate source was located in a separate
+[realdtn2/zalo-linux-2026 tree](https://github.com/realdtn2/zalo-linux-2026/tree/0f3049a6ab6fca6862d50fc73150d09776cf7035),
+commit 0f3049a6ab6fca6862d50fc73150d09776cf7035. Its generate-addon.py contains
+an independently published format-1 decrypt/extract implementation. No code was
+copied or executed, and that tree declares no root license. Its format parsing
+is explicitly inferred: it tries alternative ciphertext spans and omits the
+native header-integrity check. It is research evidence, not a verified decoder.
+
+Static disassembly of the installed arm64 addon independently confirms an
+AES-256 CBC call, a zero-initialized IV buffer, 65536-byte reads, and ZDB4.0
+magic verification in the format-1 decrypt path. Its subsequent decompressor
+reads big-endian header length/checksum after the six-byte magic, hashes the
+header segment with XXHash32, compares that result, and then seeks to byte 14
+to read the file count. The public candidate skips that validation. The complete
+file-table/checksum scope, key/chunk behavior, compressed-stream framing and
+plain/noise identity mapping still require a reproducible fixture check before
+being used as production decoding rules. No native function was executed.
+
+The next implementation should be an independent bounded Go decoder with
+explicit format/version, rather than the candidate's trial-and-error fallback.
+It must reject malformed header/checksum, unsafe or duplicate archive names,
+excessive counts/declared sizes, decompression overflow, truncated output and
+unknown identity mapping before corpus mutation. A synthetic round-trip alone
+cannot prove compatibility with a real mobile archive. Existing tools continue
+to report direct preload as a limited snapshot; mobile history is not exposed.
+
+The native checksum initial words were read from the installed addon and match
+XXH32's published seed-zero accumulator values. read_header independently
+confirms a 128-byte name ceiling. These findings now support the internal
+[plaintext-header candidate](contracts/mobile-backup-header.md); its independent
+reference-vector checks are documented in acceptance. Real archive framing and
+plain/noise mapping remain the next source boundaries.
+
+The native CBC method copies its caller-provided IV into local storage before
+block processing. Combined with the zero IV passed by each 65536-byte call, this
+confirms chunk reset independently of the fork. Format-1 key output is requested
+as hexadecimal text by the native RSA wrapper; the caller uppercases it and
+AES-256 expands its text bytes. This evidence supports the offline internal
+[block-transform candidate](contracts/mobile-backup-blocks.md). Real framing,
+compression, database schema and account mapping still require acceptance.
+
+## Native XZ stream and Go decoder memory policy — 2026-10-04
+
+The installed arm64 addon resolves stub 0x256fc to `lzma_stream_decoder`.
+Both `ZCUtil::InitDecoder` (0xcb84) and `DecompressProcessV2` (0xd034)
+call it with an unlimited memory argument and flags 0x08. The official
+[liblzma container contract](https://tukaani.org/xz/liblzma-api/container_8h.html)
+identifies this as the XZ stream decoder with `LZMA_CONCATENATED` enabled.
+This independently establishes XZ framing, including concatenated streams;
+it does not establish a real archive's filters, payload boundaries or trailer.
+
+The pure-Go candidate `github.com/ulikunitz/xz` v0.5.17 was downloaded with
+Go checksum verification, without modifying go.mod or go.sum. Its pinned
+source commit is 6ead826b4d3c7c9856f2daa905cf06403b9daddc. Source inspection
+of `lzmafilter.go` shows that `ReaderConfig.DictCap` is increased to the
+dictionary size advertised by a block before `NewReader2` allocates it.
+Therefore setting DictCap does **not** impose a maximum on XZ decoding.
+An output-size limit alone cannot bound that allocation. Do not introduce
+this reader into the service under an assumed memory ceiling.
+
+Before adoption, independently validate every XZ block's filter/dictionary
+declaration against a fixed budget before allocation, or use a decoder with
+an enforceable maximum. Also bound compressed input, decoded bytes, block and
+stream counts, cancellation and declared file sizes; validate stream integrity
+to terminal EOF before persistence. Reject unsupported filters explicitly.
+No compression decoder is wired into the current offline candidate or runtime.
+
+The subsequent offline candidate implements a bounded container preflight
+before using the pinned reader. It checks every indexed block's LZMA2 dictionary
+declaration, stream/block counts, indexed output budget and structural CRCs
+before decoding. The reader then validates the compressed stream to EOF and
+exact output length. Contract: [offline XZ decoding](contracts/mobile-backup-xz.md).
+The new dependency is now pinned in go.mod/go.sum; its license is BSD-3-Clause.
+Independent Python/liblzma and XZ Utils vectors cover check types, concatenation
+and multiple blocks. This closes the offline dictionary-allocation boundary;
+it does not establish mobile download, encrypted payload slicing, SQLite/account
+mapping or recovery of the missing message. It is not wired into the service.
+
+## Existing-listener mobile transport boundary — 2026-10-04
+
+The native startup bundle independently identifies file-service routes
+`pull_mobile_msg`, `cancel_pull_mobile_msg` and `get_crossdb`. Sync controls are
+routed by act_type=syncmsgmb, with act=user_confirm/syncmsg_info/transfer_error.
+Confirmation matches both request public key and pc_name; user_action=0 rejects,
+2 reports mobile restoring, and 1/3 confirms. Backup success matches the request
+public key. These values must not be collapsed into a generic successful control.
+The current Go listener routes file/group/friend controls and does not publish
+syncmsgmb controls; adding only an HTTP request would lose its asynchronous reply.
+
+The native request also increments a nonzero last sequence before sending
+from_seq_id; the reviewed PR passes its argument directly. A contract must define
+whether its input means last retained sequence or first requested sequence,
+preserve exact integer precision, and avoid replay guessing. Initial zero has
+the same wire value in both implementations. Cancellation carries the same
+public key/pc_name/IMEI. No transfer, cancel request, new login/listener or archive
+download was initiated during this audit. The upcoming transport must correlate
+controls within the existing session, expose only safe operation state, bound
+wait/download work, and keep backup URL/key material out of logs and MCP output.
+
+The native key generator in the inspected startup UI requests RSA-2048 with
+publicKeyEncoding type=spki, format=der, encoded as base64; its private key uses
+PKCS#1 PEM. This independently confirms the public wire form in the reviewed PR.
+The optional SDK [initial request contract](contracts/mobile-backup-request.md)
+now validates that form, fixes initial sequence/retry values at zero, and provides
+same-key cancellation without adopting unresolved continuation semantics.
+Neither method is invoked by the service yet. Native request acknowledgement
+is distinct from asynchronous phone confirmation and usable archive evidence.
+
+
+## Corrected complete-container boundary — 2026-10-04
+
+Further bounded static disassembly contradicts the earlier header-only assumption.
+In the installed arm64 addon, decompress_file at 0x43c0 seeks to offset 6, reads
+and byte-swaps a length; at 0x43f0 it subtracts 14. It hashes that many bytes from
+offset 14, compares the checksum, then seeks back to 14 to parse the file count
+and table. At 0x4b4c–0x4b68 it subtracts ftell from that **same length** and passes
+the difference to DecompressProcessV2. The latter at 0xd1b8–0xd20c bounds fread
+by that remaining compressed byte count, then distributes decoded output by file
+sizes. Indirect symbol references confirm fread=0x25690, fseek=0x256a8,
+ftell=0x256b4, fwrite=0x256c0 and lzma_stream_decoder=0x256fc. No native code
+was executed and no private archive was accessed.
+
+Thus the length is the complete declared container end, not the table end; the
+checksum covers table and compressed payload. The old table-only fixture could
+not establish that boundary. The old ReadHeader candidate was removed and replaced
+with complete bounded checksum validation, a separate bounded table parser and
+exact plaintext XZ/file splitting. Encrypted padding/trailer, real SQLite schema
+and account/plain-noise mapping remain unverified; no production history-source
+claim follows from these synthetic components.
+
+
+## Archive owner/sender ID translation — 2026-10-04
+
+Bounded static review of the installed renderer/shared-worker independently
+identifies the mapping step. Format-1 restore enumerates numeric .db/group_.db
+owner IDs and imports direct/group IDs into NoiseIdStore. Row conversion uses
+SenderId, GlbMsgId and CliMsgId; verifyCrossMsg also collects missing owner/sender,
+mention and quoted-owner IDs. The renderer's REQUEST_NOISE_ID calls getnuid;
+static implementation encrypts numeric fids/gids and posts /api/znoise to
+zwid.api.zalo.me. Reply arrays are positionally matched with count checks, and
+group results are g-prefixed for the native client's representation.
+
+Native request preparation uses Number.parseInt, with precision risks above
+2^53. The independent Go candidate retains canonical uint64 decimal identities
+via json.Number and typed positional mappings, rejecting duplicates, count
+mismatch, invalid numeric forms and ambiguous direct-to-group guesses. It never
+uses a source ID as an implicit session-ID fallback. It is a bounded plaintext
+codec only; no mapping request was sent. Real response representation and
+account/operation-bound mapping remain to be verified. The native text MsgType
+is 0; BinNet parsing and quote/attachment semantics still need independent
+validation before full row conversion/import.
+
+
+## BinNet structural framing — 2026-10-04
+
+Installed binding dbUtils points to the same db-cross-v4 native addon. ParseBinNet
+at 0x22dc calls parse_bin_net at 0x6de4, which invokes tlv::TlvBox::Parse at
+0x9fe0. Static parser instructions read a big-endian length from prefix+4 and
+a big-endian tag from prefix+0, then retain declared value bytes. GetValues and
+the attachment loop establish repeated fields, so a single-value map would lose
+metadata. Native top-level dispatch exposes attachment/quote/property/mention/
+reference parsing paths; exact semantic validation remains separate.
+
+An internet search located unrelated TLV libraries with similar names, but no
+public result established Zalo BinNet compatibility. They are not a source of
+copied decoder code or proof of the protocol. The Go candidate is an independent
+bounded structural parser only, retaining unknown/repeated fields as opaque
+values. Real BinNet fixtures, nested quote/attachment schemas and account-linked
+ID translation remain required before converting these rows to corpus messages.
+No native function was executed or private metadata accessed.
+
+## Quote scalar widths — 2026-10-04
+
+Static GetIntValue/GetInt64Value load then byte-reverse 4/8 bytes, establishing
+big-endian scalar payloads independently of the TLV framing. Quote nested tags
+80–85 map to ownerId/cliMsgId/globalMsgId/cliMsgType/ts/ttl; exact getter/property
+addresses are recorded in contracts/mobile-backup-quote.md. Native signed-to-double
+conversion can round identifiers above 2^53. The Go candidate retains signed
+integer bits with explicit presence and rejects malformed widths/duplicate known
+scalars. This does not validate owner identity or quote semantics. No private
+BinNet, native function execution, network request or corpus import was used.
+
+## Quote byte fields — 2026-10-04
+
+Following each GetBytesValue branch through explicit-length N-API string creation
+establishes nested tags 86/87/88/90 as msg/attach/fromD/quoteStatus. They are raw
+UTF-8 strings; their labels do not establish JSON or attachment schemas. The
+internal candidate validates UTF-8, retains presence/empty values/embedded NUL,
+owns and clears byte buffers, rejects duplicate known fields, and counts skipped
+unknown fields. This extends the scalar candidate but is still partial metadata
+parsing: account identity, attachment semantics and real archive compatibility
+remain unverified. No source/private message bytes or native executable code were
+used to produce fixtures.
+
+## BinNet envelope and partial coverage — 2026-10-04
+
+Native top-level tag-7 branch (0x6f54 to 0x7108) feeds the nested quote parser
+(0x74e8). The offline Go envelope now routes that field to the bounded quote
+candidate. Unsupported top-level occurrences retain tag order and are counted,
+including repeated attachments; unknown nested quote fields also contribute to
+coverage counts. Duplicate quote tags and malformed selected metadata fail the
+whole result. Unknown values are not recursively guessed. Recognition is not
+identity/semantic validation, and no zero-unknown count establishes completeness.
+No real BinNet or installed runtime was changed by this checkpoint.
+
+## Prepared offer orchestration — 2026-10-04
+
+The internal runner now connects an existing prepared ledger attempt to a guarded
+MobileBackupSource and its durable observer. It accepts a private offer only after
+its own successful BeforeDispatch commit and persisted offer_ready state. Failed
+post-dispatch execution closes evidence with an independent bounded persistence
+context; cancellation/unknown/authentication loss remain interrupted. An invocation
+that never committed dispatch cannot finalize the attempt: another attached
+observer may have won concurrently. Neither a rejected retry nor a stale observer
+can interrupt the winner. No service/CLI entry, phone request, archive download or
+message import was enabled by this checkpoint.
+
+## Mention scalar subset — 2026-10-05
+
+Native GetValues(8) at 0x7244 iterates repeated mention TLVs, parsed at 0x728c.
+Nested tags 100/101/102/103 are signed 4-byte type/uid/pos/len respectively;
+getter/property addresses are recorded in mobile-backup-mentions.md. The offline
+BinNet envelope retains mention order, presence and signed values, rejects duplicate
+known scalars/wrong widths, and counts unknown nested fields. This does not establish
+uid/session mapping, mention type meanings or offset units. No text slicing or
+resolved domain mention is performed; real archive acceptance remains open.
+
+## Existing-session service port — 2026-10-05
+
+The internal membership port now connects prepared mobile-offer execution to
+current JoinManager.API, which production collector readiness sets to sessionGuard.
+Caller/service cancellation is linked before session ownership, and the read lock
+holds the current session through execution. Integration through the actual
+collector lifecycle verifies one restore/source, one dispatch and no terminal-ID
+redispatch. No new restore/listener, CLI/MCP route, download or message import is
+introduced. The private offer goes only to an internal future archive consumer.
+
+## Format-1 declared boundary assembly — 2026-10-05
+
+Additional native static evidence: decrypt_file writes each fread-sized decrypted
+chunk back unchanged in length at 0x4298–0x42a8. GetPaddingLength at 0xe324 rounds
+to a block boundary without adding an extra aligned block. DecryptCBC copies the
+supplied IV into its private working buffer at 0x10880–0x1088c, preserving zero-IV
+restart for each chunk. No PKCS unpadding occurs. The established container decoder
+bounds checksum/XZ by the declared end and does not feed physical tail bytes into
+XZ. This does not establish the sender's padding content/length convention.
+
+An independent bounded Go assembly now decrypts, checks that declared end lies
+within the decrypted bytes and validates/splits exactly that region. Tail bytes
+are separately counted inside the ciphertext budget, neither treated as padding
+nor authenticated. Independent liblzma/official XXH32/OpenSSL fixtures cover aligned,
+zero-tail and opaque-tail streams. This closes offline stage composition only;
+real correlated archive, verified host and account/message conversion remain open.
+
+## Exact selected-file identity — 2026-10-05
+
+Internal archive selection now builds exact typed mapping requests from validated
+canonical filenames, retaining positive uint64 IDs as decimal strings. Complete
+mapping is required before choosing an index: no missing/extra/duplicate plain
+pairs or same-type many-to-one session pairs are accepted. Equal numeric IDs in
+direct/group namespaces stay distinct. Only the exact typed session conversation
+is selected; source IDs never act as fallback. File contents are neither copied
+nor opened at this stage. This narrows selected-file routing, not authenticated
+archive/account ownership or complete history. Guarded same-operation mapping and
+real filename/schema compatibility remain required.
+
+## Selected staged fetch and session scope — 2026-10-05
+
+The internal staged path now combines independently configured download policy,
+exact ciphertext bounds, format-1 assembly, guarded filename mapping and exact
+selected-file routing. Failure returns no private partial result; downloaded bytes
+and decompressed archive regions are cleared. Success transfers only the selected
+region, clearing unrelated regions before returning. It remains opaque file data,
+not a validated SQLite/message import or completeness claim.
+
+The service wrapper holds its existing session port across the stages and borrows
+revocation cancellation from sessionGuard, including non-SDK network/CPU work. It
+requires offer/mapping/scope interfaces and numeric selection before dispatch;
+late success after scope cancellation is discarded. There is no public route,
+default download host or actual phone/HTTP action at this checkpoint. Real host,
+archive/account/row acceptance and local entry remain open.
+
+## Native row filtering and page preparation — 2026-10-05
+
+Format-1 SQL applies MsgStatus > 0, non-null client IDs and an excluded type list;
+the static client type-name table distinguishes webchat/photo/voice/sticker/file/
+location and other payload kinds. Delete/undo have separate type names and cannot
+be silently treated as ordinary text. The client preserves sender/global/client
+IDs, MsgContent, millisecond timestamp and raw TTL alongside parsed BinNet.
+
+The internal candidate now prepares at most 50 selected rows under exact interval,
+request-record and 8-MiB aggregate bounds, with complete unique sender mapping and
+explicit direction. Direct senders must be the selected peer or current account.
+Deferred controls/unknown types/missing or invalid metadata remain counted gaps;
+known nontext kinds keep raw payload rather than pretending it is decoded text.
+It returns private mapped rows only, not domain messages, Events or persistence.
+Real metadata/TTL/control/content semantics and selected silent import remain open.
+
+### Mobile archive TTL evidence (2026-10-05)
+
+Read-only client source tracing confirms millisecond TTL preserved through format-1
+conversion and message normalization. `Xu5j` adds it to the archive server timestamp;
+`wlxX` contains a client-clock fallback which our importer must not silently use.
+The internal exact-integer helper rejects missing timestamps and overflow. See
+[expiry contract](contracts/mobile-backup-expiry.md). No live archive acceptance,
+expiry scheduler, control-state restoration or historical persistence is implied.
+
+### Archive deletion and quote expiry boundary (2026-10-05)
+
+The installed format-1 importer maps source types 33/36 to `chat.delete` and
+`chat.undo`; `_filterDeletedMessages` separates normalized undo messages and calls
+`_sendUndo`, whose inspected implementation is empty. A separate format-2/export
+transformer remembers normalized `msgType == 20` IDs for recalled quote handling.
+These are different representations: do not assign the exporter's type 20 meaning
+to format-1 SQLite type 20, or infer a delete target from an arbitrary MsgContent.
+Neither observation proves correct cross-page deletion restoration for our corpus.
+Those controls remain explicitly deferred.
+
+Internal candidate expiry now uses an explicit clock and whole-page validation.
+Expired messages are removed and owned buffers cleared; expired quoted payloads
+are cleared without deleting the containing message. The redundant raw BinNet copy
+is cleared as well, and repeated checks count no second transition. No database
+writes, notification Events or ongoing expiry scheduler are provided by this step.
+
+### Mobile archive download session behavior (2026-10-05)
+
+Rechecked the public synchronization PR #269, which remains an unfinished proposed
+implementation. Its source obtains chat.zalo.me cookies and forwards them with a
+fetch to the supplied archive URL; neither exact archive hosts nor safe credential
+scope are established by that example. The installed official desktop client
+separately confirms cookie-enabled file downloading in its sync download method
+(`cookies: true`, no URL transformation). These two observations make the current
+anonymous Go downloader an unaccepted compatibility candidate, not a proven real
+archive transport. See the [download compatibility gate](contracts/mobile-backup-download.md).
+Do not infer that a Cookie header is mandatory for every signed URL, and do not
+copy the third-party arbitrary-host cookie forwarding behavior. No actual phone
+request, offered URL, cookie extraction or archive download was performed.

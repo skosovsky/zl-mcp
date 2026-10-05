@@ -1,0 +1,46 @@
+[
+  {
+    "length": 0,
+    "checksum": 46947589
+  },
+  {
+    "length": 1,
+    "checksum": 1072013981
+  },
+  {
+    "length": 4,
+    "checksum": 515436826
+  },
+  {
+    "length": 15,
+    "checksum": 371820267
+  },
+  {
+    "length": 16,
+    "checksum": 2527895462
+  },
+  {
+    "length": 17,
+    "checksum": 1021292962
+  },
+  {
+    "length": 31,
+    "checksum": 3750051775
+  },
+  {
+    "length": 32,
+    "checksum": 3665851100
+  },
+  {
+    "length": 63,
+    "checksum": 12521669
+  },
+  {
+    "length": 128,
+    "checksum": 947577033
+  },
+  {
+    "length": 1024,
+    "checksum": 3246471013
+  }
+]

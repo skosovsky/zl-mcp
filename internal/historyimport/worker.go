@@ -4,6 +4,8 @@ package historyimport
 import (
 	"context"
 	"errors"
+	"log/slog"
+	"net"
 	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -80,8 +82,20 @@ func runOperation(ctx context.Context, store *storage.Store, source domain.Histo
 		request, cancel := context.WithTimeout(ctx, requestBudget)
 		started := time.Now()
 		var page domain.HistoryPage
-		if source == nil {
+		if op.Status.Source == "conversation_preload" {
+			if snapshot, ok := source.(domain.PreloadHistorySource); ok {
+				page, err = snapshot.PreloadHistoryPage(request, op.Status.Ref(), limit)
+			} else {
+				err = domain.ErrHistoryUnsupported
+			}
+		} else if source == nil {
 			err = domain.ErrHistoryUnsupported
+		} else if phased, ok := source.(domain.PhasedHistorySource); ok {
+			if phased.HistoryPhaseRequired() && op.Status.PagesObserved > 0 && op.Status.IsOld == nil {
+				cancel()
+				return stop("partial", "missing_continuation", 0)
+			}
+			page, err = phased.HistoryPageWithPhase(request, op.Status.Ref(), op.Cursor, op.Status.IsOld, limit)
 		} else {
 			page, err = source.HistoryPage(request, op.Status.Ref(), op.Cursor, limit)
 		}
@@ -91,6 +105,7 @@ func runOperation(ctx context.Context, store *storage.Store, source domain.Histo
 			return nil // running checkpoint is recoverable; never fabricate success.
 		}
 		if err != nil {
+			logSourceFailure(op.Status.OperationID, err)
 			state, reason := "failed", "upstream_unavailable"
 			var invalid *domain.Error
 			switch {
@@ -104,6 +119,8 @@ func runOperation(ctx context.Context, store *storage.Store, source domain.Histo
 			case errors.Is(err, context.DeadlineExceeded) && remaining <= 30*time.Second:
 				state, reason = "partial", "time_limit"
 			case errors.As(err, &invalid) && invalid.Code == "INVALID_ARGUMENT":
+				reason = "invalid_source_page"
+			case errors.Is(err, domain.ErrHistoryInvalidPage):
 				reason = "invalid_source_page"
 			}
 			return stop(state, reason, elapsed)
@@ -132,4 +149,35 @@ func runOperation(ctx context.Context, store *storage.Store, source domain.Histo
 		op = updated
 	}
 	return nil
+}
+
+func logSourceFailure(operationID string, err error) {
+	category := "unknown"
+	attributes := []any{"operation_id", operationID}
+	var source *domain.HistorySourceFailure
+	var network net.Error
+	switch {
+	case errors.Is(err, domain.ErrAuthenticationRequired):
+		category = "auth_required"
+	case errors.Is(err, domain.ErrHistoryUnsupported):
+		category = "source_unsupported"
+	case errors.Is(err, domain.ErrHistoryInvalidPage):
+		category = "invalid_source_page"
+		var malformed *domain.HistoryPageFailure
+		if errors.As(err, &malformed) {
+			attributes = append(attributes, "reason", malformed.Reason())
+		}
+	case errors.Is(err, context.DeadlineExceeded):
+		category = "timeout"
+	case errors.As(err, &source):
+		category = "api_error"
+		if source.APICode != nil {
+			attributes = append(attributes, "source_code", *source.APICode)
+		}
+	case errors.As(err, &network):
+		category = "network"
+	}
+	attributes = append(attributes, "category", category)
+	// Never log err.Error(): SDK errors may contain URLs or private response text.
+	slog.Warn("History source request failed", attributes...)
 }

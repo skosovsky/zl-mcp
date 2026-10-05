@@ -105,3 +105,16 @@ func TestHistoryUnsupportedAndAuthErrors(t *testing.T) {
 		t.Fatal("auth failure lost")
 	}
 }
+
+func TestHistoryPageRetainsOnlySafeAPICode(t *testing.T) {
+	// Arrange: an API message may contain account data, so expose its code only.
+	code := errs.ZaloErrorCode(114)
+	source := &fakeHistoryReader{err: errs.NewZaloAPIError("private-response-marker", &code)}
+	// Act
+	_, err := readGroupHistoryPage(context.Background(), source, "owner", domain.ConversationRef{Type: "group", ID: "group"}, "0", 1)
+	// Assert
+	var failure *domain.HistorySourceFailure
+	if !errors.As(err, &failure) || failure.APICode == nil || *failure.APICode != 114 || err.Error() != "history source API failure" {
+		t.Fatal("safe API failure evidence lost")
+	}
+}

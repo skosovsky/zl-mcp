@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/skosovsky/zl-mcp/internal/logging"
@@ -47,13 +48,13 @@ func run() error {
 		return e
 	}
 	if flags.NArg() < 1 {
-		return fmt.Errorf("usage: zl-mcp -config config.toml <login|service|serve|approve-join preview_id>")
+		return fmt.Errorf("usage: zl-mcp -config config.toml <login|service|serve|probe-preload|mobile-backup-prepare|mobile-backup-status|mobile-backup-cancel|approve-join preview_id>")
 	}
 	c, e := config.Load(*path)
 	if e != nil {
 		return e
 	}
-	if flags.Arg(0) != "serve" {
+	if flags.Arg(0) != "serve" && !mobileLedgerCommand(flags.Arg(0)) {
 		if e = c.Prepare(); e != nil {
 			return e
 		}
@@ -71,6 +72,8 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	switch flags.Arg(0) {
+	case "mobile-backup-prepare", "mobile-backup-status", "mobile-backup-cancel":
+		return runMobileLedger(ctx, c.StateDir, flags.Args(), os.Stdin, os.Stdout)
 	case "service":
 		if flags.NArg() != 1 {
 			return fmt.Errorf("service takes no arguments")
@@ -82,6 +85,17 @@ func run() error {
 			return fmt.Errorf("serve takes no arguments")
 		}
 		return service.BridgeStdio(ctx, c)
+	case "probe-preload":
+		if flags.NArg() != 1 {
+			return fmt.Errorf("probe-preload takes no arguments")
+		}
+		probeCtx, cancel := context.WithTimeout(ctx, 35*time.Second)
+		defer cancel()
+		result, err := control.New(c.StateDir).Call(probeCtx, "cli_probe_preload", map[string]any{})
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(os.Stdout).Encode(result)
 	case "approve-join":
 		if flags.NArg() != 2 {
 			return fmt.Errorf("approve-join requires preview_id")
@@ -142,7 +156,7 @@ func run() error {
 		fmt.Fprintln(os.Stderr, "Session saved locally. QR image removed.")
 		return nil
 	default:
-		return fmt.Errorf("unknown command; available: login, service, serve, approve-join")
+		return fmt.Errorf("unknown command; available: login, service, serve, approve-join, probe-preload, mobile-backup-prepare, mobile-backup-status, mobile-backup-cancel")
 	}
 }
 

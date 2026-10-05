@@ -10,9 +10,9 @@ func (s *Store) AllowsConversation(ref domain.ConversationRef) bool { return s.p
 // Aggregate once rather than issuing one SQLite query per discovered peer.
 func (s *Store) conversationMessageCounts(ctx context.Context) (map[string]int, error) {
 	counts := map[string]int{"direct": 0, "group": 0}
-	query := "SELECT conversation_type,conversation_id,COUNT(*) FROM messages GROUP BY conversation_type,conversation_id"
+	query := "SELECT conversation_type,conversation_id,COUNT(*) FROM visible_messages GROUP BY conversation_type,conversation_id"
 	if s.policy.All {
-		query = "SELECT conversation_type,'',COUNT(*) FROM messages GROUP BY conversation_type"
+		query = "SELECT conversation_type,'',COUNT(*) FROM visible_messages GROUP BY conversation_type"
 	}
 	rows, err := s.DB.QueryContext(ctx, query)
 	if err != nil {
@@ -93,7 +93,7 @@ func (s *Store) ConversationMessage(ctx context.Context, ref domain.Conversation
 	if !s.AllowsConversation(ref) {
 		return domain.Message{}, subscriptionPermission("Conversation is outside the collection policy.")
 	}
-	m, err := scanMessage(s.DB.QueryRowContext(ctx, "SELECT "+messageColumns+" FROM messages WHERE conversation_type=? AND conversation_id=? AND message_id=?", ref.Type, ref.ID, id))
+	m, err := scanMessage(s.DB.QueryRowContext(ctx, "SELECT "+messageColumns+" FROM visible_messages WHERE conversation_type=? AND conversation_id=? AND message_id=?", ref.Type, ref.ID, id))
 	if err != nil {
 		return m, err
 	}
@@ -111,5 +111,5 @@ func (s *Store) DeleteConversation(ctx context.Context, ref domain.ConversationR
 	if !s.AllowsConversation(ref) {
 		return subscriptionPermission("Conversation is outside the collection policy.")
 	}
-	return s.removeMessages(ctx, "conversation_type=? AND conversation_id=? AND message_id=?", "record_deleted", ref.Type, ref.ID, id)
+	return s.deleteObservedMessage(ctx, ref, id)
 }

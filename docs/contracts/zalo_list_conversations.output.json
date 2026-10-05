@@ -107,7 +107,8 @@
           "live",
           "replay",
           "stored_message",
-          "contacts_catalog"
+          "contacts_catalog",
+          "preload_catalog"
         ]
       }
     },

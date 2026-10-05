@@ -366,6 +366,8 @@ func (ln *listener) handleControls(ctx context.Context, body BaseWSMessage) {
 		content := ctrl.Content
 
 		switch content.ActionType {
+		case "syncmsgmb":
+			ln.handleMobileSync(ctx, content)
 		case "file_done":
 			ln.handleFileDone(ctx, content)
 		case "group":

@@ -31,6 +31,11 @@ func (s *Service) addCatalogDiagnostics(server *mcp.Server) error {
 			return nil, fmt.Errorf("profile diagnostics unavailable")
 		}
 		status["profiles"] = profiles
+		preload, err := s.Store.PreloadStatus(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("preload diagnostics unavailable")
+		}
+		status["preload"] = preload
 		body, err := json.Marshal(status)
 		if err != nil || len(body) > 64<<10 {
 			return nil, fmt.Errorf("catalogue diagnostics exceed response limit")

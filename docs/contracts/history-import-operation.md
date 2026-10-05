@@ -153,3 +153,59 @@ Before each source request, the journal reserves up to 30 seconds of remaining
 work. A normal result reconciles actual elapsed work. Crash recovery charges the
 reservation conservatively; repeated crashes cannot reset the time bound.
 Authentication waiting remains outside active work.
+
+## Safe source failure diagnostics
+
+A source request failure produces one service log record containing its operation
+UUID and a fixed category: auth_required, source_unsupported, invalid_source_page,
+timeout, api_error, network or unknown. API failures may add a numeric source_code
+when the SDK provides one. This is diagnostic evidence, not a new outcome or a
+history-completeness claim. Never log Error() text, source URLs, response bodies,
+peer/group IDs or credentials. Malformed normalized pages terminate with
+invalid_source_page; an unavailable upstream page remains upstream_unavailable.
+
+## Explicit preload snapshot source
+
+The optional `source` argument defaults to `group_cloud`, preserving existing
+requests and journal fingerprints. `source=conversation_preload` explicitly
+imports currently available records for one exact typed dialogue, using the
+existing asynchronous operation, UUID ownership, cancellation and atomic silent
+storage. It does not call group history for a direct peer or switch sources
+after failure. Explicit group_cloud normalizes to the legacy omitted value.
+
+One bounded upstream snapshot is normalized under the current account guard
+(maximum 1,000 records across source categories and 5,000 metadata entries).
+Only records matching the requested typed dialogue are selected, newest first
+with stable ID tie-breaking; at most min(page_size, remaining max_messages) are
+returned to the operation. `records_observed` counts those dialogue records,
+including duplicates and out-of-interval records; unrelated dialogues are not
+imported. The fixed whole-snapshot parsing budget is independent of this selected
+record limit. Missing source category returns unsupported. An empty available
+category does not prove the peer has no history.
+
+Every successfully read preload operation stops `partial/source_window_limited`,
+even for zero selected records. No upstream cursor or exhaustion is fabricated,
+source_has_more remains null and history_complete stays false. Increasing
+max_pages cannot page this endpoint. A new UUID obtains a new current snapshot;
+a retry of the same UUID returns the saved result without refetching. Historical
+source/novelty/deduplication and notification_policy=none remain unchanged.
+This source is a useful available-message import, not deeper direct history.
+
+## Durable group phase continuation
+
+The production group source starts in the recent phase. For each continuing
+page it must persist the exact last-message cursor and returned `is_old`
+atomically with the page. The next request routes false to getrecentv2 and true
+to getoldv2. Seen-continuation identity includes phase, so the same decimal
+cursor in a new phase is allowed once; repeating the same phase/cursor stops.
+Existing decimal journal cursors are recent-phase entries. No schema migration
+or request-fingerprint change is needed: `is_old` already exists in the durable
+status payload. Missing phase on a continuing production page stops as partial
+`missing_continuation`; it must not be guessed. A saved noninitial operation
+without phase stops before another source call. Synthetic legacy source ports
+remain compatible and do not claim production phase traversal.
+
+Observed exact deletions now retain text-free permanent markers under
+[the deletion contract](message-tombstones.md). Neither ordinary replay nor silent
+history pages may restore those identities. This differs from ordinary age
+retention; imported history still creates no new message Events.

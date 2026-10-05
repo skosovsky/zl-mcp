@@ -52,6 +52,31 @@ An empty selected policy means no collection; `all` dynamically includes newly d
 
 Optional [skills](skills.md) provide research and event-processing instructions after the relevant client capabilities are available.
 
+## Refresh ChatGPT plugin discovery after an update
+
+For a personal developer-mode plugin, OpenAI documents a separate metadata
+refresh: after deploying the server, open the existing connection at ChatGPT
+Plugins, select **Refresh**, confirm the changed tools/events, then test in a new
+conversation with that plugin enabled. See
+[Connect and test your plugin](https://developers.openai.com/plugins/deploy/connect-chatgpt).
+Do this in the account/workspace that owns the existing Zalo connection; a
+different browser account can have an empty personal catalogue.
+
+Compare three distinct observations:
+
+| Layer | Evidence |
+| --- | --- |
+| Running service | Authenticated `server/discover`, `tools/list`, and `events/list` on its actual HTTP endpoint |
+| Plugin metadata | Expected tools and Events visible after Refresh on that connection's page |
+| Client conversation | A new enabled conversation actually exposes/calls the expected tools and can subscribe through the standard Events lifecycle |
+
+A working status tool or healthy tunnel proves neither a complete client
+catalogue nor Events acceptance. A mismatch alone does not establish a cache
+defect. Refresh preserves the connection; do not recreate subscriptions or
+restart the collector merely to test tool discovery. Published plugins have a
+different reviewed tool-update flow; the personal developer-mode instructions
+do not prove their updates are approved.
+
 ## Conversation Events
 
 Discovery includes the additive `zalo.conversation.message.created` version 1 and unchanged group-only `zalo.message.created`. Subscribe with `arguments: {"scope":"all"}`, `{"scope":"direct"}`, `{"scope":"group"}`, or `{"scope":"conversation","conversation_type":"direct","conversation_id":"PEER_ID"}`. Supply the standard delivery settings through the trusted receiver; scopes are always limited by the current collection policy. Existing group subscriptions do not expand after a collection-mode change.

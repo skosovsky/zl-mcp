@@ -38,7 +38,8 @@
     "source_kind": {
       "enum": [
         "group_cloud",
-        "unsupported"
+        "unsupported",
+        "conversation_preload"
       ]
     },
     "state": {
@@ -186,7 +187,14 @@
         "invalid_source_page",
         "storage_error",
         "cancelled",
-        "access_revoked"
+        "access_revoked",
+        "source_window_limited"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "conversation_preload"
       ]
     }
   },

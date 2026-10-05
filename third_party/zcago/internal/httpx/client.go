@@ -17,6 +17,16 @@ func Request(ctx context.Context, sc session.MutableContext, urlStr string, opt 
 	return requestWithRedirect(ctx, sc, urlStr, opt, 0)
 }
 
+// RequestOnce preserves the authenticated session but never follows Location.
+// Use for a side-effecting GET whose result must not be silently retried.
+func RequestOnce(ctx context.Context, sc session.MutableContext, urlStr string, opt *RequestOptions) (*http.Response, error) {
+	req, err := buildRequest(ctx, sc, urlStr, opt)
+	if err != nil {
+		return nil, err
+	}
+	return executeRequest(sc, req, false)
+}
+
 func HandleZaloResponse[T any](sc session.Context, resp *http.Response, isEncrypted bool) *ZaloResponse[T] {
 	return handleZaloResponse[T](sc, resp, isEncrypted)
 }

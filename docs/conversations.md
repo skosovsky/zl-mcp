@@ -121,3 +121,19 @@ See [the executable sending contract](contracts/direct-messaging.md). Unknown se
 results must not be retried with a new UUID. These source changes require rebuilding
 and migrating the service; they do not update an already installed binary or client
 discovery automatically. Live acceptance is tracked in [the extension task](task-direct-messaging.md).
+
+The service additionally refreshes the verified preload catalogue at session
+startup and every five minutes. It merges permitted typed dialogue metadata,
+including dialogues outside the friendship directory when returned by Zalo.
+Absent entries are retained because each snapshot is partial. This does not
+classify Strangers or prove a complete inbox. Source message previews are not
+silently imported by catalogue refresh. Inspect the `preload` section of
+`zalo://catalog/diagnostics` for attempt/success times, observed/permitted counts
+and safe failure reasons; its completeness and message-import flags remain false.
+
+For an explicitly requested import, `zalo_import_conversation_history` also
+accepts `source=conversation_preload` for one typed direct/group dialogue. It
+imports only a bounded currently available snapshot and always reports
+partial/source_window_limited with history_complete=false. Source messages from
+other conversations are not stored. Omitted source keeps the group_cloud
+behaviour. Preload is not a replacement for deeper paginated direct history.

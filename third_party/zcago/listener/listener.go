@@ -54,8 +54,10 @@ type Listener interface {
 }
 
 type listener struct {
-	mu          sync.RWMutex
-	diagnostics diagnosticCounters
+	mobileMu       sync.Mutex
+	mobileReceiver *mobileSyncReceiver
+	mu             sync.RWMutex
+	diagnostics    diagnosticCounters
 
 	ch    channels
 	reqID uint64

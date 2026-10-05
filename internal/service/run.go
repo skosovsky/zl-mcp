@@ -89,8 +89,12 @@ func (p *membershipPort) cliHandler() http.Handler {
 		var request struct {
 			Method string `json:"method"`
 		}
-		if err != nil || json.Unmarshal(b, &request) != nil || (request.Method != "cli_preview" && request.Method != "cli_approve") {
-			http.Error(w, "Only trusted CLI approval routes are available.", http.StatusBadRequest)
+		if err != nil || json.Unmarshal(b, &request) != nil || (request.Method != "cli_preview" && request.Method != "cli_approve" && request.Method != "cli_probe_preload" && !mobileLedgerMethod(request.Method)) {
+			http.Error(w, "Only trusted CLI routes are available.", http.StatusBadRequest)
+			return
+		}
+		if mobileLedgerMethod(request.Method) {
+			p.mobileLedgerControl(w, r, b, request.Method)
 			return
 		}
 		p.mu.RLock()
@@ -154,6 +158,9 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	if err = store.RecoverInterruptedSends(ctx); err != nil {
 		return err
 	}
+	if err = store.RecoverMobileBackupAttempts(ctx); err != nil {
+		return err
+	}
 	if err = store.Retain(ctx); err != nil {
 		return err
 	}
@@ -201,7 +208,7 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	// Allow the 30s upstream send plus independent result persistence to finish.
 	// Shutdown cancels requests before waiting for session ports and closing SQLite.
 	httpServer := &http.Server{Handler: handler, BaseContext: func(net.Listener) context.Context { return ctx }, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 45 * time.Second, IdleTimeout: 30 * time.Second}
-	cliServer := &http.Server{Handler: port.cliHandler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second}
+	cliServer := &http.Server{Handler: port.cliHandler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 40 * time.Second}
 	errorsCh := make(chan error, 6)
 	var wg sync.WaitGroup
 	launch := func(fn func() error) {

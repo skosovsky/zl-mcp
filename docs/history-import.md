@@ -37,9 +37,20 @@ binary does not prove that an external client refreshed discovery.
 
 ## Limits and interpretation
 
-Only group-cloud history has a page source. Direct/Strangers requests return
-`unsupported`; profile enrichment and new subscriptions cannot recover their old
-messages. Missing source support never falls back to guessed upstream URLs.
+The default group_cloud source requests paginated group history; a direct peer
+with that source returns unsupported. Explicit source=conversation_preload
+selects one currently available direct/group snapshot. It always stops
+partial/source_window_limited, never claims upstream exhaustion, and cannot
+page deeper by increasing max_pages. Source absence returns unsupported.
+Profile enrichment and new subscriptions do not recover old message text.
+Missing source support never falls back to guessed upstream URLs.
+
+The whole preload snapshot has its own fixed parsing budget (1,000 records
+across categories); only the selected typed dialogue is passed to the import
+journal, newest first and limited by page_size/max_messages. Operation counts
+refer to those selected dialogue records. A new UUID reads a fresh snapshot;
+retries retain the previous result. None of this establishes a deeper-history
+source for direct/Strangers.
 
 Defaults are 50 records per page, 20 pages and 1,000 source records. Maximums are
 50, 100 and 5,000 respectively. The record budget includes duplicates and records
@@ -83,3 +94,9 @@ Before each source request, the journal reserves up to 30 seconds of remaining
 work. A normal result reconciles actual elapsed work. Crash recovery charges the
 reservation conservatively; repeated crashes cannot reset the time bound.
 Authentication waiting remains outside active work.
+
+Group cloud continuation preserves the exact cursor together with the source's
+recent/old phase. Missing continuation metadata stops with partial coverage;
+never describe a successful recent page as proof that older pages were fetched.
+Phase-aware traversal is implemented in the current source candidate but still
+requires installation and live acceptance. Historical imports remain silent.
