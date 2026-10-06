@@ -16,7 +16,12 @@ Progress callbacks are trusted local functions returning an error and receive on
 closed states: waiting_for_confirmation, request_result_unknown,
 mobile_restoring, waiting_for_backup, offer_ready. A callback failure terminates
 waiting and discards any offer; it never triggers a resend. A matching rejection fails;
-restoring does not imply confirmation. Transfer error/status fails. Queue failure
+restoring does not imply confirmation. Correlated transfer_error status 1/2
+means mobile active/idle and continues the existing bounded wait, matching the
+native client status-first handling. Other transfer_error events terminate:
+explicit nonzero error_code is rejected, absent/zero code without a recognized
+status is invalid. Log only the fixed status category and numeric failure code;
+never the event body or private fields. Queue failure
 fails the operation. Context expiration ends waiting without claiming that the
 phone action failed. An unknown dispatch remains unknown if no reply arrives.
 

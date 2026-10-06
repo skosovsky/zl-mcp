@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/url"
 	"strconv"
 	"strings"
@@ -138,7 +139,24 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 					return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 				}
 			case "transfer_error":
-				return domain.MobileBackupOffer{}, domain.ErrMobileBackupRejected
+				if event.PCName != "Web" {
+					return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+				}
+				// The native client checks active/idle status before backup failure.
+				// These controls are progress, despite the misleading action name.
+				if event.Status != nil && (*event.Status == 1 || *event.Status == 2) {
+					kind := "mobile_active"
+					if *event.Status == 2 {
+						kind = "mobile_idle"
+					}
+					slog.Info("mobile_backup_phone_status", "status", kind)
+					continue
+				}
+				if event.ErrorCode != nil && *event.ErrorCode != 0 {
+					slog.Warn("mobile_backup_transfer_rejected", "upstream_error_code", *event.ErrorCode)
+					return domain.MobileBackupOffer{}, domain.ErrMobileBackupRejected
+				}
+				return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 			case "syncmsg_info":
 				offer, err := mobileBackupOffer(event, owner, key)
 				if err != nil {

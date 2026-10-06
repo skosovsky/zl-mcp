@@ -224,3 +224,47 @@ func TestMobileBackupOfferCancellationAfterDispatchCommit(t *testing.T) {
 		t.Fatal("cancelled request dispatched")
 	}
 }
+
+func TestMobileBackupTransferStatusesDoNotRejectOffer(t *testing.T) {
+	for _, code := range []int{0, 7} {
+		// Arrange: native status-first semantics preserve active/idle controls.
+		f := newMobileOfferFake()
+		key := mobileOfferKey(t)
+		f.dispatch = func(public string) {
+			confirm := 1
+			f.events <- model.MobileSyncEvent{Action: "user_confirm", PublicKey: public, PCName: "Web", UserAction: &confirm}
+			for _, status := range []int{1, 2} {
+				status := status
+				f.events <- model.MobileSyncEvent{Action: "transfer_error", PublicKey: public, PCName: "Web", Status: &status, ErrorCode: &code}
+			}
+			f.events <- syntheticOffer(t, public)
+		}
+		// Act.
+		offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+		// Assert: progress does not terminate or resend the original request.
+		if err != nil || offer.FileSize != 16 || f.requests != 1 || f.releases != 1 {
+			t.Fatal("phone status rejected valid offer", err)
+		}
+	}
+}
+
+func TestMobileBackupTransferFailureIsNotProgress(t *testing.T) {
+	for _, code := range []int{0, 7} {
+		// Arrange: no active/idle status accompanies this transfer event.
+		f := newMobileOfferFake()
+		key := mobileOfferKey(t)
+		f.dispatch = func(public string) {
+			f.events <- model.MobileSyncEvent{Action: "transfer_error", PublicKey: public, PCName: "Web", ErrorCode: &code}
+		}
+		// Act.
+		offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+		// Assert: ambiguous/explicit failure never yields an archive or retries.
+		want := domain.ErrMobileBackupInvalid
+		if code != 0 {
+			want = domain.ErrMobileBackupRejected
+		}
+		if !errors.Is(err, want) || offer.FileSize != 0 || f.requests != 1 {
+			t.Fatal("invalid transfer outcome", err)
+		}
+	}
+}

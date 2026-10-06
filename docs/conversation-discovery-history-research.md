@@ -648,3 +648,21 @@ proof that the requested old Strangers record can be obtained.
 
 No phone request, archive download, credentials extraction, Zalo send or
 subscription mutation was performed for this audit.
+
+### Mobile transfer status correction (2026-10-06)
+
+An authorized phone probe was acknowledged, reached `waiting_for_confirmation`
+and then `waiting_for_backup`, but terminated as `REJECTED` before any offer.
+No archive was downloaded. Review of the same previously identified installed
+26.9.10.2959 static client shows that its correlated `transfer_error` controls
+include active (`status=1`) and idle (`status=2`) progress. With its idle-state
+feature enabled, the native handler checks these before its backup-failure guard
+and continues waiting. Our candidate rejected every such control unconditionally.
+That is a concrete compatibility defect, independently of whether this particular
+live event was progress: the installed logging did not retain its status/code.
+
+The corrected receiver accepts these two known correlated statuses within the
+existing deadline, without another dispatch or listener. Other transfer controls
+remain explicit failure or invalid metadata. Synthetic tests cover both progress
+statuses followed by an encrypted offer and genuine/ambiguous failure; a fresh
+live test remains required to establish the observed event's actual semantics.
