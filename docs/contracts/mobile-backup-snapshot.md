@@ -81,3 +81,17 @@ test/race/vet passed; CGO-free macOS arm64 and Linux amd64 builds passed. No mod
 eval, phone request, production import, subscription edit or journal ack was
 performed for these checks. This evidence does not accept the unwired mobile
 driver or establish the producer's WAL/control semantics.
+
+### Idle terminal-cleanup cost
+
+Terminal cleanup keeps at most 20 in-memory metadata hints learned only from
+successful authenticated decodes. A hint may skip reading an unexpired image
+when the trusted journal says it is not terminal; it never authorizes a read,
+import or removal. Every terminal/expired removal candidate is decoded again
+from current bytes, and terminal eligibility is checked again against that
+current authenticated binding. Names, private regular-file checks and size/count
+bounds are checked on each scan. Hints are discarded when files disappear and
+are not persisted; startup authenticates retained images again. This avoids
+repeated full-archive decryption at the worker's 500 ms idle polling interval.
+Corruption after a hint was learned is rejected on the next authenticated read
+or removal attempt; a hint is not evidence of current file integrity.

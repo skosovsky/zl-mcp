@@ -72,6 +72,18 @@ the terminal staging file; its targeted race checks passed. CGO-free macOS arm64
 and Linux amd64 builds, diff checks and a redacted worktree scan also passed.
 These checks use synthetic archives, not new phone exports or model evals.
 
+A subsequent source review found repeated full-image decryption in idle terminal
+cleanup. The next change uses bounded authenticated metadata hints only to skip
+nonterminal reads; current bytes and journal binding are always rechecked before
+removal. Its regression counts actual AEAD opens and corrupts a cached image to
+check that a hint cannot authorize deletion; further checks cover a changed
+journal decision and expiry after a hint was cached. Affected mobile-backup,
+history-import and service race checks, affected vet, CGO-free macOS arm64/Linux
+amd64 builds and diff checks passed. This optimization still needs publication
+and installation; the installed version is unchanged. The preceding cleanup
+commit `606ed02` and documentation commit `55299f3` both passed macOS/Linux CI.
+
+
 Latest mobile checkpoint supersedes the earlier download/format failure notes:
 authenticated offer, scoped download, format-1 checksum/XZ, typed selection and
 immutable SQLite inspection passed in authorized installed-service probes. The

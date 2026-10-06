@@ -37,12 +37,13 @@ const maxSnapshotClaims = 100000
 // SnapshotStore belongs to the single service owning its state lock. No path,
 // key or archive data from this internal port is an MCP argument or result.
 type SnapshotStore struct {
-	mu     chan struct{}
-	root   *os.Root
-	aead   cipher.AEAD
-	budget int64
-	now    func() time.Time
-	claims map[string]bool
+	mu            chan struct{}
+	root          *os.Root
+	aead          cipher.AEAD
+	budget        int64
+	now           func() time.Time
+	claims        map[string]bool
+	terminalHints map[string]snapshotMetadata // authenticated hints; never removal authority
 }
 
 func (s *SnapshotStore) lock(ctx context.Context) bool {
