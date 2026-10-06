@@ -52,6 +52,25 @@ downloaded or imported, and producer count presence could not be tested. This
 does not establish whether the phone displayed or accepted the prompt; the
 user's phone observation remains pending. The terminal attempt was not retried.
 
+A separately authorized follow-up on October 7 received phone confirmation and
+an owned offer, downloaded and inspected the selected archive without import.
+The durable attempt ended `offer_ready`, revision 4. The selected file contains
+24 rows, including 2 in the requested September 26 interval; both are counted as
+unsupported content, with zero text candidates. There are no observed source
+controls, invalid/missing metadata or unsupported message types; 6 metadata
+fields remain unsupported. Source inspection reports `unverified_wal_snapshot`.
+Unsupported content and unverified WAL are independent limitations; clearing
+one would not establish that these rows can be safely converted.
+
+The accepted offer logged producer claims `msg_total=1638`, `msg_thread=56`,
+with `state=available` and `verification=unverified`. This establishes presence
+of the optional fields on a real offer, not their units, scope or consistency
+with a selected conversation, and not a producer checkpoint guarantee. No
+messages, identities, tombstones or Events were imported by this diagnostic.
+An early observation still showed `prepared` and a CLI status read timed out;
+subsequent correlated records establish dispatch, confirmation and receipt.
+Preparation and a started CLI must not be reported as completed phone dispatch.
+
 The remaining full-scope gates are real incoming-only/first-only behaviour,
 the separately authorized out-of-catalogue send scenario, and safe real mobile-source
 admission and recovery of the user's older Strangers history. Synthetic source
