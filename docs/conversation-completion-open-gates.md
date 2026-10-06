@@ -555,7 +555,7 @@ and the WAL source gate remain unchanged. The fix was subsequently installed
 from clean commit `39229a9`, with successful macOS/Linux CI and connected HTTP/STDIO
 acceptance below.
 
-### Whole-source control prelude integration candidate
+### Whole-source control prelude integration
 
 The whole-source scanner is now integrated into the snapshot reader and durable
 history worker. A positive control count produces a private prelude containing
@@ -570,7 +570,8 @@ before its first ordinary page, restarts both stores and resumes with the same
 digest and expiry. It receives/downloads once, imports one supported rich-text
 record, retains all tombstones and emits no Events. Reader/storage tests cover
 late controls, missing/forged prelude evidence, invalid targets and transaction
-rollback. These changes are not installed or accepted on a fresh phone archive.
+rollback. The source was subsequently installed as `bd93406` below;
+acceptance on a fresh phone archive remains open.
 WAL, type-33/received/group controls and public mobile admission remain gated.
 
 ### Native deployment acceptance: terminal acquisition release
@@ -596,3 +597,30 @@ no Events, authenticated connected status. This does not establish the cause of
 the intermittent startup latency. No send, phone request or subscription change
 was performed for this deployment. The whole-source prelude integration remains
 an uninstalled candidate at this checkpoint.
+
+
+### Native deployment acceptance: whole-source control prelude
+
+[bd93406](https://github.com/skosovsky/zl-mcp/commit/bd93406f6565336420c55ea75dac43c1ed9f8069)
+passed [macOS and Linux CI](https://github.com/skosovsky/zl-mcp/actions/runs/37488172364).
+A clean no-CGO macOS arm64 build has `vcs.modified=false`; its ad hoc signed,
+installed SHA-256 is
+`922cad63cd282cda13fc0f141d8b82fb8483f0137238d646d81f1837e03e7ba5`.
+The exact staged executable passed isolated native startup/shutdown acceptance
+under race. Publication scanning found no secrets in the new commit.
+
+A verified private backup preceded deployment through the same LaunchAgent.
+Config, prior corpus/identities/tombstones/send and quote records/first-incoming
+facts and subscription definitions were preserved; schema remains 14 and integrity
+is valid. Sending remains disabled. Initial HTTP checks found no listener while
+the agent was running; the endpoint subsequently appeared without another
+restart. This records startup latency, not its cause or guaranteed readiness.
+
+After readiness, local HTTP and the actual connected client reported authenticated,
+connected and no error. HTTP discovery publishes v2 and the legacy group event,
+with all three recovery tools; the one active subscription had an empty unblocked
+journal. The installed STDIO bridge negotiated 2025-11-25, exposed 21 tools plus
+resources/logging and no Events, and returned connected/authenticated status.
+No sends, phone requests, subscription changes or diagnostic acknowledgements
+occurred. The prelude is installed but real mobile admission, WAL completeness
+and unsupported control classes remain open; no private archive was imported.
