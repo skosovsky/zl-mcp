@@ -202,5 +202,8 @@ later-page conversion, replay suppression and absence of historical Events.
 Only a non-WAL image whose entire control count is classified in the first page
 is eligible. A later-page control fails before any ordinary-record prefix.
 The paired real phone images above remain WAL sources and were not imported.
-This candidate is not installed or accepted against a new phone export; public
-mobile-archive admission remains disabled.
+The native candidate was subsequently installed from clean commit `d6889c7`
+after successful macOS/Linux CI. HTTP/STDIO connectivity and preserved corpus,
+tombstones, send ledger and subscription definitions were checked; the real
+client still refused the recalled anchor. It has not been accepted against a new
+phone export; public mobile-archive admission remains disabled.

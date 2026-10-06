@@ -486,5 +486,34 @@ Internal conversion and journal persistence now support the verified own-direct
 case atomically, with no historical Events. First-page classification must cover
 all controls in the immutable non-WAL source; later or out-of-window controls
 remain unsupported before any insertion. Synthetic integrated restart and rollback
-checks cover the candidate. It is not installed or phone-accepted. The real paired
-WAL images were not imported; public mobile-archive admission remains disabled.
+checks cover the candidate. Clean commit `d6889c7` is now installed; source
+acceptance against a new phone archive remains open. The real paired WAL images
+were not imported; public mobile-archive admission remains disabled.
+
+### Native deployment acceptance: atomic archive recall candidate
+
+[Commit d6889c7](https://github.com/skosovsky/zl-mcp/commit/d6889c7f171be98c1315893f68cc4efb9e7172e2)
+passed [macOS/Linux CI](https://github.com/skosovsky/zl-mcp/actions/runs/37478227495).
+The macOS arm64 binary was rebuilt with CGO disabled and trimpath from the clean
+checkout (`vcs.modified=false`) and ad hoc signed. Installed SHA-256:
+`9eeb99cd20de8edb22addbbfb4174cd99b9784e34d84a7bdd011054a418160d0`.
+
+A private, verified state/binary/config/LaunchAgent backup preceded replacement.
+The existing single direct-Go LaunchAgent and configuration were unchanged.
+Schema remains 14 and integrity is valid. Comparing the stopped-service backup
+with the running database preserved every prior message, message identity,
+tombstone, send operation, quote-send record and first-incoming record, plus all
+subscription definitions. Newly received messages may increase the corpus.
+Sending remains disabled.
+
+The actual connected MCP client's status returned connected/authenticated without
+an error. Local HTTP still publishes v2 plus the legacy group event and the three
+recovery tools. The one active subscription had an unblocked journal entry with
+payload; this diagnostic sent no acknowledgement. The installed STDIO bridge
+negotiated 2025-11-25 with 21 tools, resources/logging, no Events and authenticated
+connected status. The actual client refused the exact previously recalled anchor.
+No message, subscription or phone request was dispatched for this acceptance.
+
+This proves deployment/preservation/connectivity, not eligibility or completeness
+of a real mobile source. WAL/remaining control/content semantics and the broader
+live scenarios remain open.
