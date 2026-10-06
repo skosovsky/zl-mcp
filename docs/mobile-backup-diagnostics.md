@@ -127,4 +127,9 @@ The subsequent command-dispatch check found that `probe-recall` was described an
 parsed but omitted from the executable's command switch. An isolated Unix-socket
 regression first reproduced `unknown command`, then passed after adding the route.
 It uses only a synthetic receipt; no real recall is established by that test.
-The pending route correction is separate from the installed send-pattern update.
+The route correction was subsequently installed from signed source `9f1f0b5`
+after macOS/Linux CI passed. A verified nonexistent send UUID reached the owner
+socket and received the expected refusal without an upstream recall. The original
+real test send is now outside the diagnostic's 30-minute freshness bound. Never
+automatically send a replacement or bypass that bound; agree a fresh live scenario
+when the user is ready for both phone confirmations.

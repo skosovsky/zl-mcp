@@ -10,16 +10,19 @@ their recorded versions, not a description of the current installation.
 
 ## Installed checkpoint superseding older deployment notes
 
-Source `f134d2e0f893d23e970eb9332c988685f5dcc21f` passed
-[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37460759373).
+Source `9f1f0b5db9a562706fbb9ab518ee54a7709d9d9c` passed
+[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37463304404).
 A CGO-free, trimpath macOS arm64 binary built from its clean Git archive was
 ad-hoc signed and installed through the existing single LaunchAgent. Installed
-SHA-256 is `029aeca2a5edfa5d6ae6388b5b84bfba50e0b9b2825d84f1d926d4296b717687`;
+SHA-256 is `77fbd286e2cce7a958c372fdb33801a07fc52c6657a8d087f52f5c69cca2f616`;
 SQLite is now schema 14. A private native-binary/state/config backup and a
 consistent integrity-checked SQLite copy were verified before replacement.
 Existing corpus rows, send-operation rows, subscription boundaries and prior
 private tokens/keys were preserved. No phone request, send, subscription edit
-or journal acknowledgement occurred during deployment.
+or journal acknowledgement occurred during deployment. The installed
+`probe-recall` route was checked with a verified nonexistent send UUID: it reached
+the existing owner socket and returned `RECALL_DIAGNOSTIC_UNAVAILABLE` without
+dispatching recall. This accepts command routing, not real undo semantics.
 
 Authenticated local HTTP and the actual connected Codex client both reported
 connected/authenticated with no error after deployment. The full-string send-pattern
@@ -37,7 +40,10 @@ under investigation; a short observation timeout does not prove process failure.
 returned `tools/list` in 30–50 ms and connected/authenticated status in about
 180 ms without restarting the service. Proxy configuration was empty and explicit
 proxy-free/default clients both succeeded. Those later responses do not explain
-the earlier timeouts or establish absence of intermittent latency. Both copied skills match all five source files in
+the earlier timeouts or establish absence of intermittent latency. A subsequent
+ordinary ten-second STDIO check and the actual connected Codex status call both
+returned connected/authenticated; the same checks passed after installing the
+CLI route correction. Both copied skills match all five source files in
 each directory. The subscription journal remained empty and unblocked.
 
 The installed native subprocess acceptance uses isolated synthetic state, a
