@@ -10,11 +10,11 @@ their recorded versions, not a description of the current installation.
 
 ## Installed checkpoint superseding older deployment notes
 
-Source `4437039ca1112a4817a4368a646c75a076ea2c44` passed
-[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37457148900).
+Source `f134d2e0f893d23e970eb9332c988685f5dcc21f` passed
+[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37460759373).
 A CGO-free, trimpath macOS arm64 binary built from its clean Git archive was
 ad-hoc signed and installed through the existing single LaunchAgent. Installed
-SHA-256 is `69a0d7874c66457c7469cc0d6e2d948c4ac49e040b7f45840ae4ca15bb980bd0`;
+SHA-256 is `029aeca2a5edfa5d6ae6388b5b84bfba50e0b9b2825d84f1d926d4296b717687`;
 SQLite is now schema 14. A private native-binary/state/config backup and a
 consistent integrity-checked SQLite copy were verified before replacement.
 Existing corpus rows, send-operation rows, subscription boundaries and prior
@@ -22,12 +22,22 @@ private tokens/keys were preserved. No phone request, send, subscription edit
 or journal acknowledgement occurred during deployment.
 
 Authenticated local HTTP and the actual connected Codex client both reported
-connected/authenticated with no error after deployment. The separately prepared
-full-string send-pattern correction is not yet installed; pre-server connector
-validation rejected the agreed nonblank text against its cached `\S` pattern.
-Refreshed client acceptance of that correction remains open. The installed STDIO
-bridge initialized, discovered 21 tools and read the same connected status,
-without advertising Events. Both copied skills match all five source files in
+connected/authenticated with no error after deployment. The full-string send-pattern
+correction is now installed and visible in local HTTP `tools/list`. A retry of
+the original UUID with sending disabled still failed pre-server connector
+validation against the old `\S` pattern; the connector has not adopted the
+updated schema. The saved sent operation and message identity remained unchanged.
+Refreshed client acceptance remains open. The installed STDIO
+bridge timed out with a ten-second initialization allowance, then discovered
+21 tools with a longer allowance without advertising Events; that later status
+reported `stopped` and is not evidence of stable collector readiness. Subsequent
+local status requests also timed out, although the persisted collector heartbeat
+and ingestion diagnostics continued. Transport/status responsiveness remains
+under investigation; a short observation timeout does not prove process failure. Later direct HTTP checks
+returned `tools/list` in 30–50 ms and connected/authenticated status in about
+180 ms without restarting the service. Proxy configuration was empty and explicit
+proxy-free/default clients both succeeded. Those later responses do not explain
+the earlier timeouts or establish absence of intermittent latency. Both copied skills match all five source files in
 each directory. The subscription journal remained empty and unblocked.
 
 The installed native subprocess acceptance uses isolated synthetic state, a

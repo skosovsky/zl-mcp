@@ -72,7 +72,7 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	switch flags.Arg(0) {
-	case "mobile-backup-prepare", "mobile-backup-status", "mobile-backup-cancel", "mobile-backup-probe-offer", "mobile-backup-probe-archive":
+	case "probe-recall", "mobile-backup-prepare", "mobile-backup-status", "mobile-backup-cancel", "mobile-backup-probe-offer", "mobile-backup-probe-archive":
 		return runMobileLedger(ctx, c.StateDir, flags.Args(), os.Stdin, os.Stdout)
 	case "service":
 		if flags.NArg() != 1 {
@@ -156,7 +156,7 @@ func run() error {
 		fmt.Fprintln(os.Stderr, "Session saved locally. QR image removed.")
 		return nil
 	default:
-		return fmt.Errorf("unknown command; available: login, service, serve, approve-join, probe-preload, mobile-backup-prepare, mobile-backup-status, mobile-backup-cancel, mobile-backup-probe-offer, mobile-backup-probe-archive")
+		return fmt.Errorf("unknown command; available: login, service, serve, approve-join, probe-preload, probe-recall, mobile-backup-prepare, mobile-backup-status, mobile-backup-cancel, mobile-backup-probe-offer, mobile-backup-probe-archive")
 	}
 }
 

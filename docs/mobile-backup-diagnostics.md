@@ -122,3 +122,9 @@ this run establishes neither source recall semantics nor archive completeness.
 A new phone attempt needs a fresh UUID and a ready user; the old attempt must not
 be redispatched. The temporary one-peer send permission was restored byte for
 byte to its original disabled configuration after the attempt terminated.
+
+The subsequent command-dispatch check found that `probe-recall` was described and
+parsed but omitted from the executable's command switch. An isolated Unix-socket
+regression first reproduced `unknown command`, then passed after adding the route.
+It uses only a synthetic receipt; no real recall is established by that test.
+The pending route correction is separate from the installed send-pattern update.
