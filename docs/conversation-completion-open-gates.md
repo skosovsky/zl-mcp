@@ -66,11 +66,31 @@ selected-only bytes, durable spent UUIDs and bounded private cleanup. It is not
 wired into the service or history worker. WAL/control conversion gates remain in
 force.
 
+### Snapshot prerequisite and current client check: 2026-10-06
+
+Signed source [`52a541a`](https://github.com/skosovsky/zl-mcp/commit/52a541a7d9eb8f971456b2d10bd40a75efcd0c3b)
+contains the private snapshot store and its AAA regression tests. Root and nested
+module test/race/vet, CGO-free cross-builds and redacted scans of the worktree and
+all 38 published commits passed. [CI passed on macOS and Linux](https://github.com/skosovsky/zl-mcp/actions/runs/37432573776).
+The store remains unwired; this commit required no production process update.
+
+The connected Codex client's catalogue now includes all three history-import
+tools, superseding the earlier absence report. An initial `zalo_get_status` call
+returned `-32603: MCP request timed out`. At the same time local MCP status
+remained connected/authenticated with no error. Read-only tunnel log inspection
+found control-plane TLS/header/poll timeouts against `api.openai.com`; these do
+not establish the exact cause of the individual failed tool call. An unauthenticated
+HTTPS reachability check then succeeded and one client retry returned
+connected/authenticated with `last_error=null`. Neither process was restarted,
+no credential values were printed or changed and no import or subscription was changed. Current
+client connectivity is accepted; intermittent transport failures and actual
+client history-import workflow acceptance remain separate gates.
+
 | Requirement | Current evidence | Remaining gate |
 | --- | --- | --- |
 | Browse without a keyword | Current installed HTTP and actual connected-client catalogue→period browse→stable continuation→matching context checks pass; production regression tests | Final signed checkout/publication verification |
 | Expanded conversation catalogue | Guarded periodic preload refresh and actual connected-client catalogue reads; source/installed skills match and this desktop discovers both | Final deployment/publication consistency and other intended clients |
-| Explicit silent imports | Durable history journal with UUID/retry/cancel/restart tests; installed direct preload/group reads; synthetic archive-to-record-to-silent-storage callback retains text without Events | Three import tools are absent from the external client's catalogue; production mobile importer is not wired |
+| Explicit silent imports | Durable history journal with UUID/retry/cancel/restart tests; installed direct preload/group reads; synthetic archive-to-record-to-silent-storage callback retains text without Events | Three import tools are now discovered by the connected client; its import workflow and production mobile importer remain unverified/unwired |
 | Older Strangers message | Requested peer is selectable; September 30 archive interval is empty and September 26 has two candidate rows; preload only supplies an already retained record | Recovery from a deeper verified source, or a concrete verified source limitation agreed with the user |
 | Mobile request/transport | Current-session request/offer observer, durable dispatch ledger, restart recovery and private offer ownership; host-scoped cookie transport, scoped body consumption and revocation tests | Correlated live offer and owner mapping now accepted; download and selected sender mapping accepted by later probes; durable production import remains |
 | Mobile archive reading | Independent format-1/XXH32/XZ/OpenSSL and SQLite fixtures; typed file selection, immutable bounded SQLite reads with exact fractional-millisecond interval mapping, digest/request/account-bound keyset paging; one session/download across pages | Format/SQLite/plain-to-session reading accepted; full BinNet/content semantics remain |
