@@ -39,7 +39,8 @@
       "enum": [
         "group_cloud",
         "unsupported",
-        "conversation_preload"
+        "conversation_preload",
+        "mobile_archive"
       ]
     },
     "state": {
@@ -188,13 +189,99 @@
         "storage_error",
         "cancelled",
         "access_revoked",
-        "source_window_limited"
+        "source_window_limited",
+        "source_gaps",
+        "source_unavailable"
       ]
     },
     "source": {
       "type": "string",
       "enum": [
-        "conversation_preload"
+        "conversation_preload",
+        "mobile_archive"
+      ]
+    },
+    "mobile_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "examined": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expired": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unsupported_types": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unsupported_content": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "missing_metadata": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "invalid_metadata": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "deferred_controls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unknown_metadata_fields": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expired_quotes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unresolved_quotes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unresolved_mentions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "period_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "invalid_timestamp_rows": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "examined",
+        "rejected",
+        "expired",
+        "unsupported_types",
+        "unsupported_content",
+        "missing_metadata",
+        "invalid_metadata",
+        "deferred_controls",
+        "unknown_metadata_fields",
+        "expired_quotes",
+        "unresolved_quotes",
+        "unresolved_mentions",
+        "source_rows",
+        "period_rows",
+        "invalid_timestamp_rows"
       ]
     }
   },

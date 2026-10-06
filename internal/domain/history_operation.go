@@ -71,25 +71,26 @@ func (r HistoryImportRequest) Fingerprint() string {
 
 type HistoryImportStatus struct {
 	HistoryImportRequest
-	OperationID          string  `json:"operation_id"`
-	NotificationPolicy   string  `json:"notification_policy"`
-	SourceKind           string  `json:"source_kind"`
-	State                string  `json:"state"`
-	PagesObserved        int     `json:"pages_observed"`
-	RecordsObserved      int     `json:"records_observed"`
-	InsertedCount        int     `json:"inserted_count"`
-	DuplicateCount       int     `json:"duplicate_count"`
-	OutOfIntervalCount   int     `json:"out_of_interval_count"`
-	CreatedAt            string  `json:"created_at"`
-	UpdatedAt            string  `json:"updated_at"`
-	EarliestImportedAt   *string `json:"earliest_imported_at"`
-	LatestImportedAt     *string `json:"latest_imported_at"`
-	SourceHasMore        *bool   `json:"source_has_more"`
-	IsFiltered           *bool   `json:"is_filtered"`
-	IsFilteredByPhase    *bool   `json:"is_filtered_by_phase"`
-	IsFilteredByTimeJoin *bool   `json:"is_filtered_by_time_join"`
-	IsOld                *bool   `json:"is_old"`
-	JoinTimestampMillis  *string `json:"join_timestamp_millis"`
-	HistoryComplete      bool    `json:"history_complete"`
-	StopReason           *string `json:"stop_reason"`
+	MobileCoverage       *MobileHistoryCoverage `json:"mobile_coverage,omitempty"`
+	OperationID          string                 `json:"operation_id"`
+	NotificationPolicy   string                 `json:"notification_policy"`
+	SourceKind           string                 `json:"source_kind"`
+	State                string                 `json:"state"`
+	PagesObserved        int                    `json:"pages_observed"`
+	RecordsObserved      int                    `json:"records_observed"`
+	InsertedCount        int                    `json:"inserted_count"`
+	DuplicateCount       int                    `json:"duplicate_count"`
+	OutOfIntervalCount   int                    `json:"out_of_interval_count"`
+	CreatedAt            string                 `json:"created_at"`
+	UpdatedAt            string                 `json:"updated_at"`
+	EarliestImportedAt   *string                `json:"earliest_imported_at"`
+	LatestImportedAt     *string                `json:"latest_imported_at"`
+	SourceHasMore        *bool                  `json:"source_has_more"`
+	IsFiltered           *bool                  `json:"is_filtered"`
+	IsFilteredByPhase    *bool                  `json:"is_filtered_by_phase"`
+	IsFilteredByTimeJoin *bool                  `json:"is_filtered_by_time_join"`
+	IsOld                *bool                  `json:"is_old"`
+	JoinTimestampMillis  *string                `json:"join_timestamp_millis"`
+	HistoryComplete      bool                   `json:"history_complete"`
+	StopReason           *string                `json:"stop_reason"`
 }

@@ -19,6 +19,14 @@ var (
 )
 
 const HistoryWorkBudget = 120 * time.Second
+const MobileHistoryWorkBudget = 420 * time.Second
+
+func historyWorkBudget(op HistoryOperation) time.Duration {
+	if op.Status.Source == domain.HistorySourceMobileArchive {
+		return MobileHistoryWorkBudget
+	}
+	return HistoryWorkBudget
+}
 
 type HistoryOperation struct {
 	Status           domain.HistoryImportStatus
@@ -111,9 +119,27 @@ func commitHistoryResult(tx *sql.Tx, op HistoryOperation) (HistoryOperation, err
 }
 
 func (s *Store) PrepareHistoryOperation(ctx context.Context, request domain.HistoryImportRequest) (HistoryOperation, error) {
+	return s.prepareHistoryOperation(ctx, request, false)
+}
+
+// PrepareMobileHistoryOperation is an internal driver port, not a public source selector.
+func (s *Store) PrepareMobileHistoryOperation(ctx context.Context, request domain.HistoryImportRequest) (HistoryOperation, error) {
+	return s.prepareHistoryOperation(ctx, request, true)
+}
+
+func (s *Store) prepareHistoryOperation(ctx context.Context, request domain.HistoryImportRequest, mobile bool) (HistoryOperation, error) {
+	if mobile {
+		if request.Source != "" && request.Source != domain.HistorySourceMobileArchive {
+			return HistoryOperation{}, domain.Invalid("Invalid mobile history source.")
+		}
+		request.Source = ""
+	}
 	r, err := request.Normalize()
 	if err != nil {
 		return HistoryOperation{}, err
+	}
+	if mobile {
+		r.Source = domain.HistorySourceMobileArchive
 	}
 	if !s.AllowsConversation(r.Ref()) {
 		return HistoryOperation{}, subscriptionPermission("Conversation is outside collection policy.")
@@ -153,7 +179,9 @@ func (s *Store) PrepareHistoryOperation(ctx context.Context, request domain.Hist
 	}
 	stamp := now()
 	status := domain.HistoryImportStatus{HistoryImportRequest: r, OperationID: uuid.NewString(), NotificationPolicy: "none", SourceKind: "group_cloud", State: "queued", CreatedAt: stamp, UpdatedAt: stamp}
-	if r.Source == "conversation_preload" {
+	if mobile {
+		status.SourceKind = domain.HistorySourceMobileArchive
+	} else if r.Source == "conversation_preload" {
 		status.SourceKind = "conversation_preload"
 	} else if r.ConversationType == domain.ConversationDirect {
 		status.State, status.SourceKind = "unsupported", "unsupported"
@@ -281,7 +309,7 @@ func (s *Store) commitHistoryOperationPage(ctx context.Context, id string, revis
 	if err != nil {
 		return op, err
 	}
-	if op.Revision != revision || op.Status.State != "running" {
+	if op.Revision != revision || op.Status.State != "running" || op.Status.Source == domain.HistorySourceMobileArchive {
 		return op, ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {
@@ -467,7 +495,7 @@ func (s *Store) RecoverInterruptedHistory(ctx context.Context) error {
 			// reservation conservatively so repeated crashes cannot reset limits.
 			op.WorkDuration += op.ReservedDuration
 			op.ReservedDuration = 0
-			if op.WorkDuration >= HistoryWorkBudget {
+			if op.WorkDuration >= historyWorkBudget(op) {
 				historyStopped(&op, "partial", "time_limit")
 			} else {
 				op.Status.State, op.Status.StopReason = "queued", nil
@@ -483,6 +511,14 @@ func (s *Store) RecoverInterruptedHistory(ctx context.Context) error {
 }
 
 func (s *Store) PendingHistoryOperations(ctx context.Context, limit int) ([]HistoryOperation, error) {
+	return s.pendingHistoryOperations(ctx, limit, false)
+}
+
+func (s *Store) PendingMobileHistoryOperations(ctx context.Context, limit int) ([]HistoryOperation, error) {
+	return s.pendingHistoryOperations(ctx, limit, true)
+}
+
+func (s *Store) pendingHistoryOperations(ctx context.Context, limit int, mobile bool) ([]HistoryOperation, error) {
 	if limit < 1 || limit > 100 {
 		return nil, domain.Invalid("History queue limit must be 1–100.")
 	}
@@ -490,7 +526,11 @@ func (s *Store) PendingHistoryOperations(ctx context.Context, limit int) ([]Hist
 	if err != nil {
 		return nil, err
 	}
-	rows, err := s.DB.QueryContext(ctx, "SELECT payload,cursor,revision,work_ns FROM history_operations WHERE account_key=? AND state IN ('queued','paused') ORDER BY rowid LIMIT ?", account, limit)
+	comparison := "<>"
+	if mobile {
+		comparison = "="
+	}
+	rows, err := s.DB.QueryContext(ctx, "SELECT payload,cursor,revision,work_ns FROM history_operations WHERE account_key=? AND state IN ('queued','paused') AND coalesce(json_extract(payload,'$.source'),'') "+comparison+" ? ORDER BY rowid LIMIT ?", account, domain.HistorySourceMobileArchive, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -515,7 +555,8 @@ func (s *Store) StopHistoryOperation(ctx context.Context, id string, revision in
 		(state == "unsupported" && reason == "source_unsupported") ||
 		(state == "failed" && (reason == "upstream_unavailable" || reason == "invalid_source_page" || reason == "storage_error")) ||
 		(state == "partial" && reason == "time_limit")
-	if !valid || elapsed < 0 || elapsed > HistoryWorkBudget {
+	mobileStop := state == "partial" && (reason == "source_unavailable" || reason == "source_gaps")
+	if (!valid && !mobileStop) || elapsed < 0 || elapsed > MobileHistoryWorkBudget {
 		return HistoryOperation{}, domain.Invalid("Invalid history stop transition.")
 	}
 	tx, err := s.DB.BeginTx(ctx, nil)
@@ -529,6 +570,9 @@ func (s *Store) StopHistoryOperation(ctx context.Context, id string, revision in
 	}
 	if op.Revision != revision || op.Status.State != "running" {
 		return op, ErrHistoryState
+	}
+	if elapsed > historyWorkBudget(op) || mobileStop && op.Status.Source != domain.HistorySourceMobileArchive {
+		return op, domain.Invalid("Invalid history stop transition.")
 	}
 	historyStopped(&op, state, reason)
 	if state == "unsupported" {
@@ -546,7 +590,19 @@ func (s *Store) StopHistoryOperation(ctx context.Context, id string, revision in
 // network call. Normal completion reconciles actual work; crash recovery charges
 // the reservation, without charging time spent waiting for authentication.
 func (s *Store) ReserveHistoryPage(ctx context.Context, id string, revision int64, budget time.Duration) (HistoryOperation, error) {
-	if budget <= 0 || budget > 30*time.Second {
+	return s.reserveHistoryWork(ctx, id, revision, budget, false)
+}
+
+func (s *Store) ReserveMobileHistoryWork(ctx context.Context, id string, revision int64, budget time.Duration) (HistoryOperation, error) {
+	return s.reserveHistoryWork(ctx, id, revision, budget, true)
+}
+
+func (s *Store) reserveHistoryWork(ctx context.Context, id string, revision int64, budget time.Duration, mobile bool) (HistoryOperation, error) {
+	limit := 30 * time.Second
+	if mobile {
+		limit = 180 * time.Second
+	}
+	if budget <= 0 || budget > limit {
 		return HistoryOperation{}, domain.Invalid("Invalid history source work reservation.")
 	}
 	tx, err := s.DB.BeginTx(ctx, nil)
@@ -558,13 +614,13 @@ func (s *Store) ReserveHistoryPage(ctx context.Context, id string, revision int6
 	if err != nil {
 		return HistoryOperation{}, err
 	}
-	if op.Revision != revision || op.Status.State != "running" || op.ReservedDuration != 0 {
+	if op.Revision != revision || op.Status.State != "running" || op.ReservedDuration != 0 || (op.Status.Source == domain.HistorySourceMobileArchive) != mobile {
 		return HistoryOperation{}, ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {
 		historyStopped(&op, "cancelled", "access_revoked")
 	} else {
-		if budget > HistoryWorkBudget-op.WorkDuration {
+		if budget > historyWorkBudget(op)-op.WorkDuration {
 			return HistoryOperation{}, domain.Invalid("History source reservation exceeds work budget.")
 		}
 		op.ReservedDuration = budget

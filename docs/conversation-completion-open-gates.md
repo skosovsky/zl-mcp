@@ -21,6 +21,27 @@ importer remains unwired. Diagnostic inspection now validates and classifies can
 when a source gate prevents persistence, without returning message records;
 malformed candidates fail instead of being silently classified as blocked. See the [corrected evidence](contracts/mobile-backup-offer-probe.md#selected-image-coverage-and-correction-of-the-live-comparison).
 
+### Mobile journal prerequisite: 2026-10-06
+
+The [atomic mobile checkpoint contract](contracts/mobile-history-checkpoint.md)
+now has an internal storage implementation. Schema 13 binds the immutable image
+and its fixed expiry to an exact integer timestamp/rowid continuation. Records,
+original TTL, permanent identities, novelty state, row-gap counts and operation
+revision commit together; failed source/progress writes roll back all of them.
+Restart preserves the source binding and charges reserved acquisition work.
+Synthetic tests cover rollback, cancellation, account/policy isolation, gap-only
+pages, source substitution, large rowids, limits and absence of Events from
+historical imports. Full root race passed before the final transaction-work budget
+guard; the updated storage/history-import/domain/contracts race checks and full
+root vet then passed. CGO-free macOS arm64/Linux amd64 builds and redacted scans
+of the worktree and all 40 existing published commits passed.
+
+This remains an internal prerequisite. Public start still rejects `mobile_archive`,
+the legacy worker cannot claim its queue, and neither the archive reader nor phone
+acquisition is wired to this port. Schema 13 and these source changes have not been
+installed. The two September 26 candidate rows are not restored messages; their
+live import and the existing WAL/control/content acceptance gates remain open.
+
 ### Published probe checkpoint and native installation: 2026-10-06
 
 Signed source commit [`57d4c8d`](https://github.com/skosovsky/zl-mcp/commit/57d4c8da9a19a1c5f589b4d52a74d66e49699dc9)

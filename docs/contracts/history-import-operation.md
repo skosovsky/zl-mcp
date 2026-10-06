@@ -13,6 +13,11 @@ documents; clients do not need to resolve external schema references.
 
 ## Boundary and inputs
 
+The internal `mobile_archive` journal port is specified separately in
+[mobile-history-checkpoint.md](mobile-history-checkpoint.md). Its output schema
+does not enable public source selection: public input and normalization continue
+to reject it until driver and source acceptance. Legacy workers exclude its queue.
+
 The operation imports available messages into the existing account's local
 corpus. It uses the single service's guarded authenticated source, not another
 listener, login or native-client database reader. The currently implemented page
