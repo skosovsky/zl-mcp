@@ -12,6 +12,27 @@ this row preparation does not yet filter expired content or schedule deletion.
 Deletion type 33 and undo type 36 require separate state semantics and are not
 ordinary imported messages. Content of non-webchat types is not called plain text.
 
+## Verified own-direct recall classification
+
+The controlled paired export on 2026-10-06 demonstrated the same global message
+ID changing from type `0` to `36`, with status `3` unchanged, after an own-message
+recall in a direct conversation. Classify this precise candidate separately:
+direct selection, type `36`, status `3`, valid whole-page scalars/interval, and
+sender resolved by the current session mapper to the current account. The mapped
+sender must belong to that direct conversation; incomplete or conflicting mapping
+fails the whole page. Retain only the exact string global ID in private
+`OwnRecallIDs`; do not interpret MsgContent/BinNet as text or a target instruction.
+Group, received-message, type-33 and other-status controls remain deferred.
+
+The classification remains included in `DeferredControls` until persistence is
+implemented and accepted. The owner archive diagnostic reports only
+`own_recall_candidates`, never IDs or bodies. Clear owned IDs with the page.
+No archive-control ID is a request to the live recall API. A future silent
+tombstone/checkpoint transaction must precede any import of ordinary rows, and
+must handle controls outside the requested period. This classifier does not
+relax whole-file source-control or WAL gates, and does not prove that either
+source is complete. It is the first stage of control support, not full import.
+
 PrepareRowPage accepts at most 50 already selected rows, normalized exact request,
 canonical numeric current-account session ID and guarded identity mapper. Validate
 all row scalars/UTF-8/size/status and [since,until) before any mapping request. Aggregate text/BinNet is capped at 8 MiB.

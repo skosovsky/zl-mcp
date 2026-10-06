@@ -21,6 +21,7 @@ func (PreparedRow) GoString() string { return "mobile backup prepared row [redac
 
 type PreparedRowPage struct {
 	Rows                                                                                                      []PreparedRow `json:"-"`
+	OwnRecallIDs                                                                                              []string      `json:"-"`
 	Examined, DeferredControls, UnsupportedTypes, MissingMetadata, InvalidMetadata, UnsupportedMetadataFields int           `json:"-"`
 }
 
@@ -35,6 +36,7 @@ func (p *PreparedRowPage) Clear() {
 		p.Rows[i].Metadata.Clear()
 		p.Rows[i] = PreparedRow{}
 	}
+	clear(p.OwnRecallIDs)
 	*p = PreparedRowPage{}
 }
 func mobilePayloadKind(t int64) (string, bool) {
@@ -123,12 +125,22 @@ func PrepareRowPage(ctx context.Context, rows []SQLiteRow, r domain.MobileBackup
 	result.Examined = len(rows)
 	request := IdentityRequest{}
 	seen := map[string]bool{}
+	// Only the own/direct/status-3 transition has paired live archive evidence.
+	// Retain no body or BinNet for a recall and keep its deferred-control count.
+	controls := map[string][]string{}
 	for i, row := range owned {
 		if ctx.Err() != nil {
 			return result, ErrSQLite
 		}
 		if deferredMobileControl(row.Type) {
 			result.DeferredControls++
+			if normalized.ConversationType == domain.ConversationDirect && row.Type == 36 && row.Status == 3 {
+				controls[row.SenderID] = append(controls[row.SenderID], row.MessageID)
+				if !seen[row.SenderID] {
+					seen[row.SenderID] = true
+					request.Direct = append(request.Direct, row.SenderID)
+				}
+			}
 			continue
 		}
 		kind, known := mobilePayloadKind(row.Type)
@@ -186,6 +198,27 @@ func PrepareRowPage(ctx context.Context, rows []SQLiteRow, r domain.MobileBackup
 		row.Direction = "incoming"
 		if row.SenderID == account {
 			row.Direction = "outgoing"
+		}
+	}
+	seenTargets := map[string]bool{}
+	// Preserve encounter order; maps are only used for ownership/membership tests.
+	for _, source := range request.Direct {
+		if len(controls[source]) == 0 {
+			continue
+		}
+		sender := mapped[source]
+		if sender != account && sender != normalized.ConversationID {
+			return result, ErrSQLite
+		}
+		if sender != account {
+			continue // Received-message recall semantics are not yet verified.
+		}
+		for _, id := range controls[source] {
+			if seenTargets[id] {
+				return result, ErrSQLite
+			}
+			seenTargets[id] = true
+			result.OwnRecallIDs = append(result.OwnRecallIDs, id)
 		}
 	}
 	if ctx.Err() != nil {

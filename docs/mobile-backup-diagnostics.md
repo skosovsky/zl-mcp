@@ -184,3 +184,11 @@ completeness. Both probes performed no import. Conversion remains blocked by
 `unverified_source_controls`. Source support must be specified and tested before
 relaxing those gates; the live tombstone already prevents this exact message from
 being restored by replay or a later historical import.
+
+The subsequent source implementation classifies mapped own-direct type-36/status-3
+rows separately and adds an optional `own_recall_candidates` diagnostic count.
+It preserves exact target IDs privately, leaves controls deferred and performs no
+tombstone persistence. The classification has regression tests for namespace,
+sender mapping, cancellation, exact large IDs, redaction and unchanged source
+gates. This change is not yet installed or verified against another phone export;
+the successful paired comparison above used the prior diagnostic implementation.

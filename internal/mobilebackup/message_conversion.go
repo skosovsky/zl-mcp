@@ -36,6 +36,7 @@ func ConvertPreparedArchivePage(ctx context.Context, page PreparedArchivePage, r
 // ArchivePageInspection exposes counts only, never records eligible for storage.
 type ArchivePageInspection struct {
 	TextCandidates, Expired, UnsupportedContent, UnresolvedQuotes, UnresolvedMentions int
+	OwnRecallCandidates                                                               int
 	BlockReasons                                                                      []string
 }
 
@@ -47,7 +48,18 @@ func InspectPreparedArchivePage(ctx context.Context, page PreparedArchivePage, r
 	if err != nil {
 		return ArchivePageInspection{}, err
 	}
+	if len(page.Candidates.OwnRecallIDs) > page.Candidates.DeferredControls || len(page.Candidates.OwnRecallIDs) > page.Candidates.Examined || len(page.Candidates.OwnRecallIDs) > page.SourceControls || len(page.Candidates.OwnRecallIDs) > 50 || len(page.Candidates.OwnRecallIDs) > 0 && request.ConversationType != domain.ConversationDirect {
+		return ArchivePageInspection{}, ErrSQLite
+	}
+	seen := map[string]bool{}
+	for _, id := range page.Candidates.OwnRecallIDs {
+		if !canonicalIdentity(id) || seen[id] || ctx.Err() != nil {
+			return ArchivePageInspection{}, ErrSQLite
+		}
+		seen[id] = true
+	}
 	result := ArchivePageInspection{TextCandidates: len(converted.Records), Expired: converted.Expired, UnsupportedContent: converted.UnsupportedContent, UnresolvedQuotes: converted.UnresolvedQuotes, UnresolvedMentions: converted.UnresolvedMentions, BlockReasons: []string{}}
+	result.OwnRecallCandidates = len(page.Candidates.OwnRecallIDs)
 	if page.SourceWAL {
 		result.BlockReasons = append(result.BlockReasons, "unverified_wal_snapshot")
 	}

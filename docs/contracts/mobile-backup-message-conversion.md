@@ -11,7 +11,9 @@ also use decoded attachments rather than labeling MsgContent as plain text.
 Before conversion, the immutable SQLite reader counts deletion/undo source
 records (types 33/36) across the entire selected file, independent of timestamp,
 status and page position. Preserve `SourceControls` on each bound page. Reject
-conversion while that count is nonzero: no verified target mapping exists yet.
+conversion while that count is nonzero: paired live evidence now correlates
+own-direct type-36 rows to the original global ID, but atomic archive tombstone
+persistence and all other control semantics are not yet accepted.
 This prevents an in-window text page from being imported ahead of a later or
 out-of-window control. Detection is not implementation of deletion/undo semantics.
 
@@ -55,3 +57,11 @@ the diagnostic with no counts instead of masquerading as a safety gate. All
 temporary constructed records are cleared before returning. Inspection performs
 no writes or Events and does not change `ConvertPreparedArchivePage` eligibility.
 An empty interval can still have a whole-file persistence gate.
+
+The separate `own_recall_candidates` diagnostic counts only validated direct
+type-36/status-3 rows whose sender maps to the current account, as specified by
+[row preparation](mobile-backup-row-page.md#verified-own-direct-recall-classification).
+It preserves the exact IDs privately, returns no body, and remains a subset of
+deferred controls. It grants no persistence or live recall capability. Supporting
+this classification is not supporting arbitrary deletions or a complete mobile
+import. The existing WAL and whole-file control gates remain unchanged.

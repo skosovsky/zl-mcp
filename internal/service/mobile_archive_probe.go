@@ -54,6 +54,7 @@ func (p *membershipPort) probeMobileArchiveComparisonWithDownloader(ctx context.
 	now := time.Now().UnixMilli()
 	convertible, unsupported, controls := 0, 0, 0
 	textCandidates, unresolvedQuotes, unresolvedMentions := 0, 0, 0
+	ownRecallCandidates := 0
 	blockReasons := []string{}
 	blocked := false
 	walMode := false
@@ -97,6 +98,7 @@ func (p *membershipPort) probeMobileArchiveComparisonWithDownloader(ctx context.
 				convertible += inspection.TextCandidates
 			}
 			textCandidates += inspection.TextCandidates
+			ownRecallCandidates += inspection.OwnRecallCandidates
 			unsupported += inspection.UnsupportedContent
 			unresolvedQuotes += inspection.UnresolvedQuotes
 			unresolvedMentions += inspection.UnresolvedMentions
@@ -122,6 +124,7 @@ func (p *membershipPort) probeMobileArchiveComparisonWithDownloader(ctx context.
 	if comparison != nil {
 		response["comparison"] = comparison
 	}
+	response["own_recall_candidates"] = ownRecallCandidates
 	return response, nil
 }
 

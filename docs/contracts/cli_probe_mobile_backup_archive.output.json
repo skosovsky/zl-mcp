@@ -220,6 +220,11 @@
       "minimum": 0,
       "description": "Validated plain-text record candidates in the supplied image; not authorization to persist or proof of full source history."
     },
+    "own_recall_candidates": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Type-36/status-3 direct rows whose sender was mapped to the current account. Exact global IDs are retained privately for future tombstone projection. Still deferred controls: no persistence, no Events, no relaxation of WAL or whole-file control gates. Absence means the installed diagnostic does not provide this classification."
+    },
     "unresolved_quotes": {
       "type": "integer",
       "minimum": 0

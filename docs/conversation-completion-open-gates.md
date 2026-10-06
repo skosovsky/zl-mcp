@@ -120,6 +120,11 @@ controlled own-direct-message type-36 correlation, not general control parsing:
 type `33`, incoming/group controls and WAL completeness remain unverified. Both
 probes kept conversion/import blocked. Details are in the
 [successful comparison](mobile-backup-diagnostics.md#successful-controlled-recall-comparison-2026-10-06).
+The subsequent source classifier privately retains exact own-direct
+type-36/status-3 IDs after sender mapping and reports only a diagnostic count.
+It is regression-tested, but not yet installed or accepted on a new phone export.
+Controls remain deferred and the WAL/whole-file control import gates remain;
+silent atomic tombstone/checkpoint persistence is still required.
 After fixing the shutdown/cleanup race and correcting the spent-UUID test to the
 existing unavailable-source error contract, root tests/vet and affected
 mobile-backup/history-import/service/storage race checks passed. A further real
