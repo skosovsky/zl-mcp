@@ -202,6 +202,7 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 				if err := state("offer_ready"); err != nil {
 					return domain.MobileBackupOffer{}, err
 				}
+				slog.Info("mobile_backup_producer_counts", "claims", inspectMobileProducerCounts(event.DatabaseInfo))
 				return offer, nil
 			default:
 				return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid

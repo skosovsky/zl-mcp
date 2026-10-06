@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state", "verification"],
+  "properties": {
+    "state": {"enum": ["available", "absent", "invalid"]},
+    "verification": {"const": "unverified"},
+    "msg_total": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+    "msg_thread": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615}
+  },
+  "if": {"properties": {"state": {"const": "available"}}},
+  "then": {"required": ["msg_total", "msg_thread"]},
+  "else": {"not": {"anyOf": [{"required": ["msg_total"]}, {"required": ["msg_thread"]}]}}
+}

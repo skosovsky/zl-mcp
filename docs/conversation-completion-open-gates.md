@@ -624,3 +624,15 @@ resources/logging and no Events, and returned connected/authenticated status.
 No sends, phone requests, subscription changes or diagnostic acknowledgements
 occurred. The prelude is installed but real mobile admission, WAL completeness
 and unsupported control classes remain open; no private archive was imported.
+
+### Producer metadata investigation
+
+The open upstream PR 269 model at `29d01c4` declares two `backup_db` counts and
+`is_full_transfer`, but contains no demonstrated producer checkpoint rule.
+The source adds strictly bounded, exact-integer count diagnostics after
+offer/account validation; [the contract](contracts/mobile-backup-producer-counts.md)
+defines all observations as unverified. Synthetic tests check schema conformance,
+precision above 2^53, redaction and unchanged offer acceptance when optional
+claims are malformed. No new phone request has established these fields on a
+real export; this diagnostic change is not yet installed. A count match cannot
+prove message/control identity or WAL state.
