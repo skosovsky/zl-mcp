@@ -11,7 +11,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 2048,
-      "pattern": "\\S"
+      "pattern": "^[\\s\\S]*\\S[\\s\\S]*$"
     },
     "request_id": {
       "type": "string",

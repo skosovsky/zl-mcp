@@ -103,3 +103,22 @@ sender names or text. A zero match with rejected rows or `has_more=true` does no
 prove absence. Even without those gaps, it describes only the selected main image
 and period; it does not establish WAL completeness or identify a control whose
 own global ID differs from the recalled target. Import safety gates stay active.
+
+### Controlled diagnostic evidence (2026-10-06)
+
+The authorized disposable message was accepted through the service's local HTTP
+MCP `zalo_send_direct_message` route and retained by the collector with live quote
+metadata. Before that dispatch, the ChatGPT connector rejected the nonblank text
+against its cached `\S` pattern; the send ledger contained no operation for that
+UUID. This isolates that rejection to pre-server connector validation. The new
+full-string-compatible pattern preserves nonblank semantics; actual refreshed
+connector acceptance remains to be checked and must not be inferred from local
+contract tests.
+
+The first pre-recall archive attempt entered `waiting_for_confirmation`, then
+terminated as `interrupted` after approximately three minutes without an archive.
+No archive comparison or recall was performed. The service remained connected;
+this run establishes neither source recall semantics nor archive completeness.
+A new phone attempt needs a fresh UUID and a ready user; the old attempt must not
+be redispatched. The temporary one-peer send permission was restored byte for
+byte to its original disabled configuration after the attempt terminated.

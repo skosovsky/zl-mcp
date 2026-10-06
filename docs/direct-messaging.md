@@ -43,7 +43,11 @@ Through tools/call, `zalo_send_direct_message` accepts:
 
 Generate a fresh UUID for each new intended send; the example is illustrative.
 Reuse the original UUID and exact arguments for a retry. Text must be nonblank
-valid UTF-8, with at most 2048 Unicode code points, an application limit. To quote a
+valid UTF-8, with at most 2048 Unicode code points, an application limit. The executable
+text pattern matches the entire string, including spaces and newlines, so both
+JSON Schema search-style validation and connector full-match validation accept
+the same nonblank messages. A connector rejection before server dispatch creates
+no send operation; check the original UUID before deciding whether to retry. To quote a
 retained direct message, add reply_to_message_id. The source must be in that exact
 recipient's conversation with supported protocol metadata. Missing/deleted quotes
 return QUOTE_UNAVAILABLE and never silently send an unquoted message. Matching

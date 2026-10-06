@@ -10,11 +10,11 @@ their recorded versions, not a description of the current installation.
 
 ## Installed checkpoint superseding older deployment notes
 
-Source `c9d3e50ccbd678978b7199f31801a35ba1911548` passed
-[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37452374389).
+Source `4437039ca1112a4817a4368a646c75a076ea2c44` passed
+[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37457148900).
 A CGO-free, trimpath macOS arm64 binary built from its clean Git archive was
 ad-hoc signed and installed through the existing single LaunchAgent. Installed
-SHA-256 is `f31f9170cc236563e81f1bfe4ec4fce6cb60afd0d94c12882ba436de34720cd1`;
+SHA-256 is `69a0d7874c66457c7469cc0d6e2d948c4ac49e040b7f45840ae4ca15bb980bd0`;
 SQLite is now schema 14. A private native-binary/state/config backup and a
 consistent integrity-checked SQLite copy were verified before replacement.
 Existing corpus rows, send-operation rows, subscription boundaries and prior
@@ -22,7 +22,10 @@ private tokens/keys were preserved. No phone request, send, subscription edit
 or journal acknowledgement occurred during deployment.
 
 Authenticated local HTTP and the actual connected Codex client both reported
-connected/authenticated with no error after deployment. The installed STDIO
+connected/authenticated with no error after deployment. The separately prepared
+full-string send-pattern correction is not yet installed; pre-server connector
+validation rejected the agreed nonblank text against its cached `\S` pattern.
+Refreshed client acceptance of that correction remains open. The installed STDIO
 bridge initialized, discovered 21 tools and read the same connected status,
 without advertising Events. Both copied skills match all five source files in
 each directory. The subscription journal remained empty and unblocked.
@@ -77,8 +80,13 @@ and their `chat.delete`/`chat.undo` mappings. Its archive importer separates
 MSG_UNDO, but the located `_sendUndo` method is empty; it does not establish a
 portable target-ID/state rule. The currently retained local tombstone table has
 zero rows, so there is no existing live target marker available to correlate with
-an archive. A separately requested controlled send/recall and before/after archive
-scenario is awaiting user authorization; no new send or phone request has occurred.
+an archive. The controlled send/recall and before/after archive scenario was authorized.
+One disposable message was accepted through local HTTP MCP and retained with live
+quote metadata. Its pre-recall phone request waited approximately three minutes
+for confirmation and ended `interrupted` without an archive; no recall occurred.
+A fresh request is awaiting user readiness. The temporary one-peer send permission
+was restored to the exact original disabled configuration. See the
+[controlled diagnostic evidence](mobile-backup-diagnostics.md#controlled-diagnostic-evidence-2026-10-06).
 After fixing the shutdown/cleanup race and correcting the spent-UUID test to the
 existing unavailable-source error contract, root tests/vet and affected
 mobile-backup/history-import/service/storage race checks passed. A further real
