@@ -2,7 +2,7 @@
 
 # Conversation completion: current open gates
 
-Current checkpoint: 2026-10-06; the dated entries below preserve prior evidence. The full scope is
+Current checkpoint: 2026-10-07; the dated entries below preserve prior evidence. The full scope is
 [task-conversation-completion.md](task-conversation-completion.md). This report does
 not reduce that scope or declare completion. Historical checkpoints in
 [the acceptance report](conversation-completion-acceptance.md) are evidence for
@@ -10,13 +10,30 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
-The installed clean source is `e7f4d7f1007c1790943248429e08f79a940610f6`,
+The installed clean source is `72d17589fea0fa773ead4c340ced74fa87ba9d49`,
 with binary SHA-256
-`b3d4cde91daa93ae2ce2c275006230253543ad13578e8a7cab3c1cdd7aed595d`.
-Its deployment and preservation checks are recorded below. A subsequent
-read-only check returned connected/authenticated without an error, schema 14
-with valid integrity, and an empty, unblocked journal for the one active v2
-subscription. No acknowledgement was sent.
+`c2872c54033c51f978dfd47b2117b56505c45247b3e1c8a85b5e195b62c53153`.
+[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37502905736)
+passed root and nested-module test/race/vet, CGO-free builds and native startup
+acceptance. The clean native binary also passed isolated startup acceptance
+locally before deployment. A verified private full-state/binary/config/agent
+backup preceded replacement through the existing single LaunchAgent.
+
+Post-deployment comparisons preserve all prior messages, identities, tombstones,
+send operations, quote metadata, first-incoming facts and exact subscription
+activation boundaries. Configuration and LaunchAgent are byte-identical; sending
+remains disabled and SQLite remains schema 14 with valid integrity. Direct HTTP
+and the actual connected MCP client subsequently returned connected/authenticated,
+with an empty, unblocked journal for the one active v2 subscription. No
+acknowledgement, phone request or message send occurred during deployment.
+
+Startup initially reported reconnecting and a failed group catalogue refresh;
+some ten-second local HTTP reads timed out. The same process subsequently
+connected without a second restart, and a bounded proxy-free direct check
+succeeded. Status still retains `UPSTREAM_UNAVAILABLE` for the group catalogue
+refresh; this connected observation does not prove successful catalogue refresh
+or explain intermittent HTTP latency. Previous clean source `e7f4d7f` remains
+recoverable in the verified private backup.
 
 The existing app-backed Zalo connection was located in Safari and its
 **Refresh tools** action invoked. The ChatGPT app detail page subsequently
@@ -76,7 +93,7 @@ to the owner archive diagnostic. Root tests, affected-package race/vet and
 CGO-free macOS arm64/Linux amd64 builds pass. Synthetic checks cover all rejection
 categories, private-value redaction, whole-page rejection, unchanged WAL/control
 gates, output schema restrictions and the one-shot probe with no persistence.
-These new counters have not been installed or exercised on a real archive;
+These new counters are installed but have not been exercised on a real archive;
 they cannot explain the already cleared October 7 rows retroactively.
 
 The remaining full-scope gates are real incoming-only/first-only behaviour,
