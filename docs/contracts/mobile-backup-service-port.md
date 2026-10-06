@@ -1,6 +1,6 @@
 # Mobile offer service port candidate
 
-Status: internal service method; not exposed by MCP or the trusted CLI yet.
+Status: internal service method; not exposed by MCP. The owner-only diagnostic [offer probe](mobile-backup-offer-probe.md) can execute one explicitly authorized prepared phone request without downloading/importing an archive.
 
 The service port executes only an existing prepared attempt through the current
 collector JoinManager.API, which production RunInternal binds to sessionGuard.
@@ -13,7 +13,7 @@ revocation/cancellation and late-success suppression; the prepared-offer runner
 handles durable dispatch ownership and finalization. Return only a private offer
 to a future trusted archive consumer, never serialize it as a tool result.
 
-There is no public dispatch/import route, implicit startup phone request,
+There is no MCP dispatch/import route or implicit startup phone request,
 subscription change or corpus import at this stage. Internal staged download and
 archive parsing are tested synthetically. Live dispatch authorization, independently
 verified downloader hosts, real archive compatibility and selected account-bound

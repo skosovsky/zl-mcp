@@ -12,7 +12,7 @@ import (
 )
 
 func mobileLedgerCommand(name string) bool {
-	return name == "mobile-backup-prepare" || name == "mobile-backup-status" || name == "mobile-backup-cancel"
+	return name == "mobile-backup-prepare" || name == "mobile-backup-status" || name == "mobile-backup-cancel" || name == "mobile-backup-probe-offer"
 }
 func mobileLedgerArguments(args []string, in io.Reader) (string, any, error) {
 	if len(args) == 0 {
@@ -34,15 +34,19 @@ func mobileLedgerArguments(args []string, in io.Reader) (string, any, error) {
 			return "", nil, fmt.Errorf("mobile-backup-status requires operation_id")
 		}
 		return "cli_mobile_backup_status", map[string]any{"operation_id": args[1]}, nil
-	case "mobile-backup-cancel":
+	case "mobile-backup-cancel", "mobile-backup-probe-offer":
 		if len(args) != 3 {
-			return "", nil, fmt.Errorf("mobile-backup-cancel requires operation_id and revision")
+			return "", nil, fmt.Errorf("%s requires operation_id and revision", args[0])
 		}
 		revision, err := strconv.ParseInt(args[2], 10, 64)
 		if err != nil || revision < 0 || strconv.FormatInt(revision, 10) != args[2] {
 			return "", nil, fmt.Errorf("revision must be a nonnegative canonical integer")
 		}
-		return "cli_cancel_prepared_mobile_backup", map[string]any{"operation_id": args[1], "revision": revision}, nil
+		method := "cli_cancel_prepared_mobile_backup"
+		if args[0] == "mobile-backup-probe-offer" {
+			method = "cli_probe_mobile_backup_offer"
+		}
+		return method, map[string]any{"operation_id": args[1], "revision": revision}, nil
 	}
 	return "", nil, fmt.Errorf("unknown mobile ledger command")
 }
@@ -51,7 +55,11 @@ func runMobileLedger(ctx context.Context, stateDir string, args []string, in io.
 	if err != nil {
 		return err
 	}
-	request, stop := context.WithTimeout(ctx, 10*time.Second)
+	budget := 10 * time.Second
+	if method == "cli_probe_mobile_backup_offer" {
+		budget = 190 * time.Second
+	}
+	request, stop := context.WithTimeout(ctx, budget)
 	defer stop()
 	result, err := control.New(stateDir).Call(request, method, arguments)
 	if err != nil {

@@ -1,6 +1,6 @@
 # Trusted local mobile attempt ledger
 
-Status: owner-only Unix control routes; no phone execution route.
+Status: owner-only Unix control routes. Prepare/status/cancel are nonexecuting; the separately authorized [offer probe](mobile-backup-offer-probe.md) dispatches one diagnostic phone request.
 
 `cli_prepare_mobile_backup` validates the executable mobile request contract and
 prepares a durable attempt against the current stored account/collection policy.

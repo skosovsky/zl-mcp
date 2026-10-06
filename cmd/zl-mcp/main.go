@@ -48,7 +48,7 @@ func run() error {
 		return e
 	}
 	if flags.NArg() < 1 {
-		return fmt.Errorf("usage: zl-mcp -config config.toml <login|service|serve|probe-preload|mobile-backup-prepare|mobile-backup-status|mobile-backup-cancel|approve-join preview_id>")
+		return fmt.Errorf("usage: zl-mcp -config config.toml <login|service|serve|probe-preload|mobile-backup-prepare|mobile-backup-status|mobile-backup-cancel|mobile-backup-probe-offer|approve-join preview_id>")
 	}
 	c, e := config.Load(*path)
 	if e != nil {
@@ -72,7 +72,7 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	switch flags.Arg(0) {
-	case "mobile-backup-prepare", "mobile-backup-status", "mobile-backup-cancel":
+	case "mobile-backup-prepare", "mobile-backup-status", "mobile-backup-cancel", "mobile-backup-probe-offer":
 		return runMobileLedger(ctx, c.StateDir, flags.Args(), os.Stdin, os.Stdout)
 	case "service":
 		if flags.NArg() != 1 {
@@ -156,7 +156,7 @@ func run() error {
 		fmt.Fprintln(os.Stderr, "Session saved locally. QR image removed.")
 		return nil
 	default:
-		return fmt.Errorf("unknown command; available: login, service, serve, approve-join, probe-preload, mobile-backup-prepare, mobile-backup-status, mobile-backup-cancel")
+		return fmt.Errorf("unknown command; available: login, service, serve, approve-join, probe-preload, mobile-backup-prepare, mobile-backup-status, mobile-backup-cancel, mobile-backup-probe-offer")
 	}
 }
 

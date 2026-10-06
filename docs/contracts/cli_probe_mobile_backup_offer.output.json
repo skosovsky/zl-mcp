@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "attempt": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Phone-attempt ledger only; offer_ready does not mean messages imported.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "request": {
+          "description": "Internal mobile attempt selection, not an exposed MCP tool.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "request_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "conversation_type": {
+              "enum": [
+                "direct",
+                "group"
+              ]
+            },
+            "conversation_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "since": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 64
+            },
+            "until": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 64
+            },
+            "max_messages": {
+              "description": "Maximum source records examined, including duplicates and records outside the requested interval.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000,
+              "default": 1000
+            },
+            "max_archive_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 536870912,
+              "default": 67108864
+            }
+          },
+          "required": [
+            "request_id",
+            "conversation_type",
+            "conversation_id",
+            "since",
+            "until",
+            "max_messages",
+            "max_archive_bytes"
+          ]
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "state": {
+          "enum": [
+            "prepared",
+            "dispatching",
+            "waiting_for_confirmation",
+            "request_result_unknown",
+            "mobile_restoring",
+            "waiting_for_backup",
+            "offer_ready",
+            "failed",
+            "cancelled",
+            "interrupted"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "request",
+        "operation_id",
+        "state",
+        "revision",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "download_host": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 253,
+      "pattern": "^[a-z0-9][a-z0-9.-]*[a-z0-9]$"
+    },
+    "archive_bytes": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]{0,19}$"
+    },
+    "within_archive_budget": {
+      "type": "boolean"
+    },
+    "download_performed": {
+      "const": false
+    },
+    "import_performed": {
+      "const": false
+    }
+  },
+  "required": [
+    "attempt",
+    "download_host",
+    "archive_bytes",
+    "within_archive_budget",
+    "download_performed",
+    "import_performed"
+  ]
+}
