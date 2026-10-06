@@ -283,6 +283,51 @@
         "matching_type_counts",
         "matching_statuses"
       ]
+    },
+    "unsupported_content_reasons": {
+      "type": "object",
+      "description": "Counts for validated, unexpired candidates rejected by the text projection. Fixed categories only; sums to unsupported_content. Absent on older diagnostics.",
+      "propertyNames": {
+        "enum": [
+          "non_text_kind",
+          "unparsed_attachment",
+          "multiple_attachments",
+          "unsupported_attachment_action"
+        ]
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5000
+      },
+      "maxProperties": 4
+    },
+    "unsupported_content_kinds": {
+      "type": "object",
+      "description": "Known message kinds of unsupported content; no raw attachment action, title, URL or row identifiers. Sums to unsupported_content. Absent on older diagnostics.",
+      "propertyNames": {
+        "enum": [
+          "webchat",
+          "chat.doodle",
+          "chat.photo",
+          "chat.voice",
+          "chat.sticker",
+          "chat.recommended",
+          "chat.list.action",
+          "chat.location.new",
+          "chat.video.msg",
+          "share.file",
+          "chat.gif",
+          "chat.webcontent",
+          "chat.webcontent.v2"
+        ]
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5000
+      },
+      "maxProperties": 13
     }
   },
   "required": [

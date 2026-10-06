@@ -71,6 +71,14 @@ An early observation still showed `prepared` and a CLI status read timed out;
 subsequent correlated records establish dispatch, confirmation and receipt.
 Preparation and a started CLI must not be reported as completed phone dispatch.
 
+The subsequent source candidate adds bounded, fixed-key kind/reason counters
+to the owner archive diagnostic. Root tests, affected-package race/vet and
+CGO-free macOS arm64/Linux amd64 builds pass. Synthetic checks cover all rejection
+categories, private-value redaction, whole-page rejection, unchanged WAL/control
+gates, output schema restrictions and the one-shot probe with no persistence.
+These new counters have not been installed or exercised on a real archive;
+they cannot explain the already cleared October 7 rows retroactively.
+
 The remaining full-scope gates are real incoming-only/first-only behaviour,
 the separately authorized out-of-catalogue send scenario, and safe real mobile-source
 admission and recovery of the user's older Strangers history. Synthetic source

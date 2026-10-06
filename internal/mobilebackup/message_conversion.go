@@ -2,6 +2,7 @@ package mobilebackup
 
 import (
 	"context"
+	"maps"
 	"strconv"
 	"time"
 	"unicode/utf8"
@@ -13,6 +14,7 @@ type ConvertedArchivePage struct {
 	Records                                                           []domain.ExpiringHistoryRecord `json:"-"`
 	Recalls                                                           []domain.MobileHistoryRecall   `json:"-"`
 	Expired, UnsupportedContent, UnresolvedQuotes, UnresolvedMentions int                            `json:"-"`
+	UnsupportedContentReasons, UnsupportedContentKinds                map[string]int                 `json:"-"`
 }
 
 func (ConvertedArchivePage) String() string   { return "converted mobile archive page [redacted]" }
@@ -23,6 +25,8 @@ func (p *ConvertedArchivePage) Clear() {
 			p.Records[i] = domain.ExpiringHistoryRecord{}
 		}
 		clear(p.Recalls)
+		clear(p.UnsupportedContentReasons)
+		clear(p.UnsupportedContentKinds)
 		*p = ConvertedArchivePage{}
 	}
 }
@@ -40,6 +44,7 @@ type ArchivePageInspection struct {
 	TextCandidates, Expired, UnsupportedContent, UnresolvedQuotes, UnresolvedMentions int
 	OwnRecallCandidates                                                               int
 	BlockReasons                                                                      []string
+	UnsupportedContentReasons, UnsupportedContentKinds                                map[string]int
 }
 
 // InspectPreparedArchivePage separates source safety gates from invalid records.
@@ -52,6 +57,8 @@ func InspectPreparedArchivePage(ctx context.Context, page PreparedArchivePage, r
 	}
 	result := ArchivePageInspection{TextCandidates: len(converted.Records), Expired: converted.Expired, UnsupportedContent: converted.UnsupportedContent, UnresolvedQuotes: converted.UnresolvedQuotes, UnresolvedMentions: converted.UnresolvedMentions, BlockReasons: []string{}}
 	result.OwnRecallCandidates = len(page.Candidates.OwnRecalls)
+	result.UnsupportedContentReasons = maps.Clone(converted.UnsupportedContentReasons)
+	result.UnsupportedContentKinds = maps.Clone(converted.UnsupportedContentKinds)
 	if page.SourceWAL {
 		result.BlockReasons = append(result.BlockReasons, "unverified_wal_snapshot")
 	}
@@ -122,6 +129,12 @@ func convertArchiveCandidates(ctx context.Context, page PreparedArchivePage, req
 		text, rich, supported, _ := archiveText(row)
 		if !supported {
 			result.UnsupportedContent++
+			if result.UnsupportedContentReasons == nil {
+				result.UnsupportedContentReasons = map[string]int{}
+				result.UnsupportedContentKinds = map[string]int{}
+			}
+			result.UnsupportedContentReasons[unsupportedArchiveContentReason(row)]++
+			result.UnsupportedContentKinds[row.Kind]++
 			continue
 		}
 		if row.Metadata.Quote != nil && !row.QuoteExpired {
@@ -142,6 +155,23 @@ func convertArchiveCandidates(ctx context.Context, page PreparedArchivePage, req
 	}
 	result.Recalls = append([]domain.MobileHistoryRecall(nil), page.Candidates.OwnRecalls...)
 	return result, nil
+}
+
+// Called only for validated, unexpired rows rejected by archiveText. Never
+// include private attachment values in the diagnostic category.
+func unsupportedArchiveContentReason(row PreparedRow) string {
+	if row.Kind != "webchat" {
+		return "non_text_kind"
+	}
+	for _, tag := range row.Metadata.UnsupportedTags {
+		if tag == 6 {
+			return "unparsed_attachment"
+		}
+	}
+	if len(row.Metadata.Attachments) > 1 {
+		return "multiple_attachments"
+	}
+	return "unsupported_attachment_action"
 }
 
 // Only a complete first-page classification or its immutable accepted checkpoint

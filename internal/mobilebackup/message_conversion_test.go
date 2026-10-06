@@ -219,12 +219,53 @@ func TestMobileInspectionValidatesBlockedSnapshotWithoutReleasingRecords(t *test
 	if err != nil || got.TextCandidates != 1 || got.UnsupportedContent != 1 || got.UnresolvedQuotes != 1 || got.UnresolvedMentions != 1 || len(got.BlockReasons) != 2 || got.BlockReasons[0] != "unverified_wal_snapshot" || got.BlockReasons[1] != "unverified_source_controls" || convertErr == nil || len(converted.Records) != 0 {
 		t.Fatal("blocked snapshot evidence or persistence boundary lost", err)
 	}
+	if got.UnsupportedContentReasons["non_text_kind"] != 1 || got.UnsupportedContentKinds["chat.photo"] != 1 {
+		t.Fatal("unsupported content explanation lost after temporary records cleared")
+	}
 	// Act: a malformed later row must not be hidden by the same WAL gate.
 	page.Candidates.Rows[1].Row.ClientID = "01"
 	got, err = InspectPreparedArchivePage(context.Background(), page, request, "10", now)
 	// Assert: no prefix counts or misleading safety-only result escapes.
-	if err == nil || got.TextCandidates != 0 || len(got.BlockReasons) != 0 {
+	if err == nil || got.TextCandidates != 0 || len(got.BlockReasons) != 0 || len(got.UnsupportedContentReasons) != 0 || len(got.UnsupportedContentKinds) != 0 {
 		t.Fatal("source gate masked an invalid candidate")
+	}
+}
+
+func TestMobileInspectionContentCategoriesRedactPrivateMetadata(t *testing.T) {
+	for _, reason := range []string{"non_text_kind", "unparsed_attachment", "multiple_attachments", "unsupported_attachment_action"} {
+		t.Run(reason, func(t *testing.T) {
+			// Arrange: one unsupported record with private body/attachment values,
+			// plus a supported record. Source safety gates still prohibit import.
+			page, request, now := conversionPage(t)
+			defer page.Clear()
+			page.SourceWAL = true
+			row := &page.Candidates.Rows[0]
+			row.Row.Text = "PRIVATE-BODY-MARKER"
+			attachment := Attachment{Action: AttachmentValue{Present: true, Bytes: []byte("PRIVATE-ACTION-MARKER")}, Title: AttachmentValue{Present: true, Bytes: []byte("PRIVATE-TITLE-MARKER")}}
+			row.Metadata.Attachments = []Attachment{attachment}
+			kind := "webchat"
+			switch reason {
+			case "non_text_kind":
+				kind = "chat.photo"
+				row.Kind, row.Row.Type = kind, 3
+			case "unparsed_attachment":
+				row.Metadata.UnsupportedTags = []uint32{6}
+			case "multiple_attachments":
+				row.Metadata.Attachments = append(row.Metadata.Attachments, attachment)
+			}
+			// Act: inspection returns aggregate explanations, never record data.
+			got, err := InspectPreparedArchivePage(context.Background(), page, request, "10", now)
+			encoded, marshalErr := json.Marshal(got)
+			// Assert: counts partition rejected content and survive private cleanup.
+			if err != nil || marshalErr != nil || got.UnsupportedContent != 1 || got.TextCandidates != 1 || len(got.UnsupportedContentReasons) != 1 || got.UnsupportedContentReasons[reason] != 1 || len(got.UnsupportedContentKinds) != 1 || got.UnsupportedContentKinds[kind] != 1 || len(got.BlockReasons) != 1 || got.BlockReasons[0] != "unverified_wal_snapshot" {
+				t.Fatal("content classification or source gate changed", err)
+			}
+			for _, marker := range []string{"PRIVATE-BODY-MARKER", "PRIVATE-ACTION-MARKER", "PRIVATE-TITLE-MARKER"} {
+				if strings.Contains(string(encoded), marker) {
+					t.Fatal("private metadata exposed")
+				}
+			}
+		})
 	}
 }
 

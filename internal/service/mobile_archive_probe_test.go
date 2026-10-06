@@ -71,6 +71,29 @@ func TestMobileArchiveProbeBoundedOneShotWithoutPersistence(t *testing.T) {
 	if err != nil || schema.Validate(value) != nil {
 		t.Fatal("invalid result contract", err)
 	}
+	for _, field := range []string{"unsupported_content_reasons", "unsupported_content_kinds"} {
+		counts, ok := result[field].(map[string]int)
+		if !ok {
+			t.Fatal("missing aggregate content diagnostics", field)
+		}
+		total := 0
+		for _, count := range counts {
+			total += count
+		}
+		if total != result["unsupported_content"] {
+			t.Fatal("content diagnostics do not partition unsupported records", field)
+		}
+	}
+	// Arbitrary source strings must never be accepted as diagnostic map keys.
+	object := value.(map[string]any)
+	for _, field := range []string{"unsupported_content_reasons", "unsupported_content_kinds"} {
+		prior := object[field]
+		object[field] = map[string]any{"PRIVATE-ATTACHMENT-MARKER": 1}
+		if schema.Validate(object) == nil {
+			t.Fatal("unbounded private diagnostic key accepted", field)
+		}
+		object[field] = prior
+	}
 	if retry == nil || source.offers.Load() != 1 || source.downloads.Load() != 1 {
 		t.Fatal("one-shot boundary lost")
 	}

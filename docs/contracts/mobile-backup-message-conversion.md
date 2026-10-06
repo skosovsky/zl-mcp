@@ -60,6 +60,21 @@ temporary constructed records are cleared before returning. Inspection performs
 no writes or Events and does not change `ConvertPreparedArchivePage` eligibility.
 An empty interval can still have a whole-file persistence gate.
 
+The owner-only archive probe additionally reports optional
+`unsupported_content_reasons` and `unsupported_content_kinds` maps. Each map
+partitions the `unsupported_content` count across validated, unexpired candidates;
+expired, malformed and supported records are excluded. Reason keys are fixed:
+`non_text_kind`, `unparsed_attachment`, `multiple_attachments`, and
+`unsupported_attachment_action`. Kind keys are restricted to the known
+`mobilePayloadKind` classifications. No raw action, attachment title, parameters,
+URLs, IDs or message body can become a key. Counts are positive and bounded by
+the request's maximum 5000 examined records. Older diagnostics may omit the maps.
+
+These explanations are independent of WAL/control persistence gates and do not
+authorize import or establish rendering of the rejected content. The real
+October 7 probe predates these fields: its two unsupported records cannot be
+retroactively assigned a kind or reason from aggregate counts alone.
+
 The separate `own_recall_candidates` diagnostic counts only validated direct
 type-36/status-3 rows whose sender maps to the current account, as specified by
 [row preparation](mobile-backup-row-page.md#verified-own-direct-recall-classification).
