@@ -634,5 +634,30 @@ offer/account validation; [the contract](contracts/mobile-backup-producer-counts
 defines all observations as unverified. Synthetic tests check schema conformance,
 precision above 2^53, redaction and unchanged offer acceptance when optional
 claims are malformed. No new phone request has established these fields on a
-real export; this diagnostic change is not yet installed. A count match cannot
-prove message/control identity or WAL state.
+real export. The diagnostic source was subsequently installed as `e7f4d7f`
+below. A count match cannot prove message/control identity or WAL state.
+
+
+### Producer count diagnostic deployment
+
+Clean source `e7f4d7f1007c1790943248429e08f79a940610f6` passed
+[macOS/Linux CI](https://github.com/skosovsky/zl-mcp/actions/runs/37491624511).
+Its no-CGO macOS arm64 build has `vcs.modified=false`; installed ad hoc signed
+SHA-256 is `b3d4cde91daa93ae2ce2c275006230253543ad13578e8a7cab3c1cdd7aed595d`.
+The exact staged binary passed isolated native startup acceptance under race.
+The same LaunchAgent/config were retained with a verified private backup;
+corpus, identities, tombstones, send/quote records, first-incoming facts and
+subscription definitions survived, with schema 14 and valid integrity.
+The TCP endpoint became reachable 9.465 seconds after bootstrap, without another
+restart; this observation does not explain all prior startup delays.
+HTTP and the actual connected client returned connected/authenticated with no
+error. HTTP publishes v2 plus the legacy group event and recovery tools; the
+one active subscription's journal was empty/unblocked and no ack was sent.
+The initial concurrent STDIO check failed its readiness assertion; after the
+confirmed HTTP/client connection, a second check returned 21 tools, resources/logging
+and connected/authenticated status without Events. No further restart occurred.
+The first assertion does not identify which readiness field differed. Both
+installed skills match all five source files each.
+Sending remains disabled. No phone request or subscription edit occurred, so
+actual producer count presence/semantics, WAL admission and real archive import
+remain unverified. Diagnostic installation does not close those criteria.
