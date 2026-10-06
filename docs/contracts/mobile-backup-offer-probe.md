@@ -28,3 +28,15 @@ ledger and a separate decision about another attempt. It cannot supply a resumab
 archive or close production import, format/control or old-message recovery gates.
 Existing prepare/status/cancel routes remain nonexecuting; cancellation through
 the prepare-cancel command remains limited to prepared attempts.
+
+## Verification
+
+Implemented and installed from signed commit `051b581` on macOS. Root race tests,
+vet, CGO-disabled macOS arm64/Linux amd64 builds and the worktree secret scan
+passed. Synthetic tests prove revision/one-shot dispatch checks, private metadata
+redaction, contract validation and no corpus/Events/send writes. The installed
+owner CLI returned `NOT_FOUND` for a nonexistent attempt through the existing
+service; its STDIO bridge still listed 21 tools and read connected/authenticated
+status. SQLite integrity and selected subscription identity/filter/generation/
+activation fields matched the private pre-update snapshot. No real phone request,
+archive download or import has been performed for this diagnostic acceptance.

@@ -26,10 +26,12 @@ their recorded versions, not a description of the current installation.
 | Numeric acknowledgement plain/quote routes | Synthetic encrypted-wire tests; earlier two-send acceptance retained | Separately approved fresh live sends; unknown operations must not be resent |
 | Deployment/publication | Earlier schema-11 migration/publication checks preserved below. Signed recovery implementation `19e2105` installed with verified binary/SQLite/skill backup; docs commit `07791a0` pushed; local root race/vet, cross-builds and secret scan passed | Remaining feature/client/live gates; recovery source and docs have successful macOS/Linux CI at `07791a0` |
 
-The installed binary now uses schema 12 (`19e2105`); authenticated HTTP reads prove 21 tools, connected/authenticated collector without last_error, and exact retained event payload recovery. SQLite integrity passed; v2 subscription IDs, generations and activation boundaries match the pre-update backup. No processing acknowledgements were issued against the production backlog. See [recovery acceptance](event-recovery-acceptance.md). The recovery adoption gate is client instruction/catalogue update and reconciliation of previously completed notifications; exactly-once is not claimed.
+The installed binary now uses schema 12 (`051b581`); authenticated HTTP reads prove 21 tools, connected/authenticated collector without last_error, and exact retained event payload recovery. SQLite integrity passed; v2 subscription IDs, generations and activation boundaries match the pre-update backup. No processing acknowledgements were issued against the production backlog. See [recovery acceptance](event-recovery-acceptance.md). The recovery adoption gate is client instruction/catalogue update and reconciliation of previously completed notifications; exactly-once is not claimed.
 
-The schema-11 checkpoint below remains historical. Experimental mobile ports are present
-but have no public archive dispatch/import route and no real-archive acceptance.
+The schema-11 checkpoint below remains historical. Experimental mobile ports and an owner-only [offer probe](contracts/mobile-backup-offer-probe.md) are present,
+but have no MCP archive dispatch/import route and no real-archive acceptance.
+The probe is installed and tested synthetically; real phone execution still awaits
+human authorization and confirmation. It does not download or import the archive.
 Initial migration verification used
 a private database copy; that copy was removed afterward. The latest 8→11 check
 compared complete message/identity/send/novelty records and subscription IDs,
