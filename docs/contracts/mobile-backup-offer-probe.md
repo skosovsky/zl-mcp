@@ -41,6 +41,20 @@ status. SQLite integrity and selected subscription identity/filter/generation/
 activation fields matched the private pre-update snapshot. No real phone request,
 archive download or import has been performed for this diagnostic acceptance.
 
+## Current deployment checkpoint
+
+The last authorized phone probe confirmed the zero-code handling fix, then
+expired without an archive offer. Source commit `ac394b3` increases the Unix
+response budget to 200s and adds safe ignored-control diagnostics; its CI passed.
+Its installation did not become ready. A Go stack showed schema meta-validation
+of `zalo_get_join_status.output` before opening HTTP. Isolated contract and MCP
+server construction completed quickly, so the startup cause is unresolved.
+The verified previous `5e92289` binary was restored without reverting SQLite,
+session or configuration. Authenticated MCP reads then confirmed connected/
+authenticated state, schema 12 integrity and the active v2 journal. The installed
+version still has the old 40s Unix write budget; do not claim the long response
+fix was accepted on the live installation. No further phone request was sent.
+
 ## Failure diagnostics
 
 The service records committed dispatch/progress states with operation ID and fixed
