@@ -143,3 +143,44 @@ The new pre-recall attempt waited for confirmation from 12:55:34 to 12:58:36 UTC
 and terminated `interrupted` without an archive. No recall, comparison or import
 occurred. A further phone request awaits explicit user readiness; neither the
 terminal attempt nor the send is automatically repeated.
+
+### Successful controlled recall comparison (2026-10-06)
+
+With renewed explicit authorization and the phone available, a fresh exact-text
+send was accepted once through local HTTP MCP. Startup and MCP status reads
+temporarily stalled before dispatch; the send ledger confirmed no operation
+during that stall. After recovery, the same saved UUID was used for the single
+dispatch. The exact original send-disabled configuration was restored before
+both archive requests. No subscription was edited.
+
+Both separately confirmed archive probes downloaded and inspected the same
+selected direct conversation and interval. Their bounded exact-ID comparisons
+reported no rejected records or continuation:
+
+| Observation | Before recall | After recall |
+| --- | --- | --- |
+| Selected file rows | 129 | 129 |
+| Rows in requested interval | 1 | 1 |
+| Exact sent-message-ID matches | 1 | 1 |
+| Matching type | `0` | `36` |
+| Matching status | `3` | `3` |
+| Matching controls | 0 | 1 |
+| Whole-file source controls | 0 | 1 |
+| WAL header mode | enabled | enabled |
+
+The owner recall returned `upstream_response` with numeric status `0`. The normal
+collector persisted the exact typed-message tombstone; the message is absent
+from `visible_messages` and an actual connected-client context read returns an
+error without an anchor. Reading the saved recall again returned the same
+response with byte-identical private receipts; it did not reserve another call.
+The permanent send ledger remains the evidence of the single accepted send.
+
+This proves a type `0` to `36` transition on the same global message ID for this
+own-message recall in a direct conversation. Status `3` alone cannot distinguish
+the two states. It does not establish type `33`, received-message or group recall
+semantics, arbitrary control payload interpretation, or WAL transaction
+completeness. Both probes performed no import. Conversion remains blocked by
+`unverified_wal_snapshot`, and the post-recall source additionally reports
+`unverified_source_controls`. Source support must be specified and tested before
+relaxing those gates; the live tombstone already prevents this exact message from
+being restored by replay or a later historical import.
