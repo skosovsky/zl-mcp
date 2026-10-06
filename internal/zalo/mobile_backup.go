@@ -104,6 +104,7 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 	for {
 		select {
 		case <-sub.Errors:
+			slog.Warn("mobile_backup_control_invalid", "stage", "receiver")
 			return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 		default:
 		}
@@ -114,8 +115,10 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 			}
 			return domain.MobileBackupOffer{}, ctx.Err()
 		case <-sub.Errors:
+			slog.Warn("mobile_backup_control_invalid", "stage", "receiver")
 			return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 		case event := <-sub.Events:
+			logMobileControl(event, public, owner)
 			if event.PublicKey != public {
 				return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 			}
@@ -164,6 +167,7 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 				}
 				select {
 				case <-sub.Errors:
+					slog.Warn("mobile_backup_control_invalid", "stage", "receiver")
 					return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 				default:
 				}
@@ -184,31 +188,56 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 func mobileBackupOffer(e model.MobileSyncEvent, owner string, key *rsa.PrivateKey) (domain.MobileBackupOffer, error) {
 	u, err := url.Parse(e.URL)
 	if err != nil || len(e.URL) > 4096 || u.Scheme != "https" || u.Hostname() == "" || u.User != nil || u.Fragment != "" || len(e.EncryptedKey) > 4096 || !historyNumber(e.FromSequence) || len(e.FromSequence) > 20 || len(e.FromSequence) > 1 && e.FromSequence[0] == '0' {
-		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+		return invalidMobileOffer("OFFER_ENVELOPE")
 	}
 	if _, err := strconv.ParseUint(e.FromSequence, 10, 64); err != nil {
-		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+		return invalidMobileOffer("OFFER_SEQUENCE")
 	}
 	var info struct {
 		Format *int `json:"db_format"`
 	}
 	if e.UID != owner || e.FileSize == 0 || e.FileSize > 512<<20 || json.Unmarshal([]byte(e.DatabaseInfo), &info) != nil || info.Format == nil {
-		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+		return invalidMobileOffer("OFFER_ACCOUNT_OR_DATABASE")
 	}
 	if *info.Format != 1 {
 		return domain.MobileBackupOffer{}, domain.ErrHistoryUnsupported
 	}
 	ciphertext, err := base64.StdEncoding.Strict().DecodeString(e.EncryptedKey)
 	if err != nil || len(ciphertext) != key.Size() {
-		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+		return invalidMobileOffer("OFFER_CIPHER_ENCODING")
 	}
 	plain, err := rsa.DecryptPKCS1v15(rand.Reader, key, ciphertext)
 	if err != nil {
-		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+		return invalidMobileOffer("OFFER_RSA_DECRYPTION")
 	}
 	defer clear(plain)
 	if len(plain) < 16 || len(plain) > 128 {
-		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+		return invalidMobileOffer("OFFER_KEY_LENGTH")
 	}
 	return domain.MobileBackupOffer{URL: e.URL, KeyText: strings.ToUpper(hex.EncodeToString(plain)), FileSize: e.FileSize, FromSequence: e.FromSequence}, nil
+}
+
+func invalidMobileOffer(reason string) (domain.MobileBackupOffer, error) {
+	slog.Warn("mobile_backup_offer_invalid", "reason", reason)
+	return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+}
+
+// Only explicitly selected scalar diagnostics; never format a control event.
+func logMobileControl(event model.MobileSyncEvent, public, owner string) {
+	action := "unknown"
+	switch event.Action {
+	case "user_confirm", "transfer_error", "syncmsg_info":
+		action = event.Action
+	}
+	args := []any{"action", action, "key_match", event.PublicKey == public, "pc_match", event.PCName == "Web", "account_match", event.UID == owner, "has_url", event.URL != "", "has_encrypted_key", event.EncryptedKey != "", "archive_bytes", event.FileSize, "has_db_info", event.DatabaseInfo != ""}
+	if event.Status != nil {
+		args = append(args, "status", *event.Status)
+	}
+	if event.ErrorCode != nil {
+		args = append(args, "upstream_error_code", *event.ErrorCode)
+	}
+	if event.UserAction != nil {
+		args = append(args, "user_action", *event.UserAction)
+	}
+	slog.Info("mobile_backup_control", args...)
 }

@@ -228,3 +228,8 @@ no code from the experimental zca-js synchronization PR was copied. Root session
 guards keep body consumption inside revocation ownership. Real archive hosts and
 phone/archive acceptance remain unverified; HTTP 401 here is not an account-auth
 sentinel. No public API interface method or additional listener is required.
+
+Mobile control decode diagnostics log closed validation reason codes through the
+service logger, without payloads, URLs, correlation keys or identities. They do
+not relax parsing or initiate synchronization. Regression tests check private
+field exclusion and preservation of the existing error sentinel.

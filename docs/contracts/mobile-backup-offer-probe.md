@@ -55,3 +55,11 @@ attempt ended `failed` without an offer. Its installed version did not preserve
 intermediate diagnostic categories, so the exact failure stage cannot be inferred
 from its terminal revision. No download or import occurred. A subsequent live
 attempt needs a separate decision, not an automatic retry.
+
+Control diagnostics additionally record whitelisted action/status/error scalars,
+correlation and presence booleans, and archive size. Fixed validation reasons
+cover control decoding and offer envelope/sequence/account/database/cipher checks.
+Rejected field values and raw source errors are excluded. The authorized probe
+with the status fix reached `waiting_for_backup` and then `INVALID_SOURCE_EVENT`;
+no offer/download/import was obtained. That version did not identify the rejected
+control, so the active/idle correction alone is not a proven resolution.

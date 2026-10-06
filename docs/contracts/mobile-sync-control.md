@@ -19,7 +19,11 @@ a receiver it is ignored, preserving normal collector behavior.
 
 Sensitive event fields are internal SDK data, excluded from JSON serialization
 and redacted in default formatted representations. No raw payload is retained.
-No caller should log individual fields. Download URL is bounded HTTPS without
+Application diagnostics may log only the closed action category, numeric
+status/error/user-action, correlation/presence booleans and archive size.
+Never log identity, PC name, public key, URL, encrypted key or database body.
+Offer validation logs fixed reason codes rather than rejected values.
+Download URL is bounded HTTPS without
 userinfo/fragment; this is syntax validation, not download-host authorization.
 Encrypted key and database metadata remain untrusted until subsequent checks.
 
