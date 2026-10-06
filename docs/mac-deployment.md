@@ -9,11 +9,20 @@ This guide installs from source for the current user. Source files can stay in y
 | Binary | `~/.local/bin/zl-mcp` | 0755 |
 | Configuration | `~/.config/zl-mcp/config.toml` | Directory 0700, file 0600 |
 | Session, SQLite, token, control socket | `~/.local/share/zl-mcp` | Directory 0700, private files 0600 |
+| Internal mobile snapshots and their local key | `~/.local/share/zl-mcp/mobile-snapshots` | Directory 0700, files 0600 |
 | Application logs | `~/Library/Logs/zl-mcp` | Directory 0700, files 0600 |
 | LaunchAgent | `~/Library/LaunchAgents/com.skosovsky.zl-mcp.service.plist` | 0644 |
 | Private backups | A local directory outside the checkout | Directory 0700, files accessible only to the user |
 
 Use one state directory per account. Permissions do not provide encryption. Protect backups as carefully as the live session. Keep `state_dir` short to fit the Unix socket path limit. TOML paths do not expand literal `~` or `$HOME`: enter the actual absolute home path. Relative paths resolve against the configuration directory.
+
+The service creates `mobile-snapshots` inside its existing state directory for
+internal mobile import staging. Selected images use a separate local AES-GCM key,
+fixed 15-minute expiry and bounded capacity; the corpus and session remain
+unencrypted. Preserve the entire directory with its key during backup/rollback;
+do not substitute the MCP token or recreate a missing key over existing images.
+This internal store does not enable public mobile import: source eligibility and
+real phone acceptance are tracked in [open gates](conversation-completion-open-gates.md).
 
 ## Build and configure
 
