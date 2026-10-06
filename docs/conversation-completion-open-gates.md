@@ -11,7 +11,8 @@ their recorded versions, not a description of the current installation.
 Latest mobile checkpoint supersedes the earlier download/format failure notes:
 authenticated offer, scoped download, format-1 checksum/XZ, typed selection and
 immutable SQLite inspection passed in authorized installed-service probes. The
-selected image contains 24 rows and zero rows in the requested historical day.
+selected image contains 24 rows: zero in the September 30 interval and two in
+the subsequent September 26 interval (Vietnam local days).
 Its latest timestamp matches that peer's live corpus. Newly sent test messages
 were in another peer, so they do not demonstrate a stale export. A specific
 historical omission and uncheckpointed WAL loss have not been established.
@@ -20,7 +21,7 @@ importer remains unwired. Diagnostic inspection now validates and classifies can
 when a source gate prevents persistence, without returning message records;
 malformed candidates fail instead of being silently classified as blocked. See the [corrected evidence](contracts/mobile-backup-offer-probe.md#selected-image-coverage-and-correction-of-the-live-comparison).
 
-### Published probe checkpoint and native rollback: 2026-10-06
+### Published probe checkpoint and native installation: 2026-10-06
 
 Signed source commit [`57d4c8d`](https://github.com/skosovsky/zl-mcp/commit/57d4c8da9a19a1c5f589b4d52a74d66e49699dc9)
 was pushed to main. [Its CI](https://github.com/skosovsky/zl-mcp/actions/runs/37428680045)
@@ -42,18 +43,37 @@ changed by the rollback. The prior verified binary SHA-256
 subsequently returned connected/authenticated with no last error. SQLite
 quick_check passed; subscription IDs, activation/generation watermarks, filters
 and lifetime fields matched the pre-update backup. Credentials were not read or
-compared. The new diagnostic fields are published in source, but acceptance of
-that candidate's installed native startup remains open. No phone operation,
-send, subscription change or recovery acknowledgement was made during deployment.
+compared. That first attempt and rollback remain historical evidence.
+
+A subsequent isolated native smoke test of the exact signed candidate used fresh
+private temporary state without a Zalo session: HTTP MCP discovery returned 21
+tools and status correctly returned `auth_required`. After the installed-path
+`-h` preflight passed, the same candidate was installed through the existing
+LaunchAgent and reached connected/authenticated status. A later independent
+read confirmed SHA-256 `b0780bd2f8f1a09c2024cf411a6a80951dcb9bed11d5e718a505481df4803536`,
+schema 12, SQLite integrity, one active v2 subscription and an empty unblocked
+recovery journal. Subscription boundaries matched the private pre-update backup.
+No phone operation, send, subscription change or recovery acknowledgement was
+made during deployment. The initial OS initialization delay remains unexplained;
+it is not a proven application regression. Published docs checkpoint
+[`514d7ed`](https://github.com/skosovsky/zl-mcp/commit/514d7edfd726422cf1db85fbe23de1800a5a5e7a)
+also has [successful macOS/Linux CI](https://github.com/skosovsky/zl-mcp/actions/runs/37429531864).
+
+The new private encrypted snapshot store is an internal prerequisite for durable
+mobile import, not an exposed import feature. Its [contract](contracts/mobile-backup-snapshot.md)
+requires request/account/digest binding, fixed expiry across retries, encrypted
+selected-only bytes, durable spent UUIDs and bounded private cleanup. It is not
+wired into the service or history worker. WAL/control conversion gates remain in
+force.
 
 | Requirement | Current evidence | Remaining gate |
 | --- | --- | --- |
 | Browse without a keyword | Current installed HTTP and actual connected-client catalogue→period browse→stable continuation→matching context checks pass; production regression tests | Final signed checkout/publication verification |
 | Expanded conversation catalogue | Guarded periodic preload refresh and actual connected-client catalogue reads; source/installed skills match and this desktop discovers both | Final deployment/publication consistency and other intended clients |
 | Explicit silent imports | Durable history journal with UUID/retry/cancel/restart tests; installed direct preload/group reads; synthetic archive-to-record-to-silent-storage callback retains text without Events | Three import tools are absent from the external client's catalogue; production mobile importer is not wired |
-| Older Strangers message | Requested peer is selectable; requested older interval is empty; preload only supplies an already retained record | Recovery from a deeper verified source, or a concrete verified source limitation agreed with the user |
-| Mobile request/transport | Current-session request/offer observer, durable dispatch ledger, restart recovery and private offer ownership; host-scoped cookie transport, scoped body consumption and revocation tests | Correlated live offer and owner mapping now accepted; independently verified download hosts and actual encrypted archive/sender identity compatibility remain |
-| Mobile archive reading | Independent format-1/XXH32/XZ/OpenSSL and SQLite fixtures; typed file selection, immutable bounded SQLite reads with exact fractional-millisecond interval mapping, digest/request/account-bound keyset paging; one session/download across pages | Real format/SQLite/BinNet/plain-to-session mapping acceptance |
+| Older Strangers message | Requested peer is selectable; September 30 archive interval is empty and September 26 has two candidate rows; preload only supplies an already retained record | Recovery from a deeper verified source, or a concrete verified source limitation agreed with the user |
+| Mobile request/transport | Current-session request/offer observer, durable dispatch ledger, restart recovery and private offer ownership; host-scoped cookie transport, scoped body consumption and revocation tests | Correlated live offer and owner mapping now accepted; download and selected sender mapping accepted by later probes; durable production import remains |
+| Mobile archive reading | Independent format-1/XXH32/XZ/OpenSSL and SQLite fixtures; typed file selection, immutable bounded SQLite reads with exact fractional-millisecond interval mapping, digest/request/account-bound keyset paging; one session/download across pages | Format/SQLite/plain-to-session reading accepted; full BinNet/content semantics remain |
 | Mobile conversion/import | Supported plain-text candidate conversion preserves exact IDs, sender, timestamp, direction and original TTL; explicit unsupported rich-text/nontext and quote/mention counts | Nontext/attachment/quote/mention semantics and atomic durable page/checkpoint persistence; text-only support is not the final feature |
 | Deleted/recalled messages | Source schema 11 prevents restoration of an observed exact typed deletion by live replay or history; absent-message deletion, restart, namespace, novelty and rollback tests. Whole-file mobile type-33/36 detection blocks unverified conversion | Mobile control target/state semantics and full handling before public archive persistence; live marker receipt alone does not establish mobile compatibility |
 | Expiry after import | Expiry markers, SQL read-time filtering and cleanup are present. New trusted expiring operation-page port atomically commits records/TTL/checkpoint; rollback/restart/duplicate/cancel/due-expiry tests passed | Wire into the mobile importer, quote expiry and trustworthy clock/real archive acceptance |
@@ -65,8 +85,9 @@ send, subscription change or recovery acknowledgement was made during deployment
 | Deployment/publication | Earlier schema-11 migration/publication checks preserved below. Signed recovery implementation `19e2105` installed with verified binary/SQLite/skill backup; docs commit `07791a0` pushed; local root race/vet, cross-builds and secret scan passed | Remaining feature/client/live gates; recovery source and docs have successful macOS/Linux CI at `07791a0` |
 
 The current installed binary uses schema 12 and includes the plain-owner mapping
-fix, stage-specific mapping diagnostics and verified exact-endpoint auth-cookie fix (SHA-256
-`961f78362c1d7065a0b6ad541ab108c7e6411a850eb6d02c5199772285cf939b`).
+fix, stage-specific mapping diagnostics, verified exact-endpoint auth-cookie fix
+and candidate classification (SHA-256
+`b0780bd2f8f1a09c2024cf411a6a80951dcb9bed11d5e718a505481df4803536`).
 Authenticated reads confirmed recovery tools, connected/authenticated state with
 no last error, SQLite integrity and one active v2 subscription. The user reported
 Ann discovering all three recovery tools, reconciling three exact message IDs
@@ -78,7 +99,8 @@ reconciliation are complete. See [recovery acceptance](event-recovery-acceptance
 for evidence boundaries; exactly-once is not claimed.
 
 The schema-11 checkpoint below remains historical. Experimental mobile ports and an owner-only [offer probe](contracts/mobile-backup-offer-probe.md) are present,
-but have no MCP archive dispatch/import route and no real-archive acceptance.
+but have no MCP archive dispatch/import route. Real download, selection and SQLite
+inspection are accepted; conversion and persistence remain open.
 The probe is installed and tested synthetically. Authorized phone probes received
 confirmation and established/fixed zero-code control handling. A correlated
 archive offer was later received; direct comparison of plain/session IDs was
@@ -88,8 +110,9 @@ The installed endpoint-specific version-691 candidate returned the same code
 A missing zpw_sek at the identity host was then established from cookie scope and
 native-source comparison. A subsequent live probe with the installed correction
 passed authenticated owner mapping and reached `offer_ready` (246,660 bytes).
-It downloaded/imported nothing; real archive reading and selected silent
-persistence remain open. No archive download/import is verified.
+That identity-mapping checkpoint downloaded/imported nothing. Later authorized
+probes verified archive download and selected reading as described above; no
+production archive import has occurred.
 Initial migration verification used
 a private database copy; that copy was removed afterward. The latest 8→11 check
 compared complete message/identity/send/novelty records and subscription IDs,
