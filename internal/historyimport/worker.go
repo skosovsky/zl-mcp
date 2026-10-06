@@ -21,6 +21,12 @@ func Run(ctx context.Context, store *storage.Store, source domain.HistorySource)
 		}
 		return err
 	}
+	return RunRecovered(ctx, store, source)
+}
+
+// RunRecovered consumes legacy operations after the single owner has recovered
+// history once, before any legacy or mobile worker is started.
+func RunRecovered(ctx context.Context, store *storage.Store, source domain.HistorySource) error {
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 	for {

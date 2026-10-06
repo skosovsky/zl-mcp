@@ -112,6 +112,20 @@ never creates another listener/session. The callback must follow parent and
 upstream-session cancellation. Ports receive typed domain requests/checkpoints,
 not paths, credentials or public tool arguments.
 
+The production service implements this port using the current collector guard.
+It holds the membership session lease across all stages, binds authenticated
+archive transport and identity mapping to that account, and clears private scratch
+on callback exit. Parent/service cancellation stops the borrowed scope; upstream
+session loss returns authentication_required. No new listener or login is created.
+The private snapshot store lives at `STATE_DIR/mobile-snapshots`, under the same
+service state lock, and closes only after collector and worker shutdown.
+
+History recovery completes synchronously before either worker starts. The legacy
+worker consumes an already recovered queue; it must not recover again while mobile
+work is running. Every collector session starts one mobile loop and waits for it
+to stop before clearing the membership port. A worker storage failure terminates
+the session with a fixed public error, without exposing private source errors.
+
 An operation without a link reserves at most 180 seconds for its one phone offer,
 then creates the acquisition binding before invoking the receiver. It reconciles
 actual offer work transactionally, reserves at most 120 seconds for authenticated

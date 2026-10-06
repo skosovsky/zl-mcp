@@ -16,8 +16,9 @@ the subsequent September 26 interval (Vietnam local days).
 Its latest timestamp matches that peer's live corpus. Newly sent test messages
 were in another peer, so they do not demonstrate a stale export. A specific
 historical omission and uncheckpointed WAL loss have not been established.
-WAL-mode images still fail the current conversion gate, and the production mobile
-importer remains unwired. Diagnostic inspection now validates and classifies candidates even
+WAL-mode images still fail the current conversion gate. The production mobile
+port and worker lifecycle are now wired in source but remain uninstalled; public
+mobile source selection and real archive acceptance remain open. Diagnostic inspection now validates and classifies candidates even
 when a source gate prevents persistence, without returning message records;
 malformed candidates fail instead of being silently classified as blocked. See the [corrected evidence](contracts/mobile-backup-offer-probe.md#selected-image-coverage-and-correction-of-the-live-comparison).
 
@@ -94,7 +95,25 @@ unsupported WAL sources and unauthenticated admission. Known WAL/control source
 gates now have a distinct unsupported error instead of being reported as malformed
 SQLite. These tests use no Zalo network or model evals. The production session port,
 shared startup recovery/lifecycle wiring, live archive acceptance and public mobile
-source selection remain open; the worker is not installed or running in production.
+source selection remained open at that checkpoint; the worker was not installed or running in production.
+
+### Production session integration: 2026-10-06
+
+The current service source now creates the private encrypted snapshot store and
+starts the mobile queue under its existing collector session. Recovery precedes
+both legacy and mobile workers. The service cancels and joins mobile work before
+clearing the session port, and closes snapshots after service workers stop.
+Synthetic production-port tests exercise authenticated archive acquisition,
+encrypted snapshot publication and page processing using one restore/listener,
+one offer and one download, with zero historical Events/deliveries. Separate tests
+verify parent/service cancellation, upstream session loss, scope release, private
+scratch cleanup and redacted session formatting. No phone request or deployment
+was performed for these checks. WAL/control/content eligibility and the two real
+September 26 candidates remain unaccepted; public mobile input is still disabled.
+Full root tests and vet, affected service/collector/history-import race checks,
+CGO-free macOS arm64/Linux amd64 builds, diff whitespace validation and a redacted
+worktree secret scan passed for this integration. These are synthetic/source
+checks, not proof of live mobile history recovery or installed-client acceptance.
 Full root tests/vet and the affected storage/history-import/mobile-backup race
 checks passed for this checkpoint. The scan of the worktree found no secrets.
 
@@ -181,7 +200,7 @@ probe build. No phone request, Zalo send or subscription edit was performed.
 | --- | --- | --- |
 | Browse without a keyword | Current installed HTTP and actual connected-client catalogue→period browse→stable continuation→matching context checks pass; production regression tests | Final signed checkout/publication verification |
 | Expanded conversation catalogue | Guarded periodic preload refresh and actual connected-client catalogue reads; source/installed skills match and this desktop discovers both | Final deployment/publication consistency and other intended clients |
-| Explicit silent imports | Durable history journal with UUID/retry/cancel/restart tests; installed direct preload/group reads; synthetic archive-to-record-to-silent-storage callback retains text without Events | Three import tools are now discovered by the connected client; its import workflow and production mobile importer remain unverified/unwired |
+| Explicit silent imports | Durable history journal with UUID/retry/cancel/restart tests; installed direct preload/group reads; synthetic archive-to-record-to-silent-storage callback retains text without Events; production mobile session/worker integration verified synthetically | Three import tools are now discovered by the connected client; its import workflow and real mobile import remain unverified; current source is not installed |
 | Older Strangers message | Requested peer is selectable; September 30 archive interval is empty and September 26 has two candidate rows; preload only supplies an already retained record | Recovery from a deeper verified source, or a concrete verified source limitation agreed with the user |
 | Mobile request/transport | Current-session request/offer observer, durable dispatch ledger, restart recovery and private offer ownership; host-scoped cookie transport, scoped body consumption and revocation tests | Correlated live offer and owner mapping now accepted; download and selected sender mapping accepted by later probes; durable production import remains |
 | Mobile archive reading | Independent format-1/XXH32/XZ/OpenSSL and SQLite fixtures; typed file selection, immutable bounded SQLite reads with exact fractional-millisecond interval mapping, digest/request/account-bound keyset paging; one session/download across pages | Format/SQLite/plain-to-session reading accepted; full BinNet/content semantics remain |

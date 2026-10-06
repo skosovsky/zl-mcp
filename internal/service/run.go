@@ -24,6 +24,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/local"
 	"github.com/skosovsky/zl-mcp/internal/mcpserver"
 	"github.com/skosovsky/zl-mcp/internal/messaging"
+	"github.com/skosovsky/zl-mcp/internal/mobilebackup"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 	"github.com/skosovsky/zl-mcp/internal/zalo"
 )
@@ -50,6 +51,7 @@ type membershipPort struct {
 	allowSend  bool
 	recipients map[string]bool
 	lifecycle  context.Context
+	snapshots  *mobilebackup.SnapshotStore
 }
 
 func (p *membershipPort) set(j *collector.JoinManager) { p.mu.Lock(); p.current = j; p.mu.Unlock() }
@@ -172,7 +174,12 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	for _, id := range c.Permissions.SendRecipientIDs {
 		recipients[id] = true
 	}
-	port := &membershipPort{store: store, allowSend: c.Permissions.AllowSend, recipients: recipients, lifecycle: ctx}
+	snapshots, err := mobilebackup.NewSnapshotStore(filepath.Join(c.StateDir, "mobile-snapshots"), 512<<20)
+	if err != nil {
+		return errors.New("private mobile snapshot store unavailable")
+	}
+	defer snapshots.Close()
+	port := &membershipPort{store: store, allowSend: c.Permissions.AllowSend, recipients: recipients, lifecycle: ctx, snapshots: snapshots}
 	handler, err := mcpserver.NewHTTPWithControl(store, c.StateDir, token, port)
 	if err != nil {
 		return err
@@ -353,13 +360,35 @@ func collectSession(ctx context.Context, c config.Config, store *storage.Store, 
 			if err = save(client); err != nil {
 				return err
 			}
-			err = collector.RunInternal(ctx, c, store, client, func(j *collector.JoinManager) error {
+			sessionCtx, stopSession := context.WithCancel(ctx)
+			var mobileDone chan error
+			err = collector.RunInternal(sessionCtx, c, store, client, func(j *collector.JoinManager) error {
 				port.set(j)
 				if sender, ok := client.(messaging.Sender); ok {
 					port.setSender(sender)
 				}
+				if port.snapshots != nil {
+					mobileDone = make(chan error, 1)
+					go func() {
+						e := historyimport.RunMobile(sessionCtx, store, port)
+						mobileDone <- e
+						if e != nil {
+							stopSession()
+						}
+					}()
+				}
 				return nil
 			})
+			stopSession()
+			if mobileDone != nil {
+				if mobileErr := <-mobileDone; mobileErr != nil && err == nil {
+					if errors.Is(mobileErr, domain.ErrAuthenticationRequired) {
+						err = mobileErr
+					} else {
+						err = &domain.Error{Code: "STORAGE_ERROR", Message: "Mobile history worker storage failed."}
+					}
+				}
+			}
 			port.setSender(nil)
 			port.set(nil)
 			if ctx.Err() != nil {

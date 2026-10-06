@@ -51,9 +51,15 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 	runCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	if source, ok := client.(domain.HistorySource); ok {
+		if err := store.RecoverInterruptedHistory(runCtx); err != nil {
+			if runCtx.Err() != nil && (errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)) {
+				return nil
+			}
+			return &storageFailure{cause: err}
+		}
 		done := make(chan error, 1)
 		go func() {
-			err := historyimport.Run(runCtx, store, source)
+			err := historyimport.RunRecovered(runCtx, store, source)
 			done <- err
 			if err != nil {
 				cancel()
