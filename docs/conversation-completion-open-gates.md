@@ -44,6 +44,14 @@ plain/quote live acceptance verifies the corrected acknowledgement path; it does
 not establish that Zalo used a numeric JSON ID on this particular response.
 Numeric/string wire forms remain covered independently by encrypted HTTP tests.
 
+The separately authorized single mobile archive diagnostic for the historical
+September 26 selection reached `waiting_for_confirmation`, then finalized as
+`interrupted`. Correlated service records report `TIMEOUT` with dispatch claimed;
+they contain no accepted confirmation or offer for this attempt. No archive was
+downloaded or imported, and producer count presence could not be tested. This
+does not establish whether the phone displayed or accepted the prompt; the
+user's phone observation remains pending. The terminal attempt was not retried.
+
 The remaining full-scope gates are real incoming-only/first-only behaviour,
 the separately authorized out-of-catalogue send scenario, and safe real mobile-source
 admission and recovery of the user's older Strangers history. Synthetic source
