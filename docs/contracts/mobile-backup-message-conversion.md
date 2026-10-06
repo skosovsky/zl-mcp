@@ -12,10 +12,11 @@ Before conversion, the immutable SQLite reader counts deletion/undo source
 records (types 33/36) across the entire selected file, independent of timestamp,
 status and page position. Preserve `SourceControls` on each bound page. Reject
 conversion unless every control is a verified own-direct type-36/status-3
-candidate in the first bounded page, or an immutable committed checkpoint proves
-that first-page classification. WAL sources remain rejected. Later-page,
-out-of-window, received/group, type-33 and other-status controls block the source
-before any ordinary record prefix. Converted recall targets remain private and
+candidate in a committed whole-source prelude, or legacy immutable checkpoint
+evidence proves the accepted first-page classification. WAL sources remain
+rejected. Received/group, type-33 and other-status controls block the source before
+any ordinary record prefix. The prelude scanner independently handles late and
+out-of-period controls; this converter handles requested-period row coverage. Converted recall targets remain private and
 carry the original source timestamp, not an invented recall time.
 
 Convert verified type-0/webchat candidates without attachments, or with exactly

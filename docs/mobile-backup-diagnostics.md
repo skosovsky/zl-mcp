@@ -207,3 +207,13 @@ after successful macOS/Linux CI. HTTP/STDIO connectivity and preserved corpus,
 tombstones, send ledger and subscription definitions were checked; the real
 client still refused the recalled anchor. It has not been accepted against a new
 phone export; public mobile-archive admission remains disabled.
+
+### Whole-source prelude follow-up
+
+The next internal candidate replaces the first-page restriction for new source
+reads with a bounded complete control scan and atomic journal prelude. It handles
+verified own-direct recalls outside the requested message interval and after its
+first page, while preserving separate message coverage, original source expiry
+and silent replay suppression. A 52-target production-worker restart scenario is
+verified synthetically. The candidate has not been phone-accepted or deployed;
+the previously paired WAL images remain unimported.

@@ -3,7 +3,6 @@ package mobilebackup
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"path/filepath"
 	"testing"
 	"time"
@@ -73,7 +72,7 @@ func TestRecallSnapshotConverterJournalResumeTogether(t *testing.T) {
 	})
 	// Act: classify/commit the recall, then restart both stores before the message page.
 	page, err := snapshot.ReadHistoryPage(ctx, r, "10", t.TempDir(), 1, 0, nil, nil, mapper)
-	if err != nil || len(page.Recalls) != 1 || len(page.Records) != 0 || page.Counts.OwnRecalls != 1 || page.Counts.DeferredControls != 0 {
+	if err != nil || len(page.Recalls) != 1 || len(page.Records) != 0 || !page.ControlPrelude || page.Counts != (domain.MobileHistoryCounts{}) {
 		t.Fatal("source recall projection failed", err)
 	}
 	op, err = s.CommitMobileHistoryPage(ctx, op.Status.OperationID, op.Revision, page, 0)
@@ -88,6 +87,22 @@ func TestRecallSnapshotConverterJournalResumeTogether(t *testing.T) {
 	checkpoint, err := s.MobileHistoryCheckpoint(ctx, op.Status.OperationID)
 	if err != nil || checkpoint.Snapshot.ControlRows != 1 {
 		t.Fatal("source controls lost on restart", err)
+	}
+	page, err = snapshot.ReadHistoryPage(ctx, r, "10", t.TempDir(), 1, op.Status.RecordsObserved, &checkpoint.Snapshot, checkpoint.Next, mapper)
+	if err != nil {
+		t.Fatal(err)
+	}
+	op, err = s.CommitMobileHistoryPage(ctx, op.Status.OperationID, op.Revision, page, 0)
+	page.Clear()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if op.Status.PagesObserved != 1 || op.Status.RecordsObserved != 1 || op.Status.MobileCoverage.SourceRecalls != 1 {
+		t.Fatal("prelude changed period counters")
+	}
+	checkpoint, err = s.MobileHistoryCheckpoint(ctx, op.Status.OperationID)
+	if err != nil {
+		t.Fatal(err)
 	}
 	page, err = snapshot.ReadHistoryPage(ctx, r, "10", t.TempDir(), 1, op.Status.RecordsObserved, &checkpoint.Snapshot, checkpoint.Next, mapper)
 	if err != nil {
@@ -121,7 +136,7 @@ func TestRecallSnapshotConverterJournalResumeTogether(t *testing.T) {
 	}
 }
 
-func TestArchiveControlsOutsideFirstPageRemainUnsupported(t *testing.T) {
+func TestArchiveControlsOutsideFirstPageReturnPreludeBeforeMessages(t *testing.T) {
 	// Arrange: one ordinary row precedes a later own recall in the same source.
 	ctx := context.Background()
 	r, _ := selectedFetchRequest().Normalize()
@@ -150,7 +165,7 @@ func TestArchiveControlsOutsideFirstPageRemainUnsupported(t *testing.T) {
 	page, err := snapshots.ReadHistoryPage(ctx, r, "10", t.TempDir(), 1, 0, nil, nil, mapper)
 	defer page.Clear()
 	// Assert: no ordinary-record prefix before the unresolved later control.
-	if !errors.Is(err, ErrSnapshotSourceUnsupported) || len(page.Records) != 0 || len(page.Recalls) != 0 {
+	if err != nil || !page.ControlPrelude || len(page.Records) != 0 || len(page.Recalls) != 1 || page.Counts.Examined != 0 {
 		t.Fatal("unseen control permitted record prefix", err)
 	}
 }

@@ -551,4 +551,48 @@ port still repairs pre-upgrade inactive evidence and is idempotent.
 Deterministic tests check partial, paused, cancelled, unsupported and failed
 transitions without a worker cleanup call, plus rollback at the release step.
 The exact failing worker scenario passed 20 race repetitions. Public mobile input
-and the WAL source gate remain unchanged. This fix is not installed yet.
+and the WAL source gate remain unchanged. The fix was subsequently installed
+from clean commit `39229a9`, with successful macOS/Linux CI and connected HTTP/STDIO
+acceptance below.
+
+### Whole-source control prelude integration candidate
+
+The whole-source scanner is now integrated into the snapshot reader and durable
+history worker. A positive control count produces a private prelude containing
+only verified targets. Storage atomically publishes all tombstones and complete
+source proof before ordinary pages. New optional coverage fields separate
+`source_recalls` from period-local `own_recalls`; ordinary record/page counters
+remain zero during the prelude. Schema stays 14, and legacy checkpoint evidence
+retains its old behavior.
+
+A synthetic production-worker cycle commits 52 outside-period recalls, stops
+before its first ordinary page, restarts both stores and resumes with the same
+digest and expiry. It receives/downloads once, imports one supported rich-text
+record, retains all tombstones and emits no Events. Reader/storage tests cover
+late controls, missing/forged prelude evidence, invalid targets and transaction
+rollback. These changes are not installed or accepted on a fresh phone archive.
+WAL, type-33/received/group controls and public mobile admission remain gated.
+
+### Native deployment acceptance: terminal acquisition release
+
+[39229a9](https://github.com/skosovsky/zl-mcp/commit/39229a956c85a38137bb35372dfa247593032c9b)
+passed [both CI jobs](https://github.com/skosovsky/zl-mcp/actions/runs/37482211166).
+The exact clean checkout produced a no-CGO, trimpath macOS arm64 binary with
+`vcs.modified=false`, ad hoc signed and installed SHA-256
+`5bb25755612aac2d68a8af357647972e9546a96cfbd4299009ed7176dcd90a21`.
+A verified private state/binary/config/LaunchAgent backup preceded replacement.
+The configuration and existing single LaunchAgent remained unchanged, schema is
+14, integrity valid, and all prior messages/identities/tombstones/send and quote
+records/first-incoming evidence and subscription definitions were preserved.
+Sending remains disabled.
+
+The actual connected client initially observed reconnecting without an error,
+then connected/authenticated without another restart. Local HTTP publishes v2
+plus the legacy group event and all recovery tools; one active subscription had
+an empty unblocked journal, with no diagnostic acknowledgement. The first cold
+STDIO initialization reached its observation timeout; after service readiness,
+the repeated bridge negotiated 2025-11-25 and returned 21 tools/resources/logging,
+no Events, authenticated connected status. This does not establish the cause of
+the intermittent startup latency. No send, phone request or subscription change
+was performed for this deployment. The whole-source prelude integration remains
+an uninstalled candidate at this checkpoint.

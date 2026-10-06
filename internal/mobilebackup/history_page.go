@@ -16,7 +16,7 @@ var ErrSnapshotSourceUnsupported = errors.New("selected mobile snapshot source i
 // The caller supplies only durable progress from the operation/source journal.
 func (s *SnapshotStore) ReadHistoryPage(ctx context.Context, request domain.MobileBackupRequest, account, scratch string, size, examined int, previous *domain.MobileHistorySnapshot, after *domain.MobileHistoryPosition, mapper domain.MobileIdentitySource) (result domain.MobileHistoryPage, err error) {
 	r, err := request.Normalize()
-	if err != nil || examined < 0 || examined >= r.MaxMessages || (examined == 0) != (previous == nil) || (examined == 0) != (after == nil) {
+	if err != nil || examined < 0 || examined >= r.MaxMessages || examined == 0 && (after != nil || previous != nil && !previous.ControlPreludeComplete) || examined > 0 && (previous == nil || after == nil) {
 		return result, ErrSnapshot
 	}
 	selected, err := s.Read(ctx, r, account)
@@ -48,6 +48,23 @@ func (s *SnapshotStore) ReadHistoryPage(ctx context.Context, request domain.Mobi
 	}
 	defer page.Clear()
 	source := domain.MobileHistorySnapshot{ID: r.RequestID, Digest: digest, CreatedMS: selected.snapshotCreatedMS, ExpiresMS: selected.snapshotExpiresMS, SourceRows: page.Coverage.SourceRows, PeriodRows: page.Coverage.PeriodRows, InvalidTimestampRows: page.Coverage.InvalidTimestamps, HasRange: page.Coverage.HasRange, EarliestMS: page.Coverage.EarliestMS, LatestMS: page.Coverage.LatestMS, WALMode: page.SourceWAL, ControlRows: page.SourceControls}
+	if previous == nil && source.ControlRows > 0 && r.ConversationType == domain.ConversationDirect && !source.WALMode {
+		controls, scanErr := ReadOwnDirectRecallSet(ctx, selected, r, account, scratch, 5000, mapper)
+		if scanErr != nil {
+			return result, scanErr
+		}
+		defer controls.Clear()
+		if ctx.Err() != nil || time.Now().UnixMilli() >= source.ExpiresMS || len(controls.Recalls) != source.ControlRows {
+			return result, ErrSnapshot
+		}
+		source.ControlPreludeComplete = true
+		result.Snapshot, result.ControlPrelude, result.HasMore = source, true, true
+		result.Recalls, controls.Recalls = controls.Recalls, nil
+		return result, nil
+	}
+	if previous != nil {
+		source.ControlPreludeComplete = previous.ControlPreludeComplete
+	}
 	if previous != nil && *previous != source {
 		return result, ErrSnapshotConflict
 	}
@@ -71,6 +88,8 @@ func (s *SnapshotStore) ReadHistoryPage(ctx context.Context, request domain.Mobi
 		result.Next = &domain.MobileHistoryPosition{TimestampMS: page.Next.sqlite.TimestampMS, RowID: page.Next.sqlite.RowID}
 	}
 	result.Records, converted.Records = converted.Records, nil
-	result.Recalls, converted.Recalls = converted.Recalls, nil
+	if !source.ControlPreludeComplete {
+		result.Recalls, converted.Recalls = converted.Recalls, nil
+	}
 	return result, nil
 }

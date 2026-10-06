@@ -31,8 +31,9 @@ archive diagnostic reports only `own_recall_candidates`, never IDs or bodies.
 Clear owned targets with the page. No archive-control target invokes a live
 recall API. The [checkpoint transaction](mobile-history-checkpoint.md#atomic-own-direct-archive-recalls)
 applies silent tombstones before ordinary records. It accepts a non-WAL source
-only when every whole-file control is classified in its first bounded page;
-later-page or out-of-period controls block all import. This limited support does
+only when every whole-file control has been classified. New source reads use a
+[whole-source prelude](mobile-backup-control-scan.md) before ordinary pages; legacy
+checkpoint evidence retains its accepted first-page bounds. This limited support does
 not prove archive completeness or support arbitrary controls.
 
 PrepareRowPage accepts at most 50 already selected rows, normalized exact request,

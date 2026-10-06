@@ -163,16 +163,18 @@ and original source-row timestamp. It carries no text or presumed recall time.
 than deferred gaps. `source_controls` freezes the whole-file control count in
 `mobile_coverage`; legacy checkpoints without it mean zero controls.
 
-Before the first page can commit anything, every whole-file type-33/36 control
-must be represented by a validated own-direct recall in that page. Otherwise
-the source remains unsupported. This bounded initial implementation deliberately
-keeps out-of-period, later-page, larger-than-page, incoming/group, other-status
-and type-33 controls ineligible. A future separate bounded whole-control scan is
-needed for those cases; never import an ordinary page first and hope to discover
-a suppressing control later. WAL mode is still independently rejected.
+New source reads with controls first produce a [whole-source control prelude](mobile-backup-control-scan.md).
+All type-33/36 controls must be verified before ordinary pages can commit. The
+bounded scan supports own-direct type-36/status-3 controls across page and
+requested-period boundaries. It remains limited to 5,000 controls and 30 seconds;
+incoming/group, other-status, type-33 and WAL sources remain unsupported.
+Legacy first-page source/checkpoint evidence retains its original bounded
+semantics; missing prelude fields never grant a new whole-source proof.
 
 Validate all recall targets, interval/keyset bounds, exact sender/account and
-unique IDs before writing. Apply tombstones and existing record removal before
+unique IDs before writing. A whole-source prelude uses validated global source
+bounds for its targets; ordinary records still obey the requested interval and
+keyset. Apply tombstones and existing record removal before
 ordinary historical records, in the same transaction as identities, novelty,
 expiry, source binding and operation checkpoint. Use local observation time for
 `deleted_at`; the row timestamp is not evidence of the time of recall. Same-page

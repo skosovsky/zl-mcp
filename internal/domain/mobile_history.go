@@ -12,6 +12,7 @@ type MobileHistorySnapshot struct {
 	EarliestMS, LatestMS                         int64    `json:"-"`
 	WALMode                                      bool     `json:"-"`
 	ControlRows                                  int      `json:"-"`
+	ControlPreludeComplete                       bool     `json:"-"`
 }
 
 func (MobileHistorySnapshot) String() string   { return "mobile history snapshot [redacted]" }
@@ -43,10 +44,12 @@ type MobileHistoryCounts struct {
 
 type MobileHistoryCoverage struct {
 	MobileHistoryCounts
-	SourceRows           int64 `json:"source_rows"`
-	PeriodRows           int64 `json:"period_rows"`
-	InvalidTimestampRows int64 `json:"invalid_timestamp_rows"`
-	SourceControls       int   `json:"source_controls"`
+	SourceRows             int64 `json:"source_rows"`
+	PeriodRows             int64 `json:"period_rows"`
+	InvalidTimestampRows   int64 `json:"invalid_timestamp_rows"`
+	SourceControls         int   `json:"source_controls"`
+	SourceRecalls          int   `json:"source_recalls,omitempty"`
+	ControlPreludeComplete bool  `json:"control_prelude_complete,omitempty"`
 }
 
 // MobileHistoryRecall is a validated source observation, never a live recall request.
@@ -62,12 +65,13 @@ func (MobileHistoryRecall) GoString() string { return "historical recall [redact
 
 // MobileHistoryPage carries one exact source page; persistence is always silent.
 type MobileHistoryPage struct {
-	Snapshot MobileHistorySnapshot   `json:"-"`
-	Records  []ExpiringHistoryRecord `json:"-"`
-	Recalls  []MobileHistoryRecall   `json:"-"`
-	Counts   MobileHistoryCounts     `json:"-"`
-	HasMore  bool                    `json:"-"`
-	Next     *MobileHistoryPosition  `json:"-"`
+	ControlPrelude bool                    `json:"-"`
+	Snapshot       MobileHistorySnapshot   `json:"-"`
+	Records        []ExpiringHistoryRecord `json:"-"`
+	Recalls        []MobileHistoryRecall   `json:"-"`
+	Counts         MobileHistoryCounts     `json:"-"`
+	HasMore        bool                    `json:"-"`
+	Next           *MobileHistoryPosition  `json:"-"`
 }
 
 func (MobileHistoryPage) String() string   { return "mobile history page [redacted]" }

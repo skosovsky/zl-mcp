@@ -2,11 +2,8 @@ package storage
 
 import (
 	"context"
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"errors"
-	"strconv"
 	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -48,7 +45,7 @@ func loadMobileHistoryCheckpoint(ctx context.Context, q historyReader, id string
 	var c MobileHistoryCheckpoint
 	var digest []byte
 	var ts, rowid sql.NullInt64
-	err := q.QueryRowContext(ctx, `SELECT snapshot_id,digest,created_ms,expires_ms,source_rows,period_rows,invalid_timestamp_rows,has_range,earliest_ms,latest_ms,next_timestamp_ms,next_rowid,coalesce(json_extract(o.payload,'$.mobile_coverage.source_controls'),0) FROM history_mobile_sources h JOIN history_operations o USING(operation_id) WHERE h.operation_id=?`, id).Scan(&c.Snapshot.ID, &digest, &c.Snapshot.CreatedMS, &c.Snapshot.ExpiresMS, &c.Snapshot.SourceRows, &c.Snapshot.PeriodRows, &c.Snapshot.InvalidTimestampRows, &c.Snapshot.HasRange, &c.Snapshot.EarliestMS, &c.Snapshot.LatestMS, &ts, &rowid, &c.Snapshot.ControlRows)
+	err := q.QueryRowContext(ctx, `SELECT snapshot_id,digest,created_ms,expires_ms,source_rows,period_rows,invalid_timestamp_rows,has_range,earliest_ms,latest_ms,next_timestamp_ms,next_rowid,coalesce(json_extract(o.payload,'$.mobile_coverage.source_controls'),0),coalesce(json_extract(o.payload,'$.mobile_coverage.control_prelude_complete'),0) FROM history_mobile_sources h JOIN history_operations o USING(operation_id) WHERE h.operation_id=?`, id).Scan(&c.Snapshot.ID, &digest, &c.Snapshot.CreatedMS, &c.Snapshot.ExpiresMS, &c.Snapshot.SourceRows, &c.Snapshot.PeriodRows, &c.Snapshot.InvalidTimestampRows, &c.Snapshot.HasRange, &c.Snapshot.EarliestMS, &c.Snapshot.LatestMS, &ts, &rowid, &c.Snapshot.ControlRows, &c.Snapshot.ControlPreludeComplete)
 	if err != nil {
 		return c, err
 	}
@@ -74,7 +71,7 @@ func (s *Store) MobileHistoryCheckpoint(ctx context.Context, id string) (MobileH
 }
 
 func validMobileSource(source domain.MobileHistorySnapshot, op HistoryOperation, nowMS int64) bool {
-	if source.ID != op.Status.RequestID || source.Digest == ([32]byte{}) || source.CreatedMS <= 0 || source.CreatedMS > nowMS || source.ExpiresMS-source.CreatedMS != int64(15*time.Minute/time.Millisecond) || source.ExpiresMS <= nowMS || source.WALMode || source.ControlRows < 0 || int64(source.ControlRows) > source.SourceRows || source.ControlRows > 0 && op.Status.ConversationType != domain.ConversationDirect {
+	if source.ID != op.Status.RequestID || source.Digest == ([32]byte{}) || source.CreatedMS <= 0 || source.CreatedMS > nowMS || source.ExpiresMS-source.CreatedMS != int64(15*time.Minute/time.Millisecond) || source.ExpiresMS <= nowMS || source.WALMode || source.ControlRows < 0 || source.ControlPreludeComplete && source.ControlRows <= 0 || int64(source.ControlRows) > source.SourceRows || source.ControlRows > 0 && op.Status.ConversationType != domain.ConversationDirect {
 		return false
 	}
 	if source.SourceRows < 0 || source.SourceRows > 256<<20 || source.PeriodRows < 0 || source.PeriodRows > source.SourceRows-source.InvalidTimestampRows || source.InvalidTimestampRows < 0 || source.InvalidTimestampRows > source.SourceRows {
@@ -145,8 +142,14 @@ func (s *Store) CommitMobileHistoryPage(ctx context.Context, id string, revision
 	if elapsed < 0 || elapsed > MobileHistoryWorkBudget || op.Status.PagesObserved >= op.Status.MaxPages || !validMobileSource(page.Snapshot, op, time.Now().UnixMilli()) {
 		return HistoryOperation{}, ErrMobileHistorySource
 	}
+	if page.ControlPrelude {
+		return s.commitMobileControlPreludeTx(ctx, tx, op, page, elapsed, started)
+	}
+	if page.Snapshot.ControlPreludeComplete && (op.Status.MobileCoverage == nil || !op.Status.MobileCoverage.ControlPreludeComplete) {
+		return HistoryOperation{}, ErrMobileHistorySource
+	}
 	limit := min(op.Status.PageSize, op.Status.MaxMessages-op.Status.RecordsObserved)
-	if page.Counts.OwnRecalls != len(page.Recalls) || !validMobileCounts(page.Counts, len(page.Records), limit) || int64(op.Status.RecordsObserved+page.Counts.Examined) > page.Snapshot.PeriodRows {
+	if !page.Snapshot.ControlPreludeComplete && page.Counts.OwnRecalls != len(page.Recalls) || page.Snapshot.ControlPreludeComplete && len(page.Recalls) != 0 || !validMobileCounts(page.Counts, len(page.Records), limit) || int64(op.Status.RecordsObserved+page.Counts.Examined) > page.Snapshot.PeriodRows {
 		return HistoryOperation{}, domain.Invalid("Invalid mobile history source counts.")
 	}
 	if err = s.validateExpiringHistoryPage(op.Status.Ref(), page.Records); err != nil {
@@ -154,16 +157,10 @@ func (s *Store) CommitMobileHistoryPage(ctx context.Context, id string, revision
 	}
 	since, _ := time.Parse(time.RFC3339Nano, op.Status.Since)
 	until, _ := time.Parse(time.RFC3339Nano, op.Status.Until)
-	seenRecalls := map[string]bool{}
-	for _, recall := range page.Recalls {
-		id, e := strconv.ParseUint(recall.MessageID, 10, 64)
-		at := time.UnixMilli(recall.RecordAtMS)
-		senderHash := sha256.Sum256([]byte(recall.SenderID))
-		if e != nil || id == 0 || strconv.FormatUint(id, 10) != recall.MessageID || seenRecalls[recall.MessageID] || recall.Conversation != op.Status.Ref() || recall.Conversation.Type != domain.ConversationDirect || recall.SenderID == "" || hex.EncodeToString(senderHash[:]) != op.accountKey || at.Before(since) || !at.Before(until) || recall.RecordAtMS < page.Snapshot.EarliestMS || recall.RecordAtMS > page.Snapshot.LatestMS {
-			return HistoryOperation{}, domain.Invalid("Invalid mobile history recall target.")
-		}
-		seenRecalls[recall.MessageID] = true
+	if err = validateMobileRecallTargets(op, page.Snapshot, page.Recalls, true); err != nil {
+		return HistoryOperation{}, err
 	}
+
 	for _, r := range page.Records {
 		if r.Message.SentAt.Before(since) || !r.Message.SentAt.Before(until) || r.Message.SentAt.UnixMilli() < page.Snapshot.EarliestMS || r.Message.SentAt.UnixMilli() > page.Snapshot.LatestMS {
 			return HistoryOperation{}, domain.Invalid("Mobile history record is outside the requested interval.")
@@ -186,6 +183,11 @@ func (s *Store) CommitMobileHistoryPage(ctx context.Context, id string, revision
 	}
 	if e != nil {
 		if len(page.Recalls) != page.Snapshot.ControlRows {
+			return HistoryOperation{}, ErrMobileHistorySource
+		}
+	} else if page.Snapshot.ControlPreludeComplete {
+		coverage := op.Status.MobileCoverage
+		if len(page.Recalls) != 0 || coverage == nil || !coverage.ControlPreludeComplete || coverage.SourceRecalls != page.Snapshot.ControlRows || coverage.OwnRecalls+page.Counts.OwnRecalls > page.Snapshot.ControlRows {
 			return HistoryOperation{}, ErrMobileHistorySource
 		}
 	} else if len(page.Recalls) != 0 || op.Status.MobileCoverage == nil || op.Status.MobileCoverage.OwnRecalls != page.Snapshot.ControlRows {
@@ -246,6 +248,8 @@ func (s *Store) CommitMobileHistoryPage(ctx context.Context, id string, revision
 	coverage := domain.MobileHistoryCoverage{SourceRows: page.Snapshot.SourceRows, PeriodRows: page.Snapshot.PeriodRows, InvalidTimestampRows: page.Snapshot.InvalidTimestampRows, SourceControls: page.Snapshot.ControlRows}
 	if op.Status.MobileCoverage != nil {
 		coverage.MobileHistoryCounts = op.Status.MobileCoverage.MobileHistoryCounts
+		coverage.SourceRecalls = op.Status.MobileCoverage.SourceRecalls
+		coverage.ControlPreludeComplete = op.Status.MobileCoverage.ControlPreludeComplete
 	}
 	coverage.MobileHistoryCounts = addMobileCounts(coverage.MobileHistoryCounts, page.Counts)
 	op.Status.MobileCoverage = &coverage
@@ -267,15 +271,11 @@ func (s *Store) CommitMobileHistoryPage(ctx context.Context, id string, revision
 	case op.WorkDuration >= MobileHistoryWorkBudget:
 		historyStopped(&op, "partial", "time_limit")
 	}
-	var ts, rowid any
-	if page.Next != nil {
-		ts, rowid = page.Next.TimestampMS, page.Next.RowID
-	}
 	source := page.Snapshot
-	_, err = tx.ExecContext(ctx, `INSERT INTO history_mobile_sources(operation_id,snapshot_id,digest,created_ms,expires_ms,source_rows,period_rows,invalid_timestamp_rows,has_range,earliest_ms,latest_ms,next_timestamp_ms,next_rowid) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(operation_id) DO UPDATE SET next_timestamp_ms=excluded.next_timestamp_ms,next_rowid=excluded.next_rowid`, id, source.ID, source.Digest[:], source.CreatedMS, source.ExpiresMS, source.SourceRows, source.PeriodRows, source.InvalidTimestampRows, source.HasRange, source.EarliestMS, source.LatestMS, ts, rowid)
-	if err != nil {
+	if err = saveMobileSourceCheckpoint(ctx, tx, id, source, page.Next); err != nil {
 		return HistoryOperation{}, err
 	}
+
 	if err = s.expireHistoryTx(ctx, tx, time.Now()); err != nil {
 		return HistoryOperation{}, err
 	}

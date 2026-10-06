@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -43,6 +44,7 @@ type historyWorkerSession struct {
 	saveErr                error
 	receiveErr             error
 	beforeRead             func(int) error
+	mapper                 domain.MobileIdentitySource
 }
 
 func stageDeadline(ctx context.Context, maximum time.Duration) bool {
@@ -93,7 +95,11 @@ func (s *historyWorkerSession) ReadHistoryPage(ctx context.Context, r domain.Mob
 			return domain.MobileHistoryPage{}, err
 		}
 	}
-	page, err := s.snapshots.ReadHistoryPage(ctx, r, "10", s.scratch, size, examined, previous, after, historyPageMapper())
+	mapper := s.mapper
+	if mapper == nil {
+		mapper = historyPageMapper()
+	}
+	page, err := s.snapshots.ReadHistoryPage(ctx, r, "10", s.scratch, size, examined, previous, after, mapper)
 	if errors.Is(err, ErrSnapshot) || errors.Is(err, ErrSnapshotConflict) {
 		return domain.MobileHistoryPage{}, historyimport.ErrMobileHistorySourceUnavailable
 	}
@@ -466,4 +472,101 @@ func TestMobileWorkerUnauthenticatedLeasePausesBeforePhone(t *testing.T) {
 	if _, err = source.session.store.MobileHistoryAcquisition(context.Background(), op.Status.OperationID); err == nil {
 		t.Fatal("authentication waiting created an acquisition")
 	}
+}
+
+func TestMobileWorkerWholeControlPreludeResumesWithoutRedispatch(t *testing.T) {
+	// Arrange: 52 own recalls outside the requested period and one ordinary row.
+	source, pending, path, dir, r := historyWorkerFixture(t)
+	source.session.selected.Clear()
+	until, _ := time.Parse(time.RFC3339Nano, r.Until)
+	stamp := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC).UnixMilli()
+	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
+		metadata := attachmentField(6, append(attachmentField(45, []byte("rtf")), attachmentField(47, []byte("synthetic visible text"))...))
+		if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", "13", "14", "synthetic body", stamp, 0, 0, 1, metadata); err != nil {
+			t.Fatal(err)
+		}
+		for i := 0; i < 52; i++ {
+			if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "903", fmt.Sprint(100+i), fmt.Sprint(200+i), "untrusted recalled body", until.UnixMilli()+int64(i), 0, 36, 3, nil); err != nil {
+				t.Fatal(err)
+			}
+		}
+	})
+	source.session.selected = SelectedArchive{requestID: r.RequestID, requestFingerprint: r.Fingerprint(), ref: r.Ref(), File: ArchiveFile{Name: "902.db", Data: data}}
+	defer source.session.selected.Clear()
+	source.session.mapper = identitySourceFunc(func(ctx context.Context, request domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+		out := []domain.MobileIdentityPair{}
+		for _, plain := range request.Direct {
+			session := "12"
+			if plain == "903" {
+				session = "10"
+			}
+			out = append(out, domain.MobileIdentityPair{Plain: plain, Session: session})
+		}
+		return out, nil
+	})
+	original := domain.Message{Conversation: r.Ref(), ID: "100", SenderID: "10", Direction: "outgoing", SentAt: until, Text: "synthetic retained original"}
+	if _, err := source.session.store.PutHistoryPage(context.Background(), r.Ref(), []domain.Message{original}); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	source.session.beforeRead = func(page int) error {
+		if page == 2 {
+			cancel()
+			return ctx.Err()
+		}
+		return nil
+	}
+	// Act: stop between the committed prelude and first ordinary page, then restart.
+	done := startHistoryWorker(ctx, source.session.store, source)
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("prelude worker stop deadline")
+	}
+	current, err := source.session.store.HistoryOperation(context.Background(), pending.Status.OperationID)
+	if err != nil || current.Status.PagesObserved != 0 || current.Status.RecordsObserved != 0 || current.Status.MobileCoverage == nil || current.Status.MobileCoverage.SourceRecalls != 52 || !current.Status.MobileCoverage.ControlPreludeComplete {
+		t.Fatal("prelude not durable before shutdown", err)
+	}
+	before, err := source.session.store.MobileHistoryCheckpoint(context.Background(), pending.Status.OperationID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	source.session.store.Close()
+	source.session.snapshots.Close()
+	next, err := storage.OpenWithPolicy(context.Background(), path, domain.CollectionPolicy{All: true}, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer next.Close()
+	if err = next.BindAccount(context.Background(), "10"); err != nil {
+		t.Fatal(err)
+	}
+	if err = next.RecoverInterruptedHistory(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	source.session.store = next
+	source.session.snapshots = openSnapshotStore(t, dir, 1<<20)
+	source.session.beforeRead = nil
+	resumed, stop := context.WithCancel(context.Background())
+	defer stop()
+	done = startHistoryWorker(resumed, next, source)
+	final := waitMobileState(t, next, pending.Status.OperationID, "completed")
+	stopHistoryWorker(t, stop, done)
+	// Assert: only one receive/save, no repeated prelude or outside-period message counts.
+	after, err := next.MobileHistoryCheckpoint(context.Background(), pending.Status.OperationID)
+	if err != nil || before.Snapshot != after.Snapshot || source.session.receives != 1 || source.session.saves != 1 || source.session.reads != 3 || final.Status.MobileCoverage.SourceRecalls != 52 || final.Status.MobileCoverage.OwnRecalls != 0 || final.Status.PagesObserved != 1 || final.Status.RecordsObserved != 1 || final.Status.InsertedCount != 1 || final.Status.HistoryComplete {
+		t.Fatal("prelude resume guessed coverage or reacquired source", err)
+	}
+	var n int
+	if err = next.DB.QueryRow("SELECT count(*) FROM message_tombstones").Scan(&n); err != nil || n != 52 {
+		t.Fatal("whole recall set lost", err)
+	}
+	if _, err = next.ConversationMessage(context.Background(), r.Ref(), "100"); err == nil {
+		t.Fatal("outside-period recall restored")
+	}
+	assertSilentWorker(t, next, 1)
 }

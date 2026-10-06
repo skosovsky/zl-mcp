@@ -1,8 +1,7 @@
 # Whole-source own-direct recall scan
 
-Status: internal reader primitive. It does not enable public import or replace
-the installed first-page checkpoint policy. Integration requires a durable control
-prelude before ordinary pages, as described below.
+Status: internal whole-source scan and journal prelude candidate. Public mobile
+import remains disabled; deployment and real phone source acceptance are separate.
 
 A selected source is bound to the exact normalized request/fingerprint, typed
 direct conversation and current session account. Scan type-33/36 rows across its
@@ -41,3 +40,25 @@ Restart resumes ordinary paging from the committed prelude without another phone
 transfer or an expiry extension. Cancellation/revocation/stale revisions and
 rollback must apply to this phase. No ordinary page may precede complete control
 proof. The reader primitive alone is not that transaction or public acceptance.
+
+## Prelude representation and compatibility
+
+A private `MobileHistoryPage` with `ControlPrelude=true` carries the complete
+verified target set, no ordinary records/counts/cursor, and `HasMore=true` to
+continue ordinary paging. Its snapshot marks `ControlPreludeComplete`. The
+transaction freezes source binding and records `control_prelude_complete=true`
+and `source_recalls` in public mobile coverage. Both fields are optional in the
+output schema for legacy checkpoints; missing means false/zero.
+
+`source_recalls` counts whole-source tombstones applied once. `own_recalls` counts
+classified control rows examined in the requested message period. Prelude work
+changes neither ordinary `records_observed` nor `pages_observed`, and does not
+consume their limits. Its elapsed work consumes the existing durable work budget.
+The source identity/digest and fixed expiry cannot change between phases.
+
+A committed prelude with zero ordinary progress resumes the first ordinary page
+without a message cursor. The worker loads a source checkpoint when mobile
+coverage exists, even before the first ordinary page. Subsequent ordinary pages
+carry no new tombstone targets: period-local recalls only affect row coverage.
+Legacy accepted first-page recall checkpoints retain their original behavior;
+they are not upgraded by guessing or rescanning a different snapshot.

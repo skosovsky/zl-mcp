@@ -180,7 +180,7 @@ func runMobileOperation(ctx context.Context, store *storage.Store, source Mobile
 			}
 			var previous *domain.MobileHistorySnapshot
 			var after *domain.MobileHistoryPosition
-			if op.Status.PagesObserved > 0 {
+			if op.Status.PagesObserved > 0 || op.Status.MobileCoverage != nil {
 				checkpoint, e := store.MobileHistoryCheckpoint(sessionCtx, op.Status.OperationID)
 				if e != nil {
 					storageFailed = !errors.Is(e, storage.ErrHistoryState)

@@ -268,12 +268,22 @@
         "own_recalls": {
           "type": "integer",
           "minimum": 0,
-          "description": "Verified own-direct source recall rows committed silently as tombstones; not ordinary inserted messages."
+          "description": "Verified own-direct control rows examined in the requested period; whole-source applied targets are counted separately in source_recalls."
         },
         "source_controls": {
           "type": "integer",
           "minimum": 0,
           "description": "Frozen whole-file control count; all controls must be verified before the first page commits."
+        },
+        "source_recalls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "Whole-source own-direct tombstones applied by the control prelude, independent of the requested message period."
+        },
+        "control_prelude_complete": {
+          "type": "boolean",
+          "description": "Whole-source control proof and tombstones committed before ordinary message paging."
         }
       },
       "required": [
