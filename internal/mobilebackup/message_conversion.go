@@ -75,6 +75,13 @@ func convertArchiveCandidates(ctx context.Context, page PreparedArchivePage, req
 	// Whole-page validation precedes classification and output construction.
 	for _, row := range page.Candidates.Rows {
 		total += len(row.Row.Text) + len(row.Row.BinNet)
+		projected, _, _, valid := archiveText(row)
+		if !valid {
+			return result, ErrSQLite
+		}
+		if projected != row.Row.Text {
+			total += len(projected)
+		}
 		kind, known := mobilePayloadKind(row.Row.Type)
 		expiry, declared, e := MessageExpiryMS(row.Row.TimestampMS, row.Row.TTL)
 		direction := "incoming"
@@ -98,13 +105,8 @@ func convertArchiveCandidates(ctx context.Context, page PreparedArchivePage, req
 			result.Expired++
 			continue
 		}
-		attachment := len(row.Metadata.Attachments) > 0
-		for _, tag := range row.Metadata.UnsupportedTags {
-			if tag == 6 {
-				attachment = true
-			}
-		}
-		if row.Kind != "webchat" || attachment {
+		text, rich, supported, _ := archiveText(row)
+		if !supported {
 			result.UnsupportedContent++
 			continue
 		}
@@ -112,7 +114,10 @@ func convertArchiveCandidates(ctx context.Context, page PreparedArchivePage, req
 			result.UnresolvedQuotes++
 		}
 		result.UnresolvedMentions += len(row.Metadata.Mentions)
-		message := domain.Message{Conversation: r.Ref(), ID: row.Row.MessageID, SenderID: row.SenderID, SentAt: time.UnixMilli(row.Row.TimestampMS).UTC(), Text: row.Row.Text, Direction: row.Direction, AttachmentTypes: []string{}, QuoteMetadata: &domain.QuoteMetadata{ClientMessageID: row.Row.ClientID, MessageType: "webchat", Timestamp: strconv.FormatInt(row.Row.TimestampMS, 10), TTL: int(row.Row.TTL)}}
+		message := domain.Message{Conversation: r.Ref(), ID: row.Row.MessageID, SenderID: row.SenderID, SentAt: time.UnixMilli(row.Row.TimestampMS).UTC(), Text: text, Direction: row.Direction, AttachmentTypes: []string{}, QuoteMetadata: &domain.QuoteMetadata{ClientMessageID: row.Row.ClientID, MessageType: "webchat", Timestamp: strconv.FormatInt(row.Row.TimestampMS, 10), TTL: int(row.Row.TTL)}}
+		if rich {
+			message.AttachmentTypes = []string{"rtf"}
+		}
 		if int64(message.QuoteMetadata.TTL) != row.Row.TTL {
 			return result, ErrSQLite
 		}
@@ -122,4 +127,38 @@ func convertArchiveCandidates(ctx context.Context, page PreparedArchivePage, req
 		return result, ErrSQLite
 	}
 	return result, nil
+}
+
+// archiveText follows the installed MSG_TEXT title-or-MsgContent rule. It does
+// not render styling or interpret arbitrary attachment params/URLs.
+func archiveText(row PreparedRow) (text string, rich, supported, valid bool) {
+	text, valid = row.Row.Text, true
+	if row.Kind != "webchat" {
+		return
+	}
+	for _, tag := range row.Metadata.UnsupportedTags {
+		if tag == 6 {
+			return
+		}
+	}
+	if len(row.Metadata.Attachments) == 0 {
+		supported = true
+		return
+	}
+	if len(row.Metadata.Attachments) != 1 {
+		return
+	}
+	a := row.Metadata.Attachments[0]
+	if !utf8.Valid(a.Action.Bytes) || !utf8.Valid(a.Title.Bytes) || len(a.Title.Bytes) > 1<<20 {
+		valid = false
+		return
+	}
+	if !a.Action.Present || string(a.Action.Bytes) != "rtf" {
+		return
+	}
+	if a.Title.Present && len(a.Title.Bytes) > 0 {
+		text = string(a.Title.Bytes)
+	}
+	rich, supported = true, true
+	return
 }

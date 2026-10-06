@@ -45,12 +45,16 @@ attachment meaning from the field names. Such actions require separate verified
 semantics. The attachment id is a signed 32-bit attachment property, not a Zalo
 message identity.
 
-Decode does not establish supported content. The candidate converter continues
-to count an attachment-bearing row as unsupported, including type-0 rich text,
-until rendering rules are separately validated. The native text path recognizes
+Decode does not establish supported content. The converter supports a separately
+verified visible-text projection for exactly one type-0 `rtf` attachment, under
+the [message conversion contract](mobile-backup-message-conversion.md).
+Other actions, nontext types and repeated attachments remain unsupported.
+The native text path recognizes
 `action=rtf`, uses attachment title with MsgContent fallback, and passes an
 attachment object to normal message processing; reading only MsgContent would
-lose data. Quotes, mentions, recall targets, expiry, WAL source eligibility and
+lose data. The supported projection retains title-or-MsgContent and an `rtf`
+marker; it does not preserve styling or interpret attachment params.
+Quotes, mentions, recall targets, expiry, WAL source eligibility and
 atomic history persistence retain their separate contracts. No Events, phone
 requests or corpus writes occur in this parser.
 
@@ -61,8 +65,12 @@ present-empty versus absent strings, owned bytes, unknown occurrences, repeated
 outer attachments, JSON/formatting redaction and clearing. Whole-result failures
 cover invalid UTF-8, integer widths, repeated known nested fields, malformed
 suffixes, cancellation and an invalid quote after a valid attachment. Integration
-regression proves that decoded rich-text metadata still counts as unsupported
-content rather than importing MsgContent as a substitute. Root and nested-module
+regression originally proved that decoded rich-text metadata counted as unsupported
+content rather than importing MsgContent as a substitute. The later verified
+projection supersedes that gap for one `rtf` attachment: native-framed tests
+check a differing visible title, empty/absent fallback, unsupported actions and
+repetition, invalid UTF-8, oversized title, no source mutation and the `rtf` marker.
+Root and nested-module
 race/vet and CGO-free macOS arm64/Linux amd64 builds passed. A five-second bounded
 Go fuzz run completed 50,661 inputs without a failure; no model eval was run.
 This is offline compatibility evidence, not a new live archive/content acceptance.

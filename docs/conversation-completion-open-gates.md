@@ -114,6 +114,30 @@ Full root tests and vet, affected service/collector/history-import race checks,
 CGO-free macOS arm64/Linux amd64 builds, diff whitespace validation and a redacted
 worktree secret scan passed for this integration. These are synthetic/source
 checks, not proof of live mobile history recovery or installed-client acceptance.
+
+### Rich-text projection and WAL evidence: 2026-10-06
+
+Static inspection of the installed format-1 consumer confirms its MSG_TEXT rule:
+one selected attachment with `action=rtf` uses nonempty title, otherwise MsgContent.
+The internal converter now follows that visible-text projection and retains an
+`rtf` attachment marker, without claiming formatting preservation. Synthetic
+native-framed and conversion tests cover differing title, empty/absent fallback,
+ambiguous multiple attachments, other actions, unknown tag 6, invalid UTF-8,
+oversized text and no mutation of the borrowed source. Other content remains a
+reported gap. No real archive was reacquired or imported for this change.
+
+The [SQLite WAL documentation](https://www.sqlite.org/wal.html) confirms that
+committed updates can remain outside the main file and that the WAL marker can
+persist after checkpoint. Our independent regressions reproduce both cases.
+Thus marker 2/2 alone proves neither loss nor up-to-date deletion state. The native
+consumer reads selected `.db` files, but its observed read path does not prove the
+phone producer's checkpoint/export semantics. That source eligibility gate is
+still unresolved; do not label the two September 26 candidates recovered.
+Root tests/vet, affected mobile-backup/service/storage race checks and CGO-free
+macOS arm64/Linux amd64 builds passed. Added rich-text WAL/control regressions
+also passed under race: supported title projection never bypasses source gates.
+Redacted worktree scanning found no secrets. The preceding service integration
+commit passed [both CI jobs](https://github.com/skosovsky/zl-mcp/actions/runs/37446544187).
 Full root tests/vet and the affected storage/history-import/mobile-backup race
 checks passed for this checkpoint. The scan of the worktree found no secrets.
 

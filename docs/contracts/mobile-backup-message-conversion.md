@@ -15,9 +15,16 @@ conversion while that count is nonzero: no verified target mapping exists yet.
 This prevents an in-window text page from being imported ahead of a later or
 out-of-window control. Detection is not implementation of deletion/undo semantics.
 
-Convert only verified type-0/webchat candidates without attachment tag
-6. Attachments are decoded by [their contract](mobile-backup-attachment.md), but
-decoding alone does not establish corpus rendering. Report other recognized content and rich text as unsupported; retain their
+Convert verified type-0/webchat candidates without attachments, or with exactly
+one decoded attachment whose present action is exactly `rtf`. The installed
+consumer's MSG_TEXT branch uses nonempty attachment title, falling back to
+MsgContent when title is empty/absent. Preserve that visible text projection and
+mark `attachment_types=["rtf"]`; do not claim preservation of formatting or
+interpret params, links or styling. Validate UTF-8 and the 1 MiB text bound before
+returning any record; the aggregate text/BinNet bound includes projected text.
+Unknown outer tag 6, multiple attachments and other actions remain unsupported.
+Attachments are decoded by [their contract](mobile-backup-attachment.md), but
+decoding alone does not establish other corpus rendering. Report other recognized content as unsupported; retain their
 source-gap counts and keep full import acceptance open. Do not infer attachment
 contents or substitute a narrower text-only implementation for the full goal.
 Preserve exact string message/client/mapped-sender IDs, original UTC timestamp,

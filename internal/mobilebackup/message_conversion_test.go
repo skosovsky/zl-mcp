@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -43,6 +44,70 @@ func conversionPage(t *testing.T) (PreparedArchivePage, domain.MobileBackupReque
 		t.Fatal(e)
 	}
 	return page, r, now
+}
+
+func TestMobileRichTextProjectionBoundaries(t *testing.T) {
+	for _, mode := range []string{"title", "empty", "absent", "different-action", "multiple", "invalid-utf8", "oversized", "unknown-tag", "wal", "control"} {
+		t.Run(mode, func(t *testing.T) {
+			// Arrange: owned candidates; rich title must not overwrite the source row.
+			page, request, now := conversionPage(t)
+			defer page.Clear()
+			a := Attachment{Action: AttachmentValue{Present: true, Bytes: []byte("rtf")}, Title: AttachmentValue{Present: true, Bytes: []byte("Visible formatted text")}}
+			switch mode {
+			case "empty":
+				a.Title.Bytes = nil
+			case "absent":
+				a.Title = AttachmentValue{}
+			case "different-action":
+				a.Action.Bytes = []byte("ecard")
+			case "invalid-utf8":
+				a.Title.Bytes = []byte{0xff}
+			case "oversized":
+				a.Title.Bytes = []byte(strings.Repeat("x", (1<<20)+1))
+			}
+			row := &page.Candidates.Rows[0]
+			original := row.Row.Text
+			row.Metadata.Attachments = []Attachment{a}
+			if mode == "multiple" {
+				row.Metadata.Attachments = append(row.Metadata.Attachments, a)
+			}
+			if mode == "unknown-tag" {
+				row.Metadata.UnsupportedTags = []uint32{6}
+			}
+			if mode == "wal" {
+				page.SourceWAL = true
+			}
+			if mode == "control" {
+				page.SourceControls = 1
+			}
+			// Act.
+			got, err := ConvertPreparedArchivePage(context.Background(), page, request, "10", now)
+			defer got.Clear()
+			// Assert: native fallback, explicit gaps, or whole-page rejection with no prefix.
+			if mode == "invalid-utf8" || mode == "oversized" || mode == "wal" || mode == "control" {
+				if err == nil || len(got.Records) != 0 {
+					t.Fatal("invalid rich text yielded records")
+				}
+				return
+			}
+			if err != nil || row.Row.Text != original {
+				t.Fatal("source mutation or conversion failure", err)
+			}
+			if mode == "multiple" || mode == "different-action" || mode == "unknown-tag" {
+				if got.UnsupportedContent != 1 || len(got.Records) != 1 {
+					t.Fatal("ambiguous attachment accepted")
+				}
+				return
+			}
+			want := "Visible formatted text"
+			if mode == "empty" || mode == "absent" {
+				want = original
+			}
+			if len(got.Records) != 2 || got.Records[0].Message.Text != want || len(got.Records[0].Message.AttachmentTypes) != 1 || got.Records[0].Message.AttachmentTypes[0] != "rtf" {
+				t.Fatal("native rich-text rule lost")
+			}
+		})
+	}
 }
 func TestMobileMessageConversionPreservesExactIDsAndOriginalMetadata(t *testing.T) {
 	// Arrange: fully selected/mapped/expiry-checked page with explicit source gaps.

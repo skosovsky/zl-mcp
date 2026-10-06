@@ -95,8 +95,8 @@ func TestAttachmentRejectsMalformedWholeResult(t *testing.T) {
 		t.Fatal("cancelled decode accepted")
 	}
 }
-func TestBinNetAttachmentDecodeDoesNotGrantConversion(t *testing.T) {
-	// Arrange: valid rich-text attachment remains a content gap until rendering is verified.
+func TestBinNetRichTextUsesDecodedVisibleTitle(t *testing.T) {
+	// Arrange: native tag-6 framing with a title different from MsgContent.
 	nested := append(attachmentField(45, []byte("rtf")), attachmentField(47, []byte("synthetic title"))...)
 	input := attachmentField(6, nested)
 	metadata, err := ParseBinNet(context.Background(), input)
@@ -110,9 +110,9 @@ func TestBinNetAttachmentDecodeDoesNotGrantConversion(t *testing.T) {
 	// Act.
 	converted, err := ConvertPreparedArchivePage(context.Background(), page, r, "10", now)
 	defer converted.Clear()
-	// Assert: parsed metadata is never silently treated as plain MsgContent.
-	if err != nil || converted.UnsupportedContent != 1 || len(converted.Records) != 1 {
-		t.Fatal("attachment flattened into plain text", err)
+	// Assert: visible title follows the native text rule and remains marked rich text.
+	if err != nil || converted.UnsupportedContent != 0 || len(converted.Records) != 2 || converted.Records[0].Message.Text != "synthetic title" || !reflect.DeepEqual(converted.Records[0].Message.AttachmentTypes, []string{"rtf"}) {
+		t.Fatal("rich-text projection lost", err)
 	}
 	duplicate := append(bytes.Clone(input), input...)
 	got, err := ParseBinNet(context.Background(), duplicate)
