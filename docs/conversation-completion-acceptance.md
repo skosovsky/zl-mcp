@@ -1238,3 +1238,24 @@ extraction, runtime change or actual archive download was performed.
 Root affected-package vet and nested API vet passed. The final nested archive
 cancellation test also passed under race. Source-tree Gitleaks and diff validation
 must remain paired with the exact source checkpoint before deployment/publication.
+
+### Atomic expiring operation pages (2026-10-06)
+
+Added the trusted storage port CommitExpiringHistoryOperationPage. It derives one
+message list from bounded expiry records and reuses the existing operation's
+owner/source/interval/budget/revision transaction. Silent message/identity writes,
+original TTL markers, due-expiry cleanup and source checkpoint now commit together.
+The prior unexpiring page path retains its original behavior.
+
+Synthetic storage/history-worker race tests passed. New tests cover checkpoint
+failure rollback across messages/identities/TTL, restart with preserved progress,
+duplicate records without lifetime extension, cancellation preventing writes,
+invalid out-of-interval TTL evidence and rejection of dual message lists, and
+atomic hiding of already due records. Root vet, no-CGO macOS arm64/Linux amd64
+builds, diff checking and current-tree secret scanning passed.
+
+This is an internal persistence prerequisite, not production mobile import.
+No public source enum, archive ownership/cache, phone request, downloader host,
+real archive acceptance or mobile continuation is added. The installed recovery
+service remains unchanged. Full mobile content/control and selected archive
+checkpoint integration are still open; the original goal is not completed.

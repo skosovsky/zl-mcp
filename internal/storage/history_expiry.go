@@ -33,17 +33,7 @@ func (s *Store) migrateHistoryExpiry(ctx context.Context) error {
 // PutExpiringHistoryPage persists silent messages and original deadlines atomically.
 // A durable importer must use its own transaction for the page and checkpoint.
 func (s *Store) PutExpiringHistoryPage(ctx context.Context, ref domain.ConversationRef, records []ExpiringHistoryRecord) (HistoryPageCounts, error) {
-	if len(records) > 50 {
-		return HistoryPageCounts{}, domain.Invalid("History requires at most 50 records.")
-	}
-	messages := make([]domain.Message, len(records))
-	for i, r := range records {
-		messages[i] = r.Message
-		if r.ExpiresAtMS < 0 || r.ExpiresAtMS > 0 && (r.Message.SentAt.UnixMilli() <= 0 || r.ExpiresAtMS <= r.Message.SentAt.UnixMilli()) {
-			return HistoryPageCounts{}, domain.Invalid("Invalid historical expiry deadline.")
-		}
-	}
-	if err := s.validateHistoryPage(ref, messages); err != nil {
+	if err := s.validateExpiringHistoryPage(ref, records); err != nil {
 		return HistoryPageCounts{}, err
 	}
 	tx, err := s.DB.BeginTx(ctx, nil)
@@ -63,6 +53,20 @@ func (s *Store) PutExpiringHistoryPage(ctx context.Context, ref domain.Conversat
 	}
 	return counts, nil
 }
+func (s *Store) validateExpiringHistoryPage(ref domain.ConversationRef, records []ExpiringHistoryRecord) error {
+	if len(records) > 50 {
+		return domain.Invalid("History requires at most 50 records.")
+	}
+	messages := make([]domain.Message, len(records))
+	for i, r := range records {
+		messages[i] = r.Message
+		if r.ExpiresAtMS < 0 || r.ExpiresAtMS > 0 && (r.Message.SentAt.UnixMilli() <= 0 || r.ExpiresAtMS <= r.Message.SentAt.UnixMilli()) {
+			return domain.Invalid("Invalid historical expiry deadline.")
+		}
+	}
+	return s.validateHistoryPage(ref, messages)
+}
+
 func (s *Store) putExpiringHistoryPageTx(ctx context.Context, tx *sql.Tx, records []ExpiringHistoryRecord) (HistoryPageCounts, error) {
 	counts := HistoryPageCounts{}
 	for _, r := range records {

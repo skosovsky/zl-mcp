@@ -247,6 +247,30 @@ func exactHistoryCursor(v string) bool {
 // CommitHistoryOperationPage atomically imports records and advances the saved
 // checkpoint. Stale workers cannot persist after cancellation or another claim.
 func (s *Store) CommitHistoryOperationPage(ctx context.Context, id string, revision int64, page domain.HistoryPage, elapsed time.Duration) (HistoryOperation, error) {
+	return s.commitHistoryOperationPage(ctx, id, revision, page, nil, elapsed)
+}
+
+// CommitExpiringHistoryOperationPage derives messages from the trusted records.
+// TTL evidence and checkpoint share the operation's ownership/revision transaction.
+// This adds no public source and performs no archive request or download.
+func (s *Store) CommitExpiringHistoryOperationPage(ctx context.Context, id string, revision int64, page domain.HistoryPage, records []ExpiringHistoryRecord, elapsed time.Duration) (HistoryOperation, error) {
+	if len(page.Messages) != 0 {
+		return HistoryOperation{}, domain.Invalid("Provide records without a second message list.")
+	}
+	if len(records) > 50 {
+		return HistoryOperation{}, domain.Invalid("History requires at most 50 records.")
+	}
+	page.Messages = make([]domain.Message, len(records))
+	for i, r := range records {
+		page.Messages[i] = r.Message
+	}
+	if records == nil {
+		records = []ExpiringHistoryRecord{}
+	}
+	return s.commitHistoryOperationPage(ctx, id, revision, page, records, elapsed)
+}
+
+func (s *Store) commitHistoryOperationPage(ctx context.Context, id string, revision int64, page domain.HistoryPage, records []ExpiringHistoryRecord, elapsed time.Duration) (HistoryOperation, error) {
 	started := time.Now()
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -269,6 +293,11 @@ func (s *Store) CommitHistoryOperationPage(ctx context.Context, id string, revis
 		if err = s.validateHistoryPage(op.Status.Ref(), page.Messages); err != nil {
 			return op, err
 		}
+		if records != nil {
+			if err = s.validateExpiringHistoryPage(op.Status.Ref(), records); err != nil {
+				return op, err
+			}
+		}
 		if elapsed < 0 || elapsed > HistoryWorkBudget || len(page.Messages) > op.Status.PageSize || len(page.Messages) > op.Status.MaxMessages-op.Status.RecordsObserved || op.Status.PagesObserved >= op.Status.MaxPages || (page.Cursor != nil && !exactHistoryCursor(*page.Cursor)) || (page.JoinTimestampMillis != nil && !exactHistoryCursor(*page.JoinTimestampMillis)) {
 			return op, domain.Invalid("History page exceeds operation bounds or contains invalid continuation evidence.")
 		}
@@ -276,12 +305,17 @@ func (s *Store) CommitHistoryOperationPage(ctx context.Context, id string, revis
 		op.ReservedDuration = 0
 		if op.WorkDuration > HistoryWorkBudget {
 			historyStopped(&op, "partial", "time_limit")
-		} else if err = s.commitHistoryRecords(ctx, tx, &op, page); err != nil {
+		} else if err = s.commitHistoryRecords(ctx, tx, &op, page, records); err != nil {
 			return HistoryOperation{}, err
 		}
 		op.WorkDuration += time.Since(started)
 		if op.WorkDuration >= HistoryWorkBudget && op.Status.State == "running" {
 			historyStopped(&op, "partial", "time_limit")
+		}
+	}
+	if records != nil {
+		if err = s.expireHistoryTx(ctx, tx, time.Now()); err != nil {
+			return HistoryOperation{}, err
 		}
 	}
 	if err = saveHistoryOperation(ctx, tx, &op); err != nil {
@@ -290,14 +324,18 @@ func (s *Store) CommitHistoryOperationPage(ctx context.Context, id string, revis
 	return commitHistoryResult(tx, op)
 }
 
-func (s *Store) commitHistoryRecords(ctx context.Context, tx *sql.Tx, op *HistoryOperation, page domain.HistoryPage) error {
+func (s *Store) commitHistoryRecords(ctx context.Context, tx *sql.Tx, op *HistoryOperation, page domain.HistoryPage, records []ExpiringHistoryRecord) error {
 	status := &op.Status
 	since, _ := time.Parse(time.RFC3339Nano, status.Since)
 	until, _ := time.Parse(time.RFC3339Nano, status.Until)
 	eligible := []domain.Message{}
-	for _, m := range page.Messages {
+	eligibleExpiring := []ExpiringHistoryRecord{}
+	for i, m := range page.Messages {
 		if !m.SentAt.Before(since) && m.SentAt.Before(until) {
 			eligible = append(eligible, m)
+			if records != nil {
+				eligibleExpiring = append(eligibleExpiring, records[i])
+			}
 		} else {
 			status.OutOfIntervalCount++
 		}
@@ -306,7 +344,13 @@ func (s *Store) commitHistoryRecords(ctx context.Context, tx *sql.Tx, op *Histor
 	if err := tx.QueryRowContext(ctx, "SELECT coalesce(max(seq),0) FROM messages").Scan(&snapshot); err != nil {
 		return err
 	}
-	counts, err := s.putHistoryPageTx(ctx, tx, eligible)
+	var counts HistoryPageCounts
+	var err error
+	if records == nil {
+		counts, err = s.putHistoryPageTx(ctx, tx, eligible)
+	} else {
+		counts, err = s.putExpiringHistoryPageTx(ctx, tx, eligibleExpiring)
+	}
 	if err != nil {
 		return err
 	}

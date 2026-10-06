@@ -68,3 +68,27 @@ with permanent expiry tombstones. This is not yet called by the mobile record
 converter/import journal. The local OS UTC clock is used for visibility and normal
 maintenance; server-clock drift/provenance and quote/control expiry remain separate
 acceptance gates. No real archive was imported and no running service was changed.
+
+## Atomic operation-page persistence
+
+The trusted storage port `CommitExpiringHistoryOperationPage` accepts an existing
+running history operation ID/revision, source continuation evidence without
+`Messages`, and at most 50 `domain.ExpiringHistoryRecord` values. It derives the
+page messages from those records, rejecting ambiguous dual input. Validate all
+records/deadlines, including out-of-interval records, before any page writes.
+Apply the existing operation ownership, collection, source, interval, budget,
+phase/cursor and cancellation checks; do not invent another source or operation.
+
+Commit silent messages, permanent identities/novelty evidence, original expiry
+markers, source progress/continuation and operation revision in one transaction.
+Checkpoint failure rolls back all page/TTL writes. Stale or cancelled workers
+cannot persist. Retained duplicates preserve their original message and expiry;
+page replay cannot extend lifetime. Already due deadlines are applied inside the
+same transaction. Inserted count is cumulative ingestion, not available-message
+count; imported bounds do not guarantee visibility or uninterrupted coverage.
+
+This internal port extends the existing history-operation transaction, not its
+public source enum. It does not dispatch, download, own an archive, serialize a
+mobile cursor, publish a new MCP capability or establish archive compatibility.
+Mobile integration must additionally provide its exact retained-source checkpoint
+and content/control semantics; existing source restrictions remain authoritative.
