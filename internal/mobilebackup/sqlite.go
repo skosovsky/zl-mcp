@@ -94,7 +94,12 @@ func ReadSQLiteRows(parent context.Context, file ArchiveFile, scratch string, si
 	return ReadSQLitePage(parent, file, scratch, since, until, maxRows, nil)
 }
 
-func ReadSQLitePage(parent context.Context, file ArchiveFile, scratch string, since, until time.Time, maxRows int, after *SQLiteCursor) (batch SQLiteBatch, err error) {
+func ReadSQLitePage(parent context.Context, file ArchiveFile, scratch string, since, until time.Time, maxRows int, after *SQLiteCursor) (SQLiteBatch, error) {
+	return readSQLitePage(parent, file, scratch, since, until, maxRows, after, false)
+}
+
+// Control scans project scalar identities only; source text and BinNet are not read.
+func readSQLitePage(parent context.Context, file ArchiveFile, scratch string, since, until time.Time, maxRows int, after *SQLiteCursor, controlsOnly bool) (batch SQLiteBatch, err error) {
 	stage := "INPUT_BINDING"
 	defer func() {
 		if err != nil {
@@ -227,6 +232,9 @@ func ReadSQLitePage(parent context.Context, file ArchiveFile, scratch string, si
 		return SQLiteBatch{}, ErrSQLite
 	}
 	statement := "SELECT rowid,SenderId,GlbMsgId,CliMsgId,MsgContent,TimeStamp,TTL,MsgType,MsgStatus,BinNet FROM ChatContent WHERE TimeStamp>=? AND TimeStamp<?"
+	if controlsOnly {
+		statement = "SELECT rowid,SenderId,GlbMsgId,CliMsgId,'',TimeStamp,TTL,MsgType,MsgStatus,NULL FROM ChatContent WHERE TimeStamp>=? AND TimeStamp<? AND MsgType IN (33,36)"
+	}
 	args := []any{from, to}
 	if after != nil {
 		statement += " AND (TimeStamp>? OR (TimeStamp=? AND rowid>?))"

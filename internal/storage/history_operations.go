@@ -107,6 +107,9 @@ func saveHistoryOperation(ctx context.Context, tx *sql.Tx, op *HistoryOperation)
 	if n != 1 {
 		return ErrHistoryState
 	}
+	if err = closeMobileHistoryAcquisitionTx(ctx, tx, *op); err != nil {
+		return err
+	}
 	op.Revision++
 	return nil
 }

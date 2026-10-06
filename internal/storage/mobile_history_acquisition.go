@@ -173,15 +173,23 @@ func (s *Store) CloseMobileHistoryAcquisition(ctx context.Context, id string) er
 	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State == "queued" || op.Status.State == "running" {
 		return ErrHistoryState
 	}
+	if err = closeMobileHistoryAcquisitionTx(ctx, tx, op); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// Terminal publication and transfer release share the caller's transaction.
+func closeMobileHistoryAcquisitionTx(ctx context.Context, tx *sql.Tx, op HistoryOperation) error {
+	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State == "queued" || op.Status.State == "running" {
+		return nil
+	}
 	state := "interrupted"
 	if op.Status.State == "cancelled" {
 		state = "cancelled"
 	}
-	_, err = tx.ExecContext(ctx, `UPDATE mobile_backup_attempts SET state=?,revision=revision+1,updated_at=?
+	_, err := tx.ExecContext(ctx, `UPDATE mobile_backup_attempts SET state=?,revision=revision+1,updated_at=?
  WHERE account_key=? AND operation_id=(SELECT attempt_id FROM history_mobile_attempts WHERE operation_id=?)
- AND state IN ('prepared','dispatching','waiting_for_confirmation','request_result_unknown','mobile_restoring','waiting_for_backup')`, state, now(), op.accountKey, id)
-	if err != nil {
-		return err
-	}
-	return tx.Commit()
+ AND state IN ('prepared','dispatching','waiting_for_confirmation','request_result_unknown','mobile_restoring','waiting_for_backup')`, state, now(), op.accountKey, op.Status.OperationID)
+	return err
 }

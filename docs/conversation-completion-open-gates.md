@@ -517,3 +517,38 @@ No message, subscription or phone request was dispatched for this acceptance.
 This proves deployment/preservation/connectivity, not eligibility or completeness
 of a real mobile source. WAL/remaining control/content semantics and the broader
 live scenarios remain open.
+
+### Whole-source control reader candidate
+
+The [whole-source control scan](contracts/mobile-backup-control-scan.md) now reads
+only scalar metadata for type-33/36 rows across an immutable selected file. It
+uses 50-row keyset pages, a fixed 5,000-control ceiling and a shared 30-second
+budget. Tests classify 52 verified own-direct type-36/status-3 targets spanning
+multiple pages and dates outside the message request; source bytes cannot change
+during mapping. Unsupported, rejected, duplicate, oversized, cancelled, foreign
+or WAL sources return no partial proof. Control text/BinNet are not loaded.
+
+This primitive performs no persistence or live recall and is not yet wired into
+the history worker. Required next step is a separately checkpointed control
+prelude before ordinary pages, with control progress distinct from requested
+message-period counts. The installed first-page policy and public mobile input
+remain unchanged; this reader does not close WAL or other control semantics.
+
+### Atomic inactive acquisition release
+
+The documentation-only checkpoint `2f4e90d` exposed a production shutdown race in
+[Ubuntu race CI](https://github.com/skosovsky/zl-mcp/actions/runs/37480291226):
+`prepared-without-snapshot` observed partial history before a separate worker
+cleanup, then cancelled that cleanup and retained an active prepared transfer.
+This is not dismissed as a flaky assertion or fixed by adding a test sleep.
+
+History storage now closes an owned active linked acquisition in the same
+transaction that publishes a terminal or authentication-paused status. If release
+fails, both status and acquisition roll back. Running/queued history remains
+untouched; terminal acquisition receipts remain immutable. The separate cleanup
+port still repairs pre-upgrade inactive evidence and is idempotent.
+
+Deterministic tests check partial, paused, cancelled, unsupported and failed
+transitions without a worker cleanup call, plus rollback at the release step.
+The exact failing worker scenario passed 20 race repetitions. Public mobile input
+and the WAL source gate remain unchanged. This fix is not installed yet.

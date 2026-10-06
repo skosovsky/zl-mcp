@@ -189,7 +189,11 @@ Public mobile input stays disabled pending producer/WAL and remaining semantics
 acceptance; internal synthetic success does not establish live import support.
 
 Terminal or authentication-paused history closes any still-active linked attempt
-so a pre-dispatch failure does not block all later account transfers. This trusted
+in the same transaction that publishes its inactive status. Shutdown cannot
+observe a terminal operation while its linked transfer remains active. Cleanup
+failure rolls back both state changes; a pre-dispatch failure cannot block later
+account transfers. Separate cleanup is idempotent recovery for legacy inactive
+operations, not a required second step of a new terminal transition. This trusted
 account-owned cleanup also works after collection revocation, but requires the
 history operation to be inactive, grants no read/network authority and never
 overwrites terminal acquisition evidence. Parent shutdown leaves running evidence

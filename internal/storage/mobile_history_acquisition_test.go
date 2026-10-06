@@ -131,19 +131,31 @@ func TestMobileHistoryAcquisitionRejectsStaleCancelledAndUnreservedDispatch(t *t
 			if err != nil {
 				t.Fatal(err)
 			}
-			// Act: the attempt's own revision is still current, but history authority changed.
+			// Act: dispatch must reject changed history or the atomically closed attempt.
 			_, err = s.DispatchMobileBackup(ctx, attempt.OperationID, attempt.Revision, mobileJournalPublic(t))
-			// Assert: dispatch/public-key storage is denied; terminal cleanup remains possible.
-			if !errors.Is(err, ErrHistoryState) {
+			// Assert: exact terminal state/revision and no public key or new dispatch.
+			expectedErr := ErrMobileBackupState
+			expectedState, expectedRevision := "interrupted", attempt.Revision+1
+			if mode == "cancel-before-dispatch" {
+				expectedState = "cancelled"
+			}
+			if mode == "recover-before-dispatch" {
+				expectedErr = ErrHistoryState
+				expectedState, expectedRevision = "prepared", attempt.Revision
+			}
+			if !errors.Is(err, expectedErr) {
 				t.Fatal("stale linked history dispatched", err)
 			}
 			got, err := s.MobileBackupAttempt(ctx, attempt.OperationID)
-			if err != nil || got.State != "prepared" || got.Revision != attempt.Revision || got.PublicKey != "" {
+			if err != nil || got.State != expectedState || got.Revision != expectedRevision || got.PublicKey != "" {
 				t.Fatal("rejected dispatch mutated acquisition", err)
 			}
-			if _, err = s.ProgressMobileBackup(ctx, attempt.OperationID, got.Revision, "cancelled"); err != nil {
-				t.Fatal("cleanup lost its ability to cancel acquisition", err)
+			if mode == "recover-before-dispatch" {
+				if _, err = s.ProgressMobileBackup(ctx, attempt.OperationID, got.Revision, "cancelled"); err != nil {
+					t.Fatal("cleanup lost its ability to cancel acquisition", err)
+				}
 			}
+
 		})
 	}
 }
@@ -364,6 +376,12 @@ func TestMobileHistoryInactiveAcquisitionCleanupPreservesOwnershipAndEvidence(t 
 			if _, err = s.CancelHistoryOperation(ctx, op.Status.OperationID); err != nil {
 				t.Fatal(err)
 			}
+			// Model pre-upgrade inactive evidence for the denied/rollback recovery cases.
+			if mode == "foreign-account" || mode == "rollback" {
+				if _, err = s.DB.Exec("UPDATE mobile_backup_attempts SET state='prepared',revision=? WHERE operation_id=?", attempt.Revision, attempt.OperationID); err != nil {
+					t.Fatal(err)
+				}
+			}
 			if mode == "revoked" {
 				s.Close()
 				s = historyOperationStore(t, path, domain.CollectionPolicy{})
@@ -410,5 +428,66 @@ func TestMobileHistoryInactiveAcquisitionCleanupPreservesOwnershipAndEvidence(t 
 				t.Fatal("repeat cleanup changed terminal evidence", err)
 			}
 		})
+	}
+}
+
+func TestMobileHistoryTerminalPublicationReleasesAttemptAtomically(t *testing.T) {
+	for _, state := range []string{"partial", "paused", "cancelled", "unsupported", "failed"} {
+		for _, rollback := range []bool{false, true} {
+			t.Run(state+map[bool]string{false: "", true: "-rollback"}[rollback], func(t *testing.T) {
+				// Arrange: a linked prepared transfer, with an optional release failure.
+				ctx := context.Background()
+				s, op, _ := acquisitionOperation(t)
+				defer s.Close()
+				attempt, err := s.PrepareMobileHistoryAcquisition(ctx, op.Status.OperationID, op.Revision, 0)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if rollback {
+					if _, err = s.DB.Exec(`CREATE TRIGGER fail_terminal_release BEFORE UPDATE ON mobile_backup_attempts BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`); err != nil {
+						t.Fatal(err)
+					}
+				}
+				// Act: publish inactive history without a worker cleanup call.
+				if state == "cancelled" {
+					_, err = s.CancelHistoryOperation(ctx, op.Status.OperationID)
+				} else {
+					reason := map[string]string{"partial": "source_unavailable", "paused": "auth_required", "unsupported": "source_unsupported", "failed": "invalid_source_page"}[state]
+					_, err = s.StopHistoryOperation(ctx, op.Status.OperationID, op.Revision, state, reason, 0)
+				}
+				// Assert: terminal state/release are visible together, or neither is committed.
+				if (err != nil) != rollback {
+					t.Fatal("unexpected terminal release result", err)
+				}
+				current, readErr := s.HistoryOperation(ctx, op.Status.OperationID)
+				if readErr != nil {
+					t.Fatal(readErr)
+				}
+				linked, readErr := s.MobileBackupAttempt(ctx, attempt.OperationID)
+				if readErr != nil {
+					t.Fatal(readErr)
+				}
+				if rollback {
+					if current.Status.State != "running" || current.Revision != op.Revision || linked.State != "prepared" || linked.Revision != attempt.Revision {
+						t.Fatal("terminal release escaped rollback")
+					}
+				} else {
+					want := "interrupted"
+					if state == "cancelled" {
+						want = "cancelled"
+					}
+					if current.Status.State != state || linked.State != want || linked.Revision != attempt.Revision+1 {
+						t.Fatal("terminal history retained active attempt")
+					}
+					if err = s.CloseMobileHistoryAcquisition(ctx, op.Status.OperationID); err != nil {
+						t.Fatal(err)
+					}
+					repeated, readErr := s.MobileBackupAttempt(ctx, attempt.OperationID)
+					if readErr != nil || repeated.Revision != linked.Revision {
+						t.Fatal("idempotent cleanup changed terminal receipt", readErr)
+					}
+				}
+			})
+		}
 	}
 }
