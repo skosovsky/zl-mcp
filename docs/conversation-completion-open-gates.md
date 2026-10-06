@@ -2,7 +2,7 @@
 
 # Conversation completion: current open gates
 
-As of 2026-10-05. The full scope is
+Current checkpoint: 2026-10-06; the dated entries below preserve prior evidence. The full scope is
 [task-conversation-completion.md](task-conversation-completion.md). This report does
 not reduce that scope or declare completion. Historical checkpoints in
 [the acceptance report](conversation-completion-acceptance.md) are evidence for
@@ -20,13 +20,15 @@ their recorded versions, not a description of the current installation.
 | Deleted/recalled messages | Source schema 11 prevents restoration of an observed exact typed deletion by live replay or history; absent-message deletion, restart, namespace, novelty and rollback tests. Whole-file mobile type-33/36 detection blocks unverified conversion | Mobile control target/state semantics and full handling before public archive persistence; live marker receipt alone does not establish mobile compatibility |
 | Expiry after import | Source schema 10 adds atomic history/deadline writes, SQL read-time filtering, maintenance cleanup and irreversible expiry markers; replay/reimport and rollback tests | Wire into the mobile importer, quote expiry and trustworthy clock/real archive acceptance |
 | Group pages | Installed phase-aware candidate; two live groups each returned a terminal recent page; durable phase traversal covered synthetically | Live old-phase traversal when available; no completeness claim |
-| v2 discovery and filters | Local Events list has legacy/v1/v2; direction/novelty/restart tests | Actual client v2 discovery and agreed incoming-only/first-only live scenarios |
-| STDIO transport | Current installed bridge initialized a real STDIO client at `2025-11-25`, listed 18 tools and read connected status; no Events advertised | Final publication consistency; STDIO does not replace HTTP Events acceptance |
+| v2 discovery and filters | Installed schema-12 service exposes legacy/group and conversation v2 only; v1 contracts and implementation removed, migration cancels obsolete pending jobs; direction/novelty/restart tests | Actual client catalogue after latest update and agreed incoming-only/first-only live scenarios |
+| STDIO transport | Exact current installed bridge initialized a real STDIO client at `2025-11-25`, listed 21 tools including recovery and read connected/authenticated status; no Events advertised | STDIO does not replace external HTTP Events acceptance |
 | First direct send outside catalogue/corpus | Synthetic authorization/acknowledgement tests and preserved send ledger | A user-selected recipient and separately approved exact send |
 | Numeric acknowledgement plain/quote routes | Synthetic encrypted-wire tests; earlier two-send acceptance retained | Separately approved fresh live sends; unknown operations must not be resent |
-| Deployment/publication | Checked schema-11 candidate installed with a verified cold full-state backup; preserved records verified. Signed `fc88336` published with successful Linux/macOS CI; clean-checkout race/vet, cross-builds, plist/links and full main history secret scan pass | Remaining feature/client/live gates and final implementation publication |
+| Deployment/publication | Earlier schema-11 migration/publication checks preserved below. Signed recovery implementation `19e2105` installed with verified binary/SQLite/skill backup; docs commit `07791a0` pushed; local root race/vet, cross-builds and secret scan passed | Remaining feature/client/live gates; recovery source and docs have successful macOS/Linux CI at `07791a0` |
 
-The installed binary now uses schema 11. Experimental mobile ports are present
+The installed binary now uses schema 12 (`19e2105`); authenticated HTTP reads prove 21 tools, connected/authenticated collector without last_error, and exact retained event payload recovery. SQLite integrity passed; v2 subscription IDs, generations and activation boundaries match the pre-update backup. No processing acknowledgements were issued against the production backlog. See [recovery acceptance](event-recovery-acceptance.md). The recovery adoption gate is client instruction/catalogue update and reconciliation of previously completed notifications; exactly-once is not claimed.
+
+The schema-11 checkpoint below remains historical. Experimental mobile ports are present
 but have no public archive dispatch/import route and no real-archive acceptance.
 Initial migration verification used
 a private database copy; that copy was removed afterward. The latest 8→11 check

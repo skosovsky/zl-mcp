@@ -29,3 +29,18 @@ handling through the updated automation has not yet been verified live.
 See [event recovery contract](contracts/event-recovery.md) for the ordered workflow,
 retention and the crash/concurrency window. The workaround does not prove or fix
 the internal cause of the receiver's missing payload.
+
+## Publication and installed bridge follow-up
+
+[GitHub CI for `07791a0`](https://github.com/skosovsky/zl-mcp/actions/runs/37410266125)
+completed successfully on both macOS and Linux, including root/nested test,
+race/vet and CGO-disabled cross-builds. Full published main history secret scanning
+covered 23 commits with no findings. Source and installed files matched by SHA-256
+for both skills (five files each).
+
+The exact installed binary's STDIO bridge initialized a client at protocol
+2025-11-25, listed 21 tools including all recovery tools and returned the active
+collector status. It did not advertise Events. No second Zalo listener was started.
+The preserved active v2 subscription ID, generation and activation boundary match
+the verified pre-update SQLite backup; no callback URL or signing key was read
+for that comparison.
