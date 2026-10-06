@@ -611,3 +611,40 @@ archive transport. See the [download compatibility gate](contracts/mobile-backup
 Do not infer that a Cookie header is mandatory for every signed URL, and do not
 copy the third-party arbitrary-host cookie forwarding behavior. No actual phone
 request, offered URL, cookie extraction or archive download was performed.
+
+### Recovery prerequisite audit (2026-10-06)
+
+Rechecked upstream [PR #269](https://github.com/RFS-ADRENO/zca-js/pull/269):
+it remains open and explicitly unfinished. Its author points to PR #260, but
+[merged PR #260](https://github.com/RFS-ADRENO/zca-js/pull/260) changes 11 files
+for contacts, profile and group APIs. The reviewed file list contains neither
+mobile dispatch nor archive import/history pagination. A checked body task saying
+"implement pull message" is not implementation evidence for those capabilities.
+No verified production download host or completed archive decoder follows from
+these references. Do not treat the merged PR as closing mobile-history acceptance.
+
+The current production path was reviewed at the exact source checkpoint:
+`membershipPort.walkPreparedMobilePages` holds one existing account/session scope,
+fetches an archive, borrows pages to visit and clears the selected bytes on return.
+`WalkPreparedArchive` clears its aggregate summary on callback/context failure;
+that does not roll back side effects a visitor already committed. The prepared
+cursor is bound to request/fingerprint/account and a selected SQLite digest, but
+is currently an in-memory value. The mobile attempt ledger records dispatch
+ownership and reaches offer_ready; it does not own a resumable persisted archive
+or an atomic imported-page checkpoint. The generic history-operation path already
+commits its supported page and checkpoint transactionally, while the separate
+expiring-history writer commits TTL records without a mobile checkpoint.
+
+Therefore production wiring cannot consist of a visitor calling the standalone
+silent writer and reporting aggregate counts. Before dispatch/import is exposed,
+the executable contract must bind an attempt to an account-owned exact archive
+snapshot, define private lifetime/cleanup and crash behavior, and atomically
+persist each page's records, original expiry, source counts and continuation with
+cancellation/revision checks. Restart must use the same snapshot or stop with an
+explicit unavailable source, never dispatch another phone request implicitly.
+Unsupported content and control semantics must remain explicit, with no Events.
+These are prerequisites identified from code, not implemented capabilities or
+proof that the requested old Strangers record can be obtained.
+
+No phone request, archive download, credentials extraction, Zalo send or
+subscription mutation was performed for this audit.
