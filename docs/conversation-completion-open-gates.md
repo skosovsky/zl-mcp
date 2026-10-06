@@ -41,8 +41,9 @@ whole archive before identity mapping. This rules out that specific selection
 bug for the accepted transfer, but proves neither producer checkpoint state nor
 the interpretation of data outside the declared container. Mobile source input
 remains disabled, and the two historical candidates remain unimported. Terminal
-snapshot deletion wiring still needs acceptance before public mobile import;
-fixed expiry/cleanup alone does not prove the contract's immediate terminal removal.
+snapshot cleanup is implemented and accepted synthetically in source, including
+restart after a terminal journal commit. The installed build predates this change;
+installed cleanup and real mobile import acceptance remain open.
 
 ### Terminal snapshot cleanup and control investigation
 
@@ -80,7 +81,7 @@ Its latest timestamp matches that peer's live corpus. Newly sent test messages
 were in another peer, so they do not demonstrate a stale export. A specific
 historical omission and uncheckpointed WAL loss have not been established.
 WAL-mode images still fail the current conversion gate. The production mobile
-port and worker lifecycle are now wired in source but remain uninstalled; public
+port and worker lifecycle are wired and installed at the current checkpoint; public
 mobile source selection and real archive acceptance remain open. Diagnostic inspection now validates and classifies candidates even
 when a source gate prevents persistence, without returning message records;
 malformed candidates fail instead of being silently classified as blocked. See the [corrected evidence](contracts/mobile-backup-offer-probe.md#selected-image-coverage-and-correction-of-the-live-comparison).
@@ -287,11 +288,11 @@ probe build. No phone request, Zalo send or subscription edit was performed.
 | --- | --- | --- |
 | Browse without a keyword | Current installed HTTP and actual connected-client catalogue→period browse→stable continuation→matching context checks pass; production regression tests | Final signed checkout/publication verification |
 | Expanded conversation catalogue | Guarded periodic preload refresh and actual connected-client catalogue reads; source/installed skills match and this desktop discovers both | Final deployment/publication consistency and other intended clients |
-| Explicit silent imports | Durable history journal with UUID/retry/cancel/restart tests; installed preload/group reads; real client start/status/same-UUID retry accepted; production mobile session/worker integration verified synthetically and installed | Real mobile import and terminal snapshot removal remain unaccepted; public mobile input disabled |
+| Explicit silent imports | Durable history journal with UUID/retry/cancel/restart tests; installed preload/group reads; real client start/status/same-UUID retry accepted; production mobile session/worker integration verified synthetically and installed | Real mobile import and installed terminal snapshot removal remain unaccepted; source cleanup passed synthetic restart/completion checks; public mobile input disabled |
 | Older Strangers message | Requested peer is selectable; September 30 archive interval is empty and September 26 has two candidate rows; preload only supplies an already retained record | Recovery from a deeper verified source, or a concrete verified source limitation agreed with the user |
 | Mobile request/transport | Current-session request/offer observer, durable dispatch ledger, restart recovery and private offer ownership; host-scoped cookie transport, scoped body consumption and revocation tests | Correlated live offer and owner mapping now accepted; download and selected sender mapping accepted by later probes; durable production import remains |
 | Mobile archive reading | Independent format-1/XXH32/XZ/OpenSSL and SQLite fixtures; typed file selection, immutable bounded SQLite reads with exact fractional-millisecond interval mapping, digest/request/account-bound keyset paging; one session/download across pages | Format/SQLite/plain-to-session reading accepted; full BinNet/content semantics remain |
-| Mobile conversion/import | Plain text and verified single-rtf visible-title projection preserve exact IDs, sender, timestamp, direction and original TTL; atomic page/checkpoint persistence and gap accounting verified synthetically | Real source eligibility, terminal snapshot removal and nontext/quote/mention semantics; synthetic text projection does not close full mobile acceptance |
+| Mobile conversion/import | Plain text and verified single-rtf visible-title projection preserve exact IDs, sender, timestamp, direction and original TTL; atomic page/checkpoint persistence and gap accounting verified synthetically | Real source eligibility, installed terminal snapshot removal and nontext/quote/mention semantics; synthetic text projection and source cleanup do not close full mobile acceptance |
 | Deleted/recalled messages | Source schema 11 prevents restoration of an observed exact typed deletion by live replay or history; absent-message deletion, restart, namespace, novelty and rollback tests. Whole-file mobile type-33/36 detection blocks unverified conversion | Mobile control target/state semantics and full handling before public archive persistence; live marker receipt alone does not establish mobile compatibility |
 | Expiry after import | Expiry markers, SQL read-time filtering and cleanup; mobile worker uses atomic records/TTL/checkpoint port; rollback/restart/duplicate/cancel/due-expiry tests passed | Quote expiry and trustworthy clock/real archive acceptance |
 | Group pages | Installed phase-aware candidate; two live groups each returned a terminal recent page; durable phase traversal covered synthetically | Live old-phase traversal when available; no completeness claim |
@@ -301,7 +302,9 @@ probe build. No phone request, Zalo send or subscription edit was performed.
 | Numeric acknowledgement plain/quote routes | Synthetic encrypted-wire tests; earlier two-send acceptance retained | Separately approved fresh live sends; unknown operations must not be resent |
 | Deployment/publication | Earlier schema-11 migration/publication checks preserved below. Signed recovery implementation `19e2105` installed with verified binary/SQLite/skill backup; docs commit `07791a0` pushed; local root race/vet, cross-builds and secret scan passed | Remaining feature/client/live gates; recovery source and docs have successful macOS/Linux CI at `07791a0` |
 
-The current installed binary uses schema 12 and includes the plain-owner mapping
+### Historical schema-12 installation (superseded)
+
+The then-installed binary used schema 12 and included the plain-owner mapping
 fix, stage-specific mapping diagnostics, verified exact-endpoint auth-cookie fix
 and candidate classification (SHA-256
 `b0780bd2f8f1a09c2024cf411a6a80951dcb9bed11d5e718a505481df4803536`).

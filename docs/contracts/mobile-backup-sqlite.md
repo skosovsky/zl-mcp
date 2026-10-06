@@ -1,8 +1,10 @@
 # Bounded mobile SQLite inspection candidate
 
-Status: offline internal reader; not a message importer or exposed history source.
-Input is one caller-selected opaque file from a validated archive, with account
-and typed conversation mapping still required before any corpus mutation.
+Status: internal bounded reader used by the service mobile-history pipeline and
+diagnostic probes. Public mobile source selection remains disabled pending real
+source acceptance. Input is one caller-selected opaque file from a validated
+archive; authenticated account and typed conversation mapping are required before
+conversion and the atomic history journal can mutate the corpus.
 
 Require a standalone SQLite 3 file within 256 MiB: correct 100-byte header,
 power-of-two page size, exact page alignment, read/write pairs 1/1 or 2/2,
@@ -27,7 +29,9 @@ Copy only this selected file to a random private 0700 scratch directory under a
 trusted absolute caller-supplied location, using a fixed filename with 0600 permissions.
 Open immutable mode=ro with one connection; query_only, trusted_schema=OFF,
 temp_store=MEMORY, bounded cache and connection limits. Cleanup occurs on normal
-return; crash cleanup must be handled by the eventual operation layer. No archive
+return; durable encrypted snapshots are owned by the operation layer, with
+account/binding-checked terminal cleanup at service startup and worker boundaries
+(see [snapshot lifecycle](mobile-backup-snapshot.md)). No archive
 filename becomes a filesystem path. Use a 30-second context bound and integrity
 check before querying a real, nonvirtual ChatContent table without generated
 columns. Require the observed nine fields, and integer timestamp affinity.
