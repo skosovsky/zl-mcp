@@ -233,3 +233,7 @@ Mobile control decode diagnostics log closed validation reason codes through the
 service logger, without payloads, URLs, correlation keys or identities. They do
 not relax parsing or initiate synchronization. Regression tests check private
 field exclusion and preservation of the existing error sentinel.
+
+During an active mobile receiver, ignored key/account/host correlation controls
+log only a fixed rejection reason. Matching rules and foreign-control handling
+are unchanged; rejected values and raw events are never logged.

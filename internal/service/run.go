@@ -217,7 +217,9 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	// Allow the 30s upstream send plus independent result persistence to finish.
 	// Shutdown cancels requests before waiting for session ports and closing SQLite.
 	httpServer := &http.Server{Handler: handler, BaseContext: func(net.Listener) context.Context { return ctx }, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 45 * time.Second, IdleTimeout: 30 * time.Second}
-	cliServer := &http.Server{Handler: port.cliHandler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 40 * time.Second}
+	// The owner-only mobile probe may wait 185s and finish its ledger independently.
+	// Keep the Unix response deadline above the 190s CLI request budget.
+	cliServer := &http.Server{Handler: port.cliHandler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 200 * time.Second}
 	errorsCh := make(chan error, 7)
 	var wg sync.WaitGroup
 	launch := func(fn func() error) {

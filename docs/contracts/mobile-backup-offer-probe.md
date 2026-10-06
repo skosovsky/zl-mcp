@@ -63,3 +63,16 @@ Rejected field values and raw source errors are excluded. The authorized probe
 with the status fix reached `waiting_for_backup` and then `INVALID_SOURCE_EVENT`;
 no offer/download/import was obtained. That version did not identify the rejected
 control, so the active/idle correction alone is not a proven resolution.
+
+The owner-only Unix HTTP response deadline is 200 seconds, above the 190-second
+CLI request budget and the bounded phone wait/finalization. A shorter write
+budget previously hid the final timeout as `COLLECTOR_UNAVAILABLE`; it did not
+mean that the collector stopped. Receiver diagnostics report only fixed reasons
+for ignored correlation/account/host controls, and only while a receiver is active.
+They neither reveal rejected values nor weaken matching requirements.
+
+The authorized zero-code-fix probe received confirmation and the zero-code
+control, then correctly continued waiting. No accepted archive offer or decoder
+failure was observed before the source deadline. The ledger ended `interrupted`
+with `TIMEOUT`; archive download/import remain unverified. This proves the
+zero-code interpretation fix, not successful phone archive delivery.
