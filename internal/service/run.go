@@ -44,6 +44,7 @@ func Run(ctx context.Context, c config.Config) error {
 // membershipPort blocks network operations while the collector lacks a session.
 // Reading a saved operation needs no upstream client.
 type membershipPort struct {
+	stateDir   string
 	mu         sync.RWMutex
 	current    *collector.JoinManager
 	store      *storage.Store
@@ -91,8 +92,12 @@ func (p *membershipPort) cliHandler() http.Handler {
 		var request struct {
 			Method string `json:"method"`
 		}
-		if err != nil || json.Unmarshal(b, &request) != nil || (request.Method != "cli_preview" && request.Method != "cli_approve" && request.Method != "cli_probe_preload" && !mobileLedgerMethod(request.Method)) {
+		if err != nil || json.Unmarshal(b, &request) != nil || (request.Method != "cli_preview" && request.Method != "cli_approve" && request.Method != "cli_probe_preload" && !mobileLedgerMethod(request.Method) && request.Method != "cli_probe_recall") {
 			http.Error(w, "Only trusted CLI routes are available.", http.StatusBadRequest)
+			return
+		}
+		if request.Method == "cli_probe_recall" {
+			p.recallControl(w, r, b)
 			return
 		}
 		if mobileLedgerMethod(request.Method) {
@@ -179,7 +184,7 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 		return errors.New("private mobile snapshot store unavailable")
 	}
 	defer snapshots.Close()
-	port := &membershipPort{store: store, allowSend: c.Permissions.AllowSend, recipients: recipients, lifecycle: ctx, snapshots: snapshots}
+	port := &membershipPort{stateDir: c.StateDir, store: store, allowSend: c.Permissions.AllowSend, recipients: recipients, lifecycle: ctx, snapshots: snapshots}
 	if err = port.CleanupHistorySnapshots(ctx); err != nil {
 		return errors.New("private mobile snapshot cleanup unavailable")
 	}

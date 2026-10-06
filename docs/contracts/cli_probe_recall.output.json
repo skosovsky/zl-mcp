@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "state": {
+      "enum": [
+        "reserved",
+        "upstream_response",
+        "unknown"
+      ]
+    },
+    "upstream_status": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "state"
+  ]
+}

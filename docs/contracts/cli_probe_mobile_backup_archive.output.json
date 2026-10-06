@@ -227,6 +227,57 @@
     "unresolved_mentions": {
       "type": "integer",
       "minimum": 0
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "examined": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "has_more": {
+          "type": "boolean"
+        },
+        "matching_records": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "matching_controls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "matching_type_counts": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[0-9]+$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "matching_statuses": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "examined",
+        "rejected",
+        "has_more",
+        "matching_records",
+        "matching_controls",
+        "matching_type_counts",
+        "matching_statuses"
+      ]
     }
   },
   "required": [

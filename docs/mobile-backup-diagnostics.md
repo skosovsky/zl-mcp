@@ -76,3 +76,30 @@ archive keys or message bodies. Historical imports remain without Events.
 
 See [local ledger contract](contracts/mobile-backup-local-ledger.md) and
 [current acceptance gates](conversation-completion-open-gates.md).
+
+## Controlled recall comparison
+
+The separately authorized before/after recall investigation uses the current
+service's [owner-only recall diagnostic](contracts/recall-diagnostic.md). Send the
+exact agreed message through `zalo_send_direct_message`, inspect the pre-recall
+archive, then run `probe-recall SEND_REQUEST_UUID` and inspect a separately
+prepared post-recall archive. It uses the saved send operation and live quote
+metadata; an unknown send result cannot be recalled by guessing from text.
+Never start another Zalo client or listener for this comparison. Each archive
+request needs its own phone confirmation. An upstream numeric reply alone does
+not establish collector receipt or a corresponding archive control record.
+
+For an exact saved send-operation comparison, supply its UUID as the optional
+fourth argument to both archive probes:
+
+```sh
+zl-mcp -config /absolute/path/config.toml mobile-backup-probe-archive OPERATION_UUID REVISION SEND_REQUEST_UUID
+```
+
+The saved operation must be `sent` and belong to the selected direct conversation.
+The additional `comparison` reports matching global-message-ID rows, numeric type
+and status counts, and examination/rejection/truncation bounds. It returns no IDs,
+sender names or text. A zero match with rejected rows or `has_more=true` does not
+prove absence. Even without those gaps, it describes only the selected main image
+and period; it does not establish WAL completeness or identify a control whose
+own global ID differs from the recalled target. Import safety gates stay active.

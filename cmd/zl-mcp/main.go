@@ -48,7 +48,7 @@ func run() error {
 		return e
 	}
 	if flags.NArg() < 1 {
-		return fmt.Errorf("usage: zl-mcp -config config.toml <login|service|serve|probe-preload|mobile-backup-prepare|mobile-backup-status|mobile-backup-cancel|mobile-backup-probe-offer|mobile-backup-probe-archive|approve-join preview_id>")
+		return fmt.Errorf("usage: zl-mcp -config config.toml <login|service|serve|probe-preload|mobile-backup-prepare|mobile-backup-status|mobile-backup-cancel|mobile-backup-probe-offer|mobile-backup-probe-archive|probe-recall|approve-join preview_id>")
 	}
 	c, e := config.Load(*path)
 	if e != nil {

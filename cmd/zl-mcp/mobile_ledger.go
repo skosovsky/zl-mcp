@@ -12,13 +12,18 @@ import (
 )
 
 func mobileLedgerCommand(name string) bool {
-	return name == "mobile-backup-prepare" || name == "mobile-backup-status" || name == "mobile-backup-cancel" || name == "mobile-backup-probe-offer" || name == "mobile-backup-probe-archive"
+	return name == "probe-recall" || name == "mobile-backup-prepare" || name == "mobile-backup-status" || name == "mobile-backup-cancel" || name == "mobile-backup-probe-offer" || name == "mobile-backup-probe-archive"
 }
 func mobileLedgerArguments(args []string, in io.Reader) (string, any, error) {
 	if len(args) == 0 {
 		return "", nil, fmt.Errorf("mobile ledger command required")
 	}
 	switch args[0] {
+	case "probe-recall":
+		if len(args) != 2 {
+			return "", nil, fmt.Errorf("probe-recall requires the exact sent request UUID")
+		}
+		return "cli_probe_recall", map[string]any{"send_request_id": args[1]}, nil
 	case "mobile-backup-prepare":
 		if len(args) != 1 {
 			return "", nil, fmt.Errorf("mobile-backup-prepare reads request JSON from stdin")
@@ -35,7 +40,7 @@ func mobileLedgerArguments(args []string, in io.Reader) (string, any, error) {
 		}
 		return "cli_mobile_backup_status", map[string]any{"operation_id": args[1]}, nil
 	case "mobile-backup-cancel", "mobile-backup-probe-offer", "mobile-backup-probe-archive":
-		if len(args) != 3 {
+		if len(args) != 3 && !(args[0] == "mobile-backup-probe-archive" && len(args) == 4) {
 			return "", nil, fmt.Errorf("%s requires operation_id and revision", args[0])
 		}
 		revision, err := strconv.ParseInt(args[2], 10, 64)
@@ -49,7 +54,11 @@ func mobileLedgerArguments(args []string, in io.Reader) (string, any, error) {
 		if args[0] == "mobile-backup-probe-archive" {
 			method = "cli_probe_mobile_backup_archive"
 		}
-		return method, map[string]any{"operation_id": args[1], "revision": revision}, nil
+		arguments := map[string]any{"operation_id": args[1], "revision": revision}
+		if len(args) == 4 {
+			arguments["comparison_send_request_id"] = args[3]
+		}
+		return method, arguments, nil
 	}
 	return "", nil, fmt.Errorf("unknown mobile ledger command")
 }
@@ -59,6 +68,9 @@ func runMobileLedger(ctx context.Context, stateDir string, args []string, in io.
 		return err
 	}
 	budget := 10 * time.Second
+	if method == "cli_probe_recall" {
+		budget = 40 * time.Second
+	}
 	if method == "cli_probe_mobile_backup_offer" {
 		budget = 205 * time.Second
 	}

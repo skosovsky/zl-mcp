@@ -127,8 +127,9 @@ func (p *membershipPort) mobileLedgerControl(w http.ResponseWriter, r *http.Requ
 		result, e = p.store.PrepareMobileBackup(ctx, request)
 	} else {
 		var args struct {
-			ID       string `json:"operation_id"`
-			Revision int64  `json:"revision"`
+			ID               string `json:"operation_id"`
+			Revision         int64  `json:"revision"`
+			ComparisonSendID string `json:"comparison_send_request_id"`
 		}
 		if json.Unmarshal(envelope.Arguments, &args) != nil {
 			fail(domain.Invalid("Invalid mobile attempt reference."))
@@ -137,7 +138,7 @@ func (p *membershipPort) mobileLedgerControl(w http.ResponseWriter, r *http.Requ
 		result, e = p.store.MobileBackupAttempt(ctx, args.ID)
 		if e == nil && (method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive") {
 			if method == "cli_probe_mobile_backup_archive" {
-				probe, e = p.probeMobileArchive(ctx, args.ID, args.Revision)
+				probe, e = p.probeMobileArchiveComparison(ctx, args.ID, args.Revision, args.ComparisonSendID)
 			} else {
 				probe, e = p.probeMobileOffer(ctx, args.ID, args.Revision)
 			}
