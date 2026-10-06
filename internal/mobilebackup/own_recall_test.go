@@ -30,7 +30,7 @@ func TestOwnRecallClassificationPreservesExactTargetAndSourceGates(t *testing.T)
 	page := PreparedArchivePage{Candidates: prepared, SourceWAL: true, SourceControls: 1, requestID: r.RequestID, fingerprint: normalized.Fingerprint(), account: "10"}
 	inspection, err := InspectPreparedArchivePage(context.Background(), page, r, "10", row.TimestampMS+1)
 	// Assert: exact large ID, no ordinary message/text, no persistence eligibility.
-	if err != nil || len(prepared.Rows) != 0 || prepared.DeferredControls != 1 || len(prepared.OwnRecallIDs) != 1 || prepared.OwnRecallIDs[0] != row.MessageID || inspection.OwnRecallCandidates != 1 || inspection.TextCandidates != 0 || len(inspection.BlockReasons) != 2 {
+	if err != nil || len(prepared.Rows) != 0 || prepared.DeferredControls != 1 || len(prepared.OwnRecalls) != 1 || prepared.OwnRecalls[0].MessageID != row.MessageID || inspection.OwnRecallCandidates != 1 || inspection.TextCandidates != 0 || len(inspection.BlockReasons) != 1 || inspection.BlockReasons[0] != "unverified_wal_snapshot" {
 		t.Fatal("recall classification or source gate mismatch")
 	}
 	if result, err := ConvertPreparedArchivePage(context.Background(), page, r, "10", row.TimestampMS+1); err == nil || len(result.Records) != 0 {
@@ -40,9 +40,9 @@ func TestOwnRecallClassificationPreservesExactTargetAndSourceGates(t *testing.T)
 	if string(encoded) != "{}" {
 		t.Fatal("private target exposed")
 	}
-	ids := prepared.OwnRecallIDs
+	ids := prepared.OwnRecalls
 	prepared.Clear()
-	if len(ids) != 1 || ids[0] != "" {
+	if len(ids) != 1 || ids[0] != (domain.MobileHistoryRecall{}) {
 		t.Fatal("private target not cleared")
 	}
 }
@@ -89,12 +89,12 @@ func TestOwnRecallClassificationScopeAndMappingFailures(t *testing.T) {
 			// Assert: no target guessed; mapping/cancellation faults expose no result prefix.
 			fault := mode == "missing-map" || mode == "third-sender" || mode == "cancel"
 			if fault {
-				if !errors.Is(err, ErrSQLite) || got.Examined != 0 || len(got.OwnRecallIDs) != 0 {
+				if !errors.Is(err, ErrSQLite) || got.Examined != 0 || len(got.OwnRecalls) != 0 {
 					t.Fatal("partial recall accepted")
 				}
 				return
 			}
-			if err != nil || len(got.OwnRecallIDs) != 0 || got.DeferredControls != 1 || len(got.Rows) != 0 {
+			if err != nil || len(got.OwnRecalls) != 0 || got.DeferredControls != 1 || len(got.Rows) != 0 {
 				t.Fatal("unsupported control interpreted")
 			}
 			if (mode == "group" || mode == "other-status" || mode == "type33") && calls != 0 {
@@ -114,7 +114,7 @@ func TestDuplicateOwnRecallTargetsFailWithoutPrefix(t *testing.T) {
 	// Act.
 	got, err := PrepareRowPage(context.Background(), []SQLiteRow{row, row}, selectedFetchRequest(), "10", mapper)
 	// Assert: no partial private target list or counts survive.
-	if !errors.Is(err, ErrSQLite) || len(got.OwnRecallIDs) != 0 || got.Examined != 0 {
+	if !errors.Is(err, ErrSQLite) || len(got.OwnRecalls) != 0 || got.Examined != 0 {
 		t.Fatal("ambiguous target prefix escaped")
 	}
 }

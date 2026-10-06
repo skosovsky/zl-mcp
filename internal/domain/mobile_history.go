@@ -34,6 +34,7 @@ type MobileHistoryCounts struct {
 	MissingMetadata       int `json:"missing_metadata"`
 	InvalidMetadata       int `json:"invalid_metadata"`
 	DeferredControls      int `json:"deferred_controls"`
+	OwnRecalls            int `json:"own_recalls"`
 	UnknownMetadataFields int `json:"unknown_metadata_fields"`
 	ExpiredQuotes         int `json:"expired_quotes"`
 	UnresolvedQuotes      int `json:"unresolved_quotes"`
@@ -45,12 +46,25 @@ type MobileHistoryCoverage struct {
 	SourceRows           int64 `json:"source_rows"`
 	PeriodRows           int64 `json:"period_rows"`
 	InvalidTimestampRows int64 `json:"invalid_timestamp_rows"`
+	SourceControls       int   `json:"source_controls"`
 }
+
+// MobileHistoryRecall is a validated source observation, never a live recall request.
+type MobileHistoryRecall struct {
+	Conversation ConversationRef `json:"-"`
+	MessageID    string          `json:"-"`
+	SenderID     string          `json:"-"`
+	RecordAtMS   int64           `json:"-"`
+}
+
+func (MobileHistoryRecall) String() string   { return "historical recall [redacted]" }
+func (MobileHistoryRecall) GoString() string { return "historical recall [redacted]" }
 
 // MobileHistoryPage carries one exact source page; persistence is always silent.
 type MobileHistoryPage struct {
 	Snapshot MobileHistorySnapshot   `json:"-"`
 	Records  []ExpiringHistoryRecord `json:"-"`
+	Recalls  []MobileHistoryRecall   `json:"-"`
 	Counts   MobileHistoryCounts     `json:"-"`
 	HasMore  bool                    `json:"-"`
 	Next     *MobileHistoryPosition  `json:"-"`
@@ -62,6 +76,7 @@ func (MobileHistoryPage) GoString() string { return "mobile history page [redact
 func (p *MobileHistoryPage) Clear() {
 	if p != nil {
 		clear(p.Records)
+		clear(p.Recalls)
 		if p.Next != nil {
 			*p.Next = MobileHistoryPosition{}
 		}

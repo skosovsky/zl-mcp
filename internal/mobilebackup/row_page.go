@@ -20,9 +20,9 @@ func (PreparedRow) String() string   { return "mobile backup prepared row [redac
 func (PreparedRow) GoString() string { return "mobile backup prepared row [redacted]" }
 
 type PreparedRowPage struct {
-	Rows                                                                                                      []PreparedRow `json:"-"`
-	OwnRecallIDs                                                                                              []string      `json:"-"`
-	Examined, DeferredControls, UnsupportedTypes, MissingMetadata, InvalidMetadata, UnsupportedMetadataFields int           `json:"-"`
+	Rows                                                                                                      []PreparedRow                `json:"-"`
+	OwnRecalls                                                                                                []domain.MobileHistoryRecall `json:"-"`
+	Examined, DeferredControls, UnsupportedTypes, MissingMetadata, InvalidMetadata, UnsupportedMetadataFields int                          `json:"-"`
 }
 
 func (PreparedRowPage) String() string   { return "mobile backup prepared row page [redacted]" }
@@ -36,7 +36,7 @@ func (p *PreparedRowPage) Clear() {
 		p.Rows[i].Metadata.Clear()
 		p.Rows[i] = PreparedRow{}
 	}
-	clear(p.OwnRecallIDs)
+	clear(p.OwnRecalls)
 	*p = PreparedRowPage{}
 }
 func mobilePayloadKind(t int64) (string, bool) {
@@ -127,7 +127,7 @@ func PrepareRowPage(ctx context.Context, rows []SQLiteRow, r domain.MobileBackup
 	seen := map[string]bool{}
 	// Only the own/direct/status-3 transition has paired live archive evidence.
 	// Retain no body or BinNet for a recall and keep its deferred-control count.
-	controls := map[string][]string{}
+	controls := map[string][]SQLiteRow{}
 	for i, row := range owned {
 		if ctx.Err() != nil {
 			return result, ErrSQLite
@@ -135,7 +135,7 @@ func PrepareRowPage(ctx context.Context, rows []SQLiteRow, r domain.MobileBackup
 		if deferredMobileControl(row.Type) {
 			result.DeferredControls++
 			if normalized.ConversationType == domain.ConversationDirect && row.Type == 36 && row.Status == 3 {
-				controls[row.SenderID] = append(controls[row.SenderID], row.MessageID)
+				controls[row.SenderID] = append(controls[row.SenderID], row)
 				if !seen[row.SenderID] {
 					seen[row.SenderID] = true
 					request.Direct = append(request.Direct, row.SenderID)
@@ -213,12 +213,13 @@ func PrepareRowPage(ctx context.Context, rows []SQLiteRow, r domain.MobileBackup
 		if sender != account {
 			continue // Received-message recall semantics are not yet verified.
 		}
-		for _, id := range controls[source] {
+		for _, control := range controls[source] {
+			id := control.MessageID
 			if seenTargets[id] {
 				return result, ErrSQLite
 			}
 			seenTargets[id] = true
-			result.OwnRecallIDs = append(result.OwnRecallIDs, id)
+			result.OwnRecalls = append(result.OwnRecalls, domain.MobileHistoryRecall{Conversation: normalized.Ref(), MessageID: id, SenderID: sender, RecordAtMS: control.TimestampMS})
 		}
 	}
 	if ctx.Err() != nil {

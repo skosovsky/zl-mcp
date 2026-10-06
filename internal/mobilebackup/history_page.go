@@ -51,7 +51,10 @@ func (s *SnapshotStore) ReadHistoryPage(ctx context.Context, request domain.Mobi
 	if previous != nil && *previous != source {
 		return result, ErrSnapshotConflict
 	}
-	if page.SourceWAL || page.SourceControls > 0 {
+	if previous != nil && previous.ControlRows == source.ControlRows {
+		page.controlsVerified = true
+	}
+	if page.SourceWAL || !archiveControlsClassified(page) {
 		return result, ErrSnapshotSourceUnsupported
 	}
 	converted, err := ConvertPreparedArchivePage(ctx, page, r, account, nowMS)
@@ -63,10 +66,11 @@ func (s *SnapshotStore) ReadHistoryPage(ctx context.Context, request domain.Mobi
 		return result, ErrSnapshot
 	}
 	result.Snapshot, result.HasMore = source, page.SourceHasMore
-	result.Counts = domain.MobileHistoryCounts{Examined: page.Examined, Rejected: page.Rejected, Expired: page.ExpiredMessages + converted.Expired, UnsupportedTypes: page.Candidates.UnsupportedTypes, UnsupportedContent: converted.UnsupportedContent, MissingMetadata: page.Candidates.MissingMetadata, InvalidMetadata: page.Candidates.InvalidMetadata, DeferredControls: page.Candidates.DeferredControls, UnknownMetadataFields: page.Candidates.UnsupportedMetadataFields, ExpiredQuotes: page.ExpiredQuotes, UnresolvedQuotes: converted.UnresolvedQuotes, UnresolvedMentions: converted.UnresolvedMentions}
+	result.Counts = domain.MobileHistoryCounts{Examined: page.Examined, Rejected: page.Rejected, Expired: page.ExpiredMessages + converted.Expired, UnsupportedTypes: page.Candidates.UnsupportedTypes, UnsupportedContent: converted.UnsupportedContent, MissingMetadata: page.Candidates.MissingMetadata, InvalidMetadata: page.Candidates.InvalidMetadata, DeferredControls: page.Candidates.DeferredControls - len(converted.Recalls), OwnRecalls: len(converted.Recalls), UnknownMetadataFields: page.Candidates.UnsupportedMetadataFields, ExpiredQuotes: page.ExpiredQuotes, UnresolvedQuotes: converted.UnresolvedQuotes, UnresolvedMentions: converted.UnresolvedMentions}
 	if page.Next != nil {
 		result.Next = &domain.MobileHistoryPosition{TimestampMS: page.Next.sqlite.TimestampMS, RowID: page.Next.sqlite.RowID}
 	}
 	result.Records, converted.Records = converted.Records, nil
+	result.Recalls, converted.Recalls = converted.Recalls, nil
 	return result, nil
 }

@@ -108,8 +108,8 @@ through local HTTP MCP and its returned ID matches the saved send ledger. The
 original disabled send configuration was restored before the archive request.
 The new pre-recall attempt also terminated `interrupted` after approximately
 three minutes waiting for confirmation (12:55:34–12:58:36 UTC), without an archive.
-No real recall, comparison or import has occurred; the next phone request awaits
-explicit user readiness and must use a fresh attempt UUID.
+At that point no real recall, comparison or import had occurred; the next phone
+request required explicit user readiness and a fresh attempt UUID.
 In the subsequently authorized successful run, both confirmed archives contained
 one exact-ID match: type `0`, status `3` before recall, and type `36`, status `3`
 after recall. The source file retained 129 rows in both snapshots; whole-file
@@ -123,8 +123,9 @@ probes kept conversion/import blocked. Details are in the
 The subsequent source classifier privately retains exact own-direct
 type-36/status-3 IDs after sender mapping and reports only a diagnostic count.
 It is regression-tested, but not yet installed or accepted on a new phone export.
-Controls remain deferred and the WAL/whole-file control import gates remain;
-silent atomic tombstone/checkpoint persistence is still required.
+That classifier initially left controls deferred. The later atomic candidate
+below handles fully classified own-direct controls; WAL and unclassified
+whole-file control gates remain.
 After fixing the shutdown/cleanup race and correcting the spent-UUID test to the
 existing unavailable-source error contract, root tests/vet and affected
 mobile-backup/history-import/service/storage race checks passed. A further real
@@ -367,7 +368,7 @@ probe build. No phone request, Zalo send or subscription edit was performed.
 | Mobile request/transport | Current-session request/offer observer, durable dispatch ledger, restart recovery and private offer ownership; host-scoped cookie transport, scoped body consumption and revocation tests | Correlated live offer and owner mapping now accepted; download and selected sender mapping accepted by later probes; durable production import remains |
 | Mobile archive reading | Independent format-1/XXH32/XZ/OpenSSL and SQLite fixtures; typed file selection, immutable bounded SQLite reads with exact fractional-millisecond interval mapping, digest/request/account-bound keyset paging; one session/download across pages | Format/SQLite/plain-to-session reading accepted; full BinNet/content semantics remain |
 | Mobile conversion/import | Plain text and verified single-rtf visible-title projection preserve exact IDs, sender, timestamp, direction and original TTL; atomic page/checkpoint persistence and gap accounting verified synthetically | Real source eligibility and nontext/quote/mention semantics; native cleanup and synthetic text projection do not close full mobile acceptance |
-| Deleted/recalled messages | Source schema 11 prevents restoration of an observed exact typed deletion by live replay or history; absent-message deletion, restart, namespace, novelty and rollback tests. Real own-direct recall produced an exact tombstone and client anchor refusal; paired archives correlated the same global ID changing type `0`→`36` while status stayed `3`. Whole-file mobile type-33/36 detection still blocks unverified conversion | Specify and test supported mobile type-36 projection; type-33 and incoming/group semantics plus WAL completeness remain unverified before public archive persistence |
+| Deleted/recalled messages | Source schema 11 prevents restoration of an observed exact typed deletion by live replay or history; absent-message deletion, restart, namespace, novelty and rollback tests. Real own-direct recall produced an exact tombstone and client anchor refusal; paired archives correlated the same global ID changing type `0`→`36` while status stayed `3`. Whole-file mobile type-33/36 detection still blocks unverified conversion | Internal own-direct type-36 projection and atomic silent tombstone/checkpoint tests now cover restart and replay suppression; real source acceptance, type-33 and incoming/group semantics plus WAL completeness remain unverified before public archive persistence |
 | Expiry after import | Expiry markers, SQL read-time filtering and cleanup; mobile worker uses atomic records/TTL/checkpoint port; rollback/restart/duplicate/cancel/due-expiry tests passed | Quote expiry and trustworthy clock/real archive acceptance |
 | Group pages | Installed phase-aware candidate; two live groups each returned a terminal recent page; durable phase traversal covered synthetically | Live old-phase traversal when available; no completeness claim |
 | v2 discovery and filters | Installed schema-14 service exposes legacy/group and conversation v2 only; v1 removed; direction/novelty/restart tests; client recovery adoption confirmed by Ann | Agreed incoming-only/first-only live scenarios remain |
@@ -478,3 +479,12 @@ source manifest match this published commit.
 [Its Linux/macOS CI run](https://github.com/skosovsky/zl-mcp/actions/runs/37316075019)
 completed successfully for both jobs and the exact commit SHA. This checkpoint does not close the remaining
 archive/import, client Events or fresh-send requirements.
+
+### Atomic own-direct archive recall candidate
+
+Internal conversion and journal persistence now support the verified own-direct
+case atomically, with no historical Events. First-page classification must cover
+all controls in the immutable non-WAL source; later or out-of-window controls
+remain unsupported before any insertion. Synthetic integrated restart and rollback
+checks cover the candidate. It is not installed or phone-accepted. The real paired
+WAL images were not imported; public mobile-archive admission remains disabled.

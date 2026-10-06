@@ -264,6 +264,16 @@
         "invalid_timestamp_rows": {
           "type": "integer",
           "minimum": 0
+        },
+        "own_recalls": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Verified own-direct source recall rows committed silently as tombstones; not ordinary inserted messages."
+        },
+        "source_controls": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Frozen whole-file control count; all controls must be verified before the first page commits."
         }
       },
       "required": [

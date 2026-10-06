@@ -10,7 +10,6 @@ import (
 
 type PreparedArchiveCursor struct {
 	requestID, fingerprint, account string
-	SourceControls                  int `json:"-"`
 	examined                        int
 	sqlite                          SQLiteCursor
 }
@@ -22,6 +21,7 @@ type PreparedArchivePage struct {
 	Coverage                                           SQLiteCoverage `json:"-"`
 	SourceWAL                                          bool           `json:"-"`
 	SourceControls                                     int            `json:"-"`
+	controlsVerified                                   bool
 	requestID, fingerprint, account                    string
 	Candidates                                         PreparedRowPage        `json:"-"`
 	Examined, Rejected, ExpiredMessages, ExpiredQuotes int                    `json:"-"`

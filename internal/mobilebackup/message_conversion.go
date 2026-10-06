@@ -11,6 +11,7 @@ import (
 
 type ConvertedArchivePage struct {
 	Records                                                           []domain.ExpiringHistoryRecord `json:"-"`
+	Recalls                                                           []domain.MobileHistoryRecall   `json:"-"`
 	Expired, UnsupportedContent, UnresolvedQuotes, UnresolvedMentions int                            `json:"-"`
 }
 
@@ -21,13 +22,14 @@ func (p *ConvertedArchivePage) Clear() {
 		for i := range p.Records {
 			p.Records[i] = domain.ExpiringHistoryRecord{}
 		}
+		clear(p.Recalls)
 		*p = ConvertedArchivePage{}
 	}
 }
 
 // ConvertPreparedArchivePage borrows already mapped candidates; it performs no import.
 func ConvertPreparedArchivePage(ctx context.Context, page PreparedArchivePage, request domain.MobileBackupRequest, account string, nowMS int64) (result ConvertedArchivePage, err error) {
-	if page.SourceWAL || page.SourceControls > 0 {
+	if page.SourceWAL || !archiveControlsClassified(page) {
 		return result, ErrSQLite
 	}
 	return convertArchiveCandidates(ctx, page, request, account, nowMS)
@@ -48,22 +50,12 @@ func InspectPreparedArchivePage(ctx context.Context, page PreparedArchivePage, r
 	if err != nil {
 		return ArchivePageInspection{}, err
 	}
-	if len(page.Candidates.OwnRecallIDs) > page.Candidates.DeferredControls || len(page.Candidates.OwnRecallIDs) > page.Candidates.Examined || len(page.Candidates.OwnRecallIDs) > page.SourceControls || len(page.Candidates.OwnRecallIDs) > 50 || len(page.Candidates.OwnRecallIDs) > 0 && request.ConversationType != domain.ConversationDirect {
-		return ArchivePageInspection{}, ErrSQLite
-	}
-	seen := map[string]bool{}
-	for _, id := range page.Candidates.OwnRecallIDs {
-		if !canonicalIdentity(id) || seen[id] || ctx.Err() != nil {
-			return ArchivePageInspection{}, ErrSQLite
-		}
-		seen[id] = true
-	}
 	result := ArchivePageInspection{TextCandidates: len(converted.Records), Expired: converted.Expired, UnsupportedContent: converted.UnsupportedContent, UnresolvedQuotes: converted.UnresolvedQuotes, UnresolvedMentions: converted.UnresolvedMentions, BlockReasons: []string{}}
-	result.OwnRecallCandidates = len(page.Candidates.OwnRecallIDs)
+	result.OwnRecallCandidates = len(page.Candidates.OwnRecalls)
 	if page.SourceWAL {
 		result.BlockReasons = append(result.BlockReasons, "unverified_wal_snapshot")
 	}
-	if page.SourceControls > 0 {
+	if !archiveControlsClassified(page) {
 		result.BlockReasons = append(result.BlockReasons, "unverified_source_controls")
 	}
 	return result, nil
@@ -82,6 +74,16 @@ func convertArchiveCandidates(ctx context.Context, page PreparedArchivePage, req
 	from, to, validWindow := millisecondWindow(since, until)
 	if !validWindow {
 		return result, ErrSQLite
+	}
+	if len(page.Candidates.OwnRecalls) > page.Candidates.DeferredControls || len(page.Candidates.OwnRecalls) > page.Candidates.Examined || len(page.Candidates.OwnRecalls) > page.SourceControls || len(page.Candidates.OwnRecalls) > min(50, r.MaxMessages) {
+		return result, ErrSQLite
+	}
+	seenRecalls := map[string]bool{}
+	for _, recall := range page.Candidates.OwnRecalls {
+		if ctx.Err() != nil || !canonicalIdentity(recall.MessageID) || seenRecalls[recall.MessageID] || recall.Conversation != r.Ref() || recall.Conversation.Type != domain.ConversationDirect || recall.SenderID != account || recall.RecordAtMS < from || recall.RecordAtMS >= to {
+			return result, ErrSQLite
+		}
+		seenRecalls[recall.MessageID] = true
 	}
 	total := 0
 	// Whole-page validation precedes classification and output construction.
@@ -138,7 +140,14 @@ func convertArchiveCandidates(ctx context.Context, page PreparedArchivePage, req
 	if ctx.Err() != nil {
 		return result, ErrSQLite
 	}
+	result.Recalls = append([]domain.MobileHistoryRecall(nil), page.Candidates.OwnRecalls...)
 	return result, nil
+}
+
+// Only a complete first-page classification or its immutable accepted checkpoint
+// can prove there is no unseen suppressing control elsewhere in this source.
+func archiveControlsClassified(page PreparedArchivePage) bool {
+	return page.SourceControls >= 0 && (page.controlsVerified || page.SourceControls == len(page.Candidates.OwnRecalls))
 }
 
 // archiveText follows the installed MSG_TEXT title-or-MsgContent rule. It does

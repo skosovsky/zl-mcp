@@ -192,3 +192,15 @@ tombstone persistence. The classification has regression tests for namespace,
 sender mapping, cancellation, exact large IDs, redaction and unchanged source
 gates. This change is not yet installed or verified against another phone export;
 the successful paired comparison above used the prior diagnostic implementation.
+
+### Atomic own-direct recall candidate
+
+The internal source-to-journal path now supports silent own-direct tombstones and
+checkpoint publication in one transaction, before ordinary records. Synthetic
+integration tests cover an encrypted snapshot, first-page classification, restart,
+later-page conversion, replay suppression and absence of historical Events.
+Only a non-WAL image whose entire control count is classified in the first page
+is eligible. A later-page control fails before any ordinary-record prefix.
+The paired real phone images above remain WAL sources and were not imported.
+This candidate is not installed or accepted against a new phone export; public
+mobile-archive admission remains disabled.

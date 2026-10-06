@@ -20,18 +20,20 @@ recall in a direct conversation. Classify this precise candidate separately:
 direct selection, type `36`, status `3`, valid whole-page scalars/interval, and
 sender resolved by the current session mapper to the current account. The mapped
 sender must belong to that direct conversation; incomplete or conflicting mapping
-fails the whole page. Retain only the exact string global ID in private
-`OwnRecallIDs`; do not interpret MsgContent/BinNet as text or a target instruction.
-Group, received-message, type-33 and other-status controls remain deferred.
+fails the whole page. Retain the exact global ID, typed conversation, mapped
+sender and original row timestamp privately in `OwnRecalls`; do not interpret
+MsgContent/BinNet as text or a target instruction. Group, received-message,
+type-33 and other-status controls remain deferred.
 
-The classification remains included in `DeferredControls` until persistence is
-implemented and accepted. The owner archive diagnostic reports only
-`own_recall_candidates`, never IDs or bodies. Clear owned IDs with the page.
-No archive-control ID is a request to the live recall API. A future silent
-tombstone/checkpoint transaction must precede any import of ordinary rows, and
-must handle controls outside the requested period. This classifier does not
-relax whole-file source-control or WAL gates, and does not prove that either
-source is complete. It is the first stage of control support, not full import.
+Preparation includes these candidates in `DeferredControls`. Conversion moves
+accepted candidates into the mutually exclusive `OwnRecalls` count. The owner
+archive diagnostic reports only `own_recall_candidates`, never IDs or bodies.
+Clear owned targets with the page. No archive-control target invokes a live
+recall API. The [checkpoint transaction](mobile-history-checkpoint.md#atomic-own-direct-archive-recalls)
+applies silent tombstones before ordinary records. It accepts a non-WAL source
+only when every whole-file control is classified in its first bounded page;
+later-page or out-of-period controls block all import. This limited support does
+not prove archive completeness or support arbitrary controls.
 
 PrepareRowPage accepts at most 50 already selected rows, normalized exact request,
 canonical numeric current-account session ID and guarded identity mapper. Validate

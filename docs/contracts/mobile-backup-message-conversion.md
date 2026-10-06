@@ -11,11 +11,12 @@ also use decoded attachments rather than labeling MsgContent as plain text.
 Before conversion, the immutable SQLite reader counts deletion/undo source
 records (types 33/36) across the entire selected file, independent of timestamp,
 status and page position. Preserve `SourceControls` on each bound page. Reject
-conversion while that count is nonzero: paired live evidence now correlates
-own-direct type-36 rows to the original global ID, but atomic archive tombstone
-persistence and all other control semantics are not yet accepted.
-This prevents an in-window text page from being imported ahead of a later or
-out-of-window control. Detection is not implementation of deletion/undo semantics.
+conversion unless every control is a verified own-direct type-36/status-3
+candidate in the first bounded page, or an immutable committed checkpoint proves
+that first-page classification. WAL sources remain rejected. Later-page,
+out-of-window, received/group, type-33 and other-status controls block the source
+before any ordinary record prefix. Converted recall targets remain private and
+carry the original source timestamp, not an invented recall time.
 
 Convert verified type-0/webchat candidates without attachments, or with exactly
 one decoded attachment whose present action is exactly `rtf`. The installed
@@ -44,7 +45,7 @@ prefix on cancellation or malformed/binding-inconsistent candidates.
 
 This operation performs no requests, writes or Events. Global deletion/undo
 handling, nontext/rich-text conversion, actual archive/identity compatibility and
-atomic page/checkpoint persistence remain required before public import acceptance.
+real phone source acceptance remain required before public import acceptance.
 
 ## Diagnostic inspection without persistence eligibility
 
@@ -61,7 +62,9 @@ An empty interval can still have a whole-file persistence gate.
 The separate `own_recall_candidates` diagnostic counts only validated direct
 type-36/status-3 rows whose sender maps to the current account, as specified by
 [row preparation](mobile-backup-row-page.md#verified-own-direct-recall-classification).
-It preserves the exact IDs privately, returns no body, and remains a subset of
-deferred controls. It grants no persistence or live recall capability. Supporting
-this classification is not supporting arbitrary deletions or a complete mobile
-import. The existing WAL and whole-file control gates remain unchanged.
+It preserves exact targets privately and returns no body. Conversion returns
+validated recall targets separately from ordinary records; persistence uses the
+[atomic checkpoint contract](mobile-history-checkpoint.md#atomic-own-direct-archive-recalls).
+This does not invoke live recall, create Events, support arbitrary deletions or
+establish complete mobile import. WAL and unclassified whole-file controls remain
+explicit persistence gates; public mobile-archive admission remains disabled.

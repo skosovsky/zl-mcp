@@ -13,7 +13,8 @@ Persist one private source binding: request/snapshot UUID, image SHA-256, creati
 and fixed 15-minute expiry, immutable source row/period/invalid-timestamp counts.
 No path, transfer URL/key, account ID or body is part of a checkpoint. The driver
 obtains this evidence from its authenticated selected snapshot. Known unverified
-WAL/control images remain ineligible. A source cannot change image, expiry or
+WAL images remain ineligible. Non-WAL control images are eligible only for the
+fully classified own-direct recall case below. A source cannot change image, expiry or
 coverage after its first committed page. Missing/expired sources cannot be
 replaced by another phone transfer under the same UUID.
 
@@ -151,6 +152,41 @@ Stale/cancelled revision results stop without additional source work. Error path
 clear owned pages/offers and never expose source error text or credentials.
 Historical imports remain silent; source-row limits include rejected/expired-only
 pages and source exhaustion retains history_complete=false.
+
+## Atomic own-direct archive recalls
+
+The paired live export establishes direct type-36/status-3 rows using the same
+global ID as the recalled own message. A trusted source page may carry private
+recall targets with exact typed conversation, ID, mapped current-account sender
+and original source-row timestamp. It carries no text or presumed recall time.
+`own_recalls` counts these rows as mutually exclusive examined records, rather
+than deferred gaps. `source_controls` freezes the whole-file control count in
+`mobile_coverage`; legacy checkpoints without it mean zero controls.
+
+Before the first page can commit anything, every whole-file type-33/36 control
+must be represented by a validated own-direct recall in that page. Otherwise
+the source remains unsupported. This bounded initial implementation deliberately
+keeps out-of-period, later-page, larger-than-page, incoming/group, other-status
+and type-33 controls ineligible. A future separate bounded whole-control scan is
+needed for those cases; never import an ordinary page first and hope to discover
+a suppressing control later. WAL mode is still independently rejected.
+
+Validate all recall targets, interval/keyset bounds, exact sender/account and
+unique IDs before writing. Apply tombstones and existing record removal before
+ordinary historical records, in the same transaction as identities, novelty,
+expiry, source binding and operation checkpoint. Use local observation time for
+`deleted_at`; the row timestamp is not evidence of the time of recall. Same-page
+or later replay/history cannot resurrect a tombstoned message. No new Events,
+deliveries or subscription/send changes result from this import. Existing pending
+deliveries for a removed message follow the normal deletion policy.
+
+The immutable source control count is recovered alongside its digest/keyset from
+the same committed operation payload. Subsequent pages cannot change that count,
+introduce another recall for an already fully classified source, or lose the
+proof that all source controls were committed before ordinary records. Rollback,
+restart, cancellation, revocation and stale-revision rules apply to recalls too.
+Public mobile input stays disabled pending producer/WAL and remaining semantics
+acceptance; internal synthetic success does not establish live import support.
 
 Terminal or authentication-paused history closes any still-active linked attempt
 so a pre-dispatch failure does not block all later account transfers. This trusted

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -35,16 +36,20 @@ func (s *Store) deleteObservedMessage(ctx context.Context, ref domain.Conversati
 		return e
 	}
 	defer tx.Rollback()
-	if _, e = tx.ExecContext(ctx, "INSERT OR IGNORE INTO message_tombstones VALUES(?,?,?,?)", ref.Type, ref.ID, id, now()); e != nil {
-		return e
-	}
-	if ref.Type == domain.ConversationDirect {
-		if _, e = tx.ExecContext(ctx, "INSERT OR IGNORE INTO peer_first_incoming(peer_id,first_seq,certainty) VALUES(?,NULL,'unknown')", ref.ID); e != nil {
-			return e
-		}
-	}
-	if e = s.removeMessagesTx(ctx, tx, "conversation_type=? AND conversation_id=? AND message_id=?", "record_deleted", ref.Type, ref.ID, id); e != nil {
+	if e = s.deleteObservedMessageTx(ctx, tx, ref, id); e != nil {
 		return e
 	}
 	return tx.Commit()
+}
+
+func (s *Store) deleteObservedMessageTx(ctx context.Context, tx *sql.Tx, ref domain.ConversationRef, id string) error {
+	if _, e := tx.ExecContext(ctx, "INSERT OR IGNORE INTO message_tombstones VALUES(?,?,?,?)", ref.Type, ref.ID, id, now()); e != nil {
+		return e
+	}
+	if ref.Type == domain.ConversationDirect {
+		if _, e := tx.ExecContext(ctx, "INSERT OR IGNORE INTO peer_first_incoming(peer_id,first_seq,certainty) VALUES(?,NULL,'unknown')", ref.ID); e != nil {
+			return e
+		}
+	}
+	return s.removeMessagesTx(ctx, tx, "conversation_type=? AND conversation_id=? AND message_id=?", "record_deleted", ref.Type, ref.ID, id)
 }
