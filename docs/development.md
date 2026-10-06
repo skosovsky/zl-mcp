@@ -107,3 +107,25 @@ The mobile backup candidate has a trusted local attempt ledger, not an exposed
 mobile-history MCP source. See [mobile diagnostics](mobile-backup-diagnostics.md)
 for preparation/status/prepared-only cancellation. These commands do not authorize
 or execute a phone request and require the already running single service.
+
+## Native startup acceptance
+
+To exercise the built service executable rather than an injected Go service
+function, set an absolute path to the verified native binary:
+
+```sh
+ZL_MCP_ACCEPTANCE_BINARY="$HOME/.local/bin/zl-mcp" \
+  go test -race ./internal/mobilebackup -run TestNativeBinaryTerminalStartupAcceptance -count=1
+```
+
+The test creates a short private temporary state directory, a synthetic
+account-bound terminal history operation and encrypted snapshot, then starts
+that binary with a separate loopback endpoint and temporary HOME. It checks
+startup removal before authentication, unchanged terminal state, no imported
+messages or Events, retained private key/spent UUID and graceful shutdown.
+It neither uses the installed state/session nor requests phone synchronization.
+Without the explicit environment variable this subprocess test is skipped;
+ordinary in-process regression tests still run. CI explicitly builds and tests a
+native binary on both Linux and macOS runners. Run it with a binary built for
+the current host. It does not establish real mobile archive eligibility or
+successful import of private history.

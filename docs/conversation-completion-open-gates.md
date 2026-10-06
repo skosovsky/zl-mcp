@@ -10,11 +10,11 @@ their recorded versions, not a description of the current installation.
 
 ## Installed checkpoint superseding older deployment notes
 
-Source `ccae74ed56139b9da7b77d2d14d5f87fa3418359` passed
-[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37447225331).
+Source `c9d3e50ccbd678978b7199f31801a35ba1911548` passed
+[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37452374389).
 A CGO-free, trimpath macOS arm64 binary built from its clean Git archive was
 ad-hoc signed and installed through the existing single LaunchAgent. Installed
-SHA-256 is `558cd7ba8ef5b5598039ef76e2d4d026a491a15513aad20f1367ea48c94c6dc2`;
+SHA-256 is `f31f9170cc236563e81f1bfe4ec4fce6cb60afd0d94c12882ba436de34720cd1`;
 SQLite is now schema 14. A private native-binary/state/config backup and a
 consistent integrity-checked SQLite copy were verified before replacement.
 Existing corpus rows, send-operation rows, subscription boundaries and prior
@@ -26,6 +26,20 @@ connected/authenticated with no error after deployment. The installed STDIO
 bridge initialized, discovered 21 tools and read the same connected status,
 without advertising Events. Both copied skills match all five source files in
 each directory. The subscription journal remained empty and unblocked.
+
+The installed native subprocess acceptance uses isolated synthetic state, a
+separate loopback endpoint and temporary HOME. It verifies terminal snapshot
+removal before authentication, unchanged terminal operation, no corpus/Event
+writes, retained snapshot key/spent identity, endpoint readiness and graceful
+shutdown. The test passed under race against the candidate and exact installed
+executable; [development instructions](development.md#native-startup-acceptance)
+make it reproducible. An initial fixture ended with exit status 1 during startup;
+using a short private directory, isolated HOME and waiting for endpoint readiness
+corrected the fixture without a service change. That first subprocess result
+did not establish a production shutdown defect. Both ad-hoc signatures verify, and removing
+signatures from temporary copies confirmed identical executable payloads despite
+the path-specific installed signature changing the final file hash.
+
 
 The actual connected client started an explicit `conversation_preload` import
 for September 26 Vietnam time, read its durable status, and retried the original
@@ -42,8 +56,9 @@ bug for the accepted transfer, but proves neither producer checkpoint state nor
 the interpretation of data outside the declared container. Mobile source input
 remains disabled, and the two historical candidates remain unimported. Terminal
 snapshot cleanup is implemented and accepted synthetically in source, including
-restart after a terminal journal commit. The installed build predates this change;
-installed cleanup and real mobile import acceptance remain open.
+restart after a terminal journal commit. The native startup subprocess check also
+passed with the exact installed binary against isolated synthetic state; real
+mobile import acceptance remains open.
 
 ### Terminal snapshot cleanup and control investigation
 
@@ -54,7 +69,8 @@ prevent cleanup, while active/paused, foreign, changed and unlinked bindings sta
 ineligible. Startup cleanup does not borrow a phone/session. Spent UUIDs survive
 removal, preventing a retry from renewing the source. Synthetic tests include
 restart after terminal commit before removal, journal failure preservation and
-shutdown during cleanup. These new source changes are not yet installed.
+shutdown during cleanup. These changes and the subsequent idle-cost optimization
+are now installed at the current source checkpoint.
 
 Static format-1 inspection confirms the native names `ChatDelete=33` and `Undo=36`
 and their `chat.delete`/`chat.undo` mappings. Its archive importer separates
@@ -79,8 +95,8 @@ removal. Its regression counts actual AEAD opens and corrupts a cached image to
 check that a hint cannot authorize deletion; further checks cover a changed
 journal decision and expiry after a hint was cached. Affected mobile-backup,
 history-import and service race checks, affected vet, CGO-free macOS arm64/Linux
-amd64 builds and diff checks passed. This optimization still needs publication
-and installation; the installed version is unchanged. The preceding cleanup
+amd64 builds and diff checks passed. This optimization is published and installed
+at the current source checkpoint. The preceding cleanup
 commit `606ed02` and documentation commit `55299f3` both passed macOS/Linux CI.
 
 
@@ -300,11 +316,11 @@ probe build. No phone request, Zalo send or subscription edit was performed.
 | --- | --- | --- |
 | Browse without a keyword | Current installed HTTP and actual connected-client catalogue→period browse→stable continuation→matching context checks pass; production regression tests | Final signed checkout/publication verification |
 | Expanded conversation catalogue | Guarded periodic preload refresh and actual connected-client catalogue reads; source/installed skills match and this desktop discovers both | Final deployment/publication consistency and other intended clients |
-| Explicit silent imports | Durable history journal with UUID/retry/cancel/restart tests; installed preload/group reads; real client start/status/same-UUID retry accepted; production mobile session/worker integration verified synthetically and installed | Real mobile import and installed terminal snapshot removal remain unaccepted; source cleanup passed synthetic restart/completion checks; public mobile input disabled |
+| Explicit silent imports | Durable history journal with UUID/retry/cancel/restart tests; installed preload/group reads; real client start/status/same-UUID retry accepted; production mobile session/worker integration verified synthetically and installed | Real mobile import remains unaccepted; exact installed native cleanup passed isolated startup checks and source completion/restart tests; public mobile input disabled |
 | Older Strangers message | Requested peer is selectable; September 30 archive interval is empty and September 26 has two candidate rows; preload only supplies an already retained record | Recovery from a deeper verified source, or a concrete verified source limitation agreed with the user |
 | Mobile request/transport | Current-session request/offer observer, durable dispatch ledger, restart recovery and private offer ownership; host-scoped cookie transport, scoped body consumption and revocation tests | Correlated live offer and owner mapping now accepted; download and selected sender mapping accepted by later probes; durable production import remains |
 | Mobile archive reading | Independent format-1/XXH32/XZ/OpenSSL and SQLite fixtures; typed file selection, immutable bounded SQLite reads with exact fractional-millisecond interval mapping, digest/request/account-bound keyset paging; one session/download across pages | Format/SQLite/plain-to-session reading accepted; full BinNet/content semantics remain |
-| Mobile conversion/import | Plain text and verified single-rtf visible-title projection preserve exact IDs, sender, timestamp, direction and original TTL; atomic page/checkpoint persistence and gap accounting verified synthetically | Real source eligibility, installed terminal snapshot removal and nontext/quote/mention semantics; synthetic text projection and source cleanup do not close full mobile acceptance |
+| Mobile conversion/import | Plain text and verified single-rtf visible-title projection preserve exact IDs, sender, timestamp, direction and original TTL; atomic page/checkpoint persistence and gap accounting verified synthetically | Real source eligibility and nontext/quote/mention semantics; native cleanup and synthetic text projection do not close full mobile acceptance |
 | Deleted/recalled messages | Source schema 11 prevents restoration of an observed exact typed deletion by live replay or history; absent-message deletion, restart, namespace, novelty and rollback tests. Whole-file mobile type-33/36 detection blocks unverified conversion | Mobile control target/state semantics and full handling before public archive persistence; live marker receipt alone does not establish mobile compatibility |
 | Expiry after import | Expiry markers, SQL read-time filtering and cleanup; mobile worker uses atomic records/TTL/checkpoint port; rollback/restart/duplicate/cancel/due-expiry tests passed | Quote expiry and trustworthy clock/real archive acceptance |
 | Group pages | Installed phase-aware candidate; two live groups each returned a terminal recent page; durable phase traversal covered synthetically | Live old-phase traversal when available; no completeness claim |
@@ -312,7 +328,7 @@ probe build. No phone request, Zalo send or subscription edit was performed.
 | STDIO transport | Exact current installed bridge initialized a real STDIO client at `2025-11-25`, listed 21 tools including recovery and read connected/authenticated status; no Events advertised | STDIO does not replace external HTTP Events acceptance |
 | First direct send outside catalogue/corpus | Synthetic authorization/acknowledgement tests and preserved send ledger | A user-selected recipient and separately approved exact send |
 | Numeric acknowledgement plain/quote routes | Synthetic encrypted-wire tests; earlier two-send acceptance retained | Separately approved fresh live sends; unknown operations must not be resent |
-| Deployment/publication | Earlier schema-11 migration/publication checks preserved below. Signed recovery implementation `19e2105` installed with verified binary/SQLite/skill backup; docs commit `07791a0` pushed; local root race/vet, cross-builds and secret scan passed | Remaining feature/client/live gates; recovery source and docs have successful macOS/Linux CI at `07791a0` |
+| Deployment/publication | Signed `c9d3e50` passed macOS/Linux CI and is installed with verified native/state/config backup; code payload matches the clean-source candidate; exact installed native startup, HTTP/client and STDIO checks passed; schema 14 integrity, preserved corpus/send ledger/subscription boundaries/private keys and both skills verified | Remaining source eligibility and agreed live scenarios; final acceptance documentation publication |
 
 ### Historical schema-12 installation (superseded)
 

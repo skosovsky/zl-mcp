@@ -30,3 +30,9 @@ jobs:
       - run: CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o bin/zl-mcp-darwin-arm64 ./cmd/zl-mcp
       - run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bin/zl-mcp-darwin-amd64 ./cmd/zl-mcp
       - run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/zl-mcp-linux-amd64 ./cmd/zl-mcp
+      - name: Build native service acceptance binary
+        run: CGO_ENABLED=0 go build -trimpath -o "$RUNNER_TEMP/zl-mcp-native" ./cmd/zl-mcp
+      - name: Check native service startup cleanup
+        env:
+          ZL_MCP_ACCEPTANCE_BINARY: ${{ runner.temp }}/zl-mcp-native
+        run: go test -race ./internal/mobilebackup -run '^TestNativeBinaryTerminalStartupAcceptance$' -count=1
