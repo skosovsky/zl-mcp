@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Trusted owner-only one-shot archive download/read diagnostic. No persistence or Events.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "method": {
+      "const": "cli_probe_mobile_backup_archive"
+    },
+    "arguments": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "operation_id",
+        "revision"
+      ]
+    }
+  },
+  "required": [
+    "method",
+    "arguments"
+  ]
+}

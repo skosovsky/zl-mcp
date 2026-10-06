@@ -243,3 +243,19 @@ IDs. The receiver preserves exact key and current-session binding, but delegates
 plain-owner resolution to the caller's authenticated identity mapping rather than
 comparing different namespaces. Regression coverage checks delivery of a
 correlated plain-ID offer while rejecting foreign request keys and hosts.
+
+The znoise request uses API version 691 observed in the installed native client,
+scoped to that endpoint without changing session/login defaults. Fixed-stage
+diagnostics expose only HTTP/upstream numeric codes, never response error text
+or payload, to separate upstream rejection from mapping-codec failures.
+
+For the exact HTTPS znoise endpoint, borrow only zpw_sek from the authenticated
+chat jar when absent at the target, matching native app auth availability without
+widening stored domains. Requests do not redirect; tests verify exact target
+scope, missing auth failure, unrelated-cookie exclusion and unchanged jar state.
+
+Archive transport: native first-party cookie setup also scopes `zpw_sek` to
+`zaloapp.com`. Borrow the web session token only for exact HTTPS
+`trans-bin.zaloapp.com`, retaining public-network transport and redirect rejection.
+The jar is never expanded; no other chat cookies are forwarded. Tests cover
+other hosts, ports, unchanged request/jar and one-request transport.

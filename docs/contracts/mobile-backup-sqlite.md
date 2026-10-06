@@ -5,10 +5,23 @@ Input is one caller-selected opaque file from a validated archive, with account
 and typed conversation mapping still required before any corpus mutation.
 
 Require a standalone SQLite 3 file within 256 MiB: correct 100-byte header,
-power-of-two page size, exact page alignment, legacy read/write versions 1,
+power-of-two page size, exact page alignment, read/write pairs 1/1 or 2/2,
 fixed payload fractions, zero reserved header expansion bytes and consistent
-valid in-header page count. WAL-format inputs are rejected until an independently
-verified export/checkpoint contract establishes their completeness.
+valid in-header page count. An immutable private copy may be inspected with the
+WAL marker 2/2; mixed and unknown version pairs remain rejected. This reads only
+the supplied main-file snapshot. Missing WAL transactions and producer checkpoint
+completeness are not inferred from integrity_check. WAL snapshots are explicitly
+marked and remain ineligible for conversion/persistence until export/checkpoint
+semantics are accepted; diagnostic inspection does not claim complete history.
+
+An independent SQLite-generated regression keeps the producer connection open,
+checkpoints one message, then commits a second message and a type-33 control only
+to WAL. The copied main image passes our integrity/schema checks and reports one
+message and zero controls; the producer view contains three rows and one control.
+Thus successful main-image inspection cannot by itself justify message/control
+completeness. This demonstrates the general failure mode, not a finding that the
+actual phone export omitted those transactions. The complementary checkpointed
+WAL regression demonstrates that 2/2 also occurs on a usable complete main image.
 
 Copy only this selected file to a random private 0700 scratch directory under a
 trusted absolute caller-supplied location, using a fixed filename with 0600 permissions.
@@ -54,3 +67,12 @@ contain no integer ticks. Reject unrepresentable or overflowing millisecond boun
 Bind the keyset cursor to these effective source bounds; the outer prepared cursor
 also retains the exact normalized request fingerprint. Row preparation and final
 conversion validate the same interval, before any mapper or storage work.
+
+Selected-image coverage inspection returns total main-file row count, count inside
+the requested interval, invalid timestamp count and the valid minimum/maximum
+integer timestamp as UTC. The installed native format-1 reader compares TimeStamp
+directly with Date.now() and assigns it to message ts: milliseconds, without a
+seconds conversion. No unit guessing or window expansion is allowed. Counts
+include source rows before message validity/status/TTL filters and do not establish
+checkpoint completeness or history outside the supplied main image. Only the
+selected file is inspected; message text and identity values remain private.

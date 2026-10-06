@@ -113,3 +113,48 @@ func TestMobileArchiveDiscardsCancelledConsumerResult(t *testing.T) {
 		t.Fatal("late cancelled ciphertext escaped")
 	}
 }
+
+func TestMobileArchiveBorrowsOnlyPinnedHostAuthCookie(t *testing.T) {
+	for _, target := range []string{"https://trans-bin.zaloapp.com/private?token=synthetic", "https://other.zaloapp.com/private", "https://trans-bin.zaloapp.com:444/private", "https://archive.example.com/private"} {
+		t.Run(target, func(t *testing.T) {
+			// Arrange: the web session's host-only auth token and an unrelated cookie.
+			jar, _ := cookiejar.New(nil)
+			chat, _ := url.Parse("https://chat.zalo.me/")
+			jar.SetCookies(chat, []*http.Cookie{{Name: "zpw_sek", Value: "synthetic-auth", Secure: true, Path: "/"}, {Name: "other", Value: "private-other", Path: "/"}})
+			sc := mobileRequestSession(&http.Client{}, chat.String())
+			sc.SetCookieJar(jar)
+			request, _ := http.NewRequest("GET", target, nil)
+			seen := ""
+			client := &http.Client{Transport: archiveTransport(func(r *http.Request) (*http.Response, error) {
+				seen = r.Header.Get("Cookie")
+				return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader("x"))}, nil
+			})}
+			// Act.
+			_, err := (&api{sc: sc}).ConsumeMobileArchive(context.Background(), request, client, func(_ context.Context, r *http.Response) ([]byte, error) { return io.ReadAll(r.Body) })
+			// Assert: the pinned target alone receives one token; source/request/jar stay unchanged.
+			want := ""
+			if request.URL.Host == "trans-bin.zaloapp.com" {
+				want = "zpw_sek=synthetic-auth"
+			}
+			if err != nil || seen != want || request.Header.Get("Cookie") != "" || len(jar.Cookies(request.URL)) != 0 {
+				t.Fatal("cookie scope escaped", err)
+			}
+		})
+	}
+}
+
+func TestMobileArchiveMissingAuthFailsBeforeNetwork(t *testing.T) {
+	// Arrange: a pinned destination and a session without the required cookie.
+	jar, _ := cookiejar.New(nil)
+	sc := mobileRequestSession(&http.Client{}, "https://chat.zalo.me/")
+	sc.SetCookieJar(jar)
+	request, _ := http.NewRequest("GET", "https://trans-bin.zaloapp.com/private", nil)
+	calls := 0
+	client := &http.Client{Transport: archiveTransport(func(*http.Request) (*http.Response, error) { calls++; return nil, errors.New("unexpected request") })}
+	// Act.
+	_, err := (&api{sc: sc}).ConsumeMobileArchive(context.Background(), request, client, func(context.Context, *http.Response) ([]byte, error) { return nil, nil })
+	// Assert.
+	if !errors.Is(err, ErrMobileArchive) || calls != 0 {
+		t.Fatal("missing auth reached network")
+	}
+}

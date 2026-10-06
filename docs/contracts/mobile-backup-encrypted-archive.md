@@ -10,9 +10,9 @@ so decrypt_file's unchanged zero IV starts each 65536-byte call. It does not shr
 its output. decompress_file later bounds checksum/decompression by the declared
 container end, independently of the physical decrypted file end.
 
-ReadFormat1Archive accepts offset-zero block-aligned ciphertext under an explicit
-byte budget, using DecryptFormat1. Read the declared end from bytes 6–9 only after
-magic/alignment checks; require 18 <= end <= decrypted byte count. Pass exactly
+ReadFormat1Archive accepts offset-zero ciphertext under an explicit byte budget,
+decrypting complete AES blocks only. Read the declared end from bytes 6–9 only
+after magic validation; require 18 <= end <= complete-block decrypted byte count. Pass exactly
 that region to ReadPlainArchive for full XXH32, file-table, bounded XZ and exact
 split-size validation. Report ciphertext/container/trailing byte counts separately.
 Do not interpret or require zero/PKCS bytes in the trailing region. Ignored tail
@@ -26,3 +26,30 @@ Checksum covers the declared region only and is not cryptographic authentication
 Tail content is not authenticated/validated; real offer correlation, trusted host,
 account mapping and SQLite/message semantics remain independent requirements.
 No download, native execution, file persistence, corpus import or Events occur.
+
+Live diagnosis: scoped CDN authorization enabled a bounded real download, which
+failed before selected-file mapping at the container stage. Fixed diagnostics now
+distinguish ciphertext alignment, decrypted magic, declared end, checksum/table
+and XZ/expanded size. Only length/remainder counts, fixed stages and booleans are
+logged. Do not relax alignment or guess framing based on a failure alone; a fresh
+archive must identify the actual failed invariant before a format change.
+
+### Partial physical tail
+
+A real authenticated format-1 download was 246660 bytes (remainder 4). Native
+`decrypt_file` accepts a short final `fread` and writes its original byte count;
+`DecryptCBC` rounds allocation upward and reads full AES blocks. Reproducing its
+out-of-bounds partial-block read is unsafe. The safe boundary reader decrypts only
+complete blocks at offset zero, then requires the declared container end to fall
+entirely inside that decrypted prefix. The full checksum/table/XZ checks remain
+mandatory. A physical partial tail is accepted only outside that verified region;
+no ciphertext is padded, no offset/cipher is guessed, and no missing container
+bytes are fabricated. Counts retain the physical ciphertext size and total tail.
+The standalone `DecryptFormat1` contract remains strict block-aligned.
+
+A live run with complete-block prefix handling passed format-1 decryption,
+checksum/table/XZ, filename indexing and authenticated identity mapping. It then
+failed selection; the previous generic error did not preserve the exact selection
+reason. Message parsing/import are still unverified. Selection diagnostics now
+separate selected-conversation absence, invalid mapping and cancellation with
+file-category counts only, excluding IDs and filenames.

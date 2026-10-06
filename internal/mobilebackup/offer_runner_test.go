@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
@@ -196,5 +197,41 @@ func TestPreparedOfferStaleObserverCannotCloseWinningDispatch(t *testing.T) {
 	// Assert: CAS loser cannot finalize an attempt owned by the winner.
 	if failed == nil || e != nil || state.State != "waiting_for_confirmation" || success != nil {
 		t.Fatal("loser closed winning request")
+	}
+}
+
+func TestPreparedOfferFailureFinalizesAfterConnectionContention(t *testing.T) {
+	// Arrange: SQLite uses one connection; another short operation owns it as the
+	// upstream request fails. This exceeds the old three-second cleanup budget.
+	s, a, public := runnerAttempt(t)
+	var released chan struct{}
+	source := offerSourceFunc(func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+		if err := o.BeforeDispatch(public); err != nil {
+			return domain.MobileBackupOffer{}, err
+		}
+		if err := o.Progress("waiting_for_confirmation"); err != nil {
+			return domain.MobileBackupOffer{}, err
+		}
+		if err := o.Progress("waiting_for_backup"); err != nil {
+			return domain.MobileBackupOffer{}, err
+		}
+		conn, err := s.DB.Conn(c)
+		if err != nil {
+			return domain.MobileBackupOffer{}, err
+		}
+		released = make(chan struct{})
+		go func() { time.Sleep(3200 * time.Millisecond); conn.Close(); close(released) }()
+		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+	})
+	// Act.
+	_, err := RunPreparedOffer(context.Background(), s, source, a.OperationID)
+	if released != nil {
+		<-released
+	}
+	persisted, read := s.MobileBackupAttempt(context.Background(), a.OperationID)
+	_, repeat := RunPreparedOffer(context.Background(), s, source, a.OperationID)
+	// Assert: bounded contention cannot leave the finished invocation active or reusable.
+	if err == nil || read != nil || persisted.State != "failed" || repeat == nil {
+		t.Fatal("failure left an active attempt", read, persisted.State)
 	}
 }

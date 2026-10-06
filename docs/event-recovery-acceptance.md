@@ -21,10 +21,9 @@ remained active and its journal returned a retained payload. No production
 processing acknowledgements, new synthetic callbacks or Zalo messages were sent
 for this acceptance. The repository and local Events skill were updated.
 
-The cloud automation's saved instructions require a separate client-side update.
-Existing retained callbacks have no processing checkpoints; reconcile them with
-completed notifications before using recovery on that subscription. Notification
-handling through the updated automation has not yet been verified live.
+At the initial checkpoint the cloud automation still needed a client-side
+instruction update and reconciliation of retained callbacks. That checkpoint
+preceded the adoption evidence below.
 
 See [event recovery contract](contracts/event-recovery.md) for the ordered workflow,
 retention and the crash/concurrency window. The workaround does not prove or fix
@@ -44,3 +43,23 @@ collector status. It did not advertise Events. No second Zalo listener was start
 The preserved active v2 subscription ID, generation and activation boundary match
 the verified pre-update SQLite backup; no callback URL or signing key was read
 for that comparison.
+
+## Ann adoption and backlog reconciliation
+
+The user relayed Ann's direct acceptance report: all three recovery tools are
+available, one matching v2 direct-chat subscription includes incoming and
+outgoing messages, and three journal events matched previously completed
+notifications by exact message ID. Ann acknowledged them in order without
+repeating notifications. Ann also reported updating the saved automation and
+verifying it through `automations.list`: read the exact subscription journal
+first, process in order, acknowledge only successful handling, and stop at an
+explicit gap or ambiguity. The automation is enabled. These client-side actions
+are reported evidence, not a local inspection of the cloud automation settings.
+
+An independent authenticated read on this Mac confirmed the three recovery
+tools, one active v2 subscription, an empty journal (`has_more=false`) and no
+delivery block. Collector is connected/authenticated, `last_error` is absent,
+and schema-12 SQLite integrity passed. This verification made no acknowledgements
+or subscription changes. Client adoption and initial backlog reconciliation are
+therefore recorded as complete. A crash between notification and acknowledgement
+still permits a duplicate; exactly-once is not claimed.

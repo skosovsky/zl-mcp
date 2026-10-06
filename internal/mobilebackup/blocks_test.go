@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"log/slog"
 	"os"
 	"strings"
 	"testing"
@@ -75,5 +76,26 @@ func TestFormat1RejectsBadKeyAlignmentBudgetAndCancellation(t *testing.T) {
 	got, err := DecryptFormat1(ctx, r, validKey, int64(len(input)))
 	if !errors.Is(err, ErrBlocks) || got != nil || r.Len() != len(input) {
 		t.Fatal("cancelled transform consumed bytes")
+	}
+}
+
+func TestFormatFailureLogsOnlyFixedStageAndLengths(t *testing.T) {
+	// Arrange: invalid block length with synthetic private content and key.
+	var output bytes.Buffer
+	previous := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&output, nil)))
+	defer slog.SetDefault(previous)
+	payload := []byte("private-ciphertext")
+	key := strings.Repeat("ABCDEF0123456789", 4)
+	// Act.
+	_, err := DecryptFormat1(context.Background(), bytes.NewReader(payload), key, int64(len(payload)))
+	// Assert: retain diagnostic counts but never input bytes or key text.
+	if err == nil || !strings.Contains(output.String(), "CIPHERTEXT_LENGTH") {
+		t.Fatal("missing length diagnostic")
+	}
+	for _, private := range []string{string(payload), key} {
+		if strings.Contains(output.String(), private) {
+			t.Fatal("format diagnostic leaked private data")
+		}
 	}
 }

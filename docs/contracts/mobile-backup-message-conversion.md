@@ -35,3 +35,15 @@ prefix on cancellation or malformed/binding-inconsistent candidates.
 This operation performs no requests, writes or Events. Global deletion/undo
 handling, nontext/rich-text conversion, actual archive/identity compatibility and
 atomic page/checkpoint persistence remain required before public import acceptance.
+
+## Diagnostic inspection without persistence eligibility
+
+`InspectPreparedArchivePage` validates the same complete request/account-bound
+page and classifies content without returning records. It reports plain-text
+candidates, expired/unsupported content, unresolved quotes/mentions and explicit
+persistence gates `unverified_wal_snapshot` / `unverified_source_controls`.
+These gates do not suppress whole-page validation: malformed candidates fail
+the diagnostic with no counts instead of masquerading as a safety gate. All
+temporary constructed records are cleared before returning. Inspection performs
+no writes or Events and does not change `ConvertPreparedArchivePage` eligibility.
+An empty interval can still have a whole-file persistence gate.

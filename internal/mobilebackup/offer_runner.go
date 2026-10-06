@@ -64,10 +64,11 @@ func RunPreparedOffer(ctx context.Context, store *storage.Store, source domain.M
 		return domain.MobileBackupOffer{}, ErrOfferExecution
 	}
 	// Request lifetime may be over; finish evidence independently before returning.
-	finish, stop := context.WithTimeout(context.Background(), 3*time.Second)
+	finish, stop := context.WithTimeout(context.Background(), 15*time.Second)
 	defer stop()
 	attempt, e := store.MobileBackupAttempt(finish, id)
 	if e != nil {
+		slog.Warn("mobile_backup_finalization_failed", "operation_id", id, "stage", "READ_STATE", "timeout", finish.Err() != nil)
 		return domain.MobileBackupOffer{}, ErrOfferExecution
 	}
 	switch attempt.State {
@@ -78,8 +79,10 @@ func RunPreparedOffer(ctx context.Context, store *storage.Store, source domain.M
 			state = "interrupted"
 		}
 		if _, e = store.ProgressMobileBackup(finish, id, attempt.Revision, state); e != nil {
+			slog.Warn("mobile_backup_finalization_failed", "operation_id", id, "stage", "WRITE_STATE", "timeout", finish.Err() != nil)
 			return domain.MobileBackupOffer{}, ErrOfferExecution
 		}
+		slog.Info("mobile_backup_finalized", "operation_id", id, "state", state)
 	}
 	return domain.MobileBackupOffer{}, ErrOfferExecution
 }

@@ -17,3 +17,8 @@ The next layer must verify the complete header/checksum and compressed stream
 before persistence. Magic is not authentication. This component does not remove
 unknown trailers, decompress, open files, start a listener or recover messages.
 Real archive compatibility and account ownership remain unverified.
+
+The encrypted-archive boundary may use the internal complete-block prefix reader
+for a short physical tail, subject to the stricter declared-end/checksum/XZ rules
+in `mobile-backup-encrypted-archive.md`. This does not alter the standalone
+`DecryptFormat1` alignment contract or enable padding/framing guesses.

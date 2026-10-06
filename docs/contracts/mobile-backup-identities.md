@@ -43,3 +43,38 @@ the shared session guard cancels in-flight mappings and discards even successful
 results if another operation revoked authentication before return. Plaintext
 reply buffers are cleared after decoding; raw SDK failures are not exposed.
 This connects adapters only, not a service operation or MCP endpoint.
+
+Mapping failures expose only a closed diagnostic stage (REQUEST, HTTP_STATUS,
+WIRE_LIMIT, HTTP_DECODE, BODY_LIMIT, OUTER_ENVELOPE, CIPHER_ENCODING, DECRYPT,
+INNER_ENVELOPE, SDK_REQUEST, AUTH_COOKIE_SCOPE or MAPPING_SHAPE), numeric HTTP/upstream codes when
+applicable, and no source text, IDs, credentials or response payload. These
+stages distinguish transport/envelope failures from typed mapping rejection.
+
+The native client inspected in this investigation advertises API version 691
+(type 30), whereas the vendored SDK defaults to 665. The znoise adapter pins
+version 691 for this endpoint only, retaining the existing authenticated session
+and API type. Other endpoints and login defaults remain unchanged. A live outer
+response returned error code 600 at version 665; a subsequent authorized version-691 probe returned the same outer code 600.
+The version change did not resolve the failure and does not establish its cause.
+
+### Authentication scope compatibility
+
+Saved web-session metadata shows zpw_sek scoped to chat.zalo.me, so the normal
+jar omits it at zwid.api.zalo.me. Static native main-process code sets zpw_sek
+also on zalo.me; its identity request therefore includes that cookie. This is
+a proven request difference, not yet proof of the outer code-600 cause.
+
+For exactly `https://zwid.api.zalo.me/api/znoise` (no alternate port, userinfo or
+fragment), the adapter may borrow only zpw_sek from the existing authenticated
+chat.zalo.me jar for the one bounded nonredirecting request. If the destination
+already has it, use normal jar handling. An absent/ambiguous source token fails
+closed. Never rewrite cookie domains, persist copied credentials, forward other
+host-only cookies, broaden this to generic URLs or log cookie values. Current
+session ownership, cancellation, exact IDs and complete reply validation remain
+required. Other endpoints retain their existing jar policy.
+
+Live acceptance subsequently passed with the same version 691 and the scoped
+borrowed-cookie fix: the correlated offer's plain uid mapped to the current
+session owner, and the offer operation reached `offer_ready`. This verifies
+current-session account mapping for this case. It does not establish archive
+conversation/sender mapping completeness or successful history persistence.

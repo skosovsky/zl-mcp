@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"errors"
+	"log/slog"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -31,8 +32,16 @@ func (SQLiteRow) String() string   { return "mobile backup SQLite row [redacted]
 func (SQLiteRow) GoString() string { return "mobile backup SQLite row [redacted]" }
 
 // SQLiteBatch is private candidate data; counts do not establish complete history.
+type SQLiteCoverage struct {
+	SourceRows, PeriodRows, InvalidTimestamps int64
+	EarliestMS, LatestMS                      int64
+	HasRange                                  bool
+}
+
 type SQLiteBatch struct {
+	Coverage           SQLiteCoverage `json:"-"`
 	SourceControls     int
+	WALMode            bool
 	Rows               []SQLiteRow `json:"-"`
 	Examined, Rejected int
 	HasMore            bool
@@ -71,7 +80,7 @@ func standaloneSQLite(data []byte) bool {
 	if page == 1 {
 		page = 65536
 	}
-	if page < 512 || page > 65536 || page&(page-1) != 0 || len(data)%page != 0 || data[18] != 1 || data[19] != 1 || page-int(data[20]) < 480 || !bytes.Equal(data[21:24], []byte{64, 32, 32}) || !bytes.Equal(data[72:92], make([]byte, 20)) {
+	if page < 512 || page > 65536 || page&(page-1) != 0 || len(data)%page != 0 || !(data[18] == 1 && data[19] == 1 || data[18] == 2 && data[19] == 2) || page-int(data[20]) < 480 || !bytes.Equal(data[21:24], []byte{64, 32, 32}) || !bytes.Equal(data[72:92], make([]byte, 20)) {
 		return false
 	}
 	count := binary.BigEndian.Uint32(data[28:32])
@@ -86,22 +95,42 @@ func ReadSQLiteRows(parent context.Context, file ArchiveFile, scratch string, si
 }
 
 func ReadSQLitePage(parent context.Context, file ArchiveFile, scratch string, since, until time.Time, maxRows int, after *SQLiteCursor) (batch SQLiteBatch, err error) {
+	stage := "INPUT_BINDING"
+	defer func() {
+		if err != nil {
+			slog.Warn("mobile_archive_sqlite_failed", "stage", stage, "cancelled", parent != nil && parent.Err() != nil)
+		}
+	}()
 	from, to, validWindow := millisecondWindow(since, until)
-	if !validWindow || parent == nil || parent.Err() != nil || !validName(file.Name) || !standaloneSQLite(file.Data) || !filepath.IsAbs(scratch) || maxRows < 1 || maxRows > 5000 || since.IsZero() || !until.After(since) {
+	if !validWindow || parent == nil || parent.Err() != nil || !validName(file.Name) || !filepath.IsAbs(scratch) || maxRows < 1 || maxRows > 5000 || since.IsZero() || !until.After(since) {
 		return batch, ErrSQLite
 	}
+	stage = "SQLITE_HEADER"
+	if !standaloneSQLite(file.Data) {
+		modeRead, modeWrite := 0, 0
+		if len(file.Data) >= 20 {
+			modeRead = int(file.Data[19])
+			modeWrite = int(file.Data[18])
+		}
+		slog.Warn("mobile_archive_sqlite_header", "file_bytes", len(file.Data), "read_version", modeRead, "write_version", modeWrite)
+		return batch, ErrSQLite
+	}
+	batch.WALMode = file.Data[18] == 2
+	stage = "CURSOR_BINDING"
 	digest := sha256.Sum256(file.Data)
 	if after != nil && (after.Digest != digest || after.Name != file.Name || after.SinceMS != from || after.UntilMS != to || after.TimestampMS < from || after.TimestampMS >= to) {
 		return batch, ErrSQLite
 	}
 	ctx, cancel := context.WithTimeout(parent, 30*time.Second)
 	defer cancel()
+	stage = "SCRATCH_CREATE"
 	dir, e := os.MkdirTemp(scratch, "mobile-read-")
 	if e != nil {
 		return batch, ErrSQLite
 	}
 	defer os.RemoveAll(dir)
 	path := filepath.Join(dir, "archive.sqlite")
+	stage = "SCRATCH_WRITE"
 	if os.WriteFile(path, file.Data, 0600) != nil {
 		return batch, ErrSQLite
 	}
@@ -117,31 +146,37 @@ func ReadSQLitePage(parent context.Context, file ArchiveFile, scratch string, si
 		query.Add("_pragma", pragma)
 	}
 	uri.RawQuery = query.Encode()
+	stage = "SQLITE_OPEN"
 	db, e := sql.Open("sqlite", uri.String())
 	if e != nil {
 		return batch, ErrSQLite
 	}
 	defer db.Close()
 	db.SetMaxOpenConns(1)
+	stage = "SQLITE_CONNECTION"
 	conn, e := db.Conn(ctx)
 	if e != nil {
 		return batch, ErrSQLite
 	}
 	defer conn.Close()
+	stage = "SQLITE_LIMITS"
 	for _, limit := range [][2]int{{sqlite3.SQLITE_LIMIT_LENGTH, 1 << 20}, {sqlite3.SQLITE_LIMIT_SQL_LENGTH, 16 << 10}, {sqlite3.SQLITE_LIMIT_COLUMN, 64}, {sqlite3.SQLITE_LIMIT_EXPR_DEPTH, 20}, {sqlite3.SQLITE_LIMIT_ATTACHED, 0}} {
 		if _, e = sqlite.Limit(conn, limit[0], limit[1]); e != nil {
 			return batch, ErrSQLite
 		}
 	}
+	stage = "INTEGRITY_CHECK"
 	var check string
 	if conn.QueryRowContext(ctx, "PRAGMA integrity_check(1)").Scan(&check) != nil || check != "ok" {
 		return batch, ErrSQLite
 	}
+	stage = "CHAT_TABLE"
 	var kind string
 	var root int64
 	if conn.QueryRowContext(ctx, "SELECT type,rootpage FROM sqlite_schema WHERE name='ChatContent'").Scan(&kind, &root) != nil || kind != "table" || root <= 0 {
 		return batch, ErrSQLite
 	}
+	stage = "COLUMN_SCHEMA"
 	columns, e := conn.QueryContext(ctx, "SELECT name,type,hidden FROM pragma_table_xinfo('ChatContent')")
 	if e != nil {
 		return batch, ErrSQLite
@@ -177,7 +212,17 @@ func ReadSQLitePage(parent context.Context, file ArchiveFile, scratch string, si
 			return batch, ErrSQLite
 		}
 	}
+	stage = "SOURCE_TIME_COVERAGE"
+	var earliest, latest sql.NullInt64
+	const validTimestamp = "typeof(TimeStamp)='integer' AND TimeStamp>=0 AND TimeStamp<=253402300799999"
+	coverageSQL := "SELECT count(*), coalesce(sum(CASE WHEN " + validTimestamp + " AND TimeStamp>=? AND TimeStamp<? THEN 1 ELSE 0 END),0), coalesce(sum(CASE WHEN " + validTimestamp + " THEN 0 ELSE 1 END),0), min(CASE WHEN " + validTimestamp + " THEN TimeStamp END), max(CASE WHEN " + validTimestamp + " THEN TimeStamp END) FROM ChatContent"
+	if conn.QueryRowContext(ctx, coverageSQL, from, to).Scan(&batch.Coverage.SourceRows, &batch.Coverage.PeriodRows, &batch.Coverage.InvalidTimestamps, &earliest, &latest) != nil {
+		return batch, ErrSQLite
+	}
+	batch.Coverage.HasRange = earliest.Valid && latest.Valid
+	batch.Coverage.EarliestMS, batch.Coverage.LatestMS = earliest.Int64, latest.Int64
 	// Controls outside the requested interval can still invalidate imported content.
+	stage = "SOURCE_CONTROLS"
 	if conn.QueryRowContext(ctx, "SELECT count(*) FROM ChatContent WHERE MsgType IN (33,36)").Scan(&batch.SourceControls) != nil {
 		return SQLiteBatch{}, ErrSQLite
 	}
@@ -189,6 +234,7 @@ func ReadSQLitePage(parent context.Context, file ArchiveFile, scratch string, si
 	}
 	statement += " ORDER BY TimeStamp,rowid LIMIT ?"
 	args = append(args, maxRows+1)
+	stage = "MESSAGE_QUERY"
 	rows, e := conn.QueryContext(ctx, statement, args...)
 	if e != nil {
 		return batch, ErrSQLite
@@ -203,6 +249,7 @@ func ReadSQLitePage(parent context.Context, file ArchiveFile, scratch string, si
 			batch = SQLiteBatch{}
 		}
 	}()
+	stage = "ROW_VALIDATION"
 	var last SQLiteCursor
 	retainedBytes := 0
 	for rows.Next() {

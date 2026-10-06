@@ -27,7 +27,38 @@ func (p *ConvertedArchivePage) Clear() {
 
 // ConvertPreparedArchivePage borrows already mapped candidates; it performs no import.
 func ConvertPreparedArchivePage(ctx context.Context, page PreparedArchivePage, request domain.MobileBackupRequest, account string, nowMS int64) (result ConvertedArchivePage, err error) {
-	if page.SourceControls > 0 || ctx == nil || ctx.Err() != nil || !canonicalIdentity(account) || nowMS <= 0 || len(page.Candidates.Rows) > 50 {
+	if page.SourceWAL || page.SourceControls > 0 {
+		return result, ErrSQLite
+	}
+	return convertArchiveCandidates(ctx, page, request, account, nowMS)
+}
+
+// ArchivePageInspection exposes counts only, never records eligible for storage.
+type ArchivePageInspection struct {
+	TextCandidates, Expired, UnsupportedContent, UnresolvedQuotes, UnresolvedMentions int
+	BlockReasons                                                                      []string
+}
+
+// InspectPreparedArchivePage separates source safety gates from invalid records.
+// Temporary records are cleared even when the source cannot be imported.
+func InspectPreparedArchivePage(ctx context.Context, page PreparedArchivePage, request domain.MobileBackupRequest, account string, nowMS int64) (ArchivePageInspection, error) {
+	converted, err := convertArchiveCandidates(ctx, page, request, account, nowMS)
+	defer converted.Clear()
+	if err != nil {
+		return ArchivePageInspection{}, err
+	}
+	result := ArchivePageInspection{TextCandidates: len(converted.Records), Expired: converted.Expired, UnsupportedContent: converted.UnsupportedContent, UnresolvedQuotes: converted.UnresolvedQuotes, UnresolvedMentions: converted.UnresolvedMentions, BlockReasons: []string{}}
+	if page.SourceWAL {
+		result.BlockReasons = append(result.BlockReasons, "unverified_wal_snapshot")
+	}
+	if page.SourceControls > 0 {
+		result.BlockReasons = append(result.BlockReasons, "unverified_source_controls")
+	}
+	return result, nil
+}
+
+func convertArchiveCandidates(ctx context.Context, page PreparedArchivePage, request domain.MobileBackupRequest, account string, nowMS int64) (result ConvertedArchivePage, err error) {
+	if ctx == nil || ctx.Err() != nil || !canonicalIdentity(account) || nowMS <= 0 || len(page.Candidates.Rows) > 50 || page.SourceControls < 0 {
 		return result, ErrSQLite
 	}
 	r, e := request.Normalize()

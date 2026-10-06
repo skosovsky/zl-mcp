@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"io"
+	"log/slog"
 )
 
 type Format1Archive struct {
@@ -24,22 +25,24 @@ func ReadFormat1Archive(ctx context.Context, r io.Reader, key string, ciphertext
 	if ciphertextLimit == 0 || ciphertextLimit > MaxTotalBytes || outputLimit == 0 || outputLimit > MaxTotalBytes {
 		return Format1Archive{}, ErrArchive
 	}
-	plain, e := DecryptFormat1(ctx, r, key, int64(ciphertextLimit))
+	plain, physicalBytes, e := decryptFormat1(ctx, r, key, int64(ciphertextLimit), true)
 	if e != nil {
 		return Format1Archive{}, ErrArchive
 	}
 	defer clear(plain)
 	end := uint64(binary.BigEndian.Uint32(plain[6:10]))
 	if end < 18 || end > uint64(len(plain)) {
+		slog.Warn("mobile_archive_format_failed", "stage", "CONTAINER_BOUNDARY")
 		return Format1Archive{}, ErrArchive
 	}
 	archive, e := ReadPlainArchive(ctx, bytes.NewReader(plain[:int(end)]), end, outputLimit)
 	if e != nil {
+		slog.Warn("mobile_archive_format_failed", "stage", "PLAIN_CONTAINER")
 		return Format1Archive{}, ErrArchive
 	}
 	if ctx.Err() != nil {
 		archive.Clear()
 		return Format1Archive{}, ErrArchive
 	}
-	return Format1Archive{Archive: archive, CiphertextBytes: uint64(len(plain)), ContainerBytes: end, TrailingBytes: uint64(len(plain)) - end}, nil
+	return Format1Archive{Archive: archive, CiphertextBytes: physicalBytes, ContainerBytes: end, TrailingBytes: physicalBytes - end}, nil
 }

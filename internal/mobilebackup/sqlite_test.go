@@ -8,8 +8,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -87,12 +89,12 @@ func TestSQLiteRejectsHeaderAndUntrustedSchema(t *testing.T) {
 	valid := sqliteFixture(t, backupSQLiteSchema, nil)
 	badPage := append([]byte(nil), valid...)
 	binary.BigEndian.PutUint16(badPage[16:18], 513)
-	wal := append([]byte(nil), valid...)
-	wal[18] = 2
-	wal[19] = 2
+	mixedVersion := append([]byte(nil), valid...)
+	mixedVersion[18] = 2
+	mixedVersion[19] = 1
 	badCount := append([]byte(nil), valid...)
 	binary.BigEndian.PutUint32(badCount[28:32], uint32(len(valid)/4096+1))
-	for _, data := range [][]byte{valid[:100], badPage, wal, badCount, append(append([]byte(nil), valid...), 0), sqliteFixture(t, `CREATE VIEW ChatContent AS SELECT 1 AS SenderId`, nil), sqliteFixture(t, `CREATE TABLE ChatContent(SenderId TEXT)`, nil), sqliteFixture(t, `CREATE TABLE ChatContent(SenderId TEXT,GlbMsgId TEXT,CliMsgId TEXT,MsgContent TEXT,TimeStamp INTEGER,TTL INTEGER,MsgType INTEGER,MsgStatus INTEGER,BinNet BLOB,hiddenValue AS (1))`, nil)} {
+	for _, data := range [][]byte{valid[:100], badPage, mixedVersion, badCount, append(append([]byte(nil), valid...), 0), sqliteFixture(t, `CREATE VIEW ChatContent AS SELECT 1 AS SenderId`, nil), sqliteFixture(t, `CREATE TABLE ChatContent(SenderId TEXT)`, nil), sqliteFixture(t, `CREATE TABLE ChatContent(SenderId TEXT,GlbMsgId TEXT,CliMsgId TEXT,MsgContent TEXT,TimeStamp INTEGER,TTL INTEGER,MsgType INTEGER,MsgStatus INTEGER,BinNet BLOB,hiddenValue AS (1))`, nil)} {
 		// Act / Assert: no partial results, and cleanup after schema failure.
 		scratch := t.TempDir()
 		batch, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "1.db", Data: data}, scratch, since, until, 10)
@@ -264,5 +266,135 @@ func TestSQLiteFractionalMillisecondWindow(t *testing.T) {
 	// Assert: neither include a pre-window row nor lose the eligible upper-millisecond row.
 	if e != nil || len(page.Rows) != 1 || page.Rows[0].TimestampMS != base.UnixMilli()+1 {
 		t.Fatal("fractional window shifted source rows", e)
+	}
+}
+
+func TestSQLiteFailureDiagnosticsExcludePrivateFile(t *testing.T) {
+	// Arrange: private malformed file data in an otherwise valid read selection.
+	var output bytes.Buffer
+	previous := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&output, nil)))
+	defer slog.SetDefault(previous)
+	data := make([]byte, 512)
+	copy(data, []byte("private-message-marker"))
+	from := time.Date(2026, 9, 30, 0, 0, 0, 0, time.UTC)
+	// Act.
+	_, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "123456789.db", Data: data}, t.TempDir(), from, from.Add(time.Hour), 1)
+	// Assert: only the fixed failing stage and header counts, no content or filename.
+	if err == nil || !strings.Contains(output.String(), "SQLITE_HEADER") {
+		t.Fatal("missing header diagnosis")
+	}
+	for _, private := range []string{"private-message-marker", "123456789.db"} {
+		if strings.Contains(output.String(), private) {
+			t.Fatal("private archive diagnostic leaked")
+		}
+	}
+}
+
+func TestSQLiteImmutableCheckpointedWALSnapshot(t *testing.T) {
+	// Arrange: SQLite itself generates the 2/2 header; checkpoint before extracting
+	// the main-file image. The reader sees only a private immutable copy.
+	from := time.Date(2026, 9, 30, 0, 0, 0, 0, time.UTC)
+	data := sqliteFixture(t, "PRAGMA journal_mode=WAL;"+backupSQLiteSchema, func(db *sql.DB) {
+		if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "12", "13", "14", "synthetic snapshot", from.UnixMilli(), 0, 0, 1, nil); err != nil {
+			t.Fatal(err)
+		}
+		var busy, logPages, checkpointed int
+		if err := db.QueryRow("PRAGMA wal_checkpoint(TRUNCATE)").Scan(&busy, &logPages, &checkpointed); err != nil || busy != 0 {
+			t.Fatal("fixture checkpoint failed", err)
+		}
+	})
+	if data[18] != 2 || data[19] != 2 {
+		t.Fatal("fixture is not WAL mode")
+	}
+	original := append([]byte(nil), data...)
+	scratch := t.TempDir()
+	// Act.
+	batch, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "12.db", Data: data}, scratch, from, from.Add(time.Hour), 10)
+	// Assert: available committed main-file rows, unchanged image, no sidecars/scratch.
+	if err != nil || !batch.WALMode || len(batch.Rows) != 1 || batch.Rows[0].MessageID != "13" {
+		t.Fatal("immutable WAL read failed", err)
+	}
+	batch.Clear()
+	entries, err := os.ReadDir(scratch)
+	if err != nil || len(entries) != 0 || !bytes.Equal(data, original) {
+		t.Fatal("snapshot mutated or scratch retained")
+	}
+	for _, version := range []byte{0, 3, 255} {
+		invalid := append([]byte(nil), data...)
+		invalid[18], invalid[19] = version, version
+		if standaloneSQLite(invalid) {
+			t.Fatal("unsupported format accepted")
+		}
+	}
+}
+
+func TestSQLiteCoverageDistinguishesEmptyWindowFromEmptyImage(t *testing.T) {
+	// Arrange: selected snapshot has valid records outside the requested interval
+	// and one malformed timestamp. Source coverage must not count only valid messages.
+	from := time.Date(2026, 9, 30, 0, 0, 0, 0, time.UTC)
+	until := from.Add(time.Hour)
+	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
+		for _, ts := range []any{from.UnixMilli() - 1, until.UnixMilli(), "invalid-time"} {
+			if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "12", "13", "14", "synthetic", ts, 0, 0, 1, nil); err != nil {
+				t.Fatal(err)
+			}
+		}
+	})
+	// Act.
+	batch, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "12.db", Data: data}, t.TempDir(), from, until, 10)
+	// Assert: no period matches, but nonempty image and exact valid timestamp bounds.
+	c := batch.Coverage
+	if err != nil || batch.Examined != 0 || c.SourceRows != 3 || c.PeriodRows != 0 || c.InvalidTimestamps != 1 || !c.HasRange || c.EarliestMS != from.UnixMilli()-1 || c.LatestMS != until.UnixMilli() {
+		t.Fatal("incorrect source coverage", err)
+	}
+	empty := sqliteFixture(t, backupSQLiteSchema, nil)
+	batch, err = ReadSQLiteRows(context.Background(), ArchiveFile{Name: "12.db", Data: empty}, t.TempDir(), from, until, 10)
+	if err != nil || batch.Coverage.SourceRows != 0 || batch.Coverage.HasRange {
+		t.Fatal("empty snapshot has invented range", err)
+	}
+}
+
+func TestSQLiteImmutableMainImageCannotProveWALCompleteness(t *testing.T) {
+	// Arrange: checkpoint one message, then commit another message and a control
+	// only into WAL. Keep the producer connection open so close cannot checkpoint.
+	path := filepath.Join(t.TempDir(), "producer.sqlite")
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	db.SetMaxOpenConns(1)
+	if _, err = db.Exec("PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=0;" + backupSQLiteSchema); err != nil {
+		t.Fatal(err)
+	}
+	from := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC)
+	insert := func(id string, kind int) {
+		t.Helper()
+		if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "12", id, id, "synthetic", from.UnixMilli(), 0, kind, 1, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+	insert("13", 0)
+	var busy, logPages, checkpointed int
+	if err = db.QueryRow("PRAGMA wal_checkpoint(TRUNCATE)").Scan(&busy, &logPages, &checkpointed); err != nil || busy != 0 {
+		t.Fatal("checkpoint failed", err)
+	}
+	insert("14", 0)
+	insert("15", 33)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clear(data)
+	// Act: inspect only the copied main image, then compare with the producer view.
+	batch, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "12.db", Data: data}, t.TempDir(), from, from.Add(time.Hour), 10)
+	defer batch.Clear()
+	var producerRows, producerControls int
+	queryErr := db.QueryRow("SELECT count(*), sum(CASE WHEN MsgType=33 THEN 1 ELSE 0 END) FROM ChatContent").Scan(&producerRows, &producerControls)
+	// Assert: successful integrity/schema checks cannot detect omitted commits,
+	// including a control. This is synthetic evidence, not a claim about Zalo export.
+	if err != nil || queryErr != nil || !batch.WALMode || batch.Coverage.SourceRows != 1 || batch.SourceControls != 0 || len(batch.Rows) != 1 || batch.Rows[0].MessageID != "13" || producerRows != 3 || producerControls != 1 {
+		t.Fatal("WAL/main-image evidence boundary lost", err, queryErr)
 	}
 }

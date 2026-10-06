@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -17,6 +19,9 @@ import (
 )
 
 var ErrMobileIdentities = errors.New("mobile identity mapping failed")
+
+// Version observed in the installed native client; scoped to znoise only.
+const mobileIdentityAPIVersion = 691
 
 type mobileIdentitiesFn func(context.Context, []string, []string) ([]byte, error)
 
@@ -82,8 +87,14 @@ func mobileIdentitiesFactory(base string) endpointFactory[json.RawMessage, mobil
 			}
 			ctx, stop := context.WithTimeout(ctx, 10*time.Second)
 			defer stop()
-			response, err := httpx.RequestOnce(ctx, a.sc, u.MakeURL(base, map[string]any{"nretry": 0}, true), &httpx.RequestOptions{Method: http.MethodPost, Body: httpx.BuildFormBody(map[string]string{"params": encrypted})})
+			headers, err := mobileIdentityHeaders(sc, base)
 			if err != nil {
+				slog.Warn("mobile_identity_failed", "stage", "AUTH_COOKIE_SCOPE")
+				return nil, ErrMobileIdentities
+			}
+			response, err := httpx.RequestOnce(ctx, a.sc, u.MakeURL(base, map[string]any{"nretry": 0, "zpw_ver": mobileIdentityAPIVersion}, true), &httpx.RequestOptions{Method: http.MethodPost, Headers: headers, Body: httpx.BuildFormBody(map[string]string{"params": encrypted})})
+			if err != nil {
+				slog.Warn("mobile_identity_failed", "stage", "REQUEST")
 				return nil, ErrMobileIdentities
 			}
 			defer response.Body.Close()
@@ -91,41 +102,49 @@ func mobileIdentitiesFactory(base string) endpointFactory[json.RawMessage, mobil
 				return nil, errs.ErrAuthenticationRequired
 			}
 			if response.StatusCode != http.StatusOK {
+				slog.Warn("mobile_identity_failed", "stage", "HTTP_STATUS", "http_status", response.StatusCode)
 				return nil, ErrMobileIdentities
 			}
 			const wireLimit = 512 << 10
 			wire, err := io.ReadAll(io.LimitReader(response.Body, wireLimit+1))
 			defer clear(wire)
 			if err != nil || len(wire) > wireLimit {
+				slog.Warn("mobile_identity_failed", "stage", "WIRE_LIMIT")
 				return nil, ErrMobileIdentities
 			}
 			response.Body = io.NopCloser(bytes.NewReader(wire))
 			decoded, err := httpx.DecodeResponse(response)
 			if err != nil {
+				slog.Warn("mobile_identity_failed", "stage", "HTTP_DECODE")
 				return nil, ErrMobileIdentities
 			}
 			defer decoded.Close()
 			body, err := io.ReadAll(io.LimitReader(decoded, wireLimit+1))
 			defer clear(body)
 			if err != nil || len(body) > wireLimit {
+				slog.Warn("mobile_identity_failed", "stage", "BODY_LIMIT")
 				return nil, ErrMobileIdentities
 			}
 			code, encryptedData, err := mobileIdentityEnvelope(body)
 			if err != nil || code != 0 {
+				slog.Warn("mobile_identity_failed", "stage", "OUTER_ENVELOPE", "upstream_error_code", code)
 				return nil, ErrMobileIdentities
 			}
 			var cipher string
 			if json.Unmarshal(encryptedData, &cipher) != nil || cipher == "" {
+				slog.Warn("mobile_identity_failed", "stage", "CIPHER_ENCODING")
 				return nil, ErrMobileIdentities
 			}
 
 			plain, err := cryptox.DecodeAESCBC(sc.SecretKey().Bytes(), cipher)
 			defer clear(plain)
 			if err != nil || len(plain) > 256<<10 {
+				slog.Warn("mobile_identity_failed", "stage", "DECRYPT")
 				return nil, ErrMobileIdentities
 			}
 			code, mapping, err := mobileIdentityEnvelope(plain)
 			if err != nil || code != 0 || len(mapping) == 0 || bytes.Equal(mapping, []byte("null")) || ctx.Err() != nil {
+				slog.Warn("mobile_identity_failed", "stage", "INNER_ENVELOPE", "upstream_error_code", code)
 				return nil, ErrMobileIdentities
 			}
 			return append([]byte(nil), mapping...), nil
@@ -169,4 +188,42 @@ func mobileIdentityEnvelope(data []byte) (int, json.RawMessage, error) {
 		return 0, nil, ErrMobileIdentities
 	}
 	return *code, fields["data"], nil
+}
+
+// Borrow exactly the native identity endpoint's auth token without changing jar
+// scope. RequestOnce prevents forwarding the header through a redirect.
+func mobileIdentityHeaders(sc session.Context, base string) (http.Header, error) {
+	target, err := url.Parse(base)
+	if err != nil {
+		return nil, ErrMobileIdentities
+	}
+	if target.Scheme != "https" || target.Host != "zwid.api.zalo.me" || target.Path != "/api/znoise" || target.User != nil || target.Fragment != "" || target.RawQuery != "" {
+		return nil, nil
+	}
+	jar := sc.CookieJar()
+	if jar == nil {
+		return nil, ErrMobileIdentities
+	}
+	for _, c := range jar.Cookies(target) {
+		if c.Name == "zpw_sek" && c.Value != "" {
+			return nil, nil
+		}
+	}
+	source, _ := url.Parse("https://chat.zalo.me/")
+	var token *http.Cookie
+	for _, c := range jar.Cookies(source) {
+		if c.Name != "zpw_sek" || c.Value == "" {
+			continue
+		}
+		if token != nil {
+			return nil, ErrMobileIdentities
+		}
+		token = c
+	}
+	if token == nil {
+		return nil, ErrMobileIdentities
+	}
+	request := &http.Request{Header: make(http.Header)}
+	request.AddCookie(&http.Cookie{Name: token.Name, Value: token.Value})
+	return request.Header, nil
 }

@@ -12,7 +12,7 @@ import (
 )
 
 func mobileLedgerCommand(name string) bool {
-	return name == "mobile-backup-prepare" || name == "mobile-backup-status" || name == "mobile-backup-cancel" || name == "mobile-backup-probe-offer"
+	return name == "mobile-backup-prepare" || name == "mobile-backup-status" || name == "mobile-backup-cancel" || name == "mobile-backup-probe-offer" || name == "mobile-backup-probe-archive"
 }
 func mobileLedgerArguments(args []string, in io.Reader) (string, any, error) {
 	if len(args) == 0 {
@@ -34,7 +34,7 @@ func mobileLedgerArguments(args []string, in io.Reader) (string, any, error) {
 			return "", nil, fmt.Errorf("mobile-backup-status requires operation_id")
 		}
 		return "cli_mobile_backup_status", map[string]any{"operation_id": args[1]}, nil
-	case "mobile-backup-cancel", "mobile-backup-probe-offer":
+	case "mobile-backup-cancel", "mobile-backup-probe-offer", "mobile-backup-probe-archive":
 		if len(args) != 3 {
 			return "", nil, fmt.Errorf("%s requires operation_id and revision", args[0])
 		}
@@ -45,6 +45,9 @@ func mobileLedgerArguments(args []string, in io.Reader) (string, any, error) {
 		method := "cli_cancel_prepared_mobile_backup"
 		if args[0] == "mobile-backup-probe-offer" {
 			method = "cli_probe_mobile_backup_offer"
+		}
+		if args[0] == "mobile-backup-probe-archive" {
+			method = "cli_probe_mobile_backup_archive"
 		}
 		return method, map[string]any{"operation_id": args[1], "revision": revision}, nil
 	}
@@ -57,7 +60,10 @@ func runMobileLedger(ctx context.Context, stateDir string, args []string, in io.
 	}
 	budget := 10 * time.Second
 	if method == "cli_probe_mobile_backup_offer" {
-		budget = 190 * time.Second
+		budget = 205 * time.Second
+	}
+	if method == "cli_probe_mobile_backup_archive" {
+		budget = 445 * time.Second
 	}
 	request, stop := context.WithTimeout(ctx, budget)
 	defer stop()

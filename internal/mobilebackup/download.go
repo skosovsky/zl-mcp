@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/netip"
 	"net/url"
@@ -93,13 +94,24 @@ func (d *Downloader) Fetch(ctx context.Context, rawURL string, expected, limit u
 
 func readDownload(ctx context.Context, response *http.Response, expected uint64) ([]byte, error) {
 	if ctx == nil || response == nil || response.Body == nil || ctx.Err() != nil {
+		slog.Warn("mobile_archive_download_failed", "stage", "RESPONSE_CONTEXT")
 		return nil, ErrDownload
 	}
-	if response.StatusCode != http.StatusOK || response.Header.Get("Content-Encoding") != "" && response.Header.Get("Content-Encoding") != "identity" || response.ContentLength >= 0 && uint64(response.ContentLength) != expected {
+	if response.StatusCode != http.StatusOK {
+		slog.Warn("mobile_archive_download_failed", "stage", "HTTP_STATUS", "http_status", response.StatusCode)
+		return nil, ErrDownload
+	}
+	if response.Header.Get("Content-Encoding") != "" && response.Header.Get("Content-Encoding") != "identity" {
+		slog.Warn("mobile_archive_download_failed", "stage", "CONTENT_ENCODING")
+		return nil, ErrDownload
+	}
+	if response.ContentLength >= 0 && uint64(response.ContentLength) != expected {
+		slog.Warn("mobile_archive_download_failed", "stage", "CONTENT_LENGTH", "expected_bytes", expected, "response_bytes", response.ContentLength)
 		return nil, ErrDownload
 	}
 	data, err := io.ReadAll(io.LimitReader(cancelReader{ctx, response.Body}, int64(expected)+1))
 	if err != nil || ctx.Err() != nil || uint64(len(data)) != expected {
+		slog.Warn("mobile_archive_download_failed", "stage", "BODY_LENGTH", "expected_bytes", expected, "received_bytes", len(data), "read_failed", err != nil, "cancelled", ctx.Err() != nil)
 		clear(data)
 		return nil, ErrDownload
 	}

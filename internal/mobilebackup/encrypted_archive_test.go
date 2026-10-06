@@ -117,3 +117,27 @@ func TestFormat1SQLiteIndependentVector(t *testing.T) {
 		t.Fatal("SQLite fixture payload mismatch")
 	}
 }
+
+func TestFormat1ArchivePartialTailOutsideVerifiedContainer(t *testing.T) {
+	// Arrange: independently encrypted complete archive followed by 1..15 opaque
+	// physical tail bytes. The tail is outside the declared verified container.
+	v := archiveVectors(t)[1]
+	encrypted, _ := hex.DecodeString(v.Ciphertext)
+	want, _ := hex.DecodeString(v.Plaintext)
+	for tail := 1; tail < 16; tail++ {
+		input := append(append([]byte(nil), encrypted...), bytes.Repeat([]byte{0x93}, tail)...)
+		// Act.
+		got, err := ReadFormat1Archive(context.Background(), bytes.NewReader(input), strings.Repeat("0123456789abcdef", 4), uint64(len(input)), uint64(len(want)))
+		// Assert: exact contents/checksum remain required, physical count includes tail.
+		if err != nil || len(got.Archive.Files) != 1 || !bytes.Equal(got.Archive.Files[0].Data, want) || got.CiphertextBytes != uint64(len(input)) || got.TrailingBytes != uint64(len(input))-v.ContainerBytes {
+			t.Fatal("bounded physical tail rejected", tail, err)
+		}
+		got.Clear()
+	}
+	// Arrange/Act/Assert: an incomplete AES block needed by the container is rejected.
+	incomplete := encrypted[:int(v.ContainerBytes)-1]
+	got, err := ReadFormat1Archive(context.Background(), bytes.NewReader(incomplete), strings.Repeat("0123456789abcdef", 4), uint64(len(incomplete)), uint64(len(want)))
+	if err == nil || len(got.Archive.Files) != 0 {
+		t.Fatal("missing container ciphertext accepted")
+	}
+}

@@ -2,6 +2,7 @@ package mobilebackup
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -18,7 +19,9 @@ func (PreparedArchiveCursor) String() string   { return "mobile backup prepared 
 func (PreparedArchiveCursor) GoString() string { return "mobile backup prepared cursor [redacted]" }
 
 type PreparedArchivePage struct {
-	SourceControls                                     int `json:"-"`
+	Coverage                                           SQLiteCoverage `json:"-"`
+	SourceWAL                                          bool           `json:"-"`
+	SourceControls                                     int            `json:"-"`
 	requestID, fingerprint, account                    string
 	Candidates                                         PreparedRowPage        `json:"-"`
 	Examined, Rejected, ExpiredMessages, ExpiredQuotes int                    `json:"-"`
@@ -39,6 +42,12 @@ func (p *PreparedArchivePage) Clear() {
 }
 
 func ReadPreparedArchivePage(ctx context.Context, archive SelectedArchive, r domain.MobileBackupRequest, account, scratch string, nowMS int64, size int, after *PreparedArchiveCursor, mapper domain.MobileIdentitySource) (result PreparedArchivePage, err error) {
+	stage := "INPUT_BINDING"
+	defer func() {
+		if err != nil {
+			slog.Warn("mobile_archive_page_failed", "stage", stage)
+		}
+	}()
 	if ctx == nil || ctx.Err() != nil || nowMS <= 0 || size < 1 || size > 50 || !canonicalIdentity(account) || mapper == nil {
 		return result, ErrSQLite
 	}
@@ -61,6 +70,7 @@ func ReadPreparedArchivePage(ctx context.Context, archive SelectedArchive, r dom
 	}
 	since, _ := time.Parse(time.RFC3339Nano, normalized.Since)
 	until, _ := time.Parse(time.RFC3339Nano, normalized.Until)
+	stage = "SQLITE_READ"
 	batch, e := ReadSQLitePage(ctx, archive.File, scratch, since, until, size, sqliteAfter)
 	if e != nil {
 		return result, ErrSQLite
@@ -72,11 +82,15 @@ func ReadPreparedArchivePage(ctx context.Context, archive SelectedArchive, r dom
 		}
 	}()
 	result.SourceControls = batch.SourceControls
+	result.SourceWAL = batch.WALMode
+	result.Coverage = batch.Coverage
 	result.requestID, result.fingerprint, result.account = normalized.RequestID, normalized.Fingerprint(), account
+	stage = "SENDER_METADATA_MAPPING"
 	result.Candidates, e = PrepareRowPage(ctx, batch.Rows, normalized, account, mapper)
 	if e != nil {
 		return result, ErrSQLite
 	}
+	stage = "EXPIRY"
 	result.ExpiredMessages, result.ExpiredQuotes, e = result.Candidates.ApplyExpiry(nowMS)
 	if e != nil || ctx.Err() != nil {
 		return result, ErrSQLite
@@ -85,6 +99,7 @@ func ReadPreparedArchivePage(ctx context.Context, archive SelectedArchive, r dom
 	result.SourceHasMore = batch.HasMore
 	examined += result.Examined
 	result.BudgetExhausted = batch.HasMore && examined >= normalized.MaxMessages
+	stage = "CURSOR_OUTPUT"
 	if batch.HasMore && !result.BudgetExhausted {
 		if batch.Next == nil || result.Examined == 0 {
 			return result, ErrSQLite

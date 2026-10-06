@@ -137,6 +137,32 @@ func TestMobileMessageConversionRejectsBindingAndWholePageMutation(t *testing.T)
 	}
 }
 
+func TestMobileInspectionValidatesBlockedSnapshotWithoutReleasingRecords(t *testing.T) {
+	// Arrange: import is gated by both source properties, with one nontext row.
+	page, request, now := conversionPage(t)
+	defer page.Clear()
+	page.SourceWAL, page.SourceControls = true, 1
+	page.Candidates.Rows[0].Kind = "chat.photo"
+	page.Candidates.Rows[0].Row.Type = 3
+	page.Candidates.Rows[1].Metadata.Quote = &Quote{}
+	page.Candidates.Rows[1].Metadata.Mentions = []Mention{{}}
+	// Act: inspect privately and separately try the storage-record conversion.
+	got, err := InspectPreparedArchivePage(context.Background(), page, request, "10", now)
+	converted, convertErr := ConvertPreparedArchivePage(context.Background(), page, request, "10", now)
+	defer converted.Clear()
+	// Assert: content evidence survives the gates, which still prohibit records.
+	if err != nil || got.TextCandidates != 1 || got.UnsupportedContent != 1 || got.UnresolvedQuotes != 1 || got.UnresolvedMentions != 1 || len(got.BlockReasons) != 2 || got.BlockReasons[0] != "unverified_wal_snapshot" || got.BlockReasons[1] != "unverified_source_controls" || convertErr == nil || len(converted.Records) != 0 {
+		t.Fatal("blocked snapshot evidence or persistence boundary lost", err)
+	}
+	// Act: a malformed later row must not be hidden by the same WAL gate.
+	page.Candidates.Rows[1].Row.ClientID = "01"
+	got, err = InspectPreparedArchivePage(context.Background(), page, request, "10", now)
+	// Assert: no prefix counts or misleading safety-only result escapes.
+	if err == nil || got.TextCandidates != 0 || len(got.BlockReasons) != 0 {
+		t.Fatal("source gate masked an invalid candidate")
+	}
+}
+
 func TestMobileControlsOutsideIntervalPreventConversion(t *testing.T) {
 	// Arrange: a deletion record precedes the requested interval, so paging sees no rows.
 	r := selectedFetchRequest()
@@ -160,5 +186,16 @@ func TestMobileControlsOutsideIntervalPreventConversion(t *testing.T) {
 	// Assert: absence of in-window control rows is not treated as control compatibility.
 	if page.Examined != 0 || page.SourceControls != 1 || calls != 0 || e == nil || len(got.Records) != 0 {
 		t.Fatal("out-of-window deletion bypassed preflight")
+	}
+}
+
+func TestWALSnapshotCannotBecomeImportRecords(t *testing.T) {
+	// Arrange: main-file checkpoint completeness is not verified by the reader.
+	page := PreparedArchivePage{SourceWAL: true}
+	// Act.
+	result, err := ConvertPreparedArchivePage(context.Background(), page, domain.MobileBackupRequest{}, "10", 1)
+	// Assert: inspection alone must not authorize persistence of an unverified snapshot.
+	if err == nil || len(result.Records) != 0 {
+		t.Fatal("WAL snapshot became import records")
 	}
 }

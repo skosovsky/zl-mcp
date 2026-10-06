@@ -15,7 +15,7 @@ import (
 )
 
 func mobileLedgerMethod(method string) bool {
-	return method == "cli_prepare_mobile_backup" || method == "cli_mobile_backup_status" || method == "cli_cancel_prepared_mobile_backup" || method == "cli_probe_mobile_backup_offer"
+	return method == "cli_prepare_mobile_backup" || method == "cli_mobile_backup_status" || method == "cli_cancel_prepared_mobile_backup" || (method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive")
 }
 
 // uniqueLedgerJSON rejects ambiguous object keys before normal contract decoding.
@@ -135,8 +135,12 @@ func (p *membershipPort) mobileLedgerControl(w http.ResponseWriter, r *http.Requ
 			return
 		}
 		result, e = p.store.MobileBackupAttempt(ctx, args.ID)
-		if e == nil && method == "cli_probe_mobile_backup_offer" {
-			probe, e = p.probeMobileOffer(ctx, args.ID, args.Revision)
+		if e == nil && (method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive") {
+			if method == "cli_probe_mobile_backup_archive" {
+				probe, e = p.probeMobileArchive(ctx, args.ID, args.Revision)
+			} else {
+				probe, e = p.probeMobileOffer(ctx, args.ID, args.Revision)
+			}
 		}
 		if e == nil && method == "cli_cancel_prepared_mobile_backup" {
 			if result.Revision != args.Revision || result.State != "prepared" && result.State != "cancelled" {
@@ -151,7 +155,7 @@ func (p *membershipPort) mobileLedgerControl(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	var response any = result
-	if method == "cli_probe_mobile_backup_offer" {
+	if method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive" {
 		response = probe
 	}
 	encoded, e := json.Marshal(response)

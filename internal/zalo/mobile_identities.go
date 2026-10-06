@@ -3,6 +3,7 @@ package zalo
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"github.com/amrakk/zcago/errs"
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -50,10 +51,12 @@ func mapMobileIdentities(ctx context.Context, request domain.MobileIdentityReque
 		return nil, ctx.Err()
 	}
 	if err != nil {
+		slog.Warn("mobile_identity_failed", "stage", "SDK_REQUEST")
 		return nil, domain.ErrMobileBackupInvalid
 	}
 	result, err := mobilebackup.DecodeIdentities(request, body)
 	if err != nil {
+		slog.Warn("mobile_identity_failed", "stage", "MAPPING_SHAPE")
 		return nil, domain.ErrMobileBackupInvalid
 	}
 	return result, nil

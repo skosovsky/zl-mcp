@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 	"path/filepath"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -97,6 +98,7 @@ func (p *membershipPort) consumePreparedMobileArchive(parent context.Context, id
 	}
 	selected, e := mobilebackup.FetchSelectedArchive(operation, boundDownloader, offer, attempt.Request, mapper)
 	if e != nil || operation.Err() != nil || p.current.API.AccountID() != account {
+		slog.Warn("mobile_archive_scope_failed", "stage", "FETCH_COMPLETE", "fetch_failed", e != nil, "cancelled", operation.Err() != nil, "owner_changed", p.current.API.AccountID() != account)
 		selected.Clear()
 		return mobilebackup.SelectedArchive{}, mobilebackup.ErrArchive
 	}

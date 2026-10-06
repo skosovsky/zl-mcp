@@ -1,9 +1,11 @@
 package mobilebackup
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"testing"
@@ -125,5 +127,28 @@ func TestDownloadProductionTransportPolicy(t *testing.T) {
 	// Assert: no proxy/cookie state and redirects are rejected without a request.
 	if !ok || transport.Proxy != nil || d.client.Jar != nil || !transport.DisableKeepAlives || transport.DialContext == nil || d.client.Timeout.Seconds() != 120 || d.client.CheckRedirect(&http.Request{}, nil) == nil {
 		t.Fatal("unsafe production client")
+	}
+}
+
+func TestDownloadFailureDiagnosticsExcludeURLAndBody(t *testing.T) {
+	// Arrange: a rejected response with private payload and URL markers.
+	var logs bytes.Buffer
+	previous := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
+	defer slog.SetDefault(previous)
+	d, _ := NewDownloader([]string{"archive.example.com"})
+	d.client.Transport = downloadTransport(func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: 403, Header: make(http.Header), ContentLength: 12, Body: io.NopCloser(strings.NewReader("private-body"))}, nil
+	})
+	// Act.
+	_, err := d.Fetch(context.Background(), "https://archive.example.com/private-path?signature=private-token", 12, 20)
+	// Assert: diagnosis exposes only fixed stages and numeric status.
+	if err == nil || !strings.Contains(logs.String(), "HTTP_STATUS") || !strings.Contains(logs.String(), "403") {
+		t.Fatal("missing rejection diagnostic")
+	}
+	for _, secret := range []string{"private-body", "private-path", "private-token", "archive.example.com"} {
+		if strings.Contains(logs.String(), secret) {
+			t.Fatal("private download data leaked")
+		}
 	}
 }

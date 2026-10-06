@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "attempt": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Phone-attempt ledger only; offer_ready does not mean messages imported.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "request": {
+          "description": "Internal mobile attempt selection, not an exposed MCP tool.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "request_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "conversation_type": {
+              "enum": [
+                "direct",
+                "group"
+              ]
+            },
+            "conversation_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "since": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 64
+            },
+            "until": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 64
+            },
+            "max_messages": {
+              "description": "Maximum source records examined, including duplicates and records outside the requested interval.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000,
+              "default": 1000
+            },
+            "max_archive_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 536870912,
+              "default": 67108864
+            }
+          },
+          "required": [
+            "request_id",
+            "conversation_type",
+            "conversation_id",
+            "since",
+            "until",
+            "max_messages",
+            "max_archive_bytes"
+          ]
+        },
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "state": {
+          "enum": [
+            "prepared",
+            "dispatching",
+            "waiting_for_confirmation",
+            "request_result_unknown",
+            "mobile_restoring",
+            "waiting_for_backup",
+            "offer_ready",
+            "failed",
+            "cancelled",
+            "interrupted"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "request",
+        "operation_id",
+        "state",
+        "revision",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "download_performed": {
+      "const": true
+    },
+    "import_performed": {
+      "const": false
+    },
+    "source_has_more": {
+      "type": "boolean"
+    },
+    "conversion_blocked": {
+      "type": "boolean"
+    },
+    "stop_reason": {
+      "enum": [
+        "available_archive_exhausted",
+        "message_limit",
+        "page_limit"
+      ]
+    },
+    "pages": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "examined": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "rejected": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "candidates": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_controls": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "convertible_messages": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unsupported_content": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "expired_messages": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "deferred_controls": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unsupported_types": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "missing_metadata": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "invalid_metadata": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unsupported_metadata_fields": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "wal_mode": {
+      "type": "boolean",
+      "description": "Main-file WAL snapshot; checkpoint completeness not established. Diagnostic only, no import."
+    },
+    "source_rows": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_period_rows": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "invalid_timestamp_rows": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_earliest_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "source_latest_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "conversion_block_reasons": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "unverified_wal_snapshot",
+          "unverified_source_controls"
+        ]
+      },
+      "description": "Persistence safety gates, separate from malformed candidate failures."
+    },
+    "text_candidates": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Validated plain-text record candidates in the supplied image; not authorization to persist or proof of full source history."
+    },
+    "unresolved_quotes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unresolved_mentions": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "attempt",
+    "download_performed",
+    "import_performed",
+    "source_has_more",
+    "conversion_blocked",
+    "stop_reason",
+    "pages",
+    "examined",
+    "rejected",
+    "candidates",
+    "source_controls",
+    "convertible_messages",
+    "unsupported_content",
+    "expired_messages",
+    "deferred_controls",
+    "unsupported_types",
+    "missing_metadata",
+    "invalid_metadata",
+    "unsupported_metadata_fields",
+    "wal_mode",
+    "source_rows",
+    "source_period_rows",
+    "invalid_timestamp_rows",
+    "source_earliest_at",
+    "source_latest_at",
+    "conversion_block_reasons",
+    "text_candidates",
+    "unresolved_quotes",
+    "unresolved_mentions"
+  ]
+}

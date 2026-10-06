@@ -679,3 +679,30 @@ controls, without declaring archive success or redispatching. Regression tests
 cover the observed control followed by a validated encrypted offer, and the same
 control without an offer until deadline. This closes the observed interpretation
 defect, not real archive receipt or import acceptance.
+
+## znoise authentication scope investigation — 2026-10-06
+
+Saved-session metadata contains five cookies: one chat-scoped zpw_sek, one
+id-scoped cookie and three parent-domain cookies applicable to zwid. No values
+were reported or copied into documentation. Restore uses the same jar for the
+SDK context and HTTP client; normal Go jar selection omits chat-only zpw_sek
+from zwid.api.zalo.me. Static review of installed `main-dist/main.js` independently
+shows native setAppCookie assigning zpw_sek to zalo.me as well as chat.zalo.me
+and zaloapp.com. Native getnuid uses encrypted numeric fids/gids form POST at
+zwid.api.zalo.me/api/znoise. Thus the production cookie availability differs,
+even though the payload/method match. Changing endpoint API version alone from
+665 to native 691 reproduced outer code 600; it did not resolve rejection.
+
+A scoped adapter correction borrows only zpw_sek for the exact HTTPS identity
+endpoint when absent in its normal jar. It does not widen stored domains or
+forward unrelated host-only cookies. Synthetic wire tests verify successful
+encrypted response, single-request redirect rejection, exact-host/path checks,
+missing-token failure and unchanged jar state. Live success and code-600 cause
+remain unproven until a separately authorized correlated-offer run.
+
+A subsequent explicitly authorized run with version 691 and scoped zpw_sek
+reached `offer_ready` and logged authenticated account verification. The offer
+size was 246,660 bytes and its observed host trans-bin.zaloapp.com; no download
+or import occurred. The otherwise identical version-691 request had returned
+outer code 600 without this cookie. This is live evidence for the auth-scope
+correction in the tested session; it is not a general error-code specification.

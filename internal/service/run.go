@@ -219,7 +219,7 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	httpServer := &http.Server{Handler: handler, BaseContext: func(net.Listener) context.Context { return ctx }, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 45 * time.Second, IdleTimeout: 30 * time.Second}
 	// The owner-only mobile probe may wait 185s and finish its ledger independently.
 	// Keep the Unix response deadline above the 190s CLI request budget.
-	cliServer := &http.Server{Handler: port.cliHandler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 200 * time.Second}
+	cliServer := &http.Server{Handler: port.cliHandler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 450 * time.Second}
 	errorsCh := make(chan error, 7)
 	var wg sync.WaitGroup
 	launch := func(fn func() error) {

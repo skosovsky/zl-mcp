@@ -48,3 +48,12 @@ func TestMobileOfferProbeArgumentsRequireExactRevision(t *testing.T) {
 		}
 	}
 }
+
+func TestMobileArchiveDiagnosticArguments(t *testing.T) {
+	// Arrange/Act: canonical owner attempt reference.
+	method, args, err := mobileLedgerArguments([]string{"mobile-backup-probe-archive", "id", "0"}, strings.NewReader(""))
+	// Assert: only the private diagnostic route, with revision preserved.
+	if err != nil || method != "cli_probe_mobile_backup_archive" || args.(map[string]any)["revision"] != int64(0) || !mobileLedgerCommand("mobile-backup-probe-archive") {
+		t.Fatal(method, args, err)
+	}
+}

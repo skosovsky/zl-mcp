@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -31,13 +32,19 @@ func (a *api) ConsumeMobileArchive(ctx context.Context, req *http.Request, valid
 	}
 	client.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
 	request := req.Clone(ctx)
+	if err := bindMobileArchiveCookie(request, a.sc.CookieJar()); err != nil {
+		slog.Warn("mobile_archive_transport_failed", "stage", "AUTH_COOKIE_SCOPE")
+		return nil, ErrMobileArchive
+	}
 	response, err := client.Do(request)
 	if err != nil {
+		slog.Warn("mobile_archive_transport_failed", "stage", "HTTP_REQUEST", "cancelled", ctx.Err() != nil)
 		return nil, ErrMobileArchive
 	}
 	defer response.Body.Close()
 	data, err := consume(ctx, response)
 	if err != nil || ctx.Err() != nil || a.sc.UID() != owner {
+		slog.Warn("mobile_archive_transport_failed", "stage", "RESPONSE_CONSUMPTION", "consumer_failed", err != nil, "cancelled", ctx.Err() != nil, "owner_changed", a.sc.UID() != owner)
 		clear(data)
 		return nil, ErrMobileArchive
 	}
@@ -48,3 +55,32 @@ func (a *api) ConsumeMobileArchive(ctx context.Context, req *http.Request, valid
 type archiveReadOnlyJar struct{ http.CookieJar }
 
 func (archiveReadOnlyJar) SetCookies(*url.URL, []*http.Cookie) {}
+
+// Native setAppCookie scopes the same token to zaloapp.com. Borrow only for the
+// independently pinned archive host; never broaden the persistent cookie jar.
+func bindMobileArchiveCookie(request *http.Request, jar http.CookieJar) error {
+	if request.URL.Scheme != "https" || request.URL.Host != "trans-bin.zaloapp.com" || request.URL.User != nil || request.URL.Fragment != "" {
+		return nil
+	}
+	for _, c := range jar.Cookies(request.URL) {
+		if c.Name == "zpw_sek" && c.Value != "" {
+			return nil
+		}
+	}
+	source, _ := url.Parse("https://chat.zalo.me/")
+	var token *http.Cookie
+	for _, c := range jar.Cookies(source) {
+		if c.Name != "zpw_sek" || c.Value == "" {
+			continue
+		}
+		if token != nil {
+			return ErrMobileArchive
+		}
+		token = c
+	}
+	if token == nil {
+		return ErrMobileArchive
+	}
+	request.AddCookie(&http.Cookie{Name: "zpw_sek", Value: token.Value})
+	return nil
+}

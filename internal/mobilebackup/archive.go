@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 )
 
 var ErrArchive = errors.New("invalid mobile backup plaintext archive")
@@ -41,6 +42,7 @@ func ReadPlainArchive(ctx context.Context, r io.Reader, containerLimit, outputLi
 	}
 	container, err := ReadContainer(ctx, r, containerLimit)
 	if err != nil {
+		slog.Warn("mobile_archive_format_failed", "stage", "HEADER_CHECKSUM_TABLE")
 		return PlainArchive{}, ErrArchive
 	}
 	defer clear(container.Compressed)
@@ -51,6 +53,7 @@ func ReadPlainArchive(ctx context.Context, r io.Reader, containerLimit, outputLi
 	}
 	out, err := DecompressXZ(ctx, bytes.NewReader(container.Compressed), int64(len(container.Compressed)), int64(outputLimit))
 	if err != nil || uint64(len(out)) != container.Header.TotalBytes || ctx.Err() != nil {
+		slog.Warn("mobile_archive_format_failed", "stage", "XZ_OUTPUT", "decoder_failed", err != nil, "output_size_matches", uint64(len(out)) == container.Header.TotalBytes)
 		clear(out)
 		return PlainArchive{}, ErrArchive
 	}
