@@ -86,6 +86,20 @@ no credential values were printed or changed and no import or subscription was c
 client connectivity is accepted; intermittent transport failures and actual
 client history-import workflow acceptance remain separate gates.
 
+### Attachment decode checkpoint: 2026-10-06
+
+Read-only native inspection established the nested tag-6 field names and exact
+32-bit integer/UTF-8 wire paths. The [attachment contract](contracts/mobile-backup-attachment.md)
+and parser preserve explicit presence and ordered outer repeats, reject malformed
+whole results and clear private owned data. BinNet now decodes attachment fields
+instead of treating the whole outer value as an unknown occurrence; nested unknown
+fields still count. The converter still reports attachment-bearing records as
+unsupported content. Thus lower unknown-field counts do not establish supported
+rendering or complete import. Root/nested race/vet, cross-builds and the bounded
+Go fuzz check passed. These source changes have not been installed or tested on
+a fresh phone archive; the current service remains the previously accepted native
+probe build. No phone request, Zalo send or subscription edit was performed.
+
 | Requirement | Current evidence | Remaining gate |
 | --- | --- | --- |
 | Browse without a keyword | Current installed HTTP and actual connected-client catalogue→period browse→stable continuation→matching context checks pass; production regression tests | Final signed checkout/publication verification |

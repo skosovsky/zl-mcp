@@ -15,8 +15,9 @@ conversion while that count is nonzero: no verified target mapping exists yet.
 This prevents an in-window text page from being imported ahead of a later or
 out-of-window control. Detection is not implementation of deletion/undo semantics.
 
-Convert only verified type-0/webchat candidates without undecoded attachment tag
-6. Report other recognized content and rich text as unsupported; retain their
+Convert only verified type-0/webchat candidates without attachment tag
+6. Attachments are decoded by [their contract](mobile-backup-attachment.md), but
+decoding alone does not establish corpus rendering. Report other recognized content and rich text as unsupported; retain their
 source-gap counts and keep full import acceptance open. Do not infer attachment
 contents or substitute a narrower text-only implementation for the full goal.
 Preserve exact string message/client/mapped-sender IDs, original UTC timestamp,

@@ -2,13 +2,14 @@ package mobilebackup
 
 import "context"
 
-// BinNet retains partial quote/mention decoding and unsupported field coverage.
+// BinNet retains partial quote/mention/attachment decoding and unsupported field coverage.
 // Recognition of all encountered tags does not validate message semantics.
 type BinNet struct {
-	Mentions          []Mention `json:"-"`
-	Quote             *Quote    `json:"-"`
-	UnsupportedTags   []uint32  `json:"-"`
-	UnsupportedFields int       `json:"-"`
+	Mentions          []Mention    `json:"-"`
+	Quote             *Quote       `json:"-"`
+	Attachments       []Attachment `json:"-"`
+	UnsupportedTags   []uint32     `json:"-"`
+	UnsupportedFields int          `json:"-"`
 }
 
 func (BinNet) String() string   { return "mobile backup BinNet [redacted]" }
@@ -19,6 +20,9 @@ func (b *BinNet) Clear() {
 	}
 	if b.Quote != nil {
 		b.Quote.Clear()
+	}
+	for i := range b.Attachments {
+		b.Attachments[i].Clear()
 	}
 	for i := range b.Mentions {
 		b.Mentions[i].Clear()
@@ -40,6 +44,15 @@ func ParseBinNet(ctx context.Context, data []byte) (result BinNet, err error) {
 	for _, f := range fields.Fields {
 		if ctx.Err() != nil {
 			return result, ErrTLV
+		}
+		if f.Tag == 6 {
+			attachment, e := ParseAttachment(ctx, f.Value)
+			if e != nil {
+				return result, e
+			}
+			result.Attachments = append(result.Attachments, attachment)
+			result.UnsupportedFields += attachment.UnsupportedFields
+			continue
 		}
 		if f.Tag == 8 {
 			mention, e := ParseMention(ctx, f.Value)

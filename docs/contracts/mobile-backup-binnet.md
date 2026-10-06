@@ -11,11 +11,13 @@ and is covered by mobile-backup-mentions.md, not equated with quote metadata.
 ParseBinNet uses the existing nonempty 256-KiB / 1024-field TLV limits. Decode one
 optional tag-7 value with ParseQuote. Reject repeated quote tags rather than choose
 one. Decode each tag-8 occurrence as a raw mention, retaining encounter order.
+Decode each tag-6 occurrence with the [attachment decoder](mobile-backup-attachment.md),
+retaining order without merging. A malformed attachment fails the whole result.
 Count every other field occurrence as UnsupportedFields; retain repeated
 unsupported tags in encounter order as private tag metadata. Include nested
-unknown quote and mention fields in the unsupported count. Never return a successful prefix
-when the structural stream or selected quote fails. Cancellation fails the whole
-result. Clear owns and clears quote/mention data and resets tag metadata. Formatting
+unknown quote, attachment and mention fields in the unsupported count. Never return a successful prefix
+when the structural stream or selected nested value fails. Cancellation fails the whole
+result. Clear owns and clears quote/attachment/mention data and resets tag metadata. Formatting
 and JSON redact all metadata. There is no recursive decoding of unknown values.
 
 This decoder provides evidence for coverage reporting, not proof of complete

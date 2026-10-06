@@ -98,7 +98,7 @@ func convertArchiveCandidates(ctx context.Context, page PreparedArchivePage, req
 			result.Expired++
 			continue
 		}
-		attachment := false
+		attachment := len(row.Metadata.Attachments) > 0
 		for _, tag := range row.Metadata.UnsupportedTags {
 			if tag == 6 {
 				attachment = true

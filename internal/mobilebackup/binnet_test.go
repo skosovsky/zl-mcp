@@ -9,12 +9,12 @@ import (
 )
 
 func TestBinNetQuoteAndExplicitPartialCoverage(t *testing.T) {
-	// Arrange: quote with exact large client ID/text/unknown field, repeated attachments.
-	input, _ := hex.DecodeString("00000007000000220000005100000008002000000000000100000056000000017800000059000000017a000000060000000161000000060000000162000000090000000163")
+	// Arrange: quote with exact large client ID/text/unknown field, repeated unknown fields.
+	input, _ := hex.DecodeString("00000007000000220000005100000008002000000000000100000056000000017800000059000000017a0000000a00000001610000000a0000000162000000090000000163")
 	// Act.
 	got, err := ParseBinNet(context.Background(), input)
 	// Assert: nested quote kept, unsupported occurrences never silently lost.
-	if err != nil || got.Quote == nil || got.Quote.Scalars.ClientMessageID == nil || *got.Quote.Scalars.ClientMessageID != 9007199254740993 || string(got.Quote.Message.Bytes) != "x" || got.UnsupportedFields != 4 || len(got.UnsupportedTags) != 3 || got.UnsupportedTags[0] != 6 || got.UnsupportedTags[1] != 6 || got.UnsupportedTags[2] != 9 {
+	if err != nil || got.Quote == nil || got.Quote.Scalars.ClientMessageID == nil || *got.Quote.Scalars.ClientMessageID != 9007199254740993 || string(got.Quote.Message.Bytes) != "x" || got.UnsupportedFields != 4 || len(got.UnsupportedTags) != 3 || got.UnsupportedTags[0] != 10 || got.UnsupportedTags[1] != 10 || got.UnsupportedTags[2] != 9 {
 		t.Fatal("BinNet coverage mismatch", err)
 	}
 	b, _ := json.Marshal(got)
@@ -36,7 +36,7 @@ func TestBinNetWholeResultFailureAndUnknownOnly(t *testing.T) {
 		// Act.
 		got, err := ParseBinNet(context.Background(), input)
 		// Assert: no partial metadata survives.
-		if err == nil || got.Quote != nil || got.Mentions != nil || got.UnsupportedTags != nil || got.UnsupportedFields != 0 {
+		if err == nil || got.Quote != nil || got.Attachments != nil || got.Mentions != nil || got.UnsupportedTags != nil || got.UnsupportedFields != 0 {
 			t.Fatal("partial BinNet accepted")
 		}
 	}
@@ -56,7 +56,7 @@ func FuzzBinNetWholeResult(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		got, err := ParseBinNet(context.Background(), data)
 		if err != nil {
-			if got.Quote != nil || got.Mentions != nil || got.UnsupportedTags != nil || got.UnsupportedFields != 0 {
+			if got.Quote != nil || got.Attachments != nil || got.Mentions != nil || got.UnsupportedTags != nil || got.UnsupportedFields != 0 {
 				t.Fatal("partial BinNet")
 			}
 			return
