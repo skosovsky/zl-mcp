@@ -133,3 +133,13 @@ socket and received the expected refusal without an upstream recall. The origina
 real test send is now outside the diagnostic's 30-minute freshness bound. Never
 automatically send a replacement or bypass that bound; agree a fresh live scenario
 when the user is ready for both phone confirmations.
+
+After renewed human authorization, one fresh disposable message was sent through
+the same local HTTP MCP route. Its stable UUID was saved before dispatch; the
+send ledger records `sent` with the returned message ID. The exact original
+configuration was restored immediately after sending, with sending disabled and
+the existing collector connected. No subscription was changed.
+The new pre-recall attempt waited for confirmation from 12:55:34 to 12:58:36 UTC
+and terminated `interrupted` without an archive. No recall, comparison or import
+occurred. A further phone request awaits explicit user readiness; neither the
+terminal attempt nor the send is automatically repeated.

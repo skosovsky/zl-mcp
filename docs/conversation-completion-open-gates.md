@@ -103,6 +103,13 @@ for confirmation and ended `interrupted` without an archive; no recall occurred.
 A fresh request is awaiting user readiness. The temporary one-peer send permission
 was restored to the exact original disabled configuration. See the
 [controlled diagnostic evidence](mobile-backup-diagnostics.md#controlled-diagnostic-evidence-2026-10-06).
+Following renewed authorization, a fresh disposable message was accepted once
+through local HTTP MCP and its returned ID matches the saved send ledger. The
+original disabled send configuration was restored before the archive request.
+The new pre-recall attempt also terminated `interrupted` after approximately
+three minutes waiting for confirmation (12:55:34–12:58:36 UTC), without an archive.
+No real recall, comparison or import has occurred; the next phone request awaits
+explicit user readiness and must use a fresh attempt UUID.
 After fixing the shutdown/cleanup race and correcting the spent-UUID test to the
 existing unavailable-source error contract, root tests/vet and affected
 mobile-backup/history-import/service/storage race checks passed. A further real
