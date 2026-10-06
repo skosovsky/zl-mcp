@@ -34,13 +34,34 @@ pages, source substitution, large rowids, limits and absence of Events from
 historical imports. Full root race passed before the final transaction-work budget
 guard; the updated storage/history-import/domain/contracts race checks and full
 root vet then passed. CGO-free macOS arm64/Linux amd64 builds and redacted scans
-of the worktree and all 40 existing published commits passed.
+of the worktree and all 40 existing published commits passed. Signed source
+[`323dffa`](https://github.com/skosovsky/zl-mcp/commit/323dffa318b13753fb028fc3bbf03458b472f72b)
+was published; [both macOS and Linux CI jobs passed](https://github.com/skosovsky/zl-mcp/actions/runs/37438523127).
 
 This remains an internal prerequisite. Public start still rejects `mobile_archive`,
-the legacy worker cannot claim its queue, and neither the archive reader nor phone
-acquisition is wired to this port. Schema 13 and these source changes have not been
+the legacy worker cannot claim its queue, and at that publication neither the
+archive reader nor phone acquisition was wired to this port. Schema 13 and these source changes have not been
 installed. The two September 26 candidate rows are not restored messages; their
 live import and the existing WAL/control/content acceptance gates remain open.
+
+The subsequent internal page adapter connects authenticated encrypted snapshots
+to the existing reader/converter and the atomic journal page format. An integrated
+synthetic test commits a rejected/expired-only page, restarts both stores, resumes
+large integer rowids without renewing snapshot/message TTL and verifies two retained
+records with no Events or deliveries. Binding changes, incomplete continuations,
+WAL/control gates and cancellation return no writable page. This supersedes the
+reader-format integration gap, while acquisition/worker wiring and public/mobile
+acceptance remain open. No live snapshot was requested or imported.
+
+One full local test run exposed startup cancellation being reported as a storage
+failure by the existing history worker. Its recovery path now treats cancellation
+errors from a cancelled context as graceful stop while preserving genuine storage
+failures. Dedicated tests verify both outcomes; do not represent the initial
+failed run as passing evidence.
+After that fix, full root tests and vet passed, as did the affected collector,
+history-import and mobile-backup race checks and CGO-free macOS arm64/Linux amd64
+builds. The integrated adapter remains uninstalled and public source selection
+remains disabled.
 
 ### Published probe checkpoint and native installation: 2026-10-06
 

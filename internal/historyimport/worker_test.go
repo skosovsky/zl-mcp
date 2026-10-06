@@ -59,6 +59,39 @@ func awaitState(t *testing.T, s *storage.Store, id, state string) storage.Histor
 	}
 }
 
+func TestWorkerCancelledBeforeRecoveryStopsWithoutStorageFailure(t *testing.T) {
+	// Arrange: shutdown wins the race before the worker recovers queued operations.
+	s, op := prepare(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	calls := 0
+	source := pageSource(func(context.Context, domain.ConversationRef, string, int) (domain.HistoryPage, error) {
+		calls++
+		return domain.HistoryPage{}, nil
+	})
+	// Act: startup recovery sees the already cancelled context.
+	err := historyimport.Run(ctx, s, source)
+	// Assert: graceful stop neither calls upstream nor changes queued progress.
+	got, readErr := s.HistoryOperation(context.Background(), op.Status.OperationID)
+	if err != nil || readErr != nil || calls != 0 || got.Revision != op.Revision || got.Status.State != "queued" {
+		t.Fatal("shutdown became a storage failure", err, readErr)
+	}
+}
+
+func TestWorkerRecoveryPreservesRealStorageFailure(t *testing.T) {
+	// Arrange: the store is unavailable independently of context cancellation.
+	s, _ := prepare(t)
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+	// Act: recovery encounters the closed store.
+	err := historyimport.Run(context.Background(), s, nil)
+	// Assert: genuine storage errors are not swallowed as normal shutdown.
+	if err == nil {
+		t.Fatal("storage failure was swallowed")
+	}
+}
+
 func TestWorkerUsesExactCheckpointAndRemainingRecordBudget(t *testing.T) {
 	// Arrange
 	s, op := prepare(t)

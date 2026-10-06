@@ -397,7 +397,7 @@ func (s *SnapshotStore) read(ctx context.Context, r domain.MobileBackupRequest, 
 		clear(data)
 		return SelectedArchive{}, ErrSnapshotConflict
 	}
-	return SelectedArchive{requestID: r.RequestID, requestFingerprint: r.Fingerprint(), ref: r.Ref(), File: ArchiveFile{Name: meta.Filename, Data: data}, CiphertextBytes: meta.CiphertextBytes, ContainerBytes: meta.ContainerBytes, TrailingBytes: meta.TrailingBytes}, nil
+	return SelectedArchive{requestID: r.RequestID, requestFingerprint: r.Fingerprint(), ref: r.Ref(), snapshotCreatedMS: meta.CreatedMS, snapshotExpiresMS: meta.ExpiresMS, File: ArchiveFile{Name: meta.Filename, Data: data}, CiphertextBytes: meta.CiphertextBytes, ContainerBytes: meta.ContainerBytes, TrailingBytes: meta.TrailingBytes}, nil
 }
 
 func (s *SnapshotStore) decode(name, id string) (snapshotMetadata, []byte, error) {

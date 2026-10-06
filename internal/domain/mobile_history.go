@@ -58,3 +58,13 @@ type MobileHistoryPage struct {
 
 func (MobileHistoryPage) String() string   { return "mobile history page [redacted]" }
 func (MobileHistoryPage) GoString() string { return "mobile history page [redacted]" }
+
+func (p *MobileHistoryPage) Clear() {
+	if p != nil {
+		clear(p.Records)
+		if p.Next != nil {
+			*p.Next = MobileHistoryPosition{}
+		}
+		*p = MobileHistoryPage{}
+	}
+}

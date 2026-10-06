@@ -16,6 +16,9 @@ import (
 // loss ends this session's worker; a new authenticated session resumes pauses.
 func Run(ctx context.Context, store *storage.Store, source domain.HistorySource) error {
 	if err := store.RecoverInterruptedHistory(ctx); err != nil {
+		if ctx.Err() != nil && (errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)) {
+			return nil
+		}
 		return err
 	}
 	ticker := time.NewTicker(500 * time.Millisecond)

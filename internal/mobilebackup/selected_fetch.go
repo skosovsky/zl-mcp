@@ -13,6 +13,7 @@ type SelectedArchive struct {
 	requestID                                      string
 	ref                                            domain.ConversationRef
 	requestFingerprint                             string
+	snapshotCreatedMS, snapshotExpiresMS           int64
 	File                                           ArchiveFile `json:"-"`
 	CiphertextBytes, ContainerBytes, TrailingBytes uint64      `json:"-"`
 }

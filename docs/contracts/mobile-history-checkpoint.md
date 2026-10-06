@@ -55,6 +55,21 @@ Mobile active work has a separate bounded 420-second allowance, including durabl
 in-flight reservations up to 180 seconds for phone acquisition. Legacy sources
 retain their existing 120-second/30-second bounds. Authentication waiting does
 not consume active work. Source loss is partial/source_unavailable, never implicit
-redispatch. Snapshot storage, producer eligibility, page reader/converter and
-single-session driver still require integration; storage tests do not prove that
-integration or live import.
+redispatch.
+
+The internal snapshot page adapter reads only an authenticated encrypted snapshot;
+it owns and clears the selected image after each bounded read. Creation and fixed
+expiry come from authenticated snapshot metadata, never from the clock at retry.
+It reconstructs the reader's private cursor from the trusted operation's examined
+count and exact stored position, binding it again to account, request, selected
+name, digest and interval. Resume requires both previous source and position;
+the first page permits neither. It compares frozen coverage before returning a
+page, maps all exclusive and orthogonal counters, and lends no archive buffers
+to storage. The returned normalized page is owned by the caller and must be
+cleared after commit or failure. Conversion gates apply before any writable page
+is returned; errors return an empty result. This adapter performs no phone or
+network operation and does not itself commit progress.
+
+Producer eligibility and the single-session acquisition/worker driver still
+require integration. A synthetic snapshot/reader/converter/journal restart test
+does not prove live import or permit public source selection.
