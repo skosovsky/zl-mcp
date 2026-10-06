@@ -8,7 +8,36 @@ not reduce that scope or declare completion. Historical checkpoints in
 [the acceptance report](conversation-completion-acceptance.md) are evidence for
 their recorded versions, not a description of the current installation.
 
-## Installed checkpoint superseding older deployment notes
+## Current installation and client discovery
+
+The installed clean source is `e7f4d7f1007c1790943248429e08f79a940610f6`,
+with binary SHA-256
+`b3d4cde91daa93ae2ce2c275006230253543ad13578e8a7cab3c1cdd7aed595d`.
+Its deployment and preservation checks are recorded below. A subsequent
+read-only check returned connected/authenticated without an error, schema 14
+with valid integrity, and an empty, unblocked journal for the one active v2
+subscription. No acknowledgement was sent.
+
+The existing app-backed Zalo connection was located in Safari and its
+**Refresh tools** action invoked. The ChatGPT app detail page subsequently
+displayed 5 write tools, 16 read tools, the legacy group event, and conversation
+v2. This verifies the visible catalogue, including browse/import/recovery,
+but the page does not expose the send input schema or prove that an existing
+conversation has reloaded it. Local HTTP `tools/list` returns the corrected
+full-string non-whitespace pattern `^[\s\S]*\S[\s\S]*$`.
+
+An attempted saved-request retry was rejected by the action approval reviewer
+before MCP invocation. It therefore provides no evidence of connector schema
+acceptance or a server-side send result. No message was dispatched. A new
+client conversation and an explicitly authorized live scenario remain necessary
+for the open send acceptance checks; metadata refresh alone does not close them.
+
+The remaining full-scope gates are real incoming-only/first-only behaviour,
+the agreed fresh send/acknowledgement scenarios, and safe real mobile-source
+admission and recovery of the user's older Strangers history. Synthetic source
+tests and optional producer counts do not establish export completeness.
+
+## Historical installation checkpoints
 
 Source `9f1f0b5db9a562706fbb9ab518ee54a7709d9d9c` passed
 [Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37463304404).
