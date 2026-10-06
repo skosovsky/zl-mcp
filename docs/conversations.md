@@ -74,7 +74,7 @@ through MCP search/context even when no subscription matched its first insertion
 
 ## Events and compatibility
 
-`zalo.conversation.message.created` schema version 1 adds typed identity and an
+`zalo.conversation.message.created.v2` schema version 2 adds typed identity and an
 available conversation name. Its scopes are all, direct, group or one exact typed
 conversation. The legacy `zalo.message.created` retains its group-only scope and
 payload, including across migration. Both profiles share signed verification,
@@ -90,7 +90,7 @@ its event ID remains stable. See the [executable Events contract](contracts/even
 
 Collection mode `all` and subscription scope `all` are separate settings. To receive
 both direct and group events, the trusted client creates a new subscription with
-`name: "zalo.conversation.message.created"`, `arguments: {"scope":"all"}` and
+`name: "zalo.conversation.message.created.v2"`, `arguments: {"scope":"all"}` and
 `ttlMs: null`, using its own verified delivery settings. After successful activation,
 cancel the old `zalo.message.created` subscription by its returned ID. During the
 overlap, group events can arrive through both profiles; the receiver must apply its

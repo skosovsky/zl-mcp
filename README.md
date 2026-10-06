@@ -54,7 +54,7 @@ filtering evidence, stop reason and newly imported time bounds. See the
 
 Events use a pinned webhook draft profile, requiring a compatible HTTP client and a public HTTPS receiver with verification and signature support. STDIO does not deliver Events. The service rejects loopback and private callback addresses. Tunnels, reverse proxies, receiver infrastructure, and agent notification delivery are outside the application.
 
-`zalo.conversation.message.created` version 1 supports exact/all/direct/group scopes and includes typed conversation identity, an available name, the message ID, author, time, and up to 2048 Unicode code points of text. Truncated text has a flag and a resource URI for the full record. By default, subscriptions begin with the first insertion after activation and remain active until cancelled; queued delivery survives restarts, within documented retry and capacity limits. See the [Events contract](docs/contracts/events.md).
+`zalo.conversation.message.created.v2` version 2 supports exact/all/direct/group scopes and includes typed conversation identity, an available name, the message ID, author, time, and up to 2048 Unicode code points of text. Truncated text has a flag and a resource URI for the full record. By default, subscriptions begin with the first insertion after activation and remain active until cancelled; queued delivery survives restarts, within documented retry and capacity limits. See the [Events contract](docs/contracts/events.md).
 
 The legacy group-only event `zalo.message.created` retains its original payload and subscription scope. Collecting all conversations does not widen callback subscriptions.
 
@@ -98,3 +98,5 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/zl-mcp-linux-amd64 ./cmd/z
 Automated tests use synthetic data and fake upstreams. Linux tests and builds are covered by CI; Linux service deployment is manual and has no supported systemd setup. Default log paths are currently macOS-style. Agent skills are optional instructions, not receivers or transport implementations.
 
 Licensed under [MIT](LICENSE). The vendored dependency retains its own license and patch provenance.
+
+Event-triggered clients can recover missing payloads through the [subscription journal](docs/contracts/event-recovery.md), with an explicit durable acknowledgement cursor. Conversation Events v1 was removed; v2 and the legacy group profile remain.

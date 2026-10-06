@@ -17,7 +17,7 @@ func TestIncomingMigrationSeedsEvidenceAndPreservesLegacyQueue(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	sub := EventSubscription{ID: "legacy", Principal: "owner", Callback: "https://receiver.example/events", Secret: "synthetic", Profile: domain.ConversationMessageCreated, Scope: "all"}
+	sub := EventSubscription{ID: "legacy", Principal: "owner", Callback: "https://receiver.example/events", Secret: "synthetic", Profile: domain.ConversationMessageCreatedV2, Scope: "all"}
 	r, err := s.SubscriptionRevision(ctx, sub.ID)
 	if err != nil {
 		t.Fatal(err)

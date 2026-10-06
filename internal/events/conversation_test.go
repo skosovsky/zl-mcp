@@ -52,7 +52,7 @@ func TestConversationScopesSignedDeliveryAndCancellation(t *testing.T) {
 	scopes := []map[string]any{{"scope": "all"}, {"scope": "direct"}, {"scope": "group"}, {"scope": "conversation", "conversation_type": "direct", "conversation_id": "same"}}
 	ids := map[string]bool{}
 	for _, scope := range scopes {
-		result, err := manager.Call(ctx, "events/subscribe", "owner", raw(ConversationMessageCreated, scope, true))
+		result, err := manager.Call(ctx, "events/subscribe", "owner", raw(domain.ConversationMessageCreatedV2, scope, true))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -123,7 +123,7 @@ func TestConversationScopesSignedDeliveryAndCancellation(t *testing.T) {
 		} else {
 			kind := event.Data["conversation_type"].(string)
 			received[kind]++
-			if event.Data["schema_version"] != float64(1) || !strings.Contains(event.Data["text_resource_uri"].(string), "/"+kind+"/") {
+			if event.Data["schema_version"] != float64(2) || !strings.Contains(event.Data["text_resource_uri"].(string), "/"+kind+"/") {
 				t.Fatal("typed payload invalid")
 			}
 		}
@@ -147,7 +147,7 @@ func TestConversationScopesSignedDeliveryAndCancellation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = manager.Call(ctx, "events/unsubscribe", "owner", raw(ConversationMessageCreated, scopes[0], false)); err != nil {
+	if _, err = manager.Call(ctx, "events/unsubscribe", "owner", raw(domain.ConversationMessageCreatedV2, scopes[0], false)); err != nil {
 		t.Fatal(err)
 	}
 	var active int
@@ -156,5 +156,34 @@ func TestConversationScopesSignedDeliveryAndCancellation(t *testing.T) {
 	}
 	if active != 4 {
 		t.Fatal("cancellation changed other scopes")
+	}
+}
+
+func TestConversationV1IsNotAvailable(t *testing.T) {
+	// Arrange: a real manager; old profile must fail before callback verification.
+	ctx := context.Background()
+	s, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "state.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	manager, err := NewSubscriptionManager(s, "synthetic")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Act.
+	catalog, err := manager.Call(ctx, "events/list", "owner", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, oldErr := manager.Call(ctx, "events/subscribe", "owner", json.RawMessage(`{"name":"zalo.conversation.message.created","arguments":{"scope":"all"},"delivery":{"mode":"webhook","url":"https://receiver.example","secret":"invalid"}}`))
+	// Assert.
+	if oldErr == nil {
+		t.Fatal("removed v1 accepted")
+	}
+	for _, entry := range catalog.(map[string]any)["events"].([]any) {
+		if entry.(map[string]any)["name"] == "zalo.conversation.message.created" {
+			t.Fatal("removed v1 advertised")
+		}
 	}
 }

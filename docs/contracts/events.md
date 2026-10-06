@@ -1,4 +1,4 @@
-# MCP Events: контракт zl-mcp v1
+# MCP Events: контракт zl-mcp
 
 ## Явная загрузка старой истории
 
@@ -34,15 +34,14 @@ conversation_v2_message_created.payload.json и conversation_v2_event.delivery.j
 требует incoming/direct scope или exact direct. Payload schema_version=2 содержит
 direction и nullable first_incoming. Unknown не совпадает с положительным фильтром;
 первое локальное входящее не доказывает первое обращение во всей истории. Фильтры
-входят в canonical ID с нормализованными defaults. Старые профили и очереди сохраняют
-формат. Постоянный маркер и факты события сохраняются транзакционно; retention не
+входят в canonical ID с нормализованными defaults. Legacy профиль и v2 сохраняют формат. Conversation v1 удалён: discovery и новые подписки его отвергают; миграция отключает старые v1 подписки и отменяет незавершённую доставку без конвертации в v2. Постоянный маркер и факты события сохраняются транзакционно; retention не
 порождает нового первого обращения. Детали: [direct-messaging.md](direct-messaging.md).
 
 Legacy event name — `zalo.message.created`. Аргумент `group_id` выбирает одну явно разрешённую группу; несколько групп требуют отдельных подписок. Его формат и существующие идентификаторы подписок сохраняются.
 
-Новый профиль — `zalo.conversation.message.created`, с исполняемыми входами `conversation_events_subscribe.input.json` и `conversation_events_unsubscribe.input.json`, payload `conversation_message_created.payload.json` и envelope `conversation_event.delivery.json`. Аргументы выбирают `scope: all | direct | group | conversation`; для последнего обязательны `conversation_type` и `conversation_id`, для остальных поля конкретного диалога запрещены. Широкая подписка включает новые обнаруженные диалоги, но только в пределах действующей политики сбора. Сбор всех диалогов не расширяет старые подписки.
+Текущий профиль — `zalo.conversation.message.created.v2`, с исполняемыми входами `conversation_v2_events_subscribe.input.json` и `conversation_v2_events_unsubscribe.input.json`, payload `conversation_v2_message_created.payload.json` и envelope `conversation_v2_event.delivery.json`. Аргументы выбирают `scope: all | direct | group | conversation`; для последнего обязательны `conversation_type` и `conversation_id`, для остальных поля конкретного диалога запрещены. Широкая подписка включает новые обнаруженные диалоги, но только в пределах действующей политики сбора. Сбор всех диалогов не расширяет старые подписки.
 
-Новый payload содержит `schema_version: 1`, `conversation_type`, `conversation_id`, доступное `conversation_name` и общие поля сообщения. Обрезанный текст читается через `zalo://conversations/{type}/{escaped-id}/messages/{escaped-message-id}`; лимит остаётся 2048 Unicode code points. Тексты и имена недоверенные. Legacy payload не получает новых полей.
+Новый payload содержит `schema_version: 2`, `conversation_type`, `conversation_id`, доступное `conversation_name` и общие поля сообщения. Обрезанный текст читается через `zalo://conversations/{type}/{escaped-id}/messages/{escaped-message-id}`; лимит остаётся 2048 Unicode code points. Тексты и имена недоверенные. Legacy payload не получает новых полей.
 
 Каталог возвращает оба определения только владельцу аккаунта. `_meta` допускается как протокольное поле; неизвестные прикладные поля запрещены. Principal выводится из проверенного подключения, не из параметров запроса. ID подписки детерминирован по аккаунту/principal, callback URL, event name и canonical arguments; secret в идентификатор не входит. Один journal event имеет постоянный eventId при доставке в несколько совпадающих подписок/профилей. Обычно receiver устраняет повтор по eventId; если он отдельно обрабатывает оба формата, ключ дедупликации — (name, eventId). ID подписки не передаётся в envelope.
 
@@ -54,7 +53,7 @@ Legacy event name — `zalo.message.created`. Аргумент `group_id` выб
 
 Отсутствующий ttlMs или null означает бессрочную подписку с refreshBefore=null. Для конечного ttlMs разрешено от 60 секунд до 30 дней; срок не продлевается самопроизвольно. Cursor допускает только null: исторический replay через Events не предоставляется. Это не отменяет повторной доставки уже сохранённых новых событий после сбоя. Verification не удерживает блокировку сборщика; отмена во время verification предотвращает последующую активацию отменённого поколения.
 
-## Политика доставки v1
+## Политика доставки
 
 Рабочие значения фиксируются до реализации; это лимиты приложения, не ограничения Zalo:
 
@@ -99,3 +98,7 @@ Events требуют версии `2026-07-28` одновременно в `_me
 Стандартный resource `zalo://events/diagnostics` возвращает JSON по `events_diagnostics.output.json`: число активных подписок, необработанных записей журнала, объём pending/sending payload, количества заданий по состоянию и безопасной категории последнего результата. Это моментальный снимок SQLite, не гарантированная доставка агенту. Терминальная история учитывается в пределах срока хранения; отменённые/истёкшие подписки не считаются активными.
 
 Resource не содержит текстов, ID авторов, callback URL или signing secrets. Неизвестные значения состояния/причины сворачиваются в `other`, сырые ошибки не публикуются. Доступ — тому же локальному владельцу, что tools/resources; общий read budget сохраняется, ответ ограничен 64 КиБ. Доступен через HTTP и STDIO-мост. Новые tools для диагностики не добавляются.
+
+## Восстановление payload и постоянный checkpoint
+
+[Event recovery](event-recovery.md) описывает обычные MCP tools для точного журнала подписки, ограниченного чтения и подтверждения обработки. Они не заменяют events/subscribe и не исправляют инъекцию payload на стороне клиента.

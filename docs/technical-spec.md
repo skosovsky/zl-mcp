@@ -21,7 +21,7 @@
 
 После готовности cipher key запрашивается replay обоих типов; смешанный ответ сохраняет обе категории. Decoder не маскирует ошибку успешным пустым объектом. Message/replay/undo и raw frame buffers применяют отменяемое ожидание свободного места вместо удаления старых сообщений. Диагностика различает типы, backpressure и отмены без содержимого/ID/секретов. Успешная постановка в канал не равна записи в SQLite.
 
-Additive профиль `zalo.conversation.message.created` имеет `schema_version: 1`, typed ID/доступное имя, общие поля сообщения и scopes all/direct/group/exact. Старые подписки `zalo.message.created` сохраняют формат, границу и группу. Версионирование, дедупликация пересекающихся scopes и порядок retry — [contracts/events.md](contracts/events.md). Транспорт и внешняя инфраструктура не меняются.
+Additive профиль `zalo.conversation.message.created.v2` имеет `schema_version: 2`, typed ID/доступное имя, общие поля сообщения и scopes all/direct/group/exact. Старые подписки `zalo.message.created` сохраняют формат, границу и группу. Версионирование, дедупликация пересекающихся scopes и порядок retry — [contracts/events.md](contracts/events.md). Транспорт и внешняя инфраструктура не меняются.
 
 SQLite migration 4 сохраняет seq/high-water mark, identities, FTS, coverage/gaps, subscriptions/start_seq/generation, fanout и исходные байты очереди. Backup и откат охватывают БД и бинарник. Production-проверка должна отдельно подтвердить существующие пропущенные сообщения через общий MCP, restart и Events; новые сообщения не заменяют проверку старых. Установка и примеры config — [conversations.md](conversations.md).
 

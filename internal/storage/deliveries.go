@@ -280,6 +280,5 @@ func (s *Store) FinishDelivery(ctx context.Context, d EventDelivery, outcome Del
 }
 
 func (s *Store) PruneDeliveries(ctx context.Context, at time.Time) error {
-	_, err := s.DB.ExecContext(ctx, "DELETE FROM event_deliveries WHERE completed_at IS NOT NULL AND julianday(completed_at)<julianday(?)", at.Add(-7*24*time.Hour).UTC().Format(time.RFC3339Nano))
-	return err
+	return s.pruneEventJournal(ctx, at)
 }

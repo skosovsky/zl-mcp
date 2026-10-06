@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "subscriptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "subscription_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "event_name": {
+            "enum": [
+              "zalo.message.created",
+              "zalo.conversation.message.created.v2"
+            ]
+          },
+          "scope": {
+            "enum": [
+              "conversation",
+              "all",
+              "direct",
+              "group"
+            ]
+          },
+          "conversation_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conversation_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "direction": {
+            "enum": [
+              "all",
+              "incoming",
+              "outgoing"
+            ]
+          },
+          "first_incoming_only": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "subscription_id",
+          "event_name",
+          "scope",
+          "conversation_type",
+          "conversation_id",
+          "direction",
+          "first_incoming_only"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 100
+    }
+  },
+  "required": [
+    "subscriptions"
+  ],
+  "additionalProperties": false
+}

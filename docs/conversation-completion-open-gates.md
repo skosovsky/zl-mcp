@@ -1,3 +1,5 @@
+> Current update: conversation Events v1 has been removed. Discovery exposes legacy/group and conversation v2. Payload recovery and processing checkpoints are documented in [event-recovery](contracts/event-recovery.md). Earlier observations below retain their historical version names.
+
 # Conversation completion: current open gates
 
 As of 2026-10-05. The full scope is

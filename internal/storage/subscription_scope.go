@@ -16,7 +16,7 @@ func normalizeSubscription(s EventSubscription) (EventSubscription, error) {
 		if s.Scope != "conversation" || s.ConversationType != domain.ConversationGroup {
 			return s, domain.Invalid("Legacy event requires one group.")
 		}
-	} else if s.Profile != domain.ConversationMessageCreated && s.Profile != domain.ConversationMessageCreatedV2 {
+	} else if s.Profile != domain.ConversationMessageCreatedV2 {
 		return s, domain.Invalid("Unknown event profile.")
 	}
 	switch s.Scope {

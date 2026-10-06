@@ -29,7 +29,7 @@ func TestBroadConversationFanoutCapacityPreservesCollectedCorpus(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		sub := EventSubscription{ID: scope, Principal: "owner", Profile: domain.ConversationMessageCreated, Scope: scope, Callback: "https://callback.example", Secret: "synthetic"}
+		sub := EventSubscription{ID: scope, Principal: "owner", Profile: domain.ConversationMessageCreatedV2, Scope: scope, Callback: "https://callback.example", Secret: "synthetic"}
 		if scope == "direct" {
 			sub.ConversationType = "direct"
 		}
@@ -79,9 +79,9 @@ func TestConversationDeliveryRevocationAfterRestart(t *testing.T) {
 	defer func() { s.Close() }()
 	at := time.Now().UTC()
 	for _, sub := range []EventSubscription{
-		{ID: "all", Profile: domain.ConversationMessageCreated, Scope: "all"},
-		{ID: "direct", Profile: domain.ConversationMessageCreated, Scope: "direct", ConversationType: "direct"},
-		{ID: "exact", Profile: domain.ConversationMessageCreated, Scope: "conversation", ConversationType: "direct", GroupID: "same"},
+		{ID: "all", Profile: domain.ConversationMessageCreatedV2, Scope: "all"},
+		{ID: "direct", Profile: domain.ConversationMessageCreatedV2, Scope: "direct", ConversationType: "direct"},
+		{ID: "exact", Profile: domain.ConversationMessageCreatedV2, Scope: "conversation", ConversationType: "direct", GroupID: "same"},
 	} {
 		sub.Principal, sub.Callback, sub.Secret = "owner", "https://callback.example", "synthetic"
 		revision, err := s.SubscriptionRevision(ctx, sub.ID)

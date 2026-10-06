@@ -21,6 +21,17 @@ import (
 )
 
 func TestConversationEventsThroughHTTPAndSignedTLSReceiver(t *testing.T) {
+	for _, profile := range []struct {
+		name    string
+		version float64
+	}{
+		{domain.ConversationMessageCreatedV2, 2},
+	} {
+		t.Run(profile.name, func(t *testing.T) { testConversationProfileTLS(t, profile.name, profile.version) })
+	}
+}
+
+func testConversationProfileTLS(t *testing.T, profileName string, profileVersion float64) {
 	// Arrange: an all-conversation service and an independent signed TLS receiver.
 	ctx := context.Background()
 	dir := t.TempDir()
@@ -31,6 +42,7 @@ func TestConversationEventsThroughHTTPAndSignedTLSReceiver(t *testing.T) {
 	defer store.Close()
 	key := []byte("synthetic-key-for-webhook-32bytes!")
 	received := make(chan map[string]any, 4)
+	var verificationSubscription, expectedSubscription string
 	receiver := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -54,7 +66,13 @@ func TestConversationEventsThroughHTTPAndSignedTLSReceiver(t *testing.T) {
 			return
 		}
 		if value["type"] == "verification" {
+			verificationSubscription = r.Header.Get("X-MCP-Subscription-Id")
 			json.NewEncoder(w).Encode(map[string]any{"challenge": value["challenge"]})
+			return
+		}
+		if r.Header.Get("Content-Type") != "application/json" || r.Header.Get("webhook-id") != value["eventId"] || r.Header.Get("X-MCP-Subscription-Id") != expectedSubscription || expectedSubscription == "" {
+			t.Error("callback routing headers differ from subscribed identity")
+			w.WriteHeader(400)
 			return
 		}
 		received <- value
@@ -77,14 +95,18 @@ func TestConversationEventsThroughHTTPAndSignedTLSReceiver(t *testing.T) {
 	}
 	worker.Client = client
 	params := map[string]any{
-		"name":      events.ConversationMessageCreated,
+		"name":      profileName,
 		"arguments": map[string]any{"scope": "all"},
 		"delivery":  map[string]any{"mode": "webhook", "url": "https://receiver.example/events", "secret": "whsec_" + base64.StdEncoding.EncodeToString(key)},
 		"ttlMs":     nil,
 	}
 	fullText := strings.Repeat("界", 2049)
 	// Act: activate through MCP, insert both conversation types and deliver via TLS.
-	httpRPC(t, endpoint.URL+"/mcp", token, "events/subscribe", params)
+	subscription := httpRPC(t, endpoint.URL+"/mcp", token, "events/subscribe", params)
+	expectedSubscription = subscription["id"].(string)
+	if verificationSubscription != expectedSubscription {
+		t.Fatal("verification and subscription IDs differ")
+	}
 	for _, kind := range []string{domain.ConversationDirect, domain.ConversationGroup} {
 		if err := store.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: kind, ID: "same/id"}, ID: "same/message", SenderID: "author", SentAt: time.Now().Add(-time.Hour), Text: fullText, Source: "replay"}); err != nil {
 			t.Fatal(err)
@@ -109,7 +131,7 @@ func TestConversationEventsThroughHTTPAndSignedTLSReceiver(t *testing.T) {
 		}
 		data := event["data"].(map[string]any)
 		kind := data["conversation_type"].(string)
-		if seen[kind] || event["name"] != events.ConversationMessageCreated || data["schema_version"] != float64(1) || data["conversation_id"] != "same/id" || data["text_truncated"] != true || len([]rune(data["text"].(string))) != 2048 {
+		if seen[kind] || event["name"] != profileName || data["schema_version"] != profileVersion || data["conversation_id"] != "same/id" || data["text_truncated"] != true || len([]rune(data["text"].(string))) != 2048 {
 			t.Fatalf("invalid typed event: %v", event)
 		}
 		seen[kind] = true
@@ -120,6 +142,43 @@ func TestConversationEventsThroughHTTPAndSignedTLSReceiver(t *testing.T) {
 	}
 	if !seen[domain.ConversationDirect] || !seen[domain.ConversationGroup] {
 		t.Fatal("missing conversation type")
+	}
+
+	// Act: a payload-less automation recovers the exact accepted envelopes via MCP.
+	catalog := httpRPC(t, endpoint.URL+"/mcp", token, "events/list", map[string]any{})
+	if len(catalog["events"].([]any)) != 2 {
+		t.Fatal("removed v1 remains in discovery")
+	}
+	tools := func(name string, args map[string]any) map[string]any {
+		t.Helper()
+		result := httpRPC(t, endpoint.URL+"/mcp", token, "tools/call", map[string]any{"name": name, "arguments": args})
+		if result["isError"] == true {
+			t.Fatalf("recovery failed: %v", result)
+		}
+		return result["structuredContent"].(map[string]any)
+	}
+	owned := tools("zalo_list_event_subscriptions", map[string]any{})
+	if owned["subscriptions"].([]any)[0].(map[string]any)["subscription_id"] != expectedSubscription {
+		t.Fatal("wrong journal owner")
+	}
+	recovered := tools("zalo_read_subscription_events", map[string]any{"subscription_id": expectedSubscription})
+	records := recovered["events"].([]any)
+	if len(records) != 2 {
+		t.Fatal("callback recovery lost events")
+	}
+	for _, record := range records {
+		entry := record.(map[string]any)
+		payload := entry["event"].(map[string]any)
+		if payload["name"] != profileName || payload["eventId"] == nil || entry["delivery_state"] != "delivered" {
+			t.Fatal("recovery did not return exact envelope")
+		}
+		result := tools("zalo_ack_subscription_events", map[string]any{"subscription_id": expectedSubscription, "receipt": entry["receipt"]})
+		if result["acknowledged"] != true {
+			t.Fatal(result)
+		}
+	}
+	if len(tools("zalo_read_subscription_events", map[string]any{"subscription_id": expectedSubscription})["events"].([]any)) != 0 {
+		t.Fatal("acknowledged events replayed")
 	}
 	// Act: cancel through MCP and insert another record.
 	params["delivery"] = map[string]any{"mode": "webhook", "url": "https://receiver.example/events"}

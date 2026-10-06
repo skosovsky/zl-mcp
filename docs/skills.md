@@ -39,7 +39,7 @@ Each entrypoint has a specific trigger, uses exact tool names, and links to cond
 
 The research skill retains its historical `researching-zalo-groups` directory/name for compatibility with existing installations and fixtures. Its current scope includes direct chats and groups through the additive conversation tools; legacy-only connections support group research. Conversation identity is always the pair of type and opaque ID. Catalogue absence and an empty replay do not prove a complete history.
 
-The Events skill handles `zalo.conversation.message.created` version 1 and the unchanged group-only `zalo.message.created`. It routes context reads by profile and relies on the trusted integration for scope association and processing state. Collection mode `all` does not authorize widening an existing callback subscription. These revisions have structural checks and contract tests, without new model evals; historical group evals do not validate the updated workflows.
+The Events skill handles `zalo.conversation.message.created.v2` version 2 and the unchanged group-only `zalo.message.created`. It routes context reads by profile and relies on the trusted integration for scope association and processing state. Collection mode `all` does not authorize widening an existing callback subscription. These revisions have structural checks and contract tests, without new model evals; historical group evals do not validate the updated workflows.
 
 Changing a group-only notification workflow requires a new subscription through
 the trusted client; see [migration](conversations.md#replacing-a-legacy-group-subscription).
@@ -58,3 +58,5 @@ the client's supported procedure; back up existing customizations first. Reload
 skill discovery and verify the loaded version. Updating this repository does not
 change a client's copied skills automatically. Structural checks and synthetic MCP
 tests are evidence for the contract, not model behavior; no new model evals are run.
+
+The Events skill now uses the exact subscription journal and durable acknowledgement tools for triggered runs, including runs with missing payloads. See [recovery contract](contracts/event-recovery.md). A copied/installed skill must be updated separately; repository changes do not update cloud automation instructions. Conversation v1 is removed. Historical acceptance reports describe the version exercised at their date.

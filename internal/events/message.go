@@ -15,7 +15,6 @@ import (
 )
 
 const MessageCreated = domain.LegacyMessageCreated
-const ConversationMessageCreated = domain.ConversationMessageCreated
 
 type MessageData struct {
 	GroupID         string    `json:"group_id"`
@@ -38,7 +37,6 @@ type MessageEvent struct {
 
 type MessageEncoder struct {
 	schema               *jsonschema.Schema
-	conversationSchema   *jsonschema.Schema
 	conversationV2Schema *jsonschema.Schema
 	textLimit            int
 }
@@ -54,15 +52,11 @@ func NewMessageEncoder() (*MessageEncoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	conversationSchema, err := contracts.Compile("conversation_event", "delivery")
-	if err != nil {
-		return nil, err
-	}
 	v2, err := contracts.Compile("conversation_v2_event", "delivery")
 	if err != nil {
 		return nil, err
 	}
-	return &MessageEncoder{schema: schema, conversationSchema: conversationSchema, conversationV2Schema: v2, textLimit: int(text["maxLength"].(float64))}, nil
+	return &MessageEncoder{schema: schema, conversationV2Schema: v2, textLimit: int(text["maxLength"].(float64))}, nil
 }
 
 // Encode uses the journal's stable ID. The returned bytes are persisted and signed
@@ -98,7 +92,7 @@ func (e *MessageEncoder) EncodeProfile(profile, id string, m domain.Message) ([]
 	if profile == MessageCreated {
 		return e.Encode(id, m)
 	}
-	if (profile != ConversationMessageCreated && profile != domain.ConversationMessageCreatedV2) || !m.Ref().Valid() || !utf8.ValidString(m.Text) {
+	if profile != domain.ConversationMessageCreatedV2 || !m.Ref().Valid() || !utf8.ValidString(m.Text) {
 		return nil, errors.New("invalid conversation event")
 	}
 	text := m.Text
@@ -110,23 +104,18 @@ func (e *MessageEncoder) EncodeProfile(profile, id string, m domain.Message) ([]
 		v := "zalo://conversations/" + m.Ref().Type + "/" + url.PathEscape(m.Ref().ID) + "/messages/" + url.PathEscape(m.ID)
 		uri = &v
 	}
-	data := map[string]any{"schema_version": 1, "conversation_type": m.Ref().Type, "conversation_id": m.Ref().ID, "conversation_name": m.ConversationName, "message_id": m.ID, "sender_id": m.SenderID, "sender_name": m.SenderName, "sent_at": m.SentAt.UTC(), "text": text, "text_truncated": truncated, "text_resource_uri": uri}
-	schema := e.conversationSchema
-	if profile == domain.ConversationMessageCreatedV2 {
-		data["schema_version"] = 2
-		if m.Direction == "" {
-			m.Direction = "unknown"
-		}
-		data["direction"] = m.Direction
-		data["first_incoming"] = m.FirstIncoming
-		schema = e.conversationV2Schema
+	data := map[string]any{"schema_version": 2, "conversation_type": m.Ref().Type, "conversation_id": m.Ref().ID, "conversation_name": m.ConversationName, "message_id": m.ID, "sender_id": m.SenderID, "sender_name": m.SenderName, "sent_at": m.SentAt.UTC(), "text": text, "text_truncated": truncated, "text_resource_uri": uri}
+	if m.Direction == "" {
+		m.Direction = "unknown"
 	}
+	data["direction"] = m.Direction
+	data["first_incoming"] = m.FirstIncoming
 	body, err := json.Marshal(map[string]any{"eventId": id, "name": profile, "timestamp": m.SentAt.UTC(), "data": data, "cursor": nil})
 	if err != nil || len(body) > 256<<10 {
 		return nil, errors.New("event exceeds delivery body limit")
 	}
 	var value any
-	if json.Unmarshal(body, &value) != nil || schema.Validate(value) != nil {
+	if json.Unmarshal(body, &value) != nil || e.conversationV2Schema.Validate(value) != nil {
 		return nil, errors.New("conversation message does not satisfy event contract")
 	}
 	return body, nil

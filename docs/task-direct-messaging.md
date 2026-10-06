@@ -22,7 +22,7 @@
 
 | Возможность | Текущее состояние |
 | --- | --- |
-| Все личные, включая новые диалоги | `zalo.conversation.message.created`, scope=direct |
+| Все личные, включая новые диалоги | `zalo.conversation.message.created.v2`, scope=direct |
 | Все личные и группы | scope=all |
 | Все группы | scope=group |
 | Конкретный диалог | scope=conversation, conversation_type и conversation_id |

@@ -28,13 +28,13 @@ func TestConversationContractsRejectAmbiguousScope(t *testing.T) {
 			t.Fatal("ambiguous or invalid policy accepted")
 		}
 	}
-	s, err := Compile("conversation_events_subscribe", "input")
+	s, err := Compile("conversation_v2_events_subscribe", "input")
 	if err != nil {
 		t.Fatal(err)
 	}
 	// Synthetic zero bytes, constructed at runtime; never a receiver credential.
 	secret := "whsec_" + base64.StdEncoding.EncodeToString(make([]byte, 32))
-	base := map[string]any{"name": "zalo.conversation.message.created", "arguments": map[string]any{"scope": "all"}, "delivery": map[string]any{"mode": "webhook", "url": "https://receiver.example/callback", "secret": secret}}
+	base := map[string]any{"name": "zalo.conversation.message.created.v2", "arguments": map[string]any{"scope": "all"}, "delivery": map[string]any{"mode": "webhook", "url": "https://receiver.example/callback", "secret": secret}}
 	// Act / Assert
 	if err = s.Validate(base); err != nil {
 		t.Fatal(err)
@@ -51,11 +51,11 @@ func TestConversationContractsRejectAmbiguousScope(t *testing.T) {
 
 func TestConversationEventPayloadHasTypedIdentity(t *testing.T) {
 	// Arrange
-	s, err := Compile("conversation_message_created", "payload")
+	s, err := Compile("conversation_v2_message_created", "payload")
 	if err != nil {
 		t.Fatal(err)
 	}
-	payload := map[string]any{"schema_version": 1, "conversation_type": "direct", "conversation_id": "peer", "conversation_name": nil, "message_id": "m", "sender_id": "peer", "sender_name": nil, "sent_at": "2026-10-03T08:13:00Z", "text": "synthetic", "text_truncated": false, "text_resource_uri": nil}
+	payload := map[string]any{"schema_version": 2, "conversation_type": "direct", "conversation_id": "peer", "conversation_name": nil, "message_id": "m", "sender_id": "peer", "sender_name": nil, "sent_at": "2026-10-03T08:13:00Z", "text": "synthetic", "text_truncated": false, "text_resource_uri": nil, "direction": "incoming", "first_incoming": nil}
 	// Act / Assert
 	if err = s.Validate(payload); err != nil {
 		t.Fatal(err)

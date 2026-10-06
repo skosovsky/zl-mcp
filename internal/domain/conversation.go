@@ -11,7 +11,6 @@ const (
 	ConversationDirect           = "direct"
 	ConversationGroup            = "group"
 	LegacyMessageCreated         = "zalo.message.created"
-	ConversationMessageCreated   = "zalo.conversation.message.created"
 	ConversationMessageCreatedV2 = "zalo.conversation.message.created.v2"
 )
 

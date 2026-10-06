@@ -77,11 +77,11 @@ func TestConversationEventUnicodeBoundaryAndStableTypedURI(t *testing.T) {
 		for _, size := range []int{2048, 2049} {
 			m := domain.Message{Conversation: domain.ConversationRef{Type: kind, ID: "9007199254740993/peer"}, ID: "9007199254740995?#message", SenderID: "owner", SentAt: time.Now().UTC(), Text: strings.Repeat("界", size)}
 			// Act.
-			wire, err := encoder.EncodeProfile(ConversationMessageCreated, "stable", m)
+			wire, err := encoder.EncodeProfile(domain.ConversationMessageCreatedV2, "stable", m)
 			if err != nil {
 				t.Fatal(err)
 			}
-			retry, err := encoder.EncodeProfile(ConversationMessageCreated, "stable", m)
+			retry, err := encoder.EncodeProfile(domain.ConversationMessageCreatedV2, "stable", m)
 			var event struct {
 				Data struct {
 					Type      string  `json:"conversation_type"`

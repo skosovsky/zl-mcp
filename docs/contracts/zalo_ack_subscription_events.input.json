@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "subscription_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "receipt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    }
+  },
+  "required": [
+    "subscription_id",
+    "receipt"
+  ],
+  "additionalProperties": false
+}

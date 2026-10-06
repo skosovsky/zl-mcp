@@ -79,7 +79,7 @@ do not prove their updates are approved.
 
 ## Conversation Events
 
-Discovery includes the additive `zalo.conversation.message.created` version 1 and unchanged group-only `zalo.message.created`. Subscribe with `arguments: {"scope":"all"}`, `{"scope":"direct"}`, `{"scope":"group"}`, or `{"scope":"conversation","conversation_type":"direct","conversation_id":"PEER_ID"}`. Supply the standard delivery settings through the trusted receiver; scopes are always limited by the current collection policy. Existing group subscriptions do not expand after a collection-mode change.
+Discovery includes the additive `zalo.conversation.message.created.v2` version 2 and unchanged group-only `zalo.message.created`. Subscribe with `arguments: {"scope":"all"}`, `{"scope":"direct"}`, `{"scope":"group"}`, or `{"scope":"conversation","conversation_type":"direct","conversation_id":"PEER_ID"}`. Supply the standard delivery settings through the trusted receiver; scopes are always limited by the current collection policy. Existing group subscriptions do not expand after a collection-mode change.
 
 The new payload includes typed identity, message ID, author, time, at most 2048 Unicode code points, and a full-text URI when truncated. Both profiles use the same verification, signature, persistence, retry and cancellation rules in the [Events contract](contracts/events.md). Receiver acceptance and an agent notification remain separately verifiable outcomes.
 
@@ -94,3 +94,5 @@ Current source also advertises `zalo.conversation.message.created.v2`: direction
 filters and first_incoming_only for direct incoming scopes. Version 1 remains unchanged.
 See [incoming subscriptions and direct sending](direct-messaging.md) for examples,
 discovery verification, separate send permissions and handling an unknown send result.
+
+For event-triggered automation, store the exact subscription ID with its rule and use [journal recovery](contracts/event-recovery.md). Refresh the client/plugin catalogue to discover the three recovery tools after updating the service. Reconcile previously completed notifications before processing an existing backlog.
