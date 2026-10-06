@@ -301,3 +301,114 @@ func TestMobileHistoryAcquisitionScopeAndInputFailuresHaveNoSideEffects(t *testi
 		})
 	}
 }
+
+func TestMobileHistoryStageWorkRollbackAndBounds(t *testing.T) {
+	// Arrange: non-page work is reserved; persistence fails at the operation update.
+	ctx := context.Background()
+	s, op, _ := acquisitionOperation(t)
+	defer s.Close()
+	if _, err := s.DB.Exec(`CREATE TRIGGER reject_stage_work BEFORE UPDATE ON history_operations BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`); err != nil {
+		t.Fatal(err)
+	}
+	// Act: reconcile a finished phone stage without page counters or message writes.
+	if _, err := s.CompleteMobileHistoryWork(ctx, op.Status.OperationID, op.Revision, time.Second); err == nil {
+		t.Fatal("failed work update ignored")
+	}
+	// Assert: the entire original revision/reservation survives the rollback.
+	got, err := s.HistoryOperation(ctx, op.Status.OperationID)
+	if err != nil || got.Revision != op.Revision || got.WorkDuration != op.WorkDuration || got.ReservedDuration != 180*time.Second {
+		t.Fatal("partial stage completion", err)
+	}
+	if _, err = s.DB.Exec("DROP TRIGGER reject_stage_work"); err != nil {
+		t.Fatal(err)
+	}
+	next, err := s.CompleteMobileHistoryWork(ctx, op.Status.OperationID, op.Revision, time.Second)
+	if err != nil || next.Revision != op.Revision+1 || next.ReservedDuration != 0 || next.WorkDuration < time.Second || next.WorkDuration >= 2*time.Second || next.Status.PagesObserved != 0 || next.Status.RecordsObserved != 0 {
+		t.Fatal("stage work changed page progress", err)
+	}
+	if _, err = s.CompleteMobileHistoryWork(ctx, op.Status.OperationID, op.Revision, time.Second); !errors.Is(err, ErrHistoryState) {
+		t.Fatal("stale stage completed twice", err)
+	}
+	if _, err = s.CompleteMobileHistoryWork(ctx, op.Status.OperationID, next.Revision, time.Second); !errors.Is(err, ErrHistoryState) {
+		t.Fatal("unreserved work completed", err)
+	}
+	next, err = s.ReserveMobileHistoryWork(ctx, next.Status.OperationID, next.Revision, 120*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = s.CompleteMobileHistoryWork(ctx, next.Status.OperationID, next.Revision, -1); err == nil {
+		t.Fatal("negative work accepted")
+	}
+	// Act / Assert: exceeding the remaining allowance stops at the exact bounded ceiling.
+	finished, err := s.CompleteMobileHistoryWork(ctx, next.Status.OperationID, next.Revision, MobileHistoryWorkBudget)
+	if err != nil || finished.Status.State != "partial" || finished.Status.StopReason == nil || *finished.Status.StopReason != "time_limit" || finished.WorkDuration != MobileHistoryWorkBudget || finished.ReservedDuration != 0 || finished.Status.PagesObserved != 0 || finished.Status.RecordsObserved != 0 {
+		t.Fatal("stage exceeded remaining work budget", err)
+	}
+	assertMobileEmpty(t, s, finished)
+}
+
+func TestMobileHistoryInactiveAcquisitionCleanupPreservesOwnershipAndEvidence(t *testing.T) {
+	for _, mode := range []string{"normal", "revoked", "foreign-account", "rollback"} {
+		t.Run(mode, func(t *testing.T) {
+			// Arrange: cleanup cannot close an active history operation.
+			ctx := context.Background()
+			s, op, path := acquisitionOperation(t)
+			defer func() { s.Close() }()
+			attempt, err := s.PrepareMobileHistoryAcquisition(ctx, op.Status.OperationID, op.Revision, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err = s.CloseMobileHistoryAcquisition(ctx, op.Status.OperationID); !errors.Is(err, ErrHistoryState) {
+				t.Fatal("cleanup closed active work", err)
+			}
+			if _, err = s.CancelHistoryOperation(ctx, op.Status.OperationID); err != nil {
+				t.Fatal(err)
+			}
+			if mode == "revoked" {
+				s.Close()
+				s = historyOperationStore(t, path, domain.CollectionPolicy{})
+			}
+			if mode == "foreign-account" {
+				if _, err = s.DB.Exec("UPDATE metadata SET value='foreign-account-binding' WHERE key='account'"); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if mode == "rollback" {
+				if _, err = s.DB.Exec(`CREATE TRIGGER reject_acquisition_cleanup BEFORE UPDATE ON mobile_backup_attempts BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`); err != nil {
+					t.Fatal(err)
+				}
+			}
+			// Act: only owned inactive evidence may be closed, even after scope revocation.
+			err = s.CloseMobileHistoryAcquisition(ctx, op.Status.OperationID)
+			// Assert: denied/failed cleanup has no prefix; successful cleanup is idempotent.
+			if mode == "foreign-account" || mode == "rollback" {
+				if err == nil {
+					t.Fatal("unsafe cleanup accepted")
+				}
+			} else if err != nil {
+				t.Fatal(err)
+			}
+			var state string
+			var revision int64
+			if readErr := s.DB.QueryRow("SELECT state,revision FROM mobile_backup_attempts WHERE operation_id=?", attempt.OperationID).Scan(&state, &revision); readErr != nil {
+				t.Fatal(readErr)
+			}
+			if mode == "foreign-account" || mode == "rollback" {
+				if state != "prepared" || revision != attempt.Revision {
+					t.Fatal("cleanup changed inaccessible evidence")
+				}
+				return
+			}
+			if state != "cancelled" || revision != attempt.Revision+1 {
+				t.Fatal("cleanup did not close the sole attempt")
+			}
+			if err = s.CloseMobileHistoryAcquisition(ctx, op.Status.OperationID); err != nil {
+				t.Fatal(err)
+			}
+			var repeatedRevision int64
+			if err = s.DB.QueryRow("SELECT revision FROM mobile_backup_attempts WHERE operation_id=?", attempt.OperationID).Scan(&repeatedRevision); err != nil || repeatedRevision != revision {
+				t.Fatal("repeat cleanup changed terminal evidence", err)
+			}
+		})
+	}
+}

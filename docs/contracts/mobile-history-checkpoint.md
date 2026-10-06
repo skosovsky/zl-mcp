@@ -67,7 +67,9 @@ the first page permits neither. It compares frozen coverage before returning a
 page, maps all exclusive and orthogonal counters, and lends no archive buffers
 to storage. The returned normalized page is owned by the caller and must be
 cleared after commit or failure. Conversion gates apply before any writable page
-is returned; errors return an empty result. This adapter performs no phone or
+is returned; known WAL/control source gates have a distinct unsupported-source
+error instead of claiming a malformed SQLite page. Errors return an empty result.
+This adapter performs no phone or
 network operation and does not itself commit progress.
 
 Producer eligibility and the single-session acquisition/worker driver still
@@ -96,3 +98,42 @@ not create another attempt. Cancelling/failing an in-flight attempt under the
 same permitted account/scope remains possible for cleanup, without granting
 another dispatch. The binding contains
 only operation/attempt IDs and revision, not transfer URLs, keys or bodies.
+
+## Internal worker and session port
+
+The mobile worker consumes only its mobile queue under the service's account lock.
+Its caller performs history/acquisition recovery once before starting workers;
+the mobile loop never resets a running legacy worker. Public source selection
+remains disabled until the production port and source acceptance are verified.
+
+A trusted session port lends one account/session-scoped callback across receive,
+download/save and all page reads. It returns authentication loss explicitly and
+never creates another listener/session. The callback must follow parent and
+upstream-session cancellation. Ports receive typed domain requests/checkpoints,
+not paths, credentials or public tool arguments.
+
+An operation without a link reserves at most 180 seconds for its one phone offer,
+then creates the acquisition binding before invoking the receiver. It reconciles
+actual offer work transactionally, reserves at most 120 seconds for authenticated
+download/snapshot publication, and reconciles that stage separately. Each page
+has a reservation of at most 30 seconds and commits its work with its records and
+checkpoint. All phases use remaining active work within the 420-second allowance;
+the port receives the exact bounded stage context. Completion of non-page work
+updates revision/work/reservation without message, source or page counters.
+
+A linked operation only reads its existing snapshot, even if its attempt is still
+prepared or terminal. It never calls the receiver again. Missing/expired source
+stops partial/source_unavailable; unsupported source stops unsupported; malformed
+pages stop failed/invalid_source_page. Authentication loss pauses without polling
+the unauthenticated source; parent shutdown leaves running work recoverable.
+Stale/cancelled revision results stop without additional source work. Error paths
+clear owned pages/offers and never expose source error text or credentials.
+Historical imports remain silent; source-row limits include rejected/expired-only
+pages and source exhaustion retains history_complete=false.
+
+Terminal or authentication-paused history closes any still-active linked attempt
+so a pre-dispatch failure does not block all later account transfers. This trusted
+account-owned cleanup also works after collection revocation, but requires the
+history operation to be inactive, grants no read/network authority and never
+overwrites terminal acquisition evidence. Parent shutdown leaves running evidence
+for startup recovery. Cleanup failure remains a storage error, not source success.

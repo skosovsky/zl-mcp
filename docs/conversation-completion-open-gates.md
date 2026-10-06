@@ -76,6 +76,28 @@ and storage/mobile-backup/history-import race checks passed. This is still an
 internal port; the acquisition/worker loop is not wired, schema 14 is uninstalled,
 and no phone, live import or subscription operation was performed.
 
+The acquisition binding was published as signed
+[`d611c38`](https://github.com/skosovsky/zl-mcp/commit/d611c387a3ce80dbc73c5a3aa1cfb4c4cfb217af);
+[its macOS/Linux CI passed](https://github.com/skosovsky/zl-mcp/actions/runs/37440505244).
+The subsequent internal mobile worker consumes only mobile operations through a
+typed session callback. It reserves/reconciles phone (180s), download/save (120s)
+and page (30s) stages separately within the 420s allowance, then atomically commits
+pages. A linked operation never calls the receiver again, including a prepared
+attempt without a snapshot. Non-page work completion preserves source/page counts.
+Inactive owned attempts are closed without resetting terminal evidence or granting
+network authority, including after scope revocation.
+
+Integrated synthetic tests exercise durable dispatch, encrypted save, actual
+reader/converter paging, gap-only pages, restart without redispatch/TTL renewal,
+snapshot loss, pre-dispatch failure cleanup, cancellation, malformed pages,
+unsupported WAL sources and unauthenticated admission. Known WAL/control source
+gates now have a distinct unsupported error instead of being reported as malformed
+SQLite. These tests use no Zalo network or model evals. The production session port,
+shared startup recovery/lifecycle wiring, live archive acceptance and public mobile
+source selection remain open; the worker is not installed or running in production.
+Full root tests/vet and the affected storage/history-import/mobile-backup race
+checks passed for this checkpoint. The scan of the worktree found no secrets.
+
 ### Published probe checkpoint and native installation: 2026-10-06
 
 Signed source commit [`57d4c8d`](https://github.com/skosovsky/zl-mcp/commit/57d4c8da9a19a1c5f589b4d52a74d66e49699dc9)

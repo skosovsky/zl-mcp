@@ -3,10 +3,13 @@ package mobilebackup
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
+
+var ErrSnapshotSourceUnsupported = errors.New("selected mobile snapshot source is unsupported")
 
 // ReadHistoryPage resumes a trusted journal checkpoint from the same encrypted
 // snapshot. It never downloads, requests the phone, writes the corpus or emits Events.
@@ -47,6 +50,9 @@ func (s *SnapshotStore) ReadHistoryPage(ctx context.Context, request domain.Mobi
 	source := domain.MobileHistorySnapshot{ID: r.RequestID, Digest: digest, CreatedMS: selected.snapshotCreatedMS, ExpiresMS: selected.snapshotExpiresMS, SourceRows: page.Coverage.SourceRows, PeriodRows: page.Coverage.PeriodRows, InvalidTimestampRows: page.Coverage.InvalidTimestamps, HasRange: page.Coverage.HasRange, EarliestMS: page.Coverage.EarliestMS, LatestMS: page.Coverage.LatestMS, WALMode: page.SourceWAL, ControlRows: page.SourceControls}
 	if previous != nil && *previous != source {
 		return result, ErrSnapshotConflict
+	}
+	if page.SourceWAL || page.SourceControls > 0 {
+		return result, ErrSnapshotSourceUnsupported
 	}
 	converted, err := ConvertPreparedArchivePage(ctx, page, r, account, nowMS)
 	if err != nil {

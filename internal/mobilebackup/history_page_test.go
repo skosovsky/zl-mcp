@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -209,6 +210,9 @@ func TestSnapshotHistoryPageRejectsBindingAndUnsafeSources(t *testing.T) {
 			// Assert: no record/source/continuation is handed to the journal.
 			if err == nil || len(page.Records) != 0 || page.Next != nil || page.Snapshot.ID != "" {
 				t.Fatal("unsafe snapshot returned writable page")
+			}
+			if (mode == "wal" || mode == "controls") && !errors.Is(err, ErrSnapshotSourceUnsupported) {
+				t.Fatal("unsupported source was misclassified", err)
 			}
 			encoded, e := json.Marshal(page)
 			if e != nil || string(encoded) != "{}" || fmt.Sprintf("%#v", page) != "mobile history page [redacted]" {
