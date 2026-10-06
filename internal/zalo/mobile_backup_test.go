@@ -249,22 +249,53 @@ func TestMobileBackupTransferStatusesDoNotRejectOffer(t *testing.T) {
 }
 
 func TestMobileBackupTransferFailureIsNotProgress(t *testing.T) {
-	for _, code := range []int{0, 7} {
-		// Arrange: no active/idle status accompanies this transfer event.
-		f := newMobileOfferFake()
-		key := mobileOfferKey(t)
-		f.dispatch = func(public string) {
-			f.events <- model.MobileSyncEvent{Action: "transfer_error", PublicKey: public, PCName: "Web", ErrorCode: &code}
-		}
-		// Act.
-		offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
-		// Assert: ambiguous/explicit failure never yields an archive or retries.
-		want := domain.ErrMobileBackupInvalid
-		if code != 0 {
-			want = domain.ErrMobileBackupRejected
-		}
-		if !errors.Is(err, want) || offer.FileSize != 0 || f.requests != 1 {
-			t.Fatal("invalid transfer outcome", err)
-		}
+	// Arrange: explicit nonzero failure without an active/idle status.
+	f := newMobileOfferFake()
+	key := mobileOfferKey(t)
+	code := 7
+	f.dispatch = func(public string) {
+		f.events <- model.MobileSyncEvent{Action: "transfer_error", PublicKey: public, PCName: "Web", ErrorCode: &code}
+	}
+	// Act.
+	offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+	// Assert: failure never yields an archive or retries.
+	if !errors.Is(err, domain.ErrMobileBackupRejected) || offer.FileSize != 0 || f.requests != 1 {
+		t.Fatal("invalid transfer outcome", err)
+	}
+}
+
+func TestMobileBackupZeroErrorControlContinuesToOffer(t *testing.T) {
+	// Arrange: the observed phone response has error_code=0 and no status.
+	f := newMobileOfferFake()
+	key := mobileOfferKey(t)
+	f.dispatch = func(public string) {
+		confirm, zero := 1, 0
+		f.events <- model.MobileSyncEvent{Action: "user_confirm", PublicKey: public, PCName: "Web", UserAction: &confirm}
+		f.events <- model.MobileSyncEvent{Action: "transfer_error", PublicKey: public, PCName: "Web", ErrorCode: &zero}
+		f.events <- syntheticOffer(t, public)
+	}
+	// Act.
+	offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+	// Assert: only the subsequent validated offer counts as success.
+	if err != nil || offer.FileSize != 16 || f.requests != 1 || f.releases != 1 {
+		t.Fatal("zero code terminated offer wait", err)
+	}
+}
+
+func TestMobileBackupZeroErrorControlDoesNotInventSuccess(t *testing.T) {
+	// Arrange: a zero-code control arrives without an archive.
+	f := newMobileOfferFake()
+	key := mobileOfferKey(t)
+	f.dispatch = func(public string) {
+		zero := 0
+		f.events <- model.MobileSyncEvent{Action: "transfer_error", PublicKey: public, PCName: "Web", ErrorCode: &zero}
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	// Act.
+	offer, err := receiveMobileBackupOffer(ctx, "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+	// Assert: the original bounded wait expires, with no retry or claimed archive.
+	if !errors.Is(err, context.DeadlineExceeded) || offer.FileSize != 0 || f.requests != 1 || f.releases != 1 {
+		t.Fatal("zero control lost bounded wait", err)
 	}
 }

@@ -18,9 +18,10 @@ mobile_restoring, waiting_for_backup, offer_ready. A callback failure terminates
 waiting and discards any offer; it never triggers a resend. A matching rejection fails;
 restoring does not imply confirmation. Correlated transfer_error status 1/2
 means mobile active/idle and continues the existing bounded wait, matching the
-native client status-first handling. Other transfer_error events terminate:
-explicit nonzero error_code is rejected, absent/zero code without a recognized
-status is invalid. Log only the fixed status category and numeric failure code;
+native client status-first handling. A correlated transfer_error with error_code=0 also continues the bounded wait,
+including when status is absent; it is not archive success. Other transfer_error
+events terminate: explicit nonzero error_code is rejected, absent code without
+a recognized status is invalid. Log only the fixed status category and numeric failure code;
 never the event body or private fields. Queue failure
 fails the operation. Context expiration ends waiting without claiming that the
 phone action failed. An unknown dispatch remains unknown if no reply arrives.

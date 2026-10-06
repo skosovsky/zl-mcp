@@ -666,3 +666,16 @@ existing deadline, without another dispatch or listener. Other transfer controls
 remain explicit failure or invalid metadata. Synthetic tests cover both progress
 statuses followed by an encrypted offer and genuine/ambiguous failure; a fresh
 live test remains required to establish the observed event's actual semantics.
+
+### Observed zero-code transfer control (2026-10-06)
+
+The separately authorized detailed probe received correlated user_confirm with
+user_action=1, then transfer_error with error_code=0 and no status. It terminated
+as INVALID_SOURCE_EVENT. The native handler's failure guard is nonzero-code only;
+with zero code and absent status it logs an unclassified control and keeps the
+request alive. Our active/idle correction still terminated this zero-code case.
+The receiver now continues the original bounded wait for correlated zero-code
+controls, without declaring archive success or redispatching. Regression tests
+cover the observed control followed by a validated encrypted offer, and the same
+control without an offer until deadline. This closes the observed interpretation
+defect, not real archive receipt or import acceptance.

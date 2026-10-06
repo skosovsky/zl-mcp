@@ -159,6 +159,12 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 					slog.Warn("mobile_backup_transfer_rejected", "upstream_error_code", *event.ErrorCode)
 					return domain.MobileBackupOffer{}, domain.ErrMobileBackupRejected
 				}
+				if event.ErrorCode != nil && *event.ErrorCode == 0 {
+					// Native handling does not classify a zero-code control as failure.
+					// Retain the original deadline and wait for an explicit offer.
+					slog.Info("mobile_backup_phone_status", "status", "transfer_no_error")
+					continue
+				}
 				return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 			case "syncmsg_info":
 				offer, err := mobileBackupOffer(event, owner, key)
