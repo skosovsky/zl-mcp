@@ -26,14 +26,26 @@ but the page does not expose the send input schema or prove that an existing
 conversation has reloaded it. Local HTTP `tools/list` returns the corrected
 full-string non-whitespace pattern `^[\s\S]*\S[\s\S]*$`.
 
-An attempted saved-request retry was rejected by the action approval reviewer
-before MCP invocation. It therefore provides no evidence of connector schema
-acceptance or a server-side send result. No message was dispatched. A new
-client conversation and an explicitly authorized live scenario remain necessary
-for the open send acceptance checks; metadata refresh alone does not close them.
+An earlier saved-request retry was rejected by the action approval reviewer
+before MCP invocation and provided no connector schema evidence. Subsequently,
+the user explicitly authorized two fresh exact texts to the same verified peer,
+one plain and one quoting the first, plus same-UUID retries. Both were accepted
+through the installed service's MCP interface with nonempty message IDs; each
+same-UUID retry returned its identical saved receipt. The source configuration
+was backed up and restored after temporarily enabling only that recipient;
+sending is disabled and the collector returned connected/authenticated.
+
+The actual connected client's context read verified the quoted anchor and source
+against the exact first message ID. Its retry of the authorized plain request
+after permissions were restored passed argument validation and returned the
+server's `PERMISSION_DENIED`, rather than the old regex error. This closes the
+observed stale send-schema issue without dispatching another message. Fresh
+plain/quote live acceptance verifies the corrected acknowledgement path; it does
+not establish that Zalo used a numeric JSON ID on this particular response.
+Numeric/string wire forms remain covered independently by encrypted HTTP tests.
 
 The remaining full-scope gates are real incoming-only/first-only behaviour,
-the agreed fresh send/acknowledgement scenarios, and safe real mobile-source
+the separately authorized out-of-catalogue send scenario, and safe real mobile-source
 admission and recovery of the user's older Strangers history. Synthetic source
 tests and optional producer counts do not establish export completeness.
 
