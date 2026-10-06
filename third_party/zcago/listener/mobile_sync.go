@@ -75,12 +75,9 @@ func (ln *listener) handleMobileSync(ctx context.Context, content events.Control
 		slog.Info("mobile_backup_control_ignored", "reason", "CORRELATION_KEY")
 		return
 	}
-	if e.Action == "syncmsg_info" {
-		if e.UID != r.owner {
-			slog.Info("mobile_backup_control_ignored", "reason", "ACCOUNT_MISMATCH")
-			return
-		}
-	} else if e.PCName != r.host {
+	// syncmsg_info.uid is a plain mobile ID. The operation must map it to
+	// the session owner; direct equality here compares different namespaces.
+	if e.Action != "syncmsg_info" && e.PCName != r.host {
 		slog.Info("mobile_backup_control_ignored", "reason", "HOST_MISMATCH")
 		return
 	}

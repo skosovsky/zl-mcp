@@ -237,3 +237,9 @@ field exclusion and preservation of the existing error sentinel.
 During an active mobile receiver, ignored key/account/host correlation controls
 log only a fixed rejection reason. Matching rules and foreign-control handling
 are unchanged; rejected values and raw events are never logged.
+
+Mobile offer correlation distinguishes plain mobile owner IDs from session noise
+IDs. The receiver preserves exact key and current-session binding, but delegates
+plain-owner resolution to the caller's authenticated identity mapping rather than
+comparing different namespaces. Regression coverage checks delivery of a
+correlated plain-ID offer while rejecting foreign request keys and hosts.

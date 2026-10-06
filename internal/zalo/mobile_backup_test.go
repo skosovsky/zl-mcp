@@ -28,6 +28,7 @@ type mobileOfferFake struct {
 	requests, releases int
 	ack                error
 	dispatch           func(string)
+	mapping            func([]string) ([]byte, error)
 }
 
 func (f *mobileOfferFake) SubscribeMobileSync(public, host string) (listener.MobileSyncSubscription, func(), error) {
@@ -44,6 +45,16 @@ func (f *mobileOfferFake) RequestMobileBackup(ctx context.Context, public string
 		f.dispatch(public)
 	}
 	return f.ack
+}
+func (f *mobileOfferFake) GetMobileIdentityMapping(ctx context.Context, direct, groups []string) ([]byte, error) {
+	if f.mapping != nil {
+		return f.mapping(direct)
+	}
+	mapped := direct[0]
+	if mapped == "123" {
+		mapped = "9007199254740993"
+	}
+	return json.Marshal(map[string][]string{"fids": {mapped}})
 }
 func newMobileOfferFake() *mobileOfferFake {
 	return &mobileOfferFake{events: make(chan model.MobileSyncEvent, 8), failures: make(chan error, 1)}
@@ -70,7 +81,7 @@ func syntheticOffer(t *testing.T, public string) model.MobileSyncEvent {
 	if err != nil {
 		t.Fatal("synthetic encryption")
 	}
-	return model.MobileSyncEvent{Action: "syncmsg_info", PublicKey: public, UID: "9007199254740993", URL: "https://synthetic.invalid/backup", EncryptedKey: base64.StdEncoding.EncodeToString(cipher), FileSize: 16, FromSequence: "9007199254740995", DatabaseInfo: `{"db_format":1}`}
+	return model.MobileSyncEvent{Action: "syncmsg_info", PublicKey: public, UID: "123", URL: "https://synthetic.invalid/backup", EncryptedKey: base64.StdEncoding.EncodeToString(cipher), FileSize: 16, FromSequence: "9007199254740995", DatabaseInfo: `{"db_format":1}`}
 }
 
 func TestMobileBackupOfferPreregistrationAndUnknownAcknowledgement(t *testing.T) {
@@ -90,7 +101,7 @@ func TestMobileBackupOfferPreregistrationAndUnknownAcknowledgement(t *testing.T)
 		// Act.
 		offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, &domain.MobileBackupObserver{BeforeDispatch: func(string) error { states = append(states, "dispatching"); return nil }, Progress: func(s string) error { states = append(states, s); return nil }}, func() (*rsa.PrivateKey, error) { return key, nil })
 		// Assert: request never repeated, receiver released and key rendered as observed format-1 hex.
-		if err != nil || f.requests != 1 || f.releases != 1 || f.registered || offer.KeyText != strings.Repeat("61", 32) || offer.FromSequence != "9007199254740995" {
+		if err != nil || f.requests != 1 || f.releases != 1 || f.registered || offer.KeyText != strings.Repeat("61", 32) || offer.FromSequence != "9007199254740995" || offer.PlainAccountID != "123" || offer.SessionAccountID != "9007199254740993" {
 			t.Fatalf("offer operation: %v", err)
 		}
 		want := "dispatching,waiting_for_confirmation,mobile_restoring,waiting_for_backup,offer_ready"
@@ -297,5 +308,39 @@ func TestMobileBackupZeroErrorControlDoesNotInventSuccess(t *testing.T) {
 	// Assert: the original bounded wait expires, with no retry or claimed archive.
 	if !errors.Is(err, context.DeadlineExceeded) || offer.FileSize != 0 || f.requests != 1 || f.releases != 1 {
 		t.Fatal("zero control lost bounded wait", err)
+	}
+}
+
+func TestMobileBackupAccountMappingFailsClosed(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		body string
+		err  error
+	}{
+		{"foreign owner", `{"fids":["456"]}`, nil},
+		{"missing owner", `{"fids":[]}`, nil},
+		{"unavailable", "", errors.New("private-mapping-detail")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange: a correlated, valid offer belongs to a separate plain ID namespace.
+			f := newMobileOfferFake()
+			f.dispatch = func(p string) { f.events <- syntheticOffer(t, p) }
+			f.mapping = func(ids []string) ([]byte, error) {
+				if len(ids) != 1 || ids[0] != "123" {
+					t.Fatal("wrong mapping input")
+				}
+				return []byte(tc.body), tc.err
+			}
+			key := mobileOfferKey(t)
+			// Act.
+			offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+			// Assert: no usable offer or private upstream error escapes.
+			if !errors.Is(err, domain.ErrMobileBackupInvalid) || offer != (domain.MobileBackupOffer{}) || f.requests != 1 || f.releases != 1 {
+				t.Fatal("account binding failed open")
+			}
+			if strings.Contains(err.Error(), "private-mapping-detail") {
+				t.Fatal("private mapping error leaked")
+			}
+		})
 	}
 }

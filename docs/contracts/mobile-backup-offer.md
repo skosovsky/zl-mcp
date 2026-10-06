@@ -26,7 +26,12 @@ never the event body or private fields. Queue failure
 fails the operation. Context expiration ends waiting without claiming that the
 phone action failed. An unknown dispatch remains unknown if no reply arrives.
 
-Validate account, metadata and backup format before use. This candidate supports
+Validate account, metadata and backup format before use. The offer uid uses the
+plain mobile namespace. Resolve it through the existing authenticated znoise
+identity mapping and require exactly one direct mapping to the captured session
+owner; no direct-equality fallback. Mapping failures, foreign owners and account
+changes fail closed. Preserve both IDs privately in the offer for later archive
+validation. No account IDs or mapping response bodies are logged. This candidate supports
 only explicitly declared format 1. RSA PKCS#1 v1.5 decryption produces 16–128 key
 bytes, rendered as uppercase hex text for the separately verified block decoder.
 The internal offer carries only bounded metadata and key text; all fields are

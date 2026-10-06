@@ -18,7 +18,7 @@ func TestMobileControlDiagnosticsExcludePrivateFields(t *testing.T) {
 	status, code, action := 0, 7, 1
 	event := model.MobileSyncEvent{Action: "transfer_error", PublicKey: "private-public-key", PCName: "private-name", UID: "private-user", URL: "https://private-url.invalid/key", EncryptedKey: "private-key", DatabaseInfo: "private-db", Status: &status, ErrorCode: &code, UserAction: &action}
 	// Act.
-	logMobileControl(event, "private-public-key", "private-user")
+	logMobileControl(event, "private-public-key")
 	// Assert: diagnostics retain statuses and presence but none of their private values.
 	logs := output.String()
 	for _, secret := range []string{event.PublicKey, event.PCName, event.UID, event.URL, event.EncryptedKey, event.DatabaseInfo} {
@@ -38,7 +38,7 @@ func TestUnknownMobileActionIsNotLoggedVerbatim(t *testing.T) {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(&output, nil)))
 	defer slog.SetDefault(previous)
 	// Act.
-	logMobileControl(model.MobileSyncEvent{Action: "private-source-action"}, "key", "owner")
+	logMobileControl(model.MobileSyncEvent{Action: "private-source-action"}, "key")
 	// Assert.
 	if strings.Contains(output.String(), "private-source-action") || !strings.Contains(output.String(), `"action":"unknown"`) {
 		t.Fatal("unsafe action category")

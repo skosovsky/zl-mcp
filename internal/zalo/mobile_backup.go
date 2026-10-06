@@ -38,7 +38,12 @@ func (c *Client) ReceiveMobileBackupOffer(ctx context.Context, progress *domain.
 	if !ok {
 		return domain.MobileBackupOffer{}, domain.ErrHistoryUnsupported
 	}
-	return receiveMobileBackupOffer(ctx, c.AccountID(), r, l, progress, func() (*rsa.PrivateKey, error) { return rsa.GenerateKey(rand.Reader, 2048) })
+	owner := c.AccountID()
+	offer, err := receiveMobileBackupOffer(ctx, owner, r, l, progress, func() (*rsa.PrivateKey, error) { return rsa.GenerateKey(rand.Reader, 2048) })
+	if c.AccountID() != owner {
+		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+	}
+	return offer, err
 }
 
 func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBackupRequester, l mobileBackupReceiver, progress *domain.MobileBackupObserver, generate func() (*rsa.PrivateKey, error)) (domain.MobileBackupOffer, error) {
@@ -49,6 +54,10 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 	defer stop()
 	if ctx.Err() != nil {
 		return domain.MobileBackupOffer{}, ctx.Err()
+	}
+	mapper, ok := r.(mobileIdentityRequester)
+	if !ok {
+		return domain.MobileBackupOffer{}, domain.ErrHistoryUnsupported
 	}
 	key, err := generate()
 	if err != nil || key == nil || key.N == nil || key.D == nil || key.N.BitLen() != 2048 || key.E != 65537 {
@@ -118,7 +127,7 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 			slog.Warn("mobile_backup_control_invalid", "stage", "receiver")
 			return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 		case event := <-sub.Events:
-			logMobileControl(event, public, owner)
+			logMobileControl(event, public)
 			if event.PublicKey != public {
 				return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 			}
@@ -171,6 +180,16 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 				if err != nil {
 					return domain.MobileBackupOffer{}, err
 				}
+				pairs, err := mapMobileIdentities(ctx, domain.MobileIdentityRequest{Direct: []string{event.UID}}, mapper)
+				if err != nil {
+					slog.Warn("mobile_backup_account_invalid", "reason", "MAPPING_FAILED")
+					return domain.MobileBackupOffer{}, err
+				}
+				if len(pairs) != 1 || pairs[0].Group || pairs[0].Plain != event.UID || pairs[0].Session != owner {
+					slog.Warn("mobile_backup_account_invalid", "reason", "MAPPED_OWNER_MISMATCH")
+					return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+				}
+				slog.Info("mobile_backup_account_verified")
 				select {
 				case <-sub.Errors:
 					slog.Warn("mobile_backup_control_invalid", "stage", "receiver")
@@ -202,7 +221,8 @@ func mobileBackupOffer(e model.MobileSyncEvent, owner string, key *rsa.PrivateKe
 	var info struct {
 		Format *int `json:"db_format"`
 	}
-	if e.UID != owner || e.FileSize == 0 || e.FileSize > 512<<20 || json.Unmarshal([]byte(e.DatabaseInfo), &info) != nil || info.Format == nil {
+	uid, uidErr := strconv.ParseUint(e.UID, 10, 64)
+	if uidErr != nil || uid == 0 || strconv.FormatUint(uid, 10) != e.UID || e.FileSize == 0 || e.FileSize > 512<<20 || json.Unmarshal([]byte(e.DatabaseInfo), &info) != nil || info.Format == nil {
 		return invalidMobileOffer("OFFER_ACCOUNT_OR_DATABASE")
 	}
 	if *info.Format != 1 {
@@ -220,7 +240,7 @@ func mobileBackupOffer(e model.MobileSyncEvent, owner string, key *rsa.PrivateKe
 	if len(plain) < 16 || len(plain) > 128 {
 		return invalidMobileOffer("OFFER_KEY_LENGTH")
 	}
-	return domain.MobileBackupOffer{URL: e.URL, KeyText: strings.ToUpper(hex.EncodeToString(plain)), FileSize: e.FileSize, FromSequence: e.FromSequence}, nil
+	return domain.MobileBackupOffer{PlainAccountID: e.UID, SessionAccountID: owner, URL: e.URL, KeyText: strings.ToUpper(hex.EncodeToString(plain)), FileSize: e.FileSize, FromSequence: e.FromSequence}, nil
 }
 
 func invalidMobileOffer(reason string) (domain.MobileBackupOffer, error) {
@@ -229,13 +249,13 @@ func invalidMobileOffer(reason string) (domain.MobileBackupOffer, error) {
 }
 
 // Only explicitly selected scalar diagnostics; never format a control event.
-func logMobileControl(event model.MobileSyncEvent, public, owner string) {
+func logMobileControl(event model.MobileSyncEvent, public string) {
 	action := "unknown"
 	switch event.Action {
 	case "user_confirm", "transfer_error", "syncmsg_info":
 		action = event.Action
 	}
-	args := []any{"action", action, "key_match", event.PublicKey == public, "pc_match", event.PCName == "Web", "account_match", event.UID == owner, "has_url", event.URL != "", "has_encrypted_key", event.EncryptedKey != "", "archive_bytes", event.FileSize, "has_db_info", event.DatabaseInfo != ""}
+	args := []any{"action", action, "key_match", event.PublicKey == public, "pc_match", event.PCName == "Web", "has_url", event.URL != "", "has_encrypted_key", event.EncryptedKey != "", "archive_bytes", event.FileSize, "has_db_info", event.DatabaseInfo != ""}
 	if event.Status != nil {
 		args = append(args, "status", *event.Status)
 	}

@@ -49,11 +49,12 @@ response budget to 200s and adds safe ignored-control diagnostics; its CI passed
 Its installation did not become ready. A Go stack showed schema meta-validation
 of `zalo_get_join_status.output` before opening HTTP. Isolated contract and MCP
 server construction completed quickly, so the startup cause is unresolved.
-The verified previous `5e92289` binary was restored without reverting SQLite,
+At that checkpoint the verified previous `5e92289` binary was restored without reverting SQLite,
 session or configuration. Authenticated MCP reads then confirmed connected/
-authenticated state, schema 12 integrity and the active v2 journal. The installed
-version still has the old 40s Unix write budget; do not claim the long response
-fix was accepted on the live installation. No further phone request was sent.
+authenticated state, schema 12 integrity and the active v2 journal. That restored version still had the old 40s Unix write budget. A later separately
+authorized diagnostic deployment passed readiness on `ac394b3`; the installed
+200s write budget then returned the terminal failure instead of hiding it as a
+collector transport error. No further phone request was sent.
 
 ## Failure diagnostics
 
@@ -90,3 +91,26 @@ control, then correctly continued waiting. No accepted archive offer or decoder
 failure was observed before the source deadline. The ledger ended `interrupted`
 with `TIMEOUT`; archive download/import remain unverified. This proves the
 zero-code interpretation fix, not successful phone archive delivery.
+
+The user observed the phone progress completing quickly during this attempt.
+That observation establishes completion of the visible phone flow, not receipt
+of an archive by this service. Read-only comparison with the installed native
+client confirmed the same `syncmsgmb` / `syncmsg_info` routing. The deployed
+version can still silently discard a mismatched key or account; absence of an
+accepted offer therefore does not establish absence of an upstream response.
+The newer candidate binary subsequently opened HTTP in 0.82 seconds with an
+isolated temporary configuration and no live credentials. This does not resolve
+its earlier startup failure with the installed service state. No new phone
+request or live service change was made during these checks.
+
+A separately authorized repeat subsequently ran on the newer diagnostic binary.
+Installation readiness and preserved subscription boundaries passed. After phone
+confirmation, the receiver logged `ACCOUNT_MISMATCH` for a `syncmsg_info` control
+whose request public key matched. This establishes local rejection of an upstream
+offer, rather than absence of an upstream response. Native restore code passes
+the offer's `rawUid` as `plainUserId` and the current session's user ID as
+`noiseUserId`: direct equality between these namespaces is not a valid account
+binding. The current implementation also repeats that equality in offer validation.
+The fix must distinguish these identities and establish a verified binding before
+archive use; do not simply remove the account guard. No archive was downloaded
+or imported by this repeat.

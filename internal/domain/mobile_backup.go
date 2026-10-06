@@ -12,10 +12,12 @@ var ErrMobileBackupInvalid = errors.New("invalid mobile backup offer")
 
 // MobileBackupOffer is sensitive transport evidence, never a public tool result.
 type MobileBackupOffer struct {
-	URL          string `json:"-"`
-	KeyText      string `json:"-"`
-	FileSize     uint64 `json:"-"`
-	FromSequence string `json:"-"`
+	PlainAccountID   string `json:"-"`
+	SessionAccountID string `json:"-"`
+	URL              string `json:"-"`
+	KeyText          string `json:"-"`
+	FileSize         uint64 `json:"-"`
+	FromSequence     string `json:"-"`
 }
 
 func (MobileBackupOffer) String() string   { return "mobile backup offer [redacted]" }

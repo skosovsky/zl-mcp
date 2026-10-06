@@ -33,15 +33,25 @@ func TestMobileSyncExistingRouterCorrelation(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer stop()
-	// Act: foreign key/host/account cannot reach the receiver.
+	// Act: foreign key and host cannot reach the receiver.
 	routeMobile(t, ln, "user_confirm", map[string]any{"public_key": "foreign", "pc_name": "Web", "user_action": 1})
 	routeMobile(t, ln, "user_confirm", map[string]any{"public_key": "synthetic-public", "pc_name": "Other", "user_action": 1})
-	routeMobile(t, ln, "syncmsg_info", map[string]any{"public_key": "synthetic-public", "uid": "9007199254740994", "from_seq_id": 0, "file_size": 16, "url": "https://synthetic.invalid/backup", "encrypted_key": "synthetic-key", "db_info": map[string]any{}})
 	// Assert.
 	select {
 	case <-sub.Events:
 		t.Fatal("foreign control delivered")
 	default:
+	}
+	// Act: plain mobile owner differs from the current session noise ID.
+	routeMobile(t, ln, "syncmsg_info", map[string]any{"public_key": "synthetic-public", "uid": "123", "from_seq_id": 0, "file_size": 16, "url": "https://synthetic.invalid/backup", "encrypted_key": "synthetic-key", "db_info": map[string]any{}})
+	// Assert: the operation receives this correlated offer for authenticated mapping.
+	select {
+	case e := <-sub.Events:
+		if e.UID != "123" || e.Action != "syncmsg_info" {
+			t.Fatal("plain identity lost")
+		}
+	default:
+		t.Fatal("plain identity rejected as a noise ID")
 	}
 	// Act: matching confirmation retains restoring, not synthetic success.
 	routeMobile(t, ln, "user_confirm", map[string]any{"public_key": "synthetic-public", "pc_name": "Web", "user_action": 2})
