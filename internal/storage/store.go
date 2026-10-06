@@ -148,7 +148,10 @@ func (s *Store) migrate(ctx context.Context) error {
 	if err = s.migrateEventJournal(ctx); err != nil {
 		return err
 	}
-	return s.migrateMobileHistory(ctx)
+	if err := s.migrateMobileHistory(ctx); err != nil {
+		return err
+	}
+	return s.migrateMobileHistoryAcquisition(ctx)
 }
 func (s *Store) BindAccount(ctx context.Context, account string) error {
 	h := sha256.Sum256([]byte(account))

@@ -63,6 +63,19 @@ history-import and mobile-backup race checks and CGO-free macOS arm64/Linux amd6
 builds. The integrated adapter remains uninstalled and public source selection
 remains disabled.
 
+Signed adapter checkpoint
+[`f7038c0`](https://github.com/skosovsky/zl-mcp/commit/f7038c0609382b9ceca67d2287a72368f8713585)
+was published; [macOS and Linux CI passed](https://github.com/skosovsky/zl-mcp/actions/runs/37439506274).
+The subsequent acquisition binding adds schema 14: one transaction creates a
+single phone-attempt/operation link before dispatch. Its guard validates the
+history revision, reserved work and account/scope again at dispatch time. Tests
+cover link-write rollback, retry identity, changed budgets, stale/recovered/
+cancelled history, account/policy revocation, refusal to adopt an unlinked attempt,
+unchanged owner-diagnostic dispatch and atomic migration. Full root tests/vet
+and storage/mobile-backup/history-import race checks passed. This is still an
+internal port; the acquisition/worker loop is not wired, schema 14 is uninstalled,
+and no phone, live import or subscription operation was performed.
+
 ### Published probe checkpoint and native installation: 2026-10-06
 
 Signed source commit [`57d4c8d`](https://github.com/skosovsky/zl-mcp/commit/57d4c8da9a19a1c5f589b4d52a74d66e49699dc9)

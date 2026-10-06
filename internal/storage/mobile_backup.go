@@ -88,6 +88,17 @@ func (s *Store) PrepareMobileBackup(ctx context.Context, request domain.MobileBa
 		return MobileBackupAttempt{}, err
 	}
 	defer tx.Rollback()
+	a, err := s.prepareMobileBackupTx(ctx, tx, r, false)
+	if err != nil {
+		return MobileBackupAttempt{}, err
+	}
+	if err = tx.Commit(); err != nil {
+		return MobileBackupAttempt{}, err
+	}
+	return a, nil
+}
+
+func (s *Store) prepareMobileBackupTx(ctx context.Context, tx *sql.Tx, r domain.MobileBackupRequest, rejectExisting bool) (MobileBackupAttempt, error) {
 	account, err := historyAccount(ctx, tx)
 	if err != nil {
 		return MobileBackupAttempt{}, err
@@ -95,6 +106,9 @@ func (s *Store) PrepareMobileBackup(ctx context.Context, request domain.MobileBa
 	var id, fingerprint string
 	err = tx.QueryRowContext(ctx, "SELECT operation_id,fingerprint FROM mobile_backup_attempts WHERE request_id=?", r.RequestID).Scan(&id, &fingerprint)
 	if err == nil {
+		if rejectExisting {
+			return MobileBackupAttempt{}, ErrMobileBackupConflict
+		}
 		original, err := s.loadMobileBackup(ctx, tx, id)
 		if err != nil {
 			return MobileBackupAttempt{}, err
@@ -128,9 +142,6 @@ func (s *Store) PrepareMobileBackup(ctx context.Context, request domain.MobileBa
 	}
 	_, err = tx.ExecContext(ctx, "INSERT INTO mobile_backup_attempts(operation_id,request_id,account_key,fingerprint,state,request,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)", a.OperationID, r.RequestID, account, r.Fingerprint(), a.State, string(body), stamp, stamp)
 	if err != nil {
-		return MobileBackupAttempt{}, err
-	}
-	if err = tx.Commit(); err != nil {
 		return MobileBackupAttempt{}, err
 	}
 	return a, nil
@@ -185,6 +196,11 @@ func (s *Store) transitionMobileBackup(ctx context.Context, id string, revision 
 	}
 	if a.Revision != revision || !mobileBackupTransition(a.State, state) || state == "dispatching" && public == "" {
 		return MobileBackupAttempt{}, ErrMobileBackupState
+	}
+	if state == "dispatching" {
+		if err = s.checkMobileHistoryDispatch(ctx, tx, id); err != nil {
+			return MobileBackupAttempt{}, err
+		}
 	}
 	if public != "" {
 		a.PublicKey = public

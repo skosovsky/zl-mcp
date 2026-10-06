@@ -73,3 +73,26 @@ network operation and does not itself commit progress.
 Producer eligibility and the single-session acquisition/worker driver still
 require integration. A synthetic snapshot/reader/converter/journal restart test
 does not prove live import or permit public source selection.
+
+## Durable acquisition binding
+
+Before any linked phone dispatch, the trusted driver claims the mobile history
+operation and reserves its bounded acquisition work. One transaction validates
+account, running state, revision and collection policy, then creates exactly one
+mobile backup attempt and its permanent operation link. The attempt inherits the
+same request UUID, conversation, interval and record budget; its archive-byte
+budget is fixed by its own request fingerprint. Link creation failure rolls back
+the attempt. An unlinked existing request UUID cannot be adopted implicitly.
+Retries return the linked attempt, including terminal/interrupted state, and
+never create a replacement under that operation. Changed byte budgets conflict.
+
+The dispatch guard rechecks the linked history operation's source, running state,
+reserved work and the exact revision saved at binding. Cancellation, account or
+policy changes and recovery/reclaim therefore prevent stale phone dispatch before
+the durable `dispatching` transition. Unlinked owner diagnostics retain their
+existing behavior. Recovery marks interrupted acquisition as interrupted; the
+driver must read an existing authenticated snapshot or stop source_unavailable,
+not create another attempt. Cancelling/failing an in-flight attempt under the
+same permitted account/scope remains possible for cleanup, without granting
+another dispatch. The binding contains
+only operation/attempt IDs and revision, not transfer URLs, keys or bodies.
