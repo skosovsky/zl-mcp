@@ -3,6 +3,7 @@ package mobilebackup
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"sync/atomic"
 	"time"
 
@@ -28,6 +29,15 @@ func RunPreparedOffer(ctx context.Context, store *storage.Store, source domain.M
 		e := before(public)
 		if e == nil {
 			claimed.Store(true)
+			slog.Info("mobile_backup_progress", "operation_id", id, "state", "dispatching")
+		}
+		return e
+	}
+	progress := observer.Progress
+	observer.Progress = func(state string) error {
+		e := progress(state)
+		if e == nil {
+			slog.Info("mobile_backup_progress", "operation_id", id, "state", state)
 		}
 		return e
 	}
@@ -47,6 +57,7 @@ func RunPreparedOffer(ctx context.Context, store *storage.Store, source domain.M
 		}
 		err = ErrOfferExecution
 	}
+	slog.Warn("mobile_backup_failed", "operation_id", id, "failure_code", offerFailureCode(err), "dispatch_claimed", claimed.Load())
 	// Only the invocation that committed dispatch owns finalization. A pre-dispatch
 	// source failure may race with another observer; leave its journal unchanged.
 	if !claimed.Load() {
@@ -71,4 +82,26 @@ func RunPreparedOffer(ctx context.Context, store *storage.Store, source domain.M
 		}
 	}
 	return domain.MobileBackupOffer{}, ErrOfferExecution
+}
+
+// Fixed categories retain useful failure evidence without exposing source errors.
+func offerFailureCode(err error) string {
+	switch {
+	case errors.Is(err, context.DeadlineExceeded):
+		return "TIMEOUT"
+	case errors.Is(err, context.Canceled):
+		return "CANCELLED"
+	case errors.Is(err, domain.ErrAuthenticationRequired):
+		return "AUTH_REQUIRED"
+	case errors.Is(err, domain.ErrHistoryUnsupported):
+		return "SOURCE_UNAVAILABLE"
+	case errors.Is(err, domain.ErrMobileBackupUnknown):
+		return "REQUEST_UNKNOWN"
+	case errors.Is(err, domain.ErrMobileBackupRejected):
+		return "REJECTED"
+	case errors.Is(err, domain.ErrMobileBackupInvalid):
+		return "INVALID_SOURCE_EVENT"
+	default:
+		return "EXECUTION_FAILED"
+	}
 }

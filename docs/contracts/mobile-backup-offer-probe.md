@@ -40,3 +40,18 @@ service; its STDIO bridge still listed 21 tools and read connected/authenticated
 status. SQLite integrity and selected subscription identity/filter/generation/
 activation fields matched the private pre-update snapshot. No real phone request,
 archive download or import has been performed for this diagnostic acceptance.
+
+## Failure diagnostics
+
+The service records committed dispatch/progress states with operation ID and fixed
+failure categories (timeout, cancellation, authentication, unavailable source,
+unknown result, rejection, invalid source event or generic execution failure).
+It never logs source error text, offers, keys, URLs, account/conversation IDs or
+message content. These logs supplement the durable terminal status; they do not
+permit retrying a terminal operation or establish archive compatibility.
+
+The first authorized live probe reached the phone; the user confirmed it. The
+attempt ended `failed` without an offer. Its installed version did not preserve
+intermediate diagnostic categories, so the exact failure stage cannot be inferred
+from its terminal revision. No download or import occurred. A subsequent live
+attempt needs a separate decision, not an automatic retry.

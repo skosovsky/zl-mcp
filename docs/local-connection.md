@@ -91,7 +91,8 @@ rule. Previously stored messages remain available through reads and are not sent
 automatically. See [subscription migration](conversations.md#replacing-a-legacy-group-subscription).
 
 Current source also advertises `zalo.conversation.message.created.v2`: direction
-filters and first_incoming_only for direct incoming scopes. Version 1 remains unchanged.
+filters and first_incoming_only for direct incoming scopes. Conversation version 1
+has been removed; the legacy group event remains supported.
 See [incoming subscriptions and direct sending](direct-messaging.md) for examples,
 discovery verification, separate send permissions and handling an unknown send result.
 
