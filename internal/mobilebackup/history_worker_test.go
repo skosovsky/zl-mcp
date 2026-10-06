@@ -4,9 +4,11 @@ import (
 	"context"
 	"crypto/rsa"
 	"crypto/x509"
+	"database/sql"
 	"encoding/base64"
 	"errors"
 	"math/big"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -19,6 +21,10 @@ import (
 type historyWorkerSource struct {
 	session  *historyWorkerSession
 	leaseErr error
+}
+
+func (s *historyWorkerSource) CleanupHistorySnapshots(ctx context.Context) error {
+	return s.session.snapshots.CleanupTerminal(ctx, s.session.store.MobileHistorySnapshotTerminal)
 }
 
 func (s *historyWorkerSource) WithHistorySession(ctx context.Context, visit func(context.Context, historyimport.MobileHistorySession) error) error {
@@ -193,6 +199,109 @@ func TestMobileWorkerFullAcquisitionSnapshotAndPagingCycle(t *testing.T) {
 		t.Fatal("worker lost its only acquisition", err)
 	}
 	assertSilentWorker(t, source.session.store, 2)
+}
+
+func TestMobileWorkerRestartCleansTerminalSourceWithoutSession(t *testing.T) {
+	// Arrange: crash after a terminal journal commit, before removing its image.
+	source, pending, _, dir, request := historyWorkerFixture(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	store := source.session.store
+	op, err := store.ClaimHistoryOperation(ctx, pending.Status.OperationID, pending.Revision)
+	if err == nil {
+		op, err = store.ReserveMobileHistoryWork(ctx, op.Status.OperationID, op.Revision, 180*time.Second)
+	}
+	if err == nil {
+		_, err = store.PrepareMobileHistoryAcquisition(ctx, op.Status.OperationID, op.Revision, 0)
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = source.session.snapshots.Save(ctx, source.session.selected, request, "10"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.StopHistoryOperation(ctx, op.Status.OperationID, op.Revision, "partial", "source_unavailable", 0); err != nil {
+		t.Fatal(err)
+	}
+	if err = source.session.snapshots.Close(); err != nil {
+		t.Fatal(err)
+	}
+	source.session.snapshots = openSnapshotStore(t, dir, 1<<20)
+	if err = store.RecoverMobileBackupAttempts(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err = store.RecoverInterruptedHistory(ctx); err != nil {
+		t.Fatal(err)
+	}
+	source.leaseErr = domain.ErrAuthenticationRequired
+	// Act: cleanup runs before queue processing without borrowing upstream authority.
+	done := startHistoryWorker(ctx, store, source)
+	name, _ := snapshotName(request.RequestID)
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		_, err = os.Stat(filepath.Join(dir, name))
+		if errors.Is(err, os.ErrNotExist) {
+			break
+		}
+		if err != nil || time.Now().After(deadline) {
+			cancel()
+			stopHistoryWorker(t, cancel, done)
+			t.Fatal("terminal image survived restart", err)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	stopHistoryWorker(t, cancel, done)
+	// Assert: no new session/offer/read; cleanup retains the spent snapshot identity.
+	if source.session.receives != 0 || source.session.saves != 0 || source.session.reads != 0 {
+		t.Fatal("local cleanup borrowed network authority")
+	}
+	if err = source.session.snapshots.Save(context.Background(), source.session.selected, request, "10"); !errors.Is(err, ErrSnapshot) {
+		t.Fatal("restart cleanup renewed source", err)
+	}
+	assertSilentWorker(t, store, 0)
+}
+
+func TestMobileWorkerCompletedImportRemovesSource(t *testing.T) {
+	// Arrange: one valid text row and a real encrypted snapshot/reader/journal cycle.
+	source, pending, _, dir, request := historyWorkerFixture(t)
+	source.session.selected.Clear()
+	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
+		metadata := attachmentField(6, append(attachmentField(45, []byte("rtf")), attachmentField(47, []byte("synthetic complete title"))...))
+		_, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", "13", "14", "synthetic complete import", time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC).UnixMilli(), 0, 0, 1, metadata)
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+	source.session.selected = SelectedArchive{requestID: request.RequestID, requestFingerprint: request.Fingerprint(), ref: request.Ref(), File: ArchiveFile{Name: "902.db", Data: data}}
+	defer source.session.selected.Clear()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	// Act: let the operation and its local terminal cleanup finish before shutdown.
+	done := startHistoryWorker(ctx, source.session.store, source)
+	op := waitMobileState(t, source.session.store, pending.Status.OperationID, "completed")
+	name, _ := snapshotName(request.RequestID)
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		_, err := os.Stat(filepath.Join(dir, name))
+		if errors.Is(err, os.ErrNotExist) {
+			break
+		}
+		if err != nil || time.Now().After(deadline) {
+			stopHistoryWorker(t, cancel, done)
+			t.Fatal("completed source retained", err)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	stopHistoryWorker(t, cancel, done)
+	// Assert: source exhaustion is limited, silent and does not retain its staging file.
+	if op.Status.InsertedCount != 1 || op.Status.PagesObserved != 1 || op.Status.HistoryComplete || source.session.receives != 1 || source.session.saves != 1 || source.session.reads != 1 {
+		t.Fatal("completed cleanup/import mismatch", op.Status)
+	}
+	var text, attachments, provenance string
+	if err := source.session.store.DB.QueryRow("SELECT text,attachments,source FROM messages WHERE message_id='13'").Scan(&text, &attachments, &provenance); err != nil || text != "synthetic complete title" || attachments != `["rtf"]` || provenance != "history" {
+		t.Fatal("visible rich-text projection was not silently preserved", err)
+	}
+	assertSilentWorker(t, source.session.store, 1)
 }
 
 func TestMobileWorkerRestartsFromExactSnapshotWithoutAnotherPhone(t *testing.T) {

@@ -48,6 +48,18 @@ left by interrupted writes; reject unknown files instead of deleting them.
 Fsync publications, reservations and successful removals. Terminal operations
 explicitly remove their snapshot. Compare opened-file identity and permissions
 with the confined pre-open metadata before reading or appending.
+
+The service removes terminal snapshots at startup, before mobile queue polling,
+and after each operation. A bounded sweep authenticates each image, then passes
+only its request UUID/fingerprint and hashed account identity to a trusted local
+journal predicate. Removal requires a permanent mobile acquisition link, matching
+account/request/fingerprint and terminal history state. Collection revocation does
+not prevent owned cleanup; queued/running/paused or unlinked/foreign sources are
+not authorized for terminal removal. Interrupted shutdown retains unfinished
+images for restart. Cleanup requires no upstream session, phone dispatch or corpus
+read, and retains the spent-UUID index. Journal/filesystem failure is an error,
+not removal permission. The worker does not report snapshot errors from parent
+cancellation as a service failure.
 Clear returned plaintext on completion. Snapshot lifetime is an internal staging
 lifetime, not permission to expose expired messages: the reader/converter must
 still apply original message and quote TTL before corpus persistence.

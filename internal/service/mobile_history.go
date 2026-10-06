@@ -10,6 +10,13 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/mobilebackup"
 )
 
+func (p *membershipPort) CleanupHistorySnapshots(ctx context.Context) error {
+	if p.snapshots == nil {
+		return domain.ErrHistoryUnsupported
+	}
+	return p.snapshots.CleanupTerminal(ctx, p.store.MobileHistorySnapshotTerminal)
+}
+
 func (p *membershipPort) WithHistorySession(parent context.Context, visit func(context.Context, historyimport.MobileHistorySession) error) error {
 	downloader, err := mobilebackup.NewDownloader([]string{"trans-bin.zaloapp.com"})
 	if err != nil {

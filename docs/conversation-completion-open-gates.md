@@ -44,6 +44,33 @@ remains disabled, and the two historical candidates remain unimported. Terminal
 snapshot deletion wiring still needs acceptance before public mobile import;
 fixed expiry/cleanup alone does not prove the contract's immediate terminal removal.
 
+### Terminal snapshot cleanup and control investigation
+
+Current source adds terminal-image cleanup at service startup and in the mobile
+loop. Authenticated snapshot binding is checked against an account-owned terminal
+history operation and its permanent acquisition link; revoked collection cannot
+prevent cleanup, while active/paused, foreign, changed and unlinked bindings stay
+ineligible. Startup cleanup does not borrow a phone/session. Spent UUIDs survive
+removal, preventing a retry from renewing the source. Synthetic tests include
+restart after terminal commit before removal, journal failure preservation and
+shutdown during cleanup. These new source changes are not yet installed.
+
+Static format-1 inspection confirms the native names `ChatDelete=33` and `Undo=36`
+and their `chat.delete`/`chat.undo` mappings. Its archive importer separates
+MSG_UNDO, but the located `_sendUndo` method is empty; it does not establish a
+portable target-ID/state rule. The currently retained local tombstone table has
+zero rows, so there is no existing live target marker available to correlate with
+an archive. A separately requested controlled send/recall and before/after archive
+scenario is awaiting user authorization; no new send or phone request has occurred.
+After fixing the shutdown/cleanup race and correcting the spent-UUID test to the
+existing unavailable-source error contract, root tests/vet and affected
+mobile-backup/history-import/service/storage race checks passed. A further real
+snapshot/reader/journal synthetic cycle imports one `rtf` title silently, reaches
+completed available-source exhaustion with history_complete=false, and removes
+the terminal staging file; its targeted race checks passed. CGO-free macOS arm64
+and Linux amd64 builds, diff checks and a redacted worktree scan also passed.
+These checks use synthetic archives, not new phone exports or model evals.
+
 Latest mobile checkpoint supersedes the earlier download/format failure notes:
 authenticated offer, scoped download, format-1 checksum/XZ, typed selection and
 immutable SQLite inspection passed in authorized installed-service probes. The

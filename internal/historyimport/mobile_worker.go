@@ -22,6 +22,7 @@ type MobileHistorySession interface {
 
 type MobileHistorySource interface {
 	WithHistorySession(context.Context, func(context.Context, MobileHistorySession) error) error
+	CleanupHistorySnapshots(context.Context) error
 }
 
 // RunMobile runs after the single owner has recovered both journals. It performs
@@ -33,6 +34,14 @@ func RunMobile(ctx context.Context, store *storage.Store, source MobileHistorySo
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 	for {
+		if source != nil {
+			if err := source.CleanupHistorySnapshots(ctx); err != nil {
+				if ctx.Err() != nil {
+					return nil
+				}
+				return err
+			}
+		}
 		pending, err := store.PendingMobileHistoryOperations(ctx, 20)
 		if ctx.Err() != nil {
 			return nil
@@ -43,6 +52,14 @@ func RunMobile(ctx context.Context, store *storage.Store, source MobileHistorySo
 		for _, op := range pending {
 			if err := runMobileOperation(ctx, store, source, op); err != nil {
 				return err
+			}
+			if source != nil && ctx.Err() == nil {
+				if err := source.CleanupHistorySnapshots(ctx); err != nil {
+					if ctx.Err() != nil {
+						return nil
+					}
+					return err
+				}
 			}
 		}
 		select {

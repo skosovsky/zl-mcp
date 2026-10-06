@@ -180,6 +180,9 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	}
 	defer snapshots.Close()
 	port := &membershipPort{store: store, allowSend: c.Permissions.AllowSend, recipients: recipients, lifecycle: ctx, snapshots: snapshots}
+	if err = port.CleanupHistorySnapshots(ctx); err != nil {
+		return errors.New("private mobile snapshot cleanup unavailable")
+	}
 	handler, err := mcpserver.NewHTTPWithControl(store, c.StateDir, token, port)
 	if err != nil {
 		return err

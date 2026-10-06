@@ -140,6 +140,13 @@ prepared or terminal. It never calls the receiver again. Missing/expired source
 stops partial/source_unavailable; unsupported source stops unsupported; malformed
 pages stop failed/invalid_source_page. Authentication loss pauses without polling
 the unauthenticated source; parent shutdown leaves running work recoverable.
+
+The source also supplies local terminal-snapshot cleanup independently of its
+upstream lease. Cleanup runs before queue processing and after each finished
+operation, allowing a restart to remove an image left after a terminal journal
+commit. It never removes paused/running sources or renews spent source identity.
+The service also runs this cleanup during startup before collector authentication;
+an unavailable phone session is not required to discard an owned terminal image.
 Stale/cancelled revision results stop without additional source work. Error paths
 clear owned pages/offers and never expose source error text or credentials.
 Historical imports remain silent; source-row limits include rejected/expired-only
