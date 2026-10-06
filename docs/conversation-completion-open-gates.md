@@ -20,6 +20,32 @@ importer remains unwired. Diagnostic inspection now validates and classifies can
 when a source gate prevents persistence, without returning message records;
 malformed candidates fail instead of being silently classified as blocked. See the [corrected evidence](contracts/mobile-backup-offer-probe.md#selected-image-coverage-and-correction-of-the-live-comparison).
 
+### Published probe checkpoint and native rollback: 2026-10-06
+
+Signed source commit [`57d4c8d`](https://github.com/skosovsky/zl-mcp/commit/57d4c8da9a19a1c5f589b4d52a74d66e49699dc9)
+was pushed to main. [Its CI](https://github.com/skosovsky/zl-mcp/actions/runs/37428680045)
+passed root and nested-module test/race/vet and CGO-free builds on both macOS and
+Linux. Local vet, cross-builds, updated reader/service race tests and all 36
+published commits' secret scan passed. One initial concurrent local root race
+run timed out at the Events integration test's five-second startup deadline;
+that scenario then passed three isolated runs, the full service package passed,
+and both CI jobs passed. Do not erase the initial failure from the evidence.
+
+The signed native candidate SHA-256
+`b0780bd2f8f1a09c2024cf411a6a80951dcb9bed11d5e718a505481df4803536`
+failed installed readiness. A sampled live process remained in dyld/libobjc
+initialization before Go startup with the MCP port closed. That observation does
+not establish an application-code regression or its underlying OS cause. Only
+the executable was rolled back; neither session nor database was restored or
+changed by the rollback. The prior verified binary SHA-256
+`afc77e4dc2ded6fc741dd3fe6d50fac0badb1285eae4536a48f62a368ee18341`
+subsequently returned connected/authenticated with no last error. SQLite
+quick_check passed; subscription IDs, activation/generation watermarks, filters
+and lifetime fields matched the pre-update backup. Credentials were not read or
+compared. The new diagnostic fields are published in source, but acceptance of
+that candidate's installed native startup remains open. No phone operation,
+send, subscription change or recovery acknowledgement was made during deployment.
+
 | Requirement | Current evidence | Remaining gate |
 | --- | --- | --- |
 | Browse without a keyword | Current installed HTTP and actual connected-client catalogue→period browse→stable continuation→matching context checks pass; production regression tests | Final signed checkout/publication verification |
