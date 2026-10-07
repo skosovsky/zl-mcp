@@ -190,7 +190,7 @@ func (p *membershipPort) archiveMessages(ctx context.Context, args map[string]an
 			empty = "no_records_in_period"
 		}
 	}
-	coverage := map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "source_rows": page.Coverage.SourceRows, "period_rows": page.Coverage.PeriodRows, "invalid_timestamp_rows": page.Coverage.InvalidTimestamps, "source_earliest_at": earliest, "source_latest_at": latest, "wal_mode": page.WALMode, "history_complete": false, "examined": page.Examined, "rejected": page.Rejected, "expired": page.Expired, "suppressed_live": suppressed, "unresolved_senders": page.UnresolvedSenders, "unsupported_metadata_fields": page.UnsupportedMetadataFields, "unresolved_quotes": page.UnresolvedQuotes, "unresolved_mentions": page.UnresolvedMentions, "unsupported_content": page.Unsupported, "coverage_scope": "examined_page", "live_visibility": "global_ids_only"}
+	coverage := map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "source_rows": page.Coverage.SourceRows, "source_information_rows": page.SourceInformation, "period_rows": page.Coverage.PeriodRows, "invalid_timestamp_rows": page.Coverage.InvalidTimestamps, "source_earliest_at": earliest, "source_latest_at": latest, "wal_mode": page.WALMode, "history_complete": false, "examined": page.Examined, "rejected": page.Rejected, "expired": page.Expired, "suppressed_live": suppressed, "unresolved_senders": page.UnresolvedSenders, "unsupported_metadata_fields": page.UnsupportedMetadataFields, "unresolved_quotes": page.UnresolvedQuotes, "unresolved_mentions": page.UnresolvedMentions, "unsupported_content": page.Unsupported, "coverage_scope": "examined_page", "live_visibility": "global_ids_only"}
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}

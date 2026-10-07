@@ -43,6 +43,7 @@ type SQLiteCoverage struct {
 type SQLiteBatch struct {
 	Coverage                 SQLiteCoverage `json:"-"`
 	SourceControls           int
+	SourceInformation        int
 	DeferredControls         map[string]int `json:"-"`
 	WALMode                  bool
 	Rows                     []SQLiteRow    `json:"-"`
@@ -281,6 +282,14 @@ func readSQLitePageMode(parent context.Context, file ArchiveFile, scratch string
 	if snapshot {
 		if conn.QueryRowContext(ctx, "SELECT count(*) FROM ChatContent WHERE MsgType IN (20,21,25,26,29,32,33,34,35,36,45,51,52)").Scan(&batch.SourceControls) != nil {
 			return SQLiteBatch{}, ErrSQLite
+		}
+		information := batch.DeferredControls["20"]
+		if information > 0 {
+			if err := classifySnapshotInformation(ctx, conn, information); err != nil {
+				return SQLiteBatch{}, err
+			}
+			batch.SourceInformation = information
+			batch.SourceControls -= information
 		}
 		if batch.SourceControls != 0 {
 			return SQLiteBatch{}, ErrSnapshotControls

@@ -41,7 +41,19 @@ replays the original bounded source page and rechecks TTL, ownership, policy and
 known local tombstones; no plaintext cached in a token or disk index is necessary.
 Archive-only records are never send/quote anchors. Known local suppression is
 checked by genuine global ID; missing global IDs and unverified WAL changes remain
-explicit visibility limitations. Source controls block the whole selected file.
+explicit visibility limitations. Unclassified source controls block the whole selected file. A narrow snapshot-only
+exception recognizes type 20 only with exactly one valid attachment whose action
+is the pinned native `msginfo.actionlist` literal; every such row in the whole
+file must pass metadata classification before any prefix is returned. Classification
+reads neither message content nor identities, at most 5,000 rows/8 MiB metadata
+under the existing SQLite deadline, with a 256 KiB blob limit per row. Missing,
+malformed, oversized, multiple-attachment or different actions fail closed. Other
+deferred types, including delete/undo 33/36, remain blocking. This does not change
+strict mobile import admission. Classified informational content is never rendered
+or executed. `source_information_rows` counts all classified rows in the file;
+`unsupported_content.native_information` counts omitted rows examined on this page.
+Their metadata gaps are counted for the examined page. Empty informational pages
+still advance the cursor. TTL, local tombstones, policy and resource checks remain.
 
 Coverage distinguishes source/period counts and bounds from examined-page rejection,
 expiry, unsupported metadata/content, unresolved quote/mention/sender and known

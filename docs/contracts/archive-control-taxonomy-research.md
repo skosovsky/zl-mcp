@@ -148,3 +148,19 @@ inspection succeeded offline and no ack or subscription mutation occurred.
 A subsequent actual-client status read returned connected/authenticated with no
 last error, without another restart or login. The initial reconnection observation
 did not establish loss of the preserved session.
+
+## Narrow snapshot information candidate
+
+The source-wide snapshot classifier now accepts only type 20 with valid BinNet
+and exactly one attachment whose action bytes equal `msginfo.actionlist`. It
+never renders or executes informational text, title or parameters. Other actions,
+malformed/missing/multiple attachments and every other deferred type remain
+blocking, including 33/36. The scan is independent of requested dates/cursors,
+limited to 5,000 rows/8 MiB total metadata/256 KiB per blob and the existing SQLite
+execution deadline. Strict mobile import admission is unchanged.
+
+Public archive coverage adds optional `source_information_rows` for the whole-file
+classified count. Examined-page omissions use `unsupported_content.native_information`;
+their metadata gaps remain counted. Empty informational pages retain continuation.
+The implementation and updated skills are candidates pending clean installation
+and real public-reader acceptance; the current installed version remains 50f72d4.

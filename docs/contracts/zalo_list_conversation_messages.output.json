@@ -642,6 +642,11 @@
         },
         "live_visibility": {
           "const": "global_ids_only"
+        },
+        "source_information_rows": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Whole-file count of type-20 records classified by the exact native msginfo.actionlist attachment action. Their content is never rendered; examined-page omissions appear as native_information in unsupported_content. This is not a recall count or complete-history assertion."
         }
       },
       "required": [

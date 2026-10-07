@@ -55,3 +55,7 @@ description: >-
 source=conversation_preload сохраняет доступный снимок без уведомлений;
 partial/source_window_limited означает ограничение источника, а не ошибку
 callback. Не запрашивай более глубокую историю из обработчика события.
+
+Архивные `source_information_rows` и `unsupported_content.native_information`
+являются счётчиками покрытия чтения, а не Events. Не создавай уведомлений,
+не подтверждай журнал подписки и не объявляй отзыв сообщения по этим счётчикам.

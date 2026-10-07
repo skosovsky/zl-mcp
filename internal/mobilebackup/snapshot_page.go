@@ -42,6 +42,7 @@ type SnapshotPage struct {
 	WALMode                                                         bool             `json:"-"`
 	UnsupportedMetadataFields, UnresolvedQuotes, UnresolvedMentions int              `json:"-"`
 	Examined, Rejected, Expired, UnresolvedSenders                  int              `json:"-"`
+	SourceInformation                                               int              `json:"-"`
 	Unsupported                                                     map[string]int   `json:"-"`
 	HasMore                                                         bool             `json:"-"`
 	Next                                                            *SQLiteCursor    `json:"-"`
@@ -84,6 +85,7 @@ func (a AccountArchive) ReadSnapshotPage(ctx context.Context, sourceID string, r
 	result.WALMode = batch.WALMode
 	result.Examined = batch.Examined
 	result.Rejected = batch.Rejected
+	result.SourceInformation = batch.SourceInformation
 	result.HasMore = batch.HasMore
 	if batch.Next != nil {
 		copy := *batch.Next
@@ -99,6 +101,24 @@ func (a AccountArchive) ReadSnapshotPage(ctx context.Context, sourceID string, r
 	for _, row := range batch.Rows {
 		if ctx.Err() != nil {
 			return result, ErrArchive
+		}
+		if row.Type == 20 {
+			// Whole-source classification already validated every type-20 action.
+			// Advance the ordinary row cursor and report omission, without projecting
+			// source text, title, quote, mentions or interactive action parameters.
+			metadata, metadataErr := ParseBinNet(ctx, row.BinNet)
+			if metadataErr != nil || ctx.Err() != nil {
+				metadata.Clear()
+				return result, ErrArchive
+			}
+			result.UnsupportedMetadataFields += metadata.UnsupportedFields
+			if metadata.Quote != nil {
+				result.UnresolvedQuotes++
+			}
+			result.UnresolvedMentions += len(metadata.Mentions)
+			metadata.Clear()
+			result.Unsupported["native_information"]++
+			continue
 		}
 		expiry, declared, e := MessageExpiryMS(row.TimestampMS, row.TTL)
 		if e != nil {
