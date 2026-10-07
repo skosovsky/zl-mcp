@@ -10,11 +10,11 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
-The current installed clean source is `29acfb93a4ebc9b13210e10ef399c1835e3c8299`,
+The current installed clean source is `3592f3d56f5900a230c8cf0ab6ad310b88328f62`,
 with ad hoc signed binary SHA-256
-`86dc7c20b8fe48691f00ccdfe1c9000dda79cca9409bcc095a67f9125aaeb20a`.
+`9ea75d9103645517bcebf77899cfc269032eeba7f225423b39794d71606f68e0`.
 Root tests/vet, affected-package race and macOS arm64/Linux amd64 builds passed locally.
-[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37586543196)
+[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37587570124)
 passed root/nested test, race and vet, CGO-free builds and native startup acceptance.
 The exact clean candidate (`vcs.modified=false`) also passed isolated native
 startup/shutdown acceptance locally. A verified private full-state/binary/config/
@@ -58,9 +58,12 @@ The all-file date-window sample inspected 891 source rows; scalar validation
 rejected 128 at message ID validation. All 763 remaining rows have valid metadata:
 460 plain projections and 303 unsupported projections. Eight files have more
 unsampled rows, so this is not complete content coverage. Retained bytes/manifest/
-expiry and all runtime state were preserved. The native consumer can synthesize
-local IDs for missing globals; this is not proof that our rejected IDs are missing,
-nor permission to synthesize a genuine upstream ID.
+expiry and all runtime state were preserved. Follow-up fixed-key diagnostics established zero global IDs for all 128 sample
+rejections. All have positive status, recognized payload kind and valid client ID;
+100 have nonempty source text and 28 do not. Remaining validation and visible-text
+semantics are not proved by these observations. The native consumer can synthesize
+local IDs for missing globals; this does not give our zero IDs genuine upstream
+identity or permit using invented IDs in the corpus/quote-send routes.
 A [separate snapshot-reading proposal](contracts/retained-archive-reading-proposal.md)
 is awaiting a scope decision; it is not an available MCP capability and does not
 waive strict import admission. See [retained archive task](task-retained-mobile-archive.md).

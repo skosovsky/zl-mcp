@@ -125,12 +125,12 @@ Offline inspection сейчас выдаёт coverage по интервалу и
 Две date-window проверки прошли на одном cache без download/import; повтор
 capture вернул идентичный manifest, ciphertext и expiry не изменились.
 
-Чистый source `29acfb9` опубликован и установлен через прежний LaunchAgent после
+Чистый source `3592f3d` опубликован и установлен через прежний LaunchAgent после
 проверенного private backup. Root test/vet, race затронутых пакетов, сборки без
 CGO для macOS arm64/Linux amd64 и native startup/shutdown acceptance прошли.
-[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37586543196)
+[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37587570124)
 прошёл root/nested test/race/vet, сборки без CGO и native acceptance. Installed SHA-256:
-`86dc7c20b8fe48691f00ccdfe1c9000dda79cca9409bcc095a67f9125aaeb20a`.
+`9ea75d9103645517bcebf77899cfc269032eeba7f225423b39794d71606f68e0`.
 Проверены сохранение всего состояния, зашифрованного архива и подписок, HTTP,
 STDIO и фактический клиент: collector connected/authenticated, без last_error.
 Sending permission остаётся выключенным.
@@ -165,3 +165,11 @@ expiry, корпус и подписки остались прежними, down
 [Проект отдельного чтения снимка](contracts/retained-archive-reading-proposal.md)
 ожидает решения; публичные MCP capabilities пока не изменены. WAL admission
 для строгого импорта не снимается проверкой целостности или совпадением counts.
+
+Уточнение формы GlbMsgId на той же выборке: все 128 отказов имеют нулевой
+глобальный ID. Независимые проверки показали положительный status, известный
+payload kind и пригодный client ID у всех 128; 100 имеют непустое исходное
+поле текста, 28 — пустое. Эти наблюдения не завершают валидацию сообщения,
+метаданных, expiry или controls. Они требуют отдельной стабильной archive-row
+identity для read-only снимка, а не выдуманного Zalo ID. Новых download, phone
+request, import, Events или отправок нет; сохранность состояния проверена.

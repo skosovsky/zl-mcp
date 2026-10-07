@@ -29,9 +29,11 @@ cutoff. SQLite scalar validation rejected 128; the remaining 763 have valid
 metadata: 460 plain-text projections and 303 unsupported projections. Eight files
 have additional unsampled rows. These are sample counts, not complete message
 counts; All 128 sample scalar rejections stop at message ID validation (`GlbMsgId`).
-The other scalar fields of these rejected rows are not yet validated; the shape
-of the rejected IDs still requires investigation. Unsupported projections
-remain a separate limitation.
+The bounded follow-up established `GlbMsgId=0` for all 128. Independent
+observations show positive status, a known payload kind and a valid client ID
+for all 128; 100 have nonempty source text and 28 do not. Their text is not yet a
+verified visible-message projection, and remaining scalar/metadata/expiry/control
+validation is still required. Unsupported projections remain a separate limitation.
 Two records in the requested historical direct conversation now project as plain
 text after the native absent-action fallback correction.
 
@@ -53,7 +55,9 @@ bounded pages, order, excerpts/full-text resource URIs and stable source-bound
 cursors. It returns source capture/expiry, main-image bounds, `history_complete=false`,
 WAL uncertainty, unsupported/rejected/expired counts and `has_more`. Source and
 corpus items never share resource namespaces or checkpoints. The native importer has a separate queue for missing global IDs and generates
-local IDs; this does not prove a genuine upstream global message ID. Archive
+local IDs; this does not prove a genuine upstream global message ID. The actual sampled
+zero-ID records therefore require their own stable archive row identity for
+read-only provenance; zero must never be used as a quote/global ID. Archive
 reading must therefore use a stable source/file/row identity in its own
 namespace, and distinguish it from an available verified Zalo message ID.
 Do not synthesize a Zalo global ID to pass corpus or send validation.
