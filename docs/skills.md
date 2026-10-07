@@ -37,6 +37,13 @@ Each entrypoint has a specific trigger, uses exact tool names, and links to cond
 
 ## Conversation support
 
+When the client discovers `zalo_list_archive_sources`, the research skill can
+select a retained source and browse its conversations/messages offline. Its
+conditional archive reference distinguishes source provenance, nullable genuine
+message IDs and examined-page gaps. Archive records cannot be quote anchors.
+The Events skill keeps archive context separate from trusted journal payloads;
+reading an archive neither produces Events nor acknowledges a subscription.
+
 The research skill retains its historical `researching-zalo-groups` directory/name for compatibility with existing installations and fixtures. Its current scope includes direct chats and groups through the additive conversation tools; legacy-only connections support group research. Conversation identity is always the pair of type and opaque ID. Catalogue absence and an empty replay do not prove a complete history.
 
 The Events skill handles `zalo.conversation.message.created.v2` version 2 and the unchanged group-only `zalo.message.created`. It routes context reads by profile and relies on the trusted integration for scope association and processing state. Collection mode `all` does not authorize widening an existing callback subscription. These revisions have structural checks and contract tests, without new model evals; historical group evals do not validate the updated workflows.

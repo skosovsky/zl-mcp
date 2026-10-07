@@ -108,7 +108,8 @@
           "replay",
           "stored_message",
           "contacts_catalog",
-          "preload_catalog"
+          "preload_catalog",
+          "retained_archive"
         ]
       }
     },
@@ -122,6 +123,9 @@
         "no_matching_conversations",
         null
       ]
+    },
+    "source": {
+      "$ref": "#/$defs/ArchiveSource"
     }
   },
   "required": [
@@ -133,5 +137,68 @@
     "empty_reason"
   ],
   "additionalProperties": false,
-  "$schema": "https://json-schema.org/draft/2020-12/schema"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ArchiveSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "captured_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "capture_cache_expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "preserved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "retention": {
+          "const": "until_owner_deletion"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "file_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "direct_files": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "group_files": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "history_complete": {
+          "const": false
+        },
+        "read_scope": {
+          "const": "collection_policy"
+        }
+      },
+      "required": [
+        "source_id",
+        "captured_at",
+        "capture_cache_expires_at",
+        "preserved_at",
+        "retention",
+        "digest",
+        "file_count",
+        "direct_files",
+        "group_files",
+        "history_complete",
+        "read_scope"
+      ]
+    }
+  }
 }

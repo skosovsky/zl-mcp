@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Read-only archived text projection. Archive identity is separate from genuine Zalo ID; never an outgoing quote anchor. Public MCP integration is not yet available.",
+  "description": "Read-only archived text projection. Archive identity is separate from genuine Zalo ID; never an outgoing quote anchor.",
   "type": "object",
   "additionalProperties": false,
   "properties": {

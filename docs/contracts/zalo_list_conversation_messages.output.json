@@ -6,7 +6,14 @@
       "type": "array",
       "maxItems": 50,
       "items": {
-        "$ref": "#/$defs/Hit"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/Hit"
+          },
+          {
+            "$ref": "#/$defs/ArchiveHit"
+          }
+        ]
       }
     },
     "has_more": {
@@ -31,7 +38,8 @@
           "enum": [
             "unknown_conversation",
             "no_collected_data",
-            "no_records_in_period"
+            "no_records_in_period",
+            "no_supported_text_in_page"
           ]
         },
         {
@@ -40,7 +48,14 @@
       ]
     },
     "coverage": {
-      "$ref": "#/$defs/Coverage"
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Coverage"
+        },
+        {
+          "$ref": "#/$defs/ArchiveCoverage"
+        }
+      ]
     },
     "snapshot_at": {
       "type": "string",
@@ -79,6 +94,9 @@
           "type": "null"
         }
       ]
+    },
+    "source": {
+      "$ref": "#/$defs/ArchiveSource"
     }
   },
   "additionalProperties": false,
@@ -295,6 +313,359 @@
         "text_resource_uri"
       ],
       "additionalProperties": false
+    },
+    "ArchiveSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "captured_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "capture_cache_expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "preserved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "retention": {
+          "const": "until_owner_deletion"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "file_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "direct_files": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "group_files": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "history_complete": {
+          "const": false
+        },
+        "read_scope": {
+          "const": "collection_policy"
+        }
+      },
+      "required": [
+        "source_id",
+        "captured_at",
+        "capture_cache_expires_at",
+        "preserved_at",
+        "retention",
+        "digest",
+        "file_count",
+        "direct_files",
+        "group_files",
+        "history_complete",
+        "read_scope"
+      ]
+    },
+    "ArchiveHit": {
+      "description": "Read-only archived text projection. Archive identity is separate from genuine Zalo ID; never an outgoing quote anchor.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "archive_row_id": {
+          "type": "string",
+          "pattern": "^ar:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:(0|[1-9][0-9]{0,2}):(0|-?[1-9][0-9]{0,18})$"
+        },
+        "zalo_message_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,19}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "conversation_type": {
+          "enum": [
+            "direct",
+            "group"
+          ]
+        },
+        "conversation_id": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,19}$"
+        },
+        "sender_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,19}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sender_mapping": {
+          "enum": [
+            "verified",
+            "unavailable"
+          ]
+        },
+        "direction": {
+          "enum": [
+            "incoming",
+            "outgoing",
+            "unknown"
+          ]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 2048,
+          "minLength": 1
+        },
+        "text_kind": {
+          "enum": [
+            "plain",
+            "rich"
+          ]
+        },
+        "quote_anchor_eligible": {
+          "const": false
+        },
+        "text_truncated": {
+          "type": "boolean"
+        },
+        "resource_uri": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uri"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "archive_row_id",
+        "zalo_message_id",
+        "conversation_type",
+        "conversation_id",
+        "sender_id",
+        "sender_mapping",
+        "direction",
+        "timestamp",
+        "text",
+        "text_kind",
+        "quote_anchor_eligible",
+        "text_truncated",
+        "resource_uri"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "sender_mapping": {
+                "const": "unavailable"
+              }
+            },
+            "required": [
+              "sender_mapping"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sender_id": {
+                "type": "null"
+              },
+              "direction": {
+                "const": "unknown"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "sender_id": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]{0,19}$"
+              },
+              "direction": {
+                "enum": [
+                  "incoming",
+                  "outgoing"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "text_truncated": {
+                "const": true
+              }
+            },
+            "required": [
+              "text_truncated"
+            ]
+          },
+          "then": {
+            "properties": {
+              "resource_uri": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "resource_uri": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ArchiveCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "conversation_type": {
+          "enum": [
+            "direct",
+            "group"
+          ]
+        },
+        "conversation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "period_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "invalid_timestamp_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source_earliest_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_latest_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "wal_mode": {
+          "type": "boolean"
+        },
+        "history_complete": {
+          "const": false
+        },
+        "examined": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expired": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "suppressed_live": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unresolved_senders": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unsupported_metadata_fields": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unresolved_quotes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unresolved_mentions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unsupported_content": {
+          "type": "object",
+          "maxProperties": 16,
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "coverage_scope": {
+          "const": "examined_page"
+        },
+        "live_visibility": {
+          "const": "global_ids_only"
+        }
+      },
+      "required": [
+        "conversation_type",
+        "conversation_id",
+        "source_rows",
+        "period_rows",
+        "invalid_timestamp_rows",
+        "source_earliest_at",
+        "source_latest_at",
+        "wal_mode",
+        "history_complete",
+        "examined",
+        "rejected",
+        "expired",
+        "suppressed_live",
+        "unresolved_senders",
+        "unsupported_metadata_fields",
+        "unresolved_quotes",
+        "unresolved_mentions",
+        "unsupported_content",
+        "coverage_scope",
+        "live_visibility"
+      ]
     }
   },
   "required": [
@@ -307,5 +678,38 @@
     "coverage_observed_at",
     "requested_since",
     "requested_until"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "source"
+        ]
+      },
+      "then": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/$defs/ArchiveHit"
+            }
+          },
+          "coverage": {
+            "$ref": "#/$defs/ArchiveCoverage"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/$defs/Hit"
+            }
+          },
+          "coverage": {
+            "$ref": "#/$defs/Coverage"
+          }
+        }
+      }
+    }
   ]
 }

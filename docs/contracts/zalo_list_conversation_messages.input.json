@@ -45,11 +45,31 @@
       ],
       "default": "desc",
       "description": "Chronological order; default newest first. Cursor preserves the original order."
+    },
+    "source_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Select an immutable retained archive from zalo_list_archive_sources. Omit for the current local corpus. No automatic acquisition or source fallback."
     }
   },
   "required": [
     "conversation_type",
     "conversation_id"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "source_id"
+        ]
+      },
+      "then": {
+        "required": [
+          "since",
+          "until"
+        ]
+      }
+    }
+  ]
 }

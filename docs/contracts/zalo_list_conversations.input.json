@@ -21,6 +21,11 @@
     "cursor": {
       "type": "string",
       "minLength": 1
+    },
+    "source_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Select an immutable retained archive from zalo_list_archive_sources. Omit for the current local corpus. No automatic acquisition or source fallback."
     }
   },
   "required": [],

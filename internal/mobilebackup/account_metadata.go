@@ -15,6 +15,32 @@ func (a AccountArchive) ConversationIndex(ctx context.Context, ref domain.Conver
 	return SelectArchiveIndex(ctx, a.archive, a.pairs, ref)
 }
 
+// ConversationRefs returns the authenticated typed file mapping in immutable file order.
+func (a AccountArchive) ConversationRefs(ctx context.Context) ([]domain.ConversationRef, error) {
+	if ctx == nil || ctx.Err() != nil || a.retainedSourceID == "" {
+		return nil, ErrArchive
+	}
+	byName := map[string]domain.ConversationRef{}
+	for _, pair := range a.pairs {
+		name := pair.Plain + ".db"
+		kind := domain.ConversationDirect
+		if pair.Group {
+			name = "group_" + name
+			kind = domain.ConversationGroup
+		}
+		byName[name] = domain.ConversationRef{Type: kind, ID: pair.Session}
+	}
+	result := make([]domain.ConversationRef, 0, len(a.archive.Files))
+	for _, file := range a.archive.Files {
+		ref, ok := byName[file.Name]
+		if !ok {
+			return nil, ErrIdentities
+		}
+		result = append(result, ref)
+	}
+	return result, nil
+}
+
 type AccountActionShape struct {
 	SHA256      string `json:"sha256"`
 	ByteLength  int    `json:"byte_length"`

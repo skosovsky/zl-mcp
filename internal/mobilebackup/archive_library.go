@@ -2,8 +2,56 @@ package mobilebackup
 
 import (
 	"context"
+	"encoding/hex"
+	"io"
+	"sort"
+	"strings"
 	"time"
 )
+
+// Sources authenticates every currently published library source before returning metadata.
+func (s *RetainedArchiveStore) Sources(ctx context.Context, accountKey string) ([]PreservationReceipt, error) {
+	if !s.lock(ctx) {
+		return nil, ErrRetainedArchive
+	}
+	defer s.ledger.unlock()
+	key, decodeErr := hex.DecodeString(accountKey)
+	if !s.permanent || decodeErr != nil || len(key) != 32 || hex.EncodeToString(key) != accountKey {
+		return nil, ErrRetainedArchive
+	}
+	dir, err := s.ledger.root.Open(".")
+	if err != nil {
+		return nil, ErrRetainedArchive
+	}
+	entries, err := dir.ReadDir(32)
+	dir.Close()
+	if err != nil && err != io.EOF || len(entries) > retainedMaxSources+3 {
+		return nil, ErrRetainedArchive
+	}
+	result := []PreservationReceipt{}
+	for _, entry := range entries {
+		name := entry.Name()
+		if name == snapshotKeyName || name == snapshotClaimsName {
+			continue
+		}
+		id := strings.TrimSuffix(name, ".archive")
+		expected, valid := retainedName(id)
+		if !valid || expected != name {
+			return nil, ErrRetainedArchive
+		}
+		meta, a, stored, e := s.readBound(ctx, id, accountKey)
+		a.Clear()
+		if e != nil {
+			return nil, e
+		}
+		result = append(result, preservationReceipt(meta, stored))
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].Source.SourceID < result[j].Source.SourceID })
+	if ctx.Err() != nil {
+		return nil, ErrRetainedArchive
+	}
+	return result, nil
+}
 
 type PreservationReceipt struct {
 	Source              RetainedArchiveManifest `json:"source"`

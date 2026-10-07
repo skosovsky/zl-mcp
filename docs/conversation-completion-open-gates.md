@@ -10,6 +10,23 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
+Latest authoritative installation: clean source `f7038ce53c7f0d9315009d3bdb37cddc041d5c6b`,
+binary SHA-256 `5c29ebdc84c715c795888c64c4e13a624b761bd88d3b69e52b1e561266eb5970`.
+[Its Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37590841020)
+passed. The permanent library was restored and inspected offline through the
+owner route: 54 direct files and two group files, retention until owner deletion,
+no new phone request or corpus import. See [permanent archive](contracts/permanent-account-archive.md).
+
+Public source discovery, catalogue/message paging and full-record resources are
+currently an undeployed implementation with executable schemas and synthetic
+offline SDK acceptance. Account ownership, current collection policy, cursor
+binding, Unicode excerpts and known tombstone/expiry visibility are tested.
+Real-account MCP acceptance, copied skills, deployment and publication remain
+pending. This does not close the remaining v2/sending live gates or prove complete
+Zalo history. See [archive read contract](contracts/archive-mcp-reading.md).
+
+### Prior installation checkpoint
+
 The current installed clean source is `3592f3d56f5900a230c8cf0ab6ad310b88328f62`,
 with ad hoc signed binary SHA-256
 `9ea75d9103645517bcebf77899cfc269032eeba7f225423b39794d71606f68e0`.

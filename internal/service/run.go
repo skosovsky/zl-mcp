@@ -74,6 +74,9 @@ func (p *membershipPort) Call(ctx context.Context, method string, args any) (map
 	}
 	p.mu.RLock()
 	defer p.mu.RUnlock()
+	if method == "zalo_list_archive_sources" || method == "zalo_list_conversations" || method == "zalo_list_conversation_messages" || method == "read_archive_resource" {
+		return p.archiveRead(ctx, method, args)
+	}
 	if method == "zalo_import_conversation_history" || method == "zalo_get_history_import_status" || method == "zalo_cancel_history_import" {
 		return (&historyimport.Manager{Store: p.store}).Call(ctx, method, args)
 	}

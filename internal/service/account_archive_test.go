@@ -133,6 +133,22 @@ func TestAccountArchiveCaptureRestartOfflineInspectionAndRemoval(t *testing.T) {
 	if preserved.Code != 200 || preserved.Body.String() != restored.Body.String() {
 		t.Fatal(preserved.Body.String())
 	}
+	// Public inventory uses only the authenticated library while upstream is offline.
+	inventory, err := p.Call(ctx, "zalo_list_archive_sources", map[string]any{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	schema, err := contracts.Compile("zalo_list_archive_sources", "output")
+	encoded, _ := json.Marshal(inventory)
+	var inventoryValue any
+	json.Unmarshal(encoded, &inventoryValue)
+	if err != nil || schema.Validate(inventoryValue) != nil || len(inventory["sources"].([]map[string]any)) != 1 {
+		t.Fatal("invalid offline inventory", err)
+	}
+	if strings.Contains(string(encoded), "SessionID") || strings.Contains(string(encoded), "synthetic text") {
+		t.Fatal("source metadata disclosed private content")
+	}
+	testOfflineArchiveCatalogue(t, p, first.SourceID)
 	again, e := p.captureAccountArchiveWithDownloader(ctx, attempt.OperationID, attempt.Revision, d)
 	if e != nil {
 		t.Fatal(e)

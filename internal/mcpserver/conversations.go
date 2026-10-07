@@ -19,6 +19,41 @@ func conversationSearch(args map[string]any) storage.Search {
 	return storage.Search{General: true, ConversationType: str(args, "conversation_type"), ConversationID: str(args, "conversation_id"), Query: str(args, "query"), SenderID: str(args, "sender_id"), Since: str(args, "since"), Until: str(args, "until"), Limit: integer(args, "limit", 20), Cursor: str(args, "cursor")}
 }
 func (s *Service) addConversationResources(server *mcp.Server) error {
+	archiveSchema, err := contracts.Compile("archive_snapshot_record", "output")
+	if err != nil {
+		return err
+	}
+	server.AddResourceTemplate(&mcp.ResourceTemplate{URITemplate: "zalo://archives/{token}", Name: "Full local archive record", MIMEType: "application/json"}, func(ctx context.Context, r *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+		allowed, err := s.Store.AllowRead(ctx)
+		if err != nil || !allowed {
+			return nil, fmt.Errorf("archive read budget unavailable; retry later")
+		}
+		u, err := url.Parse(r.Params.URI)
+		if err != nil || u.Scheme != "zalo" || u.Host != "archives" || u.RawQuery != "" || u.Fragment != "" || u.User != nil {
+			return nil, fmt.Errorf("invalid archive resource URI")
+		}
+		token := strings.TrimPrefix(u.EscapedPath(), "/")
+		if token == "" || len(token) > 5600 || strings.ContainsAny(token, "/%") {
+			return nil, fmt.Errorf("invalid archive resource token")
+		}
+		value, err := s.Control.Call(ctx, "read_archive_resource", map[string]any{"token": token})
+		if err != nil {
+			return nil, fmt.Errorf("archive record unavailable or access denied")
+		}
+		body, err := json.Marshal(value)
+		if err != nil {
+			return nil, fmt.Errorf("archive record encoding failed")
+		}
+		var wire any
+		if json.Unmarshal(body, &wire) != nil || archiveSchema.Validate(wire) != nil {
+			return nil, fmt.Errorf("archive record contract mismatch")
+		}
+		text, ok := value["text"].(string)
+		if !ok || len(text) > 1<<20 {
+			return nil, fmt.Errorf("archive record exceeds supported text size")
+		}
+		return &mcp.ReadResourceResult{Contents: []*mcp.ResourceContents{{URI: r.Params.URI, MIMEType: "application/json", Text: string(body)}}}, nil
+	})
 	schema, err := contracts.Compile("conversation_collection", "output")
 	if err != nil {
 		return err

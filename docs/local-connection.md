@@ -52,6 +52,22 @@ An empty selected policy means no collection; `all` dynamically includes newly d
 
 Optional [skills](skills.md) provide research and event-processing instructions after the relevant client capabilities are available.
 
+## Read a retained local archive
+
+When `zalo_list_archive_sources` is discovered, select its immutable `source_id`.
+Pass that ID to `zalo_list_conversations`, then to
+`zalo_list_conversation_messages` with an exact conversation type/ID and explicit
+RFC3339 `since`/`until` interval. Omitting `source_id` keeps normal corpus reads.
+Follow cursors even when a page has no supported text but `has_more=true`.
+Read truncated text using the server-issued `zalo://archives/<token>` resource.
+Archive rows have their own identity and cannot serve as outgoing quote anchors.
+
+These reads work offline without a phone request, corpus import or Events.
+The permanent library lives under `StateDir/account-archive-library/sources`
+and remains until owner deletion. Capture provenance and examined-page coverage
+do not establish complete account history. Unclassified controls block the
+selected file explicitly. See [archive reading](contracts/archive-mcp-reading.md).
+
 ## Refresh ChatGPT plugin discovery after an update
 
 For a personal developer-mode plugin, OpenAI documents a separate metadata
