@@ -80,7 +80,7 @@ func (p *membershipPort) consumePreparedMobileArchive(parent context.Context, id
 	}
 	defer stop()
 	attempt, e := p.store.MobileBackupAttempt(operation, id)
-	if e != nil || attempt.State != "prepared" {
+	if e != nil || attempt.Request.ArchiveScope != "" || attempt.State != "prepared" {
 		return mobilebackup.SelectedArchive{}, mobilebackup.ErrArchive
 	}
 	identityCheck, e := mobilebackup.IdentityPayload(domain.MobileIdentityRequest{Direct: []string{attempt.Request.ConversationID}})

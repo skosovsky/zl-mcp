@@ -48,7 +48,7 @@ func run() error {
 		return e
 	}
 	if flags.NArg() < 1 {
-		return fmt.Errorf("usage: zl-mcp -config config.toml <login|service|serve|probe-preload|mobile-backup-prepare|mobile-backup-status|mobile-backup-cancel|mobile-backup-probe-offer|mobile-backup-probe-archive|probe-recall|approve-join preview_id>")
+		return fmt.Errorf("usage: zl-mcp -config config.toml <login|service|serve|probe-preload|mobile-backup-prepare|mobile-backup-status|mobile-backup-cancel|mobile-backup-probe-offer|mobile-backup-probe-archive|probe-recall|account-archive-prepare|account-archive-capture|account-archive-status|account-archive-inspect|account-archive-remove|approve-join preview_id>")
 	}
 	c, e := config.Load(*path)
 	if e != nil {
@@ -72,7 +72,7 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	switch flags.Arg(0) {
-	case "probe-recall", "mobile-backup-prepare", "mobile-backup-status", "mobile-backup-cancel", "mobile-backup-probe-offer", "mobile-backup-probe-archive":
+	case "probe-recall", "mobile-backup-prepare", "mobile-backup-status", "mobile-backup-cancel", "mobile-backup-probe-offer", "mobile-backup-probe-archive", "account-archive-prepare", "account-archive-capture", "account-archive-status", "account-archive-inspect", "account-archive-remove":
 		return runMobileLedger(ctx, c.StateDir, flags.Args(), os.Stdin, os.Stdout)
 	case "service":
 		if flags.NArg() != 1 {

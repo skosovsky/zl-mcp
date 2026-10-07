@@ -66,7 +66,7 @@ func (s *Store) loadMobileBackup(ctx context.Context, q historyReader, id string
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
-	if account != a.account || !s.AllowsConversation(a.Request.Ref()) {
+	if account != a.account || (a.Request.ArchiveScope != "account" && !s.AllowsConversation(a.Request.Ref())) {
 		return MobileBackupAttempt{}, subscriptionPermission("Mobile backup attempt is outside account or collection policy.")
 	}
 	return a, nil
@@ -80,7 +80,7 @@ func (s *Store) PrepareMobileBackup(ctx context.Context, request domain.MobileBa
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
-	if !s.AllowsConversation(r.Ref()) {
+	if r.ArchiveScope != "account" && !s.AllowsConversation(r.Ref()) {
 		return MobileBackupAttempt{}, subscriptionPermission("Conversation is outside collection policy.")
 	}
 	tx, err := s.DB.BeginTx(ctx, nil)

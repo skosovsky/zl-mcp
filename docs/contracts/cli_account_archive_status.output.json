@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Owner-only safe receipt for a retained account export. Storage does not establish history completeness or import any records.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "scope": {
+      "const": "account"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "file_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "direct_files": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "group_files": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "stored_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 538000000
+    },
+    "history_complete": {
+      "const": false
+    },
+    "import_performed": {
+      "const": false
+    }
+  },
+  "required": [
+    "source_id",
+    "scope",
+    "captured_at",
+    "expires_at",
+    "digest",
+    "file_count",
+    "direct_files",
+    "group_files",
+    "stored_bytes",
+    "history_complete",
+    "import_performed"
+  ]
+}

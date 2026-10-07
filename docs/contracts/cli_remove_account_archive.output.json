@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "removed": {
+      "const": true
+    },
+    "import_performed": {
+      "const": false
+    }
+  },
+  "required": [
+    "source_id",
+    "removed",
+    "import_performed"
+  ]
+}

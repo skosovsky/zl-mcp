@@ -32,7 +32,7 @@ func (p *membershipPort) probeMobileArchiveComparisonWithDownloader(ctx context.
 	if err != nil {
 		return nil, err
 	}
-	if attempt.State != "prepared" || attempt.Revision != revision {
+	if attempt.Request.ArchiveScope != "" || attempt.State != "prepared" || attempt.Revision != revision {
 		return nil, storage.ErrMobileBackupState
 	}
 	target := ""

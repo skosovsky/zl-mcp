@@ -10,57 +10,112 @@
       "additionalProperties": false,
       "properties": {
         "request": {
-          "description": "Internal mobile attempt selection, not an exposed MCP tool.",
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "request_id": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "conversation_type": {
-              "enum": [
-                "direct",
-                "group"
+          "oneOf": [
+            {
+              "description": "Internal mobile attempt selection, not an exposed MCP tool.",
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "request_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "conversation_type": {
+                  "enum": [
+                    "direct",
+                    "group"
+                  ]
+                },
+                "conversation_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "since": {
+                  "type": "string",
+                  "format": "date-time",
+                  "maxLength": 64
+                },
+                "until": {
+                  "type": "string",
+                  "format": "date-time",
+                  "maxLength": 64
+                },
+                "max_messages": {
+                  "description": "Maximum source records examined, including duplicates and records outside the requested interval.",
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5000,
+                  "default": 1000
+                },
+                "max_archive_bytes": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 536870912,
+                  "default": 67108864
+                }
+              },
+              "required": [
+                "request_id",
+                "conversation_type",
+                "conversation_id",
+                "since",
+                "until",
+                "max_messages",
+                "max_archive_bytes"
               ]
             },
-            "conversation_id": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 256
-            },
-            "since": {
-              "type": "string",
-              "format": "date-time",
-              "maxLength": 64
-            },
-            "until": {
-              "type": "string",
-              "format": "date-time",
-              "maxLength": 64
-            },
-            "max_messages": {
-              "description": "Maximum source records examined, including duplicates and records outside the requested interval.",
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 5000,
-              "default": 1000
-            },
-            "max_archive_bytes": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 536870912,
-              "default": 67108864
+            {
+              "description": "Owner-only whole-account capture. Empty conversation/date fields are not a fake selected chat; inspection chooses its interval separately.",
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "request_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "conversation_type": {
+                  "const": ""
+                },
+                "conversation_id": {
+                  "const": ""
+                },
+                "since": {
+                  "const": ""
+                },
+                "until": {
+                  "const": ""
+                },
+                "max_messages": {
+                  "const": 0
+                },
+                "max_archive_bytes": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 536870912,
+                  "default": 536870912
+                },
+                "archive_scope": {
+                  "const": "account"
+                },
+                "retention_hours": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 720
+                }
+              },
+              "required": [
+                "request_id",
+                "conversation_type",
+                "conversation_id",
+                "since",
+                "until",
+                "max_messages",
+                "max_archive_bytes",
+                "archive_scope",
+                "retention_hours"
+              ]
             }
-          },
-          "required": [
-            "request_id",
-            "conversation_type",
-            "conversation_id",
-            "since",
-            "until",
-            "max_messages",
-            "max_archive_bytes"
           ]
         },
         "operation_id": {

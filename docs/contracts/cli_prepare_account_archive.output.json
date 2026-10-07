@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Phone-attempt ledger only; offer_ready does not mean messages imported.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "request": {
+      "description": "Owner-only whole-account capture. Empty conversation/date fields are not a fake selected chat; inspection chooses its interval separately.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "conversation_type": {
+          "const": ""
+        },
+        "conversation_id": {
+          "const": ""
+        },
+        "since": {
+          "const": ""
+        },
+        "until": {
+          "const": ""
+        },
+        "max_messages": {
+          "const": 0
+        },
+        "max_archive_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 536870912,
+          "default": 536870912
+        },
+        "archive_scope": {
+          "const": "account"
+        },
+        "retention_hours": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 720
+        }
+      },
+      "required": [
+        "request_id",
+        "conversation_type",
+        "conversation_id",
+        "since",
+        "until",
+        "max_messages",
+        "max_archive_bytes",
+        "archive_scope",
+        "retention_hours"
+      ]
+    },
+    "operation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "state": {
+      "enum": [
+        "prepared",
+        "dispatching",
+        "waiting_for_confirmation",
+        "request_result_unknown",
+        "mobile_restoring",
+        "waiting_for_backup",
+        "offer_ready",
+        "failed",
+        "cancelled",
+        "interrupted"
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "request",
+    "operation_id",
+    "state",
+    "revision",
+    "created_at",
+    "updated_at"
+  ]
+}

@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+
+	"github.com/google/uuid"
 )
 
 type MobileBackupRequest struct {
@@ -14,12 +16,37 @@ type MobileBackupRequest struct {
 	Until            string `json:"until"`
 	MaxMessages      int    `json:"max_messages"`
 	MaxArchiveBytes  int64  `json:"max_archive_bytes"`
+	ArchiveScope     string `json:"archive_scope,omitempty"`
+	RetentionHours   int    `json:"retention_hours,omitempty"`
 }
 
 func (r MobileBackupRequest) Ref() ConversationRef {
 	return ConversationRef{Type: r.ConversationType, ID: r.ConversationID}
 }
 func (r MobileBackupRequest) Normalize() (MobileBackupRequest, error) {
+	if r.ArchiveScope != "" {
+		if r.ArchiveScope != "account" || r.ConversationType != "" || r.ConversationID != "" || r.Since != "" || r.Until != "" || r.MaxMessages != 0 {
+			return r, Invalid("Account capture cannot select a chat or interval.")
+		}
+		id, err := uuid.Parse(r.RequestID)
+		if err != nil || len(r.RequestID) != 36 {
+			return r, Invalid("Account capture needs a request UUID.")
+		}
+		r.RequestID = id.String()
+		if r.MaxArchiveBytes == 0 {
+			r.MaxArchiveBytes = 512 << 20
+		}
+		if r.RetentionHours == 0 {
+			r.RetentionHours = 168
+		}
+		if r.MaxArchiveBytes < 1 || r.MaxArchiveBytes > 512<<20 || r.RetentionHours < 1 || r.RetentionHours > 720 {
+			return r, Invalid("Account capture exceeds its storage bounds.")
+		}
+		return r, nil
+	}
+	if r.RetentionHours != 0 {
+		return r, Invalid("Selected import cannot set account archive retention.")
+	}
 	h, err := (HistoryImportRequest{RequestID: r.RequestID, ConversationType: r.ConversationType, ConversationID: r.ConversationID, Since: r.Since, Until: r.Until, MaxMessages: r.MaxMessages}).Normalize()
 	if err != nil {
 		return r, err

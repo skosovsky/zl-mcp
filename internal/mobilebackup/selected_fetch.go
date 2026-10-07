@@ -1,7 +1,6 @@
 package mobilebackup
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"log/slog"
@@ -34,31 +33,14 @@ func FetchSelectedArchive(ctx context.Context, d *Downloader, offer domain.Mobil
 	if e != nil || !canonicalIdentity(normalized.ConversationID) {
 		return SelectedArchive{}, ErrArchive
 	}
-	slog.Info("mobile_archive_stage", "request_id", normalized.RequestID, "stage", "download")
-	encrypted, e := d.Fetch(ctx, offer.URL, offer.FileSize, uint64(normalized.MaxArchiveBytes))
+	account, e := FetchAccountArchive(ctx, d, offer, normalized.MaxArchiveBytes, mapper)
 	if e != nil {
-		return SelectedArchive{}, ErrArchive
+		return SelectedArchive{}, e
 	}
-	defer clear(encrypted)
-	slog.Info("mobile_archive_stage", "request_id", normalized.RequestID, "stage", "decrypt_container")
-	archive, e := ReadFormat1Archive(ctx, bytes.NewReader(encrypted), offer.KeyText, uint64(normalized.MaxArchiveBytes), MaxTotalBytes)
-	if e != nil {
-		return SelectedArchive{}, ErrArchive
-	}
-	defer archive.Clear()
-	slog.Info("mobile_archive_stage", "request_id", normalized.RequestID, "stage", "file_index")
-	request, e := ArchiveIdentityRequest(ctx, archive.Archive)
-	if e != nil {
-		return SelectedArchive{}, ErrArchive
-	}
-	slog.Info("mobile_archive_stage", "request_id", normalized.RequestID, "stage", "identity_mapping")
-	pairs, e := mapper.MapMobileBackupIdentities(ctx, request)
-	defer clear(pairs)
-	if e != nil || ctx.Err() != nil {
-		return SelectedArchive{}, ErrArchive
-	}
+	defer account.Clear()
+	archive, pairs := account.archive, account.pairs
 	slog.Info("mobile_archive_stage", "request_id", normalized.RequestID, "stage", "selection")
-	index, e := SelectArchiveIndex(ctx, archive.Archive, pairs, normalized.Ref())
+	index, e := SelectArchiveIndex(ctx, archive, pairs, normalized.Ref())
 	if e != nil {
 		reason := "INVALID_MAPPING"
 		if errors.Is(e, ErrSelectedConversationUnavailable) {
@@ -67,13 +49,13 @@ func FetchSelectedArchive(ctx context.Context, d *Downloader, offer domain.Mobil
 		if ctx.Err() != nil {
 			reason = "CANCELLED"
 		}
-		slog.Warn("mobile_archive_selection_failed", "request_id", normalized.RequestID, "reason", reason, "direct_files", len(request.Direct), "group_files", len(request.Groups))
+		slog.Warn("mobile_archive_selection_failed", "request_id", normalized.RequestID, "reason", reason, "direct_files", account.directFiles(), "group_files", account.groupFiles())
 		return SelectedArchive{}, ErrArchive
 	}
 	if ctx.Err() != nil {
 		return SelectedArchive{}, ErrArchive
 	}
-	selected := SelectedArchive{ref: normalized.Ref(), requestID: normalized.RequestID, requestFingerprint: normalized.Fingerprint(), File: archive.Archive.Files[index], CiphertextBytes: archive.CiphertextBytes, ContainerBytes: archive.ContainerBytes, TrailingBytes: archive.TrailingBytes}
-	archive.Archive.Files[index] = ArchiveFile{}
+	selected := SelectedArchive{ref: normalized.Ref(), requestID: normalized.RequestID, requestFingerprint: normalized.Fingerprint(), File: archive.Files[index], CiphertextBytes: account.ciphertextBytes, ContainerBytes: account.containerBytes, TrailingBytes: account.trailingBytes}
+	account.archive.Files[index] = ArchiveFile{}
 	return selected, nil
 }

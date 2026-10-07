@@ -15,7 +15,7 @@ import (
 )
 
 func mobileLedgerMethod(method string) bool {
-	return method == "cli_prepare_mobile_backup" || method == "cli_mobile_backup_status" || method == "cli_cancel_prepared_mobile_backup" || (method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive")
+	return accountArchiveMethod(method) || method == "cli_prepare_mobile_backup" || method == "cli_mobile_backup_status" || method == "cli_cancel_prepared_mobile_backup" || (method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive")
 }
 
 // uniqueLedgerJSON rejects ambiguous object keys before normal contract decoding.
@@ -67,6 +67,10 @@ func uniqueLedgerJSON(body []byte) bool {
 }
 
 func (p *membershipPort) mobileLedgerControl(w http.ResponseWriter, r *http.Request, body []byte, method string) {
+	if accountArchiveMethod(method) {
+		p.accountArchiveControl(w, r, body, method)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	fail := func(err error) {
 		code := "OPERATION_FAILED"

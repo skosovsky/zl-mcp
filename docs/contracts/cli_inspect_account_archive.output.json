@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "manifest": {
+      "description": "Owner-only safe receipt for a retained account export. Storage does not establish history completeness or import any records.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "scope": {
+          "const": "account"
+        },
+        "captured_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "file_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "direct_files": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "group_files": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "stored_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 538000000
+        },
+        "history_complete": {
+          "const": false
+        },
+        "import_performed": {
+          "const": false
+        }
+      },
+      "required": [
+        "source_id",
+        "scope",
+        "captured_at",
+        "expires_at",
+        "digest",
+        "file_count",
+        "direct_files",
+        "group_files",
+        "stored_bytes",
+        "history_complete",
+        "import_performed"
+      ]
+    },
+    "since": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "offset": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "has_more_files": {
+      "type": "boolean"
+    },
+    "files": {
+      "type": "array",
+      "maxItems": 25,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "file_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "conversation_type": {
+            "enum": [
+              "direct",
+              "group"
+            ]
+          },
+          "status": {
+            "enum": [
+              "available",
+              "unreadable_sqlite"
+            ]
+          },
+          "source_rows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "period_rows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "invalid_timestamp_rows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "source_earliest_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "source_latest_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "wal_mode": {
+            "type": "boolean"
+          },
+          "examined": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rejected": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "source_controls": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sample_has_more": {
+            "type": "boolean"
+          },
+          "sample_content_kinds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "propertyNames": {
+              "enum": [
+                "webchat",
+                "chat.doodle",
+                "chat.photo",
+                "chat.voice",
+                "chat.sticker",
+                "chat.recommended",
+                "chat.list.action",
+                "chat.location.new",
+                "chat.video.msg",
+                "share.file",
+                "chat.gif",
+                "chat.webcontent",
+                "chat.webcontent.v2",
+                "unsupported"
+              ]
+            }
+          }
+        },
+        "required": [
+          "file_index",
+          "conversation_type",
+          "status",
+          "source_rows",
+          "period_rows",
+          "invalid_timestamp_rows",
+          "source_earliest_at",
+          "source_latest_at",
+          "wal_mode",
+          "examined",
+          "rejected",
+          "source_controls",
+          "sample_has_more",
+          "sample_content_kinds"
+        ]
+      }
+    },
+    "download_performed": {
+      "const": false
+    },
+    "import_performed": {
+      "const": false
+    },
+    "history_complete": {
+      "const": false
+    }
+  },
+  "required": [
+    "manifest",
+    "since",
+    "until",
+    "offset",
+    "has_more_files",
+    "files",
+    "download_performed",
+    "import_performed",
+    "history_complete"
+  ]
+}

@@ -17,7 +17,7 @@ func (p *membershipPort) probeMobileOffer(ctx context.Context, id string, revisi
 	if err != nil {
 		return nil, err
 	}
-	if attempt.State != "prepared" || attempt.Revision != revision {
+	if attempt.Request.ArchiveScope != "" || attempt.State != "prepared" || attempt.Revision != revision {
 		return nil, storage.ErrMobileBackupState
 	}
 	request, stop := context.WithTimeout(ctx, 185*time.Second)

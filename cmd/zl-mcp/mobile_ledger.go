@@ -12,7 +12,7 @@ import (
 )
 
 func mobileLedgerCommand(name string) bool {
-	return name == "probe-recall" || name == "mobile-backup-prepare" || name == "mobile-backup-status" || name == "mobile-backup-cancel" || name == "mobile-backup-probe-offer" || name == "mobile-backup-probe-archive"
+	return name == "account-archive-inspect" || name == "account-archive-remove" || name == "account-archive-prepare" || name == "account-archive-capture" || name == "account-archive-status" || name == "probe-recall" || name == "mobile-backup-prepare" || name == "mobile-backup-status" || name == "mobile-backup-cancel" || name == "mobile-backup-probe-offer" || name == "mobile-backup-probe-archive"
 }
 func mobileLedgerArguments(args []string, in io.Reader) (string, any, error) {
 	if len(args) == 0 {
@@ -24,7 +24,7 @@ func mobileLedgerArguments(args []string, in io.Reader) (string, any, error) {
 			return "", nil, fmt.Errorf("probe-recall requires the exact sent request UUID")
 		}
 		return "cli_probe_recall", map[string]any{"send_request_id": args[1]}, nil
-	case "mobile-backup-prepare":
+	case "mobile-backup-prepare", "account-archive-prepare", "account-archive-inspect":
 		if len(args) != 1 {
 			return "", nil, fmt.Errorf("mobile-backup-prepare reads request JSON from stdin")
 		}
@@ -33,13 +33,30 @@ func mobileLedgerArguments(args []string, in io.Reader) (string, any, error) {
 			return "", nil, fmt.Errorf("invalid or oversized mobile request JSON")
 		}
 		// Preserve raw keys for the service's duplicate-key and schema checks.
-		return "cli_prepare_mobile_backup", json.RawMessage(body), nil
+		method := "cli_prepare_mobile_backup"
+		if args[0] == "account-archive-prepare" {
+			method = "cli_prepare_account_archive"
+		}
+		if args[0] == "account-archive-inspect" {
+			method = "cli_inspect_account_archive"
+		}
+		return method, json.RawMessage(body), nil
+	case "account-archive-remove":
+		if len(args) != 2 {
+			return "", nil, fmt.Errorf("account-archive-remove requires source_id")
+		}
+		return "cli_remove_account_archive", map[string]any{"source_id": args[1]}, nil
+	case "account-archive-status":
+		if len(args) != 2 {
+			return "", nil, fmt.Errorf("account-archive-status requires source_id")
+		}
+		return "cli_account_archive_status", map[string]any{"source_id": args[1]}, nil
 	case "mobile-backup-status":
 		if len(args) != 2 {
 			return "", nil, fmt.Errorf("mobile-backup-status requires operation_id")
 		}
 		return "cli_mobile_backup_status", map[string]any{"operation_id": args[1]}, nil
-	case "mobile-backup-cancel", "mobile-backup-probe-offer", "mobile-backup-probe-archive":
+	case "mobile-backup-cancel", "mobile-backup-probe-offer", "mobile-backup-probe-archive", "account-archive-capture":
 		if len(args) != 3 && !(args[0] == "mobile-backup-probe-archive" && len(args) == 4) {
 			return "", nil, fmt.Errorf("%s requires operation_id and revision", args[0])
 		}
@@ -53,6 +70,9 @@ func mobileLedgerArguments(args []string, in io.Reader) (string, any, error) {
 		}
 		if args[0] == "mobile-backup-probe-archive" {
 			method = "cli_probe_mobile_backup_archive"
+		}
+		if args[0] == "account-archive-capture" {
+			method = "cli_capture_account_archive"
 		}
 		arguments := map[string]any{"operation_id": args[1], "revision": revision}
 		if len(args) == 4 {
@@ -68,13 +88,16 @@ func runMobileLedger(ctx context.Context, stateDir string, args []string, in io.
 		return err
 	}
 	budget := 10 * time.Second
+	if method == "cli_inspect_account_archive" {
+		budget = 140 * time.Second
+	}
 	if method == "cli_probe_recall" {
 		budget = 40 * time.Second
 	}
 	if method == "cli_probe_mobile_backup_offer" {
 		budget = 205 * time.Second
 	}
-	if method == "cli_probe_mobile_backup_archive" {
+	if method == "cli_probe_mobile_backup_archive" || method == "cli_capture_account_archive" {
 		budget = 445 * time.Second
 	}
 	request, stop := context.WithTimeout(ctx, budget)

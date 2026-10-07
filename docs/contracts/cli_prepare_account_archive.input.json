@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Trusted owner preparation for whole-account export; no phone request yet.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "method": {
+      "const": "cli_prepare_account_archive"
+    },
+    "arguments": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "archive_scope": {
+          "const": "account"
+        },
+        "max_archive_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 536870912,
+          "default": 536870912
+        },
+        "retention_hours": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 720,
+          "default": 168
+        }
+      },
+      "required": [
+        "request_id",
+        "archive_scope"
+      ]
+    }
+  },
+  "required": [
+    "method",
+    "arguments"
+  ]
+}
