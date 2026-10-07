@@ -42,7 +42,8 @@ type SQLiteBatch struct {
 	Coverage           SQLiteCoverage `json:"-"`
 	SourceControls     int
 	WALMode            bool
-	Rows               []SQLiteRow `json:"-"`
+	Rows               []SQLiteRow    `json:"-"`
+	RejectedReasons    map[string]int `json:"-"`
 	Examined, Rejected int
 	HasMore            bool
 	Next               *SQLiteCursor `json:"-"`
@@ -70,6 +71,8 @@ func (b *SQLiteBatch) Clear() {
 	}
 	b.Rows = nil
 	b.Next = nil
+	clear(b.RejectedReasons)
+	b.RejectedReasons = nil
 }
 
 func standaloneSQLite(data []byte) bool {
@@ -277,9 +280,13 @@ func readSQLitePage(parent context.Context, file ArchiveFile, scratch string, si
 		}
 		last = SQLiteCursor{Digest: digest, Name: file.Name, SinceMS: from, UntilMS: to, TimestampMS: timestamp, RowID: sourceRowID}
 		batch.Examined++
-		row, ok := sqliteRow(values, from, to)
-		if !ok {
+		row, reason := sqliteRowChecked(values, from, to)
+		if reason != "" {
 			batch.Rejected++
+			if batch.RejectedReasons == nil {
+				batch.RejectedReasons = map[string]int{}
+			}
+			batch.RejectedReasons[reason]++
 			continue
 		}
 		retainedBytes += len(row.Text) + len(row.BinNet)
@@ -310,55 +317,62 @@ func sqliteID(value any) (string, bool) {
 	}
 	return id, canonicalIdentity(id)
 }
+
+// sqliteRow keeps the original internal bool contract; diagnostics use only fixed reason keys.
 func sqliteRow(values [9]any, since, until int64) (SQLiteRow, bool) {
+	row, reason := sqliteRowChecked(values, since, until)
+	return row, reason == ""
+}
+
+func sqliteRowChecked(values [9]any, since, until int64) (SQLiteRow, string) {
 	var row SQLiteRow
 	var ok bool
 	row.SenderID, ok = sqliteID(values[0])
 	if !ok {
-		return row, false
+		return row, "sender_id"
 	}
 	row.MessageID, ok = sqliteID(values[1])
 	if !ok {
-		return row, false
+		return row, "message_id"
 	}
 	row.ClientID, ok = sqliteID(values[2])
 	if !ok {
-		return row, false
+		return row, "client_id"
 	}
 	row.Text, ok = values[3].(string)
 	if !ok || len(row.Text) > 1<<20 || !utf8.ValidString(row.Text) {
-		return row, false
+		return row, "text"
 	}
 	row.TimestampMS, ok = values[4].(int64)
 	if !ok || row.TimestampMS < since || row.TimestampMS >= until {
-		return row, false
+		return row, "timestamp"
 	}
 	row.TTL, ok = values[5].(int64)
 	if !ok || row.TTL < 0 {
-		return row, false
+		return row, "ttl"
 	}
 	row.Type, ok = values[6].(int64)
 	if !ok || row.Type < 0 {
-		return row, false
+		return row, "message_type"
 	}
 	row.Status, ok = values[7].(int64)
 	if !ok || row.Status <= 0 {
-		return row, false
+		return row, "message_status"
 	}
 	switch v := values[8].(type) {
 	case nil:
 	case []byte:
 		if len(v) > 256<<10 {
-			return row, false
+			return row, "metadata"
 		}
 		row.BinNet = append([]byte(nil), v...)
 	case string:
 		if len(v) > 256<<10 {
-			return row, false
+			return row, "metadata"
 		}
 		row.BinNet = []byte(v)
 	default:
-		return row, false
+		return row, "metadata"
 	}
-	return row, true
+	return row, ""
 }

@@ -294,6 +294,28 @@
               "action_shapes_truncated",
               "text_projection_classes"
             ]
+          },
+          "rejected_row_reasons": {
+            "type": "object",
+            "description": "First failed scalar validation per examined rejected row; counts partition rejected. No private values.",
+            "propertyNames": {
+              "enum": [
+                "sender_id",
+                "message_id",
+                "client_id",
+                "text",
+                "timestamp",
+                "ttl",
+                "message_type",
+                "message_status",
+                "metadata"
+              ]
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxProperties": 9
           }
         },
         "required": [

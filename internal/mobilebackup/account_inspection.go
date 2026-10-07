@@ -2,6 +2,7 @@ package mobilebackup
 
 import (
 	"context"
+	"maps"
 	"time"
 )
 
@@ -19,6 +20,7 @@ type AccountFileCoverage struct {
 	LatestAt          *string                     `json:"source_latest_at"`
 	WALMode           bool                        `json:"wal_mode"`
 	Examined          int                         `json:"examined"`
+	RejectedReasons   map[string]int              `json:"rejected_row_reasons,omitempty"`
 	Rejected          int                         `json:"rejected"`
 	SourceControls    int                         `json:"source_controls"`
 	SampleHasMore     bool                        `json:"sample_has_more"`
@@ -60,6 +62,7 @@ func (a AccountArchive) InspectCoverageWithMetadata(ctx context.Context, scratch
 			item.Status = "unreadable_sqlite"
 		} else {
 			item.SourceRows, item.PeriodRows, item.InvalidTimestamps = batch.Coverage.SourceRows, batch.Coverage.PeriodRows, batch.Coverage.InvalidTimestamps
+			item.RejectedReasons = maps.Clone(batch.RejectedReasons)
 			item.WALMode, item.Examined, item.Rejected, item.SourceControls, item.SampleHasMore = batch.WALMode, batch.Examined, batch.Rejected, batch.SourceControls, batch.HasMore
 			if batch.Coverage.HasRange {
 				first, last := time.UnixMilli(batch.Coverage.EarliestMS).UTC().Format(time.RFC3339Nano), time.UnixMilli(batch.Coverage.LatestMS).UTC().Format(time.RFC3339Nano)

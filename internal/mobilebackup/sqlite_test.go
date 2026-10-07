@@ -398,3 +398,39 @@ func TestSQLiteImmutableMainImageCannotProveWALCompleteness(t *testing.T) {
 		t.Fatal("WAL/main-image evidence boundary lost", err, queryErr)
 	}
 }
+
+func TestSQLiteRejectedRowReasonsPartitionPagesWithoutExposingValues(t *testing.T) {
+	// Arrange: independently generated SQLite rows, including two ambiguous-invalid fields.
+	since := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC)
+	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
+		rows := [][9]any{
+			{"PRIVATE-SENDER", "2", "3", "PRIVATE-TEXT", since.UnixMilli(), 0, 0, 1, nil},
+			{"1", "2", nil, "PRIVATE-TEXT", since.UnixMilli(), 0, 0, 1, nil},
+			{"1", "2", "3", "PRIVATE-TEXT", since.UnixMilli(), 0, 0, 0, nil},
+			{"1", "2", "3", "ok", since.UnixMilli(), 0, 0, 1, nil},
+		}
+		for _, row := range rows {
+			if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", row[:]...); err != nil {
+				t.Fatal(err)
+			}
+		}
+	})
+	file := ArchiveFile{Name: "1.db", Data: data}
+	// Act: the first page contains only rejected rows and must still progress.
+	first, err := ReadSQLitePage(context.Background(), file, t.TempDir(), since, since.Add(time.Hour), 2, nil)
+	defer first.Clear()
+	if err != nil || first.Next == nil {
+		t.Fatal("page did not progress", err)
+	}
+	second, err := ReadSQLitePage(context.Background(), file, t.TempDir(), since, since.Add(time.Hour), 2, first.Next)
+	defer second.Clear()
+	encoded, _ := json.Marshal(first.RejectedReasons)
+	// Assert: stable fixed reasons partition rejected rows, without private data or duplicate paging.
+	if err != nil || first.Examined != 2 || first.Rejected != 2 || first.RejectedReasons["sender_id"] != 1 || first.RejectedReasons["client_id"] != 1 || second.Examined != 2 || second.Rejected != 1 || second.RejectedReasons["message_status"] != 1 || len(second.Rows) != 1 || second.HasMore || bytes.Contains(encoded, []byte("PRIVATE")) {
+		t.Fatal("rejection partition or paging failed", err)
+	}
+	first.Clear()
+	if first.RejectedReasons != nil {
+		t.Fatal("diagnostic map retained")
+	}
+}

@@ -99,3 +99,8 @@ converter text rule (`plain`, `rich`, `unsupported`, `invalid`, or
 for one absent/empty-action attachment follows the verified native MSG_TEXT
 fallback; unknown field counts remain visible. These counts never waive WAL,
 control, identity, expiry or history-import admission.
+
+The optional `files[].rejected_row_reasons` partitions examined rejected rows by
+the first failed scalar check, using fixed field-category keys only. It reports
+no source value or guessed repair and does not classify unexamined rows. Paging
+continues past rejected rows exactly as before.
