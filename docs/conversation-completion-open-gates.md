@@ -35,8 +35,12 @@ one group with colliding typed identities under a restrictive collection policy;
 restart and repeated date-window inspection neither redownload nor change corpus,
 Events, subscriptions or send records. These routes are not public MCP tools.
 Both installed skills still match all five source files each; this owner feature
-does not add a public workflow to them. Real all-account acquisition and offline
-investigation of the retained unsupported content remain pending phone readiness.
+does not add a public workflow to them. Real account acquisition subsequently retained all 56 mapped files (54 direct,
+2 group), with 1,638 source rows. All files are readable and retain WAL markers;
+8 contain controls. Two offline date-window sweeps and an identical capture retry
+left source ciphertext/expiry unchanged and imported no messages. This closes
+retention/repeated offline coverage, not safe mobile admission or historical
+message recovery. Exact-conversation metadata investigation remains in progress.
 See [retained archive task](task-retained-mobile-archive.md).
 
 ## Previous installation and live evidence

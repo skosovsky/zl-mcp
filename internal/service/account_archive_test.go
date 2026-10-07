@@ -120,6 +120,28 @@ func TestAccountArchiveCaptureRestartOfflineInspectionAndRemoval(t *testing.T) {
 			t.Fatal("raw source disclosed")
 		}
 	}
+
+	exact, _ := ledgerRequest(t, p, "cli_inspect_account_archive", map[string]any{"source_id": first.SourceID, "since": "2026-09-01T00:00:00Z", "until": "2026-10-06T17:00:00Z", "conversation_type": "group", "conversation_id": "12", "include_metadata_diagnostics": true})
+	if exact.Code != 200 {
+		t.Fatal(exact.Body.String())
+	}
+	var exactOutput struct {
+		Files []mobilebackup.AccountFileCoverage `json:"files"`
+		More  bool                               `json:"has_more_files"`
+	}
+	if e = json.Unmarshal(exact.Body.Bytes(), &exactOutput); e != nil || len(exactOutput.Files) != 1 || exactOutput.Files[0].ConversationType != "group" || exactOutput.Files[0].Metadata == nil || exactOutput.More {
+		t.Fatal("exact cached metadata selection failed", e)
+	}
+	for _, bad := range []map[string]any{
+		{"source_id": first.SourceID, "since": "2026-09-01T00:00:00Z", "until": "2026-10-06T17:00:00Z", "conversation_type": "direct"},
+		{"source_id": first.SourceID, "since": "2026-09-01T00:00:00Z", "until": "2026-10-06T17:00:00Z", "conversation_type": "direct", "conversation_id": "12", "offset": 1},
+		{"source_id": first.SourceID, "since": "2026-09-01T00:00:00Z", "until": "2026-10-06T17:00:00Z", "conversation_type": "direct", "conversation_id": "999"},
+	} {
+		response, _ := ledgerRequest(t, p, "cli_inspect_account_archive", bad)
+		if response.Code == 200 {
+			t.Fatal("ambiguous or missing selection accepted")
+		}
+	}
 	// Assert: one phone dispatch/download/map, immutable source and no runtime/corpus writes.
 	if !reflect.DeepEqual(first, again) || first.FileCount != 3 || first.DirectFiles != 2 || first.GroupFiles != 1 || source.offers.Load() != 1 || source.downloads.Load() != 1 || source.mappings.Load() != 1 {
 		t.Fatal("capture repeated or changed")

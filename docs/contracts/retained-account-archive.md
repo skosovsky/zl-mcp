@@ -75,3 +75,20 @@ and a two-source limit. Expired files are removed during store inventory or
 selected-source access, not by a wall-clock timer. UUID claims remain spent.
 If the diagnostic cache cannot be authenticated at startup, archive operations
 fail and the collector continues; the cache is not automatically repaired.
+
+### Exact-file metadata investigation
+
+Optional flat `conversation_type`/`conversation_id` select exactly the original
+mapped conversation from the authenticated cache, without a new mapping request.
+For that form, offset must be zero and limit must be absent or one. An absent
+identity fails; another file is never inferred from similar counts or dates.
+
+`include_metadata_diagnostics=true` adds bounded diagnostics for the same first
+50 examined rows: presence/invalidity of BinNet, unsupported field counts,
+attachment/title presence, source/title equality, fixed action-literal categories
+and per-distinct-action digest/byte-length/UTF-8/NUL observations. The literals
+are observations, not accepted semantics. Unknown actions remain `other`; digests
+do not make unknown attachments readable. No action value, title, source text,
+parameters, URL or credential is returned. These observations do not change
+conversion, WAL/control/TTL admission or authorize import. The source remains
+immutable; no new phone request is made.

@@ -1,0 +1,99 @@
+package mobilebackup
+
+import (
+	"bytes"
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"unicode/utf8"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
+)
+
+// ConversationIndex uses only the authenticated original typed mapping.
+func (a AccountArchive) ConversationIndex(ctx context.Context, ref domain.ConversationRef) (int, error) {
+	return SelectArchiveIndex(ctx, a.archive, a.pairs, ref)
+}
+
+type AccountActionShape struct {
+	SHA256      string `json:"sha256"`
+	ByteLength  int    `json:"byte_length"`
+	UTF8Valid   bool   `json:"utf8_valid"`
+	ContainsNUL bool   `json:"contains_nul"`
+}
+
+type AccountMetadataDiagnostics struct {
+	RowsWithMetadata  int                  `json:"rows_with_metadata"`
+	MissingMetadata   int                  `json:"missing_metadata"`
+	InvalidMetadata   int                  `json:"invalid_metadata"`
+	AttachmentCount   int                  `json:"attachment_count"`
+	UnsupportedFields int                  `json:"unsupported_metadata_fields"`
+	SourceTextPresent int                  `json:"source_text_present"`
+	TitlePresent      int                  `json:"title_present"`
+	TitleEqualsText   int                  `json:"title_equals_source_text"`
+	ActionClasses     map[string]int       `json:"action_classes"`
+	ActionShapes      []AccountActionShape `json:"action_shapes"`
+	ShapesTruncated   bool                 `json:"action_shapes_truncated"`
+}
+
+// inspectAccountMetadata reports protocol observations only. It never renders
+// source text or accepts an attachment action, and retains no raw metadata.
+func inspectAccountMetadata(ctx context.Context, rows []SQLiteRow) (*AccountMetadataDiagnostics, error) {
+	result := &AccountMetadataDiagnostics{ActionClasses: map[string]int{}, ActionShapes: []AccountActionShape{}}
+	seen := map[string]bool{}
+	for _, row := range rows {
+		if ctx.Err() != nil {
+			return nil, ErrArchive
+		}
+		if row.Text != "" {
+			result.SourceTextPresent++
+		}
+		if len(row.BinNet) == 0 {
+			result.MissingMetadata++
+			continue
+		}
+		result.RowsWithMetadata++
+		meta, err := ParseBinNet(ctx, row.BinNet)
+		if ctx.Err() != nil {
+			meta.Clear()
+			return nil, ErrArchive
+		}
+		if err != nil {
+			meta.Clear()
+			result.InvalidMetadata++
+			continue
+		}
+		result.UnsupportedFields += meta.UnsupportedFields
+		for _, attachment := range meta.Attachments {
+			result.AttachmentCount++
+			if attachment.Title.Present {
+				result.TitlePresent++
+				if string(attachment.Title.Bytes) == row.Text {
+					result.TitleEqualsText++
+				}
+			}
+			class := "absent"
+			if attachment.Action.Present {
+				class = "other"
+				switch string(attachment.Action.Bytes) {
+				case "":
+					class = "empty"
+				case "rtf", "ecard", "text", "plain", "webchat":
+					class = string(attachment.Action.Bytes)
+				}
+				digest := sha256.Sum256(attachment.Action.Bytes)
+				id := hex.EncodeToString(digest[:])
+				if !seen[id] && len(result.ActionShapes) >= 50 {
+					result.ShapesTruncated = true
+				}
+				if !seen[id] && len(result.ActionShapes) < 50 {
+					seen[id] = true
+					result.ActionShapes = append(result.ActionShapes, AccountActionShape{SHA256: id, ByteLength: len(attachment.Action.Bytes), UTF8Valid: utf8.Valid(attachment.Action.Bytes), ContainsNUL: bytes.IndexByte(attachment.Action.Bytes, 0) >= 0})
+				}
+			}
+			result.ActionClasses[class]++
+		}
+		meta.Clear()
+	}
+	return result, nil
+}

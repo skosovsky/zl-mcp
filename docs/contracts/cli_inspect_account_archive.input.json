@@ -32,12 +32,54 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 25
+        },
+        "conversation_type": {
+          "enum": [
+            "direct",
+            "group"
+          ]
+        },
+        "conversation_id": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,19}$"
+        },
+        "include_metadata_diagnostics": {
+          "type": "boolean",
+          "default": false
         }
       },
       "required": [
         "source_id",
         "since",
         "until"
+      ],
+      "dependentRequired": {
+        "conversation_type": [
+          "conversation_id"
+        ],
+        "conversation_id": [
+          "conversation_type"
+        ]
+      },
+      "description": "Optional exact typed conversation selects one mapped file; offset must be zero and limit absent or one. Metadata diagnostics expose only fixed categories and action digests, never source values.",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "conversation_type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "offset": {
+                "const": 0
+              },
+              "limit": {
+                "const": 1
+              }
+            }
+          }
+        }
       ]
     }
   },

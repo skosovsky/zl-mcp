@@ -108,7 +108,7 @@ func (p *membershipPort) accountArchiveStatus(ctx context.Context, id string) (m
 	return manifest, err
 }
 
-func (p *membershipPort) inspectAccountArchive(ctx context.Context, id, sinceText, untilText string, offset, limit int) (map[string]any, error) {
+func (p *membershipPort) inspectAccountArchive(ctx context.Context, id, sinceText, untilText string, offset, limit int, ref domain.ConversationRef, includeMetadata bool) (map[string]any, error) {
 	if p.store == nil || p.archives == nil {
 		return nil, mobilebackup.ErrRetainedArchive
 	}
@@ -131,7 +131,18 @@ func (p *membershipPort) inspectAccountArchive(ctx context.Context, id, sinceTex
 	if err != nil {
 		return nil, err
 	}
-	if limit == 0 {
+	selected := ref.Type != "" || ref.ID != ""
+	if selected {
+		if !ref.Valid() || offset != 0 || limit > 1 {
+			return nil, domain.Invalid("Exact source selection cannot include another file page.")
+		}
+		index, e := archive.ConversationIndex(ctx, ref)
+		if e != nil {
+			return nil, e
+		}
+		offset = index
+		limit = 1
+	} else if limit == 0 {
 		limit = 25
 	}
 	scratch, err := os.MkdirTemp(p.stateDir, "account-inspection-")
@@ -139,9 +150,12 @@ func (p *membershipPort) inspectAccountArchive(ctx context.Context, id, sinceTex
 		return nil, mobilebackup.ErrRetainedArchive
 	}
 	defer os.RemoveAll(scratch)
-	files, more, err := archive.InspectCoverage(ctx, scratch, since, until, offset, limit)
+	files, more, err := archive.InspectCoverageWithMetadata(ctx, scratch, since, until, offset, limit, includeMetadata)
 	if err != nil {
 		return nil, err
+	}
+	if selected {
+		more = false
 	}
 	return map[string]any{"manifest": manifest, "since": since.UTC().Format(time.RFC3339Nano), "until": until.UTC().Format(time.RFC3339Nano), "offset": offset, "files": files, "has_more_files": more, "download_performed": false, "import_performed": false, "history_complete": false}, nil
 }

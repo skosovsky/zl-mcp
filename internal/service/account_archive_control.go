@@ -31,6 +31,8 @@ func (p *membershipPort) accountArchiveControl(w http.ResponseWriter, r *http.Re
 			code = "CAPACITY_EXCEEDED"
 		case errors.Is(err, mobilebackup.ErrRetainedExpired):
 			code = "SOURCE_EXPIRED"
+		case errors.Is(err, mobilebackup.ErrSelectedConversationUnavailable):
+			code = "SOURCE_CONVERSATION_UNAVAILABLE"
 		case errors.Is(err, mobilebackup.ErrRetainedAbsent):
 			code = "SOURCE_NOT_CAPTURED"
 		}
@@ -95,17 +97,20 @@ func (p *membershipPort) accountArchiveControl(w http.ResponseWriter, r *http.Re
 		response, err = p.captureAccountArchive(ctx, args.ID, args.Revision)
 	case "cli_inspect_account_archive":
 		var args struct {
-			ID     string `json:"source_id"`
-			Since  string `json:"since"`
-			Until  string `json:"until"`
-			Offset int    `json:"offset"`
-			Limit  int    `json:"limit"`
+			ID               string `json:"source_id"`
+			Since            string `json:"since"`
+			Until            string `json:"until"`
+			Offset           int    `json:"offset"`
+			Limit            int    `json:"limit"`
+			ConversationType string `json:"conversation_type"`
+			ConversationID   string `json:"conversation_id"`
+			IncludeMetadata  bool   `json:"include_metadata_diagnostics"`
 		}
 		if json.Unmarshal(envelope.Arguments, &args) != nil {
 			fail(domain.Invalid("Invalid archive inspection."))
 			return
 		}
-		response, err = p.inspectAccountArchive(ctx, args.ID, args.Since, args.Until, args.Offset, args.Limit)
+		response, err = p.inspectAccountArchive(ctx, args.ID, args.Since, args.Until, args.Offset, args.Limit, domain.ConversationRef{Type: args.ConversationType, ID: args.ConversationID}, args.IncludeMetadata)
 	case "cli_remove_account_archive":
 		var args struct {
 			ID string `json:"source_id"`
