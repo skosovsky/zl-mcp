@@ -12,6 +12,7 @@ import (
 // not a complete history claim or a serializable tool result.
 type AccountArchive struct {
 	ownerAccount                                   string
+	retainedSourceID                               string
 	archive                                        PlainArchive
 	pairs                                          []IdentityPair
 	ciphertextBytes, containerBytes, trailingBytes uint64

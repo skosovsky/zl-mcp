@@ -372,6 +372,7 @@ func (s *RetainedArchiveStore) readBound(ctx context.Context, id, accountKey str
 		return retainedMetadata{}, AccountArchive{}, 0, ErrRetainedArchive
 	}
 	a.ownerAccount = m.Account
+	a.retainedSourceID = m.SourceID
 	return m, a, stored, nil
 }
 

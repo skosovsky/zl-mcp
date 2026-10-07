@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Read-only archived text projection. Archive identity is separate from genuine Zalo ID; never an outgoing quote anchor. Public MCP integration is not yet available.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "archive_row_id": {
+      "type": "string",
+      "pattern": "^ar:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:(0|[1-9][0-9]{0,2}):(0|-?[1-9][0-9]{0,18})$"
+    },
+    "zalo_message_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,19}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "conversation_type": {
+      "enum": [
+        "direct",
+        "group"
+      ]
+    },
+    "conversation_id": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]{0,19}$"
+    },
+    "sender_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,19}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sender_mapping": {
+      "enum": [
+        "verified",
+        "unavailable"
+      ]
+    },
+    "direction": {
+      "enum": [
+        "incoming",
+        "outgoing",
+        "unknown"
+      ]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 1048576,
+      "minLength": 1
+    },
+    "text_kind": {
+      "enum": [
+        "plain",
+        "rich"
+      ]
+    },
+    "quote_anchor_eligible": {
+      "const": false
+    }
+  },
+  "required": [
+    "archive_row_id",
+    "zalo_message_id",
+    "conversation_type",
+    "conversation_id",
+    "sender_id",
+    "sender_mapping",
+    "direction",
+    "timestamp",
+    "text",
+    "text_kind",
+    "quote_anchor_eligible"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "sender_mapping": {
+            "const": "unavailable"
+          }
+        },
+        "required": [
+          "sender_mapping"
+        ]
+      },
+      "then": {
+        "properties": {
+          "sender_id": {
+            "type": "null"
+          },
+          "direction": {
+            "const": "unknown"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "sender_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]{0,19}$"
+          },
+          "direction": {
+            "enum": [
+              "incoming",
+              "outgoing"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

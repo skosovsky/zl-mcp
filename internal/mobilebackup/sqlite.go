@@ -21,10 +21,12 @@ import (
 )
 
 var ErrSQLite = errors.New("invalid mobile backup SQLite file")
+var ErrSnapshotControls = errors.New("archive snapshot controls unclassified")
 
 type SQLiteRow struct {
 	SenderID, MessageID, ClientID, Text string `json:"-"`
 	TimestampMS, TTL, Type, Status      int64  `json:"-"`
+	SourceRowID                         int64  `json:"-"`
 	BinNet                              []byte `json:"-"`
 }
 
@@ -56,6 +58,8 @@ type SQLiteCursor struct {
 	Digest                               [32]byte `json:"-"`
 	Name                                 string   `json:"-"`
 	SinceMS, UntilMS, TimestampMS, RowID int64    `json:"-"`
+	Descending                           bool     `json:"-"`
+	Snapshot                             bool     `json:"-"`
 }
 
 func (SQLiteCursor) String() string   { return "mobile backup SQLite cursor [redacted]" }
@@ -109,6 +113,18 @@ func ReadSQLitePage(parent context.Context, file ArchiveFile, scratch string, si
 
 // Control scans project scalar identities only; source text and BinNet are not read.
 func readSQLitePage(parent context.Context, file ArchiveFile, scratch string, since, until time.Time, maxRows int, after *SQLiteCursor, controlsOnly bool) (batch SQLiteBatch, err error) {
+	return readSQLitePageMode(parent, file, scratch, since, until, maxRows, after, controlsOnly, false, false)
+}
+
+// ReadSnapshotSQLitePage is a private read layer: zero global IDs are not corpus IDs.
+func ReadSnapshotSQLitePage(parent context.Context, file ArchiveFile, scratch string, since, until time.Time, maxRows int, after *SQLiteCursor, order string) (SQLiteBatch, error) {
+	if maxRows < 1 || maxRows > 50 || (order != "asc" && order != "desc") {
+		return SQLiteBatch{}, ErrSQLite
+	}
+	return readSQLitePageMode(parent, file, scratch, since, until, maxRows, after, false, true, order == "desc")
+}
+
+func readSQLitePageMode(parent context.Context, file ArchiveFile, scratch string, since, until time.Time, maxRows int, after *SQLiteCursor, controlsOnly, snapshot, descending bool) (batch SQLiteBatch, err error) {
 	stage := "INPUT_BINDING"
 	defer func() {
 		if err != nil {
@@ -132,7 +148,7 @@ func readSQLitePage(parent context.Context, file ArchiveFile, scratch string, si
 	batch.WALMode = file.Data[18] == 2
 	stage = "CURSOR_BINDING"
 	digest := sha256.Sum256(file.Data)
-	if after != nil && (after.Digest != digest || after.Name != file.Name || after.SinceMS != from || after.UntilMS != to || after.TimestampMS < from || after.TimestampMS >= to) {
+	if after != nil && (after.Digest != digest || after.Name != file.Name || after.SinceMS != from || after.UntilMS != to || after.TimestampMS < from || after.TimestampMS >= to || after.Descending != descending || after.Snapshot != snapshot) {
 		return batch, ErrSQLite
 	}
 	ctx, cancel := context.WithTimeout(parent, 30*time.Second)
@@ -240,16 +256,32 @@ func readSQLitePage(parent context.Context, file ArchiveFile, scratch string, si
 	if conn.QueryRowContext(ctx, "SELECT count(*) FROM ChatContent WHERE MsgType IN (33,36)").Scan(&batch.SourceControls) != nil {
 		return SQLiteBatch{}, ErrSQLite
 	}
+	if snapshot {
+		if conn.QueryRowContext(ctx, "SELECT count(*) FROM ChatContent WHERE MsgType IN (20,21,25,26,29,32,33,34,35,36,45,51,52)").Scan(&batch.SourceControls) != nil {
+			return SQLiteBatch{}, ErrSQLite
+		}
+		if batch.SourceControls != 0 {
+			return SQLiteBatch{}, ErrSnapshotControls
+		}
+	}
 	statement := "SELECT rowid,SenderId,GlbMsgId,CliMsgId,MsgContent,TimeStamp,TTL,MsgType,MsgStatus,BinNet FROM ChatContent WHERE TimeStamp>=? AND TimeStamp<?"
 	if controlsOnly {
 		statement = "SELECT rowid,SenderId,GlbMsgId,CliMsgId,'',TimeStamp,TTL,MsgType,MsgStatus,NULL FROM ChatContent WHERE TimeStamp>=? AND TimeStamp<? AND MsgType IN (33,36)"
 	}
 	args := []any{from, to}
 	if after != nil {
-		statement += " AND (TimeStamp>? OR (TimeStamp=? AND rowid>?))"
+		operator := ">"
+		if descending {
+			operator = "<"
+		}
+		statement += " AND (TimeStamp" + operator + "? OR (TimeStamp=? AND rowid" + operator + "?))"
 		args = append(args, after.TimestampMS, after.TimestampMS, after.RowID)
 	}
-	statement += " ORDER BY TimeStamp,rowid LIMIT ?"
+	if descending {
+		statement += " ORDER BY TimeStamp DESC,rowid DESC LIMIT ?"
+	} else {
+		statement += " ORDER BY TimeStamp,rowid LIMIT ?"
+	}
 	args = append(args, maxRows+1)
 	stage = "MESSAGE_QUERY"
 	rows, e := conn.QueryContext(ctx, statement, args...)
@@ -284,9 +316,12 @@ func readSQLitePage(parent context.Context, file ArchiveFile, scratch string, si
 		if !ok || timestamp < from || timestamp >= to {
 			return batch, ErrSQLite
 		}
-		last = SQLiteCursor{Digest: digest, Name: file.Name, SinceMS: from, UntilMS: to, TimestampMS: timestamp, RowID: sourceRowID}
+		last = SQLiteCursor{Digest: digest, Name: file.Name, SinceMS: from, UntilMS: to, TimestampMS: timestamp, RowID: sourceRowID, Descending: descending, Snapshot: snapshot}
 		batch.Examined++
-		row, reason := sqliteRowChecked(values, from, to)
+		row, reason := sqliteRowMode(values, from, to, snapshot)
+		if snapshot {
+			row.SourceRowID = sourceRowID
+		}
 		if reason != "" {
 			batch.Rejected++
 			if batch.RejectedReasons == nil {
@@ -334,6 +369,10 @@ func sqliteRow(values [9]any, since, until int64) (SQLiteRow, bool) {
 }
 
 func sqliteRowChecked(values [9]any, since, until int64) (SQLiteRow, string) {
+	return sqliteRowMode(values, since, until, false)
+}
+
+func sqliteRowMode(values [9]any, since, until int64, snapshot bool) (SQLiteRow, string) {
 	var row SQLiteRow
 	var ok bool
 	row.SenderID, ok = sqliteID(values[0])
@@ -341,6 +380,20 @@ func sqliteRowChecked(values [9]any, since, until int64) (SQLiteRow, string) {
 		return row, "sender_id"
 	}
 	row.MessageID, ok = sqliteID(values[1])
+	if snapshot {
+		switch value := values[1].(type) {
+		case int64:
+			if value == 0 {
+				row.MessageID = ""
+				ok = true
+			}
+		case string:
+			if value == "0" {
+				row.MessageID = ""
+				ok = true
+			}
+		}
+	}
 	if !ok {
 		return row, "message_id"
 	}

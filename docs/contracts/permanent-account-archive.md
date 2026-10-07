@@ -1,8 +1,7 @@
 # Permanent local account archive
 
-Status: executable contract and owner promotion implemented in source; not yet
-deployed. Owner restoration from a dated backup is implemented; public reading
-is not implemented.
+Status: executable contract, owner promotion, restoration and inspection deployed
+from source `f7038ce`. Public message reading is not implemented.
 The owner requested a local copy that avoids repeated phone
 synchronization. A private encrypted backup has already been preserved.
 
@@ -91,3 +90,28 @@ and reject foreign accounts, mismatched digests, corrupted ciphertext, absent
 keys, unsafe permissions, symlinks, cancellation and revival of a removed UUID.
 The owner RPC test verifies exact dated-path selection and unchanged acquisition
 counters and corpus/Event/subscription/send tables.
+
+## Live acceptance, 2026-10-07
+
+The clean signed source build was installed after successful Linux/macOS CI and
+native startup/shutdown acceptance, using the existing single LaunchAgent and a
+verified private backup of all runtime state. Configuration and agent definition
+were unchanged; prior corpus, identities, tombstones, first-incoming facts, send
+and quote journals and subscription definitions survived. No second listener,
+phone acquisition, send or acknowledgement was used.
+
+Explicit restoration from the dated encrypted backup verified the original
+source digest and all 56 mapped files (54 direct, two group). Repeating restore
+returned the identical receipt, and backup bytes/key/claims remained unchanged.
+Owner inspection paged through all files in the permanent library with effective
+retention `until_owner_deletion`; no corpus import or public archive access was
+enabled. This proves durable local availability, not complete Zalo history or
+verified WAL checkpoint/unknown-control semantics.
+
+The actual connected MCP client, loopback HTTP and installed STDIO bridge returned
+connected/authenticated without a last error. Existing v2 recovery discovery and
+the active subscription remained available; the journal was empty and no ack was
+sent. Installed binary SHA-256:
+`5c29ebdc84c715c795888c64c4e13a624b761bd88d3b69e52b1e561266eb5970`.
+[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37590841020)
+completed successfully for source `f7038ce`.
