@@ -18,16 +18,38 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/collector"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/mobilebackup"
+	"github.com/skosovsky/zl-mcp/internal/storage"
 )
+
+type accountCaptureSource struct{ archiveProbeSource }
+
+func (s *accountCaptureSource) MapMobileBackupIdentities(ctx context.Context, request domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+	s.mappings.Add(1)
+	pairs := make([]domain.MobileIdentityPair, 0, len(request.Direct)+len(request.Groups))
+	for _, id := range request.Direct {
+		session := "12"
+		if id == "903" {
+			session = "13"
+		}
+		pairs = append(pairs, domain.MobileIdentityPair{Plain: id, Session: session})
+	}
+	for _, id := range request.Groups {
+		pairs = append(pairs, domain.MobileIdentityPair{Plain: id, Session: "12", Group: true})
+	}
+	return pairs, ctx.Err()
+}
 
 func TestAccountArchiveCaptureRestartOfflineInspectionAndRemoval(t *testing.T) {
 	// Arrange: independently encrypted synthetic SQLite, bound store and one owner-only capture.
 	ctx := context.Background()
-	p := mobileLedgerPort(t)
-	p.stateDir = t.TempDir()
-	if _, e := p.store.DB.Exec("DELETE FROM metadata WHERE key='account'"); e != nil {
-		t.Fatal(e)
+	stateDir := t.TempDir()
+	policy := domain.CollectionPolicy{Selected: map[domain.ConversationRef]bool{{Type: domain.ConversationGroup, ID: "999"}: true}}
+	store, err := storage.OpenWithPolicy(ctx, filepath.Join(stateDir, "corpus.sqlite"), policy, 90)
+	if err != nil {
+		t.Fatal(err)
 	}
+	defer store.Close()
+	p := &membershipPort{stateDir: stateDir, store: store, lifecycle: ctx}
 	if e := p.store.BindAccount(ctx, "10"); e != nil {
 		t.Fatal(e)
 	}
@@ -38,7 +60,7 @@ func TestAccountArchiveCaptureRestartOfflineInspectionAndRemoval(t *testing.T) {
 	}
 	p.archives = archives
 	defer func() { p.archives.Close() }()
-	raw, e := os.ReadFile("../mobilebackup/testdata/format1-sqlite-vector.json")
+	raw, e := os.ReadFile("../mobilebackup/testdata/format1-account-vector.json")
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -53,7 +75,7 @@ func TestAccountArchiveCaptureRestartOfflineInspectionAndRemoval(t *testing.T) {
 	n := new(big.Int).Lsh(big.NewInt(1), 2047)
 	n.Add(n, big.NewInt(1))
 	der, _ := x509.MarshalPKIXPublicKey(&rsa.PublicKey{N: n, E: 65537})
-	source := &archiveProbeSource{mobilePageSource: mobilePageSource{data: data, mobileServiceSource: mobileServiceSource{public: base64.StdEncoding.EncodeToString(der)}}}
+	source := &accountCaptureSource{archiveProbeSource: archiveProbeSource{mobilePageSource: mobilePageSource{data: data, mobileServiceSource: mobileServiceSource{public: base64.StdEncoding.EncodeToString(der)}}}}
 	p.current = &collector.JoinManager{API: source}
 	response, attempt := ledgerRequest(t, p, "cli_prepare_account_archive", map[string]any{"request_id": "00000000-0000-4000-8000-000000000001", "archive_scope": "account"})
 	if response.Code != 200 {
@@ -99,7 +121,7 @@ func TestAccountArchiveCaptureRestartOfflineInspectionAndRemoval(t *testing.T) {
 		}
 	}
 	// Assert: one phone dispatch/download/map, immutable source and no runtime/corpus writes.
-	if !reflect.DeepEqual(first, again) || first.FileCount != 1 || source.offers.Load() != 1 || source.downloads.Load() != 1 || source.mappings.Load() != 1 {
+	if !reflect.DeepEqual(first, again) || first.FileCount != 3 || first.DirectFiles != 2 || first.GroupFiles != 1 || source.offers.Load() != 1 || source.downloads.Load() != 1 || source.mappings.Load() != 1 {
 		t.Fatal("capture repeated or changed")
 	}
 	for _, table := range []string{"messages", "message_identities", "message_events", "event_deliveries", "send_operations", "event_subscriptions"} {
@@ -129,7 +151,9 @@ func TestAccountArchivePrepareRejectsMixedScope(t *testing.T) {
 	response, _ := ledgerRequest(t, p, "cli_prepare_account_archive", domain.MobileBackupRequest{RequestID: "00000000-0000-4000-8000-000000000002", ArchiveScope: "account", ConversationID: "12"})
 	// Assert: rejected before durable preparation or dispatch.
 	var count int
-	_ = p.store.DB.QueryRow("SELECT count(*) FROM mobile_backup_attempts").Scan(&count)
+	if e := p.store.DB.QueryRow("SELECT count(*) FROM mobile_backup_attempts").Scan(&count); e != nil {
+		t.Fatal(e)
+	}
 	if response.Code == 200 || count != 0 {
 		t.Fatal("mixed owner scope accepted")
 	}

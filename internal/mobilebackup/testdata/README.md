@@ -53,3 +53,13 @@ of the public test key above. Recorded hashes verify encrypted and SQLite bytes.
 Service tests use it to join the existing session, download, selection, row
 mapping and expiry stages; it does not establish compatibility with real phone
 archives, cookie scopes, production download hosts or upstream identity mapping.
+
+`format1-account-vector.json` copies that public synthetic SQLite database into
+three files: `902.db`, `group_902.db` and `903.db`. These are invented identities;
+the direct/group collision tests typed mapping, not a real account. Python stdlib
+LZMA, a reference XXH32 implementation checked against the existing vector, and
+OpenSSL CBC create the framing independently of the production decoder. It
+records ciphertext/container hashes and the original per-file SQLite digest.
+The service acceptance retains all three files with a restricted collection
+policy, survives restart, inspects multiple periods offline and proves no corpus,
+Events, subscription or send writes. It does not prove real export completeness.

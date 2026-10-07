@@ -71,6 +71,10 @@ func (p *membershipPort) accountArchiveControl(w http.ResponseWriter, r *http.Re
 	var response any
 	switch method {
 	case "cli_prepare_account_archive":
+		if p.archives == nil {
+			fail(mobilebackup.ErrRetainedArchive)
+			return
+		}
 		var request domain.MobileBackupRequest
 		if json.Unmarshal(envelope.Arguments, &request) != nil {
 			fail(domain.Invalid("Invalid account capture request."))
