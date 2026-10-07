@@ -10,6 +10,26 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
+Latest installation: clean signed source `50f72d4095df4b31a0456e2a1ecea557a8098848`,
+binary SHA-256 `a719f43ee776d1a8803c1c961c757cad665973d9a358e53e3cd068a501eff37e`.
+[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37604047117), local
+root tests/vet, affected-package race and native acceptance passed. Verified backup
+and comparison preserve the corpus, records, subscriptions, configuration, agent
+and encrypted archives. Sending remains disabled. Installed STDIO discovery now
+confirms 22 tools, archive inventory, both source_id browse arguments and three
+resource templates; it exposes no Events. STDIO and actual-client status are
+connected/authenticated without errors. Actual-client archive inventory discovery
+is still unconfirmed.
+
+The per-type owner diagnostic identifies the captured type-20 action by its hash
+as the native `msginfo.actionlist` literal. Native normalization classifies that
+exact action as informational content, separately from recall. The decoder still
+blocks the file: a source-wide, narrow classification rule and real public message
+read acceptance remain pending. No phone acquisition/import/ack/send or subscription
+edit occurred. See [current evidence](contracts/archive-control-taxonomy-research.md).
+
+### Previous diagnostic installation
+
 Latest diagnostic installation: clean signed source `de80416b1358ba097b622bbb774cc693c63d4033`,
 SHA-256 `ac58ec1ddd90c44ba256b7047d919edd7062ffd51c5f4197e6bcbcc200f3d890`.
 [Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37600368737)

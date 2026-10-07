@@ -83,7 +83,7 @@ evidence about the desktop model. It cannot be transferred to backup type 20
 without the missing producer/translation evidence. Keep the public guard and
 strict-import rules unchanged until the format-1 row semantics are established.
 
-## Per-type metadata diagnostic candidate
+## Per-type metadata diagnostic and real-source evidence
 
 An [independent iOS database investigation](https://cp-df.com/en/blog/zalo.html)
 labels type 20 as a system entry based on comparison with the app UI. Its
@@ -92,15 +92,47 @@ does not implement a separate type-20 visibility rule. The inspected parser blob
 is `b1a1a736313f77f064e562e2179f822a3d192085`. These observations do not establish
 whether type 20 targets other messages in our captured producer version.
 
-The owner inspection candidate adds optional
+The owner inspection extension adds optional
 `sample_deferred_metadata_diagnostics` when metadata inspection was explicitly
 requested. It groups existing fixed metadata observations by pinned deferred
 format type, separately from ordinary-message metadata. Only scalar-valid rows
 in the requested interval and existing 50-row sample participate. Whole-file
 type counts remain separate; an absent sampled category is not absence evidence.
 The response returns neither source text/identities nor raw attachment actions.
-It performs no acquisition, import, Events or visibility-policy change. Deployment
-and real-source results of this candidate are not yet confirmed.
+It performs no acquisition, import, Events or visibility-policy change.
+
+Clean signed source `50f72d4095df4b31a0456e2a1ecea557a8098848` passed local root
+tests/vet, affected-package race, macOS/Linux builds and exact-candidate native
+acceptance, then [Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37604047117).
+Installed binary SHA-256 is
+`a719f43ee776d1a8803c1c961c757cad665973d9a358e53e3cd068a501eff37e`.
+The unchanged single agent started it; verified backup/state comparison preserved
+corpus, identity/tombstone/send/quote/first-incoming records, subscription activation
+definitions, configuration, agent, schema 14 and all encrypted archive files.
+
+Owner inspection of the same retained file examined all 24 rows without scalar
+rejection. Its single type-20 row has valid metadata, one attachment, nonempty
+source text, a present title and three unsupported metadata fields. Its action is
+valid UTF-8, 18 bytes, and matches the literal `msginfo.actionlist` in the installed
+vendor code by SHA-256. No source text, identity or raw private action was rendered;
+archive ciphertext remained byte-identical. This match uses the public vendor
+literal rather than attempting to recover arbitrary private values from a hash.
+
+The desktop normalization branch treats webchat objects with that exact action
+as MSG_INFO_CHAT. Its interactive-card parser handles group-topic/calendar actions;
+its reminder adapter also constructs such informational records. These branches
+are distinct from the previously inspected recall handler. This establishes a
+specific informational-action candidate for the captured row, not a classification
+of every type-20 row or every possible action parameter. Whole-source classification
+and a narrow tested snapshot-reading rule are still pending; the public guard and
+strict import remain unchanged.
+
+Post-deployment installed STDIO discovery reports 22 tools, archive inventory,
+source_id arguments on both browse tools and three resource templates, with
+tools/resources/logging capabilities and no Events. Both STDIO status and the
+actual connected client's status return connected/authenticated without an error.
+The actual client's archive-inventory discovery remains unconfirmed. No send,
+acknowledgement, subscription change or new phone export occurred.
 
 Diagnostic source `de80416` passed Linux/macOS CI and local native acceptance,
 then was installed with a verified private backup. Installed SHA-256:
