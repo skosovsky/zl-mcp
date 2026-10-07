@@ -10,23 +10,35 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
-Latest installation: clean signed source `50f72d4095df4b31a0456e2a1ecea557a8098848`,
-binary SHA-256 `a719f43ee776d1a8803c1c961c757cad665973d9a358e53e3cd068a501eff37e`.
-[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37604047117), local
-root tests/vet, affected-package race and native acceptance passed. Verified backup
-and comparison preserve the corpus, records, subscriptions, configuration, agent
-and encrypted archives. Sending remains disabled. Installed STDIO discovery now
-confirms 22 tools, archive inventory, both source_id browse arguments and three
-resource templates; it exposes no Events. STDIO and actual-client status are
-connected/authenticated without errors. Actual-client archive inventory discovery
-is still unconfirmed.
+Latest installation: clean signed source `578e2a58ee1a51d102e07f7f28f8d7cee86a8680`,
+binary SHA-256 `7bc6c1ccd93bc541c1e7f0593cc5f42d468e731600cce1a403141d7e01ad3b70`.
+[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37607041573),
+root/nested test, race, vet, configured CGO-free builds and exact-candidate native
+acceptance passed. Verified backup and comparison preserve the corpus, records,
+subscriptions, configuration, agent and encrypted archives. Both installed skills
+match all eleven source files. Sending remains disabled.
 
-The per-type owner diagnostic identifies the captured type-20 action by its hash
-as the native `msginfo.actionlist` literal. Native normalization classifies that
-exact action as informational content, separately from recall. The decoder still
-blocks the file: a source-wide, narrow classification rule and real public message
-read acceptance remain pending. No phone acquisition/import/ack/send or subscription
-edit occurred. See [current evidence](contracts/archive-control-taxonomy-research.md).
+Authenticated public HTTP source discovery and all three catalogue pages returned
+56 unique typed conversations from the permanent library. A two-page read of the
+requested September 26 interval returned both records, with genuine global IDs,
+verified sender mapping and nonempty text. No private text or IDs were printed.
+The source digest and encrypted files remained unchanged. No phone request,
+corpus import, ack, send or subscription edit occurred. Retention is until owner
+deletion, independently of the acquisition cache expiry.
+
+Installed STDIO discovery confirms 22 tools, archive inventory, both source_id
+browse arguments and three resource templates; it exposes no Events. Status is
+connected/authenticated without errors. Actual cloud-client archive inventory
+discovery remains unconfirmed. Initial HTTP catalogue and STDIO checks failed;
+the same service subsequently passed both without another restart. A runtime
+sample showed SQLite query-planning activity, but isolated query-plan preparation
+on a private backup completed promptly: the latency cause is not established.
+
+The narrow source-wide type-20 informational classification is installed and
+verified for this real file. This closes the selected historical archive read,
+not whole-account message visibility, strict mobile import, WAL completeness or
+remaining live v2/sending gates. Unknown controls continue to block reads rather
+than return an unsafe prefix. See [current evidence](contracts/archive-control-taxonomy-research.md).
 
 ### Previous diagnostic installation
 

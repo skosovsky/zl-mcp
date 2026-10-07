@@ -149,7 +149,7 @@ A subsequent actual-client status read returned connected/authenticated with no
 last error, without another restart or login. The initial reconnection observation
 did not establish loss of the preserved session.
 
-## Narrow snapshot information candidate
+## Narrow snapshot information classification
 
 The source-wide snapshot classifier now accepts only type 20 with valid BinNet
 and exactly one attachment whose action bytes equal `msginfo.actionlist`. It
@@ -162,8 +162,13 @@ execution deadline. Strict mobile import admission is unchanged.
 Public archive coverage adds optional `source_information_rows` for the whole-file
 classified count. Examined-page omissions use `unsupported_content.native_information`;
 their metadata gaps remain counted. Empty informational pages retain continuation.
-The implementation and updated skills are candidates pending clean installation
-and real public-reader acceptance; the current installed version remains 50f72d4.
+Clean signed source `578e2a5` passed Linux/macOS CI and exact-candidate native
+acceptance, and was installed with both skills after verified state preservation.
+Authenticated public archive discovery returned all 56 catalogue entries; reading
+the selected September 26 interval returned both historical records over two
+pages without another phone request or corpus import. Source ciphertext and
+digest were preserved. This proves this file's bounded read; unknown controls,
+whole-account visibility and strict import admission remain open.
 
 The first candidate 2eddce8 passed local checks and Ubuntu CI but macOS full-race
 CI exposed a pre-existing owner-shutdown race in cancel-before-commit: the mobile
@@ -172,4 +177,4 @@ write after its previous cancellation check. No candidate was installed on that
 failed run. The worker boundary now treats cancelled owner context as normal
 shutdown, consistently with its pending-read and snapshot-cleanup boundaries;
 errors under a live owner context still propagate. The cancelled-operation/no-prefix
-regression is repeated under race before rebuilding and rerunning CI.
+regression passed 20 repeated race runs; the rebuilt source passed both CI jobs.
