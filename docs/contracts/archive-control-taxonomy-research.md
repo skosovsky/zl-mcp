@@ -1,6 +1,8 @@
 # Archive control taxonomy: current evidence
 
-Status: the real blocking type is identified; its format-1 visibility semantics remain under investigation. Desktop model integers are not backup format integers. Message visibility rules have not changed.
+Status: installed narrow information reads are accepted. A broader read-only
+native exclusion/recall profile is a candidate; real-source acceptance remains
+required. Desktop model integers are not backup format integers.
 
 The snapshot reader blocks every type in the pinned decoder's deferred set.
 Owner inspection previously reported only types 33/36, so its zero control count
@@ -178,3 +180,24 @@ failed run. The worker boundary now treats cancelled owner context as normal
 shutdown, consistently with its pending-read and snapshot-cleanup boundaries;
 errors under a live owner context still propagate. The cancelled-operation/no-prefix
 regression passed 20 repeated race runs; the rebuilt source passed both CI jobs.
+
+## Whole-account source controls and read-only candidate
+
+Owner inspection of all 56 retained files, without acquisition or import, counted
+1,638 source rows and only two deferred types: 39 type-20 rows and 20 type-36 rows.
+Eleven files contain them; two are already readable under the narrow informational
+rule. The remaining nine comprise eight direct files with type 36 and one group
+file whose type-20 metadata includes three absent actions. Sampled counts do not
+prove all metadata shapes; source-wide counts are separate. Ciphertext is unchanged.
+
+The pinned native conversion forwards global/client IDs and sender unchanged for
+36 -> chat.undo. Its later undo branch can interpret custom_message/highLightsV2
+as chat.delete.everyone, but retains those same global/client IDs; the highlight
+UID changes displayed deletion-actor metadata. The message/count SQL excludes
+format type 20 before BinNet conversion. These consumer paths support a distinct
+read-only [source-visibility profile](archive-source-visibility.md): native query
+exclusion, and file-local recall suppression by validated genuine IDs plus exact
+sender/client fallback only for ordinary rows without global IDs. It never
+imports or applies source tombstones to the corpus. Strict own-direct recall
+prelude/WAL admission remains unchanged. Live incoming/group recall semantics
+for corpus import are not established by this snapshot rule.

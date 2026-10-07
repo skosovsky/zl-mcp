@@ -1,6 +1,7 @@
 # Archive snapshot pages
 
-Status: read-layer contract; public MCP integration is not yet available.
+Status: bounded public MCP reading is deployed and accepted through the connected
+client. The new [source-visibility profile](archive-source-visibility.md) is a candidate.
 This is a separate read-only source, not a relaxation of corpus import admission.
 
 The explicit record view is defined by
@@ -13,7 +14,7 @@ Read one authenticated, exactly mapped conversation file with an explicit
 RFC3339 interval, order (`asc`/`desc`) and at most 50 examined rows. Stable keyset
 paging uses source file digest, exact filename, millisecond interval, order,
 timestamp and SQLite rowid. A cursor for a different source/window/order fails.
-Rejected-only pages still advance. The eventual public cursor must additionally
+Rejected-only pages still advance. The public cursor additionally
 authenticate account, source UUID, conversation and decoder version; private
 SQLite cursor fields are never a public or unsigned cursor.
 
@@ -60,7 +61,8 @@ pages, changed source/window/order, every recognized deferred control outside th
 window, independent direct/group namespaces, missing/invalid metadata, nontext
 payloads, unavailable sender mapping and the executable explicit-record schema.
 
-Remaining before public availability: source inventory, authenticated public
-cursors/resources, current collection policy and live tombstone checks, bounded
-response rendering, MCP dispatch/discovery, skills and actual-client acceptance.
-The installed service remains source `f7038ce`; this read layer is not deployed.
+Public source inventory, authenticated cursors/resources, collection policy,
+live tombstone checks, bounded rendering, MCP dispatch, both skills and connected
+client acceptance are recorded in [the current gate report](../conversation-completion-open-gates.md).
+This does not establish complete source content or strict mobile-import eligibility.
+The new native-exclusion/recall profile requires its own real-source acceptance.

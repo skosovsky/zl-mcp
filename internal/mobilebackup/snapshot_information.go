@@ -7,8 +7,8 @@ import (
 )
 
 // snapshotInformation classifies only the pinned native informational action.
-// Its body and action parameters are never rendered or executed. Other type-20
-// records remain unclassified; desktop MSG_UNDO integers are not backup types.
+// This is a diagnostic subset, not the type-20 exclusion rule. Neither its body
+// nor action parameters are rendered; desktop MSG_UNDO is not a backup type.
 func snapshotInformation(ctx context.Context, data []byte) bool {
 	metadata, err := ParseBinNet(ctx, data)
 	defer metadata.Clear()
@@ -17,33 +17,37 @@ func snapshotInformation(ctx context.Context, data []byte) bool {
 }
 
 // classifySnapshotInformation scans the entire selected image, outside date and
-// paging filters, using metadata only. It returns no prefix on unknown shapes,
+// paging filters, using metadata only. Unknown metadata cannot make a native-excluded row visible.
+// It returns no prefix on query errors,
 // budget exhaustion or cancellation, and loads neither identities nor text.
-func classifySnapshotInformation(ctx context.Context, conn *sql.Conn, expected int) error {
+func classifySnapshotInformation(ctx context.Context, conn *sql.Conn, expected int) (int, error) {
 	if expected < 1 || expected > 5000 {
-		return ErrSnapshotControls
+		return 0, ErrSnapshotControls
 	}
 	rows, err := conn.QueryContext(ctx, "SELECT CASE WHEN typeof(BinNet)='blob' AND length(BinNet)<=262144 THEN BinNet ELSE NULL END FROM ChatContent WHERE MsgType=20 LIMIT 5001")
 	if err != nil {
-		return ErrSnapshotControls
+		return 0, ErrSnapshotControls
 	}
 	defer rows.Close()
-	count, decodedBytes := 0, 0
+	count, decodedBytes, information := 0, 0, 0
 	for rows.Next() {
 		var data []byte
 		if err := rows.Scan(&data); err != nil {
-			return ErrSnapshotControls
+			return 0, ErrSnapshotControls
 		}
 		count++
 		decodedBytes += len(data)
-		valid := count <= expected && decodedBytes <= 8<<20 && snapshotInformation(ctx, data)
-		clear(data)
-		if !valid {
-			return ErrSnapshotControls
+		if count > expected || decodedBytes > 8<<20 || ctx.Err() != nil {
+			clear(data)
+			return 0, ErrSnapshotControls
 		}
+		if snapshotInformation(ctx, data) {
+			information++
+		}
+		clear(data)
 	}
 	if rows.Err() != nil || ctx.Err() != nil || count != expected {
-		return ErrSnapshotControls
+		return 0, ErrSnapshotControls
 	}
-	return nil
+	return information, nil
 }

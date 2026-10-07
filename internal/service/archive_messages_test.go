@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"path/filepath"
 	"strings"
@@ -67,8 +68,12 @@ func testOfflineArchiveMessages(t *testing.T, offline, restricted *membershipPor
 					t.Fatal(err)
 				}
 				full, err := offline.Call(ctx, "read_archive_resource", map[string]any{"token": sealed})
-				if err != nil || full["archive_row_id"] != id || full["text"] != record["text"] {
+				if err != nil || full["archive_row_id"] != id {
 					t.Fatal("resource did not replay exact source record", err)
+				}
+				fullText, ok := full["text"].(string)
+				if !ok || (record["text_truncated"] == true && (len([]rune(fullText)) <= 2048 || string([]rune(fullText)[:2048]) != record["text"])) || (record["text_truncated"] != true && fullText != record["text"]) {
+					t.Fatal("resource changed the excerpt or lost full text")
 				}
 				if _, err = restricted.Call(ctx, "read_archive_resource", map[string]any{"token": sealed}); err == nil {
 					t.Fatal("resource bypassed current collection policy")
@@ -170,5 +175,50 @@ func TestArchiveExcerptBoundsUnicodeAndBindsOriginalReadPage(t *testing.T) {
 	short, err := p.archiveExcerpt(ctx, record, token, 20)
 	if err != nil || short["text_truncated"] != false || short["resource_uri"] != nil || short["text"] != record.Text {
 		t.Fatal("short text received unnecessary resource", err)
+	}
+}
+
+func testArchiveRecalledResources(t *testing.T, owner *membershipPort, sourceID string) {
+	t.Helper()
+	// Arrange: an authenticated resource claim deliberately targets a recalled row.
+	// Its undo is outside the requested interval, in both typed source files.
+	ctx := context.Background()
+	binding, err := owner.store.ArchiveAccountKey(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt, err := owner.library.PreservationStatus(ctx, sourceID, binding)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server, err := mcpserver.NewWithControl(owner.store, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ct, st := mcp.NewInMemoryTransports()
+	ss, err := server.Connect(ctx, st, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ss.Close()
+	client := mcp.NewClient(&mcp.Implementation{Name: "archive-recall-resource-test", Version: "1"}, nil)
+	cs, err := client.Connect(ctx, ct, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cs.Close()
+	for index, kind := range []string{"direct", "group"} {
+		token := archiveReadToken{Version: 1, Kind: "resource", Account: binding, Source: sourceID, Digest: receipt.Source.Digest, Ref: domain.ConversationRef{Type: kind, ID: "12"}, Since: "2026-09-26T00:00:00Z", Until: "2026-09-26T01:00:00Z", Order: "asc", Target: fmt.Sprintf("ar:%s:%d:1", sourceID, index), Limit: 1}
+		sealed, err := owner.sealArchiveRead(ctx, "resource", token)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Act: replay the same authenticated capability through owner and public MCP.
+		value, ownerErr := owner.Call(ctx, "read_archive_resource", map[string]any{"token": sealed})
+		result, resourceErr := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: "zalo://archives/" + sealed})
+		// Assert: no recalled plaintext or resource contents, despite valid ownership.
+		if ownerErr == nil || value != nil || resourceErr == nil || result != nil {
+			t.Fatal("recalled resource bypassed whole-source visibility")
+		}
 	}
 }

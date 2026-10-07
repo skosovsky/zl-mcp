@@ -40,6 +40,13 @@ func (s *accountCaptureSource) MapMobileBackupIdentities(ctx context.Context, re
 }
 
 func TestAccountArchiveCaptureRestartOfflineInspectionAndRemoval(t *testing.T) {
+	for _, fixture := range []string{"format1-account-vector.json", "format1-account-recalls-vector.json"} {
+		t.Run(fixture, func(t *testing.T) { testAccountArchiveCapture(t, fixture) })
+	}
+}
+
+func testAccountArchiveCapture(t *testing.T, fixture string) {
+	t.Helper()
 	// Arrange: independently encrypted synthetic SQLite, bound store and one owner-only capture.
 	ctx := context.Background()
 	stateDir := t.TempDir()
@@ -60,7 +67,7 @@ func TestAccountArchiveCaptureRestartOfflineInspectionAndRemoval(t *testing.T) {
 	}
 	p.archives = archives
 	defer func() { p.archives.Close() }()
-	raw, e := os.ReadFile("../mobilebackup/testdata/format1-account-vector.json")
+	raw, e := os.ReadFile(filepath.Join("../mobilebackup/testdata", fixture))
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -148,7 +155,7 @@ func TestAccountArchiveCaptureRestartOfflineInspectionAndRemoval(t *testing.T) {
 	if strings.Contains(string(encoded), "SessionID") || strings.Contains(string(encoded), "synthetic text") {
 		t.Fatal("source metadata disclosed private content")
 	}
-	testOfflineArchiveCatalogue(t, p, first.SourceID)
+	testOfflineArchiveCatalogue(t, p, first.SourceID, fixture == "format1-account-recalls-vector.json")
 	again, e := p.captureAccountArchiveWithDownloader(ctx, attempt.OperationID, attempt.Revision, d)
 	if e != nil {
 		t.Fatal(e)

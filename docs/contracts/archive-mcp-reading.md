@@ -41,19 +41,21 @@ replays the original bounded source page and rechecks TTL, ownership, policy and
 known local tombstones; no plaintext cached in a token or disk index is necessary.
 Archive-only records are never send/quote anchors. Known local suppression is
 checked by genuine global ID; missing global IDs and unverified WAL changes remain
-explicit visibility limitations. Unclassified source controls block the whole selected file. A narrow snapshot-only
-exception recognizes type 20 only with exactly one valid attachment whose action
-is the pinned native `msginfo.actionlist` literal; every such row in the whole
-file must pass metadata classification before any prefix is returned. Classification
-reads neither message content nor identities, at most 5,000 rows/8 MiB metadata
-under the existing SQLite deadline, with a 256 KiB blob limit per row. Missing,
-malformed, oversized, multiple-attachment or different actions fail closed. Other
-deferred types, including delete/undo 33/36, remain blocking. This does not change
-strict mobile import admission. Classified informational content is never rendered
-or executed. `source_information_rows` counts all classified rows in the file;
-`unsupported_content.native_information` counts omitted rows examined on this page.
-Their metadata gaps are counted for the examined page. Empty informational pages
-still advance the cursor. TTL, local tombstones, policy and resource checks remain.
+explicit visibility limitations. Unclassified source controls block the whole selected file.
+The [native source-visibility profile](archive-source-visibility.md) is a read-only
+candidate: type 20 follows the native query exclusion; exact informational actions
+are a separately counted subset. Validated type-36/status-3 targets suppress
+recalled rows and matching original copies inside the selected immutable file,
+including controls outside the requested interval. Other controls, malformed
+identity/state, duplicates and exhausted whole-source budgets fail without a prefix.
+This neither applies corpus tombstones nor changes strict mobile-import admission.
+
+`source_native_excluded_rows`, `source_information_rows` and `source_recall_rows`
+are whole-file counts; informational rows are a subset of excluded rows.
+`unsupported_content` and `suppressed_source` describe the examined page. Metadata
+gap counts can overlap exclusions. Empty excluded/recalled pages still advance
+continuation. TTL, live tombstones, collection policy and resource checks remain.
+Installation and real-source verification of this candidate remain separate gates.
 
 Coverage distinguishes source/period counts and bounds from examined-page rejection,
 expiry, unsupported metadata/content, unresolved quote/mention/sender and known

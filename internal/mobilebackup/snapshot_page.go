@@ -42,10 +42,11 @@ type SnapshotPage struct {
 	WALMode                                                         bool             `json:"-"`
 	UnsupportedMetadataFields, UnresolvedQuotes, UnresolvedMentions int              `json:"-"`
 	Examined, Rejected, Expired, UnresolvedSenders                  int              `json:"-"`
-	SourceInformation                                               int              `json:"-"`
-	Unsupported                                                     map[string]int   `json:"-"`
-	HasMore                                                         bool             `json:"-"`
-	Next                                                            *SQLiteCursor    `json:"-"`
+	SourceInformation                                               int
+	SourceNativeExcluded, SourceRecallRows, SuppressedSource        int            `json:"-"`
+	Unsupported                                                     map[string]int `json:"-"`
+	HasMore                                                         bool           `json:"-"`
+	Next                                                            *SQLiteCursor  `json:"-"`
 }
 
 func (SnapshotPage) String() string   { return "archive snapshot page [redacted]" }
@@ -86,6 +87,8 @@ func (a AccountArchive) ReadSnapshotPage(ctx context.Context, sourceID string, r
 	result.Examined = batch.Examined
 	result.Rejected = batch.Rejected
 	result.SourceInformation = batch.SourceInformation
+	result.SourceNativeExcluded = batch.SourceNativeExcluded
+	result.SourceRecallRows = batch.SourceRecallRows
 	result.HasMore = batch.HasMore
 	if batch.Next != nil {
 		copy := *batch.Next
@@ -102,22 +105,34 @@ func (a AccountArchive) ReadSnapshotPage(ctx context.Context, sourceID string, r
 		if ctx.Err() != nil {
 			return result, ErrArchive
 		}
+		if row.Type == 36 || row.Type != 20 && batch.recalls.suppresses(row) {
+			result.SuppressedSource++
+			continue
+		}
 		if row.Type == 20 {
-			// Whole-source classification already validated every type-20 action.
-			// Advance the ordinary row cursor and report omission, without projecting
-			// source text, title, quote, mentions or interactive action parameters.
+			// The native SQL query excludes this format type before conversion.
+			// Metadata is only diagnostic; it cannot turn the body into visible text.
 			metadata, metadataErr := ParseBinNet(ctx, row.BinNet)
-			if metadataErr != nil || ctx.Err() != nil {
+			if ctx.Err() != nil {
 				metadata.Clear()
 				return result, ErrArchive
 			}
-			result.UnsupportedMetadataFields += metadata.UnsupportedFields
-			if metadata.Quote != nil {
-				result.UnresolvedQuotes++
+			if metadataErr != nil {
+				result.Unsupported["invalid_excluded_metadata"]++
+				result.Unsupported["native_excluded"]++
+			} else {
+				result.UnsupportedMetadataFields += metadata.UnsupportedFields
+				if metadata.Quote != nil {
+					result.UnresolvedQuotes++
+				}
+				result.UnresolvedMentions += len(metadata.Mentions)
+				if snapshotInformation(ctx, row.BinNet) {
+					result.Unsupported["native_information"]++
+				} else {
+					result.Unsupported["native_excluded"]++
+				}
 			}
-			result.UnresolvedMentions += len(metadata.Mentions)
 			metadata.Clear()
-			result.Unsupported["native_information"]++
 			continue
 		}
 		expiry, declared, e := MessageExpiryMS(row.TimestampMS, row.TTL)

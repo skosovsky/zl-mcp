@@ -647,6 +647,21 @@
           "type": "integer",
           "minimum": 0,
           "description": "Whole-file count of type-20 records classified by the exact native msginfo.actionlist attachment action. Their content is never rendered; examined-page omissions appear as native_information in unsupported_content. This is not a recall count or complete-history assertion."
+        },
+        "source_native_excluded_rows": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Whole-file count of format-1 type-20 rows omitted according to the native query. Includes source_information_rows; not a period/page count."
+        },
+        "source_recall_rows": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Whole-file count of validated type-36/status-3 recall targets, not recall timestamps or notifications."
+        },
+        "suppressed_source": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Examined-page rows hidden by the immutable source recall set, including control rows and matching ordinary copies."
         }
       },
       "required": [

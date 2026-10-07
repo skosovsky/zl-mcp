@@ -11,7 +11,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
-func testOfflineArchiveCatalogue(t *testing.T, owner *membershipPort, sourceID string) {
+func testOfflineArchiveCatalogue(t *testing.T, owner *membershipPort, sourceID string, recalled bool) {
 	t.Helper()
 	// Arrange: authenticated library has two direct files and a colliding group ID.
 	ctx := context.Background()
@@ -86,6 +86,9 @@ func testOfflineArchiveCatalogue(t *testing.T, owner *membershipPort, sourceID s
 		t.Fatal("unknown names invented", err)
 	}
 	testOfflineArchiveMessages(t, offline, owner, sourceID)
+	if recalled {
+		testArchiveRecalledResources(t, offline, sourceID)
+	}
 	for _, table := range []string{"conversations", "messages", "message_events", "event_deliveries", "send_operations", "event_subscriptions"} {
 		var n int
 		if err = store.DB.QueryRow("SELECT count(*) FROM " + table).Scan(&n); err != nil || n != 0 {

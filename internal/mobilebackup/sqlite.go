@@ -44,7 +44,10 @@ type SQLiteBatch struct {
 	Coverage                 SQLiteCoverage `json:"-"`
 	SourceControls           int
 	SourceInformation        int
-	DeferredControls         map[string]int `json:"-"`
+	SourceNativeExcluded     int
+	SourceRecallRows         int
+	recalls                  *snapshotRecallTargets `json:"-"`
+	DeferredControls         map[string]int         `json:"-"`
 	WALMode                  bool
 	Rows                     []SQLiteRow    `json:"-"`
 	RejectedMessageIDShapes  map[string]int `json:"-"`
@@ -79,6 +82,8 @@ func (b *SQLiteBatch) Clear() {
 	}
 	b.Rows = nil
 	b.Next = nil
+	b.recalls.clear()
+	b.recalls = nil
 	clear(b.RejectedMessageIDShapes)
 	b.RejectedMessageIDShapes = nil
 	clear(b.RejectedMessageIDContext)
@@ -132,6 +137,7 @@ func readSQLitePageMode(parent context.Context, file ArchiveFile, scratch string
 	stage := "INPUT_BINDING"
 	defer func() {
 		if err != nil {
+			batch.Clear()
 			slog.Warn("mobile_archive_sqlite_failed", "stage", stage, "cancelled", parent != nil && parent.Err() != nil)
 		}
 	}()
@@ -283,15 +289,31 @@ func readSQLitePageMode(parent context.Context, file ArchiveFile, scratch string
 		if conn.QueryRowContext(ctx, "SELECT count(*) FROM ChatContent WHERE MsgType IN (20,21,25,26,29,32,33,34,35,36,45,51,52)").Scan(&batch.SourceControls) != nil {
 			return SQLiteBatch{}, ErrSQLite
 		}
+		if batch.SourceControls > 5000 {
+			return SQLiteBatch{}, ErrSnapshotControls
+		}
 		information := batch.DeferredControls["20"]
 		if information > 0 {
-			if err := classifySnapshotInformation(ctx, conn, information); err != nil {
+			classified, err := classifySnapshotInformation(ctx, conn, information)
+			if err != nil {
 				return SQLiteBatch{}, err
 			}
-			batch.SourceInformation = information
+			batch.SourceInformation = classified
+			batch.SourceNativeExcluded = information
 			batch.SourceControls -= information
 		}
+		recalls := batch.DeferredControls["36"]
+		if recalls > 0 {
+			targets, err := classifySnapshotRecalls(ctx, conn, recalls)
+			if err != nil {
+				return SQLiteBatch{}, err
+			}
+			batch.recalls = targets
+			batch.SourceRecallRows = recalls
+			batch.SourceControls -= recalls
+		}
 		if batch.SourceControls != 0 {
+			batch.recalls.clear()
 			return SQLiteBatch{}, ErrSnapshotControls
 		}
 	}
@@ -323,10 +345,7 @@ func readSQLitePageMode(parent context.Context, file ArchiveFile, scratch string
 	// Discard all previously accumulated private rows if query execution fails.
 	defer func() {
 		if err != nil {
-			for i := range batch.Rows {
-				clear(batch.Rows[i].BinNet)
-			}
-			batch = SQLiteBatch{}
+			batch.Clear()
 		}
 	}()
 	stage = "ROW_VALIDATION"

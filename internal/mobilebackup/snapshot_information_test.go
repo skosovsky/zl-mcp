@@ -50,7 +50,7 @@ func TestSnapshotInformationWholeSourceClassificationAndPaging(t *testing.T) {
 	}
 }
 
-func TestSnapshotInformationRejectsUnknownShapesAndOtherControlsBeforePrefix(t *testing.T) {
+func TestSnapshotNativeExclusionAndUnclassifiedControlGuard(t *testing.T) {
 	from := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC)
 	known := attachmentField(6, attachmentField(45, []byte("msginfo.actionlist")))
 	for _, tc := range []struct {
@@ -80,8 +80,12 @@ func TestSnapshotInformationRejectsUnknownShapesAndOtherControlsBeforePrefix(t *
 			page, err := ReadSnapshotSQLitePage(context.Background(), ArchiveFile{Name: "901.db", Data: data}, t.TempDir(), from, from.Add(time.Hour), 1, nil, "asc")
 			defer page.Clear()
 			// Assert: no prefix or cursor escapes; action naming does not waive real controls.
-			if !errors.Is(err, ErrSnapshotControls) || len(page.Rows) != 0 || page.Next != nil {
-				t.Fatal("unknown shape returned a prefix", err)
+			if tc.kind == 20 {
+				if err != nil || page.SourceNativeExcluded != 1 || page.SourceInformation != 0 || len(page.Rows) != 1 || page.Rows[0].Type != 0 {
+					t.Fatal("native exclusion did not match the pinned query", err)
+				}
+			} else if !errors.Is(err, ErrSnapshotControls) || len(page.Rows) != 0 || page.Next != nil {
+				t.Fatal("unclassified control returned a prefix", err)
 			}
 		})
 	}

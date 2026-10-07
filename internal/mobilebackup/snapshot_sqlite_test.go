@@ -124,6 +124,12 @@ func TestSnapshotSQLiteBlocksEveryDeferredControlOutsideWindow(t *testing.T) {
 			page, err := ReadSnapshotSQLitePage(context.Background(), ArchiveFile{Name: "901.db", Data: data}, t.TempDir(), from, from.Add(time.Hour), 1, nil, "asc")
 			defer page.Clear()
 			// Assert: no text, row or cursor escapes a source with unclassified controls.
+			if kind == 20 {
+				if err != nil || page.SourceNativeExcluded != 1 || len(page.Rows) != 1 {
+					t.Fatal("native-excluded source rejected", err)
+				}
+				return
+			}
 			if !errors.Is(err, ErrSnapshotControls) || len(page.Rows) != 0 || page.Next != nil {
 				t.Fatal("control-bearing snapshot returned prefix", err)
 			}
