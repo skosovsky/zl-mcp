@@ -125,14 +125,24 @@ Offline inspection сейчас выдаёт coverage по интервалу и
 Две date-window проверки прошли на одном cache без download/import; повтор
 capture вернул идентичный manifest, ciphertext и expiry не изменились.
 
-Чистый source `aa3621b` опубликован с успешным Linux/macOS CI
-[37581129318](https://github.com/skosovsky/zl-mcp/actions/runs/37581129318) и установлен
-через прежний LaunchAgent после проверенного private backup. Проверены сохранение
-состояния/подписок, HTTP, STDIO и фактический клиент; collector connected/authenticated,
-без last_error. Installed SHA-256:
-`f5893db37572a192867a7efffe6540801764572fac57d052ef23d02d68d498da`.
-Критерий acquisition и повторного offline coverage проверен на реальном источнике.
-Состояние, sending permission и границы подписок повторно сверены после capture.
-Следующий шаг — exact-conversation selection и bounded metadata диагностика
-неподдерживаемых записей без новой синхронизации; изменения в исходниках ещё
-должны пройти поставку. Сообщения из этого источника не импортированы.
+Чистый source `7b2fe7d` опубликован и установлен через прежний LaunchAgent после
+проверенного private backup. Root test/vet, race затронутых пакетов, сборки без
+CGO для macOS arm64/Linux amd64 и native startup/shutdown acceptance прошли.
+[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37584469238)
+прошёл root/nested test/race/vet, сборки без CGO и native acceptance. Installed SHA-256:
+`76f12b10e7557eaa523d134b31d9c1f50c8acd780f78c176177fca583b92098f`.
+Проверены сохранение всего состояния, зашифрованного архива и подписок, HTTP,
+STDIO и фактический клиент: collector connected/authenticated, без last_error.
+Sending permission остаётся выключенным.
+
+Exact-conversation selection на том же источнике подтвердил две записи за
+26 сентября именно в требуемом direct-диалоге. Обе имеют kind `webchat`,
+непустое поле исходного текста и успешно разобранный BinNet. В каждой парсер
+выделяет одно вложение без action/title; суммарно остаются шесть неизвестных
+nested field occurrences. Текущий конвертер отклоняет отсутствующий action
+как `unsupported_attachment_action`. Это установленное ограничение конверсии,
+а не отсутствие записей в экспорте. Видимый текст и смысл неизвестных полей
+не подтверждены. Файл содержит 24 записи, controls отсутствуют, WAL marker
+сохраняется. Ciphertext, manifest и expiry не изменились; download/import
+не выполнялись. Следующий этап — доказать структуру метаданных и отдельно
+условия WAL admission. Новая синхронизация для этого исследования не нужна.

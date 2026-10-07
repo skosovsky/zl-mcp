@@ -10,11 +10,12 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
-The current installed clean source is `aa3621b66b74c03fd237d189f1cb50dcb3cbd3e2`,
+The current installed clean source is `7b2fe7d38862cf715a248175837c367ac7c39d9d`,
 with ad hoc signed binary SHA-256
-`f5893db37572a192867a7efffe6540801764572fac57d052ef23d02d68d498da`.
-[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37581129318)
+`76f12b10e7557eaa523d134b31d9c1f50c8acd780f78c176177fca583b92098f`.
+[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37584469238)
 passed root/nested test, race and vet, CGO-free builds and native startup acceptance.
+Root tests/vet, affected-package race and macOS arm64/Linux amd64 builds also passed locally.
 The exact clean candidate (`vcs.modified=false`) also passed isolated native
 startup/shutdown acceptance locally. A verified private full-state/binary/config/
 LaunchAgent backup preceded replacement through the existing single agent.
@@ -40,7 +41,16 @@ does not add a public workflow to them. Real account acquisition subsequently re
 8 contain controls. Two offline date-window sweeps and an identical capture retry
 left source ciphertext/expiry unchanged and imported no messages. This closes
 retention/repeated offline coverage, not safe mobile admission or historical
-message recovery. Exact-conversation metadata investigation remains in progress.
+message recovery. Exact typed selection subsequently verified the two September 26
+records in the requested direct conversation: both are `webchat`, both have
+nonempty source text and valid decoded metadata; each has one attachment with
+absent action/title, and there are six unsupported nested field occurrences in
+total. The current converter rejects the absent action as
+`unsupported_attachment_action`. This establishes a conversion compatibility gap,
+not a missing source row or proof of visible text semantics. The selected file
+contains 24 source rows and no controls but retains its WAL marker. Inspection
+left the encrypted source unchanged and performed no download/import. Unknown
+metadata structure and independent WAL admission remain open.
 See [retained archive task](task-retained-mobile-archive.md).
 
 ## Previous installation and live evidence
