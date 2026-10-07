@@ -66,3 +66,45 @@ func TestAccountInspectionReportsWholeFileDeferredControlsWithoutRenderingThem(t
 		t.Fatal("control diagnosis exposed source contents")
 	}
 }
+
+func TestAccountInspectionSeparatesSampledDeferredMetadata(t *testing.T) {
+	// Arrange: ordinary text and a sampled type-20 row have distinct metadata;
+	// a type-36 row outside the window must affect only whole-file counts.
+	at := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC)
+	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
+		for _, row := range []struct {
+			kind, stamp int64
+			metadata    []byte
+		}{{0, at.UnixMilli(), attachmentField(6, attachmentField(45, []byte("rtf")))},
+			{20, at.UnixMilli() + 1, attachmentField(6, attachmentField(45, []byte("PRIVATE-ACTION")))},
+			{36, at.Add(48 * time.Hour).UnixMilli(), nil}} {
+			if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "10", "20", "30", "PRIVATE-BODY", row.stamp, 0, row.kind, 1, row.metadata); err != nil {
+				t.Fatal(err)
+			}
+		}
+	})
+	a := retainedFixture(t)
+	a.archive.Files[0].Data = data
+	// Act: compare explicit metadata diagnostics and the default privacy surface.
+	files, _, err := a.InspectCoverageWithMetadata(context.Background(), t.TempDir(), at, at.Add(time.Hour), 0, 1, true)
+	plain, _, plainErr := a.InspectCoverage(context.Background(), t.TempDir(), at, at.Add(time.Hour), 0, 1)
+	// Assert: per-type observations partition sampled deferred rows only; they do
+	// not inherit ordinary metadata or invent a visibility classification.
+	if err != nil || plainErr != nil || len(files) != 1 || len(plain) != 1 {
+		t.Fatal("inspection failed", err, plainErr)
+	}
+	file := files[0]
+	diagnostic := file.DeferredMetadata["20"]
+	if len(file.DeferredMetadata) != 1 || diagnostic == nil || diagnostic.RowsWithMetadata != 1 || diagnostic.SourceTextPresent != 1 || diagnostic.ActionClasses["other"] != 1 || diagnostic.ActionClasses["rtf"] != 0 || file.Metadata.RowsWithMetadata != 2 || file.DeferredControls["36"] != 1 || len(plain[0].DeferredMetadata) != 0 {
+		t.Fatal("sampled deferred metadata was mixed with ordinary/outside-window rows")
+	}
+	encoded, err := json.Marshal(files)
+	if err != nil || strings.Contains(string(encoded), "PRIVATE-") || strings.Contains(string(encoded), "SenderId") {
+		t.Fatal("deferred metadata diagnosis exposed source values", err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if partial, _, err := a.InspectCoverageWithMetadata(ctx, t.TempDir(), at, at.Add(time.Hour), 0, 1, true); err == nil || partial != nil {
+		t.Fatal("cancelled inspection returned a prefix")
+	}
+}

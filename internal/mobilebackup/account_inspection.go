@@ -3,6 +3,7 @@ package mobilebackup
 import (
 	"context"
 	"maps"
+	"strconv"
 	"time"
 )
 
@@ -10,25 +11,26 @@ import (
 // File ordinals are stable within one authenticated source; no peer IDs or text
 // are serialized. A scan limit never becomes a complete-history assertion.
 type AccountFileCoverage struct {
-	FileIndex                int                         `json:"file_index"`
-	ConversationType         string                      `json:"conversation_type"`
-	Status                   string                      `json:"status"`
-	SourceRows               int64                       `json:"source_rows"`
-	PeriodRows               int64                       `json:"period_rows"`
-	InvalidTimestamps        int64                       `json:"invalid_timestamp_rows"`
-	EarliestAt               *string                     `json:"source_earliest_at"`
-	LatestAt                 *string                     `json:"source_latest_at"`
-	WALMode                  bool                        `json:"wal_mode"`
-	Examined                 int                         `json:"examined"`
-	RejectedMessageIDShapes  map[string]int              `json:"rejected_message_id_shapes,omitempty"`
-	RejectedMessageIDContext map[string]int              `json:"rejected_message_id_context,omitempty"`
-	RejectedReasons          map[string]int              `json:"rejected_row_reasons,omitempty"`
-	Rejected                 int                         `json:"rejected"`
-	SourceControls           int                         `json:"source_controls"`
-	DeferredControls         map[string]int              `json:"unclassified_control_types,omitempty"`
-	SampleHasMore            bool                        `json:"sample_has_more"`
-	Types                    map[string]int              `json:"sample_content_kinds"`
-	Metadata                 *AccountMetadataDiagnostics `json:"metadata_diagnostics,omitempty"`
+	FileIndex                int                                    `json:"file_index"`
+	ConversationType         string                                 `json:"conversation_type"`
+	Status                   string                                 `json:"status"`
+	SourceRows               int64                                  `json:"source_rows"`
+	PeriodRows               int64                                  `json:"period_rows"`
+	InvalidTimestamps        int64                                  `json:"invalid_timestamp_rows"`
+	EarliestAt               *string                                `json:"source_earliest_at"`
+	LatestAt                 *string                                `json:"source_latest_at"`
+	WALMode                  bool                                   `json:"wal_mode"`
+	Examined                 int                                    `json:"examined"`
+	RejectedMessageIDShapes  map[string]int                         `json:"rejected_message_id_shapes,omitempty"`
+	RejectedMessageIDContext map[string]int                         `json:"rejected_message_id_context,omitempty"`
+	RejectedReasons          map[string]int                         `json:"rejected_row_reasons,omitempty"`
+	Rejected                 int                                    `json:"rejected"`
+	SourceControls           int                                    `json:"source_controls"`
+	DeferredControls         map[string]int                         `json:"unclassified_control_types,omitempty"`
+	SampleHasMore            bool                                   `json:"sample_has_more"`
+	Types                    map[string]int                         `json:"sample_content_kinds"`
+	Metadata                 *AccountMetadataDiagnostics            `json:"metadata_diagnostics,omitempty"`
+	DeferredMetadata         map[string]*AccountMetadataDiagnostics `json:"sample_deferred_metadata_diagnostics,omitempty"`
 }
 
 // InspectCoverage reads at most 25 files and 50 rows per file. All source bytes
@@ -80,6 +82,21 @@ func (a AccountArchive) InspectCoverageWithMetadata(ctx context.Context, scratch
 				if metadataErr != nil {
 					batch.Clear()
 					return nil, false, metadataErr
+				}
+				byType := map[int64][]SQLiteRow{}
+				for _, row := range batch.Rows {
+					if deferredMobileControl(row.Type) {
+						byType[row.Type] = append(byType[row.Type], row)
+					}
+				}
+				item.DeferredMetadata = map[string]*AccountMetadataDiagnostics{}
+				for kind, rows := range byType {
+					diagnostic, diagnosticErr := inspectAccountMetadata(ctx, rows)
+					if diagnosticErr != nil {
+						batch.Clear()
+						return nil, false, diagnosticErr
+					}
+					item.DeferredMetadata[strconv.FormatInt(kind, 10)] = diagnostic
 				}
 			}
 			for _, row := range batch.Rows {

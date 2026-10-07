@@ -390,6 +390,31 @@
               "type": "integer",
               "minimum": 1
             }
+          },
+          "sample_deferred_metadata_diagnostics": {
+            "type": "object",
+            "description": "Owner-only metadata observations for scalar-valid sampled rows grouped by deferred format type. Date window and 50-row sample limits apply; missing categories do not prove absence from the whole source. No identities or source text. Does not classify visibility or enable reads/import.",
+            "maxProperties": 13,
+            "propertyNames": {
+              "enum": [
+                "20",
+                "21",
+                "25",
+                "26",
+                "29",
+                "32",
+                "33",
+                "34",
+                "35",
+                "36",
+                "45",
+                "51",
+                "52"
+              ]
+            },
+            "additionalProperties": {
+              "$ref": "#/properties/files/items/properties/metadata_diagnostics"
+            }
           }
         },
         "required": [

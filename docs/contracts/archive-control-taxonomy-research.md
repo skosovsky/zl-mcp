@@ -83,6 +83,25 @@ evidence about the desktop model. It cannot be transferred to backup type 20
 without the missing producer/translation evidence. Keep the public guard and
 strict-import rules unchanged until the format-1 row semantics are established.
 
+## Per-type metadata diagnostic candidate
+
+An [independent iOS database investigation](https://cp-df.com/en/blog/zalo.html)
+labels type 20 as a system entry based on comparison with the app UI. Its
+[iLEAPP parser](https://github.com/abrignoni/iLEAPP/blob/main/scripts/artifacts/ZaloChats.py)
+does not implement a separate type-20 visibility rule. The inspected parser blob
+is `b1a1a736313f77f064e562e2179f822a3d192085`. These observations do not establish
+whether type 20 targets other messages in our captured producer version.
+
+The owner inspection candidate adds optional
+`sample_deferred_metadata_diagnostics` when metadata inspection was explicitly
+requested. It groups existing fixed metadata observations by pinned deferred
+format type, separately from ordinary-message metadata. Only scalar-valid rows
+in the requested interval and existing 50-row sample participate. Whole-file
+type counts remain separate; an absent sampled category is not absence evidence.
+The response returns neither source text/identities nor raw attachment actions.
+It performs no acquisition, import, Events or visibility-policy change. Deployment
+and real-source results of this candidate are not yet confirmed.
+
 Diagnostic source `de80416` passed Linux/macOS CI and local native acceptance,
 then was installed with a verified private backup. Installed SHA-256:
 `ac58ec1ddd90c44ba256b7047d919edd7062ffd51c5f4197e6bcbcc200f3d890`.
