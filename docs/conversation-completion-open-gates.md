@@ -4,7 +4,8 @@
 
 Current checkpoint: 2026-10-07; the dated entries below preserve prior evidence. The full scope is
 [task-conversation-completion.md](task-conversation-completion.md). This report does
-not reduce that scope or declare completion. Historical checkpoints in
+not reduce that scope or declare completion. The [current requirement audit](conversation-completion-current-audit.md)
+reconciles later acceptance with historical pending labels. Historical checkpoints in
 [the acceptance report](conversation-completion-acceptance.md) are evidence for
 their recorded versions, not a description of the current installation.
 
@@ -54,6 +55,23 @@ This closes complete bounded reading of the captured local source. It does not
 prove complete account history, media rendering, missing sender identities,
 strict mobile WAL/import admission or the outstanding incoming-only/first-only
 and fresh-send live scenarios. The original goal remains active.
+
+### Revalidated direct-send acknowledgement acceptance
+
+Read-only audit of the separately authorized October 6 trial confirms two saved
+sent receipts, identical plain/quote UUID repeats, one corpus record per message
+and an exact quoted relationship to the accepted plain ID. The current connected
+client independently read both same request/message/recipient identities through
+`zalo_get_send_status` after subsequent service restarts. The sending code/contracts
+are unchanged from the published checkpoint preceding the trial. Six operations
+remain sent and the original ambiguous operation remains unknown. No send,
+permission change or automatic repair occurred in this audit.
+
+This closes the corrected plain/quote acknowledgement live gate alongside the
+existing encrypted numeric/string wire tests. It does not establish the literal
+JSON type used in the live response, incoming/first-only delivery or first sending
+to a peer absent from the catalogue/corpus. The older matrix's pending fresh-send
+label is historical and superseded by this evidence; no repeat trial is required.
 
 ### Previous installation and initial archive visibility
 

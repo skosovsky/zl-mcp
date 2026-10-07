@@ -1,14 +1,33 @@
 # Direct messaging acceptance — work in progress
 
-This report tracks [the task](task-direct-messaging.md). Source implementation has
-passed autonomous checks. Collector recovery and installation were verified live;
-Two authorized direct-send operations and v1 notification delivery were exercised;
-actual client v2 incoming/first-filter acceptance remains pending.
-Synthetic tests use temporary state and fake Zalo sessions;
-they do not establish live delivery, permissions of a particular Zalo recipient,
-or client discovery. No model evals were run.
+Tracks [the direct task](task-direct-messaging.md) and its remaining gates in
+[conversation completion](task-conversation-completion.md). The current
+[requirement audit](conversation-completion-current-audit.md) supersedes the
+historical checkpoint summaries below. No model evals were run.
 
-## Current evidence
+## Current evidence (2026-10-07)
+
+The separately authorized October 6 plain/quote trial returned two accepted
+message IDs and identical saved results on both UUID retries. The quoted record
+references the exact first accepted ID. Read-only revalidation found both exact
+receipts in current SQLite and through the actual connected `zalo_get_send_status`
+after subsequent deployments; each message has one corpus match. The send
+implementation/contracts are unchanged from the published checkpoint preceding
+that trial. Six operations remain sent and the original ambiguous one remains
+unknown. No new send or retrospective unknown repair was performed.
+
+Encrypted HTTP tests cover numeric and string acknowledgement forms on both
+routes. The live upstream JSON type was not retained, so numeric live wire shape
+is not claimed. The corrected-route live gate is accepted; it does not require
+another two-message trial.
+
+HTTP v2/client recovery, installed skills, current STDIO and source publication
+are accepted for their documented scopes. Real incoming-only/first-only filtered
+delivery and first send outside the local catalogue/corpus remain pending. The
+pending recipient question concerns that first-send scenario, not the completed
+plain/quote acknowledgement trial.
+
+## Original implementation checkpoint (historical)
 
 | Requirement | Evidence | Remaining verification |
 | --- | --- | --- |
@@ -170,7 +189,7 @@ initiation to a peer absent from the collected corpus, installed skill reload,
 and diagnosis of an ambiguous acknowledgement if it recurs in an independently
 authorized send. No model evals or unapproved additional sends were performed.
 
-## Send acknowledgement decoder follow-up
+## Send acknowledgement decoder follow-up (historical)
 
 A local encrypted HTTP regression reproduces numeric `msgId` replies rejected by
 the pinned Go decoder on both plain and quote routes, yielding API code 0 and an
@@ -186,4 +205,6 @@ was performed. Post-update checks showed connected/authenticated collection,
 23 retained messages, unchanged sent/unknown operation records, two delivered
 callbacks and SQLite integrity `ok`. Sending remained disabled. No schema or
 MCP tool contract changed in this patch; send message IDs are still strings at
-the MCP boundary. New live numeric acknowledgement acceptance remains unverified.
+the MCP boundary. At that checkpoint new live acknowledgement acceptance was
+unverified. The later October 6 corrected-route trial is accepted as recorded
+above; the literal numeric JSON wire shape still was not captured.

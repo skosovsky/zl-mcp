@@ -2,6 +2,13 @@
 
 Research date: 2026-10-03. Status: findings and proposed design; no new tools or runtime changes implemented by this investigation.
 
+The initial observations/design below are historical. Subsequent implementation,
+actual client acceptance, available-source limits and remaining gates are recorded
+in the [current requirement audit](conversation-completion-current-audit.md).
+In particular, keyword-free browse, directory/preload/group paths and retained
+archive reading are now implemented; this document's original proposed order
+is not a current list of unimplemented tools.
+
 ## Confirmed local findings
 
 The reported direct conversation is absent from the installed SQLite catalogue. Accent-insensitive/case-insensitive checks of both conversation names and stored sender names found no match for the supplied name. This is a missing-data case, not merely an MCP name-search failure. Matching by name cannot establish that an unnamed peer ID is the same person; no target peer ID was available.

@@ -2,6 +2,14 @@
 
 Status: work in progress. Tracks [the combined task](task-conversation-completion.md). No model evals are used.
 
+Current requirement status is in the [October 7 audit](conversation-completion-current-audit.md)
+and [installed checkpoint](conversation-completion-open-gates.md). The historical
+entries below retain the capabilities and pending gates of their dated versions;
+they do not override later acceptance. The current archive is fully paged through
+the actual client, and the fresh plain/quote acknowledgement trial is accepted.
+Incoming-only/first-only delivery, first outside-catalogue send and safe real
+mobile admission remain unaccepted. No original scope is removed by this audit.
+
 ## Installed schema-11 checkpoint: 2026-10-05
 
 The latest candidate was built with `-trimpath` from a hash-verified isolated
