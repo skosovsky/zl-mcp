@@ -13,6 +13,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/skosovsky/zl-mcp/internal/control"
@@ -145,6 +146,11 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.Body = io.NopCloser(bytes.NewReader(body))
+	if discoveryMethod(request.Method) {
+		observed := &discoveryResponse{ResponseWriter: w, capture: request.Method == "tools/list"}
+		w = observed
+		defer logDiscovery(request.Method, r.Header.Get("MCP-Protocol-Version"), observed, time.Now())
+	}
 	if strings.HasPrefix(request.Method, "events/") {
 		media, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 		if err != nil || media != "application/json" {

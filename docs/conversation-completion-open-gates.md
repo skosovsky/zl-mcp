@@ -40,6 +40,28 @@ not whole-account message visibility, strict mobile import, WAL completeness or
 remaining live v2/sending gates. Unknown controls continue to block reads rather
 than return an unsafe prefix. See [current evidence](contracts/archive-control-taxonomy-research.md).
 
+### Whole-library bounded readability check
+
+The current installed archive reader was called once for each of the 56 typed
+conversations, with a one-record page and an explicit September 1–October 6
+UTC window. All 56 requests completed: 47 returned a page, while nine refused
+with `SOURCE_CONTROLS_UNCLASSIFIED`, without returning a prefix. The error
+responses are text-content envelopes, not structuredContent; the verification
+script initially grouped them as unclassified tool errors. The service journal
+records exactly 56 corresponding reads, 47 OK and nine control refusals.
+The 47 readable files contain 759 source rows and two classified informational
+rows; these are whole-file counts, not proof that all 759 texts are visible.
+Only first pages were examined, not every projected record. No phone request,
+corpus import, send, acknowledgement or subscription change occurred.
+
+The actual ChatGPT plugin card still shows 21 tools, without archive inventory,
+after Refresh tools; local HTTP and installed STDIO show 22. The tunnel profile
+points to the same loopback MCP endpoint. Current evidence does not establish
+why refresh failed to replace the external catalogue. A bounded metadata-only
+[discovery diagnostic](contracts/mcp-discovery-diagnostics.md) is being added to
+separate server response evidence from client catalogue adoption; it is not yet
+installed at this checkpoint.
+
 ### Previous diagnostic installation
 
 Latest diagnostic installation: clean signed source `de80416b1358ba097b622bbb774cc693c63d4033`,

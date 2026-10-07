@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "time",
+    "level",
+    "msg",
+    "method",
+    "protocol",
+    "http_status",
+    "duration_ms",
+    "response_bytes"
+  ],
+  "properties": {
+    "time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "level": {
+      "const": "INFO"
+    },
+    "msg": {
+      "const": "mcp_discovery"
+    },
+    "method": {
+      "enum": [
+        "initialize",
+        "server/discover",
+        "tools/list",
+        "resources/list",
+        "resources/templates/list",
+        "events/list"
+      ]
+    },
+    "protocol": {
+      "enum": [
+        "2026-07-28",
+        "2025-11-25",
+        "2025-06-18",
+        "2024-11-05",
+        "absent",
+        "other"
+      ]
+    },
+    "http_status": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 599
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "response_bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tool_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "archive_inventory_present": {
+      "type": "boolean"
+    },
+    "has_more": {
+      "type": "boolean"
+    },
+    "catalogue_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "required": [
+              "tool_count"
+            ]
+          },
+          {
+            "required": [
+              "archive_inventory_present"
+            ]
+          },
+          {
+            "required": [
+              "has_more"
+            ]
+          },
+          {
+            "required": [
+              "catalogue_sha256"
+            ]
+          }
+        ]
+      },
+      "then": {
+        "required": [
+          "tool_count",
+          "archive_inventory_present",
+          "has_more",
+          "catalogue_sha256"
+        ],
+        "properties": {
+          "method": {
+            "const": "tools/list"
+          },
+          "http_status": {
+            "const": 200
+          }
+        }
+      }
+    }
+  ]
+}
