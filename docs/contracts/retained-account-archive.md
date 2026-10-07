@@ -92,3 +92,10 @@ do not make unknown attachments readable. No action value, title, source text,
 parameters, URL or credential is returned. These observations do not change
 conversion, WAL/control/TTL admission or authorize import. The source remains
 immutable; no new phone request is made.
+
+`metadata_diagnostics.text_projection_classes` reports counts from the same
+converter text rule (`plain`, `rich`, `unsupported`, `invalid`, or
+`missing_metadata`) without returning text or corpus records. Plain projection
+for one absent/empty-action attachment follows the verified native MSG_TEXT
+fallback; unknown field counts remain visible. These counts never waive WAL,
+control, identity, expiry or history-import admission.

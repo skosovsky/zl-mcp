@@ -204,7 +204,11 @@ func archiveText(row PreparedRow) (text string, rich, supported, valid bool) {
 		valid = false
 		return
 	}
-	if !a.Action.Present || string(a.Action.Bytes) != "rtf" {
+	if !a.Action.Present || len(a.Action.Bytes) == 0 {
+		supported = true
+		return
+	}
+	if string(a.Action.Bytes) != "rtf" {
 		return
 	}
 	if a.Title.Present && len(a.Title.Bytes) > 0 {

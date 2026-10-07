@@ -20,7 +20,12 @@ out-of-period controls; this converter handles requested-period row coverage. Co
 carry the original source timestamp, not an invented recall time.
 
 Convert verified type-0/webchat candidates without attachments, or with exactly
-one decoded attachment whose present action is exactly `rtf`. The installed
+one decoded attachment whose present action is exactly `rtf`, or one decoded
+attachment with absent/explicitly empty action. For absent/empty action retain
+MsgContent as plain text and do not label the record rich text. The native
+MSG_TEXT branch starts with MsgContent and replaces it only for exact `rtf`;
+an absent action is not a missing-message signal. Unknown nested fields remain
+coverage limitations, not authorization to interpret their values. The installed
 consumer's MSG_TEXT branch uses nonempty attachment title, falling back to
 MsgContent when title is empty/absent. Preserve that visible text projection and
 mark `attachment_types=["rtf"]`; do not claim preservation of formatting or
@@ -84,3 +89,19 @@ validated recall targets separately from ordinary records; persistence uses the
 This does not invoke live recall, create Events, support arbitrary deletions or
 establish complete mobile import. WAL and unclassified whole-file controls remain
 explicit persistence gates; public mobile-archive admission remains disabled.
+
+## Plain-text fallback verification: 2026-10-07
+
+Read-only inspection of the installed consumer shared-worker source confirms
+that MSG_TEXT retains the initial MsgContent when attachment action is absent or
+empty. One decoded attachment is required; unknown nonempty actions and repeated
+attachments remain unsupported. This is an explicit plain-text projection only:
+unknown nested fields, quote/mention semantics and formatting are not claimed
+complete. WAL/control/identity/expiry admission gates are unchanged.
+
+Consumer source SHA-256:
+`7a83866c905956cfb122571b2f28cf00a8b61e0f362c40a82010a9947a7d6ff7`.
+The 341-byte MSG_TEXT branch SHA-256 is
+`904e5869fa6d5991d09fb52be324fe206b89b7a2599d66c3a276c7ffc9f3f8f8`.
+The consumer code was inspected as text; no native module or private archive
+was executed by that consumer during this verification.

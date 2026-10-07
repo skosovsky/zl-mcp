@@ -55,3 +55,16 @@ func TestAccountMetadataReportsShapeBudgetAndCancellation(t *testing.T) {
 		t.Fatal("diagnostic budget or cancellation failed")
 	}
 }
+
+func TestAccountMetadataCountsPlainFallbackWithoutRenderingText(t *testing.T) {
+	// Arrange: a real-shaped absent-action attachment, an empty action, and a nontext row.
+	opaque := attachmentField(999, []byte("PRIVATE-METADATA"))
+	rows := []SQLiteRow{{Text: "PRIVATE-TEXT", Type: 0, BinNet: attachmentField(6, opaque)}, {Type: 0, BinNet: attachmentField(6, attachmentField(45, nil))}, {Type: 1, BinNet: attachmentField(6, opaque)}}
+	// Act.
+	got, err := inspectAccountMetadata(context.Background(), rows)
+	serialized, _ := json.Marshal(got)
+	// Assert: projection counts do not claim full metadata coverage or disclose values.
+	if err != nil || got.TextProjectionClasses["plain"] != 2 || got.TextProjectionClasses["unsupported"] != 1 || got.UnsupportedFields != 2 || bytes.Contains(serialized, []byte("PRIVATE")) {
+		t.Fatal("projection or privacy mismatch", err)
+	}
+}

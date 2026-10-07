@@ -48,7 +48,9 @@ message identity.
 Decode does not establish supported content. The converter supports a separately
 verified visible-text projection for exactly one type-0 `rtf` attachment, under
 the [message conversion contract](mobile-backup-message-conversion.md).
-Other actions, nontext types and repeated attachments remain unsupported.
+One attachment with absent/empty action preserves the source plain-text
+projection for MSG_TEXT as specified by the conversion contract. Unknown
+nonempty actions, nontext types and repeated attachments remain unsupported.
 The native text path recognizes
 `action=rtf`, uses attachment title with MsgContent fallback, and passes an
 attachment object to normal message processing; reading only MsgContent would

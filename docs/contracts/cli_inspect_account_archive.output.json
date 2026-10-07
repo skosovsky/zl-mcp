@@ -262,6 +262,22 @@
               },
               "action_shapes_truncated": {
                 "type": "boolean"
+              },
+              "text_projection_classes": {
+                "type": "object",
+                "propertyNames": {
+                  "enum": [
+                    "plain",
+                    "rich",
+                    "unsupported",
+                    "invalid",
+                    "missing_metadata"
+                  ]
+                },
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 0
+                }
               }
             },
             "required": [
@@ -275,7 +291,8 @@
               "title_equals_source_text",
               "action_classes",
               "action_shapes",
-              "action_shapes_truncated"
+              "action_shapes_truncated",
+              "text_projection_classes"
             ]
           }
         },

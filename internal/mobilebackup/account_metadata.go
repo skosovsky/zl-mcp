@@ -23,23 +23,24 @@ type AccountActionShape struct {
 }
 
 type AccountMetadataDiagnostics struct {
-	RowsWithMetadata  int                  `json:"rows_with_metadata"`
-	MissingMetadata   int                  `json:"missing_metadata"`
-	InvalidMetadata   int                  `json:"invalid_metadata"`
-	AttachmentCount   int                  `json:"attachment_count"`
-	UnsupportedFields int                  `json:"unsupported_metadata_fields"`
-	SourceTextPresent int                  `json:"source_text_present"`
-	TitlePresent      int                  `json:"title_present"`
-	TitleEqualsText   int                  `json:"title_equals_source_text"`
-	ActionClasses     map[string]int       `json:"action_classes"`
-	ActionShapes      []AccountActionShape `json:"action_shapes"`
-	ShapesTruncated   bool                 `json:"action_shapes_truncated"`
+	RowsWithMetadata      int                  `json:"rows_with_metadata"`
+	MissingMetadata       int                  `json:"missing_metadata"`
+	InvalidMetadata       int                  `json:"invalid_metadata"`
+	AttachmentCount       int                  `json:"attachment_count"`
+	UnsupportedFields     int                  `json:"unsupported_metadata_fields"`
+	SourceTextPresent     int                  `json:"source_text_present"`
+	TitlePresent          int                  `json:"title_present"`
+	TitleEqualsText       int                  `json:"title_equals_source_text"`
+	TextProjectionClasses map[string]int       `json:"text_projection_classes"`
+	ActionClasses         map[string]int       `json:"action_classes"`
+	ActionShapes          []AccountActionShape `json:"action_shapes"`
+	ShapesTruncated       bool                 `json:"action_shapes_truncated"`
 }
 
 // inspectAccountMetadata reports protocol observations only. It never renders
 // source text or accepts an attachment action, and retains no raw metadata.
 func inspectAccountMetadata(ctx context.Context, rows []SQLiteRow) (*AccountMetadataDiagnostics, error) {
-	result := &AccountMetadataDiagnostics{ActionClasses: map[string]int{}, ActionShapes: []AccountActionShape{}}
+	result := &AccountMetadataDiagnostics{ActionClasses: map[string]int{}, TextProjectionClasses: map[string]int{}, ActionShapes: []AccountActionShape{}}
 	seen := map[string]bool{}
 	for _, row := range rows {
 		if ctx.Err() != nil {
@@ -50,6 +51,7 @@ func inspectAccountMetadata(ctx context.Context, rows []SQLiteRow) (*AccountMeta
 		}
 		if len(row.BinNet) == 0 {
 			result.MissingMetadata++
+			result.TextProjectionClasses["missing_metadata"]++
 			continue
 		}
 		result.RowsWithMetadata++
@@ -61,8 +63,20 @@ func inspectAccountMetadata(ctx context.Context, rows []SQLiteRow) (*AccountMeta
 		if err != nil {
 			meta.Clear()
 			result.InvalidMetadata++
+			result.TextProjectionClasses["invalid"]++
 			continue
 		}
+		kind, _ := mobilePayloadKind(row.Type)
+		_, rich, supported, valid := archiveText(PreparedRow{Row: row, Kind: kind, Metadata: meta})
+		projection := "unsupported"
+		if !valid {
+			projection = "invalid"
+		} else if supported && rich {
+			projection = "rich"
+		} else if supported {
+			projection = "plain"
+		}
+		result.TextProjectionClasses[projection]++
 		result.UnsupportedFields += meta.UnsupportedFields
 		for _, attachment := range meta.Attachments {
 			result.AttachmentCount++

@@ -305,3 +305,56 @@ func TestWALSnapshotCannotBecomeImportRecords(t *testing.T) {
 		t.Fatal("WAL snapshot became import records")
 	}
 }
+
+func TestMobilePlainAttachmentFallbackKeepsAdmissionGates(t *testing.T) {
+	for _, mode := range []string{"absent", "empty", "unknown-fields", "multiple", "unknown-action", "wal", "controls"} {
+		t.Run(mode, func(t *testing.T) {
+			// Arrange: native text branch keeps MsgContent unless exact rtf.
+			page, request, now := conversionPage(t)
+			defer page.Clear()
+			row := &page.Candidates.Rows[0]
+			original := row.Row.Text
+			a := Attachment{}
+			switch mode {
+			case "empty":
+				a.Action = AttachmentValue{Present: true}
+			case "unknown-fields":
+				a.UnsupportedFields = 3
+				row.Metadata.UnsupportedFields += 3
+			case "unknown-action":
+				a.Action = AttachmentValue{Present: true, Bytes: []byte("unknown")}
+			case "wal":
+				page.SourceWAL = true
+			case "controls":
+				page.SourceControls = 1
+			}
+			row.Metadata.Attachments = []Attachment{a}
+			if mode == "multiple" {
+				row.Metadata.Attachments = append(row.Metadata.Attachments, a)
+			}
+			// Act: diagnostic projection does not bypass persistence admission.
+			inspection, ie := InspectPreparedArchivePage(context.Background(), page, request, "10", now)
+			got, err := ConvertPreparedArchivePage(context.Background(), page, request, "10", now)
+			defer got.Clear()
+			// Assert: text stays exact/plain, unsupported cases explicit and WAL/controls reject all writes.
+			if ie != nil || row.Row.Text != original {
+				t.Fatal("diagnostic changed source", ie)
+			}
+			if mode == "wal" || mode == "controls" {
+				if err == nil || len(got.Records) != 0 || len(inspection.BlockReasons) != 1 || inspection.TextCandidates != 2 {
+					t.Fatal("admission gate bypassed")
+				}
+				return
+			}
+			if mode == "multiple" || mode == "unknown-action" {
+				if err != nil || got.UnsupportedContent != 1 || len(got.Records) != 1 {
+					t.Fatal("unsupported action/repetition accepted")
+				}
+				return
+			}
+			if err != nil || len(got.Records) != 2 || got.UnsupportedContent != 0 || got.Records[0].Message.Text != original || len(got.Records[0].Message.AttachmentTypes) != 0 {
+				t.Fatal("plain native fallback lost", err)
+			}
+		})
+	}
+}
