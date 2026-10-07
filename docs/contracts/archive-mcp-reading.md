@@ -61,5 +61,8 @@ retained unchanged for compatibility. The additional histogram explains a gate;
 it does not classify a control, relax visibility or permit import. Synthetic
 coverage proves the distinction for an out-of-window control with no global ID.
 Diagnostic extension de80416 is installed; the selected real file has exactly
-one type-20 row. Its target and suppression semantics remain unverified. See
+one type-20 row. Native format-1 queries exclude this type; their conversion table
+maps it to webchat, while mapping type 36 to undo. Desktop MSG_UNDO=20 therefore
+does not classify this backup row. Its exclusion/visibility semantics remain
+unverified, and the public guard is unchanged. See
 [control taxonomy evidence](archive-control-taxonomy-research.md).

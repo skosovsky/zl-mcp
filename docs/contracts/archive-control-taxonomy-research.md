@@ -1,6 +1,6 @@
 # Archive control taxonomy: current evidence
 
-Status: the real blocking type is identified; recall target/visibility semantics remain under investigation. Message visibility rules have not changed.
+Status: the real blocking type is identified; its format-1 visibility semantics remain under investigation. Desktop model integers are not backup format integers. Message visibility rules have not changed.
 
 The snapshot reader blocks every type in the pinned decoder's deferred set.
 Owner inspection previously reported only types 33/36, so its zero control count
@@ -31,8 +31,8 @@ for example [OpenClaw's Zalo adapter](https://github.com/openclaw/openclaw/blob/
 without a demonstrated integer ChatContent backup mapping. These wire types
 cannot establish backup visibility semantics.
 
-Next: observe the exact whole-file deferred type through the owner diagnostic,
-then trace the corresponding backup consumer branch and visibility effects.
+Next: trace the corresponding backup consumer branch and visibility effects,
+using the format-1 mapping rather than the desktop model enum.
 Classify ordinary unsupported content separately from recalls/deletions only
 when that path is established. Keep whole-source visibility checks, genuine-ID
 suppression, TTL and strict import admission intact. No fresh phone export is
@@ -44,9 +44,44 @@ The installed owner diagnostic reports 24 source/period rows, zero type-33/36
 controls and exactly one deferred type-20 row. The sample contains 18 webchat,
 five photo and one unsupported record, with no scalar rejections. No new source
 was acquired, imported or modified. This identifies the blocker as type 20; the
-matching desktop binding is MSG_UNDO. Determining whether this row replaces an
-original message or targets another row is still required before exposing a
-message prefix. Neither the constant name nor counts establish the target ID.
+matching desktop binding is MSG_UNDO, but the format-1 evidence below contradicts
+using that binding to classify this backup row as a recall. Its exclusion and
+visibility effects are still required before exposing a message prefix. Neither
+the desktop constant name nor counts establish a backup target ID.
+
+## Format-1 consumer evidence
+
+Read-only inspection of the current installed vendor bundle
+`shared-worker.d6af5465eb38c618bfe0.js` found the format-1 SQLite reader, not just
+the desktop message model. Bundle SHA-256:
+`713c0c4469ba7467ea2c8dc35a07c1319b72566057fdf3091ca73a59d3f58b1c`.
+No vendor module was executed and no account data was read for this inspection.
+
+Its backup enum labels 33 as ChatDelete and 36 as Undo. Its conversion table maps
+33 to `chat.delete`, 36 to `chat.undo`, and 20 to `webchat`. The table also maps
+25 to `chat.video.live.msg` and 26 to `group.poll`; these differ from the desktop
+model bindings above. The exact enum/conversion-table segment is 829 UTF-8 bytes,
+SHA-256 `2be2703318114301e009db600b13d5941f167ff58b938ecb1f684c9127b768b9`.
+
+The native message query excludes types 20, 21, 25, 26, 29, 32, 34, 35, 45, 51
+and 52 before conversion, while admitting positive-status rows with a nonnull
+client ID. Its count query uses the same type exclusions. Thus the type-20
+conversion-table entry is unreachable through that message query. The exact
+query-definition segment is 533 UTF-8 bytes, SHA-256
+`034b46fc8f9246d29cee99fa4d9038d13b9a04f224590d3e5ae9e99acbf0b69c`.
+
+The converter forwards the source global/client IDs, sender, content, timestamp
+and TTL directly from ChatContent into the cross-version record. No separate
+type-20 target interpretation was found in this branch. This proves the native
+reader's exclusion and the enum distinction; it does not prove why the producer
+wrote type 20, or whether excluding only that row is sufficient for visibility.
+
+Separately, the desktop undo handler finds an existing message by its IDs,
+changes its desktop model type to MSG_UNDO and replaces the stored message;
+matching later quotes receive a recalled-message placeholder. That behavior is
+evidence about the desktop model. It cannot be transferred to backup type 20
+without the missing producer/translation evidence. Keep the public guard and
+strict-import rules unchanged until the format-1 row semantics are established.
 
 Diagnostic source `de80416` passed Linux/macOS CI and local native acceptance,
 then was installed with a verified private backup. Installed SHA-256:

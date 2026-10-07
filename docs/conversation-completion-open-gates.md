@@ -15,8 +15,10 @@ SHA-256 `ac58ec1ddd90c44ba256b7047d919edd7062ffd51c5f4197e6bcbcc200f3d890`.
 [Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37600368737)
 and exact-candidate local native acceptance passed. Full state/config/agent and
 encrypted archive preservation were verified. Owner inspection identified exactly
-one type-20 row in the requested file; its recall target/visibility semantics are
-still open. See [control evidence](contracts/archive-control-taxonomy-research.md).
+one type-20 row in the requested file; its format-1 exclusion/visibility semantics
+are still open. The native format-1 reader maps undo to 36 and excludes 20 before
+its webchat conversion. Desktop MSG_UNDO=20 is not a backup-row classification.
+See [control evidence](contracts/archive-control-taxonomy-research.md).
 The prior installation evidence below remains historical.
 
 Previous archive-reader installation: clean signed source `3352ae1780123dbe249209ca2d30690342033454`,
