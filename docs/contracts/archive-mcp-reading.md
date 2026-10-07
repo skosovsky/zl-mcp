@@ -60,4 +60,6 @@ is rendered. The older `source_controls` field still counts only 33/36 and is
 retained unchanged for compatibility. The additional histogram explains a gate;
 it does not classify a control, relax visibility or permit import. Synthetic
 coverage proves the distinction for an out-of-window control with no global ID.
-Deployment of this diagnostic extension and the real type observation are pending.
+Diagnostic extension de80416 is installed; the selected real file has exactly
+one type-20 row. Its target and suppression semantics remain unverified. See
+[control taxonomy evidence](archive-control-taxonomy-research.md).

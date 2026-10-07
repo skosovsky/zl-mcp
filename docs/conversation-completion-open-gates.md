@@ -10,7 +10,16 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
-Latest authoritative installation: clean signed source `3352ae1780123dbe249209ca2d30690342033454`,
+Latest diagnostic installation: clean signed source `de80416b1358ba097b622bbb774cc693c63d4033`,
+SHA-256 `ac58ec1ddd90c44ba256b7047d919edd7062ffd51c5f4197e6bcbcc200f3d890`.
+[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37600368737)
+and exact-candidate local native acceptance passed. Full state/config/agent and
+encrypted archive preservation were verified. Owner inspection identified exactly
+one type-20 row in the requested file; its recall target/visibility semantics are
+still open. See [control evidence](contracts/archive-control-taxonomy-research.md).
+The prior installation evidence below remains historical.
+
+Previous archive-reader installation: clean signed source `3352ae1780123dbe249209ca2d30690342033454`,
 binary SHA-256 `4970968063d793fc26851f06a4ad16c1e15564a8866aba52abb013bacdf36a99`.
 [Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37598415082)
 passed root/nested test, race, vet, CGO-free builds and native acceptance. The exact
