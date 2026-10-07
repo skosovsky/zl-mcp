@@ -54,3 +54,8 @@ records. Invalid omitted metadata is visible as `invalid_excluded_metadata`.
 Metadata gap counts may overlap omissions. Empty excluded/recalled pages still
 advance the genuine examined-row cursor; continuation is required if has_more.
 Source/page counts do not establish complete Zalo history or create notifications.
+
+Public responses retain their own copy of projection-gap counters after private
+page buffers are cleared. Synthetic owner and actual MCP resource tests cover
+whole-source suppression outside the requested interval in direct/group files,
+long-text replay and denial of a valid resource claim targeting a recalled row.

@@ -36,6 +36,7 @@ func testOfflineArchiveMessages(t *testing.T, offline, restricted *membershipPor
 	seen := map[string]bool{}
 	testedResource := false
 	ended := false
+	nativeOmissions, sourceNativeExcluded := 0, 0
 	// Act: follow examined-row pages, including empty pages, then replay one resource.
 	for index := 0; index < 20; index++ {
 		result, err := offline.Call(ctx, "zalo_list_conversation_messages", args)
@@ -48,6 +49,10 @@ func testOfflineArchiveMessages(t *testing.T, offline, restricted *membershipPor
 		if err = schema.Validate(value); err != nil {
 			t.Fatal("archive page contract", err)
 		}
+		coverage := result["coverage"].(map[string]any)
+		sourceNativeExcluded = coverage["source_native_excluded_rows"].(int)
+		omissions := coverage["unsupported_content"].(map[string]int)
+		nativeOmissions += omissions["native_excluded"] + omissions["native_information"]
 		for _, record := range result["messages"].([]map[string]any) {
 			id := record["archive_row_id"].(string)
 			if seen[id] || record["quote_anchor_eligible"] != false {
@@ -97,6 +102,9 @@ func testOfflineArchiveMessages(t *testing.T, offline, restricted *membershipPor
 	// Assert: bounded history is available without network, phone dispatch or corpus import.
 	if !ended || len(seen) == 0 || !testedResource {
 		t.Fatal("synthetic archive walk did not yield readable records")
+	}
+	if nativeOmissions != sourceNativeExcluded {
+		t.Fatal("public coverage lost excluded-row counters after private page cleanup")
 	}
 	if _, err = restricted.Call(ctx, "zalo_list_conversation_messages", args); err == nil {
 		t.Fatal("archive messages bypassed policy")

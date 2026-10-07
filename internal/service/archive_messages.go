@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 	"os"
 	"time"
 
@@ -190,7 +191,8 @@ func (p *membershipPort) archiveMessages(ctx context.Context, args map[string]an
 			empty = "no_records_in_period"
 		}
 	}
-	coverage := map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "source_rows": page.Coverage.SourceRows, "source_information_rows": page.SourceInformation, "source_native_excluded_rows": page.SourceNativeExcluded, "source_recall_rows": page.SourceRecallRows, "suppressed_source": page.SuppressedSource, "period_rows": page.Coverage.PeriodRows, "invalid_timestamp_rows": page.Coverage.InvalidTimestamps, "source_earliest_at": earliest, "source_latest_at": latest, "wal_mode": page.WALMode, "history_complete": false, "examined": page.Examined, "rejected": page.Rejected, "expired": page.Expired, "suppressed_live": suppressed, "unresolved_senders": page.UnresolvedSenders, "unsupported_metadata_fields": page.UnsupportedMetadataFields, "unresolved_quotes": page.UnresolvedQuotes, "unresolved_mentions": page.UnresolvedMentions, "unsupported_content": page.Unsupported, "coverage_scope": "examined_page", "live_visibility": "global_ids_only"}
+	// The transport owns these counters; clearing the private page must not erase coverage.
+	coverage := map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "source_rows": page.Coverage.SourceRows, "source_information_rows": page.SourceInformation, "source_native_excluded_rows": page.SourceNativeExcluded, "source_recall_rows": page.SourceRecallRows, "suppressed_source": page.SuppressedSource, "period_rows": page.Coverage.PeriodRows, "invalid_timestamp_rows": page.Coverage.InvalidTimestamps, "source_earliest_at": earliest, "source_latest_at": latest, "wal_mode": page.WALMode, "history_complete": false, "examined": page.Examined, "rejected": page.Rejected, "expired": page.Expired, "suppressed_live": suppressed, "unresolved_senders": page.UnresolvedSenders, "unsupported_metadata_fields": page.UnsupportedMetadataFields, "unresolved_quotes": page.UnresolvedQuotes, "unresolved_mentions": page.UnresolvedMentions, "unsupported_content": maps.Clone(page.Unsupported), "coverage_scope": "examined_page", "live_visibility": "global_ids_only"}
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
