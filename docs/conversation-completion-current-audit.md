@@ -40,6 +40,8 @@ Current-state details and retained source evidence are in
 
 ## Remaining scope
 
+The [remaining live plan](conversation-completion-live-plan.md) defines exact
+temporary scopes, source controls, restart evidence and cleanup before approval.
 Do not repeat the accepted two-message trial or historical phone captures merely
 to refresh a report. The pending recipient question concerns a different gate:
 first sending to a peer absent from the catalogue/corpus. No such peer is yet

@@ -1,8 +1,11 @@
 # Direct messaging live acceptance plan
 
-Status: prepared; not executed or authorized for a particular recipient.
-This plan uses placeholders. Account IDs, private message contents and credentials
-must remain outside the repository.
+Status: historical plan for the original two-message trial; later plain/quote
+acceptance is recorded in the [current audit](conversation-completion-current-audit.md).
+Do not execute it again. Remaining scenarios use the
+[conversation live plan](conversation-completion-live-plan.md), preserving the
+current installed state and production subscription. Account IDs, private message
+contents and credentials remain outside the repository.
 
 ## User agreement
 
