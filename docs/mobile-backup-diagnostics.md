@@ -1,11 +1,30 @@
 # Mobile history diagnostics
 
 Status: experimental internal source. The owner-only CLI supports the attempt
-ledger, phone-offer probe and selected-archive inspection. Authorized installed
+ledger, phone-offer probe, selected-archive inspection and retained whole-account
+export. Authorized installed
 probes passed download, decryption, identity mapping and SQLite inspection.
 Durable mobile import is still unavailable; none of these diagnostics is an MCP
 tool. An older installed binary may not have these commands. Do not describe
 preparation or a successful probe as loading messages into the corpus.
+
+## Retained whole-account export
+
+When the user authorizes the complete account scope, prefer the separate
+[retained archive workflow](contracts/retained-account-archive.md) for repeated
+date-window investigation. It retains every validated direct/group file and
+its original typed mapping in an owner-only encrypted runtime cache. Capture
+uses one phone-confirmed transfer; status and bounded per-file coverage work
+offline after restart. Repeated reads do not redispatch or extend the seven-day
+default retention. Explicit removal keeps the source UUID spent.
+
+This is diagnostic source retention, not message import or a public MCP tool.
+Coverage is a bounded summary, not full message pagination; WAL, controls and
+unsupported attachment semantics still need source-specific evidence. The whole
+received bundle is not a guarantee of complete Zalo history. Selected-conversation
+one-shot probes below retain their existing disposable-scratch behavior.
+
+## Selected-conversation one-shot probes
 
 Use the current service and its existing account. The commands below connect to
 its owner-only Unix socket; they do not restore a session, start another listener

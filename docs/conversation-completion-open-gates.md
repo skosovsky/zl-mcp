@@ -10,6 +10,37 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
+The current installed clean source is `aa3621b66b74c03fd237d189f1cb50dcb3cbd3e2`,
+with ad hoc signed binary SHA-256
+`f5893db37572a192867a7efffe6540801764572fac57d052ef23d02d68d498da`.
+[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37581129318)
+passed root/nested test, race and vet, CGO-free builds and native startup acceptance.
+The exact clean candidate (`vcs.modified=false`) also passed isolated native
+startup/shutdown acceptance locally. A verified private full-state/binary/config/
+LaunchAgent backup preceded replacement through the existing single agent.
+
+Post-deployment comparison preserved all prior messages, identities, tombstones,
+send/quote records, first-incoming facts and exact subscription activation fields.
+Configuration and LaunchAgent remain byte-identical, sending remains disabled,
+and schema 14 passes integrity checks. Local HTTP, installed STDIO and the actual
+connected MCP client returned authenticated/connected with no last error.
+HTTP exposes legacy/group and conversation v2 plus recovery tools; the one active
+v2 subscription has an empty, unblocked journal. STDIO exposes 21 tools and
+resources/logging without Events. No diagnostic acknowledgement was sent.
+
+Owner-only account archive capture/status/coverage/remove now use a separate
+private encrypted cache. The whole-account scope was explicitly chosen by the
+user. The independent encrypted three-file fixture retains two direct files and
+one group with colliding typed identities under a restrictive collection policy;
+restart and repeated date-window inspection neither redownload nor change corpus,
+Events, subscriptions or send records. These routes are not public MCP tools.
+Both installed skills still match all five source files each; this owner feature
+does not add a public workflow to them. Real all-account acquisition and offline
+investigation of the retained unsupported content remain pending phone readiness.
+See [retained archive task](task-retained-mobile-archive.md).
+
+## Previous installation and live evidence
+
 The installed clean source is `72d17589fea0fa773ead4c340ced74fa87ba9d49`,
 with binary SHA-256
 `c2872c54033c51f978dfd47b2117b56505c45247b3e1c8a85b5e195b62c53153`.
@@ -93,8 +124,11 @@ to the owner archive diagnostic. Root tests, affected-package race/vet and
 CGO-free macOS arm64/Linux amd64 builds pass. Synthetic checks cover all rejection
 categories, private-value redaction, whole-page rejection, unchanged WAL/control
 gates, output schema restrictions and the one-shot probe with no persistence.
-These new counters are installed but have not been exercised on a real archive;
-they cannot explain the already cleared October 7 rows retroactively.
+The later real one-shot repeat exercised those counters: both September 26
+records were `webchat` rejected as `unsupported_attachment_action`; the WAL gate
+also remained blocked. Raw action values and archive bytes were cleared by that
+probe, so these categories do not establish the missing attachment semantics.
+The retained account cache is intended to avoid further disposable-only captures.
 
 The remaining full-scope gates are real incoming-only/first-only behaviour,
 the separately authorized out-of-catalogue send scenario, and safe real mobile-source
