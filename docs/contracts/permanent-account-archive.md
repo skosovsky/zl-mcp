@@ -1,7 +1,10 @@
 # Permanent local account archive
 
-Status: executable contract, owner promotion, restoration and inspection deployed
-from source `f7038ce`. Public message reading is not implemented.
+Status: owner promotion, restoration and inspection are deployed. Bounded public
+message reading is deployed through the separate [MCP read contract](archive-mcp-reading.md).
+The selected real September 26 read and all-file first-page gate check are recorded
+in [current acceptance](../conversation-completion-open-gates.md); unknown controls
+and actual cloud-agent archive invocation remain open.
 The owner requested a local copy that avoids repeated phone
 synchronization. A private encrypted backup has already been preserved.
 
@@ -35,8 +38,8 @@ connected collector. Missing or corrupt durable sources under spent UUIDs fail
 instead of republishing them. Use `source_storage=library` for owner inspection; the output identifies both
 store and effective retention. `account-archive-remove <source UUID> library`
 explicitly removes the managed durable source and retains its spent claim.
-Neither route silently falls back to cache. Public message reading remains
-incomplete.
+Neither route silently falls back to cache. Bounded public message reading does
+not prove complete history or permit unclassified controls.
 
 Keep original source UUID, capture time, source digest, file bytes and mapping.
 The original manifest's `expires_at` describes the temporary capture cache;

@@ -10,9 +10,9 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
-Latest installation: clean signed source `578e2a58ee1a51d102e07f7f28f8d7cee86a8680`,
-binary SHA-256 `7bc6c1ccd93bc541c1e7f0593cc5f42d468e731600cce1a403141d7e01ad3b70`.
-[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37607041573),
+Latest installation: clean signed source `1c0434bd1adb4f4b7916e47bd282bcb4f5f29c02`,
+binary SHA-256 `48a074407f892e1c3246d22a74801871837f6ef752d3c061e42f9cc85b335446`.
+[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37610540504),
 root/nested test, race, vet, configured CGO-free builds and exact-candidate native
 acceptance passed. Verified backup and comparison preserve the corpus, records,
 subscriptions, configuration, agent and encrypted archives. Both installed skills
@@ -28,8 +28,9 @@ deletion, independently of the acquisition cache expiry.
 
 Installed STDIO discovery confirms 22 tools, archive inventory, both source_id
 browse arguments and three resource templates; it exposes no Events. Status is
-connected/authenticated without errors. Actual cloud-client archive inventory
-discovery remains unconfirmed. Initial HTTP catalogue and STDIO checks failed;
+connected/authenticated without errors. The refreshed ChatGPT plugin card confirms archive inventory and updated
+source_id descriptions (Read17/Write5); direct archive invocation from the active
+model tool snapshot remains unconfirmed. Initial HTTP catalogue and STDIO checks failed;
 the same service subsequently passed both without another restart. A runtime
 sample showed SQLite query-planning activity, but isolated query-plan preparation
 on a private backup completed promptly: the latency cause is not established.
@@ -54,13 +55,26 @@ rows; these are whole-file counts, not proof that all 759 texts are visible.
 Only first pages were examined, not every projected record. No phone request,
 corpus import, send, acknowledgement or subscription change occurred.
 
-The actual ChatGPT plugin card still shows 21 tools, without archive inventory,
-after Refresh tools; local HTTP and installed STDIO show 22. The tunnel profile
-points to the same loopback MCP endpoint. Current evidence does not establish
-why refresh failed to replace the external catalogue. A bounded metadata-only
-[discovery diagnostic](contracts/mcp-discovery-diagnostics.md) is being added to
-separate server response evidence from client catalogue adoption; it is not yet
-installed at this checkpoint.
+### Installed discovery diagnostic
+
+The bounded metadata-only [diagnostic](contracts/mcp-discovery-diagnostics.md)
+is installed from the clean signed source above after full state preservation
+and native acceptance. The endpoint bound 1.47 seconds after bootstrap without
+another restart. Current STDIO discovery confirms 22 tools and connected,
+authenticated status without errors; all eleven installed skill files match.
+The September 26 public archive read was repeated successfully on this binary,
+with unchanged source ciphertext and digest and no phone request or import.
+
+Refresh tools reached this process: at 11:00:54 UTC, server/discover, tools/list
+and events/list returned HTTP 200. tools/list returned 22 definitions in 114252
+bytes, including archive inventory, with no continuation. Catalogue SHA-256 is
+`d007a080496acc61293b799be3240f98d1c7c3e74a58fc487a602047575129a3`.
+After reloading the ChatGPT plugin card, it displays Read17/Write5 and the new
+archive tool/source_id descriptions. The earlier unchanged card observation
+did not prove that backend catalogue refresh had failed; current evidence locates
+successful server discovery and visible registration. This does not establish
+an archive call from the active model tool snapshot, nor explain prior transport
+latency. No tunnel restart, credential change or permission expansion was needed.
 
 ### Previous diagnostic installation
 
