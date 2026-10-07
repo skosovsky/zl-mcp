@@ -104,3 +104,14 @@ The optional `files[].rejected_row_reasons` partitions examined rejected rows by
 the first failed scalar check, using fixed field-category keys only. It reports
 no source value or guessed repair and does not classify unexamined rows. Paging
 continues past rejected rows exactly as before.
+
+For rows whose first rejection is message_id, optional fixed-key shape counters
+separate missing/empty/zero/negative/noncanonical/overflow/storage-type cases.
+Independent status/kind/text-presence/client-ID-validity counters classify those
+same rows without exposing any value or asserting that the remaining fields are
+valid. Shape counts partition message-ID rejections; each context category group
+partitions them independently. They do not repair IDs, produce messages or waive
+admission. Diagnostics remain bounded by the examined row sample.
+
+ID shape classification scans at most 64 characters; longer representations
+are `oversized`, without inspecting, hashing or retaining the private value.

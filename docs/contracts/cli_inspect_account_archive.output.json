@@ -316,6 +316,54 @@
               "minimum": 1
             },
             "maxProperties": 9
+          },
+          "rejected_message_id_shapes": {
+            "type": "object",
+            "description": "Value shapes only for rows whose first scalar rejection is message_id. These counts partition that rejection category; no values returned.",
+            "propertyNames": {
+              "enum": [
+                "missing",
+                "empty",
+                "zero",
+                "negative_integer",
+                "negative_text",
+                "leading_zero",
+                "nondigit",
+                "overflow",
+                "wrong_storage_type",
+                "other_invalid",
+                "oversized"
+              ]
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxProperties": 11
+          },
+          "rejected_message_id_context": {
+            "type": "object",
+            "description": "Independent non-content observations on rejected message-ID rows; each status/kind/client-ID/text group partitions the same rows. Not message conversion evidence.",
+            "propertyNames": {
+              "enum": [
+                "positive_status",
+                "nonpositive_status",
+                "invalid_status",
+                "known_payload_kind",
+                "source_control_kind",
+                "unknown_kind",
+                "source_text_present",
+                "source_text_absent",
+                "source_text_invalid",
+                "client_id_valid",
+                "client_id_invalid"
+              ]
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxProperties": 11
           }
         },
         "required": [

@@ -10,22 +10,24 @@ import (
 // File ordinals are stable within one authenticated source; no peer IDs or text
 // are serialized. A scan limit never becomes a complete-history assertion.
 type AccountFileCoverage struct {
-	FileIndex         int                         `json:"file_index"`
-	ConversationType  string                      `json:"conversation_type"`
-	Status            string                      `json:"status"`
-	SourceRows        int64                       `json:"source_rows"`
-	PeriodRows        int64                       `json:"period_rows"`
-	InvalidTimestamps int64                       `json:"invalid_timestamp_rows"`
-	EarliestAt        *string                     `json:"source_earliest_at"`
-	LatestAt          *string                     `json:"source_latest_at"`
-	WALMode           bool                        `json:"wal_mode"`
-	Examined          int                         `json:"examined"`
-	RejectedReasons   map[string]int              `json:"rejected_row_reasons,omitempty"`
-	Rejected          int                         `json:"rejected"`
-	SourceControls    int                         `json:"source_controls"`
-	SampleHasMore     bool                        `json:"sample_has_more"`
-	Types             map[string]int              `json:"sample_content_kinds"`
-	Metadata          *AccountMetadataDiagnostics `json:"metadata_diagnostics,omitempty"`
+	FileIndex                int                         `json:"file_index"`
+	ConversationType         string                      `json:"conversation_type"`
+	Status                   string                      `json:"status"`
+	SourceRows               int64                       `json:"source_rows"`
+	PeriodRows               int64                       `json:"period_rows"`
+	InvalidTimestamps        int64                       `json:"invalid_timestamp_rows"`
+	EarliestAt               *string                     `json:"source_earliest_at"`
+	LatestAt                 *string                     `json:"source_latest_at"`
+	WALMode                  bool                        `json:"wal_mode"`
+	Examined                 int                         `json:"examined"`
+	RejectedMessageIDShapes  map[string]int              `json:"rejected_message_id_shapes,omitempty"`
+	RejectedMessageIDContext map[string]int              `json:"rejected_message_id_context,omitempty"`
+	RejectedReasons          map[string]int              `json:"rejected_row_reasons,omitempty"`
+	Rejected                 int                         `json:"rejected"`
+	SourceControls           int                         `json:"source_controls"`
+	SampleHasMore            bool                        `json:"sample_has_more"`
+	Types                    map[string]int              `json:"sample_content_kinds"`
+	Metadata                 *AccountMetadataDiagnostics `json:"metadata_diagnostics,omitempty"`
 }
 
 // InspectCoverage reads at most 25 files and 50 rows per file. All source bytes
@@ -63,6 +65,8 @@ func (a AccountArchive) InspectCoverageWithMetadata(ctx context.Context, scratch
 		} else {
 			item.SourceRows, item.PeriodRows, item.InvalidTimestamps = batch.Coverage.SourceRows, batch.Coverage.PeriodRows, batch.Coverage.InvalidTimestamps
 			item.RejectedReasons = maps.Clone(batch.RejectedReasons)
+			item.RejectedMessageIDShapes = maps.Clone(batch.RejectedMessageIDShapes)
+			item.RejectedMessageIDContext = maps.Clone(batch.RejectedMessageIDContext)
 			item.WALMode, item.Examined, item.Rejected, item.SourceControls, item.SampleHasMore = batch.WALMode, batch.Examined, batch.Rejected, batch.SourceControls, batch.HasMore
 			if batch.Coverage.HasRange {
 				first, last := time.UnixMilli(batch.Coverage.EarliestMS).UTC().Format(time.RFC3339Nano), time.UnixMilli(batch.Coverage.LatestMS).UTC().Format(time.RFC3339Nano)

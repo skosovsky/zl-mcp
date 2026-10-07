@@ -39,14 +39,16 @@ type SQLiteCoverage struct {
 }
 
 type SQLiteBatch struct {
-	Coverage           SQLiteCoverage `json:"-"`
-	SourceControls     int
-	WALMode            bool
-	Rows               []SQLiteRow    `json:"-"`
-	RejectedReasons    map[string]int `json:"-"`
-	Examined, Rejected int
-	HasMore            bool
-	Next               *SQLiteCursor `json:"-"`
+	Coverage                 SQLiteCoverage `json:"-"`
+	SourceControls           int
+	WALMode                  bool
+	Rows                     []SQLiteRow    `json:"-"`
+	RejectedMessageIDShapes  map[string]int `json:"-"`
+	RejectedMessageIDContext map[string]int `json:"-"`
+	RejectedReasons          map[string]int `json:"-"`
+	Examined, Rejected       int
+	HasMore                  bool
+	Next                     *SQLiteCursor `json:"-"`
 }
 
 // SQLiteCursor is private keyset state bound to exact bytes, name and date filter.
@@ -71,6 +73,10 @@ func (b *SQLiteBatch) Clear() {
 	}
 	b.Rows = nil
 	b.Next = nil
+	clear(b.RejectedMessageIDShapes)
+	b.RejectedMessageIDShapes = nil
+	clear(b.RejectedMessageIDContext)
+	b.RejectedMessageIDContext = nil
 	clear(b.RejectedReasons)
 	b.RejectedReasons = nil
 }
@@ -287,6 +293,9 @@ func readSQLitePage(parent context.Context, file ArchiveFile, scratch string, si
 				batch.RejectedReasons = map[string]int{}
 			}
 			batch.RejectedReasons[reason]++
+			if reason == "message_id" {
+				recordRejectedMessageID(&batch, values)
+			}
 			continue
 		}
 		retainedBytes += len(row.Text) + len(row.BinNet)
