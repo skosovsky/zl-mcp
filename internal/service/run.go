@@ -54,6 +54,7 @@ type membershipPort struct {
 	lifecycle  context.Context
 	snapshots  *mobilebackup.SnapshotStore
 	archives   *mobilebackup.RetainedArchiveStore
+	library    *mobilebackup.RetainedArchiveStore
 }
 
 func (p *membershipPort) set(j *collector.JoinManager) { p.mu.Lock(); p.current = j; p.mu.Unlock() }
@@ -192,7 +193,14 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	if archives != nil {
 		defer archives.Close()
 	}
-	port := &membershipPort{stateDir: c.StateDir, store: store, allowSend: c.Permissions.AllowSend, recipients: recipients, lifecycle: ctx, snapshots: snapshots, archives: archives}
+	library, libraryErr := mobilebackup.NewArchiveLibraryStore(filepath.Join(c.StateDir, "account-archive-library", "sources"), 1<<30)
+	if libraryErr != nil {
+		slog.Warn("account_archive_library_unavailable")
+	}
+	if library != nil {
+		defer library.Close()
+	}
+	port := &membershipPort{stateDir: c.StateDir, store: store, allowSend: c.Permissions.AllowSend, recipients: recipients, lifecycle: ctx, snapshots: snapshots, archives: archives, library: library}
 	if err = port.CleanupHistorySnapshots(ctx); err != nil {
 		return errors.New("private mobile snapshot cleanup unavailable")
 	}

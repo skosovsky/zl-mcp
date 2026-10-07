@@ -46,6 +46,14 @@
         "include_metadata_diagnostics": {
           "type": "boolean",
           "default": false
+        },
+        "source_storage": {
+          "enum": [
+            "cache",
+            "library"
+          ],
+          "default": "cache",
+          "description": "Explicit local store; never fall back to another store or acquire a source."
         }
       },
       "required": [

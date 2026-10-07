@@ -13,7 +13,7 @@ import (
 )
 
 func accountArchiveMethod(method string) bool {
-	return method == "cli_prepare_account_archive" || method == "cli_capture_account_archive" || method == "cli_account_archive_status" || method == "cli_inspect_account_archive" || method == "cli_remove_account_archive"
+	return method == "cli_restore_account_archive" || method == "cli_preserve_account_archive" || method == "cli_prepare_account_archive" || method == "cli_capture_account_archive" || method == "cli_account_archive_status" || method == "cli_inspect_account_archive" || method == "cli_remove_account_archive"
 }
 
 func (p *membershipPort) accountArchiveControl(w http.ResponseWriter, r *http.Request, body []byte, method string) {
@@ -72,6 +72,26 @@ func (p *membershipPort) accountArchiveControl(w http.ResponseWriter, r *http.Re
 	}
 	var response any
 	switch method {
+	case "cli_restore_account_archive":
+		var args struct {
+			ID     string `json:"source_id"`
+			Backup string `json:"backup_name"`
+			Digest string `json:"expected_digest"`
+		}
+		if json.Unmarshal(envelope.Arguments, &args) != nil {
+			fail(domain.Invalid("Invalid backup reference."))
+			return
+		}
+		response, err = p.restoreAccountArchive(ctx, args.ID, args.Backup, args.Digest)
+	case "cli_preserve_account_archive":
+		var args struct {
+			ID string `json:"source_id"`
+		}
+		if json.Unmarshal(envelope.Arguments, &args) != nil {
+			fail(domain.Invalid("Invalid source reference."))
+			return
+		}
+		response, err = p.preserveAccountArchive(ctx, args.ID)
 	case "cli_prepare_account_archive":
 		if p.archives == nil {
 			fail(mobilebackup.ErrRetainedArchive)
@@ -105,21 +125,23 @@ func (p *membershipPort) accountArchiveControl(w http.ResponseWriter, r *http.Re
 			ConversationType string `json:"conversation_type"`
 			ConversationID   string `json:"conversation_id"`
 			IncludeMetadata  bool   `json:"include_metadata_diagnostics"`
+			Storage          string `json:"source_storage"`
 		}
 		if json.Unmarshal(envelope.Arguments, &args) != nil {
 			fail(domain.Invalid("Invalid archive inspection."))
 			return
 		}
-		response, err = p.inspectAccountArchive(ctx, args.ID, args.Since, args.Until, args.Offset, args.Limit, domain.ConversationRef{Type: args.ConversationType, ID: args.ConversationID}, args.IncludeMetadata)
+		response, err = p.inspectAccountArchiveFrom(ctx, args.Storage, args.ID, args.Since, args.Until, args.Offset, args.Limit, domain.ConversationRef{Type: args.ConversationType, ID: args.ConversationID}, args.IncludeMetadata)
 	case "cli_remove_account_archive":
 		var args struct {
-			ID string `json:"source_id"`
+			ID      string `json:"source_id"`
+			Storage string `json:"source_storage"`
 		}
 		if json.Unmarshal(envelope.Arguments, &args) != nil {
 			fail(domain.Invalid("Invalid source reference."))
 			return
 		}
-		response, err = p.removeAccountArchive(ctx, args.ID)
+		response, err = p.removeAccountArchiveFrom(ctx, args.ID, args.Storage)
 	case "cli_account_archive_status":
 		var args struct {
 			ID string `json:"source_id"`

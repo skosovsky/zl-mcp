@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Owner-only explicit removal of a retained source. No phone request or corpus deletion.",
+  "description": "Planned owner-only promotion of an existing encrypted account source to durable local storage. Does not dispatch synchronization or enable public MCP access.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "method": {
-      "const": "cli_remove_account_archive"
+      "const": "cli_preserve_account_archive"
     },
     "arguments": {
       "type": "object",
@@ -15,17 +15,13 @@
           "type": "string",
           "format": "uuid"
         },
-        "source_storage": {
-          "enum": [
-            "cache",
-            "library"
-          ],
-          "default": "cache",
-          "description": "Explicit local store; never fall back to another store or acquire a source."
+        "retention": {
+          "const": "until_owner_deletion"
         }
       },
       "required": [
-        "source_id"
+        "source_id",
+        "retention"
       ]
     }
   },

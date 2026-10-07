@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Owner-only restore of an existing dated encrypted backup, without synchronization or corpus import.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "method": {
+      "const": "cli_restore_account_archive"
+    },
+    "arguments": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "retention": {
+          "const": "until_owner_deletion"
+        },
+        "backup_name": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "expected_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "source_id",
+        "retention",
+        "backup_name",
+        "expected_digest"
+      ]
+    }
+  },
+  "required": [
+    "method",
+    "arguments"
+  ]
+}

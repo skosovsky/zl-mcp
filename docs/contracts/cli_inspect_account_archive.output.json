@@ -392,6 +392,18 @@
     },
     "history_complete": {
       "const": false
+    },
+    "source_storage": {
+      "enum": [
+        "cache",
+        "library"
+      ]
+    },
+    "retention": {
+      "enum": [
+        "capture_cache_expiry",
+        "until_owner_deletion"
+      ]
     }
   },
   "required": [
@@ -403,6 +415,8 @@
     "files",
     "download_performed",
     "import_performed",
-    "history_complete"
+    "history_complete",
+    "source_storage",
+    "retention"
   ]
 }

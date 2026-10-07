@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -108,8 +109,38 @@ func (p *membershipPort) accountArchiveStatus(ctx context.Context, id string) (m
 	return manifest, err
 }
 
+func (p *membershipPort) preserveAccountArchive(ctx context.Context, id string) (mobilebackup.PreservationReceipt, error) {
+	if p.store == nil || p.library == nil {
+		return mobilebackup.PreservationReceipt{}, mobilebackup.ErrRetainedArchive
+	}
+	key, err := p.store.ArchiveAccountKey(ctx)
+	if err != nil {
+		return mobilebackup.PreservationReceipt{}, err
+	}
+	// A successful retry reads the durable receipt even if cache has expired.
+	receipt, err := p.library.PreservationStatus(ctx, id, key)
+	if err == nil {
+		return receipt, nil
+	}
+	if !errors.Is(err, mobilebackup.ErrRetainedAbsent) {
+		return mobilebackup.PreservationReceipt{}, err
+	}
+	return p.library.PreserveFrom(ctx, p.archives, id, key)
+}
+
 func (p *membershipPort) inspectAccountArchive(ctx context.Context, id, sinceText, untilText string, offset, limit int, ref domain.ConversationRef, includeMetadata bool) (map[string]any, error) {
-	if p.store == nil || p.archives == nil {
+	return p.inspectAccountArchiveFrom(ctx, "cache", id, sinceText, untilText, offset, limit, ref, includeMetadata)
+}
+
+func (p *membershipPort) inspectAccountArchiveFrom(ctx context.Context, sourceStorage, id, sinceText, untilText string, offset, limit int, ref domain.ConversationRef, includeMetadata bool) (map[string]any, error) {
+	if sourceStorage == "" {
+		sourceStorage = "cache"
+	}
+	archives, retention, err := p.selectArchiveStore(sourceStorage)
+	if err != nil {
+		return nil, err
+	}
+	if p.store == nil || archives == nil {
 		return nil, mobilebackup.ErrRetainedArchive
 	}
 	ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
@@ -126,7 +157,7 @@ func (p *membershipPort) inspectAccountArchive(ctx context.Context, id, sinceTex
 	if err != nil {
 		return nil, err
 	}
-	archive, manifest, err := p.archives.ReadBound(ctx, id, key)
+	archive, manifest, err := archives.ReadBound(ctx, id, key)
 	defer archive.Clear()
 	if err != nil {
 		return nil, err
@@ -157,19 +188,53 @@ func (p *membershipPort) inspectAccountArchive(ctx context.Context, id, sinceTex
 	if selected {
 		more = false
 	}
-	return map[string]any{"manifest": manifest, "since": since.UTC().Format(time.RFC3339Nano), "until": until.UTC().Format(time.RFC3339Nano), "offset": offset, "files": files, "has_more_files": more, "download_performed": false, "import_performed": false, "history_complete": false}, nil
+	return map[string]any{"manifest": manifest, "source_storage": sourceStorage, "retention": retention, "since": since.UTC().Format(time.RFC3339Nano), "until": until.UTC().Format(time.RFC3339Nano), "offset": offset, "files": files, "has_more_files": more, "download_performed": false, "import_performed": false, "history_complete": false}, nil
 }
 
 func (p *membershipPort) removeAccountArchive(ctx context.Context, id string) (map[string]any, error) {
-	if p.store == nil || p.archives == nil {
+	return p.removeAccountArchiveFrom(ctx, id, "cache")
+}
+
+func (p *membershipPort) removeAccountArchiveFrom(ctx context.Context, id, sourceStorage string) (map[string]any, error) {
+	archives, _, err := p.selectArchiveStore(sourceStorage)
+	if err != nil {
+		return nil, err
+	}
+	if p.store == nil || archives == nil {
 		return nil, mobilebackup.ErrRetainedArchive
 	}
 	key, err := p.store.ArchiveAccountKey(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err = p.archives.RemoveBound(ctx, id, key); err != nil {
+	if err = archives.RemoveBound(ctx, id, key); err != nil {
 		return nil, err
 	}
 	return map[string]any{"source_id": id, "removed": true, "import_performed": false}, nil
+}
+
+func (p *membershipPort) selectArchiveStore(selection string) (*mobilebackup.RetainedArchiveStore, string, error) {
+	switch selection {
+	case "", "cache":
+		return p.archives, "capture_cache_expiry", nil
+	case "library":
+		return p.library, "until_owner_deletion", nil
+	default:
+		return nil, "", domain.Invalid("Invalid local source storage.")
+	}
+}
+
+func (p *membershipPort) restoreAccountArchive(ctx context.Context, id, backupName, digest string) (mobilebackup.PreservationReceipt, error) {
+	if p.store == nil || p.library == nil {
+		return mobilebackup.PreservationReceipt{}, mobilebackup.ErrRetainedArchive
+	}
+	date, err := time.Parse("2006-01-02", backupName)
+	if err != nil || date.Format("2006-01-02") != backupName {
+		return mobilebackup.PreservationReceipt{}, domain.Invalid("Use an exact dated backup name.")
+	}
+	key, err := p.store.ArchiveAccountKey(ctx)
+	if err != nil {
+		return mobilebackup.PreservationReceipt{}, err
+	}
+	return p.library.RestoreBackup(ctx, filepath.Join(p.stateDir, "account-archive-library", backupName), id, key, digest)
 }

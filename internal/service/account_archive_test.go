@@ -101,6 +101,38 @@ func TestAccountArchiveCaptureRestartOfflineInspectionAndRemoval(t *testing.T) {
 		t.Fatal(e)
 	}
 	p.current = nil
+	p.library, e = mobilebackup.NewArchiveLibraryStore(filepath.Join(stateDir, "library"), 8<<20)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer p.library.Close()
+	backup := filepath.Join(stateDir, "account-archive-library", "2026-10-07")
+	if e = os.MkdirAll(backup, 0700); e != nil {
+		t.Fatal(e)
+	}
+	for _, name := range []string{first.SourceID + ".archive", ".snapshot-key", ".snapshot-claims"} {
+		data, err := os.ReadFile(filepath.Join(path, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = os.WriteFile(filepath.Join(backup, name), data, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	restored, _ := ledgerRequest(t, p, "cli_restore_account_archive", map[string]any{"source_id": first.SourceID, "backup_name": "2026-10-07", "expected_digest": first.Digest, "retention": "until_owner_deletion"})
+	if restored.Code != 200 {
+		t.Fatal(restored.Body.String())
+	}
+	for _, name := range []string{"../2026-10-07", "2026-02-31"} {
+		bad, _ := ledgerRequest(t, p, "cli_restore_account_archive", map[string]any{"source_id": first.SourceID, "backup_name": name, "expected_digest": first.Digest, "retention": "until_owner_deletion"})
+		if bad.Code == 200 {
+			t.Fatal("invalid backup directory selected")
+		}
+	}
+	preserved, _ := ledgerRequest(t, p, "cli_preserve_account_archive", map[string]any{"source_id": first.SourceID, "retention": "until_owner_deletion"})
+	if preserved.Code != 200 || preserved.Body.String() != restored.Body.String() {
+		t.Fatal(preserved.Body.String())
+	}
 	again, e := p.captureAccountArchiveWithDownloader(ctx, attempt.OperationID, attempt.Revision, d)
 	if e != nil {
 		t.Fatal(e)
@@ -155,6 +187,23 @@ func TestAccountArchiveCaptureRestartOfflineInspectionAndRemoval(t *testing.T) {
 	removed, _ := ledgerRequest(t, p, "cli_remove_account_archive", map[string]any{"source_id": first.SourceID})
 	if removed.Code != 200 {
 		t.Fatal(removed.Body.String())
+	}
+	// Durable retry works without cache or connected upstream, and preserves the receipt.
+	repeated, _ := ledgerRequest(t, p, "cli_preserve_account_archive", map[string]any{"source_id": first.SourceID, "retention": "until_owner_deletion"})
+	if repeated.Code != 200 || repeated.Body.String() != preserved.Body.String() || source.offers.Load() != 1 || source.downloads.Load() != 1 || source.mappings.Load() != 1 {
+		t.Fatal("preservation retry acquired or changed source")
+	}
+	inspection, _ := ledgerRequest(t, p, "cli_inspect_account_archive", map[string]any{"source_id": first.SourceID, "source_storage": "library", "since": "2026-09-01T00:00:00Z", "until": "2026-10-06T17:00:00Z"})
+	if inspection.Code != 200 || !strings.Contains(inspection.Body.String(), "until_owner_deletion") {
+		t.Fatal("durable inspection failed")
+	}
+	forgotten, _ := ledgerRequest(t, p, "cli_remove_account_archive", map[string]any{"source_id": first.SourceID, "source_storage": "library"})
+	if forgotten.Code != 200 {
+		t.Fatal("durable removal failed")
+	}
+	denied, _ := ledgerRequest(t, p, "cli_preserve_account_archive", map[string]any{"source_id": first.SourceID, "retention": "until_owner_deletion"})
+	if denied.Code == 200 || source.offers.Load() != 1 {
+		t.Fatal("removed durable source resurrected")
 	}
 	if _, e = p.captureAccountArchiveWithDownloader(ctx, attempt.OperationID, attempt.Revision, d); e == nil || source.offers.Load() != 1 {
 		t.Fatal("removed source redispatched")
