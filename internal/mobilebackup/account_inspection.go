@@ -25,6 +25,7 @@ type AccountFileCoverage struct {
 	RejectedReasons          map[string]int              `json:"rejected_row_reasons,omitempty"`
 	Rejected                 int                         `json:"rejected"`
 	SourceControls           int                         `json:"source_controls"`
+	DeferredControls         map[string]int              `json:"unclassified_control_types,omitempty"`
 	SampleHasMore            bool                        `json:"sample_has_more"`
 	Types                    map[string]int              `json:"sample_content_kinds"`
 	Metadata                 *AccountMetadataDiagnostics `json:"metadata_diagnostics,omitempty"`
@@ -68,6 +69,7 @@ func (a AccountArchive) InspectCoverageWithMetadata(ctx context.Context, scratch
 			item.RejectedMessageIDShapes = maps.Clone(batch.RejectedMessageIDShapes)
 			item.RejectedMessageIDContext = maps.Clone(batch.RejectedMessageIDContext)
 			item.WALMode, item.Examined, item.Rejected, item.SourceControls, item.SampleHasMore = batch.WALMode, batch.Examined, batch.Rejected, batch.SourceControls, batch.HasMore
+			item.DeferredControls = maps.Clone(batch.DeferredControls)
 			if batch.Coverage.HasRange {
 				first, last := time.UnixMilli(batch.Coverage.EarliestMS).UTC().Format(time.RFC3339Nano), time.UnixMilli(batch.Coverage.LatestMS).UTC().Format(time.RFC3339Nano)
 				item.EarliestAt, item.LatestAt = &first, &last

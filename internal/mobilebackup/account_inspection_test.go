@@ -38,3 +38,31 @@ func TestAccountArchiveOfflineCoveragePreservesAllFilesAndPeriods(t *testing.T) 
 		t.Fatal("empty interval accepted")
 	}
 }
+
+func TestAccountInspectionReportsWholeFileDeferredControlsWithoutRenderingThem(t *testing.T) {
+	// Arrange: one visible-period row and a deferred control outside the interval,
+	// whose missing global ID also excludes it from strict sampled rows.
+	at := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC)
+	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
+		for _, row := range []struct {
+			id          string
+			stamp, kind int64
+		}{{"20", at.UnixMilli(), 0}, {"0", at.Add(48 * time.Hour).UnixMilli(), 25}} {
+			if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "10", row.id, "30", "PRIVATE-CONTROL-BODY", row.stamp, 0, row.kind, 1, nil); err != nil {
+				t.Fatal(err)
+			}
+		}
+	})
+	a := retainedFixture(t)
+	a.archive.Files[0].Data = data
+	// Act: inspect the earlier window only, without identity mapping or acquisition.
+	files, _, err := a.InspectCoverage(context.Background(), t.TempDir(), at, at.Add(time.Hour), 0, 1)
+	// Assert: whole-source type counts explain the broader gate; old 33/36 count stays unchanged.
+	if err != nil || len(files) != 1 || files[0].SourceControls != 0 || files[0].DeferredControls["25"] != 1 || len(files[0].DeferredControls) != 1 || files[0].PeriodRows != 1 || files[0].Examined != 1 {
+		t.Fatal("deferred control diagnosis used only the window/sample", err)
+	}
+	encoded, _ := json.Marshal(files)
+	if strings.Contains(string(encoded), "PRIVATE-CONTROL-BODY") || strings.Contains(string(encoded), "SenderId") {
+		t.Fatal("control diagnosis exposed source contents")
+	}
+}

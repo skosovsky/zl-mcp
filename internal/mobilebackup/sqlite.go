@@ -43,6 +43,7 @@ type SQLiteCoverage struct {
 type SQLiteBatch struct {
 	Coverage                 SQLiteCoverage `json:"-"`
 	SourceControls           int
+	DeferredControls         map[string]int `json:"-"`
 	WALMode                  bool
 	Rows                     []SQLiteRow    `json:"-"`
 	RejectedMessageIDShapes  map[string]int `json:"-"`
@@ -83,6 +84,8 @@ func (b *SQLiteBatch) Clear() {
 	b.RejectedMessageIDContext = nil
 	clear(b.RejectedReasons)
 	b.RejectedReasons = nil
+	clear(b.DeferredControls)
+	b.DeferredControls = nil
 }
 
 func standaloneSQLite(data []byte) bool {
@@ -254,6 +257,25 @@ func readSQLitePageMode(parent context.Context, file ArchiveFile, scratch string
 	// Controls outside the requested interval can still invalidate imported content.
 	stage = "SOURCE_CONTROLS"
 	if conn.QueryRowContext(ctx, "SELECT count(*) FROM ChatContent WHERE MsgType IN (33,36)").Scan(&batch.SourceControls) != nil {
+		return SQLiteBatch{}, ErrSQLite
+	}
+	controlRows, e := conn.QueryContext(ctx, "SELECT MsgType,count(*) FROM ChatContent WHERE MsgType IN (20,21,25,26,29,32,33,34,35,36,45,51,52) GROUP BY MsgType")
+	if e != nil {
+		return SQLiteBatch{}, ErrSQLite
+	}
+	batch.DeferredControls = map[string]int{}
+	for controlRows.Next() {
+		var kind int64
+		var count int
+		if controlRows.Scan(&kind, &count) != nil || !deferredMobileControl(kind) || count < 1 {
+			controlRows.Close()
+			return SQLiteBatch{}, ErrSQLite
+		}
+		batch.DeferredControls[strconv.FormatInt(kind, 10)] = count
+	}
+	controlErr := controlRows.Err()
+	controlRows.Close()
+	if controlErr != nil || ctx.Err() != nil {
 		return SQLiteBatch{}, ErrSQLite
 	}
 	if snapshot {
