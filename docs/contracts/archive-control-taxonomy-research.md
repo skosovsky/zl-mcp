@@ -164,3 +164,12 @@ classified count. Examined-page omissions use `unsupported_content.native_inform
 their metadata gaps remain counted. Empty informational pages retain continuation.
 The implementation and updated skills are candidates pending clean installation
 and real public-reader acceptance; the current installed version remains 50f72d4.
+
+The first candidate 2eddce8 passed local checks and Ubuntu CI but macOS full-race
+CI exposed a pre-existing owner-shutdown race in cancel-before-commit: the mobile
+operation could return context cancellation from its final acquisition-journal
+write after its previous cancellation check. No candidate was installed on that
+failed run. The worker boundary now treats cancelled owner context as normal
+shutdown, consistently with its pending-read and snapshot-cleanup boundaries;
+errors under a live owner context still propagate. The cancelled-operation/no-prefix
+regression is repeated under race before rebuilding and rerunning CI.

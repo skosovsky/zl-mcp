@@ -51,6 +51,12 @@ func RunMobile(ctx context.Context, store *storage.Store, source MobileHistorySo
 		}
 		for _, op := range pending {
 			if err := runMobileOperation(ctx, store, source, op); err != nil {
+				// Owner shutdown can race a final operation-journal write after
+				// that operation's last context check. As with pending reads and
+				// snapshot cleanup, cancellation ends this worker normally.
+				if ctx.Err() != nil {
+					return nil
+				}
 				return err
 			}
 			if source != nil && ctx.Err() == nil {
