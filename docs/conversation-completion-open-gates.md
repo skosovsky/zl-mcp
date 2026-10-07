@@ -29,8 +29,9 @@ deletion, independently of the acquisition cache expiry.
 Installed STDIO discovery confirms 22 tools, archive inventory, both source_id
 browse arguments and three resource templates; it exposes no Events. Status is
 connected/authenticated without errors. The refreshed ChatGPT plugin card confirms archive inventory and updated
-source_id descriptions (Read17/Write5); direct archive invocation from the active
-model tool snapshot remains unconfirmed. Initial HTTP catalogue and STDIO checks failed;
+source_id descriptions (Read17/Write5). The active connected model subsequently
+called archive inventory, all three catalogue pages and both requested historical
+message pages successfully, without phone synchronization. Initial HTTP catalogue and STDIO checks failed;
 the same service subsequently passed both without another restart. A runtime
 sample showed SQLite query-planning activity, but isolated query-plan preparation
 on a private backup completed promptly: the latency cause is not established.
@@ -72,9 +73,13 @@ bytes, including archive inventory, with no continuation. Catalogue SHA-256 is
 After reloading the ChatGPT plugin card, it displays Read17/Write5 and the new
 archive tool/source_id descriptions. The earlier unchanged card observation
 did not prove that backend catalogue refresh had failed; current evidence locates
-successful server discovery and visible registration. This does not establish
-an archive call from the active model tool snapshot, nor explain prior transport
-latency. No tunnel restart, credential change or permission expansion was needed.
+successful server discovery and visible registration. The active model tool snapshot subsequently exposed the new capabilities.
+Authenticated plugin calls returned the permanent source, all 56 unique typed
+conversations over three pages, and both nonempty September 26 records over two
+ordered pages, with distinct archive identities and genuine Zalo IDs. No record
+was quote-anchor eligible. No private text or IDs were printed. This accepts
+actual client archive invocation, without explaining prior transport latency.
+No tunnel restart, credential change or permission expansion was needed.
 
 ### Previous diagnostic installation
 

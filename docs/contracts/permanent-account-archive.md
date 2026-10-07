@@ -4,7 +4,8 @@ Status: owner promotion, restoration and inspection are deployed. Bounded public
 message reading is deployed through the separate [MCP read contract](archive-mcp-reading.md).
 The selected real September 26 read and all-file first-page gate check are recorded
 in [current acceptance](../conversation-completion-open-gates.md); unknown controls
-and actual cloud-agent archive invocation remain open.
+remain open; archive inventory, catalogue and the selected message pages were
+also read successfully through the actual connected cloud client.
 The owner requested a local copy that avoids repeated phone
 synchronization. A private encrypted backup has already been preserved.
 
