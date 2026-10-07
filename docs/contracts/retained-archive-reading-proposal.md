@@ -28,7 +28,10 @@ The all-file bounded diagnostic sampled 891 source rows through the requested
 cutoff. SQLite scalar validation rejected 128; the remaining 763 have valid
 metadata: 460 plain-text projections and 303 unsupported projections. Eight files
 have additional unsampled rows. These are sample counts, not complete message
-counts; the exact rejection reasons and unsupported content require investigation.
+counts; All 128 sample scalar rejections stop at message ID validation (`GlbMsgId`).
+The other scalar fields of these rejected rows are not yet validated; the shape
+of the rejected IDs still requires investigation. Unsupported projections
+remain a separate limitation.
 Two records in the requested historical direct conversation now project as plain
 text after the native absent-action fallback correction.
 
@@ -49,7 +52,12 @@ Message browse preserves typed conversation identity, explicit RFC3339 interval,
 bounded pages, order, excerpts/full-text resource URIs and stable source-bound
 cursors. It returns source capture/expiry, main-image bounds, `history_complete=false`,
 WAL uncertainty, unsupported/rejected/expired counts and `has_more`. Source and
-corpus items never share resource namespaces or checkpoints. A snapshot message
+corpus items never share resource namespaces or checkpoints. The native importer has a separate queue for missing global IDs and generates
+local IDs; this does not prove a genuine upstream global message ID. Archive
+reading must therefore use a stable source/file/row identity in its own
+namespace, and distinguish it from an available verified Zalo message ID.
+Do not synthesize a Zalo global ID to pass corpus or send validation.
+A snapshot message
 is not eligible as an outgoing reply anchor until independently present in the
 current corpus under existing send rules.
 

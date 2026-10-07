@@ -125,12 +125,12 @@ Offline inspection сейчас выдаёт coverage по интервалу и
 Две date-window проверки прошли на одном cache без download/import; повтор
 capture вернул идентичный manifest, ciphertext и expiry не изменились.
 
-Чистый source `a8b5d50` опубликован и установлен через прежний LaunchAgent после
+Чистый source `29acfb9` опубликован и установлен через прежний LaunchAgent после
 проверенного private backup. Root test/vet, race затронутых пакетов, сборки без
 CGO для macOS arm64/Linux amd64 и native startup/shutdown acceptance прошли.
-[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37585330201)
+[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37586543196)
 прошёл root/nested test/race/vet, сборки без CGO и native acceptance. Installed SHA-256:
-`4096d555a4d5c33863b4d490c11d6504614c8eb133ebb9e899529b8523f6b8c6`.
+`86dc7c20b8fe48691f00ccdfe1c9000dda79cca9409bcc095a67f9125aaeb20a`.
 Проверены сохранение всего состояния, зашифрованного архива и подписок, HTTP,
 STDIO и фактический клиент: collector connected/authenticated, без last_error.
 Sending permission остаётся выключенным.
@@ -156,3 +156,12 @@ nested field occurrences. Текущий конвертер отклоняет �
 После restart установленный STDIO и фактический MCP-клиент вернулись в
 connected/authenticated без дополнительного restart. Проверка сохранности
 архива и всех прежних данных/подписок прошла.
+
+После добавления безопасных категорий scalar rejection прошла all-file выборка:
+891 просмотренная запись, 128 отказов на проверке GlbMsgId; оставшиеся 763
+имеют valid metadata (460 plain, 303 unsupported projections). В восьми файлах
+есть непросмотренные строки; это не full-content acceptance. Снимок, manifest,
+expiry, корпус и подписки остались прежними, download/import отсутствуют.
+[Проект отдельного чтения снимка](contracts/retained-archive-reading-proposal.md)
+ожидает решения; публичные MCP capabilities пока не изменены. WAL admission
+для строгого импорта не снимается проверкой целостности или совпадением counts.

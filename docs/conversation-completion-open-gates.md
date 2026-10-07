@@ -10,11 +10,11 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
-The current installed clean source is `a8b5d50c883048d365c0f6f92c4b37759035b2a4`,
+The current installed clean source is `29acfb93a4ebc9b13210e10ef399c1835e3c8299`,
 with ad hoc signed binary SHA-256
-`4096d555a4d5c33863b4d490c11d6504614c8eb133ebb9e899529b8523f6b8c6`.
+`86dc7c20b8fe48691f00ccdfe1c9000dda79cca9409bcc095a67f9125aaeb20a`.
 Root tests/vet, affected-package race and macOS arm64/Linux amd64 builds passed locally.
-[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37585330201)
+[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37586543196)
 passed root/nested test, race and vet, CGO-free builds and native startup acceptance.
 The exact clean candidate (`vcs.modified=false`) also passed isolated native
 startup/shutdown acceptance locally. A verified private full-state/binary/config/
@@ -54,7 +54,16 @@ this does not establish full metadata rendering or historical completeness. The 
 contains 24 source rows and no controls but retains its WAL marker. Inspection
 left the encrypted source unchanged and performed no download/import. Unknown
 metadata interpretation and independent WAL admission remain open.
-See [retained archive task](task-retained-mobile-archive.md).
+The all-file date-window sample inspected 891 source rows; scalar validation
+rejected 128 at message ID validation. All 763 remaining rows have valid metadata:
+460 plain projections and 303 unsupported projections. Eight files have more
+unsampled rows, so this is not complete content coverage. Retained bytes/manifest/
+expiry and all runtime state were preserved. The native consumer can synthesize
+local IDs for missing globals; this is not proof that our rejected IDs are missing,
+nor permission to synthesize a genuine upstream ID.
+A [separate snapshot-reading proposal](contracts/retained-archive-reading-proposal.md)
+is awaiting a scope decision; it is not an available MCP capability and does not
+waive strict import admission. See [retained archive task](task-retained-mobile-archive.md).
 
 ## Previous installation and live evidence
 
