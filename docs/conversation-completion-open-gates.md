@@ -10,20 +10,32 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
-Latest authoritative installation: clean source `f7038ce53c7f0d9315009d3bdb37cddc041d5c6b`,
-binary SHA-256 `5c29ebdc84c715c795888c64c4e13a624b761bd88d3b69e52b1e561266eb5970`.
-[Its Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37590841020)
-passed. The permanent library was restored and inspected offline through the
-owner route: 54 direct files and two group files, retention until owner deletion,
-no new phone request or corpus import. See [permanent archive](contracts/permanent-account-archive.md).
+Latest authoritative installation: clean signed source `3352ae1780123dbe249209ca2d30690342033454`,
+binary SHA-256 `4970968063d793fc26851f06a4ad16c1e15564a8866aba52abb013bacdf36a99`.
+[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37598415082)
+passed root/nested test, race, vet, CGO-free builds and native acceptance. The exact
+clean candidate passed local native startup/shutdown acceptance. Deployment used
+the unchanged existing agent with a verified full-state backup. Configuration,
+corpus, identities, tombstones, send/quote records, first-incoming facts and
+subscription definitions were preserved; schema 14 integrity is valid and sending
+remains disabled. Both installed skills match all eleven current source files.
 
-Public source discovery, catalogue/message paging and full-record resources are
-currently an undeployed implementation with executable schemas and synthetic
-offline SDK acceptance. Account ownership, current collection policy, cursor
-binding, Unicode excerpts and known tombstone/expiry visibility are tested.
-Real-account MCP acceptance, copied skills, deployment and publication remain
-pending. This does not close the remaining v2/sending live gates or prove complete
-Zalo history. See [archive read contract](contracts/archive-mcp-reading.md).
+The permanent library retains 54 direct files and two group files until owner
+deletion. Actual authenticated public source discovery and catalogue paging
+succeeded without another phone request. The requested historical message read
+failed explicitly with `SOURCE_CONTROLS_UNCLASSIFIED`; no prefix was returned.
+The selected file has 24 rows; older inspection counts only type-33/36 controls
+and reports zero, while one sampled kind is unsupported. Identifying the broader
+control class and its visibility semantics is the next gate. Synthetic SDK tests
+pass but do not establish that real-account message reading works.
+
+After deployment, the actual connected client status call reports connected/authenticated
+with no last error. Discovery of the new archive tool in that client is still
+unconfirmed. HTTP reports connected/authenticated with no last error, v2 and
+legacy group Events and all recovery tools. One active subscription has an empty,
+unblocked journal; no ack, send, acquisition or subscription edit was performed.
+This does not close remaining live v2/sending gates or prove complete Zalo history.
+See [archive read contract](contracts/archive-mcp-reading.md).
 
 ### Prior installation checkpoint
 

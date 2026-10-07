@@ -1,12 +1,17 @@
 # MCP archive reading
 
-Status: executable schemas defined; integration is in progress, not deployed.
+Status: deployed from clean signed source `3352ae1`; real-account acceptance is incomplete.
 
 Current implementation: authenticated source discovery, archive conversation
 catalogue pagination, message browsing and resource retrieval pass synthetic
 offline tests, including SDK tool/resource handlers. Known tombstone/expiry
-visibility and Unicode truncation have separate tests. Real-account acceptance
-and deployment are pending; the installed service remains unchanged.
+visibility and Unicode truncation have separate tests. The source passed Linux/macOS CI, native startup acceptance and deployment.
+Actual source discovery and the catalogue read succeeded without phone sync. The
+requested date-window message read returned `SOURCE_CONTROLS_UNCLASSIFIED`; no
+message prefix was disclosed. The selected file has 24 rows: the older strict
+inspection counts no type-33/36 controls but its sample has one unsupported kind.
+The new whole-file control set is broader, and the exact class/semantics still
+need investigation. This gate does not prove that the period lacks messages.
 
 `zalo_list_archive_sources` returns at most two authenticated permanent source
 descriptors. Counts describe the captured account package, not permission to read
