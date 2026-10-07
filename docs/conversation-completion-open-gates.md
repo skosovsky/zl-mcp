@@ -10,12 +10,12 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
-The current installed clean source is `7b2fe7d38862cf715a248175837c367ac7c39d9d`,
+The current installed clean source is `a8b5d50c883048d365c0f6f92c4b37759035b2a4`,
 with ad hoc signed binary SHA-256
-`76f12b10e7557eaa523d134b31d9c1f50c8acd780f78c176177fca583b92098f`.
-[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37584469238)
+`4096d555a4d5c33863b4d490c11d6504614c8eb133ebb9e899529b8523f6b8c6`.
+Root tests/vet, affected-package race and macOS arm64/Linux amd64 builds passed locally.
+[Linux and macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37585330201)
 passed root/nested test, race and vet, CGO-free builds and native startup acceptance.
-Root tests/vet, affected-package race and macOS arm64/Linux amd64 builds also passed locally.
 The exact clean candidate (`vcs.modified=false`) also passed isolated native
 startup/shutdown acceptance locally. A verified private full-state/binary/config/
 LaunchAgent backup preceded replacement through the existing single agent.
@@ -45,12 +45,15 @@ message recovery. Exact typed selection subsequently verified the two September 
 records in the requested direct conversation: both are `webchat`, both have
 nonempty source text and valid decoded metadata; each has one attachment with
 absent action/title, and there are six unsupported nested field occurrences in
-total. The current converter rejects the absent action as
-`unsupported_attachment_action`. This establishes a conversion compatibility gap,
-not a missing source row or proof of visible text semantics. The selected file
+total. The earlier converter rejected the absent action as
+`unsupported_attachment_action`. Static consumer inspection confirmed the native
+MSG_TEXT fallback: absent/empty attachment action keeps MsgContent, with only
+exact rtf replacing it with title. The installed fix now classifies both same-source
+records as plain text (`plain: 2`). Unknown nested fields remain explicitly counted;
+this does not establish full metadata rendering or historical completeness. The selected file
 contains 24 source rows and no controls but retains its WAL marker. Inspection
 left the encrypted source unchanged and performed no download/import. Unknown
-metadata structure and independent WAL admission remain open.
+metadata interpretation and independent WAL admission remain open.
 See [retained archive task](task-retained-mobile-archive.md).
 
 ## Previous installation and live evidence

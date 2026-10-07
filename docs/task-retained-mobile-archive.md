@@ -125,12 +125,12 @@ Offline inspection сейчас выдаёт coverage по интервалу и
 Две date-window проверки прошли на одном cache без download/import; повтор
 capture вернул идентичный manifest, ciphertext и expiry не изменились.
 
-Чистый source `7b2fe7d` опубликован и установлен через прежний LaunchAgent после
+Чистый source `a8b5d50` опубликован и установлен через прежний LaunchAgent после
 проверенного private backup. Root test/vet, race затронутых пакетов, сборки без
 CGO для macOS arm64/Linux amd64 и native startup/shutdown acceptance прошли.
-[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37584469238)
+[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37585330201)
 прошёл root/nested test/race/vet, сборки без CGO и native acceptance. Installed SHA-256:
-`76f12b10e7557eaa523d134b31d9c1f50c8acd780f78c176177fca583b92098f`.
+`4096d555a4d5c33863b4d490c11d6504614c8eb133ebb9e899529b8523f6b8c6`.
 Проверены сохранение всего состояния, зашифрованного архива и подписок, HTTP,
 STDIO и фактический клиент: collector connected/authenticated, без last_error.
 Sending permission остаётся выключенным.
@@ -146,3 +146,13 @@ nested field occurrences. Текущий конвертер отклоняет �
 сохраняется. Ciphertext, manifest и expiry не изменились; download/import
 не выполнялись. Следующий этап — доказать структуру метаданных и отдельно
 условия WAL admission. Новая синхронизация для этого исследования не нужна.
+
+Последующая проверка consumer MSG_TEXT установила правило: непустой title
+подменяет MsgContent только для exact `rtf`; absent/empty action сохраняет
+обычный текст. Исправление конвертера и исполняемая диагностическая схема
+поставлены. На том же неизменном источнике обе записи получили
+`text_projection_classes.plain=2`. Поля с неизвестным смыслом остаются
+в coverage; WAL/control/identity/expiry gates не ослаблены, импорт не выполнен.
+После restart установленный STDIO и фактический MCP-клиент вернулись в
+connected/authenticated без дополнительного restart. Проверка сохранности
+архива и всех прежних данных/подписок прошла.
