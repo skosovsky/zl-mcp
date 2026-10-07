@@ -10,7 +10,54 @@ their recorded versions, not a description of the current installation.
 
 ## Current installation and client discovery
 
-Latest installation: clean signed source `1c0434bd1adb4f4b7916e47bd282bcb4f5f29c02`,
+Latest installation: clean signed source `8032172133a6b11fb3898160a451dc8e4dc3eaad`,
+binary SHA-256 `faee83dcf72da02779e235b56eab0e7f731cd1af3e43303640860997dad00140`.
+[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37618094550)
+passed root/nested test, race, vet, three CGO-free builds and native acceptance.
+The exact clean candidate passed local native startup acceptance. A verified
+private backup preceded deployment through the unchanged single LaunchAgent;
+corpus, identities, tombstones, send/quote records, first-incoming facts,
+subscription definitions, schema 14, config and encrypted archives were preserved.
+The endpoint bound 1.059 seconds after bootstrap without an additional restart.
+Sending remains disabled. All eleven installed skill files match the source.
+
+The installed native [source visibility](contracts/archive-source-visibility.md)
+classifies whole-file type-20 exclusions and type-36/status-3 recall targets.
+All 56 captured typed conversations were paged to completion through local HTTP:
+75 pages, 1,638 source rows, 1,637 examined rows before the agreed cutoff and
+1,124 nonempty text records. Exactly 448 records lack a supported text projection,
+39 are native exclusions (36 recognized information plus three others), 20 are
+source recall controls and six are expired. Counts reconcile to 1,637; there are
+no rejected rows or live tombstone omissions in this source/window. The 505
+unresolved sender mappings occur in returned records. The 73 unresolved quotes
+count metadata gaps in examined rows and may overlap omissions; they are not
+an additional disjoint row count. No author or quote content is invented.
+
+The first deployed visibility version `00cb628` exposed a coverage ownership bug:
+private page cleanup cleared the returned unsupported-content map. A regression
+fails on that version and passes on `8032172`, which copies diagnostic counters
+before cleanup. Do not use its initially empty gap map as completeness evidence.
+Synthetic owner and actual SDK tests also reject a valid full-text resource claim
+for a recalled original whose undo lies outside the requested date interval,
+in both direct and group files; visible long-text resources retain their full text.
+
+The actual connected plugin independently read all 56 conversations/75 pages.
+Its 1,124 text records, 1,637 examined rows and all omission counters exactly match
+local HTTP. Actual client status is connected/authenticated with no error and
+58 corpus messages. STDIO negotiates 2025-11-25 with 22 tools, three resource
+templates, resources/logging and no Events. HTTP exposes legacy/group and v2;
+its single active v2 subscription has an empty, unblocked journal. No ack occurred.
+The source bytes/digest, subscription activation boundaries and sending records
+remain unchanged; no phone synchronization, history import or Zalo send occurred.
+
+This closes complete bounded reading of the captured local source. It does not
+prove complete account history, media rendering, missing sender identities,
+strict mobile WAL/import admission or the outstanding incoming-only/first-only
+and fresh-send live scenarios. The original goal remains active.
+
+### Previous installation and initial archive visibility
+
+Previous installation: clean signed source `1c0434bd1adb4f4b7916e47bd282bcb4f5f29c02`,
 binary SHA-256 `48a074407f892e1c3246d22a74801871837f6ef752d3c061e42f9cc85b335446`.
 [Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/37610540504),
 root/nested test, race, vet, configured CGO-free builds and exact-candidate native
@@ -42,9 +89,9 @@ not whole-account message visibility, strict mobile import, WAL completeness or
 remaining live v2/sending gates. Unknown controls continue to block reads rather
 than return an unsafe prefix. See [current evidence](contracts/archive-control-taxonomy-research.md).
 
-### Whole-library bounded readability check
+### Previous first-page readability check
 
-The current installed archive reader was called once for each of the 56 typed
+The previous `1c0434b` archive reader was called once for each of the 56 typed
 conversations, with a one-record page and an explicit September 1–October 6
 UTC window. All 56 requests completed: 47 returned a page, while nine refused
 with `SOURCE_CONTROLS_UNCLASSIFIED`, without returning a prefix. The error

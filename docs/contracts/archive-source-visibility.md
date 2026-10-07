@@ -1,7 +1,8 @@
 # Native source visibility for read-only archive pages
 
-Status: candidate profile; installation and real-source acceptance must be recorded
-separately. Strict corpus import and live tombstones are unchanged.
+Status: installed from clean signed source `8032172`; all 56 captured files pass
+complete bounded local pagination with exact coverage. Strict corpus import and
+live tombstones are unchanged. See [acceptance](../conversation-completion-open-gates.md).
 
 The pinned format-1 consumer's SQLite message/count queries exclude MsgType 20
 before metadata conversion. The converter maps 36 to `chat.undo` and forwards
@@ -59,3 +60,15 @@ Public responses retain their own copy of projection-gap counters after private
 page buffers are cleared. Synthetic owner and actual MCP resource tests cover
 whole-source suppression outside the requested interval in direct/group files,
 long-text replay and denial of a valid resource claim targeting a recalled row.
+
+## Real-source acceptance (2026-10-07)
+
+The clean installed `8032172` passed Linux/macOS CI and native acceptance. Local
+HTTP and the actual connected client independently completed all 56 files over
+75 pages, with identical 1,637 examined rows and 1,124 text projections before
+the agreed cutoff. Source-wide counts are 39 native exclusions (36 information)
+and 20 recalls. Page omissions are 448 unsupported payloads, 39 exclusions,
+20 source recall controls and six expired rows, exactly reconciling examined rows.
+505 unresolved senders and 73 unresolved quotes remain explicit metadata gaps.
+Encrypted source, corpus, subscriptions and sending state were preserved; no
+acquisition, import, acknowledgement or send was performed.

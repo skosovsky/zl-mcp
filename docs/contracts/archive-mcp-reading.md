@@ -1,17 +1,13 @@
 # MCP archive reading
 
-Status: deployed from clean signed source `3352ae1`; real-account acceptance is incomplete.
+Status: deployed from clean signed source `8032172`; all 56 retained files pass
+complete bounded local and actual-client pagination. Complete Zalo history and strict corpus import
+remain unproven. See [current acceptance](../conversation-completion-open-gates.md).
 
-Current implementation: authenticated source discovery, archive conversation
-catalogue pagination, message browsing and resource retrieval pass synthetic
-offline tests, including SDK tool/resource handlers. Known tombstone/expiry
-visibility and Unicode truncation have separate tests. The source passed Linux/macOS CI, native startup acceptance and deployment.
-Actual source discovery and the catalogue read succeeded without phone sync. The
-requested date-window message read returned `SOURCE_CONTROLS_UNCLASSIFIED`; no
-message prefix was disclosed. The selected file has 24 rows: the older strict
-inspection counts no type-33/36 controls but its sample has one unsupported kind.
-The new whole-file control set is broader, and the exact class/semantics still
-need investigation. This gate does not prove that the period lacks messages.
+Authenticated inventory, catalogue/message pagination, ownership, policy, TTL,
+resource replay and recall suppression pass synthetic offline tests through the
+actual MCP SDK. The read-only native visibility profile removes the former nine
+whole-file control refusals in this retained source. Reads dispatch no phone sync.
 
 `zalo_list_archive_sources` returns at most two authenticated permanent source
 descriptors. Counts describe the captured account package, not permission to read
@@ -42,8 +38,8 @@ known local tombstones; no plaintext cached in a token or disk index is necessar
 Archive-only records are never send/quote anchors. Known local suppression is
 checked by genuine global ID; missing global IDs and unverified WAL changes remain
 explicit visibility limitations. Unclassified source controls block the whole selected file.
-The [native source-visibility profile](archive-source-visibility.md) is a read-only
-candidate: type 20 follows the native query exclusion; exact informational actions
+The [native source-visibility profile](archive-source-visibility.md) is read-only
+and installed: type 20 follows the native query exclusion; exact informational actions
 are a separately counted subset. Validated type-36/status-3 targets suppress
 recalled rows and matching original copies inside the selected immutable file,
 including controls outside the requested interval. Other controls, malformed
@@ -55,7 +51,10 @@ are whole-file counts; informational rows are a subset of excluded rows.
 `unsupported_content` and `suppressed_source` describe the examined page. Metadata
 gap counts can overlap exclusions. Empty excluded/recalled pages still advance
 continuation. TTL, live tombstones, collection policy and resource checks remain.
-Installation and real-source verification of this candidate remain separate gates.
+All 56 files were paged to termination: 75 pages, 1,637 examined rows and 1,124
+text records. Coverage counters survive private-page cleanup and exactly reconcile
+projected records, omissions, recalls and expiry. This accepts the captured source,
+not account history completeness, unknown control classes or strict import.
 
 Coverage distinguishes source/period counts and bounds from examined-page rejection,
 expiry, unsupported metadata/content, unresolved quote/mention/sender and known
@@ -74,9 +73,11 @@ is rendered. The older `source_controls` field still counts only 33/36 and is
 retained unchanged for compatibility. The additional histogram explains a gate;
 it does not classify a control, relax visibility or permit import. Synthetic
 coverage proves the distinction for an out-of-window control with no global ID.
-Diagnostic extension de80416 is installed; the selected real file has exactly
-one type-20 row. Native format-1 queries exclude this type; their conversion table
-maps it to webchat, while mapping type 36 to undo. Desktop MSG_UNDO=20 therefore
-does not classify this backup row. Its exclusion/visibility semantics remain
-unverified, and the public guard is unchanged. See
+The diagnostic extension de80416 established one type-20 row in the initially
+selected real file. Subsequent whole-source inspection found 39 type-20 and 20
+validated type-36/status-3 rows across the 56-file source. The pinned native
+format-1 query excludes 20; its converter forwards the recall target identities
+for 36. These verified rules are now installed for immutable read-only pages.
+Desktop MSG_UNDO=20 is not the backup-row classifier. Other classes/statuses and
+invalid target identities still fail without a prefix. See
 [control taxonomy evidence](archive-control-taxonomy-research.md).

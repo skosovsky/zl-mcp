@@ -1,7 +1,8 @@
 # Archive snapshot pages
 
 Status: bounded public MCP reading is deployed and accepted through the connected
-client. The new [source-visibility profile](archive-source-visibility.md) is a candidate.
+client. The [source-visibility profile](archive-source-visibility.md) is installed and all
+56 captured files pass bounded local and actual-client pagination.
 This is a separate read-only source, not a relaxation of corpus import admission.
 
 The explicit record view is defined by

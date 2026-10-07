@@ -1,10 +1,10 @@
 # Archive control taxonomy: current evidence
 
-Status: installed narrow information reads are accepted. A broader read-only
-native exclusion/recall profile is a candidate; real-source acceptance remains
-required. Desktop model integers are not backup format integers.
+Status: the installed read-only native exclusion/recall profile passes complete
+bounded pagination of all 56 captured files. Strict import and completeness of
+Zalo history remain unaccepted. Desktop model integers are not backup integers.
 
-The snapshot reader blocks every type in the pinned decoder's deferred set.
+The initial snapshot reader blocked every type in the pinned decoder's deferred set.
 Owner inspection previously reported only types 33/36, so its zero control count
 could not explain a rejection by the broader set. The diagnostic extension in
 `de80416` adds whole-file type counts without rendering control contents.
