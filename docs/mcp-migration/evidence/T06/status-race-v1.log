@@ -1,0 +1,6 @@
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	8.907s
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/operations	1.629s
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	30.420s
+ok  	github.com/skosovsky/zl-mcp/internal/service	39.127s
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	6.235s
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	6.849s

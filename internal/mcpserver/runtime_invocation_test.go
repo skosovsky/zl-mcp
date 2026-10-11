@@ -10,6 +10,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	adapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
+	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
 	"github.com/skosovsky/zl-mcp/internal/app/search"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
@@ -59,7 +60,12 @@ func TestRuntimeSDKDispatchAndSingleAdmission(t *testing.T) {
 		t.Fatal(err)
 	}
 	reader := &invocationReader{Reader: adapter.New(owner)}
-	server, err := New(owner, t.TempDir(), ReadPorts{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader}, Authority: reader})
+	ports := migrationReadPorts(owner)
+	ports.Search = &search.Handler{Reads: reader}
+	ports.Conversations.Reads = reader
+	ports.Authority, ports.Admission = reader, reader
+	ports.Events = &eventaccess.Handler{Diagnostics: reader, Journal: reader}
+	server, err := New(owner, t.TempDir(), ports)
 	if err != nil {
 		t.Fatal(err)
 	}

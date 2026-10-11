@@ -1,0 +1,4 @@
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	1.068s
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	6.421s
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/store	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	(cached)

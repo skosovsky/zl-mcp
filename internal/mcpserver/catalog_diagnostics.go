@@ -15,27 +15,27 @@ func (s *Service) addCatalogDiagnostics(server *mcp.Server) error {
 		return err
 	}
 	server.AddResource(&mcp.Resource{URI: "zalo://catalog/diagnostics", Name: "Contact catalogue source diagnostics", MIMEType: "application/json"}, func(ctx context.Context, r *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		allowed, err := s.Store.AllowRead(ctx)
+		allowed, err := s.admission.AllowRead(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("local read budget unavailable")
 		}
 		if !allowed {
 			return nil, fmt.Errorf("RATE_LIMITED: retry resource read later")
 		}
-		status, err := s.Store.ContactStatus(ctx)
+		status, err := s.conversations.Catalog.ContactDiagnostics(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("catalogue diagnostics unavailable")
 		}
-		profiles, err := s.Store.ProfileStatus(ctx)
+		profiles, err := s.conversations.Catalog.ProfileDiagnostics(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("profile diagnostics unavailable")
 		}
-		status["profiles"] = profiles
-		preload, err := s.Store.PreloadStatus(ctx)
+		status.Profiles = &profiles
+		preload, err := s.conversations.Catalog.PreloadDiagnostics(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("preload diagnostics unavailable")
 		}
-		status["preload"] = preload
+		status.Preload = &preload
 		body, err := json.Marshal(status)
 		if err != nil || len(body) > 64<<10 {
 			return nil, fmt.Errorf("catalogue diagnostics exceed response limit")

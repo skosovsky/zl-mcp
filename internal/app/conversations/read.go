@@ -49,7 +49,12 @@ type ReadPort interface {
 	Message(context.Context, MessageRequest) (domain.Message, error)
 }
 
-type Handler struct{ Reads ReadPort }
+type Handler struct {
+	Reads          ReadPort
+	Catalog        CatalogPort
+	LiveGroups     LiveGroupPort
+	DirectoryReads DirectoryPort
+}
 
 func (h *Handler) GroupContext(ctx context.Context, r ContextRequest) (GroupContext, error) {
 	if r.Conversation.Type != domain.ConversationGroup {

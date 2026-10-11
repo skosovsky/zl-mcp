@@ -21,7 +21,7 @@ func (s *Service) addConversationResources(server *mcp.Server) error {
 		return err
 	}
 	server.AddResourceTemplate(&mcp.ResourceTemplate{URITemplate: "zalo://archives/{token}", Name: "Full local archive record", MIMEType: "application/json"}, func(ctx context.Context, r *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		allowed, err := s.Store.AllowRead(ctx)
+		allowed, err := s.admission.AllowRead(ctx)
 		if err != nil || !allowed {
 			return nil, fmt.Errorf("archive read budget unavailable; retry later")
 		}
@@ -33,7 +33,7 @@ func (s *Service) addConversationResources(server *mcp.Server) error {
 		if token == "" || len(token) > 5600 || strings.ContainsAny(token, "/%") {
 			return nil, fmt.Errorf("invalid archive resource token")
 		}
-		value, err := s.Control.Call(ctx, "read_archive_resource", map[string]any{"token": token})
+		value, err := s.archives.Record(ctx, token)
 		if err != nil {
 			return nil, fmt.Errorf("archive record unavailable or access denied")
 		}
@@ -45,8 +45,7 @@ func (s *Service) addConversationResources(server *mcp.Server) error {
 		if json.Unmarshal(body, &wire) != nil || archiveSchema.Validate(wire) != nil {
 			return nil, fmt.Errorf("archive record contract mismatch")
 		}
-		text, ok := value["text"].(string)
-		if !ok || len(text) > 1<<20 {
+		if len(value.Text) > 1<<20 {
 			return nil, fmt.Errorf("archive record exceeds supported text size")
 		}
 		return &mcp.ReadResourceResult{Contents: []*mcp.ResourceContents{{URI: r.Params.URI, MIMEType: "application/json", Text: string(body)}}}, nil
@@ -56,14 +55,14 @@ func (s *Service) addConversationResources(server *mcp.Server) error {
 		return err
 	}
 	server.AddResource(&mcp.Resource{URI: "zalo://collection", Name: "Conversation collection status", MIMEType: "application/json"}, func(ctx context.Context, r *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		allowed, err := s.Store.AllowRead(ctx)
+		allowed, err := s.admission.AllowRead(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("local read budget unavailable")
 		}
 		if !allowed {
 			return nil, fmt.Errorf("RATE_LIMITED: retry resource read later")
 		}
-		status, err := s.Store.CollectionStatus(ctx)
+		status, err := s.conversations.Catalog.CollectionStatus(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("collection status unavailable")
 		}
@@ -81,7 +80,7 @@ func (s *Service) addConversationResources(server *mcp.Server) error {
 		return &mcp.ReadResourceResult{Contents: []*mcp.ResourceContents{{URI: r.Params.URI, MIMEType: "application/json", Text: string(body)}}}, nil
 	})
 	server.AddResourceTemplate(&mcp.ResourceTemplate{URITemplate: "zalo://conversations/{conversation_type}/{conversation_id}/messages/{message_id}", Name: "Local conversation message", MIMEType: "text/plain"}, func(ctx context.Context, r *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		allowed, err := s.Store.AllowRead(ctx)
+		allowed, err := s.admission.AllowRead(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("local read budget unavailable")
 		}

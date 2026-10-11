@@ -184,7 +184,15 @@
           "^github\\.com/skosovsky/zl\\-mcp/internal/service$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$"
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$"
         ],
         "external": [
           "^github\\.com/modelcontextprotocol/go\\-sdk/mcp$"
@@ -316,7 +324,6 @@
           "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/events(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
@@ -325,7 +332,8 @@
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$"
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
         ],
         "external": [
           "^github\\.com/google/uuid$",
@@ -900,7 +908,8 @@
           "^encoding/json$",
           "^errors$",
           "^os$",
-          "^strconv$"
+          "^strconv$",
+          "^time$"
         ]
       }
     },

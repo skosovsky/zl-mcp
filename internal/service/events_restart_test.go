@@ -203,7 +203,7 @@ func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) 
 		bound := make(chan net.Addr, 1)
 		go func() {
 			runningDone <- runConfigured(ctx, c, func(context.Context, string) (collector.ListenerUpstream, error) { return client, nil }, func(collector.ListenerUpstream) error { return nil }, func(addr net.Addr) { bound <- addr }, func(httpService *mcpserver.HTTPService, worker *events.Worker) {
-				httpService.Events.Client = callback
+				httpService.Events.(*events.SubscriptionManager).Client = callback
 				worker.Client = callback
 			})
 		}()

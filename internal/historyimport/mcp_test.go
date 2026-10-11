@@ -7,13 +7,20 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	operationsadapter "github.com/skosovsky/zl-mcp/internal/adapters/operations"
 	storeadapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
+	"github.com/skosovsky/zl-mcp/internal/app/archives"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
+	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
+	"github.com/skosovsky/zl-mcp/internal/app/history"
+	"github.com/skosovsky/zl-mcp/internal/app/membership"
+	"github.com/skosovsky/zl-mcp/internal/app/messaging"
 	"github.com/skosovsky/zl-mcp/internal/app/search"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/historyimport"
 	"github.com/skosovsky/zl-mcp/internal/mcpserver"
 	"github.com/skosovsky/zl-mcp/internal/storage"
+	"github.com/skosovsky/zl-mcp/internal/toolruntime"
 )
 
 func TestMCPHistoryImportDiscoveryStatusAndReads(t *testing.T) {
@@ -29,7 +36,9 @@ func TestMCPHistoryImportDiscoveryStatusAndReads(t *testing.T) {
 		t.Fatal(err)
 	}
 	reader := storeadapter.New(s)
-	server, err := mcpserver.NewWithControl(s, &historyimport.Manager{Store: s}, mcpserver.ReadPorts{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader}, Authority: reader})
+	backend := &historyimport.Manager{Store: s}
+	operations := operationsadapter.NewReader(backend)
+	server, err := mcpserver.NewWithControl(s, backend, mcpserver.ReadPorts{Operations: toolruntime.OperationReads{Messaging: &messaging.Handler{Reads: operations}, History: &history.Handler{Reads: operations}, Membership: &membership.Handler{Reads: operations}}, Archives: &archives.Handler{Reads: operationsadapter.NewArchiveReader(backend)}, Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader, LiveGroups: operations}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader}})
 	if err != nil {
 		t.Fatal(err)
 	}

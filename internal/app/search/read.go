@@ -39,11 +39,8 @@ func (p *Page) Shorten(n int) error {
 	return p.shorten(p, n)
 }
 
-type GroupSummary struct {
-	GroupCount          int  `json:"group_count"`
-	HistoryComplete     bool `json:"history_complete"`
-	GroupsWithKnownGaps int  `json:"groups_with_known_gaps"`
-}
+type GroupSummary = shared.GroupCoverageSummary
+
 type ConversationSummary struct {
 	ConversationCount          int  `json:"conversation_count"`
 	HistoryComplete            bool `json:"history_complete"`

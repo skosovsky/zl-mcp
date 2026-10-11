@@ -1,0 +1,22 @@
+// Package messaging exposes capabilities around the existing durable send owner.
+package messaging
+
+import (
+	"context"
+	"time"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
+)
+
+// StatusPort cannot start a send or retry an unknown result.
+type StatusPort interface {
+	SendStatus(context.Context, string) (domain.SendOperation, error)
+}
+
+type Handler struct{ Reads StatusPort }
+
+func (h *Handler) Status(ctx context.Context, requestID string) (domain.SendOperation, error) {
+	ctx, cancel := context.WithTimeout(ctx, 35*time.Second)
+	defer cancel()
+	return h.Reads.SendStatus(ctx, requestID)
+}

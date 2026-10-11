@@ -1,0 +1,13 @@
+{
+  "commit": "45230af90f90cf27358f41e5ff52949fd686525d",
+  "tree": "6e2cd8f82e0e4e74f421ca737297ea11bba38d97",
+  "subject": "feat(runtime): execute search tools through scoped toolsy registry",
+  "accepted_source_digest": "4860680b8d2b0b4e878d6332248a40c316e59da983438c892fe9a905353369c6",
+  "actual_source_digest": "4860680b8d2b0b4e878d6332248a40c316e59da983438c892fe9a905353369c6",
+  "source_match": true,
+  "completeness": 100,
+  "correctness": "PASS",
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01"
+}

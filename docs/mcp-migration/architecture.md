@@ -20,7 +20,8 @@ composition, pure app imports and exact MCP/CLI migration exceptions. Root and s
 patterns are exercised by positive controls; unknown/root packages fail coverage.
 
 Exact legacy edges and removal tasks are in architecture-exceptions.json. Current MCP
-storage/control/SQL and HTTP Events concrete references are temporary; backend internal
+storage/control/SQL references are temporary. T06 removes the HTTP Events concrete
+reference: service constructs the native manager and supplies EventsProtocolPort; backend internal
 edges (collector/storage/events/mobilebackup/zalo) are deliberately retained. CLI concrete
 construction moves behind service composition in T07. No wildcard exception directory
 is allowed. T04/T06 remove read edges incrementally; T07 closes all new-boundary exceptions.

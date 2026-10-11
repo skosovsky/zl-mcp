@@ -1,0 +1,200 @@
+{
+  "task": "T06",
+  "authority": "accepted T01 docs/mcp-migration/manifest.json readOnlyHint true",
+  "read_tools": [
+    {
+      "name": "zalo_get_conversation",
+      "app": "conversations",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_get_conversation_message_context",
+      "app": "conversations",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_get_group",
+      "app": "conversations",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_get_history_import_status",
+      "app": "history",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_get_join_status",
+      "app": "membership",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_get_message_context",
+      "app": "conversations",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_get_send_status",
+      "app": "messaging",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_get_status",
+      "app": "conversations",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_inspect_invite",
+      "app": "membership",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_list_archive_sources",
+      "app": "archives",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_list_conversation_messages",
+      "app": "conversations",
+      "source_id_branch": "archives"
+    },
+    {
+      "name": "zalo_list_conversations",
+      "app": "conversations",
+      "source_id_branch": "archives"
+    },
+    {
+      "name": "zalo_list_event_subscriptions",
+      "app": "eventaccess",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_list_groups",
+      "app": "conversations",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_read_subscription_events",
+      "app": "eventaccess",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_search_conversation_messages",
+      "app": "search",
+      "source_id_branch": null
+    },
+    {
+      "name": "zalo_search_messages",
+      "app": "search",
+      "source_id_branch": null
+    }
+  ],
+  "resources": [
+    {
+      "mimeType": "text/plain",
+      "name": "Zalo local corpus capabilities",
+      "uri": "zalo://capabilities",
+      "transport": [
+        "HTTP",
+        "STDIO bridge"
+      ],
+      "auth": "authenticated local account; independent AllowRead 10/s burst20 per read; current policy checked for message/archive reads",
+      "handler": "internal/mcpserver/server.go",
+      "payload_limit_bytes": null,
+      "error_shape": "SDK resource/protocol error; not tool IsError",
+      "links": "text_resource_uri from truncated context/message or archive page; diagnostics/capabilities static discovery"
+    },
+    {
+      "mimeType": "application/json",
+      "name": "Contact catalogue source diagnostics",
+      "uri": "zalo://catalog/diagnostics",
+      "transport": [
+        "HTTP",
+        "STDIO bridge"
+      ],
+      "auth": "authenticated local account; independent AllowRead 10/s burst20 per read; current policy checked for message/archive reads",
+      "handler": "internal/mcpserver/catalog_diagnostics.go",
+      "payload_limit_bytes": 65536,
+      "error_shape": "SDK resource/protocol error; not tool IsError",
+      "links": "text_resource_uri from truncated context/message or archive page; diagnostics/capabilities static discovery"
+    },
+    {
+      "mimeType": "application/json",
+      "name": "Conversation collection status",
+      "uri": "zalo://collection",
+      "transport": [
+        "HTTP",
+        "STDIO bridge"
+      ],
+      "auth": "authenticated local account; independent AllowRead 10/s burst20 per read; current policy checked for message/archive reads",
+      "handler": "internal/mcpserver/conversations.go",
+      "payload_limit_bytes": null,
+      "error_shape": "SDK resource/protocol error; not tool IsError",
+      "links": "text_resource_uri from truncated context/message or archive page; diagnostics/capabilities static discovery"
+    },
+    {
+      "mimeType": "application/json",
+      "name": "MCP Events delivery diagnostics",
+      "uri": "zalo://events/diagnostics",
+      "transport": [
+        "HTTP",
+        "STDIO bridge"
+      ],
+      "auth": "authenticated local account; independent AllowRead 10/s burst20 per read; current policy checked for message/archive reads",
+      "handler": "internal/mcpserver/diagnostics.go",
+      "payload_limit_bytes": 65536,
+      "error_shape": "SDK resource/protocol error; not tool IsError",
+      "links": "text_resource_uri from truncated context/message or archive page; diagnostics/capabilities static discovery"
+    }
+  ],
+  "resource_templates": [
+    {
+      "mimeType": "application/json",
+      "name": "Full local archive record",
+      "uriTemplate": "zalo://archives/{token}",
+      "transport": [
+        "HTTP",
+        "STDIO bridge"
+      ],
+      "auth": "authenticated local account; independent AllowRead 10/s burst20 per read; current policy checked for message/archive reads",
+      "handler": "internal/mcpserver/conversations.go",
+      "payload_limit_bytes": 1048576,
+      "error_shape": "SDK resource/protocol error; not tool IsError",
+      "links": "text_resource_uri from truncated context/message or archive page; diagnostics/capabilities static discovery"
+    },
+    {
+      "mimeType": "text/plain",
+      "name": "Local conversation message",
+      "uriTemplate": "zalo://conversations/{conversation_type}/{conversation_id}/messages/{message_id}",
+      "transport": [
+        "HTTP",
+        "STDIO bridge"
+      ],
+      "auth": "authenticated local account; independent AllowRead 10/s burst20 per read; current policy checked for message/archive reads",
+      "handler": "internal/mcpserver/conversations.go",
+      "payload_limit_bytes": 1048576,
+      "error_shape": "SDK resource/protocol error; not tool IsError",
+      "links": "text_resource_uri from truncated context/message or archive page; diagnostics/capabilities static discovery"
+    },
+    {
+      "mimeType": "text/plain",
+      "name": "Local Zalo message",
+      "uriTemplate": "zalo://groups/{group_id}/messages/{message_id}",
+      "transport": [
+        "HTTP",
+        "STDIO bridge"
+      ],
+      "auth": "authenticated local account; independent AllowRead 10/s burst20 per read; current policy checked for message/archive reads",
+      "handler": "internal/mcpserver/server.go",
+      "payload_limit_bytes": 1048576,
+      "error_shape": "SDK resource/protocol error; not tool IsError",
+      "links": "text_resource_uri from truncated context/message or archive page; diagnostics/capabilities static discovery"
+    }
+  ],
+  "commands_deferred_T07": [
+    "zalo_ack_subscription_events",
+    "zalo_cancel_history_import",
+    "zalo_import_conversation_history",
+    "zalo_join_group",
+    "zalo_send_direct_message"
+  ]
+}

@@ -1,0 +1,15 @@
+?   	github.com/skosovsky/zl-mcp/internal/app/archives	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	1.613s
+ok  	github.com/skosovsky/zl-mcp/internal/app/eventaccess	1.708s
+?   	github.com/skosovsky/zl-mcp/internal/app/history	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/membership	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/messaging	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/search	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/shared	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/operations	1.708s
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/store	1.906s
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	8.374s
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	33.935s
+ok  	github.com/skosovsky/zl-mcp/internal/service	34.525s
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	6.274s
+ok  	github.com/skosovsky/zl-mcp/internal/events	(cached)

@@ -169,7 +169,7 @@ func testConversationServiceProfile(t *testing.T, profile string, version int) {
 		source := &conversationServiceSource{input: make(chan domain.Message, 8)}
 		go func() {
 			done <- runConfigured(ctx, c, func(context.Context, string) (collector.ListenerUpstream, error) { return source, nil }, func(collector.ListenerUpstream) error { return nil }, func(addr net.Addr) { bound <- addr }, func(server *mcpserver.HTTPService, worker *events.Worker) {
-				server.Events.Client = callback
+				server.Events.(*events.SubscriptionManager).Client = callback
 				worker.Client = callback
 			})
 		}()

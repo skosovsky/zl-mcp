@@ -17,22 +17,21 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/skosovsky/zl-mcp/internal/control"
-	"github.com/skosovsky/zl-mcp/internal/events"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
 type HTTPService struct {
-	Events    *events.SubscriptionManager
+	Events    EventsProtocolPort
 	sdk       http.Handler
 	tokenHash [32]byte
 	principal string
 }
 
-func NewHTTP(store *storage.Store, dir, token string, reads ReadPorts) (*HTTPService, error) {
-	return NewHTTPWithControl(store, dir, token, control.New(dir), reads)
+func NewHTTP(store *storage.Store, dir, token string, reads ReadPorts, protocol EventsProtocolPort) (*HTTPService, error) {
+	return NewHTTPWithControl(store, dir, token, control.New(dir), reads, protocol)
 }
 
-func NewHTTPWithControl(store *storage.Store, dir, token string, backend ControlPort, reads ReadPorts) (*HTTPService, error) {
+func NewHTTPWithControl(store *storage.Store, dir, token string, backend ControlPort, reads ReadPorts, protocol EventsProtocolPort) (*HTTPService, error) {
 	if len(token) < 32 {
 		return nil, errors.New("MCP bearer token must contain at least 32 bytes")
 	}
@@ -40,11 +39,10 @@ func NewHTTPWithControl(store *storage.Store, dir, token string, backend Control
 	if err != nil {
 		return nil, err
 	}
-	manager, err := events.NewSubscriptionManager(store, dir)
-	if err != nil {
-		return nil, err
+	if protocol == nil {
+		return nil, errors.New("Events protocol port is required")
 	}
-	return &HTTPService{Events: manager, tokenHash: sha256.Sum256([]byte(token)), principal: "local:" + strconv.Itoa(os.Getuid()), sdk: mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return server }, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true})}, nil
+	return &HTTPService{Events: protocol, tokenHash: sha256.Sum256([]byte(token)), principal: "local:" + strconv.Itoa(os.Getuid()), sdk: mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return server }, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true})}, nil
 }
 
 type rpcRequest struct {
@@ -60,11 +58,7 @@ func writeRPC(w http.ResponseWriter, id json.RawMessage, result any, err error) 
 	}
 	response := map[string]any{"jsonrpc": "2.0", "id": id}
 	if err != nil {
-		var rpc *events.RPCError
-		if !errors.As(err, &rpc) {
-			rpc = &events.RPCError{Code: -32603, Message: "Internal server error."}
-		}
-		response["error"] = rpc
+		response["error"] = projectProtocolError(err)
 	} else {
 		response["result"] = result
 	}
@@ -138,11 +132,11 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	var request rpcRequest
 	if json.Unmarshal(body, &request) != nil {
-		writeRPC(w, nil, nil, &events.RPCError{Code: -32700, Message: "Parse error."})
+		writeRPC(w, nil, nil, &protocolError{Code: -32700, Message: "Parse error."})
 		return
 	}
 	if request.JSONRPC != "2.0" || request.Method == "" {
-		writeRPC(w, nil, nil, &events.RPCError{Code: -32600, Message: "Invalid request."})
+		writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Invalid request."})
 		return
 	}
 	r.Body = io.NopCloser(bytes.NewReader(body))
@@ -162,48 +156,47 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if r.Header.Get("Mcp-Method") != request.Method {
-			writeRPCStatus(w, http.StatusBadRequest, request.ID, &events.RPCError{Code: mcp.CodeHeaderMismatch, Message: "Missing or mismatched Mcp-Method header."})
+			writeRPCStatus(w, http.StatusBadRequest, request.ID, &protocolError{Code: mcp.CodeHeaderMismatch, Message: "Missing or mismatched Mcp-Method header."})
 			return
 		}
 		var params struct {
 			Meta map[string]any `json:"_meta"`
 		}
 		if len(request.Params) != 0 && json.Unmarshal(request.Params, &params) != nil {
-			writeRPC(w, request.ID, nil, &events.RPCError{Code: -32602, Message: "Invalid parameters."})
+			writeRPC(w, request.ID, nil, &protocolError{Code: -32602, Message: "Invalid parameters."})
 			return
 		}
 		if _, ok := params.Meta["io.modelcontextprotocol/clientCapabilities"].(map[string]any); !ok {
-			writeRPC(w, request.ID, nil, &events.RPCError{Code: -32602, Message: "Missing or invalid client capabilities."})
+			writeRPC(w, request.ID, nil, &protocolError{Code: -32602, Message: "Missing or invalid client capabilities."})
 			return
 		}
 		version, _ := params.Meta["io.modelcontextprotocol/protocolVersion"].(string)
 		header := r.Header.Get("MCP-Protocol-Version")
 		if header == "" || (version != "" && header != version) {
-			writeRPCStatus(w, http.StatusBadRequest, request.ID, &events.RPCError{Code: mcp.CodeHeaderMismatch, Message: "Missing or mismatched MCP-Protocol-Version header."})
+			writeRPCStatus(w, http.StatusBadRequest, request.ID, &protocolError{Code: mcp.CodeHeaderMismatch, Message: "Missing or mismatched MCP-Protocol-Version header."})
 			return
 		}
 		if version == "" {
-			writeRPCStatus(w, http.StatusBadRequest, request.ID, &events.RPCError{Code: -32602, Message: "Missing or invalid protocol version metadata."})
+			writeRPCStatus(w, http.StatusBadRequest, request.ID, &protocolError{Code: -32602, Message: "Missing or invalid protocol version metadata."})
 			return
 		}
 		if version != "2026-07-28" {
-			writeRPCStatus(w, http.StatusBadRequest, request.ID, &events.RPCError{Code: mcp.CodeUnsupportedProtocolVersion, Message: "Unsupported protocol version.", Data: map[string]any{"supported": []string{"2026-07-28"}, "requested": version}})
+			writeRPCStatus(w, http.StatusBadRequest, request.ID, &protocolError{Code: mcp.CodeUnsupportedProtocolVersion, Message: "Unsupported protocol version.", Data: map[string]any{"supported": []string{"2026-07-28"}, "requested": version}})
 			return
 		}
 		var id any
 		if len(request.ID) == 0 || json.Unmarshal(request.ID, &id) != nil {
-			writeRPC(w, nil, nil, &events.RPCError{Code: -32600, Message: "Events require a request ID."})
+			writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Events require a request ID."})
 			return
 		}
 		switch id.(type) {
 		case string, float64:
 		default:
-			writeRPC(w, nil, nil, &events.RPCError{Code: -32600, Message: "Invalid request ID."})
+			writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Invalid request ID."})
 			return
 		}
 		result, err := s.Events.Call(r.Context(), request.Method, s.principal, request.Params)
-		var rpc *events.RPCError
-		if errors.As(err, &rpc) && rpc.Code == -32601 {
+		if projectProtocolError(err).Code == -32601 {
 			writeRPCStatus(w, http.StatusNotFound, request.ID, err)
 			return
 		}

@@ -1,0 +1,704 @@
+{
+  "task": "T06",
+  "reviewer": "independent completeness reviewer /root/t06_completeness",
+  "candidate_source_digest_sha256": "4a38dc778ac427b96500106f84e137ce0399e5c62b3eeee4c93e00a42ac91d47",
+  "parent_sha": "45230af90f90cf27358f41e5ff52949fd686525d",
+  "required_total": 56,
+  "verified_pass": 56,
+  "completeness_percent": 100,
+  "verdict": "PASS",
+  "findings": [],
+  "requirements": [
+    {
+      "id": "T06-01",
+      "requirement": "Accepted T05 SHA/tree/source verified; previous evidence not reset",
+      "verdict": "PASS",
+      "evidence": [
+        "docs/mcp-migration/evidence/T06/T05-postcommit.json",
+        "internal git HEAD 45230af90f90cf27358f41e5ff52949fd686525d; tree6e2cd8f82e0e4e74f421ca737297ea11bba38d97"
+      ],
+      "assessment": "Verified accepted parent history and preserved earlier evidence; no previous task reopened."
+    },
+    {
+      "id": "T06-02",
+      "requirement": "Full17read/4resource/3template manifest fixed and typed contracts before implementation",
+      "verdict": "PASS",
+      "evidence": [
+        "docs/mcp-migration/evidence/T06/initial-candidate.json",
+        "docs/mcp-migration/evidence/T06/read-manifest.json",
+        "docs/mcp-migration/evidence/T06/requirements.json",
+        "docs/mcp-migration/full-read-boundary.md"
+      ],
+      "assessment": "Initial candidate includes fixed boundary ADR before new read implementation; manifest enumerates17/4/3 and56 equal leaves."
+    },
+    {
+      "id": "T06-03",
+      "requirement": "zalo_get_conversation routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-04",
+      "requirement": "zalo_get_conversation_message_context routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-05",
+      "requirement": "zalo_get_group routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-06",
+      "requirement": "zalo_get_history_import_status routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-07",
+      "requirement": "zalo_get_join_status routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-08",
+      "requirement": "zalo_get_message_context routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-09",
+      "requirement": "zalo_get_send_status routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-10",
+      "requirement": "zalo_get_status routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-11",
+      "requirement": "zalo_inspect_invite routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-12",
+      "requirement": "zalo_list_archive_sources routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-13",
+      "requirement": "zalo_list_conversation_messages routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-14",
+      "requirement": "zalo_list_conversations routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-15",
+      "requirement": "zalo_list_event_subscriptions routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-16",
+      "requirement": "zalo_list_groups routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-17",
+      "requirement": "zalo_read_subscription_events routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-18",
+      "requirement": "zalo_search_conversation_messages routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-19",
+      "requirement": "zalo_search_messages routes through scoped toolruntime and its declared typed app read handler",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/mcpserver/server.go",
+        "internal/service/mcp_reads.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Verified named registry capability, trusted binding/current scope policy, single typed dispatch branch and complete production composition. Native read owner remains authoritative; no legacy wire read fallback."
+    },
+    {
+      "id": "T06-20",
+      "requirement": "zalo://capabilities uses typed app read/diagnostic port (static capabilities retains wire text) and independent admission/current access",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/server.go",
+        "internal/mcpserver/catalog_ports_test.go"
+      ],
+      "assessment": "Typed read/diagnostic capability and independent shared admission; capabilities static wire text preserved. Current-data access remains native authority where applicable."
+    },
+    {
+      "id": "T06-21",
+      "requirement": "zalo://catalog/diagnostics uses typed app read/diagnostic port (static capabilities retains wire text) and independent admission/current access",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/catalog_diagnostics.go",
+        "internal/mcpserver/catalog_ports_test.go"
+      ],
+      "assessment": "Typed read/diagnostic capability and independent shared admission; capabilities static wire text preserved. Current-data access remains native authority where applicable."
+    },
+    {
+      "id": "T06-22",
+      "requirement": "zalo://collection uses typed app read/diagnostic port (static capabilities retains wire text) and independent admission/current access",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/conversations.go",
+        "internal/mcpserver/catalog_ports_test.go"
+      ],
+      "assessment": "Typed read/diagnostic capability and independent shared admission; capabilities static wire text preserved. Current-data access remains native authority where applicable."
+    },
+    {
+      "id": "T06-23",
+      "requirement": "zalo://events/diagnostics uses typed app read/diagnostic port (static capabilities retains wire text) and independent admission/current access",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/diagnostics.go",
+        "internal/mcpserver/catalog_ports_test.go"
+      ],
+      "assessment": "Typed read/diagnostic capability and independent shared admission; capabilities static wire text preserved. Current-data access remains native authority where applicable."
+    },
+    {
+      "id": "T06-24",
+      "requirement": "zalo://archives/{token} uses app read ports, sameURI/MIME/limits/current policy",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/conversations.go",
+        "internal/app/archives/read.go",
+        "internal/mcpserver/read_boundary_test.go",
+        "internal/service/archive_messages_test.go"
+      ],
+      "assessment": "Resource calls typed app port directly; existing URI/MIME/text limits and native current policy/token recheck retained, separately admitted."
+    },
+    {
+      "id": "T06-25",
+      "requirement": "zalo://conversations/{conversation_type}/{conversation_id}/messages/{message_id} uses app read ports, sameURI/MIME/limits/current policy",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/conversations.go",
+        "internal/app/conversations/read.go",
+        "internal/mcpserver/read_boundary_test.go",
+        "internal/service/archive_messages_test.go"
+      ],
+      "assessment": "Resource calls typed app port directly; existing URI/MIME/text limits and native current policy/token recheck retained, separately admitted."
+    },
+    {
+      "id": "T06-26",
+      "requirement": "zalo://groups/{group_id}/messages/{message_id} uses app read ports, sameURI/MIME/limits/current policy",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/server.go",
+        "internal/app/conversations/read.go",
+        "internal/mcpserver/read_boundary_test.go",
+        "internal/service/archive_messages_test.go"
+      ],
+      "assessment": "Resource calls typed app port directly; existing URI/MIME/text limits and native current policy/token recheck retained, separately admitted."
+    },
+    {
+      "id": "T06-27",
+      "requirement": "No universal map/RawJSON app bus; explicit bounded DTOs/capability ports with domain types",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/conversations/browse.go",
+        "internal/app/conversations/catalog.go",
+        "internal/app/archives/read.go",
+        "internal/app/eventaccess/journal.go",
+        "internal/adapters/operations/read.go",
+        "internal/adapters/store/catalog.go"
+      ],
+      "assessment": "Explicit capability DTOs and typed ports; generic JSON conversion is confined to legacy backend adapters/wire projection, not an app dispatch bus."
+    },
+    {
+      "id": "T06-28",
+      "requirement": "Catalog/group/conversation ordering/cursors/empty/completeness/coverage preserved",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/adapters/store/browse.go",
+        "internal/app/conversations/browse.go",
+        "internal/app/conversations/catalog.go",
+        "docs/mcp-migration/evidence/T06/full-read-offline-v1/report.json"
+      ],
+      "assessment": "Native Store remains authoritative for order, filter, snapshot, coverage and cursor; typed DTO preserves optional field presence."
+    },
+    {
+      "id": "T06-29",
+      "requirement": "Legacy get_group live-read timeout/fallback/stale/error behavior preserved",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/conversations/catalog.go",
+        "internal/app/conversations/catalog_test.go",
+        "internal/mcpserver/catalog_ports_test.go"
+      ],
+      "assessment": "Five-second live read with cancellation followed by original-context native fallback; successful fallback sets stale=true, original native error retained."
+    },
+    {
+      "id": "T06-30",
+      "requirement": "Status/inspect use fixed read-only operation ports and original deadlines; never dispatch command",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/adapters/operations/read.go",
+        "internal/app/membership/read.go",
+        "internal/app/messaging/read.go",
+        "internal/app/history/read.go",
+        "internal/toolruntime/operation_reads_test.go",
+        "internal/adapters/operations/read_test.go"
+      ],
+      "assessment": "Adapter methods name fixed reads exclusively; handlers retain35s send/import and6s membership deadlines. Independent recorder denies untrusted/malformed/stale scopes and verifies failures dispatch reads only."
+    },
+    {
+      "id": "T06-31",
+      "requirement": "Source_id omission current corpus, explicit archive selection account-bound and no fallback",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/adapters/operations/archive_read.go",
+        "internal/service/archive_read.go",
+        "internal/mcpserver/archive_routing_test.go"
+      ],
+      "assessment": "Nonempty source_id selects Archives exclusively; omission selects Store. Native archive owner independently binds account; explicit source never falls back."
+    },
+    {
+      "id": "T06-32",
+      "requirement": "Archive IDs distinct from Zalo IDs and unusable as outgoing quote identity",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/archives/read.go",
+        "internal/service/archive_messages_test.go",
+        "internal/service/archive_messages.go"
+      ],
+      "assessment": "ArchiveRowID and nullableZaloMessageID remain distinct strings; quote_anchor_eligible retained false by native source. No send identity construction introduced."
+    },
+    {
+      "id": "T06-33",
+      "requirement": "Archive date-window/source metadata/snapshot/coverage/timestamp/null semantics preserved",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/archives/read.go",
+        "internal/app/conversations/browse.go",
+        "internal/app/shared/catalog.go",
+        "docs/mcp-migration/evidence/T06/full-read-offline-v1/report.json"
+      ],
+      "assessment": "Typed pointer fields preserve required null vs optional omission and explicit zero; source/date/snapshot strings preserve spelling. Native dates/coverage unchanged."
+    },
+    {
+      "id": "T06-34",
+      "requirement": "Archive catalogue/browse continuation empty page/dedup/ordering/limits preserved",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/archives/read.go",
+        "internal/service/archive_messages_test.go",
+        "internal/evaluation/scenarios.go",
+        "docs/mcp-migration/evidence/T06/full-read-offline-v1/report.json"
+      ],
+      "assessment": "Native source readers unchanged; execution shortens archive pages by requested limit/2 and directory by resultlen-1, preserves original query/cursor; offline archive-empty-page walks cursor including empty pages."
+    },
+    {
+      "id": "T06-35",
+      "requirement": "Archive source TTL/expiry/tombstones/policy revoke/account checks preserved",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/service/archive_read.go",
+        "internal/service/archive_messages.go",
+        "internal/storage/archive_visibility_test.go",
+        "internal/service/account_archive_test.go",
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log"
+      ],
+      "assessment": "Native account source/token/policy/TTL/tombstone readers unchanged; adapter delegates to same owner. Exact typed ID suppression/expiry and no mutation covered by storage tests."
+    },
+    {
+      "id": "T06-36",
+      "requirement": "Archive resource token/URI/MIME/full-body/schema/1MiB limits preserved",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/conversations.go",
+        "internal/service/archive_messages_test.go",
+        "docs/contracts/archive_snapshot_record.output.json"
+      ],
+      "assessment": "Same token grammar, JSON MIME, schema and original1MiB TEXT limit; full resource delegates typed Record with native account/policy/token checks. Actual SDK resource tested."
+    },
+    {
+      "id": "T06-37",
+      "requirement": "Archive read does not import/sync/start sessions/workers or mutate source messages",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/adapters/operations/archive_read.go",
+        "internal/service/archive_read.go",
+        "internal/service/archive_messages_test.go",
+        "docs/mcp-migration/evidence/T06/full-read-offline-v1/report.json"
+      ],
+      "assessment": "Borrowed ArchiveReader has no acquisition/worker/import methods; only four fixed native reads. Independent offline effects/lifecycle retained."
+    },
+    {
+      "id": "T06-38",
+      "requirement": "Event subscription/list/read principal and current grant/profile checks preserved",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "internal/adapters/store/event_journal.go",
+        "internal/storage/event_journal.go",
+        "internal/storage/event_journal_test.go"
+      ],
+      "assessment": "Trusted local principal obtained from current authority, native subscription owner rechecks active profile/grant/expiry before page."
+    },
+    {
+      "id": "T06-39",
+      "requirement": "Event read receipts/order/redelivery/gaps/durable state unchanged; ACK remains T07command",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/adapters/store/event_journal.go",
+        "internal/app/eventaccess/journal.go",
+        "internal/mcpserver/server.go",
+        "internal/storage/event_journal_test.go",
+        "docs/mcp-migration/evidence/T06/full-read-offline-v1/report.json"
+      ],
+      "assessment": "Native journal unchanged; typed projection preserves receipt/ordered envelope/null gaps. Read never ACKs; only explicit T07 branch calls AckSubscriptionEvents."
+    },
+    {
+      "id": "T06-40",
+      "requirement": "Diagnostic catalog/profile/preload/collection/delivery DTOs preserve exact schema/byte budget",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/conversations/catalog.go",
+        "internal/app/eventaccess/diagnostics.go",
+        "internal/mcpserver/catalog_diagnostics.go",
+        "internal/mcpserver/diagnostics.go",
+        "internal/adapters/store/catalog_test.go"
+      ],
+      "assessment": "Explicit diagnostics structures preserve required null/false and bounded count maps; native wire schema and64KiB diagnostic body budgets retained."
+    },
+    {
+      "id": "T06-41",
+      "requirement": "HTTP Events subscription/webhook protocol remains separate native adapter with same authority/lifecycle",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/events_protocol.go",
+        "internal/mcpserver/http.go",
+        "internal/events/subscriptions.go",
+        "internal/service/run.go",
+        "internal/mcpserver/http_test.go",
+        "internal/mcpserver/conversation_events_http_test.go"
+      ],
+      "assessment": "Composition owns concrete SubscriptionManager; MCP consumes narrow framing port. HTTP lifecycle and safe error projection remain in separate protocol adapter."
+    },
+    {
+      "id": "T06-42",
+      "requirement": "MCP no longer imports concrete events subsystem; exact T06exception removed, otherT07exceptions unchanged",
+      "verdict": "PASS",
+      "evidence": [
+        "docs/mcp-migration/architecture-exceptions.json",
+        "docs/mcp-migration/evidence/T06/full-read-architecture-v2.json",
+        "internal/mcpserver/http.go"
+      ],
+      "assessment": "Exact MCP->events exception removed; other backend exception records unchanged. No production MCP import of concrete events subsystem."
+    },
+    {
+      "id": "T06-43",
+      "requirement": "STDIO does not advertise false Events capability; HTTP discovery/frame/extension parity preserved",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/http.go",
+        "internal/mcpserver/stdio_test.go",
+        "internal/mcpserver/migration_baseline_test.go",
+        "docs/mcp-migration/evidence/T06/full-read-offline-v1/report.json"
+      ],
+      "assessment": "HTTP initialize extension still advertised by wrapper; SDK bridge retains native STDIO capabilities without Events extension. Actual binary STDIO lifecycle remains covered."
+    },
+    {
+      "id": "T06-44",
+      "requirement": "Admission/rate limits remain once per call and independently once per resource",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/server.go",
+        "internal/mcpserver/conversations.go",
+        "internal/mcpserver/catalog_diagnostics.go",
+        "internal/mcpserver/diagnostics.go",
+        "internal/mcpserver/catalog_ports_test.go"
+      ],
+      "assessment": "Same Store bucket via AdmissionPort; exactly one tool admission and one each resource callback; SQLite trigger test7calls=7admissions."
+    },
+    {
+      "id": "T06-45",
+      "requirement": "Invocation-owned continuation preserves shrink behavior without repeating tool dispatch or any write",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/archives/read.go",
+        "internal/app/conversations/browse.go",
+        "internal/app/conversations/catalog.go",
+        "internal/mcpserver/server.go",
+        "internal/mcpserver/read_boundary_test.go",
+        "internal/service/archive_messages_test.go"
+      ],
+      "assessment": "Invocation-owned result references allow native read continuation without registry redispatch; current corpus Browse retains original immediateResponseTooLarge behavior."
+    },
+    {
+      "id": "T06-46",
+      "requirement": "One borrowed owner for store/managers/archive handles; no second DB/ledger/session/worker",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/service/mcp_reads.go",
+        "internal/evalfixture/read_ports.go",
+        "internal/adapters/operations/archive_read.go",
+        "internal/adapters/store/read.go"
+      ],
+      "assessment": "Adapters and composition borrow existing Store/control backend; no second DB, archive library, session or ledger created."
+    },
+    {
+      "id": "T06-47",
+      "requirement": "Public schema/catalog/annotations/error/text-structured/opaque IDs precision unchanged",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/server.go",
+        "internal/mcpserver/reads.go",
+        "internal/mcpserver/migration_wire_test.go",
+        "internal/mcpserver/migration_inputs_test.go",
+        "internal/app/eventaccess/journal_test.go",
+        "docs/mcp-migration/evidence/T06/full-read-offline-v1/report.json"
+      ],
+      "assessment": "Public contracts/storage/third_party have zero source diff; discovery/schema/annotations and text/structured snapshots remain validated. Known numeric JSON-RPC ID precision limitation explicitly deferred SDK-01."
+    },
+    {
+      "id": "T06-48",
+      "requirement": "Composition injects all read/diagnostic/admission/protocol ports; wire has no read backend construction",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/service/mcp_reads.go",
+        "internal/service/run.go",
+        "internal/evalfixture/read_ports.go",
+        "internal/mcpserver/server.go",
+        "internal/mcpserver/reads.go"
+      ],
+      "assessment": "NewWithControl rejects missing complete production capabilities; runtime registers all17reads; onlyfive command cases remain in legacy branch. Resources call typed ports directly."
+    },
+    {
+      "id": "T06-49",
+      "requirement": "All relevant read/resource/archive/HTTP/STDIO/operation-status tests PASS",
+      "verdict": "PASS",
+      "evidence": [
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log",
+        "docs/mcp-migration/evidence/T06/full-read-race.log",
+        "docs/mcp-migration/evidence/T06/full-read-storage-race.log"
+      ],
+      "assessment": "Inspected actual raw root log for successful all-package results including resource/archive/HTTP/STDIO/status suites; reviewer independently reran affected scopes."
+    },
+    {
+      "id": "T06-50",
+      "requirement": "Meaningful scope/negative-access/status-no-command/resource-revocation counters PASS",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/operation_reads_test.go",
+        "internal/toolruntime/catalog_reads_test.go",
+        "internal/mcpserver/read_boundary_test.go",
+        "internal/mcpserver/catalog_ports_test.go",
+        "docs/mcp-migration/evidence/T06/full-read-race.log"
+      ],
+      "assessment": "Meaningful independent handler/backend/native SQLite admission counters inspected; successful prior resource cannot bypass subsequent revoke."
+    },
+    {
+      "id": "T06-51",
+      "requirement": "Relevant runtime/adapter/service/events/storage races and root tests/vet PASS",
+      "verdict": "PASS",
+      "evidence": [
+        "docs/mcp-migration/evidence/T06/full-read-initial-root-tests.log",
+        "docs/mcp-migration/evidence/T06/full-read-vet.log",
+        "docs/mcp-migration/evidence/T06/full-read-race.log",
+        "docs/mcp-migration/evidence/T06/full-read-storage-race.log"
+      ],
+      "assessment": "Raw root/race logs cover app, adapters, runtime, transport, service, historyimport, events and storage. Vet log zero failures; all commands terminal successful."
+    },
+    {
+      "id": "T06-52",
+      "requirement": "Architecture100/100 and isolated/all-build negative controls PASS without wideningexceptions",
+      "verdict": "PASS",
+      "evidence": [
+        "docs/mcp-migration/evidence/T06/full-read-architecture-v2.json",
+        "docs/mcp-migration/architecture-exceptions.json",
+        "arch-go.yml"
+      ],
+      "assessment": "Active architecture100/100, production graph,10 isolated controls and all-build source controls passed; allowance changes are exact composition/app edges, no backend exception expansion."
+    },
+    {
+      "id": "T06-53",
+      "requirement": "Frozen original business/T03 overlay remains independent of candidate and builds reproducibly",
+      "verdict": "PASS",
+      "evidence": [
+        "docs/mcp-migration/evidence/T06/full-read-build-manifest.json",
+        "scripts/mcp-migration/build_eval.py",
+        "docs/mcp-migration/evidence/T06/full-read-baseline-v1/report.json"
+      ],
+      "assessment": "Build overlay fixed to accepted T03sha; original business fixed8d913c4, reproducible baseline SHA4b38637… unchanged from acceptedT05. Candidate source/build manifest separate."
+    },
+    {
+      "id": "T06-54",
+      "requirement": "Complete required offline suite PASS with durable independent effects and lifecycle evidence",
+      "verdict": "PASS",
+      "evidence": [
+        "docs/mcp-migration/evidence/T06/full-read-offline-v1/report.json",
+        "docs/mcp-migration/evidence/T06/full-read-offline-v1/",
+        "internal/evaluation/scenarios.go",
+        "internal/evaluation/grader.go"
+      ],
+      "assessment": "Inspected50 completed trial entries with480 scored assertions, no failed/skipped cases; archive,policy,TTL,tombstone,quote,status/idempotency/restart,events-redelivery cases retain independent effect/lifecycle files."
+    },
+    {
+      "id": "T06-55",
+      "requirement": "Candidate/source/build/rawcommands/index retained; model/liveNOT_RUN and SDKdeferred explicit",
+      "verdict": "PASS",
+      "evidence": [
+        "docs/mcp-migration/evidence/T06/candidate.json",
+        "docs/mcp-migration/evidence/T06/full-read-build-manifest.json",
+        "docs/mcp-migration/evidence/T06/full-read-commands.json",
+        "docs/mcp-migration/evidence/T06/artifact-index.json",
+        "docs/mcp-migration/evidence/T06/full-read-offline-v1/report.json"
+      ],
+      "assessment": "Source digest recomputed identical; all1293 indexed artifacts hash/size verified. Raw commands/builds/failures retained. Model/live remainNOT_RUN, SDKrepair deferred."
+    },
+    {
+      "id": "T06-56",
+      "requirement": "Two independent samecandidate reviewers100% completeness and correctnessPASS before sole T06commit",
+      "verdict": "PASS",
+      "evidence": [
+        "reviewer-completeness.json",
+        "docs/mcp-migration/evidence/T06/review-candidate-report.json",
+        "git HEAD remains accepted T05; no T06 commit yet",
+        "docs/mcp-migration/evidence/T06/reviewer-correctness.json"
+      ],
+      "assessment": "Own independent completeness decision established before partner substantive report. Subsequently verified partner candidate digest identical and status/correctnessPASS. Both reviews ready before soleT06commit."
+    }
+  ],
+  "independent_checks": {
+    "source_digest_recomputed": "MATCH",
+    "artifact_index_verified": "1293/1293 SHA256 and sizes match",
+    "go_test_affected_capabilities": "PASS",
+    "uncached_targeted_boundary_transport_archive_tests": "PASS; count=1; toolruntime, operations adapters, eventaccess, MCP server, service",
+    "scope_diff": "No changes to public docs/contracts, internal/storage, internal/mobilebackup or third_party"
+  },
+  "review_gate": {
+    "this_review": "PASS",
+    "partner_correctness": "PASS; independently confirmed digest and correctness/status fields only after own substantive review verdict",
+    "commit": "NOT_CREATED; must wait for independent partner PASS on identical candidate",
+    "leaf56_interpretation": "Both independent same-candidate review verdicts PASS before commit; this review100% completeness. No existing commit required for precommit gate."
+  },
+  "limitations": {
+    "model_gate": "NOT_RUN",
+    "live_gate": "NOT_RUN",
+    "sdk_ids": "DEFERRED_TO_SDK-01",
+    "performance": "T09"
+  }
+}

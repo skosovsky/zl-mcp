@@ -29,7 +29,7 @@ func TestMigrationJSONRPCIdentityBaseline(t *testing.T) {
 			}
 			defer store.Close()
 			token := strings.Repeat("synthetic", 8)
-			service, err := NewHTTP(store, t.TempDir(), token, migrationReadPorts(store))
+			service, err := migrationHTTP(t, store, t.TempDir(), token)
 			if err != nil {
 				t.Fatal(err)
 			}

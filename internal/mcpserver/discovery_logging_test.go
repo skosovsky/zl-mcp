@@ -25,7 +25,7 @@ func TestDiscoveryLogsActualCatalogueWithoutRequestSecrets(t *testing.T) {
 	}
 	defer store.Close()
 	token := strings.Repeat("private-auth-token", 4)
-	handler, err := NewHTTP(store, dir, token, migrationReadPorts(store))
+	handler, err := migrationHTTP(t, store, dir, token)
 	if err != nil {
 		t.Fatal(err)
 	}

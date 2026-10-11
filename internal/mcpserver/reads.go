@@ -2,16 +2,30 @@ package mcpserver
 
 import (
 	"encoding/json"
+	"github.com/skosovsky/zl-mcp/internal/app/archives"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
+	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
 	"github.com/skosovsky/zl-mcp/internal/app/search"
+	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/toolruntime"
 )
 
 // ReadPorts are supplied by composition; MCP never constructs a storage adapter.
 type ReadPorts struct {
+	Archives      *archives.Handler
+	Events        *eventaccess.Handler
+	Admission     shared.AdmissionPort
 	Search        *search.Handler
 	Conversations *conversations.Handler
 	Authority     toolruntime.Authority
+	Operations    toolruntime.OperationReads
+}
+
+func (p ReadPorts) operationReads() toolruntime.OperationReads {
+	reads := p.Operations
+	reads.Archives = p.Archives
+	reads.Events = p.Events
+	return reads
 }
 
 func groupSearchResult(v search.GroupResult) map[string]any {

@@ -93,7 +93,35 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 		t.Fatal(err)
 	}
 	for {
-		status := serviceRPC(t, "http://"+addr.String()+"/mcp", token, "tools/call", map[string]any{"name": "zalo_get_status", "arguments": map[string]any{}})["structuredContent"].(map[string]any)
+		reply := serviceRPC(t, "http://"+addr.String()+"/mcp", token, "tools/call", map[string]any{"name": "zalo_get_status", "arguments": map[string]any{}})
+		status, ok := reply["structuredContent"].(map[string]any)
+		if !ok {
+			encoded, err := json.Marshal(reply)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var rejected struct {
+				IsError bool `json:"isError"`
+				Content []struct {
+					Text string `json:"text"`
+				} `json:"content"`
+			}
+			if err = json.Unmarshal(encoded, &rejected); err != nil {
+				t.Fatal(err)
+			}
+			var failure domain.Error
+			// Account binding during startup invalidates the old invocation scope.
+			// Wait for a fresh binding; persistent/other errors still fail this test.
+			if rejected.IsError && len(rejected.Content) == 1 && json.Unmarshal([]byte(rejected.Content[0].Text), &failure) == nil && failure.Code == "PERMISSION_DENIED" {
+				select {
+				case <-ctx.Done():
+					t.Fatalf("startup scope remained unavailable: %v", reply)
+				case <-time.After(150 * time.Millisecond):
+					continue
+				}
+			}
+			t.Fatalf("status did not return structured content: %v", reply)
+		}
 		if status["collector_state"] == "connected" {
 			break
 		}

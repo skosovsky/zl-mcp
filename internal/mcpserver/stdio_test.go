@@ -36,7 +36,7 @@ func TestActualBinaryStdioLifecycle(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	httpService, err := NewHTTP(store, dir, token, migrationReadPorts(store))
+	httpService, err := migrationHTTP(t, store, dir, token)
 	if err != nil {
 		t.Fatal(err)
 	}

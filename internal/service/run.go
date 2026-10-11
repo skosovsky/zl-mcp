@@ -207,7 +207,11 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	if err = port.CleanupHistorySnapshots(ctx); err != nil {
 		return errors.New("private mobile snapshot cleanup unavailable")
 	}
-	handler, err := mcpserver.NewHTTPWithControl(store, c.StateDir, token, port, mcpReadPorts(store))
+	protocol, err := events.NewSubscriptionManager(store, c.StateDir)
+	if err != nil {
+		return err
+	}
+	handler, err := mcpserver.NewHTTPWithControl(store, c.StateDir, token, port, mcpReadPorts(store, port), protocol)
 	if err != nil {
 		return err
 	}

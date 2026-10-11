@@ -1,0 +1,30 @@
+{
+  "task": "T06",
+  "status": "ACCEPTED_OFFLINE_READY_FOR_SOLE_COMMIT",
+  "parent_sha": "45230af90f90cf27358f41e5ff52949fd686525d",
+  "source_digest_sha256": "4a38dc778ac427b96500106f84e137ce0399e5c62b3eeee4c93e00a42ac91d47",
+  "requirements_total": 56,
+  "implementation": "17 read tools, 4 static resources and 3 resource templates composed; legacy read fallbacks removed; five T07 command branches retained",
+  "checks": {
+    "root_tests": "PASS",
+    "vet": "PASS",
+    "relevant_race_including_storage": "PASS",
+    "architecture": "PASS 100/100, 10 isolated and all-build source controls",
+    "offline": "PASS 50/50 cases, 480/480 assertions",
+    "frozen_baseline": "PASS 25/25 cases, 240/240 assertions",
+    "event_profile_projection": "PASS both profiles, nullable fields/false/Unicode/large string ID/timestamp spelling"
+  },
+  "baseline_binary_sha256": "4b38637e661c4004766a415342141ddc8f4e7786f1691411c1c4a355a4265101",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01",
+  "reviewers": {
+    "completeness": "100% PASS 56/56",
+    "correctness": "PASS findings0",
+    "reports": [
+      "reviewer-completeness.json",
+      "reviewer-correctness.json"
+    ]
+  },
+  "commit": "NOT_CREATED"
+}

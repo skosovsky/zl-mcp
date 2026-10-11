@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "scope": "intermediate T06 Events protocol and four operation reads; not final T06 acceptance",
+  "candidate_source_digest_sha256": "1e1598873a0eb6e3f1b3e0149f85b2adea5e3d6e6151181185dd89cfa807d4d4",
+  "baseline_byte_identical_to_T05": true,
+  "baseline_sha256": "4b38637e661c4004766a415342141ddc8f4e7786f1691411c1c4a355a4265101",
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01",
+  "evaluations": {
+    "status-offline-v1": {
+      "status": "PASS",
+      "expected_cases": 50,
+      "passed_cases": 50,
+      "expected_assertions": 480,
+      "passed_assertions": 480,
+      "model_gate": "NOT_RUN",
+      "live_gate": "NOT_RUN"
+    },
+    "status-baseline-v1": {
+      "status": "PASS",
+      "expected_cases": 25,
+      "passed_cases": 25,
+      "expected_assertions": 240,
+      "passed_assertions": 240,
+      "model_gate": "NOT_RUN",
+      "live_gate": "NOT_RUN"
+    }
+  }
+}

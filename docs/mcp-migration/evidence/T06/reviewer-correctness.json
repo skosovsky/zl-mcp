@@ -1,0 +1,40 @@
+{
+  "task": "T06",
+  "reviewer": "/root/t06_correctness",
+  "role": "independent adversarial correctness",
+  "parent_sha": "45230af90f90cf27358f41e5ff52949fd686525d",
+  "source_digest_sha256": "4a38dc778ac427b96500106f84e137ce0399e5c62b3eeee4c93e00a42ac91d47",
+  "status": "PASS",
+  "correctness": "PASS",
+  "findings": [],
+  "scope": "T06 implementation and limited offline acceptance; no T07 command migration, T09 performance or SDK-01 ID repair claims",
+  "verified": [
+    "Recomputed candidate.py source digest equals requested candidate and final offline build provenance; parent remains accepted T05.",
+    "Read T06 specification, fixed 56 leaves, full-read-boundary ADR and actual source changes versus HEAD, including new untracked production files.",
+    "Production MCP construction requires complete typed conversation/catalog/directory/live/status/archive/Event/admission capabilities; runtime includes all 17 read tools; legacy fallback switch retains only five T07 commands.",
+    "Fixed operation read adapters dispatch only status/inspect methods; original 35s/6s deadlines and group 5s/local fallback/stale behavior remain; failed reads do not start/cancel/send/join/ACK.",
+    "Archive/native source_id branches are explicit; backend retains account, mandatory-window, signed-cursor/token, current policy, tombstone/TTL and retained-source ownership. Archive row/native Zalo identities remain distinct; no import/sync or quote authority introduced.",
+    "Directory current-vs-archive optional metadata presence uses pointers, including explicit empty lists and false. Browse/archive timestamps retain original strings; null coverage and empty continuation semantics remain native-owned. Archive browse shortening halves original request limit; directory shortening preserves original query/cursor; native current browse oversized response still fails immediately.",
+    "Resource templates use typed ports with separate original shared-bucket admission, current native access checks, URI/MIME/token grammar, text bounds and original safe errors. Diagnostics retain bounded typed schemas and limits.",
+    "Events legacy/v2 projections checked against native encoder and executable output contracts: v2 nullable name/first-incoming stay present, legacy omits v2 fields, Unicode/large string IDs/false/timestamp spelling retained. Native journal owns principal/current grant/generation/receipt/order/redelivery/gaps, ACK still separate.",
+    "HTTP concrete Events manager moved to service composition; narrow native protocol port and RPCDetails error projection preserve framing/codes/privacy. SDK/HTTP numeric ID baseline limitation remains unchanged for SDK-01. STDIO discovery has no added false Events capability.",
+    "Architecture diff removes exact MCP-to-events exception; other backend exceptions unchanged. Added exact app/composition/time edges correspond to new reads; final architecture evidence passes active 100/100, 10 isolated and four all-build source controls.",
+    "All 1293 indexed evidence artifacts verified against recorded byte sizes and SHA256. Intermediate failed architecture attempts remain retained and superseded by final successful evidence.",
+    "Final candidate offline report has 50/50 cases and 480/480 assertions; frozen baseline report 25/25 and 240/240, no skipped/failed cases. Build provenance references this same source digest and unchanged baseline binary 4b38637e661c4004766a415342141ddc8f4e7786f1691411c1c4a355a4265101.",
+    "Inspected final root/vet/race/architecture/offline command logs and reports; independently reran relevant suites uncached with required isolated Go environment."
+  ],
+  "independent_test": {
+    "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test -count=1 ./internal/adapters/operations ./internal/adapters/store ./internal/app/eventaccess ./internal/toolruntime ./internal/mcpserver ./internal/service ./internal/historyimport ./internal/events ./internal/storage",
+    "exit_status": 0,
+    "output": "ok  \tgithub.com/skosovsky/zl-mcp/internal/adapters/operations\t0.418s\nok  \tgithub.com/skosovsky/zl-mcp/internal/adapters/store\t0.250s\nok  \tgithub.com/skosovsky/zl-mcp/internal/app/eventaccess\t0.176s\nok  \tgithub.com/skosovsky/zl-mcp/internal/toolruntime\t1.012s\nok  \tgithub.com/skosovsky/zl-mcp/internal/mcpserver\t6.813s\nok  \tgithub.com/skosovsky/zl-mcp/internal/service\t11.622s\nok  \tgithub.com/skosovsky/zl-mcp/internal/historyimport\t1.255s\nok  \tgithub.com/skosovsky/zl-mcp/internal/events\t0.948s\nok  \tgithub.com/skosovsky/zl-mcp/internal/storage\t4.736s\n"
+  },
+  "limitations": [
+    "Finite synthetic/offline suites plus source review establish the specified offline gate; they do not establish live Zalo behavior or paid model performance.",
+    "No deployment, LaunchAgent restart, live account, network model eval, publication or SDK fix performed.",
+    "Second independent completeness acceptance and atomic commit are parent-owned remaining gate steps."
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01",
+  "performance_gate": "T09"
+}

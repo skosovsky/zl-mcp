@@ -10,7 +10,12 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/skosovsky/toolsy"
 	"github.com/skosovsky/zl-mcp/docs/contracts"
+	"github.com/skosovsky/zl-mcp/internal/app/archives"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
+	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
+	"github.com/skosovsky/zl-mcp/internal/app/history"
+	"github.com/skosovsky/zl-mcp/internal/app/membership"
+	"github.com/skosovsky/zl-mcp/internal/app/messaging"
 	"github.com/skosovsky/zl-mcp/internal/app/search"
 	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -39,7 +44,17 @@ type scope struct {
 	revision string
 }
 
+// OperationReads names the fixed read capabilities; each native owner keeps its ledger.
+type OperationReads struct {
+	Events     *eventaccess.Handler
+	Archives   *archives.Handler
+	Messaging  *messaging.Handler
+	History    *history.Handler
+	Membership *membership.Handler
+}
+
 type Reads struct {
+	operations    OperationReads
 	view          *toolsy.RegistryView
 	authority     Authority
 	search        *search.Handler
@@ -50,14 +65,47 @@ type Reads struct {
 // Result retains invocation-owned continuations; transport projects business
 // values after tool execution without executing another handler to shrink them.
 type Result struct {
+	Subscriptions       *eventaccess.Subscriptions
+	Events              *eventaccess.Page
+	Directory           *conversations.DirectoryExecution
+	ConversationDetail  *conversations.Detail
+	Browse              *conversations.Browse
+	ArchiveSources      *archives.Sources
+	ArchiveDirectory    *archives.DirectoryExecution
+	ArchiveBrowse       *archives.BrowseExecution
 	GroupSearch         *search.GroupExecution
 	ConversationSearch  *search.ConversationExecution
 	GroupContext        *conversations.GroupContext
 	ConversationContext *conversations.ConversationContext
+	CollectorStatus     *conversations.CollectorStatus
+	GroupDetail         *conversations.GroupDetail
+	GroupList           *conversations.GroupExecution
+	SendStatus          *domain.SendOperation
+	ImportStatus        *domain.HistoryImportStatus
+	JoinStatus          *membership.JoinStatus
+	Invite              *membership.Invite
 }
+
+func (r *Result) Value() any { return r.value() }
 
 func (r *Result) value() any {
 	switch {
+	case r.Subscriptions != nil:
+		return *r.Subscriptions
+	case r.Events != nil:
+		return *r.Events
+	case r.Directory != nil:
+		return r.Directory.Result
+	case r.ConversationDetail != nil:
+		return *r.ConversationDetail
+	case r.Browse != nil:
+		return *r.Browse
+	case r.ArchiveSources != nil:
+		return *r.ArchiveSources
+	case r.ArchiveDirectory != nil:
+		return r.ArchiveDirectory.Result
+	case r.ArchiveBrowse != nil:
+		return r.ArchiveBrowse.Result
 	case r.GroupSearch != nil:
 		return r.GroupSearch.Result
 	case r.ConversationSearch != nil:
@@ -66,18 +114,67 @@ func (r *Result) value() any {
 		return *r.GroupContext
 	case r.ConversationContext != nil:
 		return *r.ConversationContext
+	case r.CollectorStatus != nil:
+		return *r.CollectorStatus
+	case r.GroupDetail != nil:
+		return *r.GroupDetail
+	case r.GroupList != nil:
+		return r.GroupList.Result
+	case r.SendStatus != nil:
+		return *r.SendStatus
+	case r.ImportStatus != nil:
+		return *r.ImportStatus
+	case r.JoinStatus != nil:
+		return *r.JoinStatus
+	case r.Invite != nil:
+		return *r.Invite
 	default:
 		return nil
 	}
 }
 
-func NewReads(searchHandler *search.Handler, conversationHandler *conversations.Handler, authority Authority) (*Reads, error) {
+func NewReads(searchHandler *search.Handler, conversationHandler *conversations.Handler, authority Authority, extra ...OperationReads) (*Reads, error) {
 	if searchHandler == nil || conversationHandler == nil || authority == nil || searchHandler.Reads == nil || conversationHandler.Reads == nil {
 		return nil, fmt.Errorf("typed handlers and read authority are required")
 	}
 	r := &Reads{authority: authority, search: searchHandler, conversations: conversationHandler, schemas: map[string]*jsonschema.Schema{}}
+	names := append([]string(nil), readNames...)
+	if conversationHandler.Catalog != nil {
+		names = append(names, "zalo_get_status", "zalo_list_groups")
+		if conversationHandler.LiveGroups != nil {
+			names = append(names, "zalo_get_group")
+		}
+	}
+	if conversationHandler.DirectoryReads != nil {
+		names = append(names, "zalo_get_conversation", "zalo_list_conversations", "zalo_list_conversation_messages")
+	}
+	if len(extra) > 1 {
+		return nil, fmt.Errorf("one operation read bundle is permitted")
+	}
+	if len(extra) == 1 {
+		r.operations = extra[0]
+		v := r.operations
+		if v.Events != nil {
+			if v.Events.Journal == nil {
+				return nil, fmt.Errorf("typed Events journal port is required")
+			}
+			names = append(names, "zalo_list_event_subscriptions", "zalo_read_subscription_events")
+		}
+		if v.Archives != nil {
+			if v.Archives.Reads == nil {
+				return nil, fmt.Errorf("typed archive port is required")
+			}
+			names = append(names, "zalo_list_archive_sources")
+		}
+		if v.Messaging != nil || v.History != nil || v.Membership != nil {
+			if v.Messaging == nil || v.History == nil || v.Membership == nil || v.Messaging.Reads == nil || v.History.Reads == nil || v.Membership.Reads == nil {
+				return nil, fmt.Errorf("all typed operation read ports are required")
+			}
+			names = append(names, "zalo_get_send_status", "zalo_get_history_import_status", "zalo_get_join_status", "zalo_inspect_invite")
+		}
+	}
 	builder := toolsy.NewRegistryBuilder(toolsy.WithPolicy("zl-local-read-v1", toolsy.PolicyFunc(r.decide)))
-	for _, name := range readNames {
+	for _, name := range names {
 		schema, err := contracts.Compile(name, "input")
 		if err != nil {
 			return nil, err
@@ -119,7 +216,7 @@ func NewReads(searchHandler *search.Handler, conversationHandler *conversations.
 	if err != nil {
 		return nil, err
 	}
-	r.view, err = registry.View(toolsy.RegistryViewSpec{ToolNames: readNames, RequiredToolNames: readNames, Owner: "zl-local-host", Reason: "first typed read slice"})
+	r.view, err = registry.View(toolsy.RegistryViewSpec{ToolNames: names, RequiredToolNames: names, Owner: "zl-local-host", Reason: "typed read capabilities"})
 	if err != nil {
 		return nil, err
 	}
@@ -218,6 +315,9 @@ func (r *Reads) decide(ctx context.Context, req toolsy.PolicyRequest) toolsy.Dec
 		err = r.authority.CheckGroupContext(ctx, contextRequest(args, true))
 	case "zalo_get_conversation_message_context":
 		err = r.authority.CheckConversationContext(ctx, contextRequest(args, false))
+	case "zalo_list_event_subscriptions", "zalo_read_subscription_events", "zalo_get_conversation", "zalo_list_conversations", "zalo_list_conversation_messages", "zalo_list_archive_sources", "zalo_get_status", "zalo_list_groups", "zalo_get_group", "zalo_get_send_status", "zalo_get_history_import_status", "zalo_get_join_status", "zalo_inspect_invite":
+		// Native owners recheck operation/account authority; schema and host scope
+		// have already been checked without invoking a command.
 	default:
 		err = permission()
 	}
@@ -248,6 +348,22 @@ func (r *Reads) dispatch(ctx context.Context, name string, args map[string]any) 
 	out := &Result{}
 	var err error
 	switch name {
+	case "zalo_list_event_subscriptions":
+		identity, e := r.authority.ReadIdentity(ctx)
+		if e != nil {
+			return nil, e
+		}
+		var v eventaccess.Subscriptions
+		v, err = r.operations.Events.Subscriptions(ctx, identity.Principal)
+		out.Subscriptions = &v
+	case "zalo_read_subscription_events":
+		identity, e := r.authority.ReadIdentity(ctx)
+		if e != nil {
+			return nil, e
+		}
+		var v eventaccess.Page
+		v, err = r.operations.Events.ReadEvents(ctx, identity.Principal, stringArg(args, "subscription_id"), intArg(args, "limit", 20))
+		out.Events = &v
 	case "zalo_search_messages":
 		out.GroupSearch, err = r.search.Group(ctx, groupRequest(args))
 	case "zalo_search_conversation_messages":
@@ -260,6 +376,60 @@ func (r *Reads) dispatch(ctx context.Context, name string, args map[string]any) 
 		var v conversations.ConversationContext
 		v, err = r.conversations.ConversationContext(ctx, contextRequest(args, false))
 		out.ConversationContext = &v
+	case "zalo_get_conversation":
+		var v conversations.Detail
+		v, err = r.conversations.Conversation(ctx, ref(args))
+		out.ConversationDetail = &v
+	case "zalo_list_conversations":
+		if source := stringArg(args, "source_id"); source != "" {
+			if r.operations.Archives == nil {
+				return nil, permission()
+			}
+			out.ArchiveDirectory, err = r.operations.Archives.Directory(ctx, archives.DirectoryRequest{SourceID: source, Type: stringArg(args, "conversation_type"), Query: stringArg(args, "query"), Cursor: stringArg(args, "cursor"), Limit: intArg(args, "limit", 20)})
+		} else {
+			out.Directory, err = r.conversations.Directory(ctx, conversations.DirectoryRequest{Type: stringArg(args, "conversation_type"), Query: stringArg(args, "query"), Cursor: stringArg(args, "cursor"), Limit: intArg(args, "limit", 20)})
+		}
+	case "zalo_list_conversation_messages":
+		if source := stringArg(args, "source_id"); source != "" {
+			if r.operations.Archives == nil {
+				return nil, permission()
+			}
+			out.ArchiveBrowse, err = r.operations.Archives.Browse(ctx, archives.BrowseRequest{SourceID: source, ConversationType: stringArg(args, "conversation_type"), ConversationID: stringArg(args, "conversation_id"), Since: stringArg(args, "since"), Until: stringArg(args, "until"), Order: stringArg(args, "order"), Cursor: stringArg(args, "cursor"), Limit: intArg(args, "limit", 20)})
+		} else {
+			var v conversations.Browse
+			v, err = r.conversations.Browse(ctx, conversations.BrowseRequest{Conversation: ref(args), Since: stringArg(args, "since"), Until: stringArg(args, "until"), Order: stringArg(args, "order"), Cursor: stringArg(args, "cursor"), Limit: intArg(args, "limit", 20)})
+			out.Browse = &v
+		}
+	case "zalo_list_archive_sources":
+		var v archives.Sources
+		v, err = r.operations.Archives.Sources(ctx)
+		out.ArchiveSources = &v
+	case "zalo_get_status":
+		var v conversations.CollectorStatus
+		v, err = r.conversations.Status(ctx)
+		out.CollectorStatus = &v
+	case "zalo_list_groups":
+		out.GroupList, err = r.conversations.Groups(ctx, conversations.GroupRequest{Query: stringArg(args, "query"), Limit: intArg(args, "limit", 20), Cursor: stringArg(args, "cursor")})
+	case "zalo_get_group":
+		var v conversations.GroupDetail
+		v, err = r.conversations.Group(ctx, stringArg(args, "group_id"))
+		out.GroupDetail = &v
+	case "zalo_get_send_status":
+		var v domain.SendOperation
+		v, err = r.operations.Messaging.Status(ctx, stringArg(args, "request_id"))
+		out.SendStatus = &v
+	case "zalo_get_history_import_status":
+		var v domain.HistoryImportStatus
+		v, err = r.operations.History.Status(ctx, stringArg(args, "operation_id"))
+		out.ImportStatus = &v
+	case "zalo_get_join_status":
+		var v membership.JoinStatus
+		v, err = r.operations.Membership.Status(ctx, stringArg(args, "operation_id"))
+		out.JoinStatus = &v
+	case "zalo_inspect_invite":
+		var v membership.Invite
+		v, err = r.operations.Membership.Inspect(ctx, stringArg(args, "invite_url"))
+		out.Invite = &v
 	default:
 		err = permission()
 	}

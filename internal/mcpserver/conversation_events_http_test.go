@@ -82,11 +82,11 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 	target, _ := url.Parse(receiver.URL)
 	client := &http.Client{Transport: localReceiverTransport{target: target, base: receiver.Client().Transport}}
 	token := strings.Repeat("t", 32)
-	service, err := NewHTTP(store, dir, token, migrationReadPorts(store))
+	service, err := migrationHTTP(t, store, dir, token)
 	if err != nil {
 		t.Fatal(err)
 	}
-	service.Events.Client = client
+	service.Events.(*events.SubscriptionManager).Client = client
 	endpoint := httptest.NewServer(service)
 	defer endpoint.Close()
 	worker, err := events.NewWorker(store)

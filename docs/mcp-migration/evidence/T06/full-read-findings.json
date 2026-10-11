@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "ARCH-COMPOSE-ARCHIVES",
+      "status": "FIXED",
+      "initial_log": "full-read-initial-architecture.log",
+      "cause": "Exact evalfixture -> app/archives composition import missing from normative allowlist",
+      "fix": "Added exact edge; backend exceptions unchanged",
+      "verified": "full-read-architecture-v2.json"
+    },
+    {
+      "id": "EVENT-V2-NULL",
+      "status": "PREVENTED_AND_TESTED",
+      "cause": "omitempty on nullable v2 fields would omit required null/false values",
+      "fix": "Explicit profile serialization keeps required nullable v2 fields and omits v2-only fields for legacy",
+      "verified": "events-journal-profile-tests.log"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "stage": "intermediate T06, not final acceptance",
+  "source_digest_sha256": "33d425e256056b3ab621b2309a4f1b74732e4c3a3ea859b9e9d62c1a366fe82b",
+  "tests": "PASS application/adapters/runtime/MCP/historyimport/service/evalfixture",
+  "offline": {
+    "cases": "50/50",
+    "assertions": "480/480"
+  },
+  "baseline": {
+    "cases": "25/25",
+    "assertions": "240/240"
+  },
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "remaining": [
+    "Events journal reads",
+    "strict production bundle",
+    "remove legacy read fallbacks",
+    "full final checks and independent reviews"
+  ]
+}

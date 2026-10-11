@@ -1,0 +1,127 @@
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	7.727s
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	1.792s
+2026/10/11 23:35:03 INFO mobile_backup_progress operation_id=8ffe939a-32d5-4697-95bf-6bc26302a38c state=dispatching
+2026/10/11 23:35:03 INFO mobile_backup_progress operation_id=8ffe939a-32d5-4697-95bf-6bc26302a38c state=waiting_for_confirmation
+2026/10/11 23:35:03 INFO mobile_backup_progress operation_id=8ffe939a-32d5-4697-95bf-6bc26302a38c state=offer_ready
+2026/10/11 23:35:03 INFO mobile_account_archive_acquired files=3 direct_files=2 group_files=1
+2026/10/11 23:35:03 INFO mcp_call tool=zalo_list_archive_sources principal=501 correlation_id=eefcda75-d2d7-4561-be08-2d4d01cd2b17 code=OK duration_ms=1
+2026/10/11 23:35:03 INFO mcp_call tool=zalo_list_conversation_messages principal=501 correlation_id=8f195deb-dc06-4bf9-a690-e57ed46c892f code=OK duration_ms=5
+2026/10/11 23:35:04 INFO mobile_backup_progress operation_id=1c405b04-d000-42f0-9bba-adddf14c3db3 state=dispatching
+2026/10/11 23:35:04 INFO mobile_backup_progress operation_id=1c405b04-d000-42f0-9bba-adddf14c3db3 state=waiting_for_confirmation
+2026/10/11 23:35:04 INFO mobile_backup_progress operation_id=1c405b04-d000-42f0-9bba-adddf14c3db3 state=offer_ready
+2026/10/11 23:35:04 INFO mobile_account_archive_acquired files=3 direct_files=2 group_files=1
+2026/10/11 23:35:04 INFO mcp_call tool=zalo_list_archive_sources principal=501 correlation_id=75343628-1596-4742-87a0-92865dbe4adb code=OK duration_ms=1
+2026/10/11 23:35:04 INFO mcp_call tool=zalo_list_conversation_messages principal=501 correlation_id=945a8506-00f4-4748-b833-9362bc3707d1 code=OK duration_ms=3
+2026/10/11 23:35:04 INFO service started mcp_listen=127.0.0.1:54854
+2026/10/11 23:35:04 INFO mcp_event_delivery_started event_id=evt_e02bc3398a9033ab6e5b06bda6de40b5 subscription_id=sub_3be0e2ba5ea6a208d43ee057eb9001c8009365a65299e145ba95af174dbad55c delivery_id=1 attempt=1 body_bytes=6628 body_sha256=cc37655ed6d1f0a332636e003b1ca36b74cbb5f02bc1e609c07fc237202ac9b4
+2026/10/11 23:35:04 INFO mcp_event_delivery_finished event_id=evt_e02bc3398a9033ab6e5b06bda6de40b5 subscription_id=sub_3be0e2ba5ea6a208d43ee057eb9001c8009365a65299e145ba95af174dbad55c delivery_id=1 attempt=1 body_bytes=6628 body_sha256=cc37655ed6d1f0a332636e003b1ca36b74cbb5f02bc1e609c07fc237202ac9b4 elapsed_ms=2 http_status=204 request_id="" openai_request_id="" outcome=delivered reason=accepted receipt_persisted=true
+2026/10/11 23:35:04 INFO mcp_call tool=zalo_get_conversation_message_context principal=501 correlation_id=79e2e5d8-ebf4-4345-92e4-83e3b47272cc code=OK duration_ms=2
+2026/10/11 23:35:05 INFO mcp_event_delivery_started event_id=evt_b74e900a8c33bcb2af4332024681d5a0 subscription_id=sub_3be0e2ba5ea6a208d43ee057eb9001c8009365a65299e145ba95af174dbad55c delivery_id=2 attempt=1 body_bytes=6626 body_sha256=7861a56e551bba4e285c3c74bcefa4d97ea67453c4f2af51e057530c71e00ddf
+2026/10/11 23:35:05 INFO mcp_event_delivery_finished event_id=evt_b74e900a8c33bcb2af4332024681d5a0 subscription_id=sub_3be0e2ba5ea6a208d43ee057eb9001c8009365a65299e145ba95af174dbad55c delivery_id=2 attempt=1 body_bytes=6626 body_sha256=7861a56e551bba4e285c3c74bcefa4d97ea67453c4f2af51e057530c71e00ddf elapsed_ms=1 http_status=204 request_id="" openai_request_id="" outcome=delivered reason=accepted receipt_persisted=true
+2026/10/11 23:35:05 INFO mcp_call tool=zalo_get_conversation_message_context principal=501 correlation_id=3d67efff-047f-49eb-ae9e-3226a7cc3155 code=OK duration_ms=1
+2026/10/11 23:35:05 INFO mcp_call tool=zalo_search_conversation_messages principal=501 correlation_id=b6d73607-2673-4e86-ae82-d0e9cd618998 code=OK duration_ms=2
+2026/10/11 23:35:05 INFO service stopped
+2026/10/11 23:35:05 INFO service started mcp_listen=127.0.0.1:54862
+2026/10/11 23:35:05 INFO mcp_event_delivery_started event_id=evt_6005345184b254c556fa68b1d6cdf70c subscription_id=sub_3be0e2ba5ea6a208d43ee057eb9001c8009365a65299e145ba95af174dbad55c delivery_id=3 attempt=1 body_bytes=6631 body_sha256=afcb672bd3e4813010c0b08517538f64965689953799fde212403f5874e665d8
+2026/10/11 23:35:05 INFO mcp_event_delivery_finished event_id=evt_6005345184b254c556fa68b1d6cdf70c subscription_id=sub_3be0e2ba5ea6a208d43ee057eb9001c8009365a65299e145ba95af174dbad55c delivery_id=3 attempt=1 body_bytes=6631 body_sha256=afcb672bd3e4813010c0b08517538f64965689953799fde212403f5874e665d8 elapsed_ms=3 http_status=204 request_id="" openai_request_id="" outcome=delivered reason=accepted receipt_persisted=true
+2026/10/11 23:35:05 INFO mcp_call tool=zalo_get_conversation_message_context principal=501 correlation_id=704fd267-7b00-4a10-bc64-66ba16795b14 code=OK duration_ms=3
+2026/10/11 23:35:05 INFO mcp_event_delivery_started event_id=evt_88fba6f5d299defb4b5b7283baf9b8b6 subscription_id=sub_3be0e2ba5ea6a208d43ee057eb9001c8009365a65299e145ba95af174dbad55c delivery_id=4 attempt=1 body_bytes=6628 body_sha256=34ee38e1645a83616ed6daaea1931ab27a9927556095e3326dc12e78ad6c5023
+2026/10/11 23:35:05 INFO mcp_event_delivery_finished event_id=evt_88fba6f5d299defb4b5b7283baf9b8b6 subscription_id=sub_3be0e2ba5ea6a208d43ee057eb9001c8009365a65299e145ba95af174dbad55c delivery_id=4 attempt=1 body_bytes=6628 body_sha256=34ee38e1645a83616ed6daaea1931ab27a9927556095e3326dc12e78ad6c5023 elapsed_ms=0 http_status=204 request_id="" openai_request_id="" outcome=delivered reason=accepted receipt_persisted=true
+2026/10/11 23:35:05 INFO mcp_call tool=zalo_get_conversation_message_context principal=501 correlation_id=5145959a-cf05-4fd5-a945-2dbf97610ec5 code=OK duration_ms=4
+2026/10/11 23:35:05 INFO mcp_call tool=zalo_search_conversation_messages principal=501 correlation_id=b41a63f0-deb7-4d94-ad27-fc723be5f0a3 code=OK duration_ms=2
+2026/10/11 23:35:05 INFO mcp_call tool=zalo_search_conversation_messages principal=501 correlation_id=1583b8d9-a100-43ba-86e4-40b0b0b75440 code=OK duration_ms=4
+2026/10/11 23:35:06 INFO service stopped
+2026/10/11 23:35:06 WARN legacy_collection_config format=group_ids next_action="Use explicit selected mode with typed conversations to preserve the group-only scope; all mode widens collection."
+2026/10/11 23:35:06 INFO service started mcp_listen=127.0.0.1:54869
+2026/10/11 23:35:06 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=369
+2026/10/11 23:35:06 INFO mcp_event_delivery_started event_id=evt_9f52930ed3815536d305804e46e1796e subscription_id=sub_7bbdcc5c32a870ab0b3032de2065eaf428c3bca4bbc89ea723429abf90110aba delivery_id=1 attempt=1 body_bytes=5454 body_sha256=3b65d4a726f305c51b0b608042339115a5f1c5b2fb915d434fa876f07c61e29b
+2026/10/11 23:35:06 INFO mcp_event_delivery_finished event_id=evt_9f52930ed3815536d305804e46e1796e subscription_id=sub_7bbdcc5c32a870ab0b3032de2065eaf428c3bca4bbc89ea723429abf90110aba delivery_id=1 attempt=1 body_bytes=5454 body_sha256=3b65d4a726f305c51b0b608042339115a5f1c5b2fb915d434fa876f07c61e29b elapsed_ms=2 http_status=503 request_id="" openai_request_id="" outcome=pending reason=http_transient receipt_persisted=true
+2026/10/11 23:35:06 INFO service stopped
+2026/10/11 23:35:06 WARN legacy_collection_config format=group_ids next_action="Use explicit selected mode with typed conversations to preserve the group-only scope; all mode widens collection."
+2026/10/11 23:35:06 INFO service started mcp_listen=127.0.0.1:54872
+2026/10/11 23:35:08 INFO mcp_event_delivery_started event_id=evt_9f52930ed3815536d305804e46e1796e subscription_id=sub_7bbdcc5c32a870ab0b3032de2065eaf428c3bca4bbc89ea723429abf90110aba delivery_id=1 attempt=2 body_bytes=5454 body_sha256=3b65d4a726f305c51b0b608042339115a5f1c5b2fb915d434fa876f07c61e29b
+2026/10/11 23:35:08 INFO mcp_event_delivery_finished event_id=evt_9f52930ed3815536d305804e46e1796e subscription_id=sub_7bbdcc5c32a870ab0b3032de2065eaf428c3bca4bbc89ea723429abf90110aba delivery_id=1 attempt=2 body_bytes=5454 body_sha256=3b65d4a726f305c51b0b608042339115a5f1c5b2fb915d434fa876f07c61e29b elapsed_ms=1 http_status=204 request_id="" openai_request_id="" outcome=delivered reason=accepted receipt_persisted=true
+2026/10/11 23:35:09 INFO mcp_event_delivery_started event_id=evt_4a473cc957b8a0a1155093e6f1b9a500 subscription_id=sub_7bbdcc5c32a870ab0b3032de2065eaf428c3bca4bbc89ea723429abf90110aba delivery_id=2 attempt=1 body_bytes=339 body_sha256=4da2d1e0cb483905565db8fae93f6c5b164de29d03fb80e4a7ecca9f01bf0797
+2026/10/11 23:35:09 INFO mcp_event_delivery_finished event_id=evt_4a473cc957b8a0a1155093e6f1b9a500 subscription_id=sub_7bbdcc5c32a870ab0b3032de2065eaf428c3bca4bbc89ea723429abf90110aba delivery_id=2 attempt=1 body_bytes=339 body_sha256=4da2d1e0cb483905565db8fae93f6c5b164de29d03fb80e4a7ecca9f01bf0797 elapsed_ms=2 http_status=204 request_id="" openai_request_id="" outcome=delivered reason=accepted receipt_persisted=true
+2026/10/11 23:35:09 INFO service stopped
+2026/10/11 23:35:09 INFO service started mcp_listen=127.0.0.1:54894
+2026/10/11 23:35:09 INFO mcp_call tool=zalo_import_conversation_history principal=501 correlation_id=b8e9802b-e6ac-4777-86d4-c44a97e60eab code=OK duration_ms=0
+2026/10/11 23:35:09 INFO mcp_call tool=zalo_get_history_import_status principal=501 correlation_id=9d60baec-ca39-4048-8fb6-f4d528dba215 code=OK duration_ms=0
+2026/10/11 23:35:09 INFO mcp_call tool=zalo_get_history_import_status principal=501 correlation_id=28e085f0-a82c-43ab-94cd-e98dce7e8cf9 code=OK duration_ms=1
+2026/10/11 23:35:09 INFO mcp_call tool=zalo_get_history_import_status principal=501 correlation_id=2622543c-3563-4955-a7fd-aa2596ad2e59 code=OK duration_ms=1
+2026/10/11 23:35:09 INFO mcp_call tool=zalo_get_history_import_status principal=501 correlation_id=55e3aa68-1b1e-46c2-9fe4-da110d74b3dc code=OK duration_ms=1
+2026/10/11 23:35:09 INFO mcp_call tool=zalo_get_history_import_status principal=501 correlation_id=bba69a7e-c981-4b8a-9659-e29766f598e2 code=OK duration_ms=1
+2026/10/11 23:35:09 INFO mcp_call tool=zalo_get_history_import_status principal=501 correlation_id=0b0dfa12-cee0-48c2-bfd5-325b691d7647 code=OK duration_ms=1
+2026/10/11 23:35:09 INFO mcp_call tool=zalo_get_conversation_message_context principal=501 correlation_id=b40da2f2-2086-4122-97ac-2e3b836dcff0 code=OK duration_ms=1
+2026/10/11 23:35:09 INFO mcp_call tool=zalo_import_conversation_history principal=501 correlation_id=ecde7c1b-5738-429e-9ed1-dd358f793c32 code=OK duration_ms=0
+2026/10/11 23:35:09 INFO service stopped
+2026/10/11 23:35:10 INFO service started mcp_listen=127.0.0.1:54906
+2026/10/11 23:35:10 INFO mcp_call tool=zalo_import_conversation_history principal=501 correlation_id=d691bcd6-df8a-4a92-beef-f4c14297aa45 code=OK duration_ms=0
+2026/10/11 23:35:10 INFO mcp_call tool=zalo_get_history_import_status principal=501 correlation_id=733b44e7-ec04-4a49-abd5-9e97cf24f531 code=OK duration_ms=2
+2026/10/11 23:35:10 INFO mcp_call tool=zalo_get_history_import_status principal=501 correlation_id=b9d5f2c1-9753-4ced-b0d2-8efd2ccaf8c0 code=OK duration_ms=1
+2026/10/11 23:35:10 INFO mcp_call tool=zalo_get_history_import_status principal=501 correlation_id=74ed29a7-81a1-45ce-8d36-b2c512d643e8 code=OK duration_ms=1
+2026/10/11 23:35:10 INFO mcp_call tool=zalo_get_history_import_status principal=501 correlation_id=71696436-d990-4ef2-9c8c-603dcafabd06 code=OK duration_ms=1
+2026/10/11 23:35:10 INFO mcp_call tool=zalo_get_history_import_status principal=501 correlation_id=283bb488-ae65-4d99-b723-e4f3e7bc5b89 code=OK duration_ms=1
+2026/10/11 23:35:10 INFO mcp_call tool=zalo_get_history_import_status principal=501 correlation_id=95c14a45-186b-470a-a188-c6e0c6ec5bd0 code=OK duration_ms=1
+2026/10/11 23:35:10 INFO mcp_call tool=zalo_get_conversation_message_context principal=501 correlation_id=b77870ab-5a01-4868-8cee-2883421ef8f1 code=OK duration_ms=2
+2026/10/11 23:35:10 INFO mcp_call tool=zalo_import_conversation_history principal=501 correlation_id=b704fe57-972a-4288-80de-a8b1ca384b61 code=OK duration_ms=0
+2026/10/11 23:35:10 INFO service stopped
+2026/10/11 23:35:10 INFO mobile_backup_progress operation_id=585f264a-a17f-4e7a-a5cc-af059ad872cf state=dispatching
+2026/10/11 23:35:10 INFO mobile_backup_progress operation_id=585f264a-a17f-4e7a-a5cc-af059ad872cf state=waiting_for_confirmation
+2026/10/11 23:35:10 INFO mobile_backup_progress operation_id=585f264a-a17f-4e7a-a5cc-af059ad872cf state=offer_ready
+2026/10/11 23:35:10 INFO mobile_account_archive_acquired files=1 direct_files=1 group_files=0
+2026/10/11 23:35:10 INFO mobile_archive_stage request_id=00000000-0000-4000-8000-000000000001 stage=selection
+2026/10/11 23:35:10 INFO mobile_archive_probe_complete operation_id=585f264a-a17f-4e7a-a5cc-af059ad872cf examined=2 conversion_blocked=false
+2026/10/11 23:35:10 INFO service started mcp_listen=127.0.0.1:54909
+2026/10/11 23:35:10 INFO service stopped
+2026/10/11 23:35:10 INFO mobile_backup_progress operation_id=0ff3db74-539c-4c0e-ad9d-cc6fe3d51f62 state=dispatching
+2026/10/11 23:35:10 INFO mobile_backup_progress operation_id=0ff3db74-539c-4c0e-ad9d-cc6fe3d51f62 state=waiting_for_confirmation
+2026/10/11 23:35:10 INFO mobile_backup_progress operation_id=0ff3db74-539c-4c0e-ad9d-cc6fe3d51f62 state=offer_ready
+2026/10/11 23:35:10 INFO mobile_backup_progress operation_id=da792659-e7cb-44a8-b0df-c7db469cc3d9 state=dispatching
+2026/10/11 23:35:10 INFO mobile_backup_progress operation_id=da792659-e7cb-44a8-b0df-c7db469cc3d9 state=waiting_for_confirmation
+2026/10/11 23:35:10 INFO mobile_backup_progress operation_id=da792659-e7cb-44a8-b0df-c7db469cc3d9 state=offer_ready
+2026/10/11 23:35:10 INFO mobile_account_archive_acquired files=1 direct_files=1 group_files=0
+2026/10/11 23:35:10 INFO mobile_archive_stage request_id=00000000-0000-4000-8000-000000000001 stage=selection
+2026/10/11 23:35:11 INFO service started mcp_listen=127.0.0.1:54910
+2026/10/11 23:35:11 WARN Zalo authentication required; waiting for local login
+2026/10/11 23:35:11 INFO service stopped
+2026/10/11 23:35:11 INFO mobile_backup_progress operation_id=b4285aa0-ce31-4a3c-9c02-66e48d88956f state=dispatching
+2026/10/11 23:35:11 INFO mobile_backup_progress operation_id=b4285aa0-ce31-4a3c-9c02-66e48d88956f state=waiting_for_confirmation
+2026/10/11 23:35:11 INFO mobile_backup_progress operation_id=b4285aa0-ce31-4a3c-9c02-66e48d88956f state=offer_ready
+2026/10/11 23:35:11 INFO mobile_backup_progress operation_id=302d85a4-56fe-48d6-93c9-ea26024c05d0 state=dispatching
+2026/10/11 23:35:11 INFO mobile_backup_progress operation_id=302d85a4-56fe-48d6-93c9-ea26024c05d0 state=waiting_for_confirmation
+2026/10/11 23:35:11 INFO mobile_backup_progress operation_id=302d85a4-56fe-48d6-93c9-ea26024c05d0 state=offer_ready
+2026/10/11 23:35:11 INFO mobile_account_archive_acquired files=1 direct_files=1 group_files=0
+2026/10/11 23:35:11 INFO mobile_archive_stage request_id=00000000-0000-4000-8000-000000000001 stage=selection
+2026/10/11 23:35:11 INFO mobile_backup_progress operation_id=f12fb3bc-4c59-4536-be38-602f4d5f910e state=dispatching
+2026/10/11 23:35:11 INFO mobile_backup_progress operation_id=f12fb3bc-4c59-4536-be38-602f4d5f910e state=waiting_for_confirmation
+2026/10/11 23:35:11 INFO mobile_backup_progress operation_id=f12fb3bc-4c59-4536-be38-602f4d5f910e state=offer_ready
+2026/10/11 23:35:11 WARN mobile_archive_download_failed stage=BODY_LENGTH expected_bytes=384 received_bytes=16 read_failed=true cancelled=true
+2026/10/11 23:35:11 WARN mobile_archive_scope_failed stage=FETCH_COMPLETE fetch_failed=true cancelled=true owner_changed=false
+2026/10/11 23:35:11 INFO mobile_backup_progress operation_id=dfbc8a9d-d640-471a-a310-93d3999d7c9a state=dispatching
+2026/10/11 23:35:11 INFO mobile_backup_progress operation_id=dfbc8a9d-d640-471a-a310-93d3999d7c9a state=waiting_for_confirmation
+2026/10/11 23:35:11 INFO mobile_backup_progress operation_id=dfbc8a9d-d640-471a-a310-93d3999d7c9a state=offer_ready
+2026/10/11 23:35:11 INFO mobile_account_archive_acquired files=1 direct_files=1 group_files=0
+2026/10/11 23:35:11 INFO mobile_archive_stage request_id=00000000-0000-4000-8000-000000000001 stage=selection
+--- FAIL: TestTwoMCPProcessesReadCollectorWrites (0.94s)
+panic: interface conversion: interface {} is nil, not map[string]interface {} [recovered, repanicked]
+
+goroutine 5823 [running]:
+testing.tRunner.func1.2({0x10561e080, 0x7553534762d0})
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/testing/testing.go:2123 +0x1a0
+testing.tRunner.func1()
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/testing/testing.go:2126 +0x2c8
+panic({0x10561e080?, 0x7553534762d0?})
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/runtime/panic.go:859 +0x120
+github.com/skosovsky/zl-mcp/internal/service.TestTwoMCPProcessesReadCollectorWrites(0x755353804008)
+	/workspace/zl-mcp/internal/service/multiprocess_test.go:96 +0x2008
+testing.tRunner(0x755353804008, 0x1057bb838)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/testing/testing.go:2193 +0xc4
+created by testing.(*T).Run in goroutine 1
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/testing/testing.go:2258 +0x3b8
+FAIL	github.com/skosovsky/zl-mcp/internal/service	9.646s
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	1.437s
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	2.076s
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/operations	(cached)
+?   	github.com/skosovsky/zl-mcp/internal/adapters/store	[no test files]
+FAIL

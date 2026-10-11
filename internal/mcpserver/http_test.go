@@ -120,11 +120,11 @@ func TestHTTPEventsLifecycleWithSignedTLSReceiverAndFullText(t *testing.T) {
 	target, _ := url.Parse(receiver.URL)
 	callbackClient := &http.Client{Transport: localReceiverTransport{target: target, base: receiver.Client().Transport}}
 	token := strings.Repeat("t", 32)
-	service, err := NewHTTP(store, dir, token, migrationReadPorts(store))
+	service, err := migrationHTTP(t, store, dir, token)
 	if err != nil {
 		t.Fatal(err)
 	}
-	service.Events.Client = callbackClient
+	service.Events.(*events.SubscriptionManager).Client = callbackClient
 	endpoint := httptest.NewServer(service)
 	defer endpoint.Close()
 	worker, err := events.NewWorker(store)
@@ -197,7 +197,7 @@ func TestHTTPRejectsUnauthorizedOriginsAndProtocolMismatch(t *testing.T) {
 	}
 	defer store.Close()
 	token := strings.Repeat("t", 32)
-	service, err := NewHTTP(store, dir, token, migrationReadPorts(store))
+	service, err := migrationHTTP(t, store, dir, token)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -249,7 +249,7 @@ func TestEventsHTTPTransportGuards(t *testing.T) {
 	}
 	defer store.Close()
 	token := strings.Repeat("t", 32)
-	service, err := NewHTTP(store, dir, token, migrationReadPorts(store))
+	service, err := migrationHTTP(t, store, dir, token)
 	if err != nil {
 		t.Fatal(err)
 	}

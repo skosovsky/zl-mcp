@@ -16,6 +16,11 @@ func BindArguments(raw []byte) (map[string]any, error) {
 	if len(raw) > 0 && json.Unmarshal(raw, &args) != nil {
 		return nil, domain.Invalid("Arguments must be a JSON object.")
 	}
+	// The legacy typed map treated top-level null as an empty object. Keep
+	// that characterization while leaving null field values untouched.
+	if args == nil {
+		args = map[string]any{}
+	}
 	for _, field := range []string{"limit", "before", "after"} {
 		if v, ok := args[field].(string); ok {
 			if n, err := strconv.Atoi(v); err == nil {

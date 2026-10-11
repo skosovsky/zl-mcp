@@ -1,0 +1,6 @@
+?   	github.com/skosovsky/zl-mcp/internal/app/eventaccess	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/store	0.641s
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	1.057s
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	7.236s
+ok  	github.com/skosovsky/zl-mcp/internal/service	11.002s
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	1.002s

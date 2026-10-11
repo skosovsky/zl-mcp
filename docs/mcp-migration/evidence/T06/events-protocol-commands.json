@@ -1,0 +1,20 @@
+[
+  {
+    "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test ./internal/mcpserver ./internal/service ./internal/events",
+    "exit_status": 0,
+    "log": "events-protocol-tests.log",
+    "log_sha256": "fad9acb80b95fcdeba9cc1f9fa52a34eab6810d3bf63e30fd23d6cc0a61877fe"
+  },
+  {
+    "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache python3 scripts/mcp-migration/architecture.py --binary /tmp/zl-migration-tools/arch-go --evidence docs/mcp-migration/evidence/T06/events-protocol-architecture.json",
+    "exit_status": 0,
+    "log": "events-protocol-architecture.log",
+    "log_sha256": "daa6f81949c8282ba9c4b41e2e9a17692bda8fc437067c0f8b55a151053226a1"
+  },
+  {
+    "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test -race ./internal/mcpserver ./internal/service ./internal/events",
+    "exit_status": 0,
+    "log": "events-protocol-race.log",
+    "log_sha256": "b216742f08362bcef91bf869ae5d09f587cf76f67a2f6dc9ba148c3a0ad82907"
+  }
+]

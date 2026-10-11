@@ -1,0 +1,35 @@
+{
+  "retained_initial_findings": [
+    {
+      "logs": [
+        "catalog-initial-tests.log"
+      ],
+      "finding": "top-level null accepted by legacy typed map became null JSON at toolsy boundary",
+      "resolution": "binder maps only top-level null to empty object; field nulls unchanged; characterized snapshot and scoped test PASS"
+    },
+    {
+      "logs": [
+        "catalog-status-diagnostic.log",
+        "catalog-tests-v2.log",
+        "catalog-diag-tests-v1.log"
+      ],
+      "finding": "startup account binding correctly invalidates queued status scope; old readiness tests assumed first response was always structured content",
+      "resolution": "explicit bounded retry only for PERMISSION_DENIED; no stale handler read; fresh host binding tested; persistent/other failures still fail"
+    },
+    {
+      "logs": [
+        "catalog-port-tests.log"
+      ],
+      "finding": "positive native catalogue test had only upserted a group, without marking catalogue collected",
+      "resolution": "fixture uses native ReplaceCatalog; native projection/schema comparisons PASS"
+    },
+    {
+      "logs": [
+        "catalog-architecture.log",
+        "catalog-architecture.json"
+      ],
+      "finding": "MCP exact allowlist lacked normative app/shared admission contract",
+      "resolution": "exact shared contract edge added; backend exception list unchanged; all architecture/negative controls PASS"
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	storeadapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
+	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
 	"github.com/skosovsky/zl-mcp/internal/app/search"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
@@ -85,7 +86,11 @@ func TestReadBoundaryShortensNativePageOnceAndRechecksResourceAccess(t *testing.
 		}
 	}
 	reads := &observedReads{Reader: storeadapter.New(owner)}
-	ports := ReadPorts{Search: &search.Handler{Reads: reads}, Conversations: &conversations.Handler{Reads: reads}, Authority: reads}
+	ports := migrationReadPorts(owner)
+	ports.Search = &search.Handler{Reads: reads}
+	ports.Conversations.Reads = reads
+	ports.Authority, ports.Admission = reads, reads
+	ports.Events = &eventaccess.Handler{Diagnostics: reads, Journal: reads}
 	server, err := New(owner, dir, ports)
 	if err != nil {
 		t.Fatal(err)

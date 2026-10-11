@@ -1,14 +1,22 @@
 package evalfixture
 
 import (
+	operationsadapter "github.com/skosovsky/zl-mcp/internal/adapters/operations"
 	storeadapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
+	"github.com/skosovsky/zl-mcp/internal/app/archives"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
+	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
+	"github.com/skosovsky/zl-mcp/internal/app/history"
+	"github.com/skosovsky/zl-mcp/internal/app/membership"
+	"github.com/skosovsky/zl-mcp/internal/app/messaging"
 	"github.com/skosovsky/zl-mcp/internal/app/search"
 	"github.com/skosovsky/zl-mcp/internal/mcpserver"
 	"github.com/skosovsky/zl-mcp/internal/storage"
+	"github.com/skosovsky/zl-mcp/internal/toolruntime"
 )
 
-func fixtureReadPorts(owner *storage.Store) mcpserver.ReadPorts {
+func fixtureReadPorts(owner *storage.Store, backend mcpserver.ControlPort) mcpserver.ReadPorts {
 	reader := storeadapter.New(owner)
-	return mcpserver.ReadPorts{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader}, Authority: reader}
+	operations := operationsadapter.NewReader(backend)
+	return mcpserver.ReadPorts{Archives: &archives.Handler{Reads: operationsadapter.NewArchiveReader(backend)}, Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader, LiveGroups: operations}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader}, Operations: toolruntime.OperationReads{Messaging: &messaging.Handler{Reads: operations}, History: &history.Handler{Reads: operations}, Membership: &membership.Handler{Reads: operations}}}
 }

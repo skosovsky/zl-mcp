@@ -1,0 +1,112 @@
+{
+  "go_environment": {
+    "GOWORK": "off",
+    "GOPATH": "/tmp/zl-migration-go-path",
+    "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+    "GOCACHE": "/tmp/zl-migration-go-cache"
+  },
+  "records": [
+    {
+      "command": "go test ./internal/mcpserver ./internal/toolruntime ./internal/service ./internal/evalfixture ./internal/historyimport ./internal/adapters/...",
+      "exit_status": 1,
+      "log": "catalog-initial-tests.log",
+      "log_sha256": "82b333cc9462b4b7765fc2a76212052b6ea0a5095383e8a3dc82a9295b286fe7"
+    },
+    {
+      "command": "go test ./internal/service -run TestServicePreservesMCPWhenAuthenticationIsRequired -count=1",
+      "exit_status": 1,
+      "log": "catalog-status-diagnostic.log",
+      "log_sha256": "37a1510d37c9f1e70c8cbac53e9fa5db92ece084148402d4fdd8cf54f47a1ac3"
+    },
+    {
+      "command": "go test ./internal/mcpserver ./internal/toolruntime ./internal/service ./internal/evalfixture ./internal/historyimport ./internal/adapters/...",
+      "exit_status": 1,
+      "log": "catalog-tests-v2.log",
+      "log_sha256": "d173e2ebddd544e2fbbfc514c4efb2f85264a09dd9525e973f3344947df51220"
+    },
+    {
+      "command": "go test ./internal/mcpserver ./internal/toolruntime ./internal/service ./internal/evalfixture ./internal/historyimport ./internal/adapters/...",
+      "exit_status": 1,
+      "log": "catalog-diag-tests-v1.log",
+      "log_sha256": "ea75051ca78c2ccaec42d4f25ff1beb2c645138cebf334d598d0f94947668ba7"
+    },
+    {
+      "command": "go test ./internal/mcpserver ./internal/toolruntime ./internal/service ./internal/evalfixture ./internal/historyimport ./internal/adapters/...",
+      "exit_status": 0,
+      "log": "catalog-diag-tests-v2.log",
+      "log_sha256": "2bcc81e394c8efa86cbaaa8242daa9b114e5538529df31f7c31026051799de47"
+    },
+    {
+      "command": "go test ./internal/adapters/store ./internal/app/conversations",
+      "exit_status": 1,
+      "log": "catalog-port-tests.log",
+      "log_sha256": "85d1f1b3e705c9b9fc91fe34c8d4eecb38a539dc39666e8b17b13ea7a5ee7a6a"
+    },
+    {
+      "command": "go test ./internal/adapters/store ./internal/app/conversations",
+      "exit_status": 0,
+      "log": "catalog-port-tests-v2.log",
+      "log_sha256": "fb78c5b9dcff2aa5630129640a133b57cfa484c0323cd09126818492cd6b90a0"
+    },
+    {
+      "command": "go test ./internal/toolruntime ./internal/mcpserver ./internal/adapters/store ./internal/app/conversations",
+      "exit_status": 0,
+      "log": "catalog-boundary-tests.log",
+      "log_sha256": "d010dd5aeb1e77dc93b58f61d84390f2c7a0266182013c723908a10d6768e828"
+    },
+    {
+      "command": "python3 scripts/mcp-migration/architecture.py --binary /tmp/zl-migration-tools/arch-go --evidence docs/mcp-migration/evidence/T06/catalog-architecture.json",
+      "exit_status": 1,
+      "log": "catalog-architecture.log",
+      "log_sha256": "e9bb986975d5c8a94ce75ed4ce50ed3cb0c3956a930a83e5bbfd18e12daf981c"
+    },
+    {
+      "command": "python3 scripts/mcp-migration/architecture.py --binary /tmp/zl-migration-tools/arch-go --evidence docs/mcp-migration/evidence/T06/catalog-architecture-v2.json",
+      "exit_status": 0,
+      "log": "catalog-architecture-v2.log",
+      "log_sha256": "daa6f81949c8282ba9c4b41e2e9a17692bda8fc437067c0f8b55a151053226a1"
+    },
+    {
+      "command": "go test -race ./internal/toolruntime ./internal/adapters/... ./internal/app/conversations ./internal/mcpserver ./internal/service ./internal/evalfixture ./internal/historyimport",
+      "exit_status": 0,
+      "log": "catalog-race-v1.log",
+      "log_sha256": "435e2e576b931b8b8dcbb3be07dcab0804b0746eb90f0014965dd867395192e9"
+    },
+    {
+      "command": "go test ./...",
+      "exit_status": 0,
+      "log": "catalog-root-tests-v1.log",
+      "log_sha256": "122455efd2f0a56f020fd8787f149d20e4d28c6498800da8954d2225ffc34a04"
+    },
+    {
+      "command": "go vet ./...",
+      "exit_status": 0,
+      "log": "catalog-vet-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "python3 scripts/mcp-migration/build_eval.py --output /tmp/zl-t06-catalog-build-v1",
+      "exit_status": 0,
+      "log": "catalog-build-v1.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "python3 scripts/mcp-migration/build_eval.py --output /tmp/zl-t06-catalog-build-v2",
+      "exit_status": 0,
+      "log": "catalog-build-v2.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "/tmp/zl-t06-catalog-build-v2/zl-mcp-eval-candidate --root \"$PWD\" --output /tmp/zl-t06-catalog-offline-v2 --repeats 2",
+      "exit_status": 0,
+      "log": "catalog-offline-v2.log",
+      "log_sha256": "e095bc7b932220bf4676733a9b2fdecb8b24755531423e351022e3c25236a72d"
+    },
+    {
+      "command": "/tmp/zl-t06-catalog-build-v2/zl-mcp-eval-candidate --root \"$PWD\" --child-binary /tmp/zl-t06-catalog-build-v2/zl-mcp-eval-baseline --output /tmp/zl-t06-catalog-baseline-v2",
+      "exit_status": 0,
+      "log": "catalog-baseline-v2.log",
+      "log_sha256": "a0d0f89d7ac228040d225b48279db8ee147b461a0ce4537b8a509bab1247b772"
+    }
+  ]
+}

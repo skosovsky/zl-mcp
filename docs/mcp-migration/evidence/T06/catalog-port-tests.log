@@ -1,0 +1,7 @@
+--- FAIL: TestCatalogPortsPreserveNativeNullableDiagnosticsAndIdentity (0.03s)
+    --- FAIL: TestCatalogPortsPreserveNativeNullableDiagnosticsAndIdentity/groups (0.00s)
+        catalog_test.go:72: COLLECTOR_UNAVAILABLE: No group catalog has been collected yet.
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/adapters/store	0.634s
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	0.556s
+FAIL

@@ -19,6 +19,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/skosovsky/zl-mcp/internal/collector"
+	"github.com/skosovsky/zl-mcp/internal/control"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/local"
 	"github.com/skosovsky/zl-mcp/internal/mcpserver"
@@ -268,10 +269,11 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	if opts.Offline {
 		f.offline, err = newOffline(runCtx, f, opts)
 		if err == nil {
-			f.Server, err = mcpserver.NewWithControl(f.Store, f.offline, fixtureReadPorts(f.Store))
+			f.Server, err = mcpserver.NewWithControl(f.Store, f.offline, fixtureReadPorts(f.Store, f.offline))
 		}
 	} else {
-		f.Server, err = mcpserver.New(f.Store, dir, fixtureReadPorts(f.Store))
+		backend := control.New(dir)
+		f.Server, err = mcpserver.NewWithControl(f.Store, backend, fixtureReadPorts(f.Store, backend))
 	}
 	if err != nil {
 		return nil, err

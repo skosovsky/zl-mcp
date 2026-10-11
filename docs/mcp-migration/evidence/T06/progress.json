@@ -1,0 +1,39 @@
+{
+  "task": "T06",
+  "status": "ACCEPTED_OFFLINE_READY_FOR_SOLE_COMMIT",
+  "parent_sha": "45230af90f90cf27358f41e5ff52949fd686525d",
+  "requirements": 56,
+  "read_tools": 17,
+  "resources": 4,
+  "templates": 3,
+  "remaining": [
+    "Sole T06 commit and postcommit verification in T07"
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01",
+  "completed_increment": [
+    "EventsProtocolPort supplied by composition; native manager construction moved to service",
+    "native protocol error accessor/projection, safe cause handling and original wire codes/data",
+    "MCP->events exact architecture exception removed without widening other exceptions",
+    "MCP/service/events tests and architecture100/100 plus negative controls PASS",
+    "Relevant MCP/service/events race tests PASS",
+    "Typed fixed send/history/join status and invite ports + borrowed operations adapter; original35s/6s deadlines",
+    "Service and synthetic composition supply these handlers to scoped toolsy executor",
+    "Scope/schema rejection before native status dispatch; one read and unchanged native failure; no command fallback",
+    "Root tests/vet, relevant races, architecture100/100 plus controls PASS",
+    "Intermediate complete offline50/50 480/480 and baseline25/25 240/240 PASS; frozen baseline byte-identical T05",
+    "Typed collector status/group list/group refresh + native group continuation in scoped runtime (11/17 reads in production)",
+    "All four static resources retained; catalog/collection/delivery diagnostics use typed read ports",
+    "All tool/resource admission delegates shared consumer port exactly once; native bucket trigger counters PASS",
+    "Collector null/missing input parity and stale account-before-read/fresh binding tests PASS",
+    "Native catalogue/diagnostic DTO parity, root/vet/race and architecture100/100 plus controls PASS",
+    "Current candidate offline50/50 480/480 + frozen baseline25/25 240/240 PASS; baseline unchanged",
+    "Current/archive browse and full archive resource ports composed; intermediate offline/baseline and transport suites PASS",
+    "Events subscription and journal reads typed; both envelope profiles preserve nullable fields and omission",
+    "Production mandatory complete read bundle; all legacy read fallback cases removed",
+    "Final-stage root/vet/relevant races/storage race/architecture/offline and unchanged frozen baseline PASS"
+  ],
+  "candidate_source_digest_sha256": "4a38dc778ac427b96500106f84e137ce0399e5c62b3eeee4c93e00a42ac91d47",
+  "review_status": "COMPLETENESS100_CORRECTNESS_PASS"
+}

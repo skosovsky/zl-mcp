@@ -1,0 +1,122 @@
+[
+  {
+    "command": "go test ./internal/toolruntime ./internal/mcpserver ./internal/service ./internal/evalfixture ./internal/historyimport",
+    "environment": {
+      "GOWORK": "off",
+      "GOPATH": "/tmp/zl-migration-go-path",
+      "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+      "GOCACHE": "/tmp/zl-migration-go-cache"
+    },
+    "exit_status": 0,
+    "log": "status-initial-tests.log",
+    "log_sha256": "e3482d5fa0d7dddb594cbbb2e19aa80de4b7b3520b5ef71b40d4ea60ca20d26a"
+  },
+  {
+    "command": "go test ./internal/adapters/operations",
+    "environment": {
+      "GOWORK": "off",
+      "GOPATH": "/tmp/zl-migration-go-path",
+      "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+      "GOCACHE": "/tmp/zl-migration-go-cache"
+    },
+    "exit_status": 0,
+    "log": "status-adapter-initial.log",
+    "log_sha256": "e861dfa1a6515379e031e991f37fc4faf95a445ef3e274485492352bb73f7f38"
+  },
+  {
+    "command": "go test ./internal/toolruntime ./internal/adapters/operations",
+    "environment": {
+      "GOWORK": "off",
+      "GOPATH": "/tmp/zl-migration-go-path",
+      "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+      "GOCACHE": "/tmp/zl-migration-go-cache"
+    },
+    "exit_status": 0,
+    "log": "status-scope-initial.log",
+    "log_sha256": "7e341b8f3cbf5f19672115863a8dee938128f546751221759c254f5dff33bcc0"
+  },
+  {
+    "command": "python3 scripts/mcp-migration/architecture.py --binary /tmp/zl-migration-tools/arch-go --evidence docs/mcp-migration/evidence/T06/status-architecture.json",
+    "environment": {
+      "GOWORK": "off",
+      "GOPATH": "/tmp/zl-migration-go-path",
+      "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+      "GOCACHE": "/tmp/zl-migration-go-cache"
+    },
+    "exit_status": 0,
+    "log": "status-architecture.log",
+    "log_sha256": "daa6f81949c8282ba9c4b41e2e9a17692bda8fc437067c0f8b55a151053226a1"
+  },
+  {
+    "command": "python3 scripts/mcp-migration/build_eval.py --output /tmp/zl-t06-status-build-v1",
+    "environment": {
+      "GOWORK": "off",
+      "GOPATH": "/tmp/zl-migration-go-path",
+      "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+      "GOCACHE": "/tmp/zl-migration-go-cache"
+    },
+    "exit_status": 0,
+    "log": "status-build-v1.log",
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "command": "go test -race ./internal/toolruntime ./internal/adapters/operations ./internal/mcpserver ./internal/service ./internal/evalfixture ./internal/historyimport",
+    "environment": {
+      "GOWORK": "off",
+      "GOPATH": "/tmp/zl-migration-go-path",
+      "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+      "GOCACHE": "/tmp/zl-migration-go-cache"
+    },
+    "exit_status": 0,
+    "log": "status-race-v1.log",
+    "log_sha256": "d8682fdfbc16d3e560db3cc08b0c8f51963e945197c121c2324f7faf23c59880"
+  },
+  {
+    "command": "go test ./...",
+    "environment": {
+      "GOWORK": "off",
+      "GOPATH": "/tmp/zl-migration-go-path",
+      "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+      "GOCACHE": "/tmp/zl-migration-go-cache"
+    },
+    "exit_status": 0,
+    "log": "status-root-tests-v1.log",
+    "log_sha256": "240e3ea98439d3024f8201c7a8e9044672de629e9079433463653a25f9ce3e57"
+  },
+  {
+    "command": "go vet ./...",
+    "environment": {
+      "GOWORK": "off",
+      "GOPATH": "/tmp/zl-migration-go-path",
+      "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+      "GOCACHE": "/tmp/zl-migration-go-cache"
+    },
+    "exit_status": 0,
+    "log": "status-vet-v1.log",
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "command": "/tmp/zl-t06-status-build-v1/zl-mcp-eval-candidate --root \"$PWD\" --output /tmp/zl-t06-status-offline-v1 --repeats 2",
+    "environment": {
+      "GOWORK": "off",
+      "GOPATH": "/tmp/zl-migration-go-path",
+      "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+      "GOCACHE": "/tmp/zl-migration-go-cache"
+    },
+    "exit_status": 0,
+    "log": "status-offline-v1.log",
+    "log_sha256": "e095bc7b932220bf4676733a9b2fdecb8b24755531423e351022e3c25236a72d"
+  },
+  {
+    "command": "/tmp/zl-t06-status-build-v1/zl-mcp-eval-candidate --root \"$PWD\" --child-binary /tmp/zl-t06-status-build-v1/zl-mcp-eval-baseline --output /tmp/zl-t06-status-baseline-v1",
+    "environment": {
+      "GOWORK": "off",
+      "GOPATH": "/tmp/zl-migration-go-path",
+      "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+      "GOCACHE": "/tmp/zl-migration-go-cache"
+    },
+    "exit_status": 0,
+    "log": "status-baseline-v1.log",
+    "log_sha256": "a0d0f89d7ac228040d225b48279db8ee147b461a0ce4537b8a509bab1247b772"
+  }
+]

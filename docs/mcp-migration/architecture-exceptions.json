@@ -1,5 +1,5 @@
 {
-  "revision": 1,
+  "revision": 2,
   "exceptions": [
     {
       "package": "github.com/skosovsky/zl-mcp/internal/mcpserver",
@@ -12,12 +12,6 @@
       "dependency": "github.com/skosovsky/zl-mcp/internal/control",
       "remove_in": "T07",
       "reason": "legacy command backend construction; remove with operation ports"
-    },
-    {
-      "package": "github.com/skosovsky/zl-mcp/internal/mcpserver",
-      "dependency": "github.com/skosovsky/zl-mcp/internal/events",
-      "remove_in": "T06",
-      "reason": "HTTP Events extension concrete transport adapter; isolate adapter in T06"
     },
     {
       "package": "github.com/skosovsky/zl-mcp/internal/mcpserver",

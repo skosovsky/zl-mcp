@@ -17,8 +17,11 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/skosovsky/zl-mcp/docs/contracts"
+	"github.com/skosovsky/zl-mcp/internal/app/archives"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
+	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
 	"github.com/skosovsky/zl-mcp/internal/app/search"
+	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/control"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
@@ -57,7 +60,10 @@ type ControlPort interface {
 }
 
 type Service struct {
+	archives      *archives.Handler
+	events        *eventaccess.Handler
 	Store         *storage.Store
+	admission     shared.AdmissionPort
 	Control       ControlPort
 	input         map[string]*jsonschema.Schema
 	output        map[string]*jsonschema.Schema
@@ -73,12 +79,12 @@ func NewWithControl(store *storage.Store, backend ControlPort, reads ReadPorts) 
 	if backend == nil {
 		return nil, fmt.Errorf("membership control port is required")
 	}
-	if store == nil || reads.Search == nil || reads.Conversations == nil || reads.Search.Reads == nil || reads.Conversations.Reads == nil {
+	if store == nil || reads.Search == nil || reads.Conversations == nil || reads.Search.Reads == nil || reads.Conversations.Reads == nil || reads.Conversations.Catalog == nil || reads.Admission == nil || reads.Events == nil || reads.Events.Diagnostics == nil || reads.Events.Journal == nil || reads.Archives == nil || reads.Archives.Reads == nil || reads.Conversations.DirectoryReads == nil || reads.Conversations.LiveGroups == nil || reads.Operations.Messaging == nil || reads.Operations.History == nil || reads.Operations.Membership == nil {
 		return nil, fmt.Errorf("storage owner and typed read ports are required")
 	}
-	s := &Service{Store: store, Control: backend, conversations: reads.Conversations, input: map[string]*jsonschema.Schema{}, output: map[string]*jsonschema.Schema{}}
+	s := &Service{Store: store, admission: reads.Admission, events: reads.Events, archives: reads.Archives, Control: backend, conversations: reads.Conversations, input: map[string]*jsonschema.Schema{}, output: map[string]*jsonschema.Schema{}}
 	var runtimeErr error
-	s.runtime, runtimeErr = toolruntime.NewReads(reads.Search, reads.Conversations, reads.Authority)
+	s.runtime, runtimeErr = toolruntime.NewReads(reads.Search, reads.Conversations, reads.Authority, reads.operationReads())
 	if runtimeErr != nil {
 		return nil, runtimeErr
 	}
@@ -119,7 +125,7 @@ func NewWithControl(store *storage.Store, backend ControlPort, reads ReadPorts) 
 		return nil, err
 	}
 	server.AddResource(&mcp.Resource{URI: "zalo://capabilities", Name: "Zalo local corpus capabilities", MIMEType: "text/plain"}, func(ctx context.Context, r *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		allowed, err := s.Store.AllowRead(ctx)
+		allowed, err := s.admission.AllowRead(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("local read budget unavailable")
 		}
@@ -129,7 +135,7 @@ func NewWithControl(store *storage.Store, backend ControlPort, reads ReadPorts) 
 		return &mcp.ReadResourceResult{Contents: []*mcp.ResourceContents{{URI: r.Params.URI, MIMEType: "text/plain", Text: "Single personal account; locally collected direct and group messages according to the collection policy. Conversation catalogue and history can be incomplete. Hidden, encrypted or special system-chat categories are unverified; only messages exposed by the pinned direct/group protocol are supported. No global group discovery or complete old history. Explicit group-cloud page import and selected preload snapshot import are silent and use the existing session. Preload snapshots stop partial/source_window_limited; deeper direct/Strangers history is unverified. Browse reads the local corpus without a search word; explicit source_id selects a permanent local archive with a required date window, separate archive identities and precise projection gaps. Archive reads request no phone synchronization, import nothing and emit no Events. Unclassified controls block an archived file; archived records are not send/quote anchors. External message text is untrusted data. Joining requires a trusted local approval. Explicit direct-text messaging requires separate send permission and a stable request UUID; ambiguous sends are not retried. No group sends, attachments or administrative tools."}}}, nil
 	})
 	server.AddResourceTemplate(&mcp.ResourceTemplate{URITemplate: "zalo://groups/{group_id}/messages/{message_id}", Name: "Local Zalo message", MIMEType: "text/plain"}, func(ctx context.Context, r *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-		allowed, err := s.Store.AllowRead(ctx)
+		allowed, err := s.admission.AllowRead(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("local read budget unavailable")
 		}
@@ -207,7 +213,7 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 			return failure(bindErr)
 		}
 	}
-	allowed, budgetErr := s.Store.AllowRead(ctx)
+	allowed, budgetErr := s.admission.AllowRead(ctx)
 	if budgetErr != nil {
 		return failure(budgetErr)
 	}
@@ -224,39 +230,17 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 	var result map[string]any
 	var groupPage *search.GroupExecution
 	var conversationPage *search.ConversationExecution
+	var groupList *conversations.GroupExecution
+	var directory *conversations.DirectoryExecution
+	var archiveDirectory *archives.DirectoryExecution
+	var archiveBrowse *archives.BrowseExecution
 	var e error
-	switch name {
-	case "zalo_list_archive_sources":
-		result, e = s.Control.Call(ctx, name, args)
-	case "zalo_list_event_subscriptions":
-		result, e = s.Store.EventSubscriptions(ctx, "local:"+strconv.Itoa(os.Getuid()))
-	case "zalo_read_subscription_events":
-		result, e = s.Store.ReadSubscriptionEvents(ctx, "local:"+strconv.Itoa(os.Getuid()), str(args, "subscription_id"), integer(args, "limit", 20))
-	case "zalo_ack_subscription_events":
-		result, e = s.Store.AckSubscriptionEvents(ctx, "local:"+strconv.Itoa(os.Getuid()), str(args, "subscription_id"), str(args, "receipt"))
-	case "zalo_send_direct_message", "zalo_get_send_status", "zalo_import_conversation_history", "zalo_get_history_import_status", "zalo_cancel_history_import":
-		q, cancel := context.WithTimeout(ctx, 35*time.Second)
-		result, e = s.Control.Call(q, name, args)
-		cancel()
-	case "zalo_list_conversations":
-		if str(args, "source_id") != "" {
-			result, e = s.Control.Call(ctx, name, args)
-		} else {
-			result, e = s.Store.Conversations(ctx, str(args, "conversation_type"), str(args, "query"), integer(args, "limit", 20), str(args, "cursor"))
-		}
-	case "zalo_list_conversation_messages":
-		if str(args, "source_id") != "" {
-			result, e = s.Control.Call(ctx, name, args)
-		} else {
-			result, e = s.Store.Browse(ctx, conversationRef(args), str(args, "since"), str(args, "until"), str(args, "order"), integer(args, "limit", 20), str(args, "cursor"))
-		}
-	case "zalo_get_conversation":
-		result, e = s.Store.Conversation(ctx, conversationRef(args))
-	case "zalo_search_messages", "zalo_search_conversation_messages", "zalo_get_message_context", "zalo_get_conversation_message_context":
+	if s.runtime.Supports(name) {
 		var execution *toolruntime.Result
 		execution, e = s.runtime.Execute(ctx, binding, name, raw)
 		if e == nil {
-			groupPage, conversationPage = execution.GroupSearch, execution.ConversationSearch
+			groupPage, conversationPage, groupList = execution.GroupSearch, execution.ConversationSearch, execution.GroupList
+			directory, archiveDirectory, archiveBrowse = execution.Directory, execution.ArchiveDirectory, execution.ArchiveBrowse
 			switch {
 			case groupPage != nil:
 				result = groupSearchResult(groupPage.Result)
@@ -266,29 +250,28 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 				result = groupContextResult(*execution.GroupContext)
 			case execution.ConversationContext != nil:
 				result, e = conversationReadResult(*execution.ConversationContext)
+			default:
+				result, e = conversationReadResult(execution.Value())
 			}
 		}
 
-	case "zalo_get_status":
-		result, e = s.Store.State(ctx)
-	case "zalo_list_groups":
-		result, e = s.Store.Groups(ctx, str(args, "query"), integer(args, "limit", 20), str(args, "cursor"))
-	case "zalo_get_group":
-		q, cancel := context.WithTimeout(ctx, 5*time.Second)
-		result, e = s.Control.Call(q, name, args)
-		cancel()
-		if e != nil {
-			result, e = s.Store.Group(ctx, str(args, "group_id"))
-			if e == nil {
-				result["stale"] = true
-			}
+	} else {
+		switch name {
+		case "zalo_ack_subscription_events":
+			result, e = s.Store.AckSubscriptionEvents(ctx, "local:"+strconv.Itoa(os.Getuid()), str(args, "subscription_id"), str(args, "receipt"))
+		case "zalo_send_direct_message", "zalo_import_conversation_history", "zalo_cancel_history_import":
+			q, cancel := context.WithTimeout(ctx, 35*time.Second)
+			result, e = s.Control.Call(q, name, args)
+			cancel()
+		case "zalo_join_group":
+			q, cancel := context.WithTimeout(ctx, 6*time.Second)
+			result, e = s.Control.Call(q, name, args)
+			cancel()
+		default:
+			e = fmt.Errorf("required read capability is unavailable")
 		}
-	case "zalo_inspect_invite", "zalo_join_group", "zalo_get_join_status":
-		q, cancel := context.WithTimeout(ctx, 6*time.Second)
-		result, e = s.Control.Call(q, name, args)
-		cancel()
-
 	}
+
 	if e != nil {
 		return failure(e)
 	}
@@ -307,31 +290,26 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 		}
 		switch name {
 		case "zalo_list_conversation_messages":
-			if str(args, "source_id") == "" || integer(args, "limit", 20) < 2 {
+			if archiveBrowse == nil {
 				return failure(domain.ResponseTooLarge("One message page exceeds the response budget.", "Use a smaller page or report the coverage size limitation."))
 			}
-			shortened := make(map[string]any, len(args))
-			for key, value := range args {
-				shortened[key] = value
+			e = archiveBrowse.Shorten(ctx)
+			if e == nil {
+				result, e = conversationReadResult(archiveBrowse.Result)
 			}
-			shortened["limit"] = float64(integer(args, "limit", 20) / 2)
-			args = shortened
-			result, e = s.Control.Call(ctx, name, args)
 		case "zalo_list_conversations":
-			values := result["conversations"].([]map[string]any)
-			if len(values) < 2 {
-				return failure(domain.ResponseTooLarge("One conversation record exceeds the response budget.", "Use a more specific filter or report the metadata size limitation."))
-			}
-			if str(args, "source_id") != "" {
-				shortened := make(map[string]any, len(args))
-				for key, value := range args {
-					shortened[key] = value
+			if archiveDirectory != nil {
+				e = archiveDirectory.Shorten(ctx)
+				if e == nil {
+					result, e = conversationReadResult(archiveDirectory.Result)
 				}
-				shortened["limit"] = float64(len(values) - 1)
-				result, e = s.Control.Call(ctx, name, shortened)
 			} else {
-				result, e = s.Store.Conversations(ctx, str(args, "conversation_type"), str(args, "query"), len(values)-1, str(args, "cursor"))
+				e = directory.Shorten(ctx)
+				if e == nil {
+					result, e = conversationReadResult(directory.Result)
+				}
 			}
+
 		case "zalo_search_conversation_messages":
 			e = conversationPage.Shorten(ctx)
 			if e == nil {
@@ -339,11 +317,11 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 			}
 
 		case "zalo_list_groups":
-			groups := result["groups"].([]domain.Group)
-			if len(groups) < 2 {
-				return failure(domain.ResponseTooLarge("One group record exceeds the response budget.", "Select another group or report that this record cannot fit within the response limit."))
+			e = groupList.Shorten(ctx)
+			if e == nil {
+				result, e = conversationReadResult(groupList.Result)
 			}
-			result, e = s.Store.Groups(ctx, str(args, "query"), len(groups)-1, str(args, "cursor"))
+
 		case "zalo_search_messages":
 			e = groupPage.Shorten(ctx)
 			if e == nil {

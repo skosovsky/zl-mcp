@@ -1,0 +1,7 @@
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/service	11.364s
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/operations	(cached)
+?   	github.com/skosovsky/zl-mcp/internal/adapters/store	[no test files]

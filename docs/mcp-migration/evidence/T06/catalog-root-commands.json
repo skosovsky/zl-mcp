@@ -1,0 +1,20 @@
+[
+  {
+    "command": [
+      "go",
+      "test",
+      "./..."
+    ],
+    "exit_status": 0,
+    "log": "catalog-root-tests-v1.log"
+  },
+  {
+    "command": [
+      "go",
+      "vet",
+      "./..."
+    ],
+    "exit_status": 0,
+    "log": "catalog-vet-v1.log"
+  }
+]

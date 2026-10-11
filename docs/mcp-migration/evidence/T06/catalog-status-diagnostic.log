@@ -1,0 +1,6 @@
+--- FAIL: TestServicePreservesMCPWhenAuthenticationIsRequired (0.60s)
+    --- FAIL: TestServicePreservesMCPWhenAuthenticationIsRequired/listener (0.10s)
+        run_test.go:129: collector status did not return structured content: map[_meta:map[io.modelcontextprotocol/serverInfo:map[name:zl-mcp version:0.1.0-dev]] content:[map[text:{"code":"PERMISSION_DENIED","message":"Local read authority is unavailable.","retryable":false,"next_action":{"tool":null,"arguments":null,"instruction":"Use the authorized local MCP transport."},"details":{}} type:text]] isError:true resultType:complete]
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/service	1.244s
+FAIL

@@ -32,6 +32,11 @@ type RPCError struct {
 
 func (e *RPCError) Error() string { return e.Message }
 
+// RPCDetails exposes the native protocol error without a transport dependency.
+func (e *RPCError) RPCDetails() (int, string, map[string]any) {
+	return e.Code, e.Message, e.Data
+}
+
 type SubscriptionManager struct {
 	Store     Subscriptions
 	Client    *http.Client
