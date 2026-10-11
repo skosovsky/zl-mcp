@@ -1,0 +1,376 @@
+{
+  "task": "T01",
+  "formula": "100 * verified_pass_leaves / required_total; all leaves equal weight",
+  "non_goals": [
+    "model and live execution",
+    "production refactoring",
+    "T02+ dependency integration"
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "revision": 2,
+  "revision_reason": "Before acceptance, expand original compound groups into additive atomic subrequirements; no original requirement removed or weakened.",
+  "group_required_total": 10,
+  "groups": [
+    {
+      "id": "T01-01",
+      "requirement": "Runtime tools/list catalog equals contracts.Names 1:1; freeze names/descriptions/schemas/annotations/order."
+    },
+    {
+      "id": "T01-02",
+      "requirement": "Inventory resources/templates/MIME/auth/limits; Events HTTP extension and STDIO boundaries; owner-only CLI."
+    },
+    {
+      "id": "T01-03",
+      "requirement": "Machine manifest includes transport/handler/permissions/effects/error/budgets/normalization/timeouts/owner for every tool, including aliases."
+    },
+    {
+      "id": "T01-04",
+      "requirement": "Freeze baseline SHA/tree/toolchain and HEAD/dirty status of used library repositories."
+    },
+    {
+      "id": "T01-05",
+      "requirement": "Reproducible synthetic old binary/dataset without credentials; source/build manifests and smoke."
+    },
+    {
+      "id": "T01-06",
+      "requirement": "Executable parity assertions for every tool and negative inputs; preserve strict formats and exact opaque IDs, normalization, missing/null/bounds/Unicode/size semantics."
+    },
+    {
+      "id": "T01-07",
+      "requirement": "Comparison permits only characterized dynamic values; structural contract regressions fail."
+    },
+    {
+      "id": "T01-08",
+      "requirement": "Root tests/vet and HTTP/STDIO/resources/contracts/operations baseline suites with explicit commands/status; known failures distinguished."
+    },
+    {
+      "id": "T01-09",
+      "requirement": "Baseline measurement command, frozen sources for T02 compiler rebuild, no production behavior/persistence/third-party/sibling changes."
+    },
+    {
+      "id": "T01-10",
+      "requirement": "Evidence parent/source digest; independent completeness 100% and correctness PASS before sole exact-message commit."
+    }
+  ],
+  "group_formula": "100 * fully_verified_groups / 10; group passes only if every leaf passes",
+  "requirements": [
+    {
+      "id": "T01-01.01",
+      "group": "T01-01",
+      "requirement": "Runtime catalog names equal contracts.Names 1:1"
+    },
+    {
+      "id": "T01-01.02",
+      "group": "T01-01",
+      "requirement": "Descriptions frozen"
+    },
+    {
+      "id": "T01-01.03",
+      "group": "T01-01",
+      "requirement": "Input schemas and aliases frozen"
+    },
+    {
+      "id": "T01-01.04",
+      "group": "T01-01",
+      "requirement": "Output schemas and aliases frozen"
+    },
+    {
+      "id": "T01-01.05",
+      "group": "T01-01",
+      "requirement": "Annotations frozen"
+    },
+    {
+      "id": "T01-01.06",
+      "group": "T01-01",
+      "requirement": "Deterministic ordering frozen"
+    },
+    {
+      "id": "T01-02.01",
+      "group": "T01-02",
+      "requirement": "Static resources inventoried from runtime discovery"
+    },
+    {
+      "id": "T01-02.02",
+      "group": "T01-02",
+      "requirement": "Resource templates inventoried from runtime discovery"
+    },
+    {
+      "id": "T01-02.03",
+      "group": "T01-02",
+      "requirement": "Resource MIME and URI preserved"
+    },
+    {
+      "id": "T01-02.04",
+      "group": "T01-02",
+      "requirement": "Resource auth/current-policy and independent admission documented"
+    },
+    {
+      "id": "T01-02.05",
+      "group": "T01-02",
+      "requirement": "Resource byte budgets characterized"
+    },
+    {
+      "id": "T01-02.06",
+      "group": "T01-02",
+      "requirement": "HTTP Events profiles and extension methods inventoried"
+    },
+    {
+      "id": "T01-02.07",
+      "group": "T01-02",
+      "requirement": "STDIO bridge owns no collector/DB and advertises no Events"
+    },
+    {
+      "id": "T01-02.08",
+      "group": "T01-02",
+      "requirement": "Owner-only CLI commands and approval authority inventoried"
+    },
+    {
+      "id": "T01-03.01",
+      "group": "T01-03",
+      "requirement": "Every tool has transport"
+    },
+    {
+      "id": "T01-03.02",
+      "group": "T01-03",
+      "requirement": "Every tool has handler"
+    },
+    {
+      "id": "T01-03.03",
+      "group": "T01-03",
+      "requirement": "Every tool has permissions"
+    },
+    {
+      "id": "T01-03.04",
+      "group": "T01-03",
+      "requirement": "Every tool has effects"
+    },
+    {
+      "id": "T01-03.05",
+      "group": "T01-03",
+      "requirement": "Every tool has operation owner"
+    },
+    {
+      "id": "T01-03.06",
+      "group": "T01-03",
+      "requirement": "Every tool has error shape"
+    },
+    {
+      "id": "T01-03.07",
+      "group": "T01-03",
+      "requirement": "Every tool has full serialized byte limit"
+    },
+    {
+      "id": "T01-03.08",
+      "group": "T01-03",
+      "requirement": "Every tool has characterized normalization/defaults"
+    },
+    {
+      "id": "T01-03.09",
+      "group": "T01-03",
+      "requirement": "Every tool has inherited/explicit deadlines"
+    },
+    {
+      "id": "T01-04.01",
+      "group": "T01-04",
+      "requirement": "Baseline parent SHA and tree retained"
+    },
+    {
+      "id": "T01-04.02",
+      "group": "T01-04",
+      "requirement": "Actual toolchain and module dependency pins retained"
+    },
+    {
+      "id": "T01-04.03",
+      "group": "T01-04",
+      "requirement": "Used library HEAD values retained"
+    },
+    {
+      "id": "T01-04.04",
+      "group": "T01-04",
+      "requirement": "Used library initial dirty states retained"
+    },
+    {
+      "id": "T01-05.01",
+      "group": "T01-05",
+      "requirement": "Frozen source reproduces real service binary"
+    },
+    {
+      "id": "T01-05.02",
+      "group": "T01-05",
+      "requirement": "Frozen source reproduces synthetic STDIO fixture binary"
+    },
+    {
+      "id": "T01-05.03",
+      "group": "T01-05",
+      "requirement": "Versioned synthetic dataset and hash retained"
+    },
+    {
+      "id": "T01-05.04",
+      "group": "T01-05",
+      "requirement": "Frozen binary smoke runs without account/credentials"
+    },
+    {
+      "id": "T01-05.05",
+      "group": "T01-05",
+      "requirement": "Child process has bounded output/deadline/termination/Wait cleanup"
+    },
+    {
+      "id": "T01-06.01",
+      "group": "T01-06",
+      "requirement": "Every tool has executable catalog/wire parity assertions"
+    },
+    {
+      "id": "T01-06.02",
+      "group": "T01-06",
+      "requirement": "Every tool has exact negative-input result fixture"
+    },
+    {
+      "id": "T01-06.03",
+      "group": "T01-06",
+      "requirement": "UUID/RFC3339 strict formats characterized"
+    },
+    {
+      "id": "T01-06.04",
+      "group": "T01-06",
+      "requirement": "Opaque identifiers >2^53 characterized separately from RPC ID limitation"
+    },
+    {
+      "id": "T01-06.05",
+      "group": "T01-06",
+      "requirement": "Legacy integer-string normalization characterized"
+    },
+    {
+      "id": "T01-06.06",
+      "group": "T01-06",
+      "requirement": "Missing/null inputs characterized"
+    },
+    {
+      "id": "T01-06.07",
+      "group": "T01-06",
+      "requirement": "Explicit zero and bounds characterized"
+    },
+    {
+      "id": "T01-06.08",
+      "group": "T01-06",
+      "requirement": "Unicode UTF-8 characterized"
+    },
+    {
+      "id": "T01-06.09",
+      "group": "T01-06",
+      "requirement": "Input and response size boundaries characterized"
+    },
+    {
+      "id": "T01-07.01",
+      "group": "T01-07",
+      "requirement": "Canonical comparison preserves exact JSON numbers"
+    },
+    {
+      "id": "T01-07.02",
+      "group": "T01-07",
+      "requirement": "Canonical comparison preserves structures and array order"
+    },
+    {
+      "id": "T01-07.03",
+      "group": "T01-07",
+      "requirement": "Only specifically allowed dynamic timestamp can vary with format validation"
+    },
+    {
+      "id": "T01-07.04",
+      "group": "T01-07",
+      "requirement": "Original text and structured content both remain authoritative"
+    },
+    {
+      "id": "T01-07.05",
+      "group": "T01-07",
+      "requirement": "Negative control rejects text regression outside dynamic field"
+    },
+    {
+      "id": "T01-08.01",
+      "group": "T01-08",
+      "requirement": "Root go test ./... PASS"
+    },
+    {
+      "id": "T01-08.02",
+      "group": "T01-08",
+      "requirement": "Root go vet ./... PASS"
+    },
+    {
+      "id": "T01-08.03",
+      "group": "T01-08",
+      "requirement": "HTTP STDIO resources contracts operations suites executed"
+    },
+    {
+      "id": "T01-08.04",
+      "group": "T01-08",
+      "requirement": "Commands exit statuses versions candidate/log digests recorded"
+    },
+    {
+      "id": "T01-08.05",
+      "group": "T01-08",
+      "requirement": "Initial infrastructure failures distinguished from final results"
+    },
+    {
+      "id": "T01-09.01",
+      "group": "T01-09",
+      "requirement": "Runnable bounded baseline read/search/context measurement command retained"
+    },
+    {
+      "id": "T01-09.02",
+      "group": "T01-09",
+      "requirement": "Frozen sources can be rebuilt under T02 compiler"
+    },
+    {
+      "id": "T01-09.03",
+      "group": "T01-09",
+      "requirement": "No production behavior changes"
+    },
+    {
+      "id": "T01-09.04",
+      "group": "T01-09",
+      "requirement": "No persistence/schema changes"
+    },
+    {
+      "id": "T01-09.05",
+      "group": "T01-09",
+      "requirement": "No third_party/sibling checkout changes"
+    },
+    {
+      "id": "T01-09.06",
+      "group": "T01-09",
+      "requirement": "User-owned specification/review preserved"
+    },
+    {
+      "id": "T01-10.01",
+      "group": "T01-10",
+      "requirement": "Review candidate bound to parent/source digest"
+    },
+    {
+      "id": "T01-10.02",
+      "group": "T01-10",
+      "requirement": "Independent completeness review verifies all leaves"
+    },
+    {
+      "id": "T01-10.03",
+      "group": "T01-10",
+      "requirement": "Independent correctness review has zero unresolved findings"
+    },
+    {
+      "id": "T01-10.04",
+      "group": "T01-10",
+      "requirement": "Both review the final changed candidate"
+    },
+    {
+      "id": "T01-10.05",
+      "group": "T01-10",
+      "requirement": "Safe evidence logs durable in task commit"
+    },
+    {
+      "id": "T01-10.06",
+      "group": "T01-10",
+      "requirement": "Only one task commit with exact prescribed message after PASS"
+    }
+  ],
+  "required_total": 63,
+  "orchestration_leaf_semantics": "Commit-dependent leaves verify that exact candidate and safe logs are ready, reviewers PASS and sole commit is performed only after acceptance; SHA/tree postcheck recorded in following task, no impossible self-hash."
+}

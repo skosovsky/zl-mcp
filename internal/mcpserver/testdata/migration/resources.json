@@ -1,0 +1,33 @@
+{
+  "resultType": "complete",
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "zl-mcp",
+      "version": "0.1.0-dev"
+    }
+  },
+  "ttlMs": 0,
+  "cacheScope": "public",
+  "resources": [
+    {
+      "mimeType": "text/plain",
+      "name": "Zalo local corpus capabilities",
+      "uri": "zalo://capabilities"
+    },
+    {
+      "mimeType": "application/json",
+      "name": "Contact catalogue source diagnostics",
+      "uri": "zalo://catalog/diagnostics"
+    },
+    {
+      "mimeType": "application/json",
+      "name": "Conversation collection status",
+      "uri": "zalo://collection"
+    },
+    {
+      "mimeType": "application/json",
+      "name": "MCP Events delivery diagnostics",
+      "uri": "zalo://events/diagnostics"
+    }
+  ]
+}

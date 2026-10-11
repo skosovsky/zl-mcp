@@ -1,0 +1,75 @@
+{
+  "repositories": {
+    "zl-mcp": {
+      "path": "/workspace/zl-mcp",
+      "head": {
+        "exit_status": 0,
+        "stdout": "8d913c48b797f54f277ffc1106e6bf28be9e697d\n",
+        "stderr": ""
+      },
+      "dirty": {
+        "exit_status": 0,
+        "stdout": "?? docs/mcp-migration/\n?? docs/task-mcp-architecture-ai-libs.md\n?? internal/mcpserver/migration_baseline_test.go\n",
+        "stderr": ""
+      }
+    },
+    "toolsy": {
+      "path": "/home/LOCAL_USER/Library/Mobile Documents/com~apple~CloudDocs/Загрузки/Projects/ai/toolsy",
+      "head": {
+        "exit_status": 0,
+        "stdout": "817f3d65809fc363159a93dbea5f134ac5ea1540\n",
+        "stderr": ""
+      },
+      "dirty": {
+        "exit_status": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    "metry": {
+      "path": "/home/LOCAL_USER/Library/Mobile Documents/com~apple~CloudDocs/Загрузки/Projects/ai/metry",
+      "head": {
+        "exit_status": 0,
+        "stdout": "215af3ee33bcc4b58f0b532da1b1958c3990bb8a\n",
+        "stderr": ""
+      },
+      "dirty": {
+        "exit_status": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    "evaly": {
+      "path": "/home/LOCAL_USER/Library/Mobile Documents/com~apple~CloudDocs/Загрузки/Projects/ai/evaly",
+      "head": {
+        "exit_status": 0,
+        "stdout": "ca98aafa445eb6ab82f1825941aa4b2cb82ee63d\n",
+        "stderr": ""
+      },
+      "dirty": {
+        "exit_status": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    "zcago": {
+      "path": "/workspace/zl-mcp/third_party/zcago",
+      "head": {
+        "exit_status": 0,
+        "stdout": "8d913c48b797f54f277ffc1106e6bf28be9e697d\n",
+        "stderr": ""
+      },
+      "dirty": {
+        "exit_status": 0,
+        "stdout": "?? docs/mcp-migration/\n?? docs/task-mcp-architecture-ai-libs.md\n?? internal/mcpserver/migration_baseline_test.go\n",
+        "stderr": ""
+      }
+    }
+  },
+  "spec_sha256": "ee81265c8f6b9fee5c77e0a036aa234faa60dd4e2e3b9ad79f86e285538f08d5",
+  "baseline_tree": {
+    "exit_status": 0,
+    "stdout": "a5d81a45c86eb4959954001c9c6877315e5d1cc0\n",
+    "stderr": ""
+  }
+}

@@ -1,0 +1,2 @@
+{"time":"2026-10-11T20:27:58.878547+07:00","level":"INFO","msg":"mcp_call","tool":"zalo_search_messages","principal":501,"correlation_id":"60983f5e-76ae-4b9b-89d4-32d04515ac12","code":"OK","duration_ms":1}
+{"time":"2026-10-11T20:27:58.896356+07:00","level":"INFO","msg":"synthetic_eval_finished","join_calls":0,"cleanup_ok":true}

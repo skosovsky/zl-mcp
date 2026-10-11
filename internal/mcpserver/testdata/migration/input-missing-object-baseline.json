@@ -1,0 +1,23 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"authenticated\":false,\"collector_state\":\"stopped\",\"coverage_summary\":{\"group_count\":2,\"groups_with_known_gaps\":0,\"history_complete\":false},\"enabled_group_count\":2,\"last_connected_at\":null,\"last_error\":null,\"last_event_at\":null,\"last_persisted_at\":null,\"stored_message_count\":0}"
+    }
+  ],
+  "structuredContent": {
+    "authenticated": false,
+    "collector_state": "stopped",
+    "coverage_summary": {
+      "group_count": 2,
+      "groups_with_known_gaps": 0,
+      "history_complete": false
+    },
+    "enabled_group_count": 2,
+    "last_connected_at": null,
+    "last_error": null,
+    "last_event_at": null,
+    "last_persisted_at": null,
+    "stored_message_count": 0
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "resultType": "complete",
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "zl-mcp",
+      "version": "0.1.0-dev"
+    }
+  },
+  "ttlMs": 0,
+  "cacheScope": "public",
+  "resourceTemplates": [
+    {
+      "mimeType": "application/json",
+      "name": "Full local archive record",
+      "uriTemplate": "zalo://archives/{token}"
+    },
+    {
+      "mimeType": "text/plain",
+      "name": "Local conversation message",
+      "uriTemplate": "zalo://conversations/{conversation_type}/{conversation_id}/messages/{message_id}"
+    },
+    {
+      "mimeType": "text/plain",
+      "name": "Local Zalo message",
+      "uriTemplate": "zalo://groups/{group_id}/messages/{message_id}"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "candidate_source_digest": "0dc5471d1b8a4638f96564703b11c229b363774ac4c185c9d7ae7bc66ff85bb9",
+  "commands": [
+    {
+      "id": "root-test",
+      "command": "GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test ./... -count=1",
+      "exit_status": 0,
+      "log": "root-test.log",
+      "log_sha256": "2d372c06414907fa204a1272a6c81a887ab9600f690003d2e6fe5adab244bc84",
+      "status": "PASS"
+    },
+    {
+      "id": "root-vet",
+      "command": "GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go vet ./...",
+      "exit_status": 0,
+      "log": "root-vet.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "PASS"
+    },
+    {
+      "id": "catalog-freeze",
+      "command": "ZL_MIGRATION_FREEZE=1 GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test ./internal/mcpserver -run TestMigrationCatalogBaseline -count=1",
+      "exit_status": 0,
+      "log": "catalog-freeze.log",
+      "log_sha256": "7d1190da48fedd0ae07a64d1f14fc9cf7ddf9e8ef1da93f858a741e4623f34dc",
+      "status": "PASS"
+    },
+    {
+      "id": "input-freeze",
+      "command": "ZL_MIGRATION_FREEZE=1 GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test ./internal/mcpserver -run TestMigrationInputCharacterization -count=1",
+      "exit_status": 0,
+      "log": "input-freeze.log",
+      "log_sha256": "9abf12408dff62bc8734711d68a8f66596d9269a0fde8ef7fb2ef961f1e8739d",
+      "status": "PASS"
+    },
+    {
+      "id": "wire-freeze",
+      "command": "ZL_MIGRATION_FREEZE=1 GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test ./internal/mcpserver -run TestMigrationJSONRPCIdentityBaseline -count=1",
+      "exit_status": 0,
+      "log": "wire-freeze.log",
+      "log_sha256": "3d0c0b3728dbb9dfb9c591019242d5f4ad86121bc65c52f434ee7726cc40d118",
+      "status": "PASS"
+    },
+    {
+      "id": "frozen-build-smoke",
+      "command": "GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache python3 scripts/mcp-migration/baseline.py --output /tmp/zl-t01-frozen-baseline",
+      "exit_status": 0,
+      "log": "frozen-build-smoke.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "PASS"
+    }
+  ],
+  "initial_infrastructure_failures": [
+    {
+      "command": "go test ./... / go vet ./... with default caches",
+      "exit_status": 1,
+      "reason": "sandbox cache writes denied; superseded by isolated writable-cache successful rerun"
+    },
+    {
+      "command": "GOTOOLCHAIN=go1.26.5 go version",
+      "exit_status": 1,
+      "reason": "default module cache lock write denied; baseline built with already installed Go 1.27.1 and source directive unchanged"
+    }
+  ],
+  "known_behavior_limitations": [
+    "SDK v1.8.0 numeric JSON-RPC IDs >2^53 round; string IDs exact; null/missing tools/list id produces HTTP400 plaintext"
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN"
+}

@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "zl-mcp",
+      "version": "0.1.0-dev"
+    }
+  },
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"code\":\"INVALID_ARGUMENT\",\"message\":\"Arguments do not match the tool schema; check types, required fields, ranges and RFC3339 dates.\",\"retryable\":false,\"next_action\":{\"tool\":null,\"arguments\":null,\"instruction\":\"Correct the arguments using the tool input schema.\"},\"details\":{}}"
+    }
+  ],
+  "isError": true,
+  "resultType": "complete"
+}

@@ -1,0 +1,19 @@
+ok  	github.com/skosovsky/zl-mcp/cmd/zl-mcp	0.541s
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval-fixture	[no test files]
+ok  	github.com/skosovsky/zl-mcp/docs/contracts	0.440s
+ok  	github.com/skosovsky/zl-mcp/internal/collector	7.602s
+ok  	github.com/skosovsky/zl-mcp/internal/config	0.448s
+?   	github.com/skosovsky/zl-mcp/internal/control	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/domain	0.384s
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	1.086s
+ok  	github.com/skosovsky/zl-mcp/internal/events	1.283s
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	2.475s
+ok  	github.com/skosovsky/zl-mcp/internal/local	0.397s
+ok  	github.com/skosovsky/zl-mcp/internal/logging	0.489s
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	10.835s
+ok  	github.com/skosovsky/zl-mcp/internal/messaging	1.295s
+ok  	github.com/skosovsky/zl-mcp/internal/mobilebackup	14.181s
+ok  	github.com/skosovsky/zl-mcp/internal/netpolicy	0.408s
+ok  	github.com/skosovsky/zl-mcp/internal/service	15.404s
+ok  	github.com/skosovsky/zl-mcp/internal/storage	14.100s
+ok  	github.com/skosovsky/zl-mcp/internal/zalo	2.032s

@@ -1,0 +1,808 @@
+{
+  "reviewer": "/root/t01_completeness",
+  "role": "independent completeness",
+  "parent_sha": "8d913c48b797f54f277ffc1106e6bf28be9e697d",
+  "source_digest_sha256": "26b4208b187426f5073dc4029c6384d057ef1562fb94d66c6834cd057e6a25b6",
+  "verified_pass": 63,
+  "required_total": 63,
+  "completeness_percent": 100,
+  "groups_pass": 10,
+  "groups_total": 10,
+  "groups_percent": 100,
+  "verdict": "PASS",
+  "commit_dependent_semantics": "ready-for-sole-commit; main agent performs SHA/tree/log inclusion postcheck",
+  "independent_checks": [
+    "migration Go tests PASS 4.531s",
+    "Python controls 2/2 PASS",
+    "root go test ./... -count=1 PASS",
+    "root go vet ./... PASS",
+    "7 command log SHA hashes match"
+  ],
+  "leaves": [
+    {
+      "id": "T01-01.01",
+      "group": "T01-01",
+      "requirement": "Runtime catalog names equal contracts.Names 1:1",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/testdata/migration/tools.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-01.02",
+      "group": "T01-01",
+      "requirement": "Descriptions frozen",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/testdata/migration/tools.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-01.03",
+      "group": "T01-01",
+      "requirement": "Input schemas and aliases frozen",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/testdata/migration/tools.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-01.04",
+      "group": "T01-01",
+      "requirement": "Output schemas and aliases frozen",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/testdata/migration/tools.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-01.05",
+      "group": "T01-01",
+      "requirement": "Annotations frozen",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/testdata/migration/tools.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-01.06",
+      "group": "T01-01",
+      "requirement": "Deterministic ordering frozen",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/testdata/migration/tools.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-02.01",
+      "group": "T01-02",
+      "requirement": "Static resources inventoried from runtime discovery",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/testdata/migration/resources.json",
+        "internal/mcpserver/testdata/migration/resource-templates.json",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-02.02",
+      "group": "T01-02",
+      "requirement": "Resource templates inventoried from runtime discovery",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/testdata/migration/resources.json",
+        "internal/mcpserver/testdata/migration/resource-templates.json",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-02.03",
+      "group": "T01-02",
+      "requirement": "Resource MIME and URI preserved",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/testdata/migration/resources.json",
+        "internal/mcpserver/testdata/migration/resource-templates.json",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-02.04",
+      "group": "T01-02",
+      "requirement": "Resource auth/current-policy and independent admission documented",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/testdata/migration/resources.json",
+        "internal/mcpserver/testdata/migration/resource-templates.json",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-02.05",
+      "group": "T01-02",
+      "requirement": "Resource byte budgets characterized",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/testdata/migration/resources.json",
+        "internal/mcpserver/testdata/migration/resource-templates.json",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-02.06",
+      "group": "T01-02",
+      "requirement": "HTTP Events profiles and extension methods inventoried",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/testdata/migration/resources.json",
+        "internal/mcpserver/testdata/migration/resource-templates.json",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-02.07",
+      "group": "T01-02",
+      "requirement": "STDIO bridge owns no collector/DB and advertises no Events",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/testdata/migration/resources.json",
+        "internal/mcpserver/testdata/migration/resource-templates.json",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-02.08",
+      "group": "T01-02",
+      "requirement": "Owner-only CLI commands and approval authority inventoried",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/testdata/migration/resources.json",
+        "internal/mcpserver/testdata/migration/resource-templates.json",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-03.01",
+      "group": "T01-03",
+      "requirement": "Every tool has transport",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/migration_baseline_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-03.02",
+      "group": "T01-03",
+      "requirement": "Every tool has handler",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/migration_baseline_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-03.03",
+      "group": "T01-03",
+      "requirement": "Every tool has permissions",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/migration_baseline_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-03.04",
+      "group": "T01-03",
+      "requirement": "Every tool has effects",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/migration_baseline_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-03.05",
+      "group": "T01-03",
+      "requirement": "Every tool has operation owner",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/migration_baseline_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-03.06",
+      "group": "T01-03",
+      "requirement": "Every tool has error shape",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/migration_baseline_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-03.07",
+      "group": "T01-03",
+      "requirement": "Every tool has full serialized byte limit",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/migration_baseline_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-03.08",
+      "group": "T01-03",
+      "requirement": "Every tool has characterized normalization/defaults",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/migration_baseline_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-03.09",
+      "group": "T01-03",
+      "requirement": "Every tool has inherited/explicit deadlines",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/manifest.json",
+        "internal/mcpserver/migration_baseline_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-04.01",
+      "group": "T01-04",
+      "requirement": "Baseline parent SHA and tree retained",
+      "status": "PASS",
+      "evidence": [
+        "initial-state.json",
+        "pins.json",
+        "build-manifest.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-04.02",
+      "group": "T01-04",
+      "requirement": "Actual toolchain and module dependency pins retained",
+      "status": "PASS",
+      "evidence": [
+        "initial-state.json",
+        "pins.json",
+        "build-manifest.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-04.03",
+      "group": "T01-04",
+      "requirement": "Used library HEAD values retained",
+      "status": "PASS",
+      "evidence": [
+        "initial-state.json",
+        "pins.json",
+        "build-manifest.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-04.04",
+      "group": "T01-04",
+      "requirement": "Used library initial dirty states retained",
+      "status": "PASS",
+      "evidence": [
+        "initial-state.json",
+        "pins.json",
+        "build-manifest.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-05.01",
+      "group": "T01-05",
+      "requirement": "Frozen source reproduces real service binary",
+      "status": "PASS",
+      "evidence": [
+        "scripts/mcp-migration/baseline.py",
+        "scripts/mcp-migration/test_baseline.py",
+        "build-manifest.json",
+        "smoke.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-05.02",
+      "group": "T01-05",
+      "requirement": "Frozen source reproduces synthetic STDIO fixture binary",
+      "status": "PASS",
+      "evidence": [
+        "scripts/mcp-migration/baseline.py",
+        "scripts/mcp-migration/test_baseline.py",
+        "build-manifest.json",
+        "smoke.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-05.03",
+      "group": "T01-05",
+      "requirement": "Versioned synthetic dataset and hash retained",
+      "status": "PASS",
+      "evidence": [
+        "scripts/mcp-migration/baseline.py",
+        "scripts/mcp-migration/test_baseline.py",
+        "build-manifest.json",
+        "smoke.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-05.04",
+      "group": "T01-05",
+      "requirement": "Frozen binary smoke runs without account/credentials",
+      "status": "PASS",
+      "evidence": [
+        "scripts/mcp-migration/baseline.py",
+        "scripts/mcp-migration/test_baseline.py",
+        "build-manifest.json",
+        "smoke.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-05.05",
+      "group": "T01-05",
+      "requirement": "Child process has bounded output/deadline/termination/Wait cleanup",
+      "status": "PASS",
+      "evidence": [
+        "scripts/mcp-migration/baseline.py",
+        "scripts/mcp-migration/test_baseline.py",
+        "build-manifest.json",
+        "smoke.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-06.01",
+      "group": "T01-06",
+      "requirement": "Every tool has executable catalog/wire parity assertions",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go",
+        "internal/mcpserver/migration_wire_test.go",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-06.02",
+      "group": "T01-06",
+      "requirement": "Every tool has exact negative-input result fixture",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go",
+        "internal/mcpserver/migration_wire_test.go",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-06.03",
+      "group": "T01-06",
+      "requirement": "UUID/RFC3339 strict formats characterized",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go",
+        "internal/mcpserver/migration_wire_test.go",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-06.04",
+      "group": "T01-06",
+      "requirement": "Opaque identifiers >2^53 characterized separately from RPC ID limitation",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go",
+        "internal/mcpserver/migration_wire_test.go",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-06.05",
+      "group": "T01-06",
+      "requirement": "Legacy integer-string normalization characterized",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go",
+        "internal/mcpserver/migration_wire_test.go",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-06.06",
+      "group": "T01-06",
+      "requirement": "Missing/null inputs characterized",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go",
+        "internal/mcpserver/migration_wire_test.go",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-06.07",
+      "group": "T01-06",
+      "requirement": "Explicit zero and bounds characterized",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go",
+        "internal/mcpserver/migration_wire_test.go",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-06.08",
+      "group": "T01-06",
+      "requirement": "Unicode UTF-8 characterized",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go",
+        "internal/mcpserver/migration_wire_test.go",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-06.09",
+      "group": "T01-06",
+      "requirement": "Input and response size boundaries characterized",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go",
+        "internal/mcpserver/migration_wire_test.go",
+        "coverage-index.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-07.01",
+      "group": "T01-07",
+      "requirement": "Canonical comparison preserves exact JSON numbers",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-07.02",
+      "group": "T01-07",
+      "requirement": "Canonical comparison preserves structures and array order",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-07.03",
+      "group": "T01-07",
+      "requirement": "Only specifically allowed dynamic timestamp can vary with format validation",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-07.04",
+      "group": "T01-07",
+      "requirement": "Original text and structured content both remain authoritative",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-07.05",
+      "group": "T01-07",
+      "requirement": "Negative control rejects text regression outside dynamic field",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/migration_baseline_test.go",
+        "internal/mcpserver/migration_inputs_test.go"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-08.01",
+      "group": "T01-08",
+      "requirement": "Root go test ./... PASS",
+      "status": "PASS",
+      "evidence": [
+        "commands.json",
+        "coverage-index.json",
+        "root-test.log",
+        "root-vet.log"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-08.02",
+      "group": "T01-08",
+      "requirement": "Root go vet ./... PASS",
+      "status": "PASS",
+      "evidence": [
+        "commands.json",
+        "coverage-index.json",
+        "root-test.log",
+        "root-vet.log"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-08.03",
+      "group": "T01-08",
+      "requirement": "HTTP STDIO resources contracts operations suites executed",
+      "status": "PASS",
+      "evidence": [
+        "commands.json",
+        "coverage-index.json",
+        "root-test.log",
+        "root-vet.log"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-08.04",
+      "group": "T01-08",
+      "requirement": "Commands exit statuses versions candidate/log digests recorded",
+      "status": "PASS",
+      "evidence": [
+        "commands.json",
+        "coverage-index.json",
+        "root-test.log",
+        "root-vet.log"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-08.05",
+      "group": "T01-08",
+      "requirement": "Initial infrastructure failures distinguished from final results",
+      "status": "PASS",
+      "evidence": [
+        "commands.json",
+        "coverage-index.json",
+        "root-test.log",
+        "root-vet.log"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-09.01",
+      "group": "T01-09",
+      "requirement": "Runnable bounded baseline read/search/context measurement command retained",
+      "status": "PASS",
+      "evidence": [
+        "scripts/mcp-migration/baseline.py",
+        "build-manifest.json",
+        "candidate.json",
+        "initial-state.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-09.02",
+      "group": "T01-09",
+      "requirement": "Frozen sources can be rebuilt under T02 compiler",
+      "status": "PASS",
+      "evidence": [
+        "scripts/mcp-migration/baseline.py",
+        "build-manifest.json",
+        "candidate.json",
+        "initial-state.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-09.03",
+      "group": "T01-09",
+      "requirement": "No production behavior changes",
+      "status": "PASS",
+      "evidence": [
+        "scripts/mcp-migration/baseline.py",
+        "build-manifest.json",
+        "candidate.json",
+        "initial-state.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-09.04",
+      "group": "T01-09",
+      "requirement": "No persistence/schema changes",
+      "status": "PASS",
+      "evidence": [
+        "scripts/mcp-migration/baseline.py",
+        "build-manifest.json",
+        "candidate.json",
+        "initial-state.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-09.05",
+      "group": "T01-09",
+      "requirement": "No third_party/sibling checkout changes",
+      "status": "PASS",
+      "evidence": [
+        "scripts/mcp-migration/baseline.py",
+        "build-manifest.json",
+        "candidate.json",
+        "initial-state.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-09.06",
+      "group": "T01-09",
+      "requirement": "User-owned specification/review preserved",
+      "status": "PASS",
+      "evidence": [
+        "scripts/mcp-migration/baseline.py",
+        "build-manifest.json",
+        "candidate.json",
+        "initial-state.json"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-10.01",
+      "group": "T01-10",
+      "requirement": "Review candidate bound to parent/source digest",
+      "status": "PASS",
+      "evidence": [
+        "candidate.json",
+        "review-A.json",
+        "review-B.md",
+        "commands.json",
+        "task-report.md"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-10.02",
+      "group": "T01-10",
+      "requirement": "Independent completeness review verifies all leaves",
+      "status": "PASS",
+      "evidence": [
+        "candidate.json",
+        "review-A.json",
+        "review-B.md",
+        "commands.json",
+        "task-report.md"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-10.03",
+      "group": "T01-10",
+      "requirement": "Independent correctness review has zero unresolved findings",
+      "status": "PASS",
+      "evidence": [
+        "candidate.json",
+        "review-A.json",
+        "review-B.md",
+        "commands.json",
+        "task-report.md"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-10.04",
+      "group": "T01-10",
+      "requirement": "Both review the final changed candidate",
+      "status": "PASS",
+      "evidence": [
+        "candidate.json",
+        "review-A.json",
+        "review-B.md",
+        "commands.json",
+        "task-report.md"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-10.05",
+      "group": "T01-10",
+      "requirement": "Safe evidence logs durable in task commit",
+      "status": "PASS",
+      "evidence": [
+        "candidate.json",
+        "review-A.json",
+        "review-B.md",
+        "commands.json",
+        "task-report.md"
+      ],
+      "missing_work": null
+    },
+    {
+      "id": "T01-10.06",
+      "group": "T01-10",
+      "requirement": "Only one task commit with exact prescribed message after PASS",
+      "status": "PASS",
+      "evidence": [
+        "candidate.json",
+        "review-A.json",
+        "review-B.md",
+        "commands.json",
+        "task-report.md"
+      ],
+      "missing_work": null
+    }
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "performance_acceptance": "NOT_YET_T03_T09; timing smoke only",
+  "unresolved_findings": []
+}

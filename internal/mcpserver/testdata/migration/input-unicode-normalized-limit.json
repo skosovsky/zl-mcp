@@ -1,0 +1,21 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"coverage\":[],\"coverage_summary\":{\"group_count\":2,\"groups_with_known_gaps\":0,\"history_complete\":false},\"empty_reason\":\"no_collected_data\",\"has_more\":false,\"messages\":[],\"next_cursor\":null,\"snapshot_at\":\"2026-10-01T00:00:00Z\"}"
+    }
+  ],
+  "structuredContent": {
+    "coverage": [],
+    "coverage_summary": {
+      "group_count": 2,
+      "groups_with_known_gaps": 0,
+      "history_complete": false
+    },
+    "empty_reason": "no_collected_data",
+    "has_more": false,
+    "messages": [],
+    "next_cursor": null,
+    "snapshot_at": "2026-10-01T00:00:00Z"
+  }
+}

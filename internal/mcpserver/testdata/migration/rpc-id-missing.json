@@ -1,0 +1,8 @@
+{
+  "error": null,
+  "has_id": false,
+  "has_result": false,
+  "id": null,
+  "non_json_body": "invalid request: missing id for \"tools/list\"\n",
+  "status": 400
+}

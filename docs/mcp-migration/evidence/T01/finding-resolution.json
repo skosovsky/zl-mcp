@@ -1,0 +1,22 @@
+{
+  "A-measurement": {
+    "status": "CLOSED",
+    "fix": "baseline.py --measure, read/search/context warmup and 10 timed calls; no full performance PASS claimed"
+  },
+  "A-leaves": {
+    "status": "CLOSED",
+    "fix": "requirements revision2: 63 additive atomic leaves, original ten groups retained"
+  },
+  "A-durable-logs": {
+    "status": "CLOSED",
+    "fix": "explicit force-add safe evidence logs at sole T01 commit"
+  },
+  "B-watchdog": {
+    "status": "CLOSED",
+    "fix": "BoundedJSONReader nonblocking chunks, combined stdout/stderr cap, case deadline, partial-line and stderr-flood negative tests"
+  },
+  "B-projection": {
+    "status": "CLOSED",
+    "fix": "compare both original JSON payloads before independently normalizing snapshot_at; negative coverage-loss test"
+  }
+}

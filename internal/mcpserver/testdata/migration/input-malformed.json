@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"code\":\"INVALID_ARGUMENT\",\"message\":\"Arguments must be a JSON object.\",\"retryable\":false,\"next_action\":{\"tool\":null,\"arguments\":null,\"instruction\":\"Correct the arguments using the tool input schema.\"},\"details\":{}}"
+    }
+  ],
+  "isError": true
+}

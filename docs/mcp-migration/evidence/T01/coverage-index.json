@@ -1,0 +1,25 @@
+{
+  "scope": "T01 compatibility characterization; T03 behavioral paired eval not yet accepted",
+  "index": {
+    "discovery_all_tools": "internal/mcpserver/migration_baseline_test.go: TestMigrationCatalogBaseline",
+    "negative_all_tools": "internal/mcpserver/migration_baseline_test.go: tool subtests and exact invalid result snapshots",
+    "input_variants": "internal/mcpserver/migration_inputs_test.go: TestMigrationInputCharacterization",
+    "json_rpc_identity": "internal/mcpserver/migration_wire_test.go: TestMigrationJSONRPCIdentityBaseline",
+    "http_auth_headers_protocol": "internal/mcpserver/http_test.go: TestHTTPRejectsUnauthorizedOriginsAndProtocolMismatch, TestEventsHTTPTransportGuards",
+    "stdio_binary": "internal/mcpserver/stdio_test.go: TestActualBinaryStdioLifecycle",
+    "search_context_resources": "internal/mcpserver/server_test.go: TestMCPDiscoverySearchContextAndResourceAuthorization; conversations_test.go: TestConversationMCPSearchContextCatalogueAndFullText",
+    "response_budget_pagination": "internal/mcpserver/pagination_test.go: TestLargeWirePagesKeepAllResultsAndSearchSnapshot; budget_error_test.go: TestOversizedRecordAndCoverageReturnActionableErrors",
+    "archive": "internal/mcpserver/archive_routing_test.go: TestArchiveRequestsNeverFallBackToCorpus; internal/service/archive_messages_test.go; account_archive_test.go",
+    "send": "internal/service/sending_test.go: TestServiceSendAndReplyUseCollectorSessionAndPersistAcrossRestart; internal/messaging manager suites",
+    "membership": "internal/collector join suites; internal/evalfixture/fixture_test.go",
+    "history": "internal/service/history_test.go: TestHTTPHistoryToolsUseExistingCollectorSession; internal/historyimport and storage/history_operations_test.go",
+    "events": "internal/mcpserver/http_test.go: TestHTTPEventsLifecycleWithSignedTLSReceiverAndFullText; conversation_events_http_test.go; internal/service/events_restart_test.go",
+    "diagnostics": "internal/mcpserver/diagnostics_test.go: TestDeliveryDiagnosticsResourceThroughHTTP; discovery_logging_test.go",
+    "schemas": "docs/contracts/*_test.go: compile/strict format/bounds/alias and ambiguity suites",
+    "synthetic_binary_smoke": "scripts/mcp-migration/baseline.py; evidence/T01/build-manifest.json and smoke.json"
+  },
+  "execution": "all listed suites included in root go test ./... -count=1, status recorded in commands.json",
+  "historical_model_evals": "not used as baseline",
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN"
+}
