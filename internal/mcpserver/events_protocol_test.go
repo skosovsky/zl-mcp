@@ -55,5 +55,5 @@ func migrationHTTP(t *testing.T, store *storage.Store, dir, token string) (*HTTP
 	if err != nil {
 		return nil, err
 	}
-	return NewHTTP(store, dir, token, migrationReadPorts(store, control.New(dir)), protocol)
+	return NewHTTP(token, migrationReadPorts(store, control.New(dir)), protocol)
 }

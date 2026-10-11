@@ -115,7 +115,7 @@ func testArchiveSDKResource(t *testing.T, owner *membershipPort, token, id strin
 	t.Helper()
 	// Arrange: actual MCP SDK transport wired to the offline service owner.
 	ctx := context.Background()
-	server, err := mcpserver.NewWithControl(owner.store, owner, mcpReadPorts(owner.store, owner))
+	server, err := mcpserver.New(mcpReadPorts(owner.store, owner))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,7 +199,7 @@ func testArchiveRecalledResources(t *testing.T, owner *membershipPort, sourceID 
 	if err != nil {
 		t.Fatal(err)
 	}
-	server, err := mcpserver.NewWithControl(owner.store, owner, mcpReadPorts(owner.store, owner))
+	server, err := mcpserver.New(mcpReadPorts(owner.store, owner))
 	if err != nil {
 		t.Fatal(err)
 	}

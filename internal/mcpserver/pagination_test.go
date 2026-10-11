@@ -38,7 +38,7 @@ func TestLargeWirePagesKeepAllResultsAndSearchSnapshot(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	server, err := New(store, dir, migrationReadPorts(store))
+	server, err := New(migrationReadPorts(store))
 	if err != nil {
 		t.Fatal(err)
 	}

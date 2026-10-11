@@ -43,7 +43,10 @@ type ReadPort interface {
 	JoinStatus(context.Context, string) (JoinStatus, error)
 }
 
-type Handler struct{ Reads ReadPort }
+type Handler struct {
+	Reads    ReadPort
+	Commands CommandPort
+}
 
 func (h *Handler) Inspect(ctx context.Context, inviteURL string) (Invite, error) {
 	ctx, cancel := context.WithTimeout(ctx, 6*time.Second)

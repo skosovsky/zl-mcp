@@ -16,8 +16,6 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/skosovsky/zl-mcp/internal/control"
-	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
 type HTTPService struct {
@@ -27,15 +25,11 @@ type HTTPService struct {
 	principal string
 }
 
-func NewHTTP(store *storage.Store, dir, token string, reads ReadPorts, protocol EventsProtocolPort) (*HTTPService, error) {
-	return NewHTTPWithControl(store, dir, token, control.New(dir), reads, protocol)
-}
-
-func NewHTTPWithControl(store *storage.Store, dir, token string, backend ControlPort, reads ReadPorts, protocol EventsProtocolPort) (*HTTPService, error) {
+func NewHTTP(token string, reads ReadPorts, protocol EventsProtocolPort) (*HTTPService, error) {
 	if len(token) < 32 {
 		return nil, errors.New("MCP bearer token must contain at least 32 bytes")
 	}
-	server, err := NewWithControl(store, backend, reads)
+	server, err := New(reads)
 	if err != nil {
 		return nil, err
 	}

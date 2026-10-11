@@ -1,0 +1,4 @@
+=== RUN   TestScopedCommandOwnerSurvivesAbruptSubprocessCrashWithoutResend
+--- PASS: TestScopedCommandOwnerSurvivesAbruptSubprocessCrashWithoutResend (1.75s)
+PASS
+ok  	github.com/skosovsky/zl-mcp/internal/messaging	3.452s

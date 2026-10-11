@@ -1,0 +1,42 @@
+{
+  "findings": [
+    {
+      "id": "MCP-SQL-COMPILE",
+      "status": "FIXED",
+      "initial": "transport-command-initial-tests.log",
+      "fix": "Removed SQL wire branch; safe original NOT_FOUND conversion in operations/store adapters",
+      "verified": "transport-command-tests-v2.log/root v2"
+    },
+    {
+      "id": "SERVICE-COMPOSITION-IMPORTS",
+      "status": "FIXED",
+      "initial": "command-initial-architecture.json",
+      "fix": "Exact service control and signal/syscall composition edges admitted; all8 temporary exceptions removed",
+      "verified": "command-architecture-v4.json"
+    },
+    {
+      "id": "TEMP-ARCH-BINARY",
+      "status": "RECOVERED_INFRASTRUCTURE",
+      "initial": "command-architecture-v2.log",
+      "fix": "Restored pinned arch-go/v2v2.1.2 without dependency/threshold change",
+      "verified": "arch-tool-restore.log and command-architecture-v4.json"
+    },
+    {
+      "id": "T07-C01",
+      "requirement": "T07-41",
+      "status": "CLOSED_BY_BOTH_INDEPENDENT_REVIEWERS",
+      "cause": "Existing restart fixtures did not abruptly terminate/reopen a durable owner in distinct OS processes",
+      "fix": "Native messaging owner through scoped runtime: real subprocess SIGKILL after claim/upstream effect, recovery in second process, independent append+fsync counter, unknown/interrupted preserved, identical UUID no resend and conflicting request rejected",
+      "verification": "subprocess-restart-v2.log, command-messaging-race-v3.log, root/vet v3",
+      "review_candidate": "61e9a59b4a9f54d71ff97fb8bfa9045125b878b92e14c43a0428bfd00fba7402"
+    },
+    {
+      "id": "SUBPROCESS-HARNESS-RECOVERY",
+      "status": "FIXED",
+      "initial": "subprocess-restart-initial.log",
+      "cause": "Fixture omitted service startup account lock and RecoverInterruptedSends",
+      "fix": "Uses same native account lock and recovery before runtime calls; no production changes",
+      "verified": "subprocess-restart-v2.log"
+    }
+  ]
+}

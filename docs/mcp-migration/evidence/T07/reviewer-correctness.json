@@ -1,0 +1,98 @@
+{
+  "task": "T07",
+  "reviewer": "independent_adversarial_correctness",
+  "parent_sha": "a0ed93568dd3dae388e4bc65142becceb5085890",
+  "source_digest_sha256": "61e9a59b4a9f54d71ff97fb8bfa9045125b878b92e14c43a0428bfd00fba7402",
+  "status": "PASS",
+  "findings": [],
+  "verified_checks": [
+    {
+      "check": "candidate integrity",
+      "status": "PASS",
+      "detail": "Independently SHA256-checked all922 candidate files and349 indexed artifacts against current filesystem; no mismatch."
+    },
+    {
+      "check": "five typed command capabilities and full22 registry",
+      "status": "PASS",
+      "detail": "Reviewed actual HEAD diff and current runtime construction/dispatch. Consumer-owned typed send/join/import/cancel/ACK requests and results; fixed borrowed operations adapter names; ACK delegates existing storage journal. Complete production composition requires command ports. No command fallback remains in MCP."
+    },
+    {
+      "check": "authorization and execution boundaries",
+      "status": "PASS",
+      "detail": "Inspected binder/executable schema, private Binding ownership, trusted account/principal/current policy validation before dispatch and native owner rechecks. Adversarial recorder tests reject zero/foreign/stale/malformed scope before effects; exactly one native dispatch with original domain failure, original35s/6s timeout and omitted history defaults preserved. ACK uses current host principal; existing journal checks grant/generation and ordered receipt transaction."
+    },
+    {
+      "check": "ownership/persistence/public contracts",
+      "status": "PASS",
+      "detail": "Existing send/join/history workers, storage ledgers and transactions unchanged. Native managers still validate quote authority, UUID conflicts, cancellation, permission and approval binding. No retry/cache/operation pipeline or new ledger. Public contract files and third_party unchanged. SDK annotations preserved; commands are mutating and idempotent in registry. CLI moved into service with same interactive approval and native control path; mobile ledger implementation byte-identical apart from package declaration."
+    },
+    {
+      "check": "independent uncached race suites",
+      "status": "PASS",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test -race -count=1 ./internal/toolruntime ./internal/mcpserver ./internal/historyimport ./internal/messaging ./internal/events",
+      "exit_status": 0,
+      "results": {
+        "toolruntime": "10.147s",
+        "mcpserver": "34.622s",
+        "historyimport": "5.670s",
+        "messaging": "2.563s",
+        "events": "5.319s"
+      }
+    },
+    {
+      "check": "required root/vet/all relevant race evidence",
+      "status": "PASS",
+      "evidence": [
+        "command-root-tests-v3.log",
+        "command-vet-v3.log",
+        "command-race-v1.log",
+        "command-scope-tests.log",
+        "command-messaging-race-v3.log",
+        "subprocess-restart-v2.log"
+      ],
+      "detail": "Root/vet v3 and relevant races PASS. Existing native restart/concurrency/cancel/revoked-auth/receipt suites plus new real abrupt-owner subprocess recovery fixture satisfy coverage gap."
+    },
+    {
+      "check": "architecture",
+      "status": "PASS",
+      "evidence": "command-architecture-v4.json",
+      "detail": "Actual A03 narrowing removes MCP storage/control/sql and all8 exact temporary exceptions. Reviewed production graph and10 isolated controls plus4 all-build source controls, all PASS. CLI concrete dependencies moved to composition; no wildcard exclusions introduced."
+    },
+    {
+      "check": "offline and frozen baseline",
+      "status": "PASS",
+      "evidence": [
+        "offline-v1/report.json",
+        "baseline-v1/report.json",
+        "build-manifest-v1.json",
+        "build-manifest-v3.json",
+        "offline-carryforward.json"
+      ],
+      "detail": "Inspected raw sealed experiment/report and durable effect artifacts. Candidate50/50 cases480/480 assertions; original25/25 cases240/240 assertions. Independently compared v1/v3 candidate source records: only command_scope_test.go and subprocess_restart_test.go differ. All production/docs sources unchanged. Candidate binarySHA b21945b4113891dfb3f171ed4baa6293612c54b03e3fac51f266651802fd921a and baselineSHA4b38637e661c4004766a415342141ddc8f4e7786f1691411c1c4a355a4265101 byte-identical v1/v3. Offline carryforward is justified."
+    },
+    {
+      "check": "independent uncached subprocess race",
+      "status": "PASS",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test -race -count=1 ./internal/messaging -run ^TestScopedCommandOwnerSurvivesAbruptSubprocessCrashWithoutResend$ -v",
+      "exit_status": 0,
+      "result": "PASS fixture1.76s package3.071s"
+    }
+  ],
+  "limitations": [
+    "Acceptance is limited to authorized offline scope. No live account, deployment, LaunchAgent restart or paid model eval used.",
+    "Model/live gates remain NOT_RUN; SDK ID01–ID07 remain separate SDK-01 after T09 and are not claimed PASS.",
+    "Reviewer independently reran five uncached race suites before final test-only addition and the new uncached subprocess fixture under race on final candidate; root/vet/other relevant suites/architecture evaluated from hash-verified recorded evidence.",
+    "T07 commit and paired-review completion are parent orchestration steps; this report authorizes no publication."
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01",
+  "resolved_findings": [
+    {
+      "id": "T07-C01",
+      "status": "RESOLVED",
+      "evidence": "internal/messaging/subprocess_restart_test.go:122",
+      "detail": "Actual owner in first distinct OS subprocess takes native local.Lock, commits native send claim, records/fsyncs synthetic upstream effect and blocks. Parent kills process abruptly without defers; second OS subprocess acquires owner lock, opens same ledger and runs native RecoverInterruptedSends. Scoped runtime duplicate UUID stays unknown/interrupted/retry_safe=false and does not resend; conflicting UUID rejected. Independent fsynced effect counter remains exactly1. Reviewed fixture and independently reran uncached under race PASS."
+    }
+  ]
+}

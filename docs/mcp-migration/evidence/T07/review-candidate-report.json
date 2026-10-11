@@ -1,0 +1,25 @@
+{
+  "task": "T07",
+  "status": "ACCEPTED_OFFLINE_READY_FOR_SOLE_COMMIT",
+  "parent_sha": "a0ed93568dd3dae388e4bc65142becceb5085890",
+  "source_digest_sha256": "61e9a59b4a9f54d71ff97fb8bfa9045125b878b92e14c43a0428bfd00fba7402",
+  "requirements_total": 46,
+  "implementation": "All22 tools via scoped registry;5commands typed borrowed native owners; no MCP concrete dependencies; CLI wiring moved to service; exception manifest empty",
+  "checks": {
+    "root": "PASS v3",
+    "vet": "PASS v3",
+    "relevant_race": "PASS v1 plus new adversarial command test under race",
+    "architecture": "PASS100/100 and10isolated/all-buildcontrols v4",
+    "offline": "PASS50/50 480/480, same binary SHA finalv2",
+    "baseline": "PASS25/25 240/240 byte-identical T03\u2013T06",
+    "subprocess_restart": "PASS actual abrupt OS process termination and second owner process recovery; independent fsync effect counter1; no resend/conflicting UUID"
+  },
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01",
+  "reviewers": {
+    "completeness": "46/46 100% PASS",
+    "correctness": "PASS openfindings0"
+  },
+  "commit": "NOT_CREATED"
+}

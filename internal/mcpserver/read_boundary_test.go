@@ -90,8 +90,8 @@ func TestReadBoundaryShortensNativePageOnceAndRechecksResourceAccess(t *testing.
 	ports.Search = &search.Handler{Reads: reads}
 	ports.Conversations.Reads = reads
 	ports.Authority, ports.Admission = reads, reads
-	ports.Events = &eventaccess.Handler{Diagnostics: reads, Journal: reads}
-	server, err := New(owner, dir, ports)
+	ports.Events = &eventaccess.Handler{Diagnostics: reads, Journal: reads, Commands: reads}
+	server, err := New(ports)
 	if err != nil {
 		t.Fatal(err)
 	}

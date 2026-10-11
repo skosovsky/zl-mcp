@@ -65,6 +65,7 @@ type Reads struct {
 // Result retains invocation-owned continuations; transport projects business
 // values after tool execution without executing another handler to shrink them.
 type Result struct {
+	Acknowledgement     *eventaccess.Acknowledgement
 	Subscriptions       *eventaccess.Subscriptions
 	Events              *eventaccess.Page
 	Directory           *conversations.DirectoryExecution
@@ -90,6 +91,8 @@ func (r *Result) Value() any { return r.value() }
 
 func (r *Result) value() any {
 	switch {
+	case r.Acknowledgement != nil:
+		return *r.Acknowledgement
 	case r.Subscriptions != nil:
 		return *r.Subscriptions
 	case r.Events != nil:
@@ -172,6 +175,13 @@ func NewReads(searchHandler *search.Handler, conversationHandler *conversations.
 			}
 			names = append(names, "zalo_get_send_status", "zalo_get_history_import_status", "zalo_get_join_status", "zalo_inspect_invite")
 		}
+		if commandsPresent(v) {
+			if v.Messaging == nil || v.History == nil || v.Membership == nil || v.Events == nil || v.Messaging.Commands == nil || v.History.Commands == nil || v.Membership.Commands == nil || v.Events.Commands == nil {
+				return nil, fmt.Errorf("all typed command ports are required")
+			}
+			names = append(names, "zalo_send_direct_message", "zalo_join_group", "zalo_import_conversation_history", "zalo_cancel_history_import", "zalo_ack_subscription_events")
+		}
+
 	}
 	builder := toolsy.NewRegistryBuilder(toolsy.WithPolicy("zl-local-read-v1", toolsy.PolicyFunc(r.decide)))
 	for _, name := range names {
@@ -192,7 +202,11 @@ func NewReads(searchHandler *search.Handler, conversationHandler *conversations.
 		if err != nil {
 			return nil, err
 		}
-		tool, err := toolsy.NewProxyTool(name, "Local read with current account policy", raw, func(ctx context.Context, _ *toolsy.RunEnv, rawArgs []byte, yield func(toolsy.Chunk) error) error {
+		options := []toolsy.ToolOption{toolsy.WithOutputSchema(output), toolsy.WithIdempotent()}
+		if !isCommand(name) {
+			options = append(options, toolsy.WithReadOnly())
+		}
+		tool, err := toolsy.NewProxyTool(name, "Local capability with current account policy", raw, func(ctx context.Context, _ *toolsy.RunEnv, rawArgs []byte, yield func(toolsy.Chunk) error) error {
 			args, err := BindArguments(rawArgs)
 			if err != nil {
 				return err
@@ -206,7 +220,7 @@ func NewReads(searchHandler *search.Handler, conversationHandler *conversations.
 				return err
 			}
 			return yield(toolsy.Chunk{Event: toolsy.EventResult, MimeType: toolsy.MimeTypeJSON, Data: data, TypedResult: result})
-		}, toolsy.WithOutputSchema(output), toolsy.WithReadOnly(), toolsy.WithIdempotent())
+		}, options...)
 		if err != nil {
 			return nil, err
 		}
@@ -315,7 +329,7 @@ func (r *Reads) decide(ctx context.Context, req toolsy.PolicyRequest) toolsy.Dec
 		err = r.authority.CheckGroupContext(ctx, contextRequest(args, true))
 	case "zalo_get_conversation_message_context":
 		err = r.authority.CheckConversationContext(ctx, contextRequest(args, false))
-	case "zalo_list_event_subscriptions", "zalo_read_subscription_events", "zalo_get_conversation", "zalo_list_conversations", "zalo_list_conversation_messages", "zalo_list_archive_sources", "zalo_get_status", "zalo_list_groups", "zalo_get_group", "zalo_get_send_status", "zalo_get_history_import_status", "zalo_get_join_status", "zalo_inspect_invite":
+	case "zalo_send_direct_message", "zalo_join_group", "zalo_import_conversation_history", "zalo_cancel_history_import", "zalo_ack_subscription_events", "zalo_list_event_subscriptions", "zalo_read_subscription_events", "zalo_get_conversation", "zalo_list_conversations", "zalo_list_conversation_messages", "zalo_list_archive_sources", "zalo_get_status", "zalo_list_groups", "zalo_get_group", "zalo_get_send_status", "zalo_get_history_import_status", "zalo_get_join_status", "zalo_inspect_invite":
 		// Native owners recheck operation/account authority; schema and host scope
 		// have already been checked without invoking a command.
 	default:
@@ -348,6 +362,34 @@ func (r *Reads) dispatch(ctx context.Context, name string, args map[string]any) 
 	out := &Result{}
 	var err error
 	switch name {
+	case "zalo_send_direct_message":
+		var reply *string
+		if text, ok := args["reply_to_message_id"].(string); ok {
+			reply = &text
+		}
+		var v domain.SendOperation
+		v, err = r.operations.Messaging.Send(ctx, domain.SendRequest{RecipientID: stringArg(args, "recipient_id"), Text: stringArg(args, "text"), RequestID: stringArg(args, "request_id"), ReplyTo: reply})
+		out.SendStatus = &v
+	case "zalo_join_group":
+		var v membership.JoinStatus
+		v, err = r.operations.Membership.Join(ctx, membership.JoinRequest{PlanToken: stringArg(args, "plan_token"), RequestID: stringArg(args, "request_id")})
+		out.JoinStatus = &v
+	case "zalo_import_conversation_history":
+		var v domain.HistoryImportStatus
+		v, err = r.operations.History.Start(ctx, history.StartRequest{Source: stringArg(args, "source"), ConversationType: stringArg(args, "conversation_type"), ConversationID: stringArg(args, "conversation_id"), RequestID: stringArg(args, "request_id"), Since: stringArg(args, "since"), Until: stringArg(args, "until"), PageSize: optionalInt(args, "page_size"), MaxPages: optionalInt(args, "max_pages"), MaxMessages: optionalInt(args, "max_messages")})
+		out.ImportStatus = &v
+	case "zalo_cancel_history_import":
+		var v domain.HistoryImportStatus
+		v, err = r.operations.History.Cancel(ctx, stringArg(args, "operation_id"))
+		out.ImportStatus = &v
+	case "zalo_ack_subscription_events":
+		identity, e := r.authority.ReadIdentity(ctx)
+		if e != nil {
+			return nil, e
+		}
+		var v eventaccess.Acknowledgement
+		v, err = r.operations.Events.Acknowledge(ctx, identity.Principal, stringArg(args, "subscription_id"), stringArg(args, "receipt"))
+		out.Acknowledgement = &v
 	case "zalo_list_event_subscriptions":
 		identity, e := r.authority.ReadIdentity(ctx)
 		if e != nil {
@@ -434,4 +476,22 @@ func (r *Reads) dispatch(ctx context.Context, name string, args map[string]any) 
 		err = permission()
 	}
 	return out, err
+}
+
+func isCommand(name string) bool {
+	switch name {
+	case "zalo_send_direct_message", "zalo_join_group", "zalo_import_conversation_history", "zalo_cancel_history_import", "zalo_ack_subscription_events":
+		return true
+	}
+	return false
+}
+func commandsPresent(v OperationReads) bool {
+	return v.Messaging != nil && v.Messaging.Commands != nil || v.History != nil && v.History.Commands != nil || v.Membership != nil && v.Membership.Commands != nil || v.Events != nil && v.Events.Commands != nil
+}
+func optionalInt(args map[string]any, key string) *int {
+	if _, ok := args[key]; !ok {
+		return nil
+	}
+	n := intArg(args, key, 0)
+	return &n
 }

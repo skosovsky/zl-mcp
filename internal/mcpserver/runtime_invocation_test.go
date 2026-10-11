@@ -64,8 +64,8 @@ func TestRuntimeSDKDispatchAndSingleAdmission(t *testing.T) {
 	ports.Search = &search.Handler{Reads: reader}
 	ports.Conversations.Reads = reader
 	ports.Authority, ports.Admission = reader, reader
-	ports.Events = &eventaccess.Handler{Diagnostics: reader, Journal: reader}
-	server, err := New(owner, t.TempDir(), ports)
+	ports.Events = &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader}
+	server, err := New(ports)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -46,7 +46,7 @@ func TestCatalogToolsAndStaticResourcesShareSingleNativeAdmission(t *testing.T) 
 		}
 	}
 	backend := &unavailableCatalogRefresh{}
-	server, err := NewWithControl(owner, backend, migrationReadPorts(owner, backend))
+	server, err := New(migrationReadPorts(owner, backend))
 	if err != nil {
 		t.Fatal(err)
 	}

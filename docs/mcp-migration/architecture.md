@@ -19,13 +19,13 @@ checks ensure toolsy is only in toolruntime, metry/OTel only in observability/ex
 composition, pure app imports and exact MCP/CLI migration exceptions. Root and subpackage
 patterns are exercised by positive controls; unknown/root packages fail coverage.
 
-Exact legacy edges and removal tasks are in architecture-exceptions.json. Current MCP
-storage/control/SQL references are temporary. T06 removes the HTTP Events concrete
-reference: service constructs the native manager and supplies EventsProtocolPort; backend internal
-edges (collector/storage/events/mobilebackup/zalo) are deliberately retained. CLI concrete
-construction moves behind service composition in T07. No wildcard exception directory
-is allowed. T04/T06 remove read edges incrementally; T07 closes all new-boundary exceptions.
-The checker reads the source-controlled exception manifest, not a mutable acceptance report.
+T07 closes all exact temporary edges: MCP imports only typed app/runtime contracts
+and SDK/wire dependencies; it constructs no storage/control/native owner. SQL
+no-row errors become the same safe domain error in backend adapters. The CLI
+entrypoint calls service composition, which owns login, logger, control client and
+private-state wiring with unchanged local authority/validation. The exception
+manifest is empty; native subsystem internal edges remain deliberately retained.
+The checker reads the source-controlled manifest, not an acceptance report.
 
 Ten isolated controls run the same pinned executable: domain->SQL, app->SDK,
 mcpserver->storage, production->evaluation, domain subpackage->SQL, uncovered package,
@@ -34,7 +34,7 @@ Four additional source controls reject platform/tag-hidden service SDK imports,
 CGO-constrained domain SQL and a platform-only uncovered package. The bare normative fixture has
 no legacy implementation, so its copy of A03 omits documented temporary edges; negative
 controls must fail on the specified dependency/coverage rule, never just a loader error.
-Active repository rules keep only the exact current migration exceptions. Negative fixture
+Active repository rules enforce A03/A09 without temporary exceptions. Negative fixture
 results and reasons are retained in evidence/T02/architecture.json.
 
 Pinned syntax details are characterized: empty shouldOnlyDependsOn lists do not forbid

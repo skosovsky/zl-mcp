@@ -1,0 +1,36 @@
+{
+  "task": "T07",
+  "commands": [
+    {
+      "name": "zalo_send_direct_message",
+      "app": "messaging",
+      "owner": "existing messaging/control",
+      "deadline_seconds": 35
+    },
+    {
+      "name": "zalo_join_group",
+      "app": "membership",
+      "owner": "existing collector/control",
+      "deadline_seconds": 6
+    },
+    {
+      "name": "zalo_import_conversation_history",
+      "app": "history",
+      "owner": "existing historyimport/control",
+      "deadline_seconds": 35
+    },
+    {
+      "name": "zalo_cancel_history_import",
+      "app": "history",
+      "owner": "existing historyimport/control",
+      "deadline_seconds": 35
+    },
+    {
+      "name": "zalo_ack_subscription_events",
+      "app": "eventaccess",
+      "owner": "existing storage Events journal",
+      "deadline_seconds": null
+    }
+  ],
+  "cli": "existing local approve/control authority; same domain validation, not MCP tools"
+}

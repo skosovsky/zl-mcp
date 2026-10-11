@@ -1,0 +1,497 @@
+{
+  "task": "T07",
+  "reviewer": "independent completeness",
+  "candidate_source_digest_sha256": "e2e1241d2ddabcb937081f19a7546fbe4d5a94e61565c06c756d7871e2f4b87a",
+  "parent_sha": "a0ed93568dd3dae388e4bc65142becceb5085890",
+  "required_total": 46,
+  "verified_pass_or_ready_gate": 45,
+  "completeness_percent": 97.82608695652173,
+  "status": "FAIL",
+  "findings": [
+    {
+      "id": "T07-C01",
+      "severity": "acceptance gap",
+      "requirement": "T07-41",
+      "file": "internal/service/multiprocess_test.go",
+      "line": 138,
+      "description": "No meaningful subprocess abrupt-termination/restart fixture for migrated durable command owners is evidenced. Existing two STDIO bridge processes are never crashed/restarted; native ledger crash tests simulate rows or Close/Open; evaluation restart reconstructs fixture in the same process. Existing unit recovery plus process startup evidence is narrower than explicit subprocess restart acceptance.",
+      "requested_fix": "Add bounded synthetic child process fixture exercising migrated registry command/native durable owner, interrupt after committed dispatch/reservation, abruptly terminate child, restart owner using same SQLite state, and independently assert stable operation identity and no duplicate outgoing effect or post-cancellation history persistence. No live account/service deployment needed."
+    }
+  ],
+  "leaf_verdicts": [
+    {
+      "id": "T07-01",
+      "requirement": "Accepted T06 commit/tree/source and durable evidence independently verified; prior tasks not reopened",
+      "verdict": "PASS",
+      "evidence": [
+        "T06-postcommit.json",
+        "../T06/artifact-index.json",
+        "git HEAD tree e9f78da1cb5999175ae77300576b40d7fcf0cd9c"
+      ]
+    },
+    {
+      "id": "T07-02",
+      "requirement": "Five command manifest and explicit consumer-owned typed contracts fixed before implementation",
+      "verdict": "PASS",
+      "evidence": [
+        "command-manifest.json",
+        "initial-candidate.json",
+        "../../command-boundary.md"
+      ]
+    },
+    {
+      "id": "T07-03",
+      "requirement": "All22 tools execute via scoped toolsy registry; full public catalog unchanged",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go NewReads/Execute/dispatch",
+        "internal/mcpserver/server.go New/call",
+        "offline-v1/report.json"
+      ]
+    },
+    {
+      "id": "T07-04",
+      "requirement": "zalo_send_direct_message uses typed messaging command and borrowed native owner",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/messaging/command.go",
+        "internal/adapters/operations/command.go Send",
+        "internal/service/mcp_reads.go"
+      ]
+    },
+    {
+      "id": "T07-05",
+      "requirement": "zalo_join_group uses typed membership command and borrowed native owner",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/membership/command.go",
+        "internal/adapters/operations/command.go Join"
+      ]
+    },
+    {
+      "id": "T07-06",
+      "requirement": "zalo_import_conversation_history uses typed history start command and borrowed native owner",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/history/command.go StartRequest/Start",
+        "internal/adapters/operations/command.go StartImport"
+      ]
+    },
+    {
+      "id": "T07-07",
+      "requirement": "zalo_cancel_history_import uses typed history cancel command and borrowed native owner",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/history/command.go Cancel",
+        "internal/adapters/operations/command.go CancelImport"
+      ]
+    },
+    {
+      "id": "T07-08",
+      "requirement": "zalo_ack_subscription_events uses typed Events acknowledgement command and borrowed native owner",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/eventaccess/command.go",
+        "internal/adapters/store/event_ack.go",
+        "internal/storage/event_journal.go AckSubscriptionEvents"
+      ]
+    },
+    {
+      "id": "T07-09",
+      "requirement": "Command arguments/results explicit business types; no universal map/RawJSON application bus",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/*/command.go explicit DTOs",
+        "internal/domain/sending.go",
+        "internal/adapters/operations/command.go fixed methods"
+      ]
+    },
+    {
+      "id": "T07-10",
+      "requirement": "Command annotations/effect metadata preserve exact readOnly/idempotency/open-world semantics",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/server.go annotations unchanged",
+        "internal/toolruntime/reads.go NewProxyTool options",
+        "offline-v1 raw SDK captures"
+      ]
+    },
+    {
+      "id": "T07-11",
+      "requirement": "Trusted principal/account/current policy cannot come from caller JSON",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/adapters/store/authority.go ReadIdentity",
+        "internal/toolruntime/reads.go Bind/decide",
+        "internal/toolruntime/command_scope_test.go"
+      ]
+    },
+    {
+      "id": "T07-12",
+      "requirement": "Invalid/foreign/stale scope rejected before command handler and effects",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/command_scope_test.go zero/foreign/invalid/stale recorder0",
+        "command-scope-tests.log"
+      ]
+    },
+    {
+      "id": "T07-13",
+      "requirement": "Host binder preserves UUID/RFC3339/null/missing/numeric strings/Unicode/opaque IDs",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/bind.go",
+        "internal/toolruntime/command_scope_test.go opaque ID/Unicode/omitted bounds",
+        "internal/mcpserver/migration_inputs_test.go",
+        "offline-v1"
+      ]
+    },
+    {
+      "id": "T07-14",
+      "requirement": "One independent native admission per tool and resource; no extra charge on runtime dispatch",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/mcpserver/server.go call single AllowRead",
+        "internal/mcpserver/runtime_invocation_test.go",
+        "internal/mcpserver/catalog_ports_test.go",
+        "internal/toolruntime/reads.go Execute no admission"
+      ]
+    },
+    {
+      "id": "T07-15",
+      "requirement": "Original35s send/history and6s join deadlines/cancellation/error projection retained",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/messaging/command.go 35s",
+        "internal/app/history/command.go 35s",
+        "internal/app/membership/command.go 6s",
+        "internal/toolruntime/command_scope_test.go deadlines/native error pointer"
+      ]
+    },
+    {
+      "id": "T07-16",
+      "requirement": "Existing native domain validation retained for MCP and CLI approve/control",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/messaging/manager.go Validate",
+        "internal/collector/join.go",
+        "internal/historyimport/manager.go executable contract",
+        "internal/service/cli.go same owner Call"
+      ]
+    },
+    {
+      "id": "T07-17",
+      "requirement": "CLI approve/control preserves local authority; no MCP approval or hidden grant introduced",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/service/cli.go approve-join interactive terminal/explicit JOIN/cli_approve",
+        "cmd/zl-mcp/main.go service composition",
+        "native owner files unchanged"
+      ]
+    },
+    {
+      "id": "T07-18",
+      "requirement": "Send existing durable owner/permission/recipient checks retained",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/messaging/manager.go",
+        "internal/service/sending_test.go",
+        "command-race-v1.log"
+      ]
+    },
+    {
+      "id": "T07-19",
+      "requirement": "Send duplicate identical request UUID preserves identity; conflicting effective request rejected",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/storage/sending_test.go TestSendJournalRejectsChangedArgumentsAndNeverResendsTerminal",
+        "offline-v1 send-idempotency"
+      ]
+    },
+    {
+      "id": "T07-20",
+      "requirement": "Send unknown/ambiguous outcome never retried implicitly",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/messaging/manager_test.go TestManagerNeverRetriesAmbiguousSend",
+        "offline-v1 send-unknown-restart",
+        "internal/toolruntime/command_scope_test.go owner calls1"
+      ]
+    },
+    {
+      "id": "T07-21",
+      "requirement": "Send quote authority still native and archive IDs cannot authorize quotes",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/messaging/manager_test.go TestManagerReplyRequiresExactRetainedSourceAndPermission",
+        "offline-v1 cross-quote",
+        "internal/storage/sending.go native retained quote lookup unchanged"
+      ]
+    },
+    {
+      "id": "T07-22",
+      "requirement": "Join approval plan-token binds request/preview/account/current approval",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/collector/join_test.go TestApprovalIdempotencyAndTargetBinding/TestMissingApprovalAndChangedPreviewNeverJoin",
+        "offline-v1 join-no-approval/join-approved"
+      ]
+    },
+    {
+      "id": "T07-23",
+      "requirement": "Join duplicate/conflicting UUID and expired/revoked approval behavior retained",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/collector/join_test.go",
+        "command-race-v1.log",
+        "native join owner unchanged"
+      ]
+    },
+    {
+      "id": "T07-24",
+      "requirement": "Join operation ledger/worker ownership/restart/concurrency retained",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/collector/join_test.go TestExpiredApprovalAndCrashRecovery/TestRecoveredOperationReconcilesWithoutRepeatingJoin",
+        "internal/storage/join.go",
+        "native collector unchanged"
+      ]
+    },
+    {
+      "id": "T07-25",
+      "requirement": "History start required native conversation/time window/source/message bounds retained",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/historyimport/manager.go",
+        "internal/storage/history_operations_test.go",
+        "internal/toolruntime/reads.go typed StartRequest mapping"
+      ]
+    },
+    {
+      "id": "T07-26",
+      "requirement": "History retry request UUID effective-argument equivalence/conflict retained",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/storage/history_operations_test.go",
+        "offline-v1 history-cancel-restart",
+        "native history owner unchanged"
+      ]
+    },
+    {
+      "id": "T07-27",
+      "requirement": "History cancellation terminal/idempotent and queued/inflight pages cannot persist after cancel",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/historyimport/worker_test.go TestWorkerCannotPersistPageAfterCancellation",
+        "internal/storage/history_operations_test.go TestHistoryOperationCancellationUnsupportedAndAccountBoundary",
+        "offline-v1 history-cancel-restart"
+      ]
+    },
+    {
+      "id": "T07-28",
+      "requirement": "History imported messages remain silent: no Events/subscription/notification effects",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/storage/history_test.go TestHistoryPageSilentAtomicAndReplayAfterRetention",
+        "internal/historyimport/worker_test.go TestWorkerExplicitPreloadSourceUsesDurableSilentImportAndNoFallback",
+        "offline-v1 durable effects"
+      ]
+    },
+    {
+      "id": "T07-29",
+      "requirement": "History partial/exhaustion/progress/completeness and restart behavior retained",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/historyimport/worker_test.go",
+        "internal/storage/history_operations_test.go",
+        "offline-v1 history-cancel-restart"
+      ]
+    },
+    {
+      "id": "T07-30",
+      "requirement": "Events ACK uses host principal, current subscription grant/profile/generation and receipt",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go ACK host ReadIdentity",
+        "internal/storage/event_journal.go AckSubscriptionEvents/journalSubscription",
+        "internal/storage/event_journal_test.go"
+      ]
+    },
+    {
+      "id": "T07-31",
+      "requirement": "Events ACK ordered prefix/idempotence/stale concurrent receipt/revocation semantics retained",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/storage/event_journal_test.go TestJournalRecoveryCheckpointRestartAndConcurrentReceipts/TestRemovedV1MigrationCancelsOnlyV1AndRejectsOldReceipts",
+        "internal/storage/event_journal.go transactional generation/principal/current grant/order/idempotence"
+      ]
+    },
+    {
+      "id": "T07-32",
+      "requirement": "Events reads do not ACK; ACK does not send notifications or start delivery",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/app/eventaccess/command.go",
+        "internal/adapters/store/event_ack.go",
+        "internal/storage/event_journal.go ACK has no delivery call",
+        "internal/storage/event_journal_test.go read does not acknowledge"
+      ]
+    },
+    {
+      "id": "T07-33",
+      "requirement": "Exactly one owner per operation/store/ledger/session/worker; no second durable implementation",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/service/mcp_reads.go stateless borrowed adapters",
+        "internal/adapters/operations/read.go Reader owner",
+        "internal/adapters/store/read.go",
+        "native persistence/worker source unchanged"
+      ]
+    },
+    {
+      "id": "T07-34",
+      "requirement": "No toolsy retry/cache/OperationProfile pipeline or speculative outgoing effect added",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/toolruntime/reads.go RegistryView.Execute direct no retry/cache/pipeline",
+        "internal/toolruntime/command_scope_test.go calls1/native failure",
+        "offline-v1 effect journal"
+      ]
+    },
+    {
+      "id": "T07-35",
+      "requirement": "Relocated five switch branches removed from MCP; no concrete backend imports remain",
+      "verdict": "PASS",
+      "evidence": [
+        "git diff internal/mcpserver/server.go removed5branches/Store/Control",
+        "internal/mcpserver/http.go New typed ports only",
+        "command-architecture-v4.json"
+      ]
+    },
+    {
+      "id": "T07-36",
+      "requirement": "Architecture A03 temporary MCP exceptions removed, without widening other exceptions",
+      "verdict": "PASS",
+      "evidence": [
+        "../../architecture-exceptions.json exceptions[]",
+        "arch-go.yml A03 strict imports",
+        "command-architecture-v4.json active/production graph/controls"
+      ]
+    },
+    {
+      "id": "T07-37",
+      "requirement": "Production and offline/test composition inject complete read and command ports",
+      "verdict": "PASS",
+      "evidence": [
+        "internal/service/mcp_reads.go",
+        "internal/evalfixture/read_ports.go",
+        "internal/mcpserver/migration_read_ports_test.go",
+        "internal/mcpserver/server.go complete constructor ports"
+      ]
+    },
+    {
+      "id": "T07-38",
+      "requirement": "Public schemas/catalog/annotations/structured-text/error/resource parity unchanged",
+      "verdict": "PASS",
+      "evidence": [
+        "git diff docs/contracts empty",
+        "offline-v1/report.json 50/50 480/480",
+        "baseline-v1/report.json 25/25 240/240",
+        "internal/mcpserver/migration_baseline_test.go"
+      ]
+    },
+    {
+      "id": "T07-39",
+      "requirement": "Persistence schema/migrations/rows and third_party/sibling scope unchanged",
+      "verdict": "PASS",
+      "evidence": [
+        "git diff native business/schema/third_party empty except history MCP composition test",
+        "candidate.json",
+        "initial-candidate.json"
+      ]
+    },
+    {
+      "id": "T07-40",
+      "requirement": "Messaging/collector/history/events/service/storage relevant tests and race PASS",
+      "verdict": "PASS",
+      "evidence": [
+        "command-race-v1.log all required packages PASS",
+        "command-root-tests-v2.log",
+        "command-vet-v2.log"
+      ]
+    },
+    {
+      "id": "T07-41",
+      "requirement": "Meaningful crash/restart subprocess, concurrency, cancellation and revoked-auth suites PASS",
+      "verdict": "FAIL",
+      "evidence": [
+        "internal/collector/join_test.go simulates persisted crash state",
+        "internal/storage/history_operations_test.go Close/Open crash simulation",
+        "internal/service/multiprocess_test.go2bridges no crash/restart",
+        "internal/evaluation/scenarios.go restart in same process"
+      ]
+    },
+    {
+      "id": "T07-42",
+      "requirement": "Complete required offline eval and independent durable effects/parity PASS",
+      "verdict": "PASS",
+      "evidence": [
+        "offline-v1/report.json50trials480assertions allpass",
+        "baseline-v1/report.json25trials240assertions allpass",
+        "offline-v1 raw traces and independent fsynced effects",
+        "internal/evalfixture/offline.go native managers"
+      ]
+    },
+    {
+      "id": "T07-43",
+      "requirement": "Root tests/vet and architecture100/100 isolated/all-build controls PASS",
+      "verdict": "PASS",
+      "evidence": [
+        "command-root-tests-v2.log",
+        "command-vet-v2.log",
+        "command-architecture-v4.json active100/10010isolated4all-buildcontrols"
+      ]
+    },
+    {
+      "id": "T07-44",
+      "requirement": "Frozen original business/T03 harness independence and candidate hashes/raw evidence/index retained",
+      "verdict": "PASS",
+      "evidence": [
+        "build-manifest-v1.json",
+        "build-manifest-v2.json",
+        "offline-carryforward.json",
+        "artifact-index.json337SHAverified",
+        "scripts/mcp-migration/build_eval.py overlay frozenT03"
+      ]
+    },
+    {
+      "id": "T07-45",
+      "requirement": "Model/live NOT_RUN and SDK ID gate deferred to SDK-01 explicitly retained",
+      "verdict": "PASS",
+      "evidence": [
+        "review-candidate-report.json",
+        "offline-v1/report.json model/liveNOT_RUN SDKdeferred",
+        "../../command-boundary.md"
+      ]
+    },
+    {
+      "id": "T07-46",
+      "requirement": "Two independent same-candidate reviewers100% completeness and correctnessPASS before sole T07commit",
+      "verdict": "READY_GATE_PENDING_PARTNER",
+      "evidence": [
+        "this independent completeness review",
+        "review-candidate-report.json readyforreview commitnotcreated",
+        "requirements last leaf evaluated ready gate pending partner and findings remediation"
+      ]
+    }
+  ],
+  "independent_verifications": {
+    "current_candidate_digest": "MATCH",
+    "T06_commit_tree": "MATCH",
+    "T06_artifacts_sha256": "1296/1296 MATCH",
+    "T07_artifacts_sha256": "337/337 MATCH",
+    "build_v1_v2_binary_sha256": "baseline and candidate byte-identical; only added source command_scope_test.go",
+    "offline": "50/50480/480; baseline25/25240/240 raw artifacts retained"
+  },
+  "acceptance_scope": "limited offline; model/live NOT_RUN; SDK IDs deferred SDK-01; task commit must wait for both independent reviewers PASS on fixed candidate"
+}

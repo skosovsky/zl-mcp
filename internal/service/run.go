@@ -211,7 +211,7 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	if err != nil {
 		return err
 	}
-	handler, err := mcpserver.NewHTTPWithControl(store, c.StateDir, token, port, mcpReadPorts(store, port), protocol)
+	handler, err := mcpserver.NewHTTP(token, mcpReadPorts(store, port), protocol)
 	if err != nil {
 		return err
 	}

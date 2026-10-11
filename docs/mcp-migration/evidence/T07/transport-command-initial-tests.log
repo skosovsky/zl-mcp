@@ -1,0 +1,8 @@
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	(cached)
+# github.com/skosovsky/zl-mcp/internal/mcpserver
+internal/mcpserver/server.go:158:27: undefined: sql
+FAIL	github.com/skosovsky/zl-mcp/internal/mcpserver [build failed]
+FAIL	github.com/skosovsky/zl-mcp/internal/historyimport [build failed]
+FAIL	github.com/skosovsky/zl-mcp/internal/service [build failed]
+FAIL	github.com/skosovsky/zl-mcp/internal/evalfixture [build failed]
+FAIL

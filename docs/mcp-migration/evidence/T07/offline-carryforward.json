@@ -1,0 +1,22 @@
+{
+  "reason": "Only two adversarial _test.go fixtures added after v1; all production/docs sources unchanged",
+  "initial_source_digest_sha256": "532e5c337213c914b2dfdd63da7b7931afc177faf4ae3a5fc80694f44f626276",
+  "review_source_digest_sha256": "61e9a59b4a9f54d71ff97fb8bfa9045125b878b92e14c43a0428bfd00fba7402",
+  "baseline_binary_byte_identical": true,
+  "candidate_binary_byte_identical": true,
+  "proof": "build-manifest-v1.json and build-manifest-v3.json source records + equal baseline/candidate binary SHA256",
+  "offline": "PASS 50/50 480/480",
+  "baseline": "PASS 25/25 240/240",
+  "new_test": "command-scope-tests.log PASS under race",
+  "root_vet_arch_after_new_test": "PASS v2/v4 logs",
+  "changed_files": [
+    "internal/messaging/subprocess_restart_test.go",
+    "internal/toolruntime/command_scope_test.go"
+  ],
+  "new_tests": [
+    "command-scope-tests.log PASS under race",
+    "subprocess-restart-v2.log PASS under race",
+    "command-messaging-race-v3.log PASS"
+  ],
+  "root_vet_after_new_tests": "PASS v3"
+}

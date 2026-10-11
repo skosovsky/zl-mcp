@@ -1,0 +1,14 @@
+{
+  "task": "T07",
+  "status": "ACCEPTED_OFFLINE_READY_FOR_SOLE_COMMIT",
+  "parent_sha": "a0ed93568dd3dae388e4bc65142becceb5085890",
+  "requirements": 46,
+  "implementation": "All22scoped tools;typed commands;borrowedowners;CLIservicecomposition;MCPconcreteimports removed",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01",
+  "candidate_source_digest_sha256": "61e9a59b4a9f54d71ff97fb8bfa9045125b878b92e14c43a0428bfd00fba7402",
+  "remaining": [
+    "Sole T07 commit and postcommit verification in T08"
+  ]
+}

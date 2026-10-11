@@ -3,7 +3,9 @@ package operations
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
 	"github.com/skosovsky/zl-mcp/internal/app/history"
@@ -30,10 +32,16 @@ var (
 
 func decode[T any](value map[string]any, err error) (T, error) {
 	var result T
+	if errors.Is(err, sql.ErrNoRows) {
+		return result, &domain.Error{Code: "NOT_FOUND", Message: "No accessible local record was found.", NextAction: domain.NextAction{Instruction: "Use IDs returned by zalo_list_groups or zalo_search_messages."}, Details: map[string]any{}}
+	}
 	if err != nil {
 		return result, err
 	}
 	body, err := json.Marshal(value)
+	if errors.Is(err, sql.ErrNoRows) {
+		return result, &domain.Error{Code: "NOT_FOUND", Message: "No accessible local record was found.", NextAction: domain.NextAction{Instruction: "Use IDs returned by zalo_list_groups or zalo_search_messages."}, Details: map[string]any{}}
+	}
 	if err != nil {
 		return result, err
 	}

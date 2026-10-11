@@ -61,7 +61,7 @@ func TestMigrationCatalogBaseline(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer store.Close()
-	server, err := New(store, t.TempDir(), migrationReadPorts(store))
+	server, err := New(migrationReadPorts(store))
 	if err != nil {
 		t.Fatal(err)
 	}

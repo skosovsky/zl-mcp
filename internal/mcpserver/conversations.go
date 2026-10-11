@@ -12,9 +12,6 @@ import (
 	"strings"
 )
 
-func conversationRef(args map[string]any) domain.ConversationRef {
-	return domain.ConversationRef{Type: str(args, "conversation_type"), ID: str(args, "conversation_id")}
-}
 func (s *Service) addConversationResources(server *mcp.Server) error {
 	archiveSchema, err := contracts.Compile("archive_snapshot_record", "output")
 	if err != nil {

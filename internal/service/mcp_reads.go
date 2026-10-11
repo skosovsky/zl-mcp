@@ -16,8 +16,8 @@ import (
 )
 
 // mcpReadPorts composes stateless capabilities around the existing borrowed owner.
-func mcpReadPorts(owner *storage.Store, backend mcpserver.ControlPort) mcpserver.ReadPorts {
+func mcpReadPorts(owner *storage.Store, backend operationsadapter.Backend) mcpserver.ReadPorts {
 	reader := storeadapter.New(owner)
 	operations := operationsadapter.NewReader(backend)
-	return mcpserver.ReadPorts{Archives: &archives.Handler{Reads: operationsadapter.NewArchiveReader(backend)}, Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader, LiveGroups: operations}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader}, Operations: toolruntime.OperationReads{Messaging: &messaging.Handler{Reads: operations}, History: &history.Handler{Reads: operations}, Membership: &membership.Handler{Reads: operations}}}
+	return mcpserver.ReadPorts{Archives: &archives.Handler{Reads: operationsadapter.NewArchiveReader(backend)}, Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader, LiveGroups: operations}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader}, Operations: toolruntime.OperationReads{Messaging: &messaging.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}}}
 }

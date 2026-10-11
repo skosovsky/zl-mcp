@@ -1,0 +1,79 @@
+{
+  "cwd": "repository root",
+  "environment": {
+    "GOWORK": "off",
+    "GOPATH": "/tmp/zl-migration-go-path",
+    "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+    "GOCACHE": "/tmp/zl-migration-go-cache"
+  },
+  "commands": [
+    {
+      "command": "go test ./...",
+      "log": "command-root-tests-v2.log",
+      "exit_status": 0
+    },
+    {
+      "command": "go vet ./...",
+      "log": "command-vet-v2.log",
+      "exit_status": 0
+    },
+    {
+      "command": "go test -race ./internal/messaging ./internal/collector ./internal/historyimport ./internal/events ./internal/service ./internal/storage ./internal/toolruntime ./internal/mcpserver ./internal/adapters/... ./internal/app/...",
+      "log": "command-race-v1.log",
+      "exit_status": 0
+    },
+    {
+      "command": "go test -race ./internal/toolruntime",
+      "log": "command-scope-tests.log",
+      "exit_status": 0
+    },
+    {
+      "command": "python3 scripts/mcp-migration/architecture.py --binary /tmp/zl-migration-tools/arch-go --evidence docs/mcp-migration/evidence/T07/command-architecture-v4.json",
+      "log": "command-architecture-v4.log",
+      "exit_status": 0
+    },
+    {
+      "command": "python3 scripts/mcp-migration/build_eval.py --output /tmp/zl-t07-command-build-v2",
+      "log": "command-build-v2.log",
+      "exit_status": 0
+    },
+    {
+      "command": "/tmp/zl-t07-command-build-v1/zl-mcp-eval-candidate --root \"$PWD\" --output /tmp/zl-t07-command-offline-v1 --repeats 2",
+      "log": "command-offline-v1.log",
+      "exit_status": 0
+    },
+    {
+      "command": "/tmp/zl-t07-command-build-v1/zl-mcp-eval-candidate --root \"$PWD\" --child-binary /tmp/zl-t07-command-build-v1/zl-mcp-eval-baseline --output /tmp/zl-t07-command-baseline-v1",
+      "log": "command-baseline-v1.log",
+      "exit_status": 0
+    },
+    {
+      "command": "go test -race ./internal/messaging -run TestScopedCommandOwnerSurvivesAbruptSubprocessCrashWithoutResend -count=1 -v",
+      "log": "subprocess-restart-v2.log",
+      "exit_status": 0
+    },
+    {
+      "command": "go test -race ./internal/messaging",
+      "log": "command-messaging-race-v3.log",
+      "exit_status": 0
+    },
+    {
+      "command": "go test ./...",
+      "log": "command-root-tests-v3.log",
+      "exit_status": 0
+    },
+    {
+      "command": "go vet ./...",
+      "log": "command-vet-v3.log",
+      "exit_status": 0
+    },
+    {
+      "command": "python3 scripts/mcp-migration/build_eval.py --output /tmp/zl-t07-command-build-v3",
+      "log": "command-build-v3.log",
+      "exit_status": 0
+    }
+  ],
+  "offline_final_source_proof": "offline-carryforward.json",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

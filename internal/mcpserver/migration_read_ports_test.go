@@ -1,6 +1,7 @@
 package mcpserver
 
 import (
+	"github.com/santhosh-tekuri/jsonschema/v6"
 	operationsadapter "github.com/skosovsky/zl-mcp/internal/adapters/operations"
 	storeadapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
 	"github.com/skosovsky/zl-mcp/internal/app/archives"
@@ -15,10 +16,10 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/toolruntime"
 )
 
-func migrationReadPorts(owner *storage.Store, backend ...ControlPort) ReadPorts {
+func migrationReadPorts(owner *storage.Store, backend ...operationsadapter.Backend) ReadPorts {
 	reader := storeadapter.New(owner)
-	ports := ReadPorts{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader}}
-	selected := ControlPort(control.New(""))
+	ports := ReadPorts{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader}}
+	selected := operationsadapter.Backend(control.New(""))
 	if len(backend) == 1 && backend[0] != nil {
 		selected = backend[0]
 	}
@@ -26,12 +27,20 @@ func migrationReadPorts(owner *storage.Store, backend ...ControlPort) ReadPorts 
 		operations := operationsadapter.NewReader(selected)
 		ports.Archives = &archives.Handler{Reads: operationsadapter.NewArchiveReader(selected)}
 		ports.Conversations.LiveGroups = operations
-		ports.Operations = toolruntime.OperationReads{Messaging: &messaging.Handler{Reads: operations}, History: &history.Handler{Reads: operations}, Membership: &membership.Handler{Reads: operations}}
+		ports.Operations = toolruntime.OperationReads{Messaging: &messaging.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}}
 	}
 	return ports
 }
-func withMigrationReads(service *Service) *Service {
-	reads := migrationReadPorts(service.Store, service.Control)
+
+type migrationService struct {
+	Store         *storage.Store
+	Control       operationsadapter.Backend
+	input, output map[string]*jsonschema.Schema
+}
+
+func withMigrationReads(fixture *migrationService) *Service {
+	reads := migrationReadPorts(fixture.Store, fixture.Control)
+	service := &Service{input: fixture.input, output: fixture.output}
 	var err error
 	service.runtime, err = toolruntime.NewReads(reads.Search, reads.Conversations, reads.Authority, reads.operationReads())
 	if err != nil {

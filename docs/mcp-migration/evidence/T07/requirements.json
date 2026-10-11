@@ -1,0 +1,192 @@
+{
+  "task": "T07",
+  "parent_sha": "a0ed93568dd3dae388e4bc65142becceb5085890",
+  "required_total": 46,
+  "formula": "100 * verified_pass / required_total",
+  "requirements": [
+    {
+      "id": "T07-01",
+      "requirement": "Accepted T06 commit/tree/source and durable evidence independently verified; prior tasks not reopened"
+    },
+    {
+      "id": "T07-02",
+      "requirement": "Five command manifest and explicit consumer-owned typed contracts fixed before implementation"
+    },
+    {
+      "id": "T07-03",
+      "requirement": "All22 tools execute via scoped toolsy registry; full public catalog unchanged"
+    },
+    {
+      "id": "T07-04",
+      "requirement": "zalo_send_direct_message uses typed messaging command and borrowed native owner"
+    },
+    {
+      "id": "T07-05",
+      "requirement": "zalo_join_group uses typed membership command and borrowed native owner"
+    },
+    {
+      "id": "T07-06",
+      "requirement": "zalo_import_conversation_history uses typed history start command and borrowed native owner"
+    },
+    {
+      "id": "T07-07",
+      "requirement": "zalo_cancel_history_import uses typed history cancel command and borrowed native owner"
+    },
+    {
+      "id": "T07-08",
+      "requirement": "zalo_ack_subscription_events uses typed Events acknowledgement command and borrowed native owner"
+    },
+    {
+      "id": "T07-09",
+      "requirement": "Command arguments/results explicit business types; no universal map/RawJSON application bus"
+    },
+    {
+      "id": "T07-10",
+      "requirement": "Command annotations/effect metadata preserve exact readOnly/idempotency/open-world semantics"
+    },
+    {
+      "id": "T07-11",
+      "requirement": "Trusted principal/account/current policy cannot come from caller JSON"
+    },
+    {
+      "id": "T07-12",
+      "requirement": "Invalid/foreign/stale scope rejected before command handler and effects"
+    },
+    {
+      "id": "T07-13",
+      "requirement": "Host binder preserves UUID/RFC3339/null/missing/numeric strings/Unicode/opaque IDs"
+    },
+    {
+      "id": "T07-14",
+      "requirement": "One independent native admission per tool and resource; no extra charge on runtime dispatch"
+    },
+    {
+      "id": "T07-15",
+      "requirement": "Original35s send/history and6s join deadlines/cancellation/error projection retained"
+    },
+    {
+      "id": "T07-16",
+      "requirement": "Existing native domain validation retained for MCP and CLI approve/control"
+    },
+    {
+      "id": "T07-17",
+      "requirement": "CLI approve/control preserves local authority; no MCP approval or hidden grant introduced"
+    },
+    {
+      "id": "T07-18",
+      "requirement": "Send existing durable owner/permission/recipient checks retained"
+    },
+    {
+      "id": "T07-19",
+      "requirement": "Send duplicate identical request UUID preserves identity; conflicting effective request rejected"
+    },
+    {
+      "id": "T07-20",
+      "requirement": "Send unknown/ambiguous outcome never retried implicitly"
+    },
+    {
+      "id": "T07-21",
+      "requirement": "Send quote authority still native and archive IDs cannot authorize quotes"
+    },
+    {
+      "id": "T07-22",
+      "requirement": "Join approval plan-token binds request/preview/account/current approval"
+    },
+    {
+      "id": "T07-23",
+      "requirement": "Join duplicate/conflicting UUID and expired/revoked approval behavior retained"
+    },
+    {
+      "id": "T07-24",
+      "requirement": "Join operation ledger/worker ownership/restart/concurrency retained"
+    },
+    {
+      "id": "T07-25",
+      "requirement": "History start required native conversation/time window/source/message bounds retained"
+    },
+    {
+      "id": "T07-26",
+      "requirement": "History retry request UUID effective-argument equivalence/conflict retained"
+    },
+    {
+      "id": "T07-27",
+      "requirement": "History cancellation terminal/idempotent and queued/inflight pages cannot persist after cancel"
+    },
+    {
+      "id": "T07-28",
+      "requirement": "History imported messages remain silent: no Events/subscription/notification effects"
+    },
+    {
+      "id": "T07-29",
+      "requirement": "History partial/exhaustion/progress/completeness and restart behavior retained"
+    },
+    {
+      "id": "T07-30",
+      "requirement": "Events ACK uses host principal, current subscription grant/profile/generation and receipt"
+    },
+    {
+      "id": "T07-31",
+      "requirement": "Events ACK ordered prefix/idempotence/stale concurrent receipt/revocation semantics retained"
+    },
+    {
+      "id": "T07-32",
+      "requirement": "Events reads do not ACK; ACK does not send notifications or start delivery"
+    },
+    {
+      "id": "T07-33",
+      "requirement": "Exactly one owner per operation/store/ledger/session/worker; no second durable implementation"
+    },
+    {
+      "id": "T07-34",
+      "requirement": "No toolsy retry/cache/OperationProfile pipeline or speculative outgoing effect added"
+    },
+    {
+      "id": "T07-35",
+      "requirement": "Relocated five switch branches removed from MCP; no concrete backend imports remain"
+    },
+    {
+      "id": "T07-36",
+      "requirement": "Architecture A03 temporary MCP exceptions removed, without widening other exceptions"
+    },
+    {
+      "id": "T07-37",
+      "requirement": "Production and offline/test composition inject complete read and command ports"
+    },
+    {
+      "id": "T07-38",
+      "requirement": "Public schemas/catalog/annotations/structured-text/error/resource parity unchanged"
+    },
+    {
+      "id": "T07-39",
+      "requirement": "Persistence schema/migrations/rows and third_party/sibling scope unchanged"
+    },
+    {
+      "id": "T07-40",
+      "requirement": "Messaging/collector/history/events/service/storage relevant tests and race PASS"
+    },
+    {
+      "id": "T07-41",
+      "requirement": "Meaningful crash/restart subprocess, concurrency, cancellation and revoked-auth suites PASS"
+    },
+    {
+      "id": "T07-42",
+      "requirement": "Complete required offline eval and independent durable effects/parity PASS"
+    },
+    {
+      "id": "T07-43",
+      "requirement": "Root tests/vet and architecture100/100 isolated/all-build controls PASS"
+    },
+    {
+      "id": "T07-44",
+      "requirement": "Frozen original business/T03 harness independence and candidate hashes/raw evidence/index retained"
+    },
+    {
+      "id": "T07-45",
+      "requirement": "Model/live NOT_RUN and SDK ID gate deferred to SDK-01 explicitly retained"
+    },
+    {
+      "id": "T07-46",
+      "requirement": "Two independent same-candidate reviewers100% completeness and correctnessPASS before sole T07commit"
+    }
+  ]
+}

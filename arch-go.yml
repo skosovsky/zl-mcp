@@ -10,12 +10,7 @@
       "shouldOnlyDependsOn": {
         "internal": [
           "^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/logging(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/service(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/zalo(/[\\w.-]+)*$"
+          "^github\\.com/skosovsky/zl\\-mcp/internal/service(/[\\w.-]+)*$"
         ],
         "standard": [
           "^bufio$",
@@ -322,9 +317,7 @@
       "shouldOnlyDependsOn": {
         "internal": [
           "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
@@ -345,7 +338,6 @@
           "^context$",
           "^crypto/sha256$",
           "^crypto/subtle$",
-          "^database/sql$",
           "^encoding/hex$",
           "^encoding/json$",
           "^errors$",
@@ -469,7 +461,8 @@
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$"
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$"
         ],
         "external": [
           "^github\\.com/google/uuid$",
@@ -496,7 +489,11 @@
           "^strconv$",
           "^strings$",
           "^sync$",
-          "^time$"
+          "^time$",
+          "^flag$",
+          "^bufio$",
+          "^os/signal$",
+          "^syscall$"
         ]
       }
     },

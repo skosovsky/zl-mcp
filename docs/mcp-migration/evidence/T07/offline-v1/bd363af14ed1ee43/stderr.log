@@ -1,0 +1,2 @@
+2026/10/11 17:13:48 INFO mcp_call tool=zalo_join_group principal=501 correlation_id=cc990aea-8cd4-4520-b93a-4e0f5a26b6e4 code=OK duration_ms=2
+2026/10/11 17:13:48 INFO mcp_call tool=zalo_get_join_status principal=501 correlation_id=92dc8d4a-c5c0-4f34-bbdd-4c3683a2a7ff code=OK duration_ms=1

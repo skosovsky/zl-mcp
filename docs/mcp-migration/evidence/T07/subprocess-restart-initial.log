@@ -1,0 +1,8 @@
+=== RUN   TestScopedCommandOwnerSurvivesAbruptSubprocessCrashWithoutResend
+    subprocess_restart_test.go:150: restart: exit status 1 --- FAIL: TestCommandOwnerCrashHelper (0.19s)
+            subprocess_restart_test.go:89: restart changed ambiguous send: &{Acknowledgement:<nil> Subscriptions:<nil> Events:<nil> Directory:<nil> ConversationDetail:<nil> Browse:<nil> ArchiveSources:<nil> ArchiveDirectory:<nil> ArchiveBrowse:<nil> GroupSearch:<nil> ConversationSearch:<nil> GroupContext:<nil> ConversationContext:<nil> CollectorStatus:<nil> GroupDetail:<nil> GroupList:<nil> SendStatus:0xc000130600 ImportStatus:<nil> JoinStatus:<nil> Invite:<nil>}
+        FAIL
+--- FAIL: TestScopedCommandOwnerSurvivesAbruptSubprocessCrashWithoutResend (0.75s)
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/messaging	1.447s
+FAIL

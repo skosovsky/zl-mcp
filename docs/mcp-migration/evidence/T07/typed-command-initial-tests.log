@@ -1,0 +1,22 @@
+go: downloading github.com/google/uuid v1.6.0
+go: downloading github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
+go: downloading modernc.org/sqlite v1.60.1
+go: downloading golang.org/x/text v0.42.0
+go: downloading modernc.org/libc v1.77.1
+go: downloading golang.org/x/sys v0.48.0
+go: downloading github.com/ncruces/go-strftime v1.0.0
+go: downloading github.com/mattn/go-isatty v0.0.24
+go: downloading github.com/dustin/go-humanize v1.0.1
+go: downloading modernc.org/mathutil v1.7.1
+go: downloading modernc.org/memory v1.12.1
+go: downloading github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec
+?   	github.com/skosovsky/zl-mcp/internal/app/archives	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/app/eventaccess	0.618s
+?   	github.com/skosovsky/zl-mcp/internal/app/history	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/membership	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/messaging	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/search	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/shared	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/operations	0.556s
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/store	0.544s

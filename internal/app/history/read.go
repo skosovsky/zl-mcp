@@ -13,7 +13,10 @@ type StatusPort interface {
 	ImportStatus(context.Context, string) (domain.HistoryImportStatus, error)
 }
 
-type Handler struct{ Reads StatusPort }
+type Handler struct {
+	Reads    StatusPort
+	Commands CommandPort
+}
 
 func (h *Handler) Status(ctx context.Context, operationID string) (domain.HistoryImportStatus, error) {
 	ctx, cancel := context.WithTimeout(ctx, 35*time.Second)

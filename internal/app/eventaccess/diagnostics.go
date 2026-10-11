@@ -27,6 +27,7 @@ type DiagnosticsPort interface {
 	DeliveryDiagnostics(context.Context, time.Time) (DeliveryDiagnostics, error)
 }
 type Handler struct {
+	Commands    AcknowledgementPort
 	Diagnostics DiagnosticsPort
 	Journal     JournalPort
 }

@@ -1,0 +1,13 @@
+{
+  "task": "T06",
+  "commit": "a0ed93568dd3dae388e4bc65142becceb5085890",
+  "tree": "e9f78da1cb5999175ae77300576b40d7fcf0cd9c",
+  "source_digest_sha256": "4a38dc778ac427b96500106f84e137ce0399e5c62b3eeee4c93e00a42ac91d47",
+  "message": "refactor(mcp): migrate reads archives and resources to application ports",
+  "evidence_artifacts_verified": 1296,
+  "completeness": "56/56 100% PASS",
+  "correctness": "PASS findings0",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01"
+}
