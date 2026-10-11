@@ -1,0 +1,7 @@
+--- FAIL: TestExternalWatchdogAndOutputBounds (0.65s)
+    --- FAIL: TestExternalWatchdogAndOutputBounds/normal (0.30s)
+        process_test.go:67: context deadline exceeded {"ok":true}
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/evaluation	1.230s
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	4.237s
+FAIL

@@ -1,0 +1,7 @@
+--- FAIL: TestExternalWatchdogAndOutputBounds (0.64s)
+    --- FAIL: TestExternalWatchdogAndOutputBounds/flood (0.31s)
+        process_test.go:63: context deadline exceeded 24577024
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/evaluation	1.184s
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	0.889s
+FAIL

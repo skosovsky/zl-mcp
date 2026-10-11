@@ -1,0 +1,1 @@
+{"case_id":"numeric-precision","trace":null,"facts":null,"cleanup":false,"effects":{},"complete":false,"failure":"fork/exec /tmp/no-such-zl-binary: no such file or directory: missing child output","elapsed_seconds":0.001146,"bytes":0}

@@ -1,0 +1,10 @@
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py:1140: ResourceWarning: subprocess 9841 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/bin/sh: /bin/ps: Operation not permitted
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.538s
+
+OK
+<sys>:0: ResourceWarning: unclosed file <_io.TextIOWrapper name=3 encoding='UTF-8'>

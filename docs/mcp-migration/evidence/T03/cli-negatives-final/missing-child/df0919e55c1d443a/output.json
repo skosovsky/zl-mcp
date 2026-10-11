@@ -1,0 +1,1 @@
+{"case_id":"gaps","trace":null,"facts":null,"cleanup":false,"effects":{},"complete":false,"failure":"fork/exec /private/tmp/zl-t03-cli-negatives-final/missing-binary: no such file or directory: missing child output","elapsed_seconds":0.001392791,"bytes":0}

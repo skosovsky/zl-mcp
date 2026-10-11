@@ -1,0 +1,36 @@
+{
+  "status": "RESOLVED_VERIFIED_BY_FINAL_REVIEWERS",
+  "preliminary_completeness": "39/52=75%",
+  "preliminary_correctness": "FAIL",
+  "findings": [
+    {
+      "id": "watchdog-readerfrom",
+      "fix": "private bounded buffer prevents io.ReaderFrom bypass",
+      "test": "Go stdout/stderr flood test"
+    },
+    {
+      "id": "race-helper-timeout",
+      "fix": "normal subprocess allows race runtime exit delay; stuck/flood deadlines remain300ms"
+    },
+    {
+      "id": "restart-cleanup",
+      "fix": "nil-safe cleanup after failed restart; library closed even worker fails"
+    },
+    {
+      "id": "paging-identity",
+      "fix": "exact IDs distinct pages and same snapshot/final cursor"
+    },
+    {
+      "id": "event-redelivery",
+      "fix": "exact ordered events/receipts and remaining event after ACK/restart"
+    },
+    {
+      "id": "model-profile",
+      "fix": "explicit external host-driver contract with real MCP capture and enforced30calls/180s; no model executed"
+    },
+    {
+      "id": "benchmark-descendants",
+      "fix": "unconditional killpg after normal worker exit; negative helper spawns descendant"
+    }
+  ]
+}

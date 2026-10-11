@@ -176,7 +176,12 @@
           "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$"
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/events$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/historyimport$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/messaging$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/service$"
         ],
         "external": [
           "^github\\.com/modelcontextprotocol/go\\-sdk/mcp$"
@@ -193,7 +198,11 @@
           "^path/filepath$",
           "^strings$",
           "^sync$",
-          "^time$"
+          "^time$",
+          "^bytes$",
+          "^io$",
+          "^errors$",
+          "^strconv$"
         ]
       }
     },
@@ -924,7 +933,33 @@
         ],
         "external": [
           "^github\\.com/skosovsky/evaly(/[\\w.-]+)*$",
-          "^github\\.com/modelcontextprotocol/go\\-sdk(/[\\w.-]+)*$"
+          "^github\\.com/modelcontextprotocol/go\\-sdk(/[\\w.-]+)*$",
+          "^github\\.com/santhosh\\-tekuri/jsonschema/v6$",
+          "^github\\.com/modelcontextprotocol/go-sdk/jsonrpc$"
+        ],
+        "standard": [
+          "^bytes$",
+          "^context$",
+          "^crypto/sha256$",
+          "^encoding/hex$",
+          "^encoding/json$",
+          "^errors$",
+          "^fmt$",
+          "^os$",
+          "^os/exec$",
+          "^path/filepath$",
+          "^reflect$",
+          "^runtime$",
+          "^runtime/debug$",
+          "^strconv$",
+          "^strings$",
+          "^sync$",
+          "^syscall$",
+          "^time$",
+          "^io$",
+          "^net$",
+          "^net/http$",
+          "^sort$"
         ]
       }
     },
@@ -934,6 +969,15 @@
         "internal": [
           "^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/evaluation(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^encoding/json$",
+          "^flag$",
+          "^fmt$",
+          "^os$",
+          "^path/filepath$",
+          "^time$"
         ]
       }
     },

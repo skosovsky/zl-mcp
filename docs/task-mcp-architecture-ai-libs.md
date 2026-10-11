@@ -2,7 +2,7 @@
 
 Дата: 2026-10-11. Статус: спецификация для последующего выполнения; реализация не начата.
 Репозиторий: `github.com/skosovsky/zl-mcp`. Целевой путь: `docs/task-mcp-architecture-ai-libs.md`.
-Владелец: Сергей Косовский. План: T01–T10, строго последовательно, одна задача — один коммит.
+Владелец: Сергей Косовский. План: T01–T09 → SDK-01 → T10; 11 задач, одна задача — один коммит.
 
 ## 1. Цель и границы
 
@@ -163,6 +163,8 @@ missing/null, explicit zero, bounds и normalization проверяются cont
 Обязательны точные IDs >2^53 как opaque strings, JSON-RPC string/numeric IDs, null/missing,
 Unicode/UTF-8, malformed input, границы размеров. Уже известное ограничение SDK фиксируется
 отдельно; нельзя объявлять точность гарантированной только по типам Go. Новый регресс запрещён.
+Для дефекта JSON-RPC ID #1376 действует обязательное исправление и gate §4.4; его нельзя
+принять как допустимый baseline только потому, что текущая версия уже содержит ошибку.
 
 ### 4.3. Wire parity
 
@@ -181,6 +183,80 @@ error string. Оригинальная cause доступна внутренне
 только JSON business payload (на момент исследования 64 KiB). Resource/request limits
 фиксируются T01. Уменьшение страницы не теряет cursor/coverage; пустая archive page может
 иметь продолжение. Нельзя повторно вызвать write handler ради подгонки ответа под budget.
+
+### 4.4. Обязательный SDK-gate: точность JSON-RPC ID (#1376)
+
+На 2026-10-11 [issue #1376](https://github.com/modelcontextprotocol/go-sdk/issues/1376)
+открыт; [PR #1375](https://github.com/modelcontextprotocol/go-sdk/pull/1375) предложен,
+но не слит и не выпущен. В SDK v1.8.0 числовой ID `9007199254740993` декодируется как
+`9007199254740992`. Обработчик может выполнить действие, а ответ потеряет корреляцию;
+разные ID могут совпасть во внутренних таблицах, включая корреляцию отмены.
+SDK-01 заново проверяет upstream status и фактический выбранный код, а не только номер релиза.
+
+Это envelope ID, не Zalo message ID, tool argument, structuredContent или domain request UUID.
+Строковые ID сообщений, schema validation и toolsy не исправляют потерю точности SDK.
+Ошибка корреляции/отмена клиента не разрешает resend: ledger и stable domain request_id
+сохраняют свои гарантии. Не переводить domain unknown в success из-за успешного HTTP status.
+
+Числовой контракт этой миграции: string IDs сохраняют тип и значение; целочисленные numeric IDs
+в диапазоне signed int64 сохраняют точное математическое значение. Integral decimal/exponent
+формы эквивалентны соответствующему integer; string `"1"` отличается от numeric `1`.
+Побайтовое сохранение numeric spelling не требуется. Дробные и вне-int64 numeric IDs
+отклоняются до application dispatch, без округления/усечения/коллизии. Для запроса, ID которого
+невозможно принять, вернуть protocol error с `id: null`, не сфабрикованный округлённый ID.
+Это явное исправление ошибочного baseline, не обещание arbitrary-precision поддержки.
+Конкретные error code/HTTP framing фиксируются executable fixtures в SDK-01. Уже принятые
+T01/T02 не переоткрываются из-за этого дополнения.
+
+| Gate ID | Обязательная проверка |
+|---|---|
+| ID01 | SDK decode/encode requests и responses: `2^53-1`, `2^53`, `2^53+1`, `2^53+2`, signed int64 min/max; точное значение и различие string/numeric |
+| ID02 | Raw HTTP tools/call: два соседних больших numeric IDs, параллельные handlers, out-of-order ответы; каждый ответ соответствует своему запросу и результату |
+| ID03 | Настоящий STDIO bridge subprocess: те же ID на клиентской стороне, round-trip и concurrent calls; внутренние bridge IDs могут отличаться, внешняя корреляция сохраняется |
+| ID04 | Cancellation на поддерживаемых путях: отменяется только выбранный запрос; соседний остаётся активен; завершение старой invocation не повреждает состояние нового запроса при повторном использовании ID |
+| ID05 | Дробные, вне-int64 и чрезмерно длинные/exponent inputs: bounded rejection без dispatch, паники или неограниченных CPU/memory; числовые bounds и бюджеты явно зафиксированы |
+| ID06 | `server/discover`, resources/read, protocol errors и Events HTTP wrapper: сохранение типа/значения валидного envelope ID, включая большие numeric IDs |
+| ID07 | Synthetic write effect выполнен, ответ прерван/потерян: повтор с исходным domain UUID не создаёт второй upstream dispatch; новый JSON-RPC ID не меняет domain identity |
+
+Тестовый клиент обязан читать ID как raw JSON/json.Number: fixture с float64 сама скрывает
+дефект. Для ID04 транспорт, где отдельная cancellation notification неприменима, проверяется
+через поддерживаемое отключение/cancel request lifecycle и явно маркируется; SDK codec и
+STDIO cancellation tests обязательны. Проверить динамический тип числового cancellation
+requestId после изменения SDK (предложенный PR использует json.Number); application code
+не должен предполагать float64. Уже округлённый caller-provided float64 восстановить нельзя.
+
+Проверить собственные Zalo wrappers отдельно от SDK. В `internal/mcpserver/http.go`
+ответ `server/discover` декодируется в `map[string]any` и сериализуется повторно: envelope ID
+нужно сохранять losslessly при добавлении capabilities. Events ID admission должен применять
+тот же числовой контракт. Допустима точечная правка существующих envelope DTO/декодирования;
+создание второго transport/parser или переписывание всех business numbers не требуется.
+
+Порядок выбора зависимости:
+1. Предпочтителен pinned официальный релиз с исправлением и PASS ID01–ID07.
+2. Если такого релиза нет, зафиксировать незакрытый gate SDK-01. Это не блокирует T03–T09.
+   Подготовить для пользователя
+   конкретный reviewed patch/pinned commit как отдельное dependency exception: provenance,
+   минимальный diff, licenses, сохранённые upstream tests, числовой контракт и условия удаления.
+   Применять vendored/patched SDK только после отдельного согласования; текущая спецификация
+   не выдаёт автоматического разрешения на fork или публикацию библиотеки.
+3. Для согласованного patch проверить весь nested SDK (test/race/vet/build), root Zalo gates,
+   ID01–ID07 и CGO-free builds; pin нельзя оставлять на floating branch. Для будущего удаления
+   patch те же gates должны пройти на unmodified upstream release.
+
+PASS ID01–ID07 обязателен для финальной приёмки T10 и последующего развёртывания,
+но не для выполнения или приёмки T03–T09. Известный дефект текущего SDK фиксируется отдельно
+от регрессий миграции; characterization с ожидаемым округлением не заменяет исправление.
+T03–T09 запускают обязательные migration gates; ID01–ID07 сохраняют отдельный FAIL/NOT_RUN
+до SDK-01, без превращения в PASS и без блокировки независимых задач. Новые регрессии,
+в том числе новые нарушения ID-контракта, этим исключением не разрешаются.
+Изменение SDK/wrappers выполняется отдельной задачей SDK-01 и отдельным коммитом после T09,
+до T10. Не менять zcago или соседние библиотеки. §4.4 — явное исключение из общего wire parity
+только для ошибочного числового поведения; остальные контрактные гарантии сохраняются.
+
+Уже принятые T01/T02 и их коммиты сохраняются без amend/rebase и повторной приёмки из-за
+#1376. На момент исправления плана: T01 `a3151c6`, T02 `23b3e20`. Незакоммиченные изменения
+T03 сохранить и продолжить с них после обычной проверки рабочего дерева. Не откатывать
+работу, не переносить SDK-фикс в старый коммит и не требовать ожидания upstream для миграции.
 
 ## 5. Сохранение domain operations и данных
 
@@ -306,7 +382,7 @@ Model tokens/calls — измерение, не обязательное уме�
 
 ## 8. Arch-go: исполняемые архитектурные границы
 
-Использовать `github.com/arch-go/arch-go/v2`, исходный pin v2.1.2 (уже используется в tg-mcp),
+Использовать `github.com/arch-go/arch-go/v2`, исходный pin v2.1.2,
 проверить совместимость в T02. Вводятся `arch-go.yml`, pinned install target и
 `make architecture`; CI обязан падать при нарушении. Не добавлять arch-go в production imports.
 Конкретный syntax/globs проверить на pinned binary; это ТЗ задаёт правила, не обещает,
@@ -356,6 +432,9 @@ atomicity, no resend, privacy, cancellation или корректность ав
 Снять manifest раздела 2, baseline SHA/tree/toolchain, существующие тесты/известные failures,
 зафиксировать synthetic old binary или воспроизводимую сборку и dataset; определить точные
 границы CLI/events/resources. Составить parity assertions для всех tools и negative inputs.
+Дефект #1376 воспроизводится и исправляется в SDK-01 (§4.4); добавление этого требования
+не меняет acceptance уже выполненной T01. Старый baseline остаётся свидетельством исходного
+поведения, а не требованием сохранять ошибку числовых ID.
 Artifacts: `docs/mcp-migration/baseline.md`, manifest, testdata, baseline measurement command.
 Acceptance: manifest покрывает runtime catalog 1:1; tests различают допустимые динамические
 поля и реальные изменения; baseline можно запустить без аккаунта; исходные failures явно отделены.
@@ -370,6 +449,8 @@ Commit: `test(mcp): freeze migration compatibility baseline`.
 Проверить доступные версии ai-libs в изолированном consumer probe с GOWORK=off.
 Не коммитить абсолютные replace на соседние checkout; отсутствие подходящего релиза — BLOCKED
 dependency gate, а не разрешение публиковать библиотеку. Результат probe записать в dependency matrix.
+SDK-gate §4.4 относится к отдельной SDK-01, не к T02. Он не отменяет приёмку T02
+и не препятствует началу/продолжению T03.
 Acceptance: root/nested zcago тесты и CGO-free builds проходят; active architecture rules=100%,
 negative controls fail ожидаемым правилом; нет незадокументированного dependency drift.
 Commit: `build: pin migration toolchain and architecture checks`.
@@ -455,14 +536,30 @@ Checks: root+nested tests/race/vet, arch-go, CGO-free platform builds, parity, f
 performance, old/new synthetic-state restart compatibility.
 Commit: `refactor(mcp): remove migration glue and verify behavior parity`.
 
+### SDK-01 — Исправление JSON-RPC ID и собственных wrappers
+
+Зависимости: T09; существующие T01/T02 не изменяются. Это отдельная задача с одним коммитом.
+Воспроизвести #1376 на исходном SDK и сохранить before-fix evidence; зафиксировать числовой
+контракт/fixtures §4.4. Выбрать исправленный pinned SDK по указанной dependency policy,
+устранить потерю ID в собственных discover/Events wrappers; не писать второй MCP transport.
+При отсутствии подходящего релиза подготовить конкретный dependency exception на решение
+пользователя. Незакрытый SDK gate блокирует только финальную приёмку/развёртывание;
+уже выполненная миграция T03–T09 остаётся выполненной.
+Acceptance: ID01–ID07 PASS, no duplicate effects, точная корреляция HTTP/STDIO/cancellation,
+сохранены остальные contracts/permissions. Обновлены dependency matrix и before/after evidence.
+Checks: SDK wire suite, root tests/race/vet, CGO-free builds, полные offline eval/parity;
+для patched SDK отдельно nested SDK tests/race/vet/build. Повторить затронутые performance
+измерения при смене зависимости. Findings исправлять в working tree этой задачи.
+Commit: `fix(mcp): preserve JSON-RPC IDs across SDK and wrappers`.
+
 ### T10 — Финальная независимая приёмка и handoff
 
-Зависимости: T09. Два новых независимых субагента проверяют весь candidate, contracts,
-git history T01–T09, evidence и scope. Подготовить итоговый report, limitations, rollback/runbook,
+Зависимости: T09 и SDK-01. Два новых независимых субагента проверяют весь candidate, contracts,
+git history T01–T09 и SDK-01, evidence и scope. Подготовить итоговый report, limitations, rollback/runbook,
 dependency lock matrix и status всех требований. Исправления findings допускаются внутри T10
 с повторными релевантными checks и двумя ревью; итоговый коммит включает их и отчёты.
 Acceptance: completeness 100%, correctness PASS, zero unresolved findings; все обязательные
-offline gates выполнены; deferred/model/live чётко отделены от принятого scope; 10 task commits.
+offline gates выполнены; deferred/model/live чётко отделены от принятого scope; 11 task commits; ID01–ID07 PASS.
 Commit: `chore(mcp): finalize architecture migration acceptance`.
 
 ## 10. Проверки, evidence и rollback
@@ -520,42 +617,46 @@ fix expectation. Correctness PASS означает отсутствие обна
 После двух PASS главный агент создаёт ровно один коммит задачи. Reviews внутри коммита
 ссылаются на parent SHA и digest проверяемых исходников (исключая сами reports), чтобы не
 возникало невозможной самоссылки на SHA содержащего их коммита. После commit сверить tree;
-следующая задача фиксирует предыдущий SHA. Финальный report включает T01–T09 SHA и T10
+следующая задача фиксирует предыдущий SHA. Финальный report включает T01–T09 и SDK-01 SHA и T10
 parent/source digest; финальный T10 SHA сообщается в handoff после commit.
 Не amend чужие/опубликованные commits. Findings до принятия исправляются в текущем working
 tree; поздний finding предыдущей задачи явно учитывается в текущем task report и revalidation.
 
 ### 11.3. Приёмка самого ТЗ
 
-До передачи на реализацию провести два независимых review этого документа по тем же ролям.
-Матрица полноты спецификации может использовать заранее зафиксированные веса по разделам;
-формулу/веса приложить к report. Ревью документа не засчитывает implementation acceptance.
-Результат сохраняется в `docs/mcp-migration/spec-review.md` с hash проверенного ТЗ.
+Независимые субагенты обязательны для приёмки будущей реализации по §11.1, а не для каждой
+редакционной правки этого документа. Ревью самой спецификации субагентами выполняется только
+по отдельной просьбе пользователя. Исторический report хранится в `docs/mcp-migration/spec-review.md`;
+при изменении ТЗ прежний PASS не переносится автоматически на новый hash. Редакционные изменения
+отмечаются отдельно и не засчитывают implementation acceptance.
 
 ## 12. Goal для последовательного выполнения (не запускать в сеансе спецификации)
 
 ```text
 Цель: выполнить ТЗ docs/task-mcp-architecture-ai-libs.md в репозитории zl-mcp.
-Работай строго T01 -> T02 -> ... -> T10. На каждую задачу ровно один атомарный коммит
+Работай последовательно T01 -> T02 -> ... -> T09 -> SDK-01 -> T10. На каждую задачу ровно один атомарный коммит
 с указанным сообщением. Сначала контракты и evidence, затем реализация. Сохраняй пользовательские
 изменения; не меняй соседние библиотеки и third_party вне оговорённого scope.
 
 В начале прочитай ТЗ/AGENTS.md, проверь git status и уже принятые task reports/commits.
 Создай активный goal на эту реализацию, если его ещё нет. После продолжения чата возобновляй
 первую незавершённую задачу; не пересоздавай выполненные задачи и не сбрасывай evidence.
+T01/T02, принятые до дополнения #1376, не переоткрывать; продолжить сохранённую работу T03.
+ID01–ID07 — отдельный gate SDK-01 перед T10, он не блокирует выполнение/приёмку T03–T09.
 
 Для каждой задачи: зафиксируй leaf acceptance requirements и candidate hash, выполни работу
 и релевантные проверки, запусти двух независимых субагентов (полнота в %, отсутствие ошибок),
 исправляй findings до 100% и PASS обоих. Только затем коммит и следующая задача.
 При невозможности получить compatible dependency, нарушении публичного/persistence контракта
 или необходимости расширить scope зафиксируй blocker и запроси решение; не обходи gate.
+Для известного дефекта #1376 это правило применяется в SDK-01; не останавливай из-за него T03–T09.
 
 Не разворачивай сервис, не перезапускай LaunchAgent, не используй живой аккаунт, не запускай
 платные model evals и не публикуй изменения без отдельного поручения. Offline evaluation
 обязательна; model/live gates без запуска остаются NOT_RUN и не препятствуют только явно
 ограниченной offline-приёмке данного ТЗ. Не скрывай их в финальном результате.
 
-Goal завершён, когда T01–T10 приняты, создано 10 task commits, обязательные offline checks
+Goal завершён, когда T01–T10 и SDK-01 приняты, создано 11 task commits, ID01–ID07 PASS, обязательные offline checks
 пройдены, финальные независимые reviewers дали 100% completeness и correctness PASS,
 сохранены архитектура, dependency matrix, parity/eval/performance evidence и rollback handoff.
 Финальный ответ: commits, evidence, acceptance, незапущенные model/live gates.

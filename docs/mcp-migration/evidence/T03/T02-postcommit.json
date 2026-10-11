@@ -1,0 +1,22 @@
+{
+  "sha": "23b3e200e18ad0d0433f38fe4832207c01bb74d2",
+  "tree": "53106222d3a2fd6bcb7098803a3d0d3f29b15fd6",
+  "reviewed_source_digest": "8b6880c4bea84fd4da538d62a935446f8a22e147221a967143e2f8c08f8b5b4c",
+  "git_status": "?? docs/mcp-migration/evidence/T03/\n",
+  "logs_tracked": [
+    "docs/mcp-migration/evidence/T02/architecture-final.log",
+    "docs/mcp-migration/evidence/T02/architecture.log",
+    "docs/mcp-migration/evidence/T02/build-darwin-amd64.log",
+    "docs/mcp-migration/evidence/T02/build-darwin-arm64.log",
+    "docs/mcp-migration/evidence/T02/build-linux-amd64.log",
+    "docs/mcp-migration/evidence/T02/initial-zl-t02-arch-gates-v2.log",
+    "docs/mcp-migration/evidence/T02/initial-zl-t02-arch-gates-v4.log",
+    "docs/mcp-migration/evidence/T02/initial-zl-t02-architecture-initial.log",
+    "docs/mcp-migration/evidence/T02/nested-race.log",
+    "docs/mcp-migration/evidence/T02/nested-test.log",
+    "docs/mcp-migration/evidence/T02/nested-vet.log",
+    "docs/mcp-migration/evidence/T02/root-race.log",
+    "docs/mcp-migration/evidence/T02/root-test.log",
+    "docs/mcp-migration/evidence/T02/root-vet.log"
+  ]
+}

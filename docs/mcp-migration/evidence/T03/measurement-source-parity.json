@@ -1,0 +1,60 @@
+{
+  "status": "PASS",
+  "note": "Accepted performance binary v2 remains frozen. Final model-only preflight/runner control changes and unit tests do not modify benchmark entry/SDK client/fixture/business dependency closure; same Go and pinned dependencies. Current source-based functional build is separate. No architectural improvement claimed.",
+  "files": [
+    {
+      "path": "internal/evaluation/benchmark.go",
+      "measurement_build_sha256": "0addc5f9d306c027d33ccfcb2de7806f8921fbd639e74f1aac83707691d6fe27",
+      "final_source_sha256": "0addc5f9d306c027d33ccfcb2de7806f8921fbd639e74f1aac83707691d6fe27",
+      "identical": true
+    },
+    {
+      "path": "internal/evaluation/client.go",
+      "measurement_build_sha256": "be631f00291c5b67f8f1d7f654677c3065ab2b3ba8f4da8ad13f781b1f58232b",
+      "final_source_sha256": "be631f00291c5b67f8f1d7f654677c3065ab2b3ba8f4da8ad13f781b1f58232b",
+      "identical": true
+    },
+    {
+      "path": "internal/evalfixture/fixture.go",
+      "measurement_build_sha256": "c9d25810664992f9bb9b1200f41d45f98292ccfb58a77e79e733a6a4dc943fda",
+      "final_source_sha256": "c9d25810664992f9bb9b1200f41d45f98292ccfb58a77e79e733a6a4dc943fda",
+      "identical": true
+    },
+    {
+      "path": "internal/evalfixture/offline.go",
+      "measurement_build_sha256": "30c500ec012bea5168df3f25226bc038ba715d45474d07c6fc987b98d9031dbf",
+      "final_source_sha256": "30c500ec012bea5168df3f25226bc038ba715d45474d07c6fc987b98d9031dbf",
+      "identical": true
+    },
+    {
+      "path": "internal/evalfixture/evidence.go",
+      "measurement_build_sha256": "1b9a7a116d6f1ac4bf4ea01faacf8e7dc2d5274a5112ea0c4b5c909a48672b8a",
+      "final_source_sha256": "1b9a7a116d6f1ac4bf4ea01faacf8e7dc2d5274a5112ea0c4b5c909a48672b8a",
+      "identical": true
+    },
+    {
+      "path": "internal/service/archive_port.go",
+      "measurement_build_sha256": "96a10f95402f70a6c4a7048ac08a56a95759c8d7afa0c905cad46d0fb77ab4d0",
+      "final_source_sha256": "96a10f95402f70a6c4a7048ac08a56a95759c8d7afa0c905cad46d0fb77ab4d0",
+      "identical": true
+    },
+    {
+      "path": "go.mod",
+      "measurement_build_sha256": "138d23b1c58487cb3107f2d1e798d9a8b9b166c2492cf57f295e13be9f97f580",
+      "final_source_sha256": "138d23b1c58487cb3107f2d1e798d9a8b9b166c2492cf57f295e13be9f97f580",
+      "identical": true
+    },
+    {
+      "path": "go.sum",
+      "measurement_build_sha256": "fafaadb0b450d083b9264165eea41a7bc27f785d943019a24416d0940b1f21e2",
+      "final_source_sha256": "fafaadb0b450d083b9264165eea41a7bc27f785d943019a24416d0940b1f21e2",
+      "identical": true
+    },
+    {
+      "path": "cmd/zl-mcp-eval/main.go",
+      "measurement_build_sha256": "06a618c9c6a265af9a4dbee0b7c2481c849e6bec954a17c73779505ea9cf7a57",
+      "final_source_sha256": "06a618c9c6a265af9a4dbee0b7c2481c849e6bec954a17c73779505ea9cf7a57",
+      "identical": true
+    }
+  ]
+}

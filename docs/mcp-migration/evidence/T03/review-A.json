@@ -1,0 +1,224 @@
+{
+  "reviewer": "/root/t03_completeness",
+  "role": "independent completeness",
+  "candidate_source_digest": "ef92dd136f7e5ac40e057f741a162a5e90703988b8090ade6ba785f033354a48",
+  "required_total": 52,
+  "verified_pass": 52,
+  "completeness_percent": 100,
+  "verdict": "PASS",
+  "open_findings": 0,
+  "leaf_results": [
+    {
+      "id": "T03-01",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-02",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-03",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-04",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-05",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-06",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-07",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-08",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-09",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-10",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-11",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-12",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-13",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-14",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-15",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-16",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-17",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-18",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-19",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-20",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-21",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-22",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-23",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-24",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-25",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-26",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-27",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-28",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-29",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-30",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-31",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-32",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-33",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-34",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-35",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-36",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-37",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-38",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-39",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-40",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-41",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-42",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-43",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-44",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-45",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-46",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-47",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-48",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-49",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-50",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-51",
+      "status": "PASS"
+    },
+    {
+      "id": "T03-52",
+      "status": "PASS"
+    }
+  ],
+  "independence": "Substantive judgment fixed before B verdict; later read only paired gate identity/status for leaf52",
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01"
+}

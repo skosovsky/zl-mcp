@@ -1,0 +1,24 @@
+{
+  "task": "T03",
+  "status": "ACCEPTED_PENDING_COMMIT",
+  "parent_sha": "23b3e200e18ad0d0433f38fe4832207c01bb74d2",
+  "scope_update": "T01/T02 accepted remain closed; SDK-01 afterT09 beforeT10; eleven taskcommits",
+  "user_spec_sha256": "2418969d21974f7e608233bdc1469abfba2696c28ba235353cfda91c7007ebfa",
+  "user_spec_review_sha256": "65919a74eb956ae87a3fa1fb33113711f33835704bd317fdc5e2708bd6d47619",
+  "offline_cases": 50,
+  "offline_assertions": 480,
+  "functional_baseline": "25/25 240/240 PASS",
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01",
+  "sessions": {},
+  "remaining": [
+    "SoleT03commit thenT04"
+  ],
+  "performance_note": "First preliminary benchmark started with functional/race/root checks; capture as diagnostic and repeat isolated baseline after checks stop. This anomaly is recorded before accepting performance numbers.",
+  "model_limitation": "Protocol-only scaffolding; normal-search smoke setup only; public full-suite preflight alwaysNOT_RUN, unsupported scenarios rejected before driver; no model executed",
+  "candidate": "candidate-final.json",
+  "review_completeness": "52/52=100% PASS",
+  "review_correctness": "PASS zeroopenfindings",
+  "performance_baseline": "PASS 5 runs x1000calls for each of read/search/context"
+}

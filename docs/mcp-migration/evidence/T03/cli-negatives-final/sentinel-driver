@@ -1,0 +1,2 @@
+#!/bin/sh
+touch '/private/tmp/zl-t03-cli-negatives-final/model-was-launched'

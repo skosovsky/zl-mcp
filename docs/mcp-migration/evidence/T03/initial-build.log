@@ -1,0 +1,4 @@
+# github.com/skosovsky/zl-mcp/internal/evaluation
+internal/evaluation/runner.go:202:160: too many arguments in call to evaly.CompleteFor
+	have (evaly.EvidenceRecord, string, string, string)
+	want (evaly.EvidenceRecord, string)

@@ -1,0 +1,115 @@
+{
+  "status": "PASS",
+  "records": [
+    {
+      "name": "assertion-failure",
+      "command": [
+        "/private/tmp/zl-t03-baseline-build-v3/zl-mcp-eval-candidate",
+        "--root",
+        "/workspace/zl-mcp",
+        "--output",
+        "/private/tmp/zl-t03-cli-negatives-final/assertion-failure",
+        "--dataset",
+        "/private/tmp/zl-t03-cli-negatives-final/failing-dataset.json"
+      ],
+      "exit_status": 1,
+      "expected_exit": 1,
+      "status": "FAIL",
+      "stdout": "FAIL cases24/25 assertions240/241; model=NOT_RUN live=NOT_RUN\n",
+      "stderr": "",
+      "report": "/private/tmp/zl-t03-cli-negatives-final/assertion-failure/report.json"
+    },
+    {
+      "name": "missing-child",
+      "command": [
+        "/private/tmp/zl-t03-baseline-build-v3/zl-mcp-eval-candidate",
+        "--root",
+        "/workspace/zl-mcp",
+        "--output",
+        "/private/tmp/zl-t03-cli-negatives-final/missing-child",
+        "--child-binary",
+        "/private/tmp/zl-t03-cli-negatives-final/missing-binary"
+      ],
+      "exit_status": 1,
+      "expected_exit": 1,
+      "status": "FAIL",
+      "stdout": "FAIL cases0/25 assertions95/240; model=NOT_RUN live=NOT_RUN\n",
+      "stderr": "",
+      "report": "/private/tmp/zl-t03-cli-negatives-final/missing-child/report.json"
+    },
+    {
+      "name": "global-timeout",
+      "command": [
+        "/private/tmp/zl-t03-baseline-build-v3/zl-mcp-eval-candidate",
+        "--root",
+        "/workspace/zl-mcp",
+        "--output",
+        "/private/tmp/zl-t03-cli-negatives-final/global-timeout",
+        "--run-budget",
+        "1ms"
+      ],
+      "exit_status": 2,
+      "expected_exit": 2,
+      "status": "INCOMPLETE",
+      "stdout": "INCOMPLETE cases0/25 assertions0/240; model=NOT_RUN live=NOT_RUN\n",
+      "stderr": "",
+      "report": "/private/tmp/zl-t03-cli-negatives-final/global-timeout/report.json"
+    },
+    {
+      "name": "model-not-run",
+      "command": [
+        "/private/tmp/zl-t03-baseline-build-v3/zl-mcp-eval-candidate",
+        "--root",
+        "/workspace/zl-mcp",
+        "--output",
+        "/private/tmp/zl-t03-cli-negatives-final/model-not-run",
+        "--profile",
+        "model"
+      ],
+      "exit_status": 2,
+      "expected_exit": 2,
+      "status": "INCOMPLETE",
+      "stdout": "INCOMPLETE cases0/0 assertions0/0; model=NOT_RUN live=NOT_RUN\n",
+      "stderr": "",
+      "report": "/private/tmp/zl-t03-cli-negatives-final/model-not-run/report.json"
+    },
+    {
+      "name": "model-full-preflight",
+      "command": [
+        "/private/tmp/zl-t03-baseline-build-v3/zl-mcp-eval-candidate",
+        "--root",
+        "/workspace/zl-mcp",
+        "--output",
+        "/private/tmp/zl-t03-cli-negatives-final/model-full-preflight",
+        "--profile",
+        "model",
+        "--model-driver",
+        "/private/tmp/zl-t03-cli-negatives-final/sentinel-driver"
+      ],
+      "exit_status": 2,
+      "expected_exit": 2,
+      "status": "INCOMPLETE",
+      "stdout": "INCOMPLETE cases0/0 assertions0/0; model=NOT_RUN live=NOT_RUN\n",
+      "stderr": "",
+      "report": "/private/tmp/zl-t03-cli-negatives-final/model-full-preflight/report.json"
+    },
+    {
+      "name": "unknown-profile",
+      "command": [
+        "/private/tmp/zl-t03-baseline-build-v3/zl-mcp-eval-candidate",
+        "--root",
+        "/workspace/zl-mcp",
+        "--output",
+        "/private/tmp/zl-t03-cli-negatives-final/unknown-profile",
+        "--profile",
+        "typo"
+      ],
+      "exit_status": 2,
+      "expected_exit": 2,
+      "status": "INCOMPLETE",
+      "stdout": "INCOMPLETE cases0/0 assertions0/0; model=NOT_RUN live=NOT_RUN\n",
+      "stderr": "unknown evaluation profile\n",
+      "report": "/private/tmp/zl-t03-cli-negatives-final/unknown-profile/report.json"
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+{
+  "commands": [
+    {
+      "id": "root-test",
+      "command": "go test ./...",
+      "cwd": ".",
+      "exit_status": 0,
+      "log": "root-test.log",
+      "log_sha256": "d77e4e4164be4f74810be0796680e8c0738f429a1d2c709b6e9ea1727dc80350",
+      "go_env": {
+        "GOWORK": "off",
+        "GOPATH": "/tmp/zl-migration-go-path",
+        "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+        "GOCACHE": "/tmp/zl-migration-go-cache"
+      }
+    },
+    {
+      "id": "root-vet",
+      "command": "go vet ./...",
+      "cwd": ".",
+      "exit_status": 0,
+      "log": "root-vet.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "go_env": {
+        "GOWORK": "off",
+        "GOPATH": "/tmp/zl-migration-go-path",
+        "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+        "GOCACHE": "/tmp/zl-migration-go-cache"
+      }
+    },
+    {
+      "id": "harness-race-before-preflight",
+      "command": "go test -race ./internal/evaluation ./internal/evalfixture",
+      "cwd": ".",
+      "exit_status": 0,
+      "log": "harness-race-before-preflight.log",
+      "log_sha256": "52aa24c152f223b156014150a8c2b3046389c600e8f8f41a1222b0e0510fdbb0",
+      "go_env": {
+        "GOWORK": "off",
+        "GOPATH": "/tmp/zl-migration-go-path",
+        "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+        "GOCACHE": "/tmp/zl-migration-go-cache"
+      }
+    },
+    {
+      "id": "benchmark-descendants",
+      "command": "python3 -m unittest discover -s scripts/mcp-migration -p test_bench_mcp.py",
+      "cwd": ".",
+      "exit_status": 0,
+      "log": "benchmark-descendants.log",
+      "log_sha256": "9c544a5f5f965aca98ba840cdd1927deed5ee6e3694f5daec5754f806cf1a9a7",
+      "go_env": {}
+    },
+    {
+      "id": "architecture-before-preflight",
+      "command": "python3 scripts/mcp-migration/architecture.py --binary /tmp/zl-migration-tools/arch-go --evidence /tmp/zl-t03-architecture-v4.json",
+      "cwd": ".",
+      "exit_status": 0,
+      "log": "architecture-before-preflight.log",
+      "log_sha256": "daa6f81949c8282ba9c4b41e2e9a17692bda8fc437067c0f8b55a151053226a1",
+      "go_env": {
+        "GOWORK": "off",
+        "GOPATH": "/tmp/zl-migration-go-path",
+        "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+        "GOCACHE": "/tmp/zl-migration-go-cache"
+      }
+    },
+    {
+      "id": "offline-repeated-before-preflight",
+      "command": "/tmp/zl-t03-baseline-build-v2/zl-mcp-eval-candidate --root \"$PWD\" --output /tmp/zl-t03-offline-v4 --repeats 2",
+      "cwd": ".",
+      "exit_status": 0,
+      "log": "offline-repeated-before-preflight.log",
+      "log_sha256": "e095bc7b932220bf4676733a9b2fdecb8b24755531423e351022e3c25236a72d",
+      "go_env": {}
+    },
+    {
+      "id": "functional-baseline-before-preflight",
+      "command": "/tmp/zl-t03-baseline-build-v2/zl-mcp-eval-candidate --root \"$PWD\" --child-binary /tmp/zl-t03-baseline-build-v2/zl-mcp-eval-baseline --output /tmp/zl-t03-functional-baseline-v2",
+      "cwd": ".",
+      "exit_status": 0,
+      "log": "functional-baseline-before-preflight.log",
+      "log_sha256": "a0d0f89d7ac228040d225b48279db8ee147b461a0ce4537b8a509bab1247b772",
+      "go_env": {}
+    },
+    {
+      "id": "baseline-build-v2",
+      "command": "python3 scripts/mcp-migration/build_eval.py --output /tmp/zl-t03-baseline-build-v2",
+      "cwd": ".",
+      "exit_status": 0,
+      "log": "baseline-build-v2.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "go_env": {
+        "GOWORK": "off",
+        "GOPATH": "/tmp/zl-migration-go-path",
+        "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+        "GOCACHE": "/tmp/zl-migration-go-cache"
+      }
+    },
+    {
+      "id": "final-build",
+      "command": "python3 scripts/mcp-migration/build_eval.py --output /tmp/zl-t03-baseline-build-v3",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "final-build.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "final-root-test",
+      "command": "go test ./...",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "final-root-test.log",
+      "log_sha256": "a3025cecd20a839bcb1071ab4ab9d6630bd32b8cc0b792570f2071e53becf387"
+    },
+    {
+      "id": "final-root-vet",
+      "command": "go vet ./...",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "final-root-vet.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "final-harness-race",
+      "command": "go test -race ./internal/evaluation ./internal/evalfixture",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "final-harness-race.log",
+      "log_sha256": "9ee97ff237703609001bb5fe3014eda27ed8cd84b9e7b99fb28d53b9b3862302"
+    },
+    {
+      "id": "final-architecture",
+      "command": "python3 scripts/mcp-migration/architecture.py --binary /tmp/zl-migration-tools/arch-go --evidence /tmp/zl-t03-architecture-final.json",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "final-architecture.log",
+      "log_sha256": "daa6f81949c8282ba9c4b41e2e9a17692bda8fc437067c0f8b55a151053226a1"
+    },
+    {
+      "id": "final-offline-repeats",
+      "command": "/tmp/zl-t03-baseline-build-v3/zl-mcp-eval-candidate --root \"$PWD\" --output /tmp/zl-t03-offline-final --repeats 2",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "final-offline-repeats.log",
+      "log_sha256": "e095bc7b932220bf4676733a9b2fdecb8b24755531423e351022e3c25236a72d"
+    },
+    {
+      "id": "final-functional-baseline",
+      "command": "/tmp/zl-t03-baseline-build-v3/zl-mcp-eval-candidate --root \"$PWD\" --child-binary /tmp/zl-t03-baseline-build-v3/zl-mcp-eval-baseline --output /tmp/zl-t03-functional-baseline-final",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "final-functional-baseline.log",
+      "log_sha256": "a0d0f89d7ac228040d225b48279db8ee147b461a0ce4537b8a509bab1247b772"
+    },
+    {
+      "id": "final-cli-negative",
+      "command": "python3 scripts/mcp-migration/check_eval_cli.py --binary /tmp/zl-t03-baseline-build-v3/zl-mcp-eval-candidate --output /tmp/zl-t03-cli-negatives-final",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "final-cli-negative.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "performance-isolated",
+      "command": "python3 scripts/mcp-migration/bench_mcp.py --cpu-model \"Apple M1 Max\" --binary /tmp/zl-t03-baseline-build-v2/zl-mcp-eval-baseline --build-manifest /tmp/zl-t03-baseline-build-v2/build-manifest.json --output /tmp/zl-t03-performance-baseline-v3",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "performance-isolated.log",
+      "log_sha256": "f0e7ef281d73d08073a032d93c56c771ad2741dcec4c3599893ac78020ebcc06"
+    }
+  ],
+  "note": "All final verifications completed after isolated performance measurement. Models/live were not run."
+}

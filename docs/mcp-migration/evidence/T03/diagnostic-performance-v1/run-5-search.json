@@ -1,0 +1,36 @@
+{
+  "run": 5,
+  "kind": "search",
+  "status": "PASS",
+  "command": [
+    "/private/tmp/zl-t03-baseline-build-v1/zl-mcp-eval-baseline",
+    "--root",
+    "/workspace/zl-mcp",
+    "--measure-kind",
+    "search",
+    "--measure-calls",
+    "1000",
+    "--state-dir",
+    "/tmp/local-temp/zl-mcp-bench-xy6ui351"
+  ],
+  "exit_status": 0,
+  "measurement": {
+    "kind": "search",
+    "calls": 1000,
+    "warmup": 50,
+    "errors": 0,
+    "bytes": 2650770,
+    "p95_seconds": 0.003325917,
+    "allocations_per_op": 1143.692,
+    "alloc_bytes_per_op": 464996.096,
+    "elapsed_seconds": 119.340177709,
+    "go": "go1.27.1",
+    "os": "darwin",
+    "arch": "arm64",
+    "concurrency": 1,
+    "pacing_millis": 110,
+    "admission_enabled": true,
+    "exporters_enabled": false,
+    "cleanup": true
+  }
+}

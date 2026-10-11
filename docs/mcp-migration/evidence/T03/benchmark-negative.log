@@ -1,0 +1,12 @@
+/bin/sh: /bin/ps: Operation not permitted
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py:1140: ResourceWarning: subprocess 9121 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/workspace/zl-mcp/scripts/mcp-migration/test_bench_mcp.py:33: ResourceWarning: unclosed file <_io.TextIOWrapper name=3 encoding='UTF-8'>
+  state = os.popen(f'ps -o stat= -p {pid}').read().strip()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.404s
+
+OK

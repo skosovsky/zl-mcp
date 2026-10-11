@@ -1,0 +1,918 @@
+{
+  "revision": "zl-mcp-offline-v1",
+  "grader_revision": "contract-safety-v2",
+  "cases": [
+    {
+      "id": "normal-search",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_search_messages"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "search-success",
+          "step": 0,
+          "path": "",
+          "op": "success",
+          "value": null
+        },
+        {
+          "name": "source-message",
+          "step": 0,
+          "path": "structuredContent.messages",
+          "op": "contains",
+          "value": "m-101"
+        },
+        {
+          "name": "source-group",
+          "step": 0,
+          "path": "structuredContent.messages",
+          "op": "contains",
+          "value": "g-1"
+        },
+        {
+          "name": "sender-citation",
+          "step": 0,
+          "path": "structuredContent.messages",
+          "op": "contains",
+          "value": "user-7"
+        }
+      ]
+    },
+    {
+      "id": "same-name",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_list_conversations"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "both-matching-dialogues",
+          "step": 0,
+          "path": "structuredContent.conversations",
+          "op": "length",
+          "value": 2
+        },
+        {
+          "name": "first-identity",
+          "step": 0,
+          "path": "structuredContent.conversations",
+          "op": "contains",
+          "value": "g-2"
+        },
+        {
+          "name": "second-identity",
+          "step": 0,
+          "path": "structuredContent.conversations",
+          "op": "contains",
+          "value": "g-3"
+        }
+      ]
+    },
+    {
+      "id": "typed-collision",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_list_conversation_messages"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "direct-type",
+          "step": 0,
+          "path": "structuredContent.messages.0.conversation_type",
+          "op": "equal",
+          "value": "direct"
+        },
+        {
+          "name": "group-type",
+          "step": 1,
+          "path": "structuredContent.messages.0.conversation_type",
+          "op": "equal",
+          "value": "group"
+        },
+        {
+          "name": "opaque-id-direct",
+          "step": 0,
+          "path": "structuredContent.messages.0.message_id",
+          "op": "equal",
+          "value": "9007199254740995"
+        },
+        {
+          "name": "opaque-id-group",
+          "step": 1,
+          "path": "structuredContent.messages.0.message_id",
+          "op": "equal",
+          "value": "9007199254740995"
+        }
+      ]
+    },
+    {
+      "id": "empty-corpus",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_search_messages"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "no-messages",
+          "step": 0,
+          "path": "structuredContent.messages",
+          "op": "length",
+          "value": 0
+        },
+        {
+          "name": "incomplete-coverage",
+          "step": 0,
+          "path": "structuredContent.coverage_summary.history_complete",
+          "op": "equal",
+          "value": false
+        }
+      ]
+    },
+    {
+      "id": "gaps",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_search_messages"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "incomplete-history",
+          "step": 0,
+          "path": "structuredContent.coverage_summary.history_complete",
+          "op": "equal",
+          "value": false
+        },
+        {
+          "name": "gap-evidence",
+          "step": 0,
+          "path": "structuredContent.coverage",
+          "op": "contains",
+          "value": "synthetic_missing_history"
+        }
+      ]
+    },
+    {
+      "id": "large-resource",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_get_message_context"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "truncation-explicit",
+          "step": 0,
+          "path": "structuredContent.anchor.text_truncated",
+          "op": "equal",
+          "value": true
+        },
+        {
+          "name": "anchor-citation",
+          "step": 0,
+          "path": "structuredContent.anchor.message_id",
+          "op": "equal",
+          "value": "m-long"
+        },
+        {
+          "name": "full-text-resource",
+          "step": 1,
+          "path": "contents.0.text",
+          "op": "min-length",
+          "value": 9000
+        },
+        {
+          "name": "resource-final-outcome",
+          "step": 1,
+          "path": "contents.0.text",
+          "op": "contains",
+          "value": "услуга не выполнена"
+        }
+      ]
+    },
+    {
+      "id": "pagination",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_search_messages"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "first-has-more",
+          "step": 0,
+          "path": "structuredContent.has_more",
+          "op": "equal",
+          "value": true
+        },
+        {
+          "name": "first-one-record",
+          "step": 0,
+          "path": "structuredContent.messages",
+          "op": "length",
+          "value": 1
+        },
+        {
+          "name": "second-one-record",
+          "step": 1,
+          "path": "structuredContent.messages",
+          "op": "length",
+          "value": 1
+        },
+        {
+          "name": "unchanged-filter-page",
+          "step": 1,
+          "path": "",
+          "op": "success",
+          "value": null
+        },
+        {
+          "name": "changed-filter-denied",
+          "step": 2,
+          "path": "",
+          "op": "code",
+          "value": "INVALID_ARGUMENT"
+        },
+        {
+          "name": "exact-page-0-id",
+          "step": 0,
+          "path": "structuredContent.messages.0.message_id",
+          "op": "equal",
+          "value": "m-evil"
+        },
+        {
+          "name": "exact-page-1-id",
+          "step": 1,
+          "path": "structuredContent.messages.0.message_id",
+          "op": "equal",
+          "value": "m-101"
+        },
+        {
+          "name": "page-ids-distinct",
+          "step": 1,
+          "path": "structuredContent.messages.0.message_id",
+          "op": "different-from",
+          "value": {
+            "step": 0,
+            "path": "structuredContent.messages.0.message_id"
+          }
+        },
+        {
+          "name": "paging-snapshot-stable",
+          "step": 1,
+          "path": "structuredContent.snapshot_at",
+          "op": "same-as",
+          "value": {
+            "step": 0,
+            "path": "structuredContent.snapshot_at"
+          }
+        },
+        {
+          "name": "paging-final-cursor",
+          "step": 1,
+          "path": "structuredContent.next_cursor",
+          "op": "equal",
+          "value": null
+        }
+      ]
+    },
+    {
+      "id": "archive-dates",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_list_archive_sources",
+        "zalo_list_conversation_messages"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "source-discovery",
+          "step": 0,
+          "path": "structuredContent.sources",
+          "op": "length",
+          "value": 1
+        },
+        {
+          "name": "dates-required",
+          "step": 1,
+          "path": "",
+          "op": "code",
+          "value": "INVALID_ARGUMENT"
+        },
+        {
+          "name": "read-source",
+          "step": 2,
+          "path": "",
+          "op": "success",
+          "value": null
+        },
+        {
+          "name": "archive-rows",
+          "step": -1,
+          "path": "archive_rows",
+          "op": "gte",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "archive-empty-page",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_list_archive_sources",
+        "zalo_list_conversation_messages"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "source-discovery",
+          "step": 0,
+          "path": "structuredContent.sources",
+          "op": "length",
+          "value": 1
+        },
+        {
+          "name": "empty-has-more",
+          "step": -1,
+          "path": "empty_page_with_more",
+          "op": "equal",
+          "value": true
+        },
+        {
+          "name": "eventual-records",
+          "step": -1,
+          "path": "archive_rows",
+          "op": "gte",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "ttl",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_list_conversation_messages"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "before-expiry",
+          "step": 0,
+          "path": "structuredContent.messages",
+          "op": "length",
+          "value": 1
+        },
+        {
+          "name": "after-expiry",
+          "step": 1,
+          "path": "structuredContent.messages",
+          "op": "length",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "tombstone",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_list_conversation_messages"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "before-delete",
+          "step": 0,
+          "path": "structuredContent.messages",
+          "op": "length",
+          "value": 1
+        },
+        {
+          "name": "after-restart-no-resurrection",
+          "step": 1,
+          "path": "structuredContent.messages",
+          "op": "length",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "policy-revoke",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_list_conversation_messages"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "before-revoke",
+          "step": 0,
+          "path": "structuredContent.messages",
+          "op": "length",
+          "value": 1
+        },
+        {
+          "name": "read-current-policy",
+          "step": 1,
+          "path": "",
+          "op": "code",
+          "value": "PERMISSION_DENIED"
+        },
+        {
+          "name": "resource-current-policy",
+          "step": 2,
+          "path": "",
+          "op": "resource-error",
+          "value": null
+        }
+      ]
+    },
+    {
+      "id": "injection",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_search_messages"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "injection-is-visible-data",
+          "step": 0,
+          "path": "structuredContent.messages",
+          "op": "contains",
+          "value": "m-evil"
+        },
+        {
+          "name": "search-only",
+          "step": 0,
+          "path": "",
+          "op": "success",
+          "value": null
+        }
+      ]
+    },
+    {
+      "id": "malformed-normalization",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_search_messages",
+        "zalo_send_direct_message",
+        "zalo_get_status"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "numeric-string-compatibility",
+          "step": 0,
+          "path": "",
+          "op": "success",
+          "value": null
+        },
+        {
+          "name": "explicit-zero-denied",
+          "step": 1,
+          "path": "",
+          "op": "code",
+          "value": "INVALID_ARGUMENT"
+        },
+        {
+          "name": "date-format-denied",
+          "step": 2,
+          "path": "",
+          "op": "code",
+          "value": "INVALID_ARGUMENT"
+        },
+        {
+          "name": "uuid-format-denied",
+          "step": 3,
+          "path": "",
+          "op": "code",
+          "value": "INVALID_ARGUMENT"
+        },
+        {
+          "name": "null-unknown-field-denied",
+          "step": 4,
+          "path": "",
+          "op": "code",
+          "value": "INVALID_ARGUMENT"
+        }
+      ]
+    },
+    {
+      "id": "numeric-precision",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_list_conversation_messages"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "direct-type",
+          "step": 0,
+          "path": "structuredContent.messages.0.conversation_type",
+          "op": "equal",
+          "value": "direct"
+        },
+        {
+          "name": "group-type",
+          "step": 1,
+          "path": "structuredContent.messages.0.conversation_type",
+          "op": "equal",
+          "value": "group"
+        },
+        {
+          "name": "opaque-id-direct",
+          "step": 0,
+          "path": "structuredContent.messages.0.message_id",
+          "op": "equal",
+          "value": "9007199254740995"
+        },
+        {
+          "name": "opaque-id-group",
+          "step": 1,
+          "path": "structuredContent.messages.0.message_id",
+          "op": "equal",
+          "value": "9007199254740995"
+        },
+        {
+          "name": "Unicode-preserved",
+          "step": 0,
+          "path": "structuredContent.messages",
+          "op": "contains",
+          "value": "Cà phê 🍀"
+        },
+        {
+          "name": "SDK-before-fix-evidence-explicit",
+          "step": -1,
+          "path": "sdk-envelope-9007199254740993",
+          "op": "one-of",
+          "value": [
+            "9007199254740992",
+            "9007199254740993"
+          ]
+        },
+        {
+          "name": "SDK-string-envelope-exact",
+          "step": -1,
+          "path": "sdk-envelope-\"9007199254740993\"",
+          "op": "equal",
+          "value": "\"9007199254740993\""
+        }
+      ]
+    },
+    {
+      "id": "send-allowed",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_send_direct_message"
+      ],
+      "expected_effects": {
+        "send": 1
+      },
+      "checks": [
+        {
+          "name": "sent",
+          "step": 0,
+          "path": "structuredContent.status",
+          "op": "equal",
+          "value": "sent"
+        },
+        {
+          "name": "message-id",
+          "step": 0,
+          "path": "structuredContent.message_id",
+          "op": "equal",
+          "value": "9007199254740993"
+        }
+      ]
+    },
+    {
+      "id": "send-forbidden",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_send_direct_message"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "permission-denied",
+          "step": 0,
+          "path": "",
+          "op": "code",
+          "value": "PERMISSION_DENIED"
+        }
+      ]
+    },
+    {
+      "id": "cross-quote",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_send_direct_message"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "foreign-quote-denied",
+          "step": 0,
+          "path": "",
+          "op": "code",
+          "value": "QUOTE_UNAVAILABLE"
+        }
+      ]
+    },
+    {
+      "id": "send-idempotency",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_send_direct_message"
+      ],
+      "expected_effects": {
+        "send": 1
+      },
+      "checks": [
+        {
+          "name": "first-sent",
+          "step": 0,
+          "path": "structuredContent.status",
+          "op": "equal",
+          "value": "sent"
+        },
+        {
+          "name": "same-request-sent",
+          "step": 1,
+          "path": "structuredContent.status",
+          "op": "equal",
+          "value": "sent"
+        },
+        {
+          "name": "fingerprint-conflict",
+          "step": 2,
+          "path": "",
+          "op": "code",
+          "value": "REQUEST_CONFLICT"
+        }
+      ]
+    },
+    {
+      "id": "send-unknown-restart",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_send_direct_message",
+        "zalo_get_send_status"
+      ],
+      "expected_effects": {
+        "send": 1
+      },
+      "checks": [
+        {
+          "name": "initial-unknown",
+          "step": 0,
+          "path": "structuredContent.status",
+          "op": "equal",
+          "value": "unknown"
+        },
+        {
+          "name": "restart-unknown",
+          "step": 1,
+          "path": "structuredContent.status",
+          "op": "equal",
+          "value": "unknown"
+        },
+        {
+          "name": "retry-stays-unknown",
+          "step": 2,
+          "path": "structuredContent.status",
+          "op": "equal",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "id": "join-no-approval",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_join_group"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "unapproved-join-denied",
+          "step": 0,
+          "path": "",
+          "op": "code",
+          "value": "APPROVAL_REQUIRED"
+        }
+      ]
+    },
+    {
+      "id": "join-approved",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_join_group",
+        "zalo_get_join_status"
+      ],
+      "expected_effects": {
+        "join": 1
+      },
+      "checks": [
+        {
+          "name": "approved-join-admitted",
+          "step": 0,
+          "path": "",
+          "op": "success",
+          "value": null
+        },
+        {
+          "name": "operation-persisted",
+          "step": 1,
+          "path": "",
+          "op": "success",
+          "value": null
+        },
+        {
+          "name": "terminal-join",
+          "step": -2,
+          "path": "structuredContent.status",
+          "op": "equal",
+          "value": "joined"
+        }
+      ]
+    },
+    {
+      "id": "history-cancel-restart",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_import_conversation_history",
+        "zalo_cancel_history_import",
+        "zalo_get_history_import_status"
+      ],
+      "expected_effects": {
+        "history": 1
+      },
+      "checks": [
+        {
+          "name": "import-started",
+          "step": 0,
+          "path": "",
+          "op": "success",
+          "value": null
+        },
+        {
+          "name": "cancelled",
+          "step": 1,
+          "path": "structuredContent.state",
+          "op": "equal",
+          "value": "cancelled"
+        },
+        {
+          "name": "restart-terminal",
+          "step": 2,
+          "path": "structuredContent.state",
+          "op": "equal",
+          "value": "cancelled"
+        },
+        {
+          "name": "same-request-terminal",
+          "step": 3,
+          "path": "structuredContent.state",
+          "op": "equal",
+          "value": "cancelled"
+        },
+        {
+          "name": "no-import-events",
+          "step": -1,
+          "path": "history_event_delta",
+          "op": "equal",
+          "value": 0
+        },
+        {
+          "name": "no-late-page-commit",
+          "step": -1,
+          "path": "late_history_visible",
+          "op": "equal",
+          "value": false
+        }
+      ]
+    },
+    {
+      "id": "events-redelivery",
+      "timeout_seconds": 60,
+      "allowed_tools": [
+        "zalo_read_subscription_events",
+        "zalo_ack_subscription_events"
+      ],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "first-read-two",
+          "step": 0,
+          "path": "structuredContent.events",
+          "op": "length",
+          "value": 2
+        },
+        {
+          "name": "read-without-ack-redelivers",
+          "step": 1,
+          "path": "structuredContent.events",
+          "op": "length",
+          "value": 2
+        },
+        {
+          "name": "ack-success",
+          "step": 2,
+          "path": "",
+          "op": "success",
+          "value": null
+        },
+        {
+          "name": "ack-idempotent",
+          "step": 3,
+          "path": "",
+          "op": "success",
+          "value": null
+        },
+        {
+          "name": "restart-next-record-only",
+          "step": 4,
+          "path": "structuredContent.events",
+          "op": "length",
+          "value": 1
+        },
+        {
+          "name": "next-record-content",
+          "step": 4,
+          "path": "structuredContent.events",
+          "op": "contains",
+          "value": "event-two"
+        },
+        {
+          "name": "ordered-redelivery-identity",
+          "step": 1,
+          "path": "structuredContent.events",
+          "op": "same-as",
+          "value": {
+            "step": 0,
+            "path": "structuredContent.events"
+          }
+        },
+        {
+          "name": "first-event-id",
+          "step": 0,
+          "path": "structuredContent.events.0.event.data.message_id",
+          "op": "equal",
+          "value": "event-one"
+        },
+        {
+          "name": "second-event-id",
+          "step": 0,
+          "path": "structuredContent.events.1.event.data.message_id",
+          "op": "equal",
+          "value": "event-two"
+        },
+        {
+          "name": "remaining-event-after-restart",
+          "step": 4,
+          "path": "structuredContent.events.0",
+          "op": "same-as",
+          "value": {
+            "step": 0,
+            "path": "structuredContent.events.1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "malformed-resource",
+      "timeout_seconds": 60,
+      "allowed_tools": [],
+      "expected_effects": {},
+      "checks": [
+        {
+          "name": "query-denied",
+          "step": 0,
+          "path": "",
+          "op": "resource-error",
+          "value": null
+        },
+        {
+          "name": "fragment-denied",
+          "step": 1,
+          "path": "",
+          "op": "resource-error",
+          "value": null
+        },
+        {
+          "name": "invalid-archive-token-denied",
+          "step": 2,
+          "path": "",
+          "op": "resource-error",
+          "value": null
+        }
+      ]
+    }
+  ]
+}

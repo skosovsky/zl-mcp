@@ -1,0 +1,8 @@
+{
+  "command": "sysctl -n machdep.cpu.brand_string",
+  "exit_status": 0,
+  "stdout": "Apple M1 Max\n",
+  "access": "read-only host metadata after sandbox denied sysctl",
+  "benchmark_override": "--cpu-model Apple M1 Max",
+  "metadata_failure_log": "performance-metadata-failure.log"
+}

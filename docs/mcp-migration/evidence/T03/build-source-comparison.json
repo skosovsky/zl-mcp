@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "binary_sources_identical": true,
+  "source_changes": [
+    "scripts/mcp-migration/check_eval_cli.py"
+  ],
+  "build_digest": "39cc5a4d84340a1bf762bef65de5975cf2516b3009fdbab1c5a38cb352a90970",
+  "review_digest": "ef92dd136f7e5ac40e057f741a162a5e90703988b8090ade6ba785f033354a48",
+  "reason": "Added reproducible CLI negative checker after final binaries built; checker itself executed against final candidate"
+}

@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -27,6 +28,17 @@ import (
 const InviteURL = "https://zalo.me/g/evalapproved"
 
 type Options struct {
+	Policy *domain.CollectionPolicy
+
+	// Offline enables extended synthetic scenarios through existing domain owners.
+	Offline       bool
+	StateDir      string
+	EffectsFile   string
+	SendTimeout   bool
+	DenySend      bool
+	KeepState     bool
+	ArchiveVector string
+
 	Fixtures    string
 	SkillDir    string
 	Empty       bool
@@ -50,17 +62,26 @@ type Fixture struct {
 	cancel        context.CancelFunc
 	done          chan error
 	heartbeatDone chan struct{}
+	offline       *offlineControl
+	keepState     bool
 }
 
 type Upstream struct {
-	mu      sync.Mutex
-	groups  []domain.Group
-	joined  bool
-	calls   int
-	timeout bool
+	mu         sync.Mutex
+	groups     []domain.Group
+	joined     bool
+	calls      int
+	timeout    bool
+	effectPath string
+	accountID  string
 }
 
-func (*Upstream) AccountID() string { return "synthetic-eval-account" }
+func (u *Upstream) AccountID() string {
+	if u.accountID != "" {
+		return u.accountID
+	}
+	return "synthetic-eval-account"
+}
 func (u *Upstream) Groups(context.Context) ([]domain.Group, error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
@@ -91,6 +112,11 @@ func (u *Upstream) Join(_ context.Context, link string) error {
 	}
 	u.mu.Lock()
 	defer u.mu.Unlock()
+	if u.effectPath != "" {
+		if err := recordEffect(u.effectPath, "join"); err != nil {
+			return err
+		}
+	}
 	u.calls++
 	// A timeout deliberately remains unknown: absence of confirmation must not
 	// make the model submit another request.
@@ -114,12 +140,17 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	if err = json.Unmarshal(data, &corpus); err != nil {
 		return nil, err
 	}
-	dir, err := os.MkdirTemp("", "zl-eval-")
+	dir := opts.StateDir
+	if dir == "" {
+		dir, err = os.MkdirTemp("", "zl-eval-")
+	} else {
+		err = os.MkdirAll(dir, 0700)
+	}
 	if err != nil {
 		return nil, err
 	}
 	runCtx, cancel := context.WithCancel(ctx)
-	f := &Fixture{Dir: dir, cancel: cancel, done: make(chan error, 1)}
+	f := &Fixture{Dir: dir, cancel: cancel, done: make(chan error, 1), keepState: opts.KeepState}
 	defer func() {
 		if err != nil {
 			f.Close()
@@ -129,11 +160,23 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	for _, group := range corpus.Groups {
 		allowed = append(allowed, group.ID)
 	}
-	f.Store, err = storage.Open(runCtx, filepath.Join(dir, "messages.sqlite"), allowed, 90)
+	if opts.Offline {
+		policy := domain.CollectionPolicy{All: true}
+		if opts.Policy != nil {
+			policy = *opts.Policy
+		}
+		f.Store, err = storage.OpenWithPolicy(runCtx, filepath.Join(dir, "messages.sqlite"), policy, 90)
+	} else {
+		f.Store, err = storage.Open(runCtx, filepath.Join(dir, "messages.sqlite"), allowed, 90)
+	}
 	if err != nil {
 		return nil, err
 	}
-	if err = f.Store.BindAccount(runCtx, "synthetic-eval-account"); err != nil {
+	account := "synthetic-eval-account"
+	if opts.Offline {
+		account = "10"
+	}
+	if err = f.Store.BindAccount(runCtx, account); err != nil {
 		return nil, err
 	}
 	if err = f.Store.ReplaceCatalog(runCtx, corpus.Groups); err != nil {
@@ -157,7 +200,7 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	if err = f.Store.SetState(runCtx, state); err != nil {
 		return nil, err
 	}
-	f.Upstream = &Upstream{groups: corpus.Groups, timeout: opts.JoinTimeout}
+	f.Upstream = &Upstream{groups: corpus.Groups, timeout: opts.JoinTimeout, accountID: account}
 	f.joins = collector.NewJoin(runCtx, f.Store, f.Upstream, true)
 	if opts.ApprovalFile != "" && opts.ApprovalTokenFile != "" {
 		return nil, fmt.Errorf("use only one synthetic approval mode")
@@ -222,7 +265,14 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	}
 	f.http = &http.Server{Handler: collector.ControlHandler(f.joins), ReadHeaderTimeout: 5 * time.Second}
 	go func() { f.done <- f.http.Serve(listener) }()
-	f.Server, err = mcpserver.New(f.Store, dir)
+	if opts.Offline {
+		f.offline, err = newOffline(runCtx, f, opts)
+		if err == nil {
+			f.Server, err = mcpserver.NewWithControl(f.Store, f.offline)
+		}
+	} else {
+		f.Server, err = mcpserver.New(f.Store, dir)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -260,6 +310,7 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 }
 
 func (f *Fixture) Close() error {
+	var result error
 	f.cancel()
 	if f.heartbeatDone != nil {
 		<-f.heartbeatDone
@@ -276,11 +327,18 @@ func (f *Fixture) Close() error {
 	if f.joins != nil {
 		f.joins.Wait()
 	}
+	if f.offline != nil {
+		result = errors.Join(result, f.offline.close())
+	}
 	if f.Store != nil {
-		_ = f.Store.Close()
+		result = errors.Join(result, f.Store.Close())
+	}
+
+	if f.keepState {
+		return result
 	}
 	if err := os.RemoveAll(f.Dir); err != nil {
-		return fmt.Errorf("remove synthetic state: %w", err)
+		return errors.Join(result, fmt.Errorf("remove synthetic state: %w", err))
 	}
-	return nil
+	return result
 }

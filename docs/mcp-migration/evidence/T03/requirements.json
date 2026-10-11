@@ -1,0 +1,223 @@
+{
+  "task": "T03",
+  "parent_sha": "23b3e200e18ad0d0433f38fe4832207c01bb74d2",
+  "required_total": 52,
+  "formula": "100 * verified_pass / required_total",
+  "requirements": [
+    {
+      "id": "T03-01",
+      "requirement": "Accepted T02 SHA/tree and source digest postcheck; initial clean worktree"
+    },
+    {
+      "id": "T03-02",
+      "requirement": "Record initial/final candidate parent and source digest"
+    },
+    {
+      "id": "T03-03",
+      "requirement": "Pin public evaly v0.4.2 without sibling or internal-example imports"
+    },
+    {
+      "id": "T03-04",
+      "requirement": "Create internal/evaluation typed target through real MCP entry"
+    },
+    {
+      "id": "T03-05",
+      "requirement": "Create cmd/zl-mcp-eval CLI and make eval-offline"
+    },
+    {
+      "id": "T03-06",
+      "requirement": "Versioned sealed synthetic dataset and fixture hashes; at least22 named cases"
+    },
+    {
+      "id": "T03-07",
+      "requirement": "Case01 normal search data and source IDs"
+    },
+    {
+      "id": "T03-08",
+      "requirement": "Case02 same-name conversations stay distinct"
+    },
+    {
+      "id": "T03-09",
+      "requirement": "Case03 direct/group same ID stay typed"
+    },
+    {
+      "id": "T03-10",
+      "requirement": "Case04 empty corpus does not claim complete history"
+    },
+    {
+      "id": "T03-11",
+      "requirement": "Case05 gaps/incomplete history assertions"
+    },
+    {
+      "id": "T03-12",
+      "requirement": "Case06 large text full resource and citation"
+    },
+    {
+      "id": "T03-13",
+      "requirement": "Case07 paging cursors bind unchanged filters"
+    },
+    {
+      "id": "T03-14",
+      "requirement": "Case08 archive source and mandatory date window"
+    },
+    {
+      "id": "T03-15",
+      "requirement": "Case09 empty archive page preserves has_more"
+    },
+    {
+      "id": "T03-16",
+      "requirement": "Case10 TTL/tombstone/current-policy revoke cases"
+    },
+    {
+      "id": "T03-17",
+      "requirement": "Case11 injection remains untrusted with no unauthorized effects"
+    },
+    {
+      "id": "T03-18",
+      "requirement": "Case12 malformed args, format and normalization"
+    },
+    {
+      "id": "T03-19",
+      "requirement": "Case13 numeric IDs precision and known SDK limitation characterized"
+    },
+    {
+      "id": "T03-20",
+      "requirement": "Case14 allowed send uses real durable owner exactly once"
+    },
+    {
+      "id": "T03-21",
+      "requirement": "Case15 forbidden send dispatch0"
+    },
+    {
+      "id": "T03-22",
+      "requirement": "Case16 cross-conversation quote rejected dispatch0"
+    },
+    {
+      "id": "T03-23",
+      "requirement": "Case17 duplicate UUID no resend and fingerprint conflict"
+    },
+    {
+      "id": "T03-24",
+      "requirement": "Case18 timeout/unknown/restart does not resend"
+    },
+    {
+      "id": "T03-25",
+      "requirement": "Case19 join without/with trusted prior approval"
+    },
+    {
+      "id": "T03-26",
+      "requirement": "Case20 history cancel/restart terminal without imported Events"
+    },
+    {
+      "id": "T03-27",
+      "requirement": "Case21 Events read/ACK redelivery durable ordering"
+    },
+    {
+      "id": "T03-28",
+      "requirement": "Case22 malformed resource URI rejected"
+    },
+    {
+      "id": "T03-29",
+      "requirement": "Each case declares expected evidence, allowed tools/effects and60s timeout"
+    },
+    {
+      "id": "T03-30",
+      "requirement": "Existing business implementation reused; no alternative business logic in fixture"
+    },
+    {
+      "id": "T03-31",
+      "requirement": "Typed evaly lifecycle prepares/reset/cleanup isolated fresh state"
+    },
+    {
+      "id": "T03-32",
+      "requirement": "Independent upstream effects recorded durably before replies; failed effects retained"
+    },
+    {
+      "id": "T03-33",
+      "requirement": "Baseline and candidate use independent copies of identical fixture"
+    },
+    {
+      "id": "T03-34",
+      "requirement": "Hard external wall watchdog bounded stdout/stderr, termination/Wait and finally cleanup"
+    },
+    {
+      "id": "T03-35",
+      "requirement": "Explicit global run budget, budget exceed failed/incomplete neverPASS"
+    },
+    {
+      "id": "T03-36",
+      "requirement": "Model explicit opt-in and180s/30call budgets; skipped profile NOT_RUN"
+    },
+    {
+      "id": "T03-37",
+      "requirement": "CLI exit0 only full assertions/evidence/lifecycle; failure1 incomplete2; report always saved"
+    },
+    {
+      "id": "T03-38",
+      "requirement": "Completeness counts all expected cases/graders, failed/skipped retained"
+    },
+    {
+      "id": "T03-39",
+      "requirement": "Deterministic graders validate schemas,error/data/citations/gaps/permissions/dispatch"
+    },
+    {
+      "id": "T03-40",
+      "requirement": "Offline100% assertions, unauthorized effects0 and duplicate unknown dispatch0"
+    },
+    {
+      "id": "T03-41",
+      "requirement": "Manifest SHA/tree/toolchain/libs/SDK, dataset/fixture/seed/repeats/elapsed/calls/bytes"
+    },
+    {
+      "id": "T03-42",
+      "requirement": "Tokens null with unavailable reason; timeouts/failures/raw traces/grader revisions"
+    },
+    {
+      "id": "T03-43",
+      "requirement": "Functional baseline from frozen T01 business sources beforeT04 and build overlay disclosed"
+    },
+    {
+      "id": "T03-44",
+      "requirement": "Original T01 binary retained for behavior/rollback; new toolchain build manifest"
+    },
+    {
+      "id": "T03-45",
+      "requirement": "Performance baseline same machine/Go/fixture/exportersdisabled/concurrency"
+    },
+    {
+      "id": "T03-46",
+      "requirement": "Performance5independent warmed runs each>=1000 read/search/context calls; errors/bytes/p95/alloc"
+    },
+    {
+      "id": "T03-47",
+      "requirement": "CPU/OS/counts recorded; future thresholds1.15p95/1.20alloc fixed before baseline"
+    },
+    {
+      "id": "T03-48",
+      "requirement": "No credentials/externalnetwork/model/live/deployment/publication"
+    },
+    {
+      "id": "T03-49",
+      "requirement": "Harness unit/integration/negative controls including stuck/flood/missing/assertionfailure"
+    },
+    {
+      "id": "T03-50",
+      "requirement": "Offline evaluation and repeated isolation check PASS"
+    },
+    {
+      "id": "T03-51",
+      "requirement": "Architecture100/100 and production dependency isolation PASS"
+    },
+    {
+      "id": "T03-52",
+      "requirement": "Two samecandidate independent reviews completeness100% correctnessPASS beforesolecommit"
+    }
+  ],
+  "non_goals": [
+    "T04-T10 production migration",
+    "model/live execution",
+    "production persistence changes"
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN"
+}

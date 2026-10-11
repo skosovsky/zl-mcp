@@ -1,0 +1,99 @@
+{
+  "status": "PASS",
+  "baseline_sha": "8d913c48b797f54f277ffc1106e6bf28be9e697d",
+  "baseline_tree": "a5d81a45c86eb4959954001c9c6877315e5d1cc0",
+  "candidate_parent_sha": "23b3e200e18ad0d0433f38fe4832207c01bb74d2",
+  "toolchain": "go version go1.27.1 darwin/arm64",
+  "original_t01_build_manifest": "docs/mcp-migration/evidence/T01/build-manifest.json",
+  "overlay": [
+    {
+      "path": "cmd/zl-mcp-eval/main.go",
+      "sha256": "599fcff5cd03da3cd7cc9dab0d08322b3ee8db590cb9d4b7c1636b2bc7b78720"
+    },
+    {
+      "path": "go.mod",
+      "sha256": "25a7fa6fbcee6975f7dd5bd6d68792f5e5dcf4e1908f432dc2f6f089b8bd6986"
+    },
+    {
+      "path": "go.sum",
+      "sha256": "fafaadb0b450d083b9264165eea41a7bc27f785d943019a24416d0940b1f21e2"
+    },
+    {
+      "path": "internal/evalfixture/evidence.go",
+      "sha256": "1b9a7a116d6f1ac4bf4ea01faacf8e7dc2d5274a5112ea0c4b5c909a48672b8a"
+    },
+    {
+      "path": "internal/evalfixture/fixture.go",
+      "sha256": "c9d25810664992f9bb9b1200f41d45f98292ccfb58a77e79e733a6a4dc943fda"
+    },
+    {
+      "path": "internal/evalfixture/offline.go",
+      "sha256": "ab843fa3148b0a1622191ca9502cfccadc65a789fa7a261febb8bac4b678cd02"
+    },
+    {
+      "path": "internal/evaluation/benchmark.go",
+      "sha256": "f54f32cf4647b8114556959f872ffbc51f5a116c323658e1f1ddc746286c9ca4"
+    },
+    {
+      "path": "internal/evaluation/client.go",
+      "sha256": "bc7d2c3724d0e02d3787195287ca3f8f4b8349db191de51af47a0c727b0600af"
+    },
+    {
+      "path": "internal/evaluation/grader.go",
+      "sha256": "fec466c4531ad862df2e0137c1e14042852c2670e63940b2f87d25928362474d"
+    },
+    {
+      "path": "internal/evaluation/process.go",
+      "sha256": "45a3af8a097b4c1c7f03e55b85919c307788db012a0c8aa53ba2109110b15e40"
+    },
+    {
+      "path": "internal/evaluation/runner.go",
+      "sha256": "b343a7e6f5e30e0c4323e4ce9d1f98bbe8b627118f1da6c5c6a993ea6b4ab9dc"
+    },
+    {
+      "path": "internal/evaluation/scenarios.go",
+      "sha256": "9a514d81825ab397f4c3165307439d88e26e83ce4125d6c54b34b712d51fc248"
+    },
+    {
+      "path": "internal/evaluation/types.go",
+      "sha256": "6ff4595f0bbe7428efef46e87fb64f1774e045b1721b3e2aa3d6f7fa7d52d494"
+    },
+    {
+      "path": "internal/service/archive_port.go",
+      "sha256": "96a10f95402f70a6c4a7048ac08a56a95759c8d7afa0c905cad46d0fb77ab4d0"
+    }
+  ],
+  "builds": [
+    {
+      "kind": "baseline",
+      "command": [
+        "go",
+        "build",
+        "-trimpath",
+        "-o",
+        "/private/tmp/zl-t03-baseline-build-v1/zl-mcp-eval-baseline",
+        "./cmd/zl-mcp-eval"
+      ],
+      "exit_status": 0,
+      "binary": "/private/tmp/zl-t03-baseline-build-v1/zl-mcp-eval-baseline",
+      "binary_sha256": "ad8927dd59a92fb2727684c7fcbd4fef999e0ac927f981419e8b408bab4a9cab",
+      "build_info": "/private/tmp/zl-t03-baseline-build-v1/zl-mcp-eval-baseline: go1.27.1\n\tpath\tgithub.com/skosovsky/zl-mcp/cmd/zl-mcp-eval\n\tmod\tgithub.com/skosovsky/zl-mcp\t(devel)\t\n\tdep\tgithub.com/amrakk/zcago\tv0.3.1-0.20260908044439-d4ff65b46057\n\t=>\t./third_party/zcago\t(devel)\t\n\t\n\tdep\tgithub.com/coder/websocket\tv1.8.12\th1:5bUXkEPPIbewrnkU8LTCLVaxi4N4J8ahufH2vlo4NAo=\n\tdep\tgithub.com/dustin/go-humanize\tv1.0.1\th1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=\n\tdep\tgithub.com/google/jsonschema-go\tv0.4.3\th1:/DBOLZTfDow7pe2GmaJNhltueGTtDKICi8V8p+DQPd0=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/modelcontextprotocol/go-sdk\tv1.8.0\th1:KIvahhYqwtbeniWVPs3TcXEA7b8jEtwfBpOTAI+Urx4=\n\tdep\tgithub.com/ncruces/go-strftime\tv1.0.0\th1:HMFp8mLCTPp341M/ZnA4qaf7ZlsbTc+miZjCLOFAw7w=\n\tdep\tgithub.com/pelletier/go-toml/v2\tv2.4.3\th1:GTRvJQutkOSftxIFD5xw9aepkYNuPWmVJpffdDPYVpY=\n\tdep\tgithub.com/remyoudompheng/bigfft\tv0.0.0-20230129092748-24d4a6f8daec\th1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=\n\tdep\tgithub.com/santhosh-tekuri/jsonschema/v6\tv6.0.3\th1:1EYB5IzjZawrrnELUi78f9fPu57HuXjmddZPjrls/28=\n\tdep\tgithub.com/segmentio/asm\tv1.1.3\th1:WM03sfUOENvvKexOLp+pCqgb/WDjsi7EK8gIsICtzhc=\n\tdep\tgithub.com/segmentio/encoding\tv0.5.4\th1:OW1VRern8Nw6ITAtwSZ7Idrl3MXCFwXHPgqESYfvNt0=\n\tdep\tgithub.com/skosovsky/evaly\tv0.4.2\th1:d3WKDTPlSKJQTW5xOFKt1SEPkeGYYdSJKt5qevkP2lg=\n\tdep\tgithub.com/ulikunitz/xz\tv0.5.17\th1:flR0y/x1hgM8EGV1AW3Xll6T413G0glV8UfBwR617V4=\n\tdep\tgithub.com/yosida95/uritemplate/v3\tv3.0.2\th1:Ed3Oyj9yrmi9087+NczuL5BwkIc4wvTb5zIM+UJPGz4=\n\tdep\tgolang.org/x/mod\tv0.41.0\th1:qJmnOUb4YB+FsEuM3HcWucdZASCPGhsX6uljO6pog0c=\n\tdep\tgolang.org/x/oauth2\tv0.35.0\th1:Mv2mzuHuZuY2+bkyWXIHMfhNdJAdwW3FuWeCPYN5GVQ=\n\tdep\tgolang.org/x/sync\tv0.23.0\th1:KameEIfc1IkluZyXWLn39Wd4tURc6GbCiISGiZm2bQk=\n\tdep\tgolang.org/x/sys\tv0.48.0\th1:bbX/i/6MgT9BVLM9RT1thmxL04yeTAhbEz4SyadbXoo=\n\tdep\tgolang.org/x/text\tv0.42.0\th1:JbOZXgfeCPU9gacVtYliJqOhD+zhrEqK4LfdpmlUZqI=\n\tdep\tgolang.org/x/time\tv0.15.0\th1:bbrp8t3bGUeFOx08pvsMYRTCVSMk89u4tKbNOZbp88U=\n\tdep\tgopkg.in/natefinch/lumberjack.v2\tv2.2.1\th1:bBRl1b0OH9s/DuPhuXpNl+VtCaJXFZ5/uEFST95x9zc=\n\tdep\tmodernc.org/libc\tv1.77.1\th1:Ct8j47QtiZ1Enj2DtFXQtUqrPCAjdCmPjtCuvrYQ0Hs=\n\tdep\tmodernc.org/mathutil\tv1.7.1\th1:GCZVGXdaN8gTqB1Mf/usp1Y/hSqgI2vAGGP4jZMCxOU=\n\tdep\tmodernc.org/memory\tv1.12.1\th1:nFMiWrpStgZczNl6XI9GnIk/rWhYIyHGUaR04pGbp9g=\n\tdep\tmodernc.org/sqlite\tv1.60.1\th1:/blz53O951KWFOso4QQvEs/Fq6cDBKLtMVrYNSeJVKw=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-trimpath=true\n\tbuild\tCGO_ENABLED=1\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=darwin\n\tbuild\tGOARM64=v8.0\n"
+    },
+    {
+      "kind": "candidate",
+      "command": [
+        "go",
+        "build",
+        "-trimpath",
+        "-o",
+        "/private/tmp/zl-t03-baseline-build-v1/zl-mcp-eval-candidate",
+        "./cmd/zl-mcp-eval"
+      ],
+      "exit_status": 0,
+      "binary": "/private/tmp/zl-t03-baseline-build-v1/zl-mcp-eval-candidate",
+      "binary_sha256": "2be4656529bfbf536ca8b09ff0bcc98fb80a57f77ec9590ba95732d9825bde5c",
+      "build_info": "/private/tmp/zl-t03-baseline-build-v1/zl-mcp-eval-candidate: go1.27.1\n\tpath\tgithub.com/skosovsky/zl-mcp/cmd/zl-mcp-eval\n\tmod\tgithub.com/skosovsky/zl-mcp\tv0.0.0-20261011140607-23b3e200e18a+dirty\t\n\tdep\tgithub.com/amrakk/zcago\tv0.3.1-0.20260908044439-d4ff65b46057\n\t=>\t./third_party/zcago\t(devel)\t\n\t\n\tdep\tgithub.com/coder/websocket\tv1.8.12\th1:5bUXkEPPIbewrnkU8LTCLVaxi4N4J8ahufH2vlo4NAo=\n\tdep\tgithub.com/dustin/go-humanize\tv1.0.1\th1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=\n\tdep\tgithub.com/google/jsonschema-go\tv0.4.3\th1:/DBOLZTfDow7pe2GmaJNhltueGTtDKICi8V8p+DQPd0=\n\tdep\tgithub.com/google/uuid\tv1.6.0\th1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.24\th1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=\n\tdep\tgithub.com/modelcontextprotocol/go-sdk\tv1.8.0\th1:KIvahhYqwtbeniWVPs3TcXEA7b8jEtwfBpOTAI+Urx4=\n\tdep\tgithub.com/ncruces/go-strftime\tv1.0.0\th1:HMFp8mLCTPp341M/ZnA4qaf7ZlsbTc+miZjCLOFAw7w=\n\tdep\tgithub.com/pelletier/go-toml/v2\tv2.4.3\th1:GTRvJQutkOSftxIFD5xw9aepkYNuPWmVJpffdDPYVpY=\n\tdep\tgithub.com/remyoudompheng/bigfft\tv0.0.0-20230129092748-24d4a6f8daec\th1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=\n\tdep\tgithub.com/santhosh-tekuri/jsonschema/v6\tv6.0.3\th1:1EYB5IzjZawrrnELUi78f9fPu57HuXjmddZPjrls/28=\n\tdep\tgithub.com/segmentio/asm\tv1.1.3\th1:WM03sfUOENvvKexOLp+pCqgb/WDjsi7EK8gIsICtzhc=\n\tdep\tgithub.com/segmentio/encoding\tv0.5.4\th1:OW1VRern8Nw6ITAtwSZ7Idrl3MXCFwXHPgqESYfvNt0=\n\tdep\tgithub.com/skosovsky/evaly\tv0.4.2\th1:d3WKDTPlSKJQTW5xOFKt1SEPkeGYYdSJKt5qevkP2lg=\n\tdep\tgithub.com/ulikunitz/xz\tv0.5.17\th1:flR0y/x1hgM8EGV1AW3Xll6T413G0glV8UfBwR617V4=\n\tdep\tgithub.com/yosida95/uritemplate/v3\tv3.0.2\th1:Ed3Oyj9yrmi9087+NczuL5BwkIc4wvTb5zIM+UJPGz4=\n\tdep\tgolang.org/x/mod\tv0.41.0\th1:qJmnOUb4YB+FsEuM3HcWucdZASCPGhsX6uljO6pog0c=\n\tdep\tgolang.org/x/oauth2\tv0.35.0\th1:Mv2mzuHuZuY2+bkyWXIHMfhNdJAdwW3FuWeCPYN5GVQ=\n\tdep\tgolang.org/x/sync\tv0.23.0\th1:KameEIfc1IkluZyXWLn39Wd4tURc6GbCiISGiZm2bQk=\n\tdep\tgolang.org/x/sys\tv0.48.0\th1:bbX/i/6MgT9BVLM9RT1thmxL04yeTAhbEz4SyadbXoo=\n\tdep\tgolang.org/x/text\tv0.42.0\th1:JbOZXgfeCPU9gacVtYliJqOhD+zhrEqK4LfdpmlUZqI=\n\tdep\tgolang.org/x/time\tv0.15.0\th1:bbrp8t3bGUeFOx08pvsMYRTCVSMk89u4tKbNOZbp88U=\n\tdep\tgopkg.in/natefinch/lumberjack.v2\tv2.2.1\th1:bBRl1b0OH9s/DuPhuXpNl+VtCaJXFZ5/uEFST95x9zc=\n\tdep\tmodernc.org/libc\tv1.77.1\th1:Ct8j47QtiZ1Enj2DtFXQtUqrPCAjdCmPjtCuvrYQ0Hs=\n\tdep\tmodernc.org/mathutil\tv1.7.1\th1:GCZVGXdaN8gTqB1Mf/usp1Y/hSqgI2vAGGP4jZMCxOU=\n\tdep\tmodernc.org/memory\tv1.12.1\th1:nFMiWrpStgZczNl6XI9GnIk/rWhYIyHGUaR04pGbp9g=\n\tdep\tmodernc.org/sqlite\tv1.60.1\th1:/blz53O951KWFOso4QQvEs/Fq6cDBKLtMVrYNSeJVKw=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\t-trimpath=true\n\tbuild\tCGO_ENABLED=1\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=darwin\n\tbuild\tGOARM64=v8.0\n\tbuild\tvcs=git\n\tbuild\tvcs.revision=23b3e200e18ad0d0433f38fe4832207c01bb74d2\n\tbuild\tvcs.time=2026-10-11T14:06:07Z\n\tbuild\tvcs.modified=true\n"
+    }
+  ],
+  "overlay_purpose": "Only fixture/driver plus forwarding archive constructor and pinned harness dependency/toolchain; frozen business implementations unchanged"
+}

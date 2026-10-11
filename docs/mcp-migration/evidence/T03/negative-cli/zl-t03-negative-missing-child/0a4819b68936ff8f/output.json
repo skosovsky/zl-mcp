@@ -1,0 +1,1 @@
+{"case_id":"injection","trace":null,"facts":null,"cleanup":false,"effects":{},"complete":false,"failure":"fork/exec /tmp/no-such-zl-binary: no such file or directory: missing child output","elapsed_seconds":0.001043042,"bytes":0}
