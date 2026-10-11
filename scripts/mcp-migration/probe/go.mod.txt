@@ -1,0 +1,9 @@
+module migration-consumer-probe
+
+go 1.27.1
+
+require (
+ github.com/skosovsky/toolsy v0.20.0
+ github.com/skosovsky/metry v0.10.1
+ github.com/skosovsky/evaly v0.4.2
+)

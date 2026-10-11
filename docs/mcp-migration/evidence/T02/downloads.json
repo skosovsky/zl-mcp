@@ -1,0 +1,64 @@
+{
+	"Path": "github.com/skosovsky/toolsy",
+	"Version": "v0.20.0",
+	"Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.0.info",
+	"GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.0.mod",
+	"Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.0.zip",
+	"Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.0",
+	"Sum": "h1:nUgLZz3mGKKu47atAN04kFkF3HIhjLR8psUDwN9SHrs=",
+	"GoModSum": "h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://github.com/skosovsky/toolsy",
+		"Hash": "fb4c809c07ea65d618536ee3c0e8a6de1b4bdc23",
+		"Ref": "refs/tags/v0.20.0"
+	}
+}
+{
+	"Path": "github.com/skosovsky/metry",
+	"Version": "v0.10.1",
+	"Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/metry/@v/v0.10.1.info",
+	"GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/metry/@v/v0.10.1.mod",
+	"Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/metry/@v/v0.10.1.zip",
+	"Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/metry@v0.10.1",
+	"Sum": "h1:BLl242PXNWwk4+bWyVph3sKKgoPBhQi66bPjZtnIcBI=",
+	"GoModSum": "h1:DF+cRevcaXSlbby6IjYhhdS7k6BCpL+5ohfgHFV7/bo=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://github.com/skosovsky/metry",
+		"Hash": "cffc692e7ffdbcc67a9f5fd44c4f408bf2789f1e",
+		"Ref": "refs/tags/v0.10.1"
+	}
+}
+{
+	"Path": "github.com/skosovsky/evaly",
+	"Version": "v0.4.2",
+	"Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/evaly/@v/v0.4.2.info",
+	"GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/evaly/@v/v0.4.2.mod",
+	"Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/evaly/@v/v0.4.2.zip",
+	"Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/evaly@v0.4.2",
+	"Sum": "h1:d3WKDTPlSKJQTW5xOFKt1SEPkeGYYdSJKt5qevkP2lg=",
+	"GoModSum": "h1:pTZYC/g7JOQJxxpe9Sq/C4z2TdNwzyE+/BQzWW5l48Y=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://github.com/skosovsky/evaly",
+		"Hash": "1c87fbcf650a93790cf97262f4ff673f0001abf6",
+		"Ref": "refs/tags/v0.4.2"
+	}
+}
+{
+	"Path": "github.com/arch-go/arch-go/v2",
+	"Version": "v2.1.2",
+	"Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/arch-go/arch-go/v2/@v/v2.1.2.info",
+	"GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/arch-go/arch-go/v2/@v/v2.1.2.mod",
+	"Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/arch-go/arch-go/v2/@v/v2.1.2.zip",
+	"Dir": "/tmp/zl-migration-mod-cache/github.com/arch-go/arch-go/v2@v2.1.2",
+	"Sum": "h1:kYf2VIVjtbKLGTs0/lr+2FOqiXFFKAiGc4UhoIS/l0M=",
+	"GoModSum": "h1:8W9kj7Pgv0iPioau6yoaiC3HLvzqyq5LydXam9Z1Fpc=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://github.com/arch-go/arch-go",
+		"Hash": "31f733794f225c0f38763349f7bffb19973e526a",
+		"Ref": "refs/tags/v2.1.2"
+	}
+}

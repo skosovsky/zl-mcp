@@ -1,0 +1,27 @@
+{
+  "candidate": "d6baf9daeb01fbd64da32751ffb99ed92a26da9c27e4922e5ca1e76f800a914a",
+  "reviewer": "/root/t02_correctness",
+  "verdict": "FAIL",
+  "findings": [
+    {
+      "id": "B01",
+      "severity": "P1",
+      "requirements": [
+        "T02-18",
+        "T02-27"
+      ],
+      "finding": "Host-only AST skips windows/tag/cgo files; SDK allowed outside bridge.go",
+      "resolution": "Parse all production source files and enforce allowlists plus exact per-file SDK exception; four source controls"
+    },
+    {
+      "id": "B02",
+      "severity": "P1",
+      "requirements": [
+        "T02-20",
+        "T02-26"
+      ],
+      "finding": "Unanchored selectors accept shadow package path as covered domain",
+      "resolution": "Anchor full escaped import paths; shadow-package negative control"
+    }
+  ]
+}

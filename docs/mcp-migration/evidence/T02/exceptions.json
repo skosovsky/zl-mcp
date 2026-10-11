@@ -1,0 +1,60 @@
+{
+  "revision": 1,
+  "exceptions": [
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/mcpserver",
+      "dependency": "github.com/skosovsky/zl-mcp/internal/storage",
+      "remove_in": "T07",
+      "reason": "legacy reads/write dispatch and admission; read extraction T04/T06, final removal T07"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/mcpserver",
+      "dependency": "github.com/skosovsky/zl-mcp/internal/control",
+      "remove_in": "T07",
+      "reason": "legacy command backend construction; remove with operation ports"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/mcpserver",
+      "dependency": "github.com/skosovsky/zl-mcp/internal/events",
+      "remove_in": "T06",
+      "reason": "HTTP Events extension concrete transport adapter; isolate adapter in T06"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/mcpserver",
+      "dependency": "database/sql",
+      "remove_in": "T07",
+      "reason": "sql.ErrNoRows legacy error projection; typed domain mapper removes final concrete dependency"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp",
+      "dependency": "github.com/skosovsky/zl-mcp/internal/storage",
+      "remove_in": "T07",
+      "reason": "legacy owner CLI opens storage; delegate concrete ownership to service composition"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp",
+      "dependency": "github.com/skosovsky/zl-mcp/internal/zalo",
+      "remove_in": "T07",
+      "reason": "legacy login construction; move wiring to service composition"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp",
+      "dependency": "github.com/skosovsky/zl-mcp/internal/control",
+      "remove_in": "T07",
+      "reason": "legacy owner CLI control client construction; retain local authority through service entrypoint"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp",
+      "dependency": "github.com/skosovsky/zl-mcp/internal/local",
+      "remove_in": "T07",
+      "reason": "legacy owner CLI socket/private-state helpers; keep behind service entrypoint"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp",
+      "dependency": "github.com/skosovsky/zl-mcp/internal/logging",
+      "remove_in": "T07",
+      "reason": "CLI builds operational logger; consolidate concrete composition"
+    }
+  ],
+  "policy": "exact package/dependency only; no new baseline backend edges; close all new-boundary exceptions by T07"
+}

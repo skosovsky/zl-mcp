@@ -1,0 +1,18 @@
+{
+  "commit_sha": "a3151c6bbee589cfaa3aeb21b147afe59e2ad321",
+  "commit_tree": "c41a85eef512ae66f575403ea7e7ff7ff7cfabe9",
+  "subject": "test(mcp): freeze migration compatibility baseline",
+  "source_digest_sha256": "26b4208b187426f5073dc4029c6384d057ef1562fb94d66c6834cd057e6a25b6",
+  "tracked_evidence_logs": [
+    "docs/mcp-migration/evidence/T01/catalog-freeze.log",
+    "docs/mcp-migration/evidence/T01/frozen-build-smoke.log",
+    "docs/mcp-migration/evidence/T01/initial-root-test.log",
+    "docs/mcp-migration/evidence/T01/initial-root-vet.log",
+    "docs/mcp-migration/evidence/T01/input-freeze.log",
+    "docs/mcp-migration/evidence/T01/root-test.log",
+    "docs/mcp-migration/evidence/T01/root-vet.log",
+    "docs/mcp-migration/evidence/T01/watchdog-tests.log",
+    "docs/mcp-migration/evidence/T01/wire-freeze.log"
+  ],
+  "postcommit_worktree_clean": true
+}

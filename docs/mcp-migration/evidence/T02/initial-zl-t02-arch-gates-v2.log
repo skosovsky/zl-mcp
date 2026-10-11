@@ -1,0 +1,40 @@
+Traceback (most recent call last):
+  File "/workspace/zl-mcp/scripts/mcp-migration/architecture.py", line 149, in <module>
+    main()
+    ~~~~^^
+  File "/workspace/zl-mcp/scripts/mcp-migration/architecture.py", line 140, in main
+    output['controls'] = controls(binary, json.loads((ROOT / 'arch-go.yml').read_text()))
+                         ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/zl-mcp/scripts/mcp-migration/architecture.py", line 109, in controls
+    result = run(binary, work)
+  File "/workspace/zl-mcp/scripts/mcp-migration/architecture.py", line 72, in run
+    raise RuntimeError(f'arch-go did not produce a report: exit{result.returncode}\n{result.stdout}\n{result.stderr}')
+RuntimeError: arch-go did not produce a report: exit2
+Running arch-go command
+Using configuration file: /tmp/local-temp/zl-arch-control-2xyi6hp6/arch-go.yml
+
+panic: runtime error: invalid memory address or nil pointer dereference
+[signal SIGSEGV: segmentation violation code=0x2 addr=0x90 pc=0x100c55cd4]
+
+goroutine 28 [running]:
+regexp.(*Regexp).find(0x14a41c4d7518?, {0x0?, 0x0?}, {0x0?, 0x14a41c36fbf8?, 0x100b1e5fc?}, {0x14a41c49e0f1?, 0x0?}, 0x14a41c36fbf8?, 0x100c521e4?, ...)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/regexp/exec.go:527 +0x54
+regexp.(*Regexp).doMatch(...)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/regexp/exec.go:514
+regexp.(*Regexp).MatchString(...)
+	/opt/homebrew/Cellar/go/1.27.1/libexec/src/regexp/regexp.go:506
+github.com/arch-go/arch-go/v2/internal/verifications/dependencies.checkRestrictedExternalImports({0x14a41c49e0f1, 0x2a}, {0x14a41c478400, 0x1, 0x14a41c36fc68?}, {{0x14a41c46af00, 0x1b}, {0x14a41c307378, 0x1, 0x1}})
+	/tmp/zl-migration-mod-cache/github.com/arch-go/arch-go/v2@v2.1.2/internal/verifications/dependencies/check_restricted.go:49 +0x158
+github.com/arch-go/arch-go/v2/internal/verifications/dependencies.checkRestrictedDependencies(0x14a41c31c160?, {{0x14a41c46a760?, 0x14a41c36fde8?}, 0x0?, 0x14a41c474f50?}, {{0x14a41c46af00, 0x1b}, {0x14a41c307378, 0x1, 0x1}})
+	/tmp/zl-migration-mod-cache/github.com/arch-go/arch-go/v2@v2.1.2/internal/verifications/dependencies/verifications.go:95 +0x194
+github.com/arch-go/arch-go/v2/internal/verifications/dependencies.checkDependencies(0x14a41c431800, {{0x14a41c46a760?, 0x0?}, 0x0?, 0x14a41c474f50?}, {{0x14a41c46af00, 0x1b}, {0x14a41c307378, 0x1, 0x1}})
+	/tmp/zl-migration-mod-cache/github.com/arch-go/arch-go/v2@v2.1.2/internal/verifications/dependencies/verifications.go:58 +0x84
+github.com/arch-go/arch-go/v2/internal/verifications/dependencies.CheckRule({{0x14a41c46af00, 0x1b}, {0x14a41c307378, 0x1, 0x1}}, {{0x14a41c46a760?, 0x0?}, 0x0?, 0x14a41c474f50?})
+	/tmp/zl-migration-mod-cache/github.com/arch-go/arch-go/v2@v2.1.2/internal/verifications/dependencies/verifications.go:38 +0x190
+github.com/arch-go/arch-go/v2/internal/verifications/dependencies.CheckRules({{0x14a41c46af00, 0x1b}, {0x14a41c307378, 0x1, 0x1}}, {0x14a41c32a5a0, 0x39, 0x0?})
+	/tmp/zl-migration-mod-cache/github.com/arch-go/arch-go/v2@v2.1.2/internal/verifications/dependencies/verifications.go:17 +0x94
+github.com/arch-go/arch-go/v2/api.(*architectureAnalysis).Execute.func1()
+	/tmp/zl-migration-mod-cache/github.com/arch-go/arch-go/v2@v2.1.2/api/architecture.go:49 +0x4c
+created by github.com/arch-go/arch-go/v2/api.(*architectureAnalysis).Execute in goroutine 1
+	/tmp/zl-migration-mod-cache/github.com/arch-go/arch-go/v2@v2.1.2/api/architecture.go:47 +0x100
+

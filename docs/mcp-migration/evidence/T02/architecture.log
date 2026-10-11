@@ -1,0 +1,4 @@
+mkdir -p "/tmp/zl-migration-tools"
+GOWORK=off GOBIN="/tmp/zl-migration-tools" go install github.com/arch-go/arch-go/v2@v2.1.2
+GOWORK=off python3 scripts/mcp-migration/architecture.py --binary "/tmp/zl-migration-tools/arch-go" --evidence "docs/mcp-migration/evidence/T02/architecture.json"
+architecture PASS: active compliance/coverage100%, production graph, 9 isolated controls

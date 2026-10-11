@@ -1,0 +1,115 @@
+{
+  "commands": [
+    {
+      "id": "root-test",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test ./...",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "root-test.log",
+      "log_sha256": "97c9aac3f42b05e2bb807aa88f7e609eb6321775d52006fc55e2bfc6c184254c"
+    },
+    {
+      "id": "root-race",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test -race ./...",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "root-race.log",
+      "log_sha256": "3882d08dc343e656c8ad7d34d24f4e79588d4482872ec6ae3bb34680e86f8754"
+    },
+    {
+      "id": "root-vet",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go vet ./...",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "root-vet.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "nested-test",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test ./...",
+      "cwd": "third_party/zcago",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "nested-test.log",
+      "log_sha256": "e9759fdf4a069f1ccebfb61296842fea438b32985bc69c9b3b38b8bef7413a8d"
+    },
+    {
+      "id": "nested-race",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test -race ./...",
+      "cwd": "third_party/zcago",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "nested-race.log",
+      "log_sha256": "886139d7ad195b5699d06bb822f93b1fb1ec0f5240aeb5abfb59279a01c1ee0d"
+    },
+    {
+      "id": "nested-vet",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go vet ./...",
+      "cwd": "third_party/zcago",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "nested-vet.log",
+      "log_sha256": "af96c5f0293c2a134de872449cc4fe40f93cc982555bb8b25e64ea9848f9672a"
+    },
+    {
+      "id": "build-darwin-arm64",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -trimpath -o /tmp/zl-t02-darwin-arm64 ./cmd/zl-mcp",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "build-darwin-arm64.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "build-darwin-amd64",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -trimpath -o /tmp/zl-t02-darwin-amd64 ./cmd/zl-mcp",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "build-darwin-amd64.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "build-linux-amd64",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o /tmp/zl-t02-linux-amd64 ./cmd/zl-mcp",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "build-linux-amd64.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "architecture",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache make architecture TOOLS_BIN=/tmp/zl-migration-tools ARCHITECTURE_EVIDENCE=docs/mcp-migration/evidence/T02/architecture.json",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "architecture.log",
+      "log_sha256": "9ff960f6dbe072335b649de6ce7e611e57f593695e6d63b30d4feb0ade847bd2",
+      "machine_report": "architecture.json"
+    },
+    {
+      "id": "consumer-probe",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache python3 scripts/mcp-migration/dependency_probe.py docs/mcp-migration/evidence/T02/consumer-probe.json",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "machine_report": "consumer-probe.json"
+    },
+    {
+      "id": "architecture-review-fixes",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache python3 scripts/mcp-migration/architecture.py --binary /tmp/zl-migration-tools/arch-go --evidence /tmp/zl-t02-architecture-fixed2.json",
+      "cwd": ".",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "architecture-final.log",
+      "log_sha256": "daa6f81949c8282ba9c4b41e2e9a17692bda8fc437067c0f8b55a151053226a1"
+    }
+  ],
+  "go_version": "go version go1.27.1 darwin/arm64",
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN"
+}

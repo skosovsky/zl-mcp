@@ -1,0 +1,172 @@
+{
+  "task": "T02",
+  "parent_sha": "a3151c6bbee589cfaa3aeb21b147afe59e2ad321",
+  "required_total": 39,
+  "formula": "100 * verified_pass / required_total",
+  "requirements": [
+    {
+      "id": "T02-01",
+      "requirement": "Record accepted T01 commit SHA and tree/source-digest/log inclusion postcheck"
+    },
+    {
+      "id": "T02-02",
+      "requirement": "Record T02 candidate parent/source digest"
+    },
+    {
+      "id": "T02-03",
+      "requirement": "Verify available pinned toolsy API in isolated GOWORK=off consumer"
+    },
+    {
+      "id": "T02-04",
+      "requirement": "Verify available pinned metry API in isolated GOWORK=off consumer"
+    },
+    {
+      "id": "T02-05",
+      "requirement": "Verify available pinned evaly API in isolated GOWORK=off consumer"
+    },
+    {
+      "id": "T02-06",
+      "requirement": "Verify pinned arch-go/v2 v2.1.2 compatibility"
+    },
+    {
+      "id": "T02-07",
+      "requirement": "No absolute sibling replace or unauthorized publication"
+    },
+    {
+      "id": "T02-08",
+      "requirement": "Raise source Go directive to minimum compatible patch >=1.27.1"
+    },
+    {
+      "id": "T02-09",
+      "requirement": "Synchronize CI toolchain/build/development documentation"
+    },
+    {
+      "id": "T02-10",
+      "requirement": "Pin arch-go install outside production runtime dependencies"
+    },
+    {
+      "id": "T02-11",
+      "requirement": "Introduce active A01 domain boundaries"
+    },
+    {
+      "id": "T02-12",
+      "requirement": "Introduce active A02 application boundaries"
+    },
+    {
+      "id": "T02-13",
+      "requirement": "Introduce active A03 MCP concrete-dependency boundaries"
+    },
+    {
+      "id": "T02-14",
+      "requirement": "Introduce active A04 runtime/toolsy boundaries"
+    },
+    {
+      "id": "T02-15",
+      "requirement": "Introduce active A05 adapter boundaries"
+    },
+    {
+      "id": "T02-16",
+      "requirement": "Introduce active A06 metry/OTel boundaries"
+    },
+    {
+      "id": "T02-17",
+      "requirement": "Introduce active A07 evaluation-only boundaries"
+    },
+    {
+      "id": "T02-18",
+      "requirement": "Introduce active A08 contracts/SDK boundaries"
+    },
+    {
+      "id": "T02-19",
+      "requirement": "Introduce active A09 entrypoint/composition boundaries"
+    },
+    {
+      "id": "T02-20",
+      "requirement": "All production packages covered by meaningful rules with100% compliance/coverage"
+    },
+    {
+      "id": "T02-21",
+      "requirement": "Exact migration exceptions with rationale/removal T04-T07, no broad exclusions"
+    },
+    {
+      "id": "T02-22",
+      "requirement": "Negative control domain->SQL exits nonzero by expected rule"
+    },
+    {
+      "id": "T02-23",
+      "requirement": "Negative control app->SDK exits nonzero by expected rule"
+    },
+    {
+      "id": "T02-24",
+      "requirement": "Negative control mcpserver->storage exits nonzero by expected rule"
+    },
+    {
+      "id": "T02-25",
+      "requirement": "Negative control production->evaluation exits nonzero by expected rule"
+    },
+    {
+      "id": "T02-26",
+      "requirement": "Root/subpackage glob and new-package coverage controls enforced"
+    },
+    {
+      "id": "T02-27",
+      "requirement": "Production go list -deps graph checked independently"
+    },
+    {
+      "id": "T02-28",
+      "requirement": "Root go test ./... PASS"
+    },
+    {
+      "id": "T02-29",
+      "requirement": "Root go test -race ./... PASS"
+    },
+    {
+      "id": "T02-30",
+      "requirement": "Root go vet ./... PASS"
+    },
+    {
+      "id": "T02-31",
+      "requirement": "Nested zcago go test ./... PASS"
+    },
+    {
+      "id": "T02-32",
+      "requirement": "Nested zcago go test -race ./... PASS"
+    },
+    {
+      "id": "T02-33",
+      "requirement": "Nested zcago go vet ./... PASS"
+    },
+    {
+      "id": "T02-34",
+      "requirement": "CGO-free darwin/arm64 build PASS"
+    },
+    {
+      "id": "T02-35",
+      "requirement": "CGO-free darwin/amd64 build PASS"
+    },
+    {
+      "id": "T02-36",
+      "requirement": "CGO-free linux/amd64 build PASS"
+    },
+    {
+      "id": "T02-37",
+      "requirement": "Dependency matrix records pins/revisions/API probe commands/status, no undocumented drift"
+    },
+    {
+      "id": "T02-38",
+      "requirement": "Retain user edits and production/persistence/third_party/sibling scope"
+    },
+    {
+      "id": "T02-39",
+      "requirement": "Two independent same-candidate reviews: completeness100% and correctnessPASS before sole exact-message commit"
+    }
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "non_goals": [
+    "production migration T03-T10",
+    "account/deployment/model execution",
+    "sibling or third_party source changes",
+    "library publication"
+  ]
+}

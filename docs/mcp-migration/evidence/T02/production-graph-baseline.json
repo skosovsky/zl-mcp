@@ -1,0 +1,517 @@
+{
+  "packages": [
+    {
+      "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/internal/config",
+        "github.com/skosovsky/zl-mcp/internal/control",
+        "github.com/skosovsky/zl-mcp/internal/local",
+        "github.com/skosovsky/zl-mcp/internal/logging",
+        "github.com/skosovsky/zl-mcp/internal/service",
+        "github.com/skosovsky/zl-mcp/internal/storage",
+        "github.com/skosovsky/zl-mcp/internal/zalo"
+      ],
+      "external": [],
+      "standard": [
+        "bufio",
+        "context",
+        "encoding/json",
+        "flag",
+        "fmt",
+        "io",
+        "log/slog",
+        "os",
+        "os/signal",
+        "path/filepath",
+        "strconv",
+        "strings",
+        "syscall",
+        "time"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval-fixture",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/internal/evalfixture"
+      ],
+      "external": [
+        "github.com/modelcontextprotocol/go-sdk/mcp"
+      ],
+      "standard": [
+        "context",
+        "encoding/json",
+        "flag",
+        "fmt",
+        "log/slog",
+        "os",
+        "os/signal",
+        "syscall"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/docs/contracts",
+      "internal": [],
+      "external": [
+        "github.com/santhosh-tekuri/jsonschema/v6"
+      ],
+      "standard": [
+        "embed",
+        "encoding/json",
+        "fmt",
+        "sort",
+        "strings"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/collector",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/docs/contracts",
+        "github.com/skosovsky/zl-mcp/internal/config",
+        "github.com/skosovsky/zl-mcp/internal/domain",
+        "github.com/skosovsky/zl-mcp/internal/historyimport",
+        "github.com/skosovsky/zl-mcp/internal/storage"
+      ],
+      "external": [
+        "github.com/google/uuid"
+      ],
+      "standard": [
+        "context",
+        "crypto/rand",
+        "crypto/sha256",
+        "database/sql",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "io",
+        "log/slog",
+        "math/big",
+        "net",
+        "net/http",
+        "net/url",
+        "strings",
+        "sync",
+        "sync/atomic",
+        "time"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/config",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/docs/contracts",
+        "github.com/skosovsky/zl-mcp/internal/domain"
+      ],
+      "external": [
+        "github.com/pelletier/go-toml/v2"
+      ],
+      "standard": [
+        "fmt",
+        "net",
+        "os",
+        "path/filepath",
+        "strconv",
+        "syscall"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/control",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/internal/domain"
+      ],
+      "external": [],
+      "standard": [
+        "bytes",
+        "context",
+        "encoding/json",
+        "fmt",
+        "io",
+        "net",
+        "net/http",
+        "path/filepath"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/domain",
+      "internal": [],
+      "external": [
+        "github.com/google/uuid"
+      ],
+      "standard": [
+        "context",
+        "crypto/sha256",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "net/http",
+        "strings",
+        "time",
+        "unicode/utf8"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/evalfixture",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/internal/collector",
+        "github.com/skosovsky/zl-mcp/internal/domain",
+        "github.com/skosovsky/zl-mcp/internal/local",
+        "github.com/skosovsky/zl-mcp/internal/mcpserver",
+        "github.com/skosovsky/zl-mcp/internal/storage"
+      ],
+      "external": [
+        "github.com/modelcontextprotocol/go-sdk/mcp"
+      ],
+      "standard": [
+        "context",
+        "crypto/sha256",
+        "encoding/hex",
+        "encoding/json",
+        "fmt",
+        "net",
+        "net/http",
+        "os",
+        "path/filepath",
+        "strings",
+        "sync",
+        "time"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/events",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/docs/contracts",
+        "github.com/skosovsky/zl-mcp/internal/domain",
+        "github.com/skosovsky/zl-mcp/internal/netpolicy",
+        "github.com/skosovsky/zl-mcp/internal/storage"
+      ],
+      "external": [
+        "github.com/santhosh-tekuri/jsonschema/v6"
+      ],
+      "standard": [
+        "bytes",
+        "context",
+        "crypto/hmac",
+        "crypto/rand",
+        "crypto/sha256",
+        "crypto/subtle",
+        "encoding/base64",
+        "encoding/binary",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "io",
+        "log/slog",
+        "net/http",
+        "net/netip",
+        "net/url",
+        "strconv",
+        "strings",
+        "sync",
+        "time",
+        "unicode/utf8"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/historyimport",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/docs/contracts",
+        "github.com/skosovsky/zl-mcp/internal/domain",
+        "github.com/skosovsky/zl-mcp/internal/storage"
+      ],
+      "external": [],
+      "standard": [
+        "context",
+        "database/sql",
+        "encoding/json",
+        "errors",
+        "log/slog",
+        "net",
+        "time"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/local",
+      "internal": [],
+      "external": [
+        "golang.org/x/sys/unix"
+      ],
+      "standard": [
+        "fmt",
+        "os",
+        "path/filepath",
+        "runtime"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/logging",
+      "internal": [],
+      "external": [
+        "golang.org/x/sys/unix",
+        "gopkg.in/natefinch/lumberjack.v2"
+      ],
+      "standard": [
+        "encoding/json",
+        "errors",
+        "fmt",
+        "io",
+        "os",
+        "path/filepath",
+        "strings",
+        "sync",
+        "syscall",
+        "time"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/mcpserver",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/docs/contracts",
+        "github.com/skosovsky/zl-mcp/internal/control",
+        "github.com/skosovsky/zl-mcp/internal/domain",
+        "github.com/skosovsky/zl-mcp/internal/events",
+        "github.com/skosovsky/zl-mcp/internal/storage"
+      ],
+      "external": [
+        "github.com/google/uuid",
+        "github.com/modelcontextprotocol/go-sdk/mcp",
+        "github.com/santhosh-tekuri/jsonschema/v6"
+      ],
+      "standard": [
+        "bytes",
+        "context",
+        "crypto/sha256",
+        "crypto/subtle",
+        "database/sql",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "io",
+        "log/slog",
+        "mime",
+        "net",
+        "net/http",
+        "net/url",
+        "os",
+        "strconv",
+        "strings",
+        "time"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/messaging",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/internal/domain",
+        "github.com/skosovsky/zl-mcp/internal/storage"
+      ],
+      "external": [],
+      "standard": [
+        "context",
+        "database/sql",
+        "encoding/json",
+        "errors",
+        "time"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/mobilebackup",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/internal/domain",
+        "github.com/skosovsky/zl-mcp/internal/netpolicy",
+        "github.com/skosovsky/zl-mcp/internal/storage"
+      ],
+      "external": [
+        "github.com/google/uuid",
+        "github.com/ulikunitz/xz",
+        "modernc.org/sqlite",
+        "modernc.org/sqlite/lib"
+      ],
+      "standard": [
+        "bytes",
+        "context",
+        "crypto/aes",
+        "crypto/cipher",
+        "crypto/rand",
+        "crypto/sha256",
+        "database/sql",
+        "encoding/base64",
+        "encoding/binary",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "hash/crc32",
+        "io",
+        "log/slog",
+        "maps",
+        "math",
+        "math/bits",
+        "net/http",
+        "net/netip",
+        "net/url",
+        "os",
+        "path/filepath",
+        "sort",
+        "strconv",
+        "strings",
+        "sync/atomic",
+        "time",
+        "unicode/utf8"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/netpolicy",
+      "internal": [],
+      "external": [],
+      "standard": [
+        "context",
+        "errors",
+        "net",
+        "net/http",
+        "net/netip",
+        "time"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/service",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/docs/contracts",
+        "github.com/skosovsky/zl-mcp/internal/collector",
+        "github.com/skosovsky/zl-mcp/internal/config",
+        "github.com/skosovsky/zl-mcp/internal/domain",
+        "github.com/skosovsky/zl-mcp/internal/events",
+        "github.com/skosovsky/zl-mcp/internal/historyimport",
+        "github.com/skosovsky/zl-mcp/internal/local",
+        "github.com/skosovsky/zl-mcp/internal/logging",
+        "github.com/skosovsky/zl-mcp/internal/mcpserver",
+        "github.com/skosovsky/zl-mcp/internal/messaging",
+        "github.com/skosovsky/zl-mcp/internal/mobilebackup",
+        "github.com/skosovsky/zl-mcp/internal/storage",
+        "github.com/skosovsky/zl-mcp/internal/zalo"
+      ],
+      "external": [
+        "github.com/google/uuid",
+        "github.com/modelcontextprotocol/go-sdk/mcp"
+      ],
+      "standard": [
+        "bytes",
+        "context",
+        "crypto/rand",
+        "crypto/sha256",
+        "database/sql",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "io",
+        "log/slog",
+        "maps",
+        "net",
+        "net/http",
+        "net/url",
+        "os",
+        "path/filepath",
+        "strconv",
+        "strings",
+        "sync",
+        "time"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/storage",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/internal/domain"
+      ],
+      "external": [
+        "github.com/google/uuid",
+        "golang.org/x/text/unicode/norm",
+        "modernc.org/sqlite"
+      ],
+      "standard": [
+        "context",
+        "crypto/hmac",
+        "crypto/rand",
+        "crypto/rsa",
+        "crypto/sha256",
+        "crypto/x509",
+        "database/sql",
+        "encoding/base64",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "net/url",
+        "os",
+        "path/filepath",
+        "sort",
+        "strconv",
+        "strings",
+        "sync",
+        "sync/atomic",
+        "time",
+        "unicode",
+        "unicode/utf8"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    },
+    {
+      "package": "github.com/skosovsky/zl-mcp/internal/zalo",
+      "internal": [
+        "github.com/skosovsky/zl-mcp/internal/domain",
+        "github.com/skosovsky/zl-mcp/internal/local",
+        "github.com/skosovsky/zl-mcp/internal/messaging",
+        "github.com/skosovsky/zl-mcp/internal/mobilebackup"
+      ],
+      "external": [
+        "github.com/amrakk/zcago",
+        "github.com/amrakk/zcago/api",
+        "github.com/amrakk/zcago/errs",
+        "github.com/amrakk/zcago/listener",
+        "github.com/amrakk/zcago/model",
+        "github.com/amrakk/zcago/session/auth"
+      ],
+      "standard": [
+        "bytes",
+        "context",
+        "crypto/rand",
+        "crypto/rsa",
+        "crypto/x509",
+        "encoding/base64",
+        "encoding/hex",
+        "encoding/json",
+        "errors",
+        "fmt",
+        "io",
+        "log/slog",
+        "net/http",
+        "net/http/cookiejar",
+        "net/url",
+        "os",
+        "path/filepath",
+        "sort",
+        "strconv",
+        "strings",
+        "sync",
+        "time"
+      ],
+      "scope": "existing production/support package; exact baseline backend edges retained"
+    }
+  ],
+  "production_package_count": 19,
+  "future_rules": "A01-A09 exact package families; no unrestricted package catch-all"
+}

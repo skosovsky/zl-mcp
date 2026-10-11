@@ -1,0 +1,1 @@
+go: loading module retractions for github.com/arch-go/arch-go/v2@v2.0.0: verifying go.mod: github.com/arch-go/arch-go/v2@v2.1.2/go.mod: open /home/LOCAL_USER/go/pkg/sumdb/sum.golang.org/latest: operation not permitted

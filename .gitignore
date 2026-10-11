@@ -16,3 +16,6 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+/.arch-go/
+/.tools/

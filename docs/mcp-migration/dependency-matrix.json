@@ -1,0 +1,101 @@
+{
+  "revision": 1,
+  "selected_toolchain": "go version go1.27.1 darwin/arm64",
+  "root_directive": "1.27.1",
+  "GOWORK": "off",
+  "replace_policy": "no absolute sibling replacement; existing ./third_party/zcago preserved unchanged",
+  "modules": [
+    {
+      "Path": "github.com/skosovsky/toolsy",
+      "Version": "v0.20.0",
+      "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.0.info",
+      "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.0.mod",
+      "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.0.zip",
+      "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.0",
+      "Sum": "h1:nUgLZz3mGKKu47atAN04kFkF3HIhjLR8psUDwN9SHrs=",
+      "GoModSum": "h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=",
+      "Origin": {
+        "VCS": "git",
+        "URL": "https://github.com/skosovsky/toolsy",
+        "Hash": "fb4c809c07ea65d618536ee3c0e8a6de1b4bdc23",
+        "Ref": "refs/tags/v0.20.0"
+      },
+      "contract_sha256": {
+        "docs/execution-contract.md": "601ffe8c1f93ee31fb712842375d492cbca32c26f4561e76b1f708a057e4d045"
+      },
+      "go_directive": "1.27.1",
+      "integration_task": "T05",
+      "probe": "PASS isolated consumer public API test"
+    },
+    {
+      "Path": "github.com/skosovsky/metry",
+      "Version": "v0.10.1",
+      "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/metry/@v/v0.10.1.info",
+      "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/metry/@v/v0.10.1.mod",
+      "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/metry/@v/v0.10.1.zip",
+      "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/metry@v0.10.1",
+      "Sum": "h1:BLl242PXNWwk4+bWyVph3sKKgoPBhQi66bPjZtnIcBI=",
+      "GoModSum": "h1:DF+cRevcaXSlbby6IjYhhdS7k6BCpL+5ohfgHFV7/bo=",
+      "Origin": {
+        "VCS": "git",
+        "URL": "https://github.com/skosovsky/metry",
+        "Hash": "cffc692e7ffdbcc67a9f5fd44c4f408bf2789f1e",
+        "Ref": "refs/tags/v0.10.1"
+      },
+      "contract_sha256": {
+        "INTEGRATION.md": "cf1c5039d24f18164ec7ff1d3421fa6c0e99df28ef1952341f99bc660e65fe0c",
+        "PRIVACY.md": "9b9bee951e8c2c9033e8f98034c7295f3e1003303a0e029b04748133928de909"
+      },
+      "go_directive": "1.27.1",
+      "integration_task": "T08",
+      "probe": "PASS isolated consumer public API test"
+    },
+    {
+      "Path": "github.com/skosovsky/evaly",
+      "Version": "v0.4.2",
+      "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/evaly/@v/v0.4.2.info",
+      "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/evaly/@v/v0.4.2.mod",
+      "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/evaly/@v/v0.4.2.zip",
+      "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/evaly@v0.4.2",
+      "Sum": "h1:d3WKDTPlSKJQTW5xOFKt1SEPkeGYYdSJKt5qevkP2lg=",
+      "GoModSum": "h1:pTZYC/g7JOQJxxpe9Sq/C4z2TdNwzyE+/BQzWW5l48Y=",
+      "Origin": {
+        "VCS": "git",
+        "URL": "https://github.com/skosovsky/evaly",
+        "Hash": "1c87fbcf650a93790cf97262f4ff673f0001abf6",
+        "Ref": "refs/tags/v0.4.2"
+      },
+      "contract_sha256": {
+        "docs/execution-contract.md": "02f203bef8e632a670fc609dee605b4eca01ab44e6de61447399aceed8c0bd00",
+        "docs/integration-contract.md": "65c8bbd38d340b0099bf8574b29557996c8ec704669734bf3cb5660199df4aab"
+      },
+      "go_directive": "1.27.1",
+      "integration_task": "T03",
+      "probe": "PASS isolated consumer public API test"
+    },
+    {
+      "Path": "github.com/arch-go/arch-go/v2",
+      "Version": "v2.1.2",
+      "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/arch-go/arch-go/v2/@v/v2.1.2.info",
+      "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/arch-go/arch-go/v2/@v/v2.1.2.mod",
+      "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/arch-go/arch-go/v2/@v/v2.1.2.zip",
+      "Dir": "/tmp/zl-migration-mod-cache/github.com/arch-go/arch-go/v2@v2.1.2",
+      "Sum": "h1:kYf2VIVjtbKLGTs0/lr+2FOqiXFFKAiGc4UhoIS/l0M=",
+      "GoModSum": "h1:8W9kj7Pgv0iPioau6yoaiC3HLvzqyq5LydXam9Z1Fpc=",
+      "Origin": {
+        "VCS": "git",
+        "URL": "https://github.com/arch-go/arch-go",
+        "Hash": "31f733794f225c0f38763349f7bffb19973e526a",
+        "Ref": "refs/tags/v2.1.2"
+      },
+      "contract_sha256": {},
+      "go_directive": "1.24.0",
+      "integration_task": "T02",
+      "probe": "pinned go install/build info + arch-go active/negative controls"
+    }
+  ],
+  "runtime_dependencies": "not added before responsible task T03/T05/T08; arch-go installed outside production",
+  "consumer_probe": "docs/mcp-migration/evidence/T02/consumer-probe.json",
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN"
+}

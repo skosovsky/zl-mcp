@@ -129,3 +129,25 @@ ordinary in-process regression tests still run. CI explicitly builds and tests a
 native binary on both Linux and macOS runners. Run it with a binary built for
 the current host. It does not establish real mobile archive eligibility or
 successful import of private history.
+
+
+## Architecture migration toolchain (T02)
+
+Root Go directive: 1.27.1, the minimum compiler required by verified public pins.
+CI setup-go reads go.mod on Linux and native macOS; all existing tests/race/vet,
+nested patched zcago checks, native startup acceptance and CGO-free builds remain.
+The nested patched module is not modified; run it with the same selected root Go binary.
+
+`make architecture` installs github.com/arch-go/arch-go/v2@v2.1.2 into ignored `.tools`
+and checks the active import rules at compliance=100%/coverage=100%, the production
+`go list -deps` graph and isolated negative/positive controls. The pinned executable
+reports "master" via --version; build information (`go version -m`) is the verified pin.
+`make dependency-probe` recreates the isolated GOWORK=off consumer (no replace).
+`make check` currently runs root/nested test/race/vet, architecture, and three CGO-free
+platform builds. Mandatory offline eval joins it in T03; paired parity/performance
+acceptance joins it in T09. Model evaluation stays opt-in and NOT_RUN without authorization.
+
+Dependency pins and contracts: docs/mcp-migration/dependency-matrix.json.
+Exact temporary migration edges: docs/mcp-migration/architecture-exceptions.json.
+Evidence: docs/mcp-migration/evidence/T02. Architecture static imports do not prove
+account ownership, no resend, persistence, authorization or lifecycle: behavioral gates remain.

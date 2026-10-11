@@ -1,0 +1,11 @@
+{
+  "candidate": "d6baf9daeb01fbd64da32751ffb99ed92a26da9c27e4922e5ca1e76f800a914a",
+  "reviewer": "/root/t02_completeness",
+  "pass": 38,
+  "total": 39,
+  "completeness_percent": 97.43589743589743,
+  "pending": [
+    "T02-39"
+  ],
+  "findings": []
+}

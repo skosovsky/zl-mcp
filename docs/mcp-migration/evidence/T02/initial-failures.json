@@ -1,0 +1,29 @@
+{
+  "status": "RESOLVED_BEFORE_ACCEPTANCE",
+  "failures": [
+    {
+      "log": "initial-zl-t02-versions.stderr",
+      "sha256": "5d94aabe728786d57d692b043292c499ae1b59f9f7f3c5df81c165cbf515a098"
+    },
+    {
+      "log": "initial-zl-t02-architecture-initial.log",
+      "sha256": "b4bb43e17509bb87a2b50a17d40c2b9cd713fb56c9cc99b89d80d40e9a016598"
+    },
+    {
+      "log": "initial-zl-t02-arch-gates-v2.log",
+      "sha256": "314787ba0c8d3a33c5db641a0f00092ad165a4fc8ffd630b2c89d062864a743b"
+    },
+    {
+      "log": "initial-zl-t02-arch-gates-v4.log",
+      "sha256": "1f7aaa268ddbccc985bcc6896340d7d20dad19d1beec6d624c7ebac054ae9a29"
+    }
+  ],
+  "resolutions": [
+    "writable GOPATH for sumdb cache",
+    "explicit golang.org/x/sys/unix standard entries for pinned classification",
+    "valid deny regex .+ instead of unsupported standalone **",
+    "separator -- before AST parser arguments"
+  ],
+  "no_threshold_reduction": true,
+  "no_package_exclusion": true
+}
