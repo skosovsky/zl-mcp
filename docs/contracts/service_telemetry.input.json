@@ -1,0 +1,18 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema",
+ "type":"object","additionalProperties":false,
+ "required":["enabled","exporter","endpoint","headers","export_timeout_ms","shutdown_timeout_ms"],
+ "properties":{
+  "enabled":{"type":"boolean","default":false},
+  "exporter":{"enum":["none","otlp_http"],"default":"none"},
+  "endpoint":{"type":"string","maxLength":2048,"default":""},
+  "headers":{"type":"object","maxProperties":16,"propertyNames":{"type":"string","pattern":"^[A-Za-z0-9-]+$","maxLength":128},"additionalProperties":{"type":"string","maxLength":4096}},
+  "export_timeout_ms":{"type":"integer","minimum":100,"maximum":5000,"default":1000},
+  "shutdown_timeout_ms":{"type":"integer","minimum":100,"maximum":5000,"default":2000}
+ },
+ "allOf":[
+  {"if":{"properties":{"enabled":{"const":false}}},"then":{"properties":{"exporter":{"const":"none"},"endpoint":{"const":""},"headers":{"maxProperties":0}}}},
+  {"if":{"properties":{"exporter":{"const":"none"}}},"then":{"properties":{"endpoint":{"const":""},"headers":{"maxProperties":0}}}},
+  {"if":{"properties":{"exporter":{"const":"otlp_http"}}},"then":{"properties":{"enabled":{"const":true},"endpoint":{"minLength":1}}}}
+ ]
+}

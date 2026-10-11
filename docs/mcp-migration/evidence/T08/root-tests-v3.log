@@ -1,0 +1,33 @@
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp	[no test files]
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval	[no test files]
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval-fixture	[no test files]
+ok  	github.com/skosovsky/zl-mcp/docs/contracts	0.586s
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/operations	0.446s
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/store	0.592s
+?   	github.com/skosovsky/zl-mcp/internal/app/archives	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/app/eventaccess	0.442s
+?   	github.com/skosovsky/zl-mcp/internal/app/history	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/membership	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/messaging	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/search	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/shared	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/collector	6.813s
+ok  	github.com/skosovsky/zl-mcp/internal/config	0.452s
+?   	github.com/skosovsky/zl-mcp/internal/control	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/domain	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	2.227s
+ok  	github.com/skosovsky/zl-mcp/internal/evaluation	0.996s
+ok  	github.com/skosovsky/zl-mcp/internal/events	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	2.061s
+ok  	github.com/skosovsky/zl-mcp/internal/local	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/logging	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	11.297s
+ok  	github.com/skosovsky/zl-mcp/internal/messaging	1.299s
+ok  	github.com/skosovsky/zl-mcp/internal/mobilebackup	11.748s
+ok  	github.com/skosovsky/zl-mcp/internal/netpolicy	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/observability	1.081s
+ok  	github.com/skosovsky/zl-mcp/internal/service	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/storage	10.028s
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	2.922s
+ok  	github.com/skosovsky/zl-mcp/internal/zalo	3.059s

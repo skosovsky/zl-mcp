@@ -1,0 +1,13 @@
+# github.com/skosovsky/zl-mcp/internal/events
+internal/events/worker.go:91:7: d.CreatedAt undefined (type *storage.EventDelivery has no field or method CreatedAt)
+internal/events/worker.go:92:16: d.CreatedAt undefined (type *storage.EventDelivery has no field or method CreatedAt)
+# github.com/skosovsky/zl-mcp/internal/observability [github.com/skosovsky/zl-mcp/internal/observability.test]
+internal/observability/provider_test.go:186:61: cannot use observedAge(time.Second) (value of type *"time".Duration) as "time".Duration value in argument to context.WithTimeout
+FAIL	github.com/skosovsky/zl-mcp/internal/observability [build failed]
+ok  	github.com/skosovsky/zl-mcp/internal/messaging	0.830s
+ok  	github.com/skosovsky/zl-mcp/internal/collector	5.353s
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	1.346s
+FAIL	github.com/skosovsky/zl-mcp/internal/events [build failed]
+ok  	github.com/skosovsky/zl-mcp/internal/storage	4.736s
+FAIL	github.com/skosovsky/zl-mcp/internal/service [build failed]
+FAIL

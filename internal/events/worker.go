@@ -3,17 +3,13 @@ package events
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/binary"
-	"encoding/hex"
-	"encoding/json"
-	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
+	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
@@ -77,39 +73,44 @@ func (w *Worker) DeliverOne(ctx context.Context, at time.Time) (bool, error) {
 	if err != nil || d == nil {
 		return false, err
 	}
+	var handled bool
+	err = shared.ObserveWorker(ctx, domain.WorkEvents, strconv.FormatInt(d.ID, 10), func(ctx context.Context) error {
+		var err error
+		handled, err = w.deliverClaimed(ctx, at, d)
+		return err
+	})
+	return handled, err
+}
+func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.EventDelivery) (bool, error) {
+	created := time.Time{}
+	if d.CreatedAt != nil {
+		created = *d.CreatedAt
+	}
+	shared.ObserveTransition(ctx, domain.WorkEvents, "pending", "sending", created)
 	logger := w.Logger
 	if logger == nil {
 		logger = slog.Default()
 	}
-	digest := sha256.Sum256(d.Payload)
-	attrs := []any{"event_id", d.EventID, "subscription_id", d.SubscriptionID, "delivery_id", d.ID, "attempt", d.Attempts, "body_bytes", len(d.Payload), "body_sha256", hex.EncodeToString(digest[:])}
+	attrs := []any{"correlation_id", rand.Text(), "attempt", d.Attempts, "body_bytes", len(d.Payload)}
 	logger.Info("mcp_event_delivery_started", attrs...)
 	if w.TraceLogger != nil {
-		w.TraceLogger.Info("mcp_event_request", append(append([]any{}, attrs...), "body", json.RawMessage(d.Payload))...)
+		w.TraceLogger.Info("mcp_event_request", attrs...)
 	}
 	started := time.Now()
 	statusCode := 0
-	requestID, openaiRequestID := "", ""
 	requestCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	response, requestErr := postCallback(requestCtx, w.Client, d.Callback, d.Secret, d.SubscriptionID, d.EventID, d.Payload)
+	response, requestErr := shared.ObserveUpstream(requestCtx, domain.WorkEvents, func(ctx context.Context) (*http.Response, error) {
+		return postCallback(ctx, w.Client, d.Callback, d.Secret, d.SubscriptionID, d.EventID, d.Payload)
+	})
 	outcome := storage.DeliveryOutcome{State: "pending", Reason: "network", RetryAt: at.Add(retryDelay(d.Attempts))}
 	if requestErr == nil {
 		statusCode = response.StatusCode
-		requestID = safeRequestID(response.Header.Get("x-request-id"))
-		openaiRequestID = safeRequestID(response.Header.Get("openai-request-id"))
+		if statusCode < 100 || statusCode > 599 {
+			statusCode = 0
+		}
 		if w.TraceLogger != nil {
-			raw, readErr := io.ReadAll(io.LimitReader(response.Body, 65537))
-			truncated := len(raw) > 65536
-			if truncated {
-				raw = raw[:65536]
-			}
-			body := strings.ReplaceAll(string(raw), d.Secret, "[redacted]")
-			body = strings.ReplaceAll(body, d.Callback, "[redacted]")
-			if key, err := DecodeSigningKey(d.Secret); err == nil {
-				body = strings.ReplaceAll(body, string(key), "[redacted]")
-			}
-			w.TraceLogger.Info("mcp_event_response", append(append([]any{}, attrs...), "http_status", statusCode, "request_id", requestID, "openai_request_id", openaiRequestID, "body", body, "body_truncated", truncated, "body_read_failed", readErr != nil)...)
+			w.TraceLogger.Info("mcp_event_response", append(append([]any{}, attrs...), "http_status", statusCode)...)
 		}
 		response.Body.Close()
 		switch code := response.StatusCode; {
@@ -144,7 +145,10 @@ func (w *Worker) DeliverOne(ctx context.Context, at time.Time) (bool, error) {
 	finishCtx, finishCancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer finishCancel()
 	finishErr := w.Queue.FinishDelivery(finishCtx, *d, outcome, time.Now().UTC())
-	attrs = append(attrs, "elapsed_ms", time.Since(started).Milliseconds(), "http_status", statusCode, "request_id", requestID, "openai_request_id", openaiRequestID, "outcome", outcome.State, "reason", outcome.Reason, "receipt_persisted", finishErr == nil)
+	if finishErr == nil {
+		shared.ObserveTransition(ctx, domain.WorkEvents, "sending", outcome.State, created)
+	}
+	attrs = append(attrs, "elapsed_ms", time.Since(started).Milliseconds(), "http_status", statusCode, "outcome", outcome.State, "reason", outcome.Reason, "receipt_persisted", finishErr == nil)
 	logger.Info("mcp_event_delivery_finished", attrs...)
 	if w.TraceLogger != nil {
 		w.TraceLogger.Info("mcp_event_delivery_finished", attrs...)
@@ -228,17 +232,4 @@ func (w *Worker) fanout(ctx context.Context, at time.Time) (int, error) {
 		return q.FanoutProfileEvents(ctx, at, w.Policy, w.Encoder.EncodeProfile)
 	}
 	return w.Queue.FanoutEvents(ctx, at, w.Policy, w.Encoder.Encode)
-}
-
-// safeRequestID prevents arbitrary receiver content from entering diagnostic logs.
-func safeRequestID(value string) string {
-	if len(value) > 128 {
-		return ""
-	}
-	for _, ch := range value {
-		if !(ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '-' || ch == '_' || ch == '.') {
-			return ""
-		}
-	}
-	return value
 }

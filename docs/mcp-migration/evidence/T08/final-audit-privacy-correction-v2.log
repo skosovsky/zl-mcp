@@ -1,0 +1,3 @@
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	0.568s
+ok  	github.com/skosovsky/zl-mcp/internal/observability	1.048s
+ok  	github.com/skosovsky/zl-mcp/internal/events	0.242s

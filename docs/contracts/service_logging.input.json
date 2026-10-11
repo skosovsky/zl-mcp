@@ -26,7 +26,7 @@
     "event_trace_file": {
       "type": "string",
       "maxLength": 4096,
-      "description": "Optional absolute path to a private rotating diagnostic log containing full MCP Event bodies. Empty disables it."
+      "description": "Optional absolute path to a private rotating bounded diagnostic log. Only explicitly allowed safe metadata and random correlation IDs; no payload/body, native IDs, tokens or raw errors. Empty disables it."
     }
   }
 }

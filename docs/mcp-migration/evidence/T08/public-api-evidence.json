@@ -1,0 +1,59 @@
+{
+  "pin": "github.com/skosovsky/metry v0.10.1",
+  "source_files": [
+    {
+      "path": "/home/LOCAL_USER/go/pkg/mod/github.com/skosovsky/metry@v0.10.1/go.mod",
+      "sha256": "606ecb10b1b7803dca53b812891d1dc64cd1982037362a62292f874df9ddd6bd"
+    },
+    {
+      "path": "/home/LOCAL_USER/go/pkg/mod/github.com/skosovsky/metry@v0.10.1/INTEGRATION.md",
+      "sha256": "cf1c5039d24f18164ec7ff1d3421fa6c0e99df28ef1952341f99bc660e65fe0c"
+    },
+    {
+      "path": "/home/LOCAL_USER/go/pkg/mod/github.com/skosovsky/metry@v0.10.1/PRIVACY.md",
+      "sha256": "9b9bee951e8c2c9033e8f98034c7295f3e1003303a0e029b04748133928de909"
+    },
+    {
+      "path": "/home/LOCAL_USER/go/pkg/mod/github.com/skosovsky/metry@v0.10.1/metry.go",
+      "sha256": "bea36e73191f38244b3b5228ac8ad7623edaccde0d04b07c990acdfd4452554d"
+    },
+    {
+      "path": "/home/LOCAL_USER/go/pkg/mod/github.com/skosovsky/metry@v0.10.1/sdk.go",
+      "sha256": "0f6610eedbd360b2ff36c27cdf666f3e8347fe482b28df69403a78ea2318914d"
+    },
+    {
+      "path": "/home/LOCAL_USER/go/pkg/mod/github.com/skosovsky/metry@v0.10.1/executor_middleware.go",
+      "sha256": "c9f9aed07d58e7ca0ac421e17620e0a6ea73d21c0cd7b6b86319513f638a3518"
+    },
+    {
+      "path": "/home/LOCAL_USER/go/pkg/mod/github.com/skosovsky/metry@v0.10.1/options.go",
+      "sha256": "139e30779ed96c8b8cc123f4086eb1c71b1b45770d688468cb574c5836471727"
+    },
+    {
+      "path": "/tmp/zl-migration-mod-cache/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp@v1.47.0/options.go",
+      "sha256": "f5e151befda558896d848f06c7b9c6504b7dff0b88af09e1999e136b3a9926af"
+    },
+    {
+      "path": "/tmp/zl-migration-mod-cache/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp@v1.47.0/config.go",
+      "sha256": "ab366e83f0203fa913436ca1075b00d55ccd5f970db4c487262667605891d4b2"
+    }
+  ],
+  "findings": [
+    "New owns SDK/BatchSpanProcessor queue, absent exporters noop",
+    "ExecutorWrap requires nonnil provider and caches instruments",
+    "Technical status success/error/panic only; host typed domain outcome separate",
+    "Default diagnostic suppresses raw formatter contents; custom host/export sinks remain host responsibility",
+    "Provider shutdown terminal/idempotent10s ceiling respecting earlier fresh context"
+  ],
+  "otlp_api": {
+    "version": "v1.47.0",
+    "verification": "Pinned local public source inspected before implementation",
+    "options": [
+      "WithEndpointURL",
+      "WithHeaders",
+      "WithTimeout",
+      "WithRetry(RetryConfig{Enabled:false})"
+    ],
+    "resource_filter": "Trace ReadOnlySpan.Resource override; metric ResourceMetrics copy with static resource"
+  }
+}

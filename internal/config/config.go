@@ -13,8 +13,9 @@ import (
 )
 
 type Config struct {
-	StateDir string `toml:"state_dir"`
-	MCP      struct {
+	Telemetry TelemetryConfig `toml:"telemetry"`
+	StateDir  string          `toml:"state_dir"`
+	MCP       struct {
 		Listen    string `toml:"listen"`
 		TokenFile string `toml:"token_file"`
 	} `toml:"mcp"`
@@ -42,6 +43,7 @@ type Config struct {
 
 func Load(path string) (Config, error) {
 	var c Config
+	c.Telemetry = c.Telemetry.WithDefaults()
 	c.Storage.RetentionDays = 90
 	c.Logging.Level = "info"
 	c.Logging.MaxSizeMB = 5
@@ -52,7 +54,10 @@ func Load(path string) (Config, error) {
 		return c, err
 	}
 	if err = toml.Unmarshal(b, &c); err != nil {
-		return c, fmt.Errorf("invalid config TOML: %w", err)
+		return c, fmt.Errorf("invalid config TOML")
+	}
+	if err = c.Telemetry.Validate(); err != nil {
+		return c, err
 	}
 	if c.StateDir == "" {
 		return c, fmt.Errorf("state_dir is required")

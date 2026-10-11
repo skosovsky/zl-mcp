@@ -1,0 +1,4 @@
+2026/10/11 18:10:23 INFO mobile_account_archive_acquired files=3 direct_files=2 group_files=1
+2026/10/11 18:10:23 INFO mcp_call tool=zalo_list_archive_sources principal=501 correlation_id=2168cca0-cefd-4fed-885f-f8dbc9e37bf4 code=OK duration_ms=1
+2026/10/11 18:10:23 INFO mcp_call tool=zalo_list_conversation_messages principal=501 correlation_id=53a4f6ad-c728-4833-a7bb-d01ecd011ab0 code=OK duration_ms=3
+2026/10/11 18:10:23 INFO mcp_call tool=zalo_list_conversation_messages principal=501 correlation_id=9d185981-1f89-4e0c-b357-c3fede96ffc2 code=OK duration_ms=2

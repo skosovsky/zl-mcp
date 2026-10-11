@@ -77,7 +77,8 @@
           "^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$"
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
         ],
         "external": [
           "^github\\.com/google/uuid$"
@@ -119,7 +120,10 @@
           "^os$",
           "^path/filepath$",
           "^strconv$",
-          "^syscall$"
+          "^syscall$",
+          "^errors$",
+          "^net/url$",
+          "^strings$"
         ]
       }
     },
@@ -219,7 +223,8 @@
           "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$"
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
         ],
         "external": [
           "^github\\.com/santhosh\\-tekuri/jsonschema/v6$"
@@ -256,7 +261,8 @@
         "internal": [
           "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$"
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
         ],
         "standard": [
           "^context$",
@@ -351,7 +357,8 @@
           "^os$",
           "^strconv$",
           "^strings$",
-          "^time$"
+          "^time$",
+          "^crypto/rand$"
         ]
       }
     },
@@ -360,7 +367,8 @@
       "shouldOnlyDependsOn": {
         "internal": [
           "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$"
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
         ],
         "standard": [
           "^context$",
@@ -462,11 +470,13 @@
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$"
+          "^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
         ],
         "external": [
           "^github\\.com/google/uuid$",
-          "^github\\.com/modelcontextprotocol/go\\-sdk/mcp$"
+          "^github\\.com/modelcontextprotocol/go\\-sdk/mcp$",
+          "^github\\.com/modelcontextprotocol/go\\-sdk/jsonrpc$"
         ],
         "standard": [
           "^bytes$",
@@ -937,7 +947,8 @@
       "shouldOnlyDependsOn": {
         "internal": [
           "^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$"
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
         ],
         "external": [
           "^github\\.com/skosovsky/metry(/[\\w.-]+)*$",

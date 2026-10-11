@@ -1,0 +1,72 @@
+{
+  "task": "T08",
+  "role": "independent correctness",
+  "candidate": "e590ed814c581fb33e31efef02794c5fd9a712880ef3445dabe6e92232fe7588",
+  "parent": "bcab7133d00a34db8bfc148fee80480d05c1126f",
+  "verdict": "FAIL",
+  "findings": [
+    {
+      "id": "C1",
+      "priority": "P1",
+      "requirements": [
+        "T08-24",
+        "T08-25",
+        "T08-37"
+      ],
+      "path": "internal/observability/provider.go",
+      "line": 91,
+      "summary": "Owned SDK initialization leaks malformed resource environment values through OTel global diagnostics before safe exporters.",
+      "evidence": [
+        "reviewer-correctness-malformed-resource.log",
+        "reviewer-correctness-percent-resource.log"
+      ],
+      "reproduction": "Fresh process; OTEL_RESOURCE_ATTRIBUTES=PRIVATE_SENTINEL_MALFORMED_RESOURCE; call metry.New(ctx,WithServiceName(\"zl-mcp\")) exactly as newOwned. Both resource Detect and Default report the raw sentinel on stderr. Invalid percent resource encoding also reaches SDK diagnostics.",
+      "required_fix": "Neutral host validation before SDK resource initialization, or compatible pinned public API that supplies a safe explicit resource; no process-global error-handler mutation or sibling library edit. Add fresh-process malformed environment sentinel tests."
+    },
+    {
+      "id": "C2",
+      "priority": "P2",
+      "requirements": [
+        "T08-34",
+        "T08-37"
+      ],
+      "path": "internal/mcpserver/server.go",
+      "line": 158,
+      "summary": "Moving the operational call audit into app execution drops rejected preflights and misreports later response failures.",
+      "evidence": [
+        "internal/mcpserver/server.go:158-179",
+        "internal/toolruntime/reads.go:262-279",
+        "internal/observability/observer.go:Execute/log"
+      ],
+      "reproduction": "Bind/admission/BindArguments/input.Validate errors return before Observer.Execute. Projection/encode/response-budget errors occur after its audit has already reported app success. The former deferred Service.call audit captured the final MCP response and its safe domain error code.",
+      "required_fix": "Retain one safe final-call diagnostic for rejected preflight and post-execution response failures, without duplicating ExecutorWrap/application spans. Preserve bounded operational error codes and privacy. Cover denied principal, rate limit, invalid arguments and post-execution response-budget failures."
+    }
+  ],
+  "checked_scope": [
+    "Actual provider/observer/runtime/outcome implementation",
+    "HTTP accepted-byte writer and borrowed STDIO SDK connection writer",
+    "Native send/join/history/Events hooks and unchanged durable owners",
+    "Finite enums and capped 4096-entry/24h memory trace references",
+    "Service sampler deadlines and worker/provider/store ordering",
+    "Config schema and opt-in defaults",
+    "In-memory privacy/failure/result/panic tests and source controls"
+  ],
+  "checks": [
+    {
+      "command": "go test -race ./internal/observability ./internal/service ./internal/mcpserver ./internal/toolruntime",
+      "result": "PASS (cache validated)"
+    },
+    {
+      "command": "go test -race -count=1 ./internal/observability ./internal/service ./internal/mcpserver ./internal/toolruntime",
+      "result": "PASS (fresh -count=1)",
+      "evidence": "reviewer-correctness-race-fresh.log"
+    },
+    {
+      "command": "Fresh-process malformed OTEL_RESOURCE_ATTRIBUTES SDK reproduction",
+      "result": "FAIL privacy sentinel leak",
+      "evidence": "reviewer-correctness-malformed-resource.log"
+    }
+  ],
+  "model_live": "NOT_RUN",
+  "sdk_ids": "Deferred to SDK-01; not reopened here"
+}

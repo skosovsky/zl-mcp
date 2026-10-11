@@ -14,28 +14,34 @@ Synthetic receiver tests exercise this contract. Compatibility with a specific a
 ## Delivery observability
 
 Each claimed delivery emits `mcp_event_delivery_started` and
-`mcp_event_delivery_finished` through the service logger. Both carry event and
-subscription IDs, queue delivery ID, attempt, body byte count and SHA-256 of the
-exact persisted body. The finish record adds elapsed milliseconds, HTTP status
-(zero when no response), bounded ASCII `x-request-id` / `openai-request-id`
-values when present, categorized outcome, and whether the outcome was persisted.
+`mcp_event_delivery_finished` through the service logger. Both carry a random
+per-attempt correlation ID, attempt count and body byte count. The finish record
+adds elapsed milliseconds, bounded HTTP status (zero when unavailable), a finite
+outcome/reason and whether the outcome was persisted. The explicit safe field
+allowlist below applies to both the service logger and diagnostic file.
 A start without finish requires checking lease recovery. HTTP acceptance remains
 distinct from model-visible event processing.
 
-Logs never include body text, sender/conversation IDs, callback URL, signing
-headers/secrets, response bodies or raw transport errors. Request IDs accept only
-ASCII letters, digits, dot, underscore and hyphen, at most 128 characters; other
-values are omitted. Existing private log permissions and rotation apply.
+Logs never include message text, payload/body, native account/chat/message/event/
+subscription/delivery IDs, receiver request IDs, tokens, response bodies or raw
+errors, including nested fields. No payload digest is retained.
 
-### Opt-in full diagnostic trace
+### Opt-in bounded diagnostic trace
 
-`logging.event_trace_file` is disabled by default. A nonempty absolute path,
-separate from `logging.file`, enables a private rotating JSON log. It records the
-full outbound event body, response status, bounded receiver request IDs, and the
-response body up to 64 KiB with truncation/read-failure indicators. Known callback
-URL and signing key values are redacted from responses. Authentication/signature
-headers and cookies are never recorded. This trace contains private conversation
-text and IDs: keep it outside the repository/iCloud and disable after diagnosis.
-The file and archives are 0600 in a 0700 directory, using the existing size/backup
-limits; write failures stop the service rather than silently losing diagnostics.
+`logging.event_trace_file` remains disabled by default. A nonempty absolute path,
+separate from `logging.file`, enables a private rotating JSON log. T08 replaces
+its former full-content format; no full-trace or bypass mode remains.
+
+The explicit field allowlist is: standard logger time/level/message; randomly
+created per-attempt `correlation_id`; integer `attempt`, `body_bytes`,
+`elapsed_ms`, `http_status`; finite `outcome` (pending/delivered/failed) and
+`reason` (network/accepted/callback_gone/payload_too_large/http_transient/
+http_rejected/attempts/deadline); boolean `receipt_persisted`. HTTP status is
+0 if unavailable, otherwise a valid 100..599 status (other values collapse to 0).
+Request, response and receipt records share a random correlation ID; it is
+independent of all native IDs. These fields cannot reconstruct the event body.
+
+The file and archives remain 0600 in a 0700 directory with existing size/backup
+limits; write failures retain existing service behavior. The delivered Events
+format, callback signing, leases, receipts and retry policy do not change.
 An empty trace is expected until the next naturally collected matching event.

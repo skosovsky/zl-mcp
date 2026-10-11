@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
@@ -77,6 +78,9 @@ func RunMobile(ctx context.Context, store *storage.Store, source MobileHistorySo
 }
 
 func runMobileOperation(ctx context.Context, store *storage.Store, source MobileHistorySource, pending storage.HistoryOperation) error {
+	return shared.ObserveWorker(ctx, domain.WorkHistory, pending.Status.OperationID, func(ctx context.Context) error { return runMobileOperationObserved(ctx, store, source, pending) })
+}
+func runMobileOperationObserved(ctx context.Context, store *storage.Store, source MobileHistorySource, pending storage.HistoryOperation) error {
 	op, err := store.ClaimHistoryOperation(ctx, pending.Status.OperationID, pending.Revision)
 	if ctx.Err() != nil || errors.Is(err, storage.ErrHistoryState) {
 		return nil
@@ -84,11 +88,14 @@ func runMobileOperation(ctx context.Context, store *storage.Store, source Mobile
 	if err != nil || op.Status.State != "running" {
 		return err
 	}
+	created, _ := time.Parse(time.RFC3339Nano, op.Status.CreatedAt)
+	shared.ObserveTransition(ctx, domain.WorkHistory, pending.Status.State, op.Status.State, created)
 	storageFailed := false
 	stop := func(state, reason string, elapsed time.Duration) error {
 		remaining := max(storage.MobileHistoryWorkBudget-op.WorkDuration, 0)
 		next, e := store.StopHistoryOperation(ctx, op.Status.OperationID, op.Revision, state, reason, min(elapsed, remaining))
 		if e == nil {
+			shared.ObserveTransition(ctx, domain.WorkHistory, op.Status.State, next.Status.State, created)
 			op = next
 		}
 		if ctx.Err() != nil || errors.Is(e, storage.ErrHistoryState) {
@@ -143,7 +150,9 @@ func runMobileOperation(ctx context.Context, store *storage.Store, source Mobile
 			}
 			request, cancel := context.WithTimeout(sessionCtx, budget)
 			started := time.Now()
-			offer, receiveErr := session.ReceiveOffer(request, attempt.OperationID)
+			offer, receiveErr := shared.ObserveUpstream(request, domain.WorkHistory, func(ctx context.Context) (domain.MobileBackupOffer, error) {
+				return session.ReceiveOffer(ctx, attempt.OperationID)
+			})
 			cancel()
 			defer func() { offer = domain.MobileBackupOffer{} }()
 			if sessionCtx.Err() != nil {
@@ -162,7 +171,12 @@ func runMobileOperation(ctx context.Context, store *storage.Store, source Mobile
 			}
 			request, cancel = context.WithTimeout(sessionCtx, budget)
 			started = time.Now()
-			saveErr := session.SaveOffer(request, attempt.Request, offer)
+			saveErr := func() error {
+				_, err := shared.ObserveUpstream(request, domain.WorkHistory, func(ctx context.Context) (struct{}, error) {
+					return struct{}{}, session.SaveOffer(ctx, attempt.Request, offer)
+				})
+				return err
+			}()
 			cancel()
 			offer = domain.MobileBackupOffer{}
 			if sessionCtx.Err() != nil {
@@ -196,7 +210,9 @@ func runMobileOperation(ctx context.Context, store *storage.Store, source Mobile
 			}
 			request, cancel := context.WithTimeout(sessionCtx, budget)
 			started := time.Now()
-			page, readErr := session.ReadHistoryPage(request, attempt.Request, op.Status.PageSize, op.Status.RecordsObserved, previous, after)
+			page, readErr := shared.ObserveUpstream(request, domain.WorkHistory, func(ctx context.Context) (domain.MobileHistoryPage, error) {
+				return session.ReadHistoryPage(ctx, attempt.Request, op.Status.PageSize, op.Status.RecordsObserved, previous, after)
+			})
 			cancel()
 			elapsed := time.Since(started)
 			if readErr != nil || sessionCtx.Err() != nil {
@@ -227,6 +243,9 @@ func runMobileOperation(ctx context.Context, store *storage.Store, source Mobile
 				}
 				storageFailed = !errors.Is(e, storage.ErrHistoryState)
 				return e
+			}
+			if op.Status.State != next.Status.State {
+				shared.ObserveTransition(ctx, domain.WorkHistory, op.Status.State, next.Status.State, created)
 			}
 			op = next
 		}

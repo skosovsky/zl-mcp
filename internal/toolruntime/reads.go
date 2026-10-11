@@ -259,6 +259,24 @@ func invalidSchema() error {
 }
 
 func (r *Reads) Execute(ctx context.Context, binding Binding, name string, raw []byte) (*Result, error) {
+	observer := shared.Telemetry(ctx)
+	if observer == nil {
+		return r.execute(ctx, binding, name, raw)
+	}
+	var result *Result
+	err := observer.Execute(ctx, name, func(ctx context.Context) (domain.Outcome, error) {
+		var err error
+		result, err = r.execute(ctx, binding, name, raw)
+		if err != nil {
+			return domain.OutcomeError, err
+		}
+		result.remember(ctx, name, observer)
+		return result.Outcome(), nil
+	})
+	return result, err
+}
+
+func (r *Reads) execute(ctx context.Context, binding Binding, name string, raw []byte) (*Result, error) {
 	if binding.owner != r {
 		return nil, permission()
 	}

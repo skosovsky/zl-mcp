@@ -49,3 +49,17 @@ arch-go/v2 v2.1.2. Neither a generic allow-all nor a reduced threshold fixes a f
 Static imports do not prove runtime operation ownership, no resend, permissions,
 persistence compatibility, response budgets or telemetry privacy. Their behavioral
 checks remain mandatory in later tasks. Model/live execution stays NOT_RUN.
+
+T08 adds one explicit observability -> app/shared edge for the consumer-owned
+TelemetryPort and Invocation types. The adapter imports no other app capability,
+transport, SQL or native owner. metry/OTel remain inside observability; service
+constructs its one owned provider through the host factory.
+
+The native messaging/collector/historyimport/Events packages and service gain
+only the explicit app/shared observation-port edge. Their existing native
+DB/session owners remain intact. Config gains exact standard errors/net-url/strings
+imports to validate private opt-in settings and return neutral errors.
+
+T08 review correction: MCP final-call audit imports only standard crypto/rand to
+create unrelated random correlation IDs. This exact edge retains no raw caller
+or native identity and introduces no business/SDK dependency.

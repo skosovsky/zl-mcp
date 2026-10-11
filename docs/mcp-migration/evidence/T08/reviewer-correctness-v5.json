@@ -1,0 +1,90 @@
+{
+  "task": "T08",
+  "role": "independent correctness",
+  "candidate": "3de785e5375edc889d9a9a403d8b3d5696e6c6e0520cffb29ae2113df740a1aa",
+  "parent": "bcab7133d00a34db8bfc148fee80480d05c1126f",
+  "verdict": "PASS",
+  "findings": [],
+  "previous_findings": [
+    {
+      "id": "C1",
+      "status": "FIXED",
+      "evidence": "Host neutral resource-environment validation runs before enabled SDK/exporter construction. Fresh-process malformed syntax/percent tests pass; disabled mode ignores resource environment."
+    },
+    {
+      "id": "C2",
+      "status": "FIXED",
+      "evidence": "Single final MCP audit covers preflight, projection/encode/response-budget and panic exits. No audit duplicate at app/metry execution boundary; bounded direct error-code allowlist and original panic identity preserved."
+    },
+    {
+      "id": "C3",
+      "status": "FIXED",
+      "evidence": "callback.md Delivery observability paragraph now matches the authorized safe service/trace field allowlist and production Worker implementation."
+    }
+  ],
+  "verification": {
+    "leaf_scope": "Reviewed normative §6/T08 and all44 fixed leaf requirements; leaf44 final orchestration closes when both independent reports are present before the sole task commit.",
+    "current_source_files_verified": 941,
+    "source_mismatches": [],
+    "indexed_artifacts_verified": 706,
+    "artifact_mismatches": [],
+    "v4_v5_changed_files": [
+      "docs/contracts/callback.md"
+    ],
+    "production_code_changed_since_fresh_review": false,
+    "fresh_build_byte_equality": {
+      "candidate": "b5bd5fa981e27df4d4ffb1915bcf71bf61be94d3b28e327e349f6b91e2d3d458",
+      "baseline": "4b38637e661c4004766a415342141ddc8f4e7786f1691411c1c4a355a4265101"
+    },
+    "checks_carryforward_reason": "Only corrected contract documentation changed. Every Go/config/schema/build source is identical and independent v5 rebuilds match both tested v4 binaries."
+  },
+  "checked_scope": [
+    "One owned metry.New provider, default-off export and no SDK globals",
+    "Finite technical/domain outcome metrics and original business result/error/panic preservation",
+    "Safe resource/error/panic/log/span fields including enabled Events metadata and trace sinks",
+    "Bounded export/shutdown queue behavior, private headers, neutral failure diagnostics",
+    "4096entry/24h opaque operation-worker trace cache without persistence edits",
+    "Native send/join/history/Events owners, effects/permissions/retries unchanged",
+    "Service sampler bounded100ms reads off command path, worker/provider/store lifetime",
+    "HTTP actual accepted bytes and optional borrowed STDIO frame bytes without execution duplication",
+    "Contracts/evidence/architecture allowlists and complete required offline outcomes"
+  ],
+  "checks": [
+    {
+      "command": "go test -race -count=1 ./internal/observability ./internal/service ./internal/mcpserver ./internal/toolruntime ./internal/events",
+      "result": "PASS, source-identical v4 evidence",
+      "evidence": "reviewer-correctness-v4-race.log"
+    },
+    {
+      "check": "full root tests and vet",
+      "result": "PASS recorded, unchanged source",
+      "evidence": [
+        "root-tests-v4.log",
+        "root-vet-v4.log"
+      ]
+    },
+    {
+      "check": "architecture and negative controls",
+      "result": "PASS recorded, unchanged source",
+      "evidence": "architecture-checks-v4.json"
+    },
+    {
+      "check": "full offline candidate",
+      "result": "PASS50/50cases480/480assertions, byte-identical rebuild",
+      "evidence": "offline-v4/report.json"
+    },
+    {
+      "check": "independent frozen baseline",
+      "result": "PASS25/25cases240/240assertions, byte-identical rebuild",
+      "evidence": "baseline-v4/report.json"
+    }
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_ids": "Separate SDK-01 gate after T09; no T01–T07 reopening",
+  "production_edits": "none",
+  "retained_initial_fail_reports": [
+    "reviewer-correctness.json",
+    "reviewer-correctness-v4.json"
+  ]
+}

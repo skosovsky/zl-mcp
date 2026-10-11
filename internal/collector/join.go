@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
@@ -71,7 +72,7 @@ func (j *JoinManager) Inspect(ctx context.Context, raw string) (map[string]any, 
 	if e != nil {
 		return nil, e
 	}
-	v, e := j.API.Inspect(ctx, link)
+	v, e := shared.ObserveUpstream(ctx, domain.WorkJoin, func(ctx context.Context) (domain.Invite, error) { return j.API.Inspect(ctx, link) })
 	if e != nil {
 		if errors.Is(e, domain.ErrAuthenticationRequired) {
 			return nil, safeError("NOT_AUTHENTICATED", "Zalo authentication is required.", "Stop service and run local login.")
@@ -93,7 +94,7 @@ func (j *JoinManager) Inspect(ctx context.Context, raw string) (map[string]any, 
 		expires = &t
 	}
 	member := "unknown"
-	groups, e := j.API.Groups(ctx)
+	groups, e := shared.ObserveUpstream(ctx, domain.WorkJoin, func(ctx context.Context) ([]domain.Group, error) { return j.API.Groups(ctx) })
 	if e == nil {
 		member = "not_member"
 		for _, g := range groups {
@@ -196,7 +197,7 @@ func (j *JoinManager) Start(ctx context.Context, token, requestID string) (map[s
 		return nil, e
 	}
 	// Do not issue a membership mutation until its target and conditions have been revalidated.
-	checked, e := j.API.Inspect(ctx, p.URL)
+	checked, e := shared.ObserveUpstream(ctx, domain.WorkJoin, func(ctx context.Context) (domain.Invite, error) { return j.API.Inspect(ctx, p.URL) })
 	if e != nil {
 		return nil, safeError("UPSTREAM_UNAVAILABLE", "Cannot revalidate the invitation.", "Retry with the same request_id and plan_token later.")
 	}
@@ -239,11 +240,15 @@ func (j *JoinManager) Start(ctx context.Context, token, requestID string) (map[s
 	if n != 1 {
 		return nil, safeError("APPROVAL_REQUIRED", "Approval was already consumed.", "Inspect and approve again.")
 	}
-	if _, e = tx.ExecContext(ctx, "INSERT INTO join_requests VALUES(?,?,?,?,?)", requestID, operationID, hash, string(b), time.Now().UTC().Format(time.RFC3339Nano)); e != nil {
+	created := time.Now().UTC()
+	if _, e = tx.ExecContext(ctx, "INSERT INTO join_requests VALUES(?,?,?,?,?)", requestID, operationID, hash, string(b), created.Format(time.RFC3339Nano)); e != nil {
 		return nil, e
 	}
 	if e = tx.Commit(); e != nil {
 		return nil, e
+	}
+	if observer := shared.Telemetry(ctx); observer != nil && observer.Recording() {
+		observer.Remember(ctx, domain.WorkJoin, operationID)
 	}
 	j.wg.Add(1)
 	go func() {
@@ -252,12 +257,15 @@ func (j *JoinManager) Start(ctx context.Context, token, requestID string) (map[s
 		for key, value := range result {
 			copyResult[key] = value
 		}
-		j.execute(p, copyResult)
+		_ = shared.ObserveWorker(j.ctx, domain.WorkJoin, operationID, func(workerCtx context.Context) error {
+			j.execute(workerCtx, p, copyResult, created)
+			return nil
+		})
 	}()
 	return result, nil
 }
-func (j *JoinManager) execute(p preview, result map[string]any) {
-	ctx, cancel := context.WithTimeout(j.ctx, 45*time.Second)
+func (j *JoinManager) execute(parent context.Context, p preview, result map[string]any, created time.Time) {
+	ctx, cancel := context.WithTimeout(parent, 45*time.Second)
 	defer cancel()
 	status := "unknown"
 	defer func() {
@@ -276,6 +284,8 @@ func (j *JoinManager) execute(p preview, result map[string]any) {
 		defer cancelSave()
 		if _, err = j.Store.DB.ExecContext(saveCtx, "UPDATE join_requests SET payload=? WHERE operation_id=?", string(b), result["operation_id"]); err != nil {
 			slog.Error("join outcome persistence failed", "operation_id", result["operation_id"])
+		} else {
+			shared.ObserveTransition(ctx, domain.WorkJoin, "running", status, created)
 		}
 	}()
 	if e := j.enter(ctx); e != nil {
@@ -283,7 +293,7 @@ func (j *JoinManager) execute(p preview, result map[string]any) {
 		return
 	}
 	defer j.leave()
-	groups, e := j.API.Groups(ctx)
+	groups, e := shared.ObserveUpstream(ctx, domain.WorkJoin, func(ctx context.Context) ([]domain.Group, error) { return j.API.Groups(ctx) })
 	member := false
 	if e == nil {
 		for _, g := range groups {
@@ -296,9 +306,9 @@ func (j *JoinManager) execute(p preview, result map[string]any) {
 	if member {
 		status = "already_member"
 	} else if e == nil {
-		err := j.API.Join(ctx, p.URL)
+		_, err := shared.ObserveUpstream(ctx, domain.WorkJoin, func(ctx context.Context) (struct{}, error) { return struct{}{}, j.API.Join(ctx, p.URL) })
 		checkCtx, stop := context.WithTimeout(j.ctx, 15*time.Second)
-		after, checkErr := j.API.Groups(checkCtx)
+		after, checkErr := shared.ObserveUpstream(checkCtx, domain.WorkJoin, func(ctx context.Context) ([]domain.Group, error) { return j.API.Groups(ctx) })
 		stop()
 		if checkErr == nil {
 			for _, g := range after {

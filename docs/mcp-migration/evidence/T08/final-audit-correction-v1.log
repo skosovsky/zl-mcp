@@ -1,0 +1,5 @@
+--- FAIL: TestFinalAuditIncludesPreflightAndPostExecutionFailures (0.08s)
+    final_audit_test.go:108: incorrect final audit: {"time":"2026-10-12T01:24:06.062743+07:00","level":"INFO","msg":"mcp_call","tool":"zalo_list_groups","correlation_id":"RTBHAL77MP4SB6G3NAEN37IHSE","code":"COLLECTOR_UNAVAILABLE","outcome":"error","duration_ms":0}
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/mcpserver	0.681s
+FAIL

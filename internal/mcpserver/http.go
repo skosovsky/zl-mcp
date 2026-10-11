@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/skosovsky/zl-mcp/internal/app/shared"
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 type HTTPService struct {
@@ -134,6 +136,19 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.Body = io.NopCloser(bytes.NewReader(body))
+	if observer := shared.Telemetry(r.Context()); observer != nil && (request.Method == "tools/call" || request.Method == "resources/read") {
+		var params struct {
+			Name string `json:"name"`
+		}
+		_ = json.Unmarshal(request.Params, &params)
+		transport := domain.TransportHTTP
+		if request.Method == "resources/read" {
+			transport = domain.TransportResource
+		}
+		counted := &telemetryResponse{ResponseWriter: w}
+		w = counted
+		defer func() { observer.ResponseBytes(r.Context(), params.Name, transport, counted.bytes) }()
+	}
 	if discoveryMethod(request.Method) {
 		observed := &discoveryResponse{ResponseWriter: w, capture: request.Method == "tools/list"}
 		w = observed
@@ -247,3 +262,18 @@ func (c *jsonResponseCapture) Write(body []byte) (int, error) {
 	}
 	return c.body.Write(body)
 }
+
+// telemetryResponse counts bytes accepted by the actual wire writer, including
+// the JSON-RPC envelope and SDK escaping; it neither buffers nor re-encodes.
+type telemetryResponse struct {
+	http.ResponseWriter
+	bytes int64
+}
+
+func (w *telemetryResponse) Write(body []byte) (int, error) {
+	n, err := w.ResponseWriter.Write(body)
+	w.bytes += int64(n)
+	return n, err
+}
+func (w *telemetryResponse) Unwrap() http.ResponseWriter { return w.ResponseWriter }
+func (w *telemetryResponse) Flush()                      { _ = http.NewResponseController(w.ResponseWriter).Flush() }

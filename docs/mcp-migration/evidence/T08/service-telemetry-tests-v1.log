@@ -1,0 +1,80 @@
+2026/10/12 00:42:04 INFO mobile_backup_progress operation_id=d93ad220-422e-4f20-8563-9230bcffa1d0 state=dispatching
+2026/10/12 00:42:04 INFO mobile_backup_progress operation_id=d93ad220-422e-4f20-8563-9230bcffa1d0 state=waiting_for_confirmation
+2026/10/12 00:42:04 INFO mobile_backup_progress operation_id=d93ad220-422e-4f20-8563-9230bcffa1d0 state=offer_ready
+2026/10/12 00:42:04 INFO mobile_account_archive_acquired files=3 direct_files=2 group_files=1
+2026/10/12 00:42:04 INFO mobile_backup_progress operation_id=8906feb5-2f9d-42a8-a1a8-b86f3c88397f state=dispatching
+2026/10/12 00:42:04 INFO mobile_backup_progress operation_id=8906feb5-2f9d-42a8-a1a8-b86f3c88397f state=waiting_for_confirmation
+2026/10/12 00:42:04 INFO mobile_backup_progress operation_id=8906feb5-2f9d-42a8-a1a8-b86f3c88397f state=offer_ready
+2026/10/12 00:42:04 INFO mobile_account_archive_acquired files=3 direct_files=2 group_files=1
+{"time":"2026-10-12T00:42:05.161182+07:00","level":"INFO","msg":"INFO service started mcp_listen=127.0.0.1:59817"}
+{"time":"2026-10-12T00:42:05.415282+07:00","level":"INFO","msg":"INFO mcp_event_delivery_started event_id=evt_a2ff69dd6afd0219efce2f894b7f449a subscription_id=sub_ba87e5862cbb6158320c5a4f7f6816041c10a306181f401527a78be16bc09501 delivery_id=1 attempt=1 body_bytes=6628 body_sha256=be175eb28f62cc67f3b53ba38274bd92d419a13d23ee0c2dd0401724d72eac31"}
+{"time":"2026-10-12T00:42:05.416004+07:00","level":"INFO","msg":"INFO mcp_event_delivery_finished event_id=evt_a2ff69dd6afd0219efce2f894b7f449a subscription_id=sub_ba87e5862cbb6158320c5a4f7f6816041c10a306181f401527a78be16bc09501 delivery_id=1 attempt=1 body_bytes=6628 body_sha256=be175eb28f62cc67f3b53ba38274bd92d419a13d23ee0c2dd0401724d72eac31 elapsed_ms=0 http_status=204 request_id=\"\" openai_request_id=\"\" outcome=delivered reason=accepted receipt_persisted=true"}
+{"time":"2026-10-12T00:42:05.66526+07:00","level":"INFO","msg":"INFO mcp_event_delivery_started event_id=evt_11252484b3d98d5cbac81421841888a2 subscription_id=sub_ba87e5862cbb6158320c5a4f7f6816041c10a306181f401527a78be16bc09501 delivery_id=2 attempt=1 body_bytes=6626 body_sha256=31892057147679788e97f7561ddcba7ba8d71db0c0042714eb132a41f8fb912c"}
+{"time":"2026-10-12T00:42:05.666306+07:00","level":"INFO","msg":"INFO mcp_event_delivery_finished event_id=evt_11252484b3d98d5cbac81421841888a2 subscription_id=sub_ba87e5862cbb6158320c5a4f7f6816041c10a306181f401527a78be16bc09501 delivery_id=2 attempt=1 body_bytes=6626 body_sha256=31892057147679788e97f7561ddcba7ba8d71db0c0042714eb132a41f8fb912c elapsed_ms=1 http_status=204 request_id=\"\" openai_request_id=\"\" outcome=delivered reason=accepted receipt_persisted=true"}
+{"time":"2026-10-12T00:42:05.671738+07:00","level":"INFO","msg":"INFO service stopped"}
+{"time":"2026-10-12T00:42:05.752315+07:00","level":"INFO","msg":"INFO service started mcp_listen=127.0.0.1:59823"}
+{"time":"2026-10-12T00:42:06.01039+07:00","level":"INFO","msg":"INFO mcp_event_delivery_started event_id=evt_0dd06864035bbb9841b7b78836e37e78 subscription_id=sub_ba87e5862cbb6158320c5a4f7f6816041c10a306181f401527a78be16bc09501 delivery_id=3 attempt=1 body_bytes=6631 body_sha256=35080ee18496f966e333aa618d1249e68e267b78ea6593961f06f2e9486c9eb9"}
+{"time":"2026-10-12T00:42:06.011054+07:00","level":"INFO","msg":"INFO mcp_event_delivery_finished event_id=evt_0dd06864035bbb9841b7b78836e37e78 subscription_id=sub_ba87e5862cbb6158320c5a4f7f6816041c10a306181f401527a78be16bc09501 delivery_id=3 attempt=1 body_bytes=6631 body_sha256=35080ee18496f966e333aa618d1249e68e267b78ea6593961f06f2e9486c9eb9 elapsed_ms=0 http_status=204 request_id=\"\" openai_request_id=\"\" outcome=delivered reason=accepted receipt_persisted=true"}
+{"time":"2026-10-12T00:42:06.255419+07:00","level":"INFO","msg":"INFO mcp_event_delivery_started event_id=evt_d9fdc789e0e1e399e8ea340cade5a382 subscription_id=sub_ba87e5862cbb6158320c5a4f7f6816041c10a306181f401527a78be16bc09501 delivery_id=4 attempt=1 body_bytes=6628 body_sha256=81dff666d9d4fa390159633470d285d3d5b1cf493894de60354264f948732d83"}
+{"time":"2026-10-12T00:42:06.260094+07:00","level":"INFO","msg":"INFO mcp_event_delivery_finished event_id=evt_d9fdc789e0e1e399e8ea340cade5a382 subscription_id=sub_ba87e5862cbb6158320c5a4f7f6816041c10a306181f401527a78be16bc09501 delivery_id=4 attempt=1 body_bytes=6628 body_sha256=81dff666d9d4fa390159633470d285d3d5b1cf493894de60354264f948732d83 elapsed_ms=4 http_status=204 request_id=\"\" openai_request_id=\"\" outcome=delivered reason=accepted receipt_persisted=true"}
+{"time":"2026-10-12T00:42:06.876734+07:00","level":"INFO","msg":"INFO service stopped"}
+{"time":"2026-10-12T00:42:06.880752+07:00","level":"INFO","msg":"WARN legacy_collection_config format=group_ids next_action=\"Use explicit selected mode with typed conversations to preserve the group-only scope; all mode widens collection.\""}
+{"time":"2026-10-12T00:42:06.982433+07:00","level":"INFO","msg":"INFO service started mcp_listen=127.0.0.1:59826"}
+{"time":"2026-10-12T00:42:06.986986+07:00","level":"INFO","msg":"INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=369"}
+{"time":"2026-10-12T00:42:07.238436+07:00","level":"INFO","msg":"INFO mcp_event_delivery_started event_id=evt_1a2d01f7bb91e9a6fde6db6c1fb8fc5d subscription_id=sub_3df933cd409f2f1a18d7bc79148876acc7ec20ad6938c79881f603230a7098fe delivery_id=1 attempt=1 body_bytes=5454 body_sha256=22ecaa04aed86d09ace880eb1fd93f738b0eed1508c67ddb6de059afba1d5e19"}
+{"time":"2026-10-12T00:42:07.241873+07:00","level":"INFO","msg":"INFO mcp_event_delivery_finished event_id=evt_1a2d01f7bb91e9a6fde6db6c1fb8fc5d subscription_id=sub_3df933cd409f2f1a18d7bc79148876acc7ec20ad6938c79881f603230a7098fe delivery_id=1 attempt=1 body_bytes=5454 body_sha256=22ecaa04aed86d09ace880eb1fd93f738b0eed1508c67ddb6de059afba1d5e19 elapsed_ms=3 http_status=503 request_id=\"\" openai_request_id=\"\" outcome=pending reason=http_transient receipt_persisted=true"}
+{"time":"2026-10-12T00:42:07.242745+07:00","level":"INFO","msg":"INFO service stopped"}
+{"time":"2026-10-12T00:42:07.24295+07:00","level":"INFO","msg":"WARN legacy_collection_config format=group_ids next_action=\"Use explicit selected mode with typed conversations to preserve the group-only scope; all mode widens collection.\""}
+{"time":"2026-10-12T00:42:07.314528+07:00","level":"INFO","msg":"INFO service started mcp_listen=127.0.0.1:59829"}
+{"time":"2026-10-12T00:42:09.315728+07:00","level":"INFO","msg":"INFO mcp_event_delivery_started event_id=evt_1a2d01f7bb91e9a6fde6db6c1fb8fc5d subscription_id=sub_3df933cd409f2f1a18d7bc79148876acc7ec20ad6938c79881f603230a7098fe delivery_id=1 attempt=2 body_bytes=5454 body_sha256=22ecaa04aed86d09ace880eb1fd93f738b0eed1508c67ddb6de059afba1d5e19"}
+{"time":"2026-10-12T00:42:09.316396+07:00","level":"INFO","msg":"INFO mcp_event_delivery_finished event_id=evt_1a2d01f7bb91e9a6fde6db6c1fb8fc5d subscription_id=sub_3df933cd409f2f1a18d7bc79148876acc7ec20ad6938c79881f603230a7098fe delivery_id=1 attempt=2 body_bytes=5454 body_sha256=22ecaa04aed86d09ace880eb1fd93f738b0eed1508c67ddb6de059afba1d5e19 elapsed_ms=0 http_status=204 request_id=\"\" openai_request_id=\"\" outcome=delivered reason=accepted receipt_persisted=true"}
+{"time":"2026-10-12T00:42:09.566197+07:00","level":"INFO","msg":"INFO mcp_event_delivery_started event_id=evt_9859784966dbeceb84a58bb12bd8a33f subscription_id=sub_3df933cd409f2f1a18d7bc79148876acc7ec20ad6938c79881f603230a7098fe delivery_id=2 attempt=1 body_bytes=339 body_sha256=433b9f73efc7758f3c7a24be048f67f73b168a89bf0f6963e52deb08fccdfe61"}
+{"time":"2026-10-12T00:42:09.56684+07:00","level":"INFO","msg":"INFO mcp_event_delivery_finished event_id=evt_9859784966dbeceb84a58bb12bd8a33f subscription_id=sub_3df933cd409f2f1a18d7bc79148876acc7ec20ad6938c79881f603230a7098fe delivery_id=2 attempt=1 body_bytes=339 body_sha256=433b9f73efc7758f3c7a24be048f67f73b168a89bf0f6963e52deb08fccdfe61 elapsed_ms=0 http_status=204 request_id=\"\" openai_request_id=\"\" outcome=delivered reason=accepted receipt_persisted=true"}
+{"time":"2026-10-12T00:42:09.819408+07:00","level":"INFO","msg":"INFO service stopped"}
+{"time":"2026-10-12T00:42:09.925525+07:00","level":"INFO","msg":"INFO service started mcp_listen=127.0.0.1:59831"}
+{"time":"2026-10-12T00:42:10.460172+07:00","level":"INFO","msg":"INFO service stopped"}
+{"time":"2026-10-12T00:42:10.585787+07:00","level":"INFO","msg":"INFO service started mcp_listen=127.0.0.1:59833"}
+{"time":"2026-10-12T00:42:11.112851+07:00","level":"INFO","msg":"INFO service stopped"}
+{"time":"2026-10-12T00:42:11.132376+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=9e621844-1581-4293-b919-1f3b760e1f16 state=dispatching"}
+{"time":"2026-10-12T00:42:11.132583+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=9e621844-1581-4293-b919-1f3b760e1f16 state=waiting_for_confirmation"}
+{"time":"2026-10-12T00:42:11.132805+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=9e621844-1581-4293-b919-1f3b760e1f16 state=offer_ready"}
+{"time":"2026-10-12T00:42:11.134442+07:00","level":"INFO","msg":"INFO mobile_account_archive_acquired files=1 direct_files=1 group_files=0"}
+{"time":"2026-10-12T00:42:11.134455+07:00","level":"INFO","msg":"INFO mobile_archive_stage request_id=00000000-0000-4000-8000-000000000001 stage=selection"}
+{"time":"2026-10-12T00:42:11.135771+07:00","level":"INFO","msg":"INFO mobile_archive_probe_complete operation_id=9e621844-1581-4293-b919-1f3b760e1f16 examined=2 conversion_blocked=false"}
+{"time":"2026-10-12T00:42:11.266538+07:00","level":"INFO","msg":"INFO service started mcp_listen=127.0.0.1:59835"}
+{"time":"2026-10-12T00:42:11.267657+07:00","level":"INFO","msg":"INFO service stopped"}
+{"time":"2026-10-12T00:42:11.291331+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=eda5618d-3160-494d-87ef-407ff17fa535 state=dispatching"}
+{"time":"2026-10-12T00:42:11.291619+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=eda5618d-3160-494d-87ef-407ff17fa535 state=waiting_for_confirmation"}
+{"time":"2026-10-12T00:42:11.291916+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=eda5618d-3160-494d-87ef-407ff17fa535 state=offer_ready"}
+{"time":"2026-10-12T00:42:11.326236+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=92f30f3d-09c7-4bad-af30-cf516909e7d2 state=dispatching"}
+{"time":"2026-10-12T00:42:11.326671+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=92f30f3d-09c7-4bad-af30-cf516909e7d2 state=waiting_for_confirmation"}
+{"time":"2026-10-12T00:42:11.327023+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=92f30f3d-09c7-4bad-af30-cf516909e7d2 state=offer_ready"}
+{"time":"2026-10-12T00:42:11.328416+07:00","level":"INFO","msg":"INFO mobile_account_archive_acquired files=1 direct_files=1 group_files=0"}
+{"time":"2026-10-12T00:42:11.328429+07:00","level":"INFO","msg":"INFO mobile_archive_stage request_id=00000000-0000-4000-8000-000000000001 stage=selection"}
+{"time":"2026-10-12T00:42:11.735887+07:00","level":"INFO","msg":"INFO service started mcp_listen=127.0.0.1:59837"}
+{"time":"2026-10-12T00:42:11.737861+07:00","level":"INFO","msg":"WARN Zalo authentication required; waiting for local login"}
+{"time":"2026-10-12T00:42:11.739603+07:00","level":"INFO","msg":"INFO service stopped"}
+{"time":"2026-10-12T00:42:11.75824+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=9caf0572-390c-4048-b44a-965b87ec230f state=dispatching"}
+{"time":"2026-10-12T00:42:11.758455+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=9caf0572-390c-4048-b44a-965b87ec230f state=waiting_for_confirmation"}
+{"time":"2026-10-12T00:42:11.75865+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=9caf0572-390c-4048-b44a-965b87ec230f state=offer_ready"}
+{"time":"2026-10-12T00:42:11.799131+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=f5ee101e-35c1-4787-af66-10045da113d2 state=dispatching"}
+{"time":"2026-10-12T00:42:11.799343+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=f5ee101e-35c1-4787-af66-10045da113d2 state=waiting_for_confirmation"}
+{"time":"2026-10-12T00:42:11.799543+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=f5ee101e-35c1-4787-af66-10045da113d2 state=offer_ready"}
+{"time":"2026-10-12T00:42:11.800931+07:00","level":"INFO","msg":"INFO mobile_account_archive_acquired files=1 direct_files=1 group_files=0"}
+{"time":"2026-10-12T00:42:11.80094+07:00","level":"INFO","msg":"INFO mobile_archive_stage request_id=00000000-0000-4000-8000-000000000001 stage=selection"}
+{"time":"2026-10-12T00:42:11.821873+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=ada9bb22-daec-4f07-b607-c74244fddbc6 state=dispatching"}
+{"time":"2026-10-12T00:42:11.822062+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=ada9bb22-daec-4f07-b607-c74244fddbc6 state=waiting_for_confirmation"}
+{"time":"2026-10-12T00:42:11.822245+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=ada9bb22-daec-4f07-b607-c74244fddbc6 state=offer_ready"}
+{"time":"2026-10-12T00:42:11.822304+07:00","level":"INFO","msg":"WARN mobile_archive_download_failed stage=BODY_LENGTH expected_bytes=384 received_bytes=16 read_failed=true cancelled=true"}
+{"time":"2026-10-12T00:42:11.822311+07:00","level":"INFO","msg":"WARN mobile_archive_scope_failed stage=FETCH_COMPLETE fetch_failed=true cancelled=true owner_changed=false"}
+{"time":"2026-10-12T00:42:11.841267+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=e9ce2db9-a4a7-4645-81b9-bf871c4c6ab4 state=dispatching"}
+{"time":"2026-10-12T00:42:11.841471+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=e9ce2db9-a4a7-4645-81b9-bf871c4c6ab4 state=waiting_for_confirmation"}
+{"time":"2026-10-12T00:42:11.841658+07:00","level":"INFO","msg":"INFO mobile_backup_progress operation_id=e9ce2db9-a4a7-4645-81b9-bf871c4c6ab4 state=offer_ready"}
+{"time":"2026-10-12T00:42:11.841861+07:00","level":"INFO","msg":"INFO mobile_account_archive_acquired files=1 direct_files=1 group_files=0"}
+{"time":"2026-10-12T00:42:11.841866+07:00","level":"INFO","msg":"INFO mobile_archive_stage request_id=00000000-0000-4000-8000-000000000001 stage=selection"}
+--- FAIL: TestTwoMCPProcessesReadCollectorWrites (1.99s)
+    multiprocess_test.go:252: missing or unsafe service audit
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/service	11.966s
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	8.540s
+FAIL

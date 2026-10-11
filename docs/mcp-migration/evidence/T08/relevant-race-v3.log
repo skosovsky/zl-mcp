@@ -1,0 +1,9 @@
+ok  	github.com/skosovsky/zl-mcp/internal/observability	11.033s
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	13.717s
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	39.706s
+ok  	github.com/skosovsky/zl-mcp/internal/messaging	6.524s
+ok  	github.com/skosovsky/zl-mcp/internal/collector	26.673s
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	8.162s
+ok  	github.com/skosovsky/zl-mcp/internal/events	7.454s
+ok  	github.com/skosovsky/zl-mcp/internal/service	36.917s
+ok  	github.com/skosovsky/zl-mcp/internal/storage	65.793s

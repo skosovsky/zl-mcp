@@ -1,0 +1,184 @@
+{
+  "task": "T08",
+  "parent_sha": "bcab7133d00a34db8bfc148fee80480d05c1126f",
+  "required_total": 44,
+  "formula": "100 * verified_pass / required_total",
+  "requirements": [
+    {
+      "id": "T08-01",
+      "requirement": "Accepted T07 commit/tree/source and durable evidence verified; prior tasks not reopened"
+    },
+    {
+      "id": "T08-02",
+      "requirement": "Pinned metryv0.10.1 public API/INTEGRATION/PRIVACY contract verified; no sibling/third_party edits"
+    },
+    {
+      "id": "T08-03",
+      "requirement": "Telemetry contract, safe signal manifest, ownership/config schema and fixed leaf requirements before implementation"
+    },
+    {
+      "id": "T08-04",
+      "requirement": "One service-owned metry provider via New; no second provider or mutable global SDK ownership"
+    },
+    {
+      "id": "T08-05",
+      "requirement": "Exporter opt-in; default configuration creates no external network dependency or changed service network behavior"
+    },
+    {
+      "id": "T08-06",
+      "requirement": "Additive config fields validated with executable JSON schema and documented defaults"
+    },
+    {
+      "id": "T08-07",
+      "requirement": "Exporter queue/export timeout/shutdown bounded; API keys/headers never logged"
+    },
+    {
+      "id": "T08-08",
+      "requirement": "metry.ExecutorWrap wraps application execution exactly once for all22tools"
+    },
+    {
+      "id": "T08-09",
+      "requirement": "HTTP/STDIO transport instrumentation does not duplicate execution span"
+    },
+    {
+      "id": "T08-10",
+      "requirement": "Built-in technical status remains actual Go success/error/panic"
+    },
+    {
+      "id": "T08-11",
+      "requirement": "Host typed domain outcome finite mapping independent from technical status"
+    },
+    {
+      "id": "T08-12",
+      "requirement": "Business error inside typed result classified error with nil Go error"
+    },
+    {
+      "id": "T08-13",
+      "requirement": "Unknown/partial/cancelled distinct domain outcomes; no synthetic Go error to fake metrics"
+    },
+    {
+      "id": "T08-14",
+      "requirement": "executor calls metric observable with bounded stable operation/tool and technical status"
+    },
+    {
+      "id": "T08-15",
+      "requirement": "executor duration metric observable in seconds with bounded stable operation/tool and technical status"
+    },
+    {
+      "id": "T08-16",
+      "requirement": "zl_mcp_domain_calls calls/tool/domainoutcome observable"
+    },
+    {
+      "id": "T08-17",
+      "requirement": "zl_mcp_response_bytes histogram bytes/tool/transport observable with actual encoded wire bytes"
+    },
+    {
+      "id": "T08-18",
+      "requirement": "zl_mcp_upstream_calls counter bounded operation kind/outcome observable"
+    },
+    {
+      "id": "T08-19",
+      "requirement": "zl_mcp_operation_transitions counter kind/finite from/to observable"
+    },
+    {
+      "id": "T08-20",
+      "requirement": "zl_mcp_worker_queue_depth gauge/queue name observable"
+    },
+    {
+      "id": "T08-21",
+      "requirement": "zl_mcp_operation_age_seconds histogram or gauge explicit ADR semantics kind/state observable"
+    },
+    {
+      "id": "T08-22",
+      "requirement": "Typed outcome and worker state enums reject unknown arbitrary strings as metric attributes"
+    },
+    {
+      "id": "T08-23",
+      "requirement": "No account/chat/message/request/operation IDs/query/text/raw URI/token/error in metric labels"
+    },
+    {
+      "id": "T08-24",
+      "requirement": "Logs/spans only safe enumerated fields and random correlation IDs; no raw error/quote/session/upstream causes"
+    },
+    {
+      "id": "T08-25",
+      "requirement": "Privacy sentinel absent in all memory metric/span/log sinks including panic and formatting paths"
+    },
+    {
+      "id": "T08-26",
+      "requirement": "Request->operation->worker correlation via bounded in-memory opaque trace references with IDs kept distinct"
+    },
+    {
+      "id": "T08-27",
+      "requirement": "Trace correlation introduces no persistence schema/record changes and bounded memory lifecycle"
+    },
+    {
+      "id": "T08-28",
+      "requirement": "Telemetry/upstream instrumentation does not change business result, permission, send count or retry behavior"
+    },
+    {
+      "id": "T08-29",
+      "requirement": "Exporter failure isolated from application outcome; no blocked send or retry"
+    },
+    {
+      "id": "T08-30",
+      "requirement": "Exporter timeout failure-injection test isolates outcome and bounds shutdown"
+    },
+    {
+      "id": "T08-31",
+      "requirement": "Nil provider safe and disabled provider safe across execution/resource/worker paths"
+    },
+    {
+      "id": "T08-32",
+      "requirement": "Provider cleanup owned by service and orderly relative to worker/DB lifetime"
+    },
+    {
+      "id": "T08-33",
+      "requirement": "Shutdown idempotent and bounded under cancelled context/exporter stall"
+    },
+    {
+      "id": "T08-34",
+      "requirement": "Existing operational diagnostics/redaction preserved; duplicate execution logging removed"
+    },
+    {
+      "id": "T08-35",
+      "requirement": "Native send/join/history/Events worker owners remain unchanged; no second ledger/session"
+    },
+    {
+      "id": "T08-36",
+      "requirement": "In-memory exporters observe exact required signals and technical/business status distinction"
+    },
+    {
+      "id": "T08-37",
+      "requirement": "Meaningful privacy/failure/lifecycle/outcome tests PASS"
+    },
+    {
+      "id": "T08-38",
+      "requirement": "Relevant observability/runtime/service/worker race tests PASS"
+    },
+    {
+      "id": "T08-39",
+      "requirement": "Root tests/vet PASS and no public/persistence/wire regressions"
+    },
+    {
+      "id": "T08-40",
+      "requirement": "Architecture100/100 and negative controls PASS; metry/OTel imports only permitted observability/composition"
+    },
+    {
+      "id": "T08-41",
+      "requirement": "Complete required offline eval and independent durable effects PASS"
+    },
+    {
+      "id": "T08-42",
+      "requirement": "Frozen baseline/independent harness retained; candidate/build/rawcommands/versions/source hashes/index retained"
+    },
+    {
+      "id": "T08-43",
+      "requirement": "Model/live NOT_RUN and SDK IDs deferred SDK-01 explicit; no deployed/live/paid actions"
+    },
+    {
+      "id": "T08-44",
+      "requirement": "Two independent samecandidate reviewers100% completeness and correctnessPASS before soleT08commit"
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
@@ -51,6 +52,9 @@ func RunRecovered(ctx context.Context, store *storage.Store, source domain.Histo
 }
 
 func runOperation(ctx context.Context, store *storage.Store, source domain.HistorySource, pending storage.HistoryOperation) error {
+	return shared.ObserveWorker(ctx, domain.WorkHistory, pending.Status.OperationID, func(ctx context.Context) error { return runOperationObserved(ctx, store, source, pending) })
+}
+func runOperationObserved(ctx context.Context, store *storage.Store, source domain.HistorySource, pending storage.HistoryOperation) error {
 	op, err := store.ClaimHistoryOperation(ctx, pending.Status.OperationID, pending.Revision)
 	if errors.Is(err, storage.ErrHistoryState) || ctx.Err() != nil {
 		return nil
@@ -58,8 +62,13 @@ func runOperation(ctx context.Context, store *storage.Store, source domain.Histo
 	if err != nil {
 		return err
 	}
+	created, _ := time.Parse(time.RFC3339Nano, op.Status.CreatedAt)
+	shared.ObserveTransition(ctx, domain.WorkHistory, pending.Status.State, op.Status.State, created)
 	stop := func(state, reason string, elapsed time.Duration) error {
 		_, err := store.StopHistoryOperation(ctx, op.Status.OperationID, op.Revision, state, reason, min(elapsed, storage.HistoryWorkBudget))
+		if err == nil {
+			shared.ObserveTransition(ctx, domain.WorkHistory, op.Status.State, state, created)
+		}
 		if errors.Is(err, storage.ErrHistoryState) || ctx.Err() != nil {
 			return nil
 		}
@@ -93,7 +102,9 @@ func runOperation(ctx context.Context, store *storage.Store, source domain.Histo
 		var page domain.HistoryPage
 		if op.Status.Source == "conversation_preload" {
 			if snapshot, ok := source.(domain.PreloadHistorySource); ok {
-				page, err = snapshot.PreloadHistoryPage(request, op.Status.Ref(), limit)
+				page, err = shared.ObserveUpstream(request, domain.WorkHistory, func(ctx context.Context) (domain.HistoryPage, error) {
+					return snapshot.PreloadHistoryPage(ctx, op.Status.Ref(), limit)
+				})
 			} else {
 				err = domain.ErrHistoryUnsupported
 			}
@@ -104,9 +115,13 @@ func runOperation(ctx context.Context, store *storage.Store, source domain.Histo
 				cancel()
 				return stop("partial", "missing_continuation", 0)
 			}
-			page, err = phased.HistoryPageWithPhase(request, op.Status.Ref(), op.Cursor, op.Status.IsOld, limit)
+			page, err = shared.ObserveUpstream(request, domain.WorkHistory, func(ctx context.Context) (domain.HistoryPage, error) {
+				return phased.HistoryPageWithPhase(ctx, op.Status.Ref(), op.Cursor, op.Status.IsOld, limit)
+			})
 		} else {
-			page, err = source.HistoryPage(request, op.Status.Ref(), op.Cursor, limit)
+			page, err = shared.ObserveUpstream(request, domain.WorkHistory, func(ctx context.Context) (domain.HistoryPage, error) {
+				return source.HistoryPage(ctx, op.Status.Ref(), op.Cursor, limit)
+			})
 		}
 		elapsed := time.Since(started)
 		cancel()
@@ -154,6 +169,9 @@ func runOperation(ctx context.Context, store *storage.Store, source domain.Histo
 				reason = "invalid_source_page"
 			}
 			return stop("failed", reason, elapsed)
+		}
+		if op.Status.State != updated.Status.State {
+			shared.ObserveTransition(ctx, domain.WorkHistory, op.Status.State, updated.Status.State, created)
 		}
 		op = updated
 	}

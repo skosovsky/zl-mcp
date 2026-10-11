@@ -2,13 +2,12 @@ package mcpserver
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"log/slog"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -161,42 +160,55 @@ func failure(err error) *mcp.CallToolResult {
 }
 func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (response *mcp.CallToolResult) {
 	started := time.Now()
+	code := "OK"
 	defer func() {
-		code := "OK"
-		if response != nil && response.IsError {
-			code = "TOOL_ERROR"
-			if len(response.Content) > 0 {
-				if content, ok := response.Content[0].(*mcp.TextContent); ok {
-					var value domain.Error
-					if json.Unmarshal([]byte(content.Text), &value) == nil {
-						code = value.Code
-					}
-				}
+		panicValue := recover()
+		outcome := "success"
+		if panicValue != nil {
+			code, outcome = "TOOL_ERROR", "panic"
+		} else if response != nil && response.IsError {
+			outcome = "error"
+			if code == "OK" {
+				code = "TOOL_ERROR"
 			}
 		}
-		slog.Info("mcp_call", "tool", name, "principal", os.Getuid(), "correlation_id", uuid.NewString(), "code", code, "duration_ms", time.Since(started).Milliseconds())
+		tool := name
+		if _, allowed := descriptions[tool]; !allowed {
+			tool = "other"
+		}
+		slog.InfoContext(ctx, "mcp_call", "tool", tool, "correlation_id", rand.Text(), "code", code, "outcome", outcome, "duration_ms", time.Since(started).Milliseconds())
+		if panicValue != nil {
+			panic(panicValue)
+		}
 	}()
+	fail := func(err error) *mcp.CallToolResult {
+		code = "STORAGE_ERROR"
+		if de, ok := err.(*domain.Error); ok {
+			code = safeAuditCode(de.Code)
+		}
+		return failure(err)
+	}
 	var binding toolruntime.Binding
 	if s.runtime.Supports(name) {
 		var bindErr error
 		binding, bindErr = s.runtime.Bind(ctx)
 		if bindErr != nil {
-			return failure(bindErr)
+			return fail(bindErr)
 		}
 	}
 	allowed, budgetErr := s.admission.AllowRead(ctx)
 	if budgetErr != nil {
-		return failure(budgetErr)
+		return fail(budgetErr)
 	}
 	if !allowed {
-		return failure(&domain.Error{Code: "RATE_LIMITED", Message: "Too many local calls.", Retryable: true, NextAction: domain.NextAction{Instruction: "Wait one second before retrying."}, Details: map[string]any{"retry_after_ms": 1000}})
+		return fail(&domain.Error{Code: "RATE_LIMITED", Message: "Too many local calls.", Retryable: true, NextAction: domain.NextAction{Instruction: "Wait one second before retrying."}, Details: map[string]any{"retry_after_ms": 1000}})
 	}
 	args, bindErr := toolruntime.BindArguments(raw)
 	if bindErr != nil {
-		return failure(bindErr)
+		return fail(bindErr)
 	}
 	if e := s.input[name].Validate(args); e != nil {
-		return failure(domain.Invalid("Arguments do not match the tool schema; check types, required fields, ranges and RFC3339 dates."))
+		return fail(domain.Invalid("Arguments do not match the tool schema; check types, required fields, ranges and RFC3339 dates."))
 	}
 	var result map[string]any
 	var groupPage *search.GroupExecution
@@ -231,17 +243,17 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 	}
 
 	if e != nil {
-		return failure(e)
+		return fail(e)
 	}
 
 	for {
 		response, e = s.encode(name, result)
 		if e != nil {
-			return failure(e)
+			return fail(e)
 		}
 		encoded, err := json.Marshal(response)
 		if err != nil {
-			return failure(err)
+			return fail(err)
 		}
 		if len(encoded) <= 64<<10 {
 			return response
@@ -249,7 +261,7 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 		switch name {
 		case "zalo_list_conversation_messages":
 			if archiveBrowse == nil {
-				return failure(domain.ResponseTooLarge("One message page exceeds the response budget.", "Use a smaller page or report the coverage size limitation."))
+				return fail(domain.ResponseTooLarge("One message page exceeds the response budget.", "Use a smaller page or report the coverage size limitation."))
 			}
 			e = archiveBrowse.Shorten(ctx)
 			if e == nil {
@@ -287,10 +299,10 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 			}
 
 		default:
-			return failure(domain.ResponseTooLarge("Result exceeds the response budget.", "Report that this result cannot fit within the response limit; do not repeat the same request blindly."))
+			return fail(domain.ResponseTooLarge("Result exceeds the response budget.", "Report that this result cannot fit within the response limit; do not repeat the same request blindly."))
 		}
 		if e != nil {
-			return failure(e)
+			return fail(e)
 		}
 	}
 }
@@ -314,4 +326,14 @@ func (s *Service) encode(name string, result map[string]any) (*mcp.CallToolResul
 		}
 	}
 	return &mcp.CallToolResult{StructuredContent: wire, Content: contents}, nil
+}
+
+// Audit dimensions never accept arbitrary domain codes or error formatting.
+func safeAuditCode(code string) string {
+	switch code {
+	case "COLLECTOR_UNAVAILABLE", "INVALID_ARGUMENT", "NOT_AUTHENTICATED", "NOT_FOUND", "PERMISSION_DENIED", "RATE_LIMITED", "RECALL_DIAGNOSTIC_UNAVAILABLE", "RESPONSE_TOO_LARGE", "SOURCE_CONTROLS_UNCLASSIFIED", "SOURCE_UNAVAILABLE", "SOURCE_UNSUPPORTED", "STORAGE_ERROR", "UPSTREAM_UNAVAILABLE":
+		return code
+	default:
+		return "TOOL_ERROR"
+	}
 }

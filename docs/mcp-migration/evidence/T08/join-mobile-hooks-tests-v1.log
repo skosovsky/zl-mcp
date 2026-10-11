@@ -1,0 +1,7 @@
+# github.com/skosovsky/zl-mcp/internal/collector [github.com/skosovsky/zl-mcp/internal/collector.test]
+internal/collector/join_test.go:235:65: not enough arguments in call to j.execute
+	have (preview, map[string]any)
+	want (context.Context, preview, map[string]any, "time".Time)
+FAIL	github.com/skosovsky/zl-mcp/internal/collector [build failed]
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	1.440s
+FAIL

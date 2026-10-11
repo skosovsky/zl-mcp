@@ -1,0 +1,112 @@
+{
+  "task": "T08",
+  "status": "ACCEPTED_OFFLINE_READY_FOR_SOLE_COMMIT",
+  "requirements": 44,
+  "implementation": "Accepted bounded telemetry, authorized safe diagnostic logging, final MCP audit, workers/wire/provider lifecycle",
+  "remaining": [
+    "Sole T08 commit and postcommit verification in T09"
+  ],
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01",
+  "completed_work": [
+    "One owned metry.New factory with opt-in pinned OTLP HTTP exporters, default SDK-free audit observer",
+    "Finite content-free metrics/span adapter and bounded4096entry24h trace cache",
+    "Single runtime ExecutorWrap boundary with separate typed operation outcome mapping",
+    "Service-owned cleanup before shared DB close; safe audit moved out of transport",
+    "HTTP response byte counting at the actual wire writer",
+    "In-memory technical/domain/privacy/correlation/cache/nil tests and owned failure/resource/shutdown tests PASS",
+    "Native send/join/legacy+mobile history/Events worker and upstream hooks; existing ledgers and retry/cancellation owners retained",
+    "Queue depth moved off command path into bounded service-owned sampler; default disabled skips native reads",
+    "Native send/join/history/Events in-memory integration effects/privacy/correlation PASS",
+    "HTTP tools and resources actual SDK wire byte measurement with Unicode/escaping/exact string ID integration PASS",
+    "Absent native creation timestamps omit age samples; no fabricated zero or persistence migration"
+  ],
+  "checks": {
+    "observer_runtime_v2": "PASS",
+    "provider_lifecycle_v1": "PASS",
+    "service_mcp_v2": "PASS",
+    "wire_runtime_config_v1": "PASS",
+    "observer_runtime_race_v1": "PASS",
+    "native_hooks_v1": "PASS",
+    "events_mobile_hooks_v1": "PASS",
+    "native_all_v3": "PASS",
+    "native_in_memory_v2": "PASS",
+    "native_relevant_race_in_progress_v1": "PASS",
+    "architecture_in_progress_v2": "PASS compliance100 coverage100 controls10 source_controls4",
+    "transport_age_sampler_v1": "PASS",
+    "root_tests_v2": "PASS",
+    "root_vet_v2": "PASS",
+    "relevant_race_v2": "PASS",
+    "architecture_checks_v2": "PASS 100/100 controls10 source_controls4",
+    "offline_v2": "PASS 50/50 480/480",
+    "baseline_v2": "PASS 25/25 240/240",
+    "stdio_framing_v1": "PASS",
+    "privacy_final_v1": "PASS",
+    "root_tests_v4": "PASS",
+    "root_vet_v4": "PASS",
+    "relevant_race_v3": "PASS; v4 all Go sources identical",
+    "architecture_checks_v4": "PASS",
+    "offline_v4": "PASS",
+    "baseline_v4": "PASS"
+  },
+  "retained_failures": [
+    {
+      "log": "observer-initial-tests.log",
+      "cause": "Test attempted direct comparison of non-comparable OTel SpanContext; fixed explicit TraceID/SpanID comparison"
+    },
+    {
+      "log": "service-telemetry-tests-v1.log",
+      "cause": "Removed transport execution audit without default-disabled replacement; moved one safe audit to observer execution boundary and service/mcp v2 PASS"
+    },
+    {
+      "log": "join-mobile-hooks-tests-v1.log",
+      "cause": "Existing test of private join execution helper required new context/creation-time arguments; updated the cancellation fixture and native all v3 PASS"
+    },
+    {
+      "log": "native-all-tests-v2.log",
+      "cause": "Partial edit failed before adding event creation metadata; corrected claim SELECT metadata and a test deadline argument; native all v3 PASS"
+    },
+    {
+      "log": "architecture-in-progress-v1.json",
+      "cause": "Exact new service/shared and config standard dependencies missing from allowlists; added only required edges/imports, architecture v2 100/100 and all controls PASS"
+    },
+    {
+      "log": "events-privacy-correction-v1.log",
+      "cause": "Replaced full-trace tests left unused fmt test import; removed and events v2 PASS."
+    },
+    {
+      "log": "review-corrections-tests-v1.log",
+      "cause": "Removing app audit assertion left unused encoding/json test import; removed and corrections v2 PASS."
+    },
+    {
+      "log": "final-audit-correction-v1.log",
+      "cause": "Post-execution test used live groups adapter unavailable on synthetic fixture; switched to real local search execution and regression v2 PASS."
+    },
+    {
+      "log": "architecture-checks-v3.json",
+      "cause": "New final MCP audit needs exact crypto/rand standard import; documented and added only required edge, architecture v4 PASS."
+    }
+  ],
+  "candidate_in_progress_v1": "43b7dd60a925700c67c2582b151e2789e5861ca813d8134a8fdc5344dcc5f332",
+  "candidate_in_progress_v2": "3e1cc5ef67101d33dbfe8d8ace830319dd252b0a29df47c4904e6691876f3b92",
+  "candidate_checks_v2": "e590ed814c581fb33e31efef02794c5fd9a712880ef3445dabe6e92232fe7588",
+  "review_findings": {
+    "completeness": "FAIL 41/44; production full-trace sink violates all-sinks privacy",
+    "correctness": "FAIL; malformed SDK resource env leaks and final MCP audit regressed"
+  },
+  "blocker": "blocker-full-trace-contract.json",
+  "candidate_checks_v3": "40fb9f5a8930f7786325129737168141339349371d4761b4e18f8f1d6ed2a661",
+  "corrections": [
+    "Explicit user authorization updates full-trace contract, preserves opt-in/rotation, removes full-content/native-ID path; both enabled diagnostic sinks tested.",
+    "Malformed OTEL_RESOURCE_ATTRIBUTES rejected neutrally before enabled SDK/exporter initialization; fresh subprocess percent/missing-value tests PASS.",
+    "One final MCP audit restores preflight/schema/budget/encode/panic failures and finite domain codes; app executor emits no duplicate log; regression PASS."
+  ],
+  "candidate_checks_v4": "9275e2688296dc90758821f156d16651f2afd7cccc36d3bfd91eae9694e8c000",
+  "candidate_checks_v5": "3de785e5375edc889d9a9a403d8b3d5696e6c6e0520cffb29ae2113df740a1aa",
+  "checks_carryforward": "v4-v5-checks-carryforward.json",
+  "reviews": {
+    "completeness": "44/44 =100% PASS",
+    "correctness": "PASS"
+  }
+}

@@ -1,0 +1,3 @@
+2026/10/11 18:26:18 INFO mcp_call tool=zalo_send_direct_message correlation_id=VYDOP2HEU5NENXG6GIZPVJQS6O code=OK outcome=success duration_ms=7
+2026/10/11 18:26:19 INFO mcp_call tool=zalo_get_send_status correlation_id=ULN2CMFMAZZX5M4NHK4S3R4UVZ code=OK outcome=success duration_ms=0
+2026/10/11 18:26:19 INFO mcp_call tool=zalo_send_direct_message correlation_id=6GKVPZ7V6DJIM73FRLYPEU4XUE code=OK outcome=success duration_ms=1

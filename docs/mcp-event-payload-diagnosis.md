@@ -52,13 +52,15 @@ The loss point and root cause remain unproven; this is not a completed fix.
 
 ## Instrumentation follow-up
 
-Opt-in `logging.event_trace_file` now records the exact outgoing event JSON and
-bounded callback response in a separate private rotating file, together with
-body digest, queue/attempt/event/subscription IDs and receiver request IDs.
-Normal service logs retain metadata only. This evidence can establish the exact
-request/response boundary for future deliveries; it cannot inspect ChatGPT's
-asynchronous run input. Do not equate successful trace tests with live model
-payload acceptance. Disable the private trace after diagnosis.
+T08 changes `logging.event_trace_file` to bounded metadata and random per-attempt
+correlation IDs only. Exact payloads, response bodies, payload digests, native IDs
+and receiver IDs are no longer logged. Opt-in configuration and private rotation
+remain. See [callback logging contract](contracts/callback.md). No alternate
+full-content mode remains. This diagnostic establishes transport status and
+receipt persistence, not model-visible payload acceptance.
+
+The following observation describes the historical pre-T08 full-trace behavior;
+it is not the current diagnostic contract.
 
 ## First full-trace observation, 2026-10-06
 

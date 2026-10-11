@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -232,7 +233,7 @@ func TestCanceledExecutionPersistsTerminalOutcome(t *testing.T) {
 	}
 	cancel()
 	// Act
-	j.execute(preview{GroupID: "g", URL: "https://zalo.me/g/abc"}, result)
+	j.execute(ctx, preview{GroupID: "g", URL: "https://zalo.me/g/abc"}, result, time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC))
 	saved, err := j.Operation(context.Background(), operationID)
 	// Assert: no restart required to clear running, and no network mutation.
 	if err != nil || saved["status"] != "unknown" || saved["poll_after_ms"] != nil || api.calls != 0 {

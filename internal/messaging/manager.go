@@ -8,6 +8,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
@@ -71,6 +72,9 @@ func (m *Manager) Call(ctx context.Context, method string, args any) (map[string
 	if err != nil {
 		return nil, err
 	}
+	if observer := shared.Telemetry(ctx); observer != nil && observer.Recording() {
+		observer.Remember(ctx, domain.WorkSend, op.RequestID)
+	}
 	if op.Status != "pending" {
 		return view(op), nil
 	}
@@ -102,33 +106,43 @@ func (m *Manager) Call(ctx context.Context, method string, args any) (map[string
 		}
 		return view(op), nil
 	}
-	sendCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	id, sendErr := m.Sender.SendDirect(sendCtx, r.RecipientID, r.Text, quote)
-	cancel()
-	state := "sent"
-	var messageID, reason *string
-	if sendErr == nil && id != "" {
-		messageID = &id
-	} else {
-		state = "unknown"
-		category := "upstream_ambiguous"
-		if errors.Is(sendErr, ErrRejected) {
-			state = "failed"
-			category = "upstream_rejected"
+	created := op.UpdatedAt // Pending has only its original native creation stamp.
+	shared.ObserveTransition(ctx, domain.WorkSend, "pending", "sending", created)
+	var result map[string]any
+	err = shared.ObserveWorker(ctx, domain.WorkSend, op.RequestID, func(ctx context.Context) error {
+		sendCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		id, sendErr := shared.ObserveUpstream(sendCtx, domain.WorkSend, func(ctx context.Context) (string, error) {
+			return m.Sender.SendDirect(ctx, r.RecipientID, r.Text, quote)
+		})
+		cancel()
+		state := "sent"
+		var messageID, reason *string
+		if sendErr == nil && id != "" {
+			messageID = &id
+		} else {
+			state = "unknown"
+			category := "upstream_ambiguous"
+			if errors.Is(sendErr, ErrRejected) {
+				state = "failed"
+				category = "upstream_rejected"
+			}
+			reason = &category
 		}
-		reason = &category
-	}
-	// A cancelled client must not prevent recording a confirmed upstream result.
-	finish, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	if err = m.Store.CompleteSend(finish, r.RequestID, state, messageID, reason); err != nil {
-		return nil, failure("STORAGE_ERROR", "Cannot record send result; do not create another request.")
-	}
-	op, err = m.Store.SendStatus(finish, r.RequestID)
-	if err != nil {
-		return nil, err
-	}
-	return view(op), nil
+		// A cancelled client must not prevent recording a confirmed upstream result.
+		finish, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		if err = m.Store.CompleteSend(finish, r.RequestID, state, messageID, reason); err != nil {
+			return failure("STORAGE_ERROR", "Cannot record send result; do not create another request.")
+		}
+		shared.ObserveTransition(ctx, domain.WorkSend, "sending", state, created)
+		op, err = m.Store.SendStatus(finish, r.RequestID)
+		if err != nil {
+			return err
+		}
+		result = view(op)
+		return nil
+	})
+	return result, err
 }
 
 func view(op domain.SendOperation) map[string]any {

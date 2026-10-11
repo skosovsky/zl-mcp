@@ -1,0 +1,4 @@
+# github.com/skosovsky/zl-mcp/internal/events [github.com/skosovsky/zl-mcp/internal/events.test]
+internal/events/worker_test.go:10:2: "fmt" imported and not used
+FAIL	github.com/skosovsky/zl-mcp/internal/events [build failed]
+FAIL

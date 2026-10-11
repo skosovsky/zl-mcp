@@ -1,0 +1,32 @@
+{
+  "source_v4": "9275e2688296dc90758821f156d16651f2afd7cccc36d3bfd91eae9694e8c000",
+  "source_v5": "3de785e5375edc889d9a9a403d8b3d5696e6c6e0520cffb29ae2113df740a1aa",
+  "changed_files": [
+    "docs/contracts/callback.md"
+  ],
+  "only_contract_documentation_changed": true,
+  "binary_proof": [
+    {
+      "kind": "baseline",
+      "sha256_v4": "4b38637e661c4004766a415342141ddc8f4e7786f1691411c1c4a355a4265101",
+      "sha256_v5": "4b38637e661c4004766a415342141ddc8f4e7786f1691411c1c4a355a4265101",
+      "byte_identical": true
+    },
+    {
+      "kind": "candidate",
+      "sha256_v4": "b5bd5fa981e27df4d4ffb1915bcf71bf61be94d3b28e327e349f6b91e2d3d458",
+      "sha256_v5": "b5bd5fa981e27df4d4ffb1915bcf71bf61be94d3b28e327e349f6b91e2d3d458",
+      "byte_identical": true
+    }
+  ],
+  "checks_carryforward": [
+    "root-tests-v4.log",
+    "root-vet-v4.log",
+    "relevant-race-v3.log",
+    "reviewer-correctness-v4-race.log",
+    "architecture-checks-v4.json",
+    "offline-v4/report.json",
+    "baseline-v4/report.json"
+  ],
+  "rationale": "No Go, configuration, schema, architecture or build input change. Fresh rebuilt baseline and candidate byte-identical to the v4 binaries used by offline evaluation."
+}

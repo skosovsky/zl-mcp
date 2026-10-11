@@ -1,0 +1,1098 @@
+{
+  "status": "FAIL",
+  "arch_go_build_info": "/private/tmp/zl-migration-tools/arch-go: go1.27.1\n\tpath\tgithub.com/arch-go/arch-go/v2\n\tmod\tgithub.com/arch-go/arch-go/v2\tv2.1.2\th1:kYf2VIVjtbKLGTs0/lr+2FOqiXFFKAiGc4UhoIS/l0M=\n\tdep\tgithub.com/fatih/color\tv1.18.0\th1:S8gINlzdQ840/4pfAwic/ZE0djQEH3wM94VfqLTZcOM=\n\tdep\tgithub.com/fsnotify/fsnotify\tv1.8.0\th1:dAwr6QBTBZIkG8roQaJjGof0pp0EeF+tNV7YBP3F/8M=\n\tdep\tgithub.com/go-viper/mapstructure/v2\tv2.2.1\th1:ZAaOCxANMuZx5RCeg0mBdEZk7DZasvvZIxtHqx8aGss=\n\tdep\tgithub.com/jedib0t/go-pretty/v6\tv6.7.8\th1:BVYrDy5DPBA3Qn9ICT+PokP9cvCv1KaHv2i+Hc8sr5o=\n\tdep\tgithub.com/mattn/go-colorable\tv0.1.13\th1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=\n\tdep\tgithub.com/mattn/go-isatty\tv0.0.20\th1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=\n\tdep\tgithub.com/mattn/go-runewidth\tv0.0.16\th1:E5ScNMtiwvlvB5paMFdw9p4kSQzbXFikJ5SQO6TULQc=\n\tdep\tgithub.com/pelletier/go-toml/v2\tv2.2.3\th1:YmeHyLY8mFWbdkNWwpr+qIL2bEqT0o95WSdkNHvL12M=\n\tdep\tgithub.com/rivo/uniseg\tv0.4.7\th1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=\n\tdep\tgithub.com/sagikazarmark/locafero\tv0.7.0\th1:5MqpDsTGNDhY8sGp0Aowyf0qKsPrhewaLSsFaodPcyo=\n\tdep\tgithub.com/sourcegraph/conc\tv0.3.0\th1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9ySo=\n\tdep\tgithub.com/spf13/afero\tv1.12.0\th1:UcOPyRBYczmFn6yvphxkn9ZEOY65cpwGKb5mL36mrqs=\n\tdep\tgithub.com/spf13/cast\tv1.7.1\th1:cuNEagBQEHWN1FnbGEjCXL2szYEXqfJPbP2HNUaca9Y=\n\tdep\tgithub.com/spf13/cobra\tv1.10.2\th1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=\n\tdep\tgithub.com/spf13/pflag\tv1.0.9\th1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=\n\tdep\tgithub.com/spf13/viper\tv1.20.1\th1:ZMi+z/lvLyPSCoNtFCpqjy0S4kPbirhpTMwl8BkW9X4=\n\tdep\tgithub.com/subosito/gotenv\tv1.6.0\th1:9NlTDc1FTs4qu0DDq7AEtTPNw6SVm7uBMsUCUjABIf8=\n\tdep\tgolang.org/x/mod\tv0.32.0\th1:9F4d3PHLljb6x//jOyokMv3eX+YDeepZSEo3mFJy93c=\n\tdep\tgolang.org/x/sync\tv0.19.0\th1:vV+1eWNmZ5geRlYjzm2adRgW2/mcpevXNg50YZtPCE4=\n\tdep\tgolang.org/x/sys\tv0.40.0\th1:DBZZqJ2Rkml6QMQsZywtnjnnGvHza6BTfYFWY9kjEWQ=\n\tdep\tgolang.org/x/text\tv0.22.0\th1:bofq7m3/HAFvbF51jz3Q9wLg3jkvSPuiZu/pD1XwgtM=\n\tdep\tgolang.org/x/tools\tv0.41.0\th1:a9b8iMweWG+S0OBnlU36rzLp20z1Rp10w+IY2czHTQc=\n\tdep\tgopkg.in/yaml.v3\tv3.0.1\th1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=\n\tbuild\t-buildmode=exe\n\tbuild\t-compiler=gc\n\tbuild\tDefaultGODEBUG=containermaxprocs=0,cryptocustomrand=1,decoratemappings=0,tlssecpmlkem=0,tlssha1=1,tracebacklabels=0,updatemaxprocs=0,urlstrictcolons=0,x509sha256skid=0,x509sslcertoverrideplatform=0\n\tbuild\tCGO_ENABLED=1\n\tbuild\tCGO_CFLAGS=\n\tbuild\tCGO_CPPFLAGS=\n\tbuild\tCGO_CXXFLAGS=\n\tbuild\tCGO_LDFLAGS=\n\tbuild\tGOARCH=arm64\n\tbuild\tGOOS=darwin\n\tbuild\tGOARM64=v8.0\n",
+  "active": {
+    "exit_status": 1,
+    "stdout": "Running arch-go command\nUsing configuration file: /workspace/zl-mcp/arch-go.yml\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/service(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^bufio$ ^context$ ^encoding/json$ ^flag$ ^fmt$ ^io$ ^log/slog$ ^os$ ^os/signal$ ^path/filepath$ ^strconv$ ^strings$ ^syscall$ ^time$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/cmd/zl-mcp' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval\\-fixture(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/evalfixture(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/modelcontextprotocol/go\\-sdk/mcp$]]','only depend on standard packages that matches [[^context$ ^encoding/json$ ^flag$ ^fmt$ ^log/slog$ ^os$ ^os/signal$ ^syscall$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval-fixture' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/santhosh\\-tekuri/jsonschema/v6$]]','only depend on standard packages that matches [[^embed$ ^encoding/json$ ^fmt$ ^sort$ ^strings$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/docs/contracts' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/collector(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/google/uuid$]]','only depend on standard packages that matches [[^context$ ^crypto/rand$ ^crypto/sha256$ ^database/sql$ ^encoding/hex$ ^encoding/json$ ^errors$ ^io$ ^log/slog$ ^math/big$ ^net$ ^net/http$ ^net/url$ ^strings$ ^sync$ ^sync/atomic$ ^time$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/collector' passes\n[FAIL] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/pelletier/go\\-toml/v2$]]','only depend on standard packages that matches [[^fmt$ ^net$ ^os$ ^path/filepath$ ^strconv$ ^syscall$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/config' fails\n\t\tShouldOnlyDependsOn.Standard rule doesn't contains imported package 'errors'\n\t\tShouldOnlyDependsOn.Standard rule doesn't contains imported package 'net/url'\n\t\tShouldOnlyDependsOn.Standard rule doesn't contains imported package 'strings'\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^encoding/json$ ^fmt$ ^io$ ^net$ ^net/http$ ^path/filepath$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/control' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/google/uuid$]]','only depend on standard packages that matches [[^context$ ^crypto/sha256$ ^encoding/hex$ ^encoding/json$ ^errors$ ^net/http$ ^strings$ ^time$ ^unicode/utf8$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/domain' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/evalfixture(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/collector(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/events$ ^github\\.com/skosovsky/zl\\-mcp/internal/historyimport$ ^github\\.com/skosovsky/zl\\-mcp/internal/messaging$ ^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup$ ^github\\.com/skosovsky/zl\\-mcp/internal/service$ ^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/modelcontextprotocol/go\\-sdk/mcp$]]','only depend on standard packages that matches [[^context$ ^crypto/sha256$ ^encoding/hex$ ^encoding/json$ ^fmt$ ^net$ ^net/http$ ^os$ ^path/filepath$ ^strings$ ^sync$ ^time$ ^bytes$ ^io$ ^errors$ ^strconv$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/evalfixture' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/events(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/santhosh\\-tekuri/jsonschema/v6$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^crypto/hmac$ ^crypto/rand$ ^crypto/sha256$ ^crypto/subtle$ ^encoding/base64$ ^encoding/binary$ ^encoding/hex$ ^encoding/json$ ^errors$ ^fmt$ ^io$ ^log/slog$ ^net/http$ ^net/netip$ ^net/url$ ^strconv$ ^strings$ ^sync$ ^time$ ^unicode/utf8$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/events' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^database/sql$ ^encoding/json$ ^errors$ ^log/slog$ ^net$ ^time$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/historyimport' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$]]','only depend on external packages that matches [[^golang\\.org/x/sys/unix$]]','only depend on standard packages that matches [[^fmt$ ^os$ ^path/filepath$ ^runtime$ ^golang\\.org/x/sys/unix$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/local' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/logging(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/logging(/[\\w.-]+)*$]]','only depend on external packages that matches [[^golang\\.org/x/sys/unix$ ^gopkg\\.in/natefinch/lumberjack\\.v2$]]','only depend on standard packages that matches [[^encoding/json$ ^errors$ ^fmt$ ^io$ ^os$ ^path/filepath$ ^strings$ ^sync$ ^syscall$ ^time$ ^golang\\.org/x/sys/unix$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/logging' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/google/uuid$ ^github\\.com/modelcontextprotocol/go\\-sdk/mcp$ ^github\\.com/santhosh\\-tekuri/jsonschema/v6$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^crypto/sha256$ ^crypto/subtle$ ^encoding/hex$ ^encoding/json$ ^errors$ ^fmt$ ^io$ ^log/slog$ ^mime$ ^net$ ^net/http$ ^net/url$ ^os$ ^strconv$ ^strings$ ^time$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/mcpserver' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^database/sql$ ^encoding/json$ ^errors$ ^time$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/messaging' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/google/uuid$ ^github\\.com/ulikunitz/xz$ ^modernc\\.org/sqlite$ ^modernc\\.org/sqlite/lib$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^crypto/aes$ ^crypto/cipher$ ^crypto/rand$ ^crypto/sha256$ ^database/sql$ ^encoding/base64$ ^encoding/binary$ ^encoding/hex$ ^encoding/json$ ^errors$ ^hash/crc32$ ^io$ ^log/slog$ ^maps$ ^math$ ^math/bits$ ^net/http$ ^net/netip$ ^net/url$ ^os$ ^path/filepath$ ^sort$ ^strconv$ ^strings$ ^sync/atomic$ ^time$ ^unicode/utf8$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/mobilebackup' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^net$ ^net/http$ ^net/netip$ ^time$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/netpolicy' passes\n[FAIL] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/service(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/collector(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/events(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/logging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/zalo(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/google/uuid$ ^github\\.com/modelcontextprotocol/go\\-sdk/mcp$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^crypto/rand$ ^crypto/sha256$ ^database/sql$ ^encoding/hex$ ^encoding/json$ ^errors$ ^fmt$ ^io$ ^log/slog$ ^maps$ ^net$ ^net/http$ ^net/url$ ^os$ ^path/filepath$ ^strconv$ ^strings$ ^sync$ ^time$ ^flag$ ^bufio$ ^os/signal$ ^syscall$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/service' fails\n\t\tShouldOnlyDependsOn.Internal rule doesn't contains imported package 'github.com/skosovsky/zl-mcp/internal/app/shared'\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/google/uuid$ ^golang\\.org/x/text/unicode/norm$ ^modernc\\.org/sqlite$]]','only depend on standard packages that matches [[^context$ ^crypto/hmac$ ^crypto/rand$ ^crypto/rsa$ ^crypto/sha256$ ^crypto/x509$ ^database/sql$ ^encoding/base64$ ^encoding/hex$ ^encoding/json$ ^errors$ ^fmt$ ^net/url$ ^os$ ^path/filepath$ ^sort$ ^strconv$ ^strings$ ^sync$ ^sync/atomic$ ^time$ ^unicode$ ^unicode/utf8$ ^golang\\.org/x/text/unicode/norm$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/storage' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/zalo(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/amrakk/zcago$ ^github\\.com/amrakk/zcago/api$ ^github\\.com/amrakk/zcago/errs$ ^github\\.com/amrakk/zcago/listener$ ^github\\.com/amrakk/zcago/model$ ^github\\.com/amrakk/zcago/session/auth$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^crypto/rand$ ^crypto/rsa$ ^crypto/x509$ ^encoding/base64$ ^encoding/hex$ ^encoding/json$ ^errors$ ^fmt$ ^io$ ^log/slog$ ^net/http$ ^net/http/cookiejar$ ^net/url$ ^os$ ^path/filepath$ ^sort$ ^strconv$ ^strings$ ^sync$ ^time$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/zalo' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/conversations' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/conversations' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/search' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/search' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/messaging' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/messaging' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/membership' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/membership' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/history' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/history' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/archives' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/archives' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/eventaccess' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/eventaccess' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/shared' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/skosovsky/toolsy(/[\\w.-]+)*$ ^github\\.com/santhosh\\-tekuri/jsonschema/v6(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^encoding/json$ ^errors$ ^fmt$ ^strconv$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/toolruntime' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^database/sql$ ^encoding/json$ ^errors$ ^os$ ^strconv$ ^time$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/adapters/store' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/collector(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/events(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/adapters/operations' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/skosovsky/metry(/[\\w.-]+)*$ ^go\\.opentelemetry\\.io(/[\\w.-]+)*$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/observability' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/evaluation(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/evaluation(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/evalfixture(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/skosovsky/evaly(/[\\w.-]+)*$ ^github\\.com/modelcontextprotocol/go\\-sdk(/[\\w.-]+)*$ ^github\\.com/santhosh\\-tekuri/jsonschema/v6$ ^github\\.com/modelcontextprotocol/go-sdk/jsonrpc$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^crypto/sha256$ ^encoding/hex$ ^encoding/json$ ^errors$ ^fmt$ ^os$ ^os/exec$ ^path/filepath$ ^reflect$ ^runtime$ ^runtime/debug$ ^strconv$ ^strings$ ^sync$ ^syscall$ ^time$ ^io$ ^net$ ^net/http$ ^sort$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/evaluation' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/evaluation(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^encoding/json$ ^flag$ ^fmt$ ^os$ ^path/filepath$ ^time$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/cmd/zl-mcp' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/control' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/historyimport' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/messaging' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/netpolicy' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/conversations' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/search' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/messaging' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/membership' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/history' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/archives' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/eventaccess' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/shared' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/adapters/store' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/adapters/operations' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']\n\tPackage 'github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/app/shared' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net$ ^net/http$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/toolruntime' passes\n[PASS] - Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$]]']\n\tPackage 'github.com/skosovsky/zl-mcp/internal/observability' passes\nJSON report generated at: .arch-go/report.json\n+---+--------------------+-------+--------+--------+\n| # | RULE TYPE          | TOTAL | PASSED | FAILED |\n+---+--------------------+-------+--------+--------+\n| 1 | Dependencies Rules |    59 |     57 |      2 |\n| 2 | Functions Rules    |     0 |      0 |      0 |\n| 3 | Contents Rules     |     0 |      0 |      0 |\n| 4 | Naming Rules       |     0 |      0 |      0 |\n+---+--------------------+-------+--------+--------+\n|   | COMPLIANCE RATE    |  96% [FAIL]             |\n|   | COVERAGE RATE      | 100% [PASS]             |\n+---+--------------------+-------------------------+\n--------------------------------------\n\tExecution Summary\n--------------------------------------\nTotal Rules: \t59\nSucceeded: \t57\nFailed: \t2\n--------------------------------------\nCompliance:       96% (FAIL)\nCoverage:        100% (PASS)\n",
+    "stderr": "",
+    "report": {
+      "version": "master",
+      "summary": {
+        "pass": false,
+        "timestamp": "2026-10-12T00:57:14.204658+07:00",
+        "duration": 40823375
+      },
+      "compliance": {
+        "pass": false,
+        "rate": 96,
+        "threshold": 100,
+        "total": 59,
+        "passed": 57,
+        "failed": 2,
+        "summary": [
+          ""
+        ],
+        "details": {
+          "dependenciesRules": {
+            "total": 59,
+            "passed": 57,
+            "failed": 2,
+            "details": [
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/service(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^bufio$ ^context$ ^encoding/json$ ^flag$ ^fmt$ ^io$ ^log/slog$ ^os$ ^os/signal$ ^path/filepath$ ^strconv$ ^strings$ ^syscall$ ^time$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval\\-fixture(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/evalfixture(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/modelcontextprotocol/go\\-sdk/mcp$]]','only depend on standard packages that matches [[^context$ ^encoding/json$ ^flag$ ^fmt$ ^log/slog$ ^os$ ^os/signal$ ^syscall$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval-fixture",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/santhosh\\-tekuri/jsonschema/v6$]]','only depend on standard packages that matches [[^embed$ ^encoding/json$ ^fmt$ ^sort$ ^strings$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/docs/contracts",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/collector(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/google/uuid$]]','only depend on standard packages that matches [[^context$ ^crypto/rand$ ^crypto/sha256$ ^database/sql$ ^encoding/hex$ ^encoding/json$ ^errors$ ^io$ ^log/slog$ ^math/big$ ^net$ ^net/http$ ^net/url$ ^strings$ ^sync$ ^sync/atomic$ ^time$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/collector",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/pelletier/go\\-toml/v2$]]','only depend on standard packages that matches [[^fmt$ ^net$ ^os$ ^path/filepath$ ^strconv$ ^syscall$]]']",
+                "pass": false,
+                "total": 1,
+                "passed": 0,
+                "failed": 1,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/config",
+                    "pass": false,
+                    "details": [
+                      "ShouldOnlyDependsOn.Standard rule doesn't contains imported package 'errors'",
+                      "ShouldOnlyDependsOn.Standard rule doesn't contains imported package 'net/url'",
+                      "ShouldOnlyDependsOn.Standard rule doesn't contains imported package 'strings'"
+                    ]
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^encoding/json$ ^fmt$ ^io$ ^net$ ^net/http$ ^path/filepath$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/control",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/google/uuid$]]','only depend on standard packages that matches [[^context$ ^crypto/sha256$ ^encoding/hex$ ^encoding/json$ ^errors$ ^net/http$ ^strings$ ^time$ ^unicode/utf8$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/domain",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/evalfixture(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/collector(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/events$ ^github\\.com/skosovsky/zl\\-mcp/internal/historyimport$ ^github\\.com/skosovsky/zl\\-mcp/internal/messaging$ ^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup$ ^github\\.com/skosovsky/zl\\-mcp/internal/service$ ^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/modelcontextprotocol/go\\-sdk/mcp$]]','only depend on standard packages that matches [[^context$ ^crypto/sha256$ ^encoding/hex$ ^encoding/json$ ^fmt$ ^net$ ^net/http$ ^os$ ^path/filepath$ ^strings$ ^sync$ ^time$ ^bytes$ ^io$ ^errors$ ^strconv$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/evalfixture",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/events(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/santhosh\\-tekuri/jsonschema/v6$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^crypto/hmac$ ^crypto/rand$ ^crypto/sha256$ ^crypto/subtle$ ^encoding/base64$ ^encoding/binary$ ^encoding/hex$ ^encoding/json$ ^errors$ ^fmt$ ^io$ ^log/slog$ ^net/http$ ^net/netip$ ^net/url$ ^strconv$ ^strings$ ^sync$ ^time$ ^unicode/utf8$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/events",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^database/sql$ ^encoding/json$ ^errors$ ^log/slog$ ^net$ ^time$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/historyimport",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$]]','only depend on external packages that matches [[^golang\\.org/x/sys/unix$]]','only depend on standard packages that matches [[^fmt$ ^os$ ^path/filepath$ ^runtime$ ^golang\\.org/x/sys/unix$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/local",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/logging(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/logging(/[\\w.-]+)*$]]','only depend on external packages that matches [[^golang\\.org/x/sys/unix$ ^gopkg\\.in/natefinch/lumberjack\\.v2$]]','only depend on standard packages that matches [[^encoding/json$ ^errors$ ^fmt$ ^io$ ^os$ ^path/filepath$ ^strings$ ^sync$ ^syscall$ ^time$ ^golang\\.org/x/sys/unix$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/logging",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/google/uuid$ ^github\\.com/modelcontextprotocol/go\\-sdk/mcp$ ^github\\.com/santhosh\\-tekuri/jsonschema/v6$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^crypto/sha256$ ^crypto/subtle$ ^encoding/hex$ ^encoding/json$ ^errors$ ^fmt$ ^io$ ^log/slog$ ^mime$ ^net$ ^net/http$ ^net/url$ ^os$ ^strconv$ ^strings$ ^time$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/mcpserver",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^database/sql$ ^encoding/json$ ^errors$ ^time$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/messaging",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/google/uuid$ ^github\\.com/ulikunitz/xz$ ^modernc\\.org/sqlite$ ^modernc\\.org/sqlite/lib$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^crypto/aes$ ^crypto/cipher$ ^crypto/rand$ ^crypto/sha256$ ^database/sql$ ^encoding/base64$ ^encoding/binary$ ^encoding/hex$ ^encoding/json$ ^errors$ ^hash/crc32$ ^io$ ^log/slog$ ^maps$ ^math$ ^math/bits$ ^net/http$ ^net/netip$ ^net/url$ ^os$ ^path/filepath$ ^sort$ ^strconv$ ^strings$ ^sync/atomic$ ^time$ ^unicode/utf8$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/mobilebackup",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^net$ ^net/http$ ^net/netip$ ^time$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/netpolicy",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/service(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/collector(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/events(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/logging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/zalo(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/google/uuid$ ^github\\.com/modelcontextprotocol/go\\-sdk/mcp$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^crypto/rand$ ^crypto/sha256$ ^database/sql$ ^encoding/hex$ ^encoding/json$ ^errors$ ^fmt$ ^io$ ^log/slog$ ^maps$ ^net$ ^net/http$ ^net/url$ ^os$ ^path/filepath$ ^strconv$ ^strings$ ^sync$ ^time$ ^flag$ ^bufio$ ^os/signal$ ^syscall$]]']",
+                "pass": false,
+                "total": 1,
+                "passed": 0,
+                "failed": 1,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/service",
+                    "pass": false,
+                    "details": [
+                      "ShouldOnlyDependsOn.Internal rule doesn't contains imported package 'github.com/skosovsky/zl-mcp/internal/app/shared'"
+                    ]
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/google/uuid$ ^golang\\.org/x/text/unicode/norm$ ^modernc\\.org/sqlite$]]','only depend on standard packages that matches [[^context$ ^crypto/hmac$ ^crypto/rand$ ^crypto/rsa$ ^crypto/sha256$ ^crypto/x509$ ^database/sql$ ^encoding/base64$ ^encoding/hex$ ^encoding/json$ ^errors$ ^fmt$ ^net/url$ ^os$ ^path/filepath$ ^sort$ ^strconv$ ^strings$ ^sync$ ^sync/atomic$ ^time$ ^unicode$ ^unicode/utf8$ ^golang\\.org/x/text/unicode/norm$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/storage",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/zalo(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/amrakk/zcago$ ^github\\.com/amrakk/zcago/api$ ^github\\.com/amrakk/zcago/errs$ ^github\\.com/amrakk/zcago/listener$ ^github\\.com/amrakk/zcago/model$ ^github\\.com/amrakk/zcago/session/auth$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^crypto/rand$ ^crypto/rsa$ ^crypto/x509$ ^encoding/base64$ ^encoding/hex$ ^encoding/json$ ^errors$ ^fmt$ ^io$ ^log/slog$ ^net/http$ ^net/http/cookiejar$ ^net/url$ ^os$ ^path/filepath$ ^sort$ ^strconv$ ^strings$ ^sync$ ^time$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/zalo",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/conversations",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/conversations",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/search",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/search",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/messaging",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/messaging",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/membership",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/membership",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/history",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/history",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/archives",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/archives",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/eventaccess",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/eventaccess",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^errors$ ^fmt$ ^time$ ^strings$ ^sort$ ^slices$ ^encoding/json$ ^unicode$ ^unicode/utf8$ ^strconv$ ^math$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/shared",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/skosovsky/toolsy(/[\\w.-]+)*$ ^github\\.com/santhosh\\-tekuri/jsonschema/v6(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^encoding/json$ ^errors$ ^fmt$ ^strconv$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/toolruntime",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^database/sql$ ^encoding/json$ ^errors$ ^os$ ^strconv$ ^time$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/adapters/store",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/collector(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/events(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/adapters/operations",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/skosovsky/metry(/[\\w.-]+)*$ ^go\\.opentelemetry\\.io(/[\\w.-]+)*$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/observability",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/evaluation(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/internal/evaluation(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/evalfixture(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$]]','only depend on external packages that matches [[^github\\.com/skosovsky/evaly(/[\\w.-]+)*$ ^github\\.com/modelcontextprotocol/go\\-sdk(/[\\w.-]+)*$ ^github\\.com/santhosh\\-tekuri/jsonschema/v6$ ^github\\.com/modelcontextprotocol/go-sdk/jsonrpc$]]','only depend on standard packages that matches [[^bytes$ ^context$ ^crypto/sha256$ ^encoding/hex$ ^encoding/json$ ^errors$ ^fmt$ ^os$ ^os/exec$ ^path/filepath$ ^reflect$ ^runtime$ ^runtime/debug$ ^strconv$ ^strings$ ^sync$ ^syscall$ ^time$ ^io$ ^net$ ^net/http$ ^sort$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/evaluation",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval(/[\\w.-]+)*$' should ['only depend on internal packages that matches [[^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval(/[\\w.-]+)*$ ^github\\.com/skosovsky/zl\\-mcp/internal/evaluation(/[\\w.-]+)*$]]','only depend on standard packages that matches [[^context$ ^encoding/json$ ^flag$ ^fmt$ ^os$ ^path/filepath$ ^time$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/control",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/historyimport",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/messaging",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/netpolicy",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/conversations",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/search",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/messaging",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/membership",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/history",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/archives",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/eventaccess",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/shared",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/adapters/store",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/adapters/operations",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval(/[\\w.-]+)*$' should ['not depend on external packages that matches [[.+]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net/http$ ^net$ ^os$ ^os/exec$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/app/shared",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$ ^net$ ^net/http$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/toolruntime",
+                    "pass": true
+                  }
+                ]
+              },
+              {
+                "rule": "Packages matching pattern '^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$' should ['not depend on standard packages that matches [[^database/sql$]]']",
+                "pass": true,
+                "total": 1,
+                "passed": 1,
+                "failed": 0,
+                "packageDetails": [
+                  {
+                    "package": "github.com/skosovsky/zl-mcp/internal/observability",
+                    "pass": true
+                  }
+                ]
+              }
+            ]
+          },
+          "functionsRules": {
+            "total": 0,
+            "passed": 0,
+            "failed": 0
+          },
+          "contentsRules": {
+            "total": 0,
+            "passed": 0,
+            "failed": 0
+          },
+          "namingRules": {
+            "total": 0,
+            "passed": 0,
+            "failed": 0
+          }
+        }
+      },
+      "coverage": {
+        "pass": true,
+        "rate": 100,
+        "threshold": 100,
+        "details": [
+          {
+            "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp",
+            "contentsRules": 0,
+            "dependenciesRules": 2,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval",
+            "contentsRules": 0,
+            "dependenciesRules": 2,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval-fixture",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/docs/contracts",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/adapters/operations",
+            "contentsRules": 0,
+            "dependenciesRules": 2,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/adapters/store",
+            "contentsRules": 0,
+            "dependenciesRules": 2,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/app/archives",
+            "contentsRules": 0,
+            "dependenciesRules": 3,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/app/conversations",
+            "contentsRules": 0,
+            "dependenciesRules": 3,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/app/eventaccess",
+            "contentsRules": 0,
+            "dependenciesRules": 3,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/app/history",
+            "contentsRules": 0,
+            "dependenciesRules": 3,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/app/membership",
+            "contentsRules": 0,
+            "dependenciesRules": 3,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/app/messaging",
+            "contentsRules": 0,
+            "dependenciesRules": 3,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/app/search",
+            "contentsRules": 0,
+            "dependenciesRules": 3,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/app/shared",
+            "contentsRules": 0,
+            "dependenciesRules": 3,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/collector",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/config",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/control",
+            "contentsRules": 0,
+            "dependenciesRules": 2,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/domain",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/evalfixture",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/evaluation",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/events",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/historyimport",
+            "contentsRules": 0,
+            "dependenciesRules": 2,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/local",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/logging",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/mcpserver",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/messaging",
+            "contentsRules": 0,
+            "dependenciesRules": 2,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/mobilebackup",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/netpolicy",
+            "contentsRules": 0,
+            "dependenciesRules": 2,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/observability",
+            "contentsRules": 0,
+            "dependenciesRules": 2,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/service",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/storage",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/toolruntime",
+            "contentsRules": 0,
+            "dependenciesRules": 2,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          },
+          {
+            "package": "github.com/skosovsky/zl-mcp/internal/zalo",
+            "contentsRules": 0,
+            "dependenciesRules": 1,
+            "functionsRules": 0,
+            "namingRules": 0,
+            "covered": true
+          }
+        ]
+      }
+    }
+  }
+}

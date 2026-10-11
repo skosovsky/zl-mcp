@@ -1,0 +1,7 @@
+# github.com/skosovsky/zl-mcp/internal/observability [github.com/skosovsky/zl-mcp/internal/observability.test]
+internal/observability/provider_test.go:6:2: "encoding/json" imported and not used
+ok  	github.com/skosovsky/zl-mcp/internal/events	1.506s
+FAIL	github.com/skosovsky/zl-mcp/internal/observability [build failed]
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	9.005s
+ok  	github.com/skosovsky/zl-mcp/internal/service	11.856s
+FAIL

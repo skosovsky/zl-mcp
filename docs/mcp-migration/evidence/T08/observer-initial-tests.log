@@ -1,0 +1,4 @@
+# github.com/skosovsky/zl-mcp/internal/observability [github.com/skosovsky/zl-mcp/internal/observability.test]
+internal/observability/observer_test.go:186:44: invalid operation: parent.SpanContext == s.Links[0].SpanContext (struct containing "go.opentelemetry.io/otel/trace".TraceState cannot be compared)
+FAIL	github.com/skosovsky/zl-mcp/internal/observability [build failed]
+FAIL

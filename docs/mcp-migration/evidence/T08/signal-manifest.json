@@ -1,0 +1,109 @@
+{
+  "task": "T08",
+  "signals": [
+    {
+      "name": "executor_operation_calls",
+      "unit": "calls",
+      "dimensions": [
+        "operation",
+        "status"
+      ],
+      "sdk_unit_metadata": "Empty unit in pinned metryv0.10.1; semantic measurement is calls. No upstream metadata rewritten."
+    },
+    {
+      "name": "executor_operation_duration",
+      "unit": "s",
+      "dimensions": [
+        "operation",
+        "status"
+      ]
+    },
+    {
+      "name": "zl_mcp_domain_calls",
+      "unit": "calls",
+      "dimensions": [
+        "tool",
+        "outcome"
+      ]
+    },
+    {
+      "name": "zl_mcp_response_bytes",
+      "unit": "By",
+      "dimensions": [
+        "tool",
+        "transport"
+      ]
+    },
+    {
+      "name": "zl_mcp_upstream_calls",
+      "unit": "calls",
+      "dimensions": [
+        "kind",
+        "outcome"
+      ]
+    },
+    {
+      "name": "zl_mcp_operation_transitions",
+      "unit": "transitions",
+      "dimensions": [
+        "kind",
+        "from",
+        "to"
+      ]
+    },
+    {
+      "name": "zl_mcp_worker_queue_depth",
+      "unit": "operations",
+      "dimensions": [
+        "queue"
+      ]
+    },
+    {
+      "name": "zl_mcp_operation_age_seconds",
+      "unit": "s",
+      "dimensions": [
+        "kind",
+        "state"
+      ]
+    }
+  ],
+  "outcomes": [
+    "success",
+    "error",
+    "partial",
+    "unknown",
+    "cancelled",
+    "panic"
+  ],
+  "transports": [
+    "http",
+    "stdio",
+    "resource"
+  ],
+  "kinds": [
+    "send",
+    "join",
+    "history",
+    "events",
+    "collector",
+    "other"
+  ],
+  "queues": [
+    "send",
+    "join",
+    "history",
+    "events"
+  ],
+  "age": "histogram sampled on native transition/work attempt, seconds since original created timestamp; nonnegative",
+  "forbidden": [
+    "account/chat/message/request/operation IDs",
+    "query/text/quote",
+    "URI/token/session",
+    "raw errors/headers"
+  ],
+  "memory_trace_cache": {
+    "max_entries": 4096,
+    "ttl_hours": 24,
+    "persistence": false
+  }
+}

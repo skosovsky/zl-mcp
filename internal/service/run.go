@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/collector"
 	"github.com/skosovsky/zl-mcp/internal/config"
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -25,6 +26,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/mcpserver"
 	"github.com/skosovsky/zl-mcp/internal/messaging"
 	"github.com/skosovsky/zl-mcp/internal/mobilebackup"
+	"github.com/skosovsky/zl-mcp/internal/observability"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 	"github.com/skosovsky/zl-mcp/internal/zalo"
 )
@@ -167,6 +169,27 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 		return err
 	}
 	defer store.Close()
+	telemetryConfig := c.Telemetry.WithDefaults()
+	if err = telemetryConfig.Validate(); err != nil {
+		return err
+	}
+	telemetryOwner, observer, err := observability.NewOwned(ctx, observability.Options{
+		Enabled: telemetryConfig.Enabled, Exporter: telemetryConfig.Exporter,
+		Endpoint: telemetryConfig.Endpoint, Headers: telemetryConfig.Headers,
+		ExportTimeout:   time.Duration(telemetryConfig.ExportTimeoutMS) * time.Millisecond,
+		ShutdownTimeout: time.Duration(telemetryConfig.ShutdownTimeoutMS) * time.Millisecond,
+	})
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := telemetryOwner.Shutdown(ctx); err != nil {
+			slog.Warn("telemetry_shutdown_failed")
+		}
+	}()
+	if observer != nil {
+		ctx = shared.WithTelemetry(ctx, observer)
+	}
 	if err = store.RecoverInterruptedSends(ctx); err != nil {
 		return err
 	}
@@ -258,7 +281,7 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	// The owner-only mobile probe may wait 185s and finish its ledger independently.
 	// Keep the Unix response deadline above the 190s CLI request budget.
 	cliServer := &http.Server{Handler: port.cliHandler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 450 * time.Second}
-	errorsCh := make(chan error, 7)
+	errorsCh := make(chan error, 8)
 	var wg sync.WaitGroup
 	launch := func(fn func() error) {
 		wg.Add(1)
@@ -296,6 +319,10 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	launch(func() error { return httpServer.Serve(listener) })
 	launch(func() error { return cliServer.Serve(ipc) })
 	launch(func() error { return worker.Run(ctx) })
+	if shared.Recording(ctx) {
+		launch(func() error { return observeNativeQueues(ctx, store) })
+	}
+
 	launch(func() error {
 		ticker := time.NewTicker(5 * time.Minute)
 		defer ticker.Stop()
@@ -323,6 +350,11 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	_ = httpServer.Close()
 	_ = cliServer.Close()
 	wg.Wait()
+	if shared.Recording(ctx) {
+		sample, cancelSample := context.WithTimeout(context.WithoutCancel(ctx), 500*time.Millisecond)
+		sampleNativeQueues(sample, store)
+		cancelSample()
+	}
 	slog.Info("service stopped")
 	if logFile != nil && logFile.Err() != nil {
 		return logFile.Err()

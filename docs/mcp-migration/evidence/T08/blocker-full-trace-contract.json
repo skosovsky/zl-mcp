@@ -1,0 +1,36 @@
+{
+  "task": "T08",
+  "status": "RESOLVED_BY_EXPLICIT_USER_AUTHORIZATION",
+  "candidate_source_sha256": "e590ed814c581fb33e31efef02794c5fd9a712880ef3445dabe6e92232fe7588",
+  "reason": "Existing documented opt-in full Events trace conflicts with mandatory all-sinks privacy in migration specification section 6. Changing or exempting it requires an explicit contract decision.",
+  "conflicting_contracts": [
+    {
+      "path": "docs/contracts/callback.md",
+      "section": "Opt-in full diagnostic trace",
+      "behavior": "Preserves exact outbound event JSON, private conversation text and IDs, and bounded receiver response body with credential redaction."
+    },
+    {
+      "path": "docs/contracts/service_logging.input.json",
+      "field": "event_trace_file",
+      "behavior": "Private rotating diagnostic log containing full MCP Event bodies."
+    },
+    {
+      "path": "docs/task-mcp-architecture-ai-libs.md",
+      "section": "6 and T08",
+      "behavior": "Logs/spans permit safe bounded fields/random correlation IDs only; texts/quotes/sessions/raw upstream causes forbidden; sentinel absent from sinks."
+    }
+  ],
+  "review_results": {
+    "completeness": "FAIL 41/44 = 93.18%",
+    "correctness": "FAIL"
+  },
+  "proposed_resolution": "Keep event_trace_file configuration and private rotation lifecycle, replace raw payload/response content and native IDs with safe bounded diagnostic fields and random correlation IDs; update existing logging contract and tests before implementation. Preserve callback payload, ledger and retry behavior.",
+  "alternative": "Explicitly exempt the existing opt-in private full-trace sink from section 6, retain its contract, and record that all-sinks privacy acceptance is limited.",
+  "independent_fixes": [
+    "Neutral validation of malformed OTEL_RESOURCE_ATTRIBUTES before SDK initialization.",
+    "Restore one final MCP audit covering preflight and post-execution failures with bounded error codes."
+  ],
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "decision": "Update logging contract in T08: retain event_trace_file opt-in/rotation; safe bounded fields/random correlation IDs only; remove full-trace path without bypass. No Events wire changes and no section 6 exemption."
+}

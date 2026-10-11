@@ -1,0 +1,14 @@
+{
+  "task": "T07",
+  "commit": "bcab7133d00a34db8bfc148fee80480d05c1126f",
+  "tree": "6a4f8551334b27a2dc7c18fdb75c9e6e9f1a8fc5",
+  "source_digest_sha256": "61e9a59b4a9f54d71ff97fb8bfa9045125b878b92e14c43a0428bfd00fba7402",
+  "message": "refactor(operations): route commands through toolsy preserving durable owners",
+  "indexed_artifacts_verified": 349,
+  "completeness": "46/46 100% PASS",
+  "correctness": "PASS openfindings0",
+  "subprocess_restart": "actualSIGKILL/nativeownerrecovery independently reviewed/rerunPASS",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01"
+}

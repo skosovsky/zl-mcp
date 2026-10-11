@@ -1,0 +1,10 @@
+{
+  "from_source": "40fb9f5a8930f7786325129737168141339349371d4761b4e18f8f1d6ed2a661",
+  "to_source": "9275e2688296dc90758821f156d16651f2afd7cccc36d3bfd91eae9694e8c000",
+  "changed_files": [
+    "arch-go.yml",
+    "docs/mcp-migration/architecture.md"
+  ],
+  "go_sources_identical": true,
+  "relevant_race_v3_applicability": "All Go sources/build inputs identical; v4 changes architecture allowlist and explanatory architecture documentation only."
+}

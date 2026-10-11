@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"github.com/skosovsky/zl-mcp/docs/contracts"
+	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
@@ -78,6 +79,9 @@ func (m *Manager) Call(ctx context.Context, method string, arguments any) (map[s
 		default:
 			return nil, managerError("STORAGE_ERROR", "Cannot access the history operation; do not create a replacement UUID blindly.")
 		}
+	}
+	if observer := shared.Telemetry(ctx); observer != nil && observer.Recording() && method == "zalo_import_conversation_history" {
+		observer.Remember(ctx, domain.WorkHistory, op.Status.OperationID)
 	}
 	encoded, err := json.Marshal(op.Status)
 	if err != nil {

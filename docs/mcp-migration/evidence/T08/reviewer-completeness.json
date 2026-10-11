@@ -1,0 +1,478 @@
+{
+  "task": "T08",
+  "review_role": "independent_completeness",
+  "candidate_sha256": "e590ed814c581fb33e31efef02794c5fd9a712880ef3445dabe6e92232fe7588",
+  "parent_sha": "bcab7133d00a34db8bfc148fee80480d05c1126f",
+  "verdict": "FAIL",
+  "verified_pass": 41,
+  "failed": 2,
+  "pending_orchestration": 1,
+  "required_total": 44,
+  "completeness_percent": 93.18181818181819,
+  "implementation_verified_pass": 41,
+  "implementation_total": 43,
+  "implementation_completeness_percent": 95.34883720930233,
+  "artifact_hash_verification": {
+    "indexed_files": 358,
+    "mismatches": 0
+  },
+  "independent_tests": {
+    "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test ./internal/observability ./internal/service ./internal/mcpserver ./internal/toolruntime",
+    "exit_status": 0,
+    "log": "completeness-independent-tests.log"
+  },
+  "findings": [
+    {
+      "id": "T08-COMP-01",
+      "priority": "P1",
+      "requirements": [
+        "T08-24",
+        "T08-25"
+      ],
+      "paths": [
+        "internal/events/worker.go:103",
+        "internal/events/worker.go:129",
+        "internal/service/run.go:246",
+        "internal/observability/native_test.go:300",
+        "internal/events/worker_test.go:212"
+      ],
+      "problem": "Installed service can enable TraceLogger through logging.event_trace_file. It emits complete event payload including message text and upstream response bodies. Credential/URL replacement does not remove arbitrary message or response sentinel. Current native privacy test discards operational logging and leaves TraceLogger nil, so all-sinks privacy is unproven and contradicted by code/existing full-trace test. §6 allows only safe fields/random correlation IDs and forbids texts/quotes/sessions/raw upstream causes in logs/spans.",
+      "required_resolution": "Resolve the explicit conflict between existing full-body operational trace contract and T08 privacy contract; do not silently narrow all-sinks acceptance. A conforming implementation needs content-free safe trace diagnostics and a sentinel test capturing each actual production logger, or an explicit user-approved specification exception."
+    }
+  ],
+  "scope_notes": [
+    "STDIO optional in-process borrowed observer is consistent with one service-owned provider and absence of new IPC; installed bridge HTTP forwarding and scope limitation are explicit. Specification does not require a second bridge exporter/provider.",
+    "metry executor call unit metadata empty is explicitly documented without altering pinned dependency; semantic call count is observable.",
+    "T01–T07 not reopened. Model/live remain NOT_RUN. SDK ID gate deferred SDK-01."
+  ],
+  "leaf_requirements": [
+    {
+      "id": "T08-01",
+      "requirement": "Accepted T07 commit/tree/source and durable evidence verified; prior tasks not reopened",
+      "status": "PASS",
+      "evidence": [
+        "T07-postcommit.json"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-02",
+      "requirement": "Pinned metryv0.10.1 public API/INTEGRATION/PRIVACY contract verified; no sibling/third_party edits",
+      "status": "PASS",
+      "evidence": [
+        "public-api-evidence.json",
+        "build-manifest-v2.json"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-03",
+      "requirement": "Telemetry contract, safe signal manifest, ownership/config schema and fixed leaf requirements before implementation",
+      "status": "PASS",
+      "evidence": [
+        "requirements.json",
+        "initial-candidate.json",
+        "signal-manifest.json"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-04",
+      "requirement": "One service-owned metry provider via New; no second provider or mutable global SDK ownership",
+      "status": "PASS",
+      "evidence": [
+        "provider-lifecycle-tests-v1.log",
+        "root-tests-v2.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-05",
+      "requirement": "Exporter opt-in; default configuration creates no external network dependency or changed service network behavior",
+      "status": "PASS",
+      "evidence": [
+        "provider-lifecycle-tests-v1.log",
+        "root-tests-v2.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-06",
+      "requirement": "Additive config fields validated with executable JSON schema and documented defaults",
+      "status": "PASS",
+      "evidence": [
+        "config-initial-tests.log",
+        "wire-runtime-config-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-07",
+      "requirement": "Exporter queue/export timeout/shutdown bounded; API keys/headers never logged",
+      "status": "PASS",
+      "evidence": [
+        "provider-lifecycle-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-08",
+      "requirement": "metry.ExecutorWrap wraps application execution exactly once for all22tools",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "relevant-race-v2.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-09",
+      "requirement": "HTTP/STDIO transport instrumentation does not duplicate execution span",
+      "status": "PASS",
+      "evidence": [
+        "transport-age-sampler-tests-v1.log",
+        "stdio-framing-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-10",
+      "requirement": "Built-in technical status remains actual Go success/error/panic",
+      "status": "PASS",
+      "evidence": [
+        "privacy-final-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-11",
+      "requirement": "Host typed domain outcome finite mapping independent from technical status",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "privacy-final-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-12",
+      "requirement": "Business error inside typed result classified error with nil Go error",
+      "status": "PASS",
+      "evidence": [
+        "privacy-final-tests-v1.log",
+        "root-tests-v2.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-13",
+      "requirement": "Unknown/partial/cancelled distinct domain outcomes; no synthetic Go error to fake metrics",
+      "status": "PASS",
+      "evidence": [
+        "privacy-final-tests-v1.log",
+        "root-tests-v2.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-14",
+      "requirement": "executor calls metric observable with bounded stable operation/tool and technical status",
+      "status": "PASS",
+      "evidence": [
+        "privacy-final-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-15",
+      "requirement": "executor duration metric observable in seconds with bounded stable operation/tool and technical status",
+      "status": "PASS",
+      "evidence": [
+        "privacy-final-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-16",
+      "requirement": "zl_mcp_domain_calls calls/tool/domainoutcome observable",
+      "status": "PASS",
+      "evidence": [
+        "privacy-final-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-17",
+      "requirement": "zl_mcp_response_bytes histogram bytes/tool/transport observable with actual encoded wire bytes",
+      "status": "PASS",
+      "evidence": [
+        "transport-age-sampler-tests-v1.log",
+        "stdio-framing-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-18",
+      "requirement": "zl_mcp_upstream_calls counter bounded operation kind/outcome observable",
+      "status": "PASS",
+      "evidence": [
+        "native-in-memory-tests-v2.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-19",
+      "requirement": "zl_mcp_operation_transitions counter kind/finite from/to observable",
+      "status": "PASS",
+      "evidence": [
+        "native-in-memory-tests-v2.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-20",
+      "requirement": "zl_mcp_worker_queue_depth gauge/queue name observable",
+      "status": "PASS",
+      "evidence": [
+        "transport-age-sampler-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-21",
+      "requirement": "zl_mcp_operation_age_seconds histogram or gauge explicit ADR semantics kind/state observable",
+      "status": "PASS",
+      "evidence": [
+        "native-in-memory-tests-v2.log",
+        "transport-age-sampler-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-22",
+      "requirement": "Typed outcome and worker state enums reject unknown arbitrary strings as metric attributes",
+      "status": "PASS",
+      "evidence": [
+        "privacy-final-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-23",
+      "requirement": "No account/chat/message/request/operation IDs/query/text/raw URI/token/error in metric labels",
+      "status": "PASS",
+      "evidence": [
+        "privacy-final-tests-v1.log",
+        "native-in-memory-tests-v2.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-24",
+      "requirement": "Logs/spans only safe enumerated fields and random correlation IDs; no raw error/quote/session/upstream causes",
+      "status": "FAIL",
+      "evidence": [
+        "privacy-final-tests-v1.log",
+        "provider-lifecycle-tests-v1.log"
+      ],
+      "review_note": "Production Events full-trace logger emits raw message/upstream response bodies; current sentinel tests disable this sink."
+    },
+    {
+      "id": "T08-25",
+      "requirement": "Privacy sentinel absent in all memory metric/span/log sinks including panic and formatting paths",
+      "status": "FAIL",
+      "evidence": [
+        "privacy-final-tests-v1.log",
+        "provider-lifecycle-tests-v1.log",
+        "native-in-memory-tests-v2.log"
+      ],
+      "review_note": "Production Events full-trace logger emits raw message/upstream response bodies; current sentinel tests disable this sink."
+    },
+    {
+      "id": "T08-26",
+      "requirement": "Request->operation->worker correlation via bounded in-memory opaque trace references with IDs kept distinct",
+      "status": "PASS",
+      "evidence": [
+        "native-in-memory-tests-v2.log",
+        "privacy-final-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-27",
+      "requirement": "Trace correlation introduces no persistence schema/record changes and bounded memory lifecycle",
+      "status": "PASS",
+      "evidence": [
+        "privacy-final-tests-v1.log",
+        "offline-v2/report.json"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-28",
+      "requirement": "Telemetry/upstream instrumentation does not change business result, permission, send count or retry behavior",
+      "status": "PASS",
+      "evidence": [
+        "native-in-memory-tests-v2.log",
+        "offline-v2/report.json"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-29",
+      "requirement": "Exporter failure isolated from application outcome; no blocked send or retry",
+      "status": "PASS",
+      "evidence": [
+        "provider-lifecycle-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-30",
+      "requirement": "Exporter timeout failure-injection test isolates outcome and bounds shutdown",
+      "status": "PASS",
+      "evidence": [
+        "provider-lifecycle-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-31",
+      "requirement": "Nil provider safe and disabled provider safe across execution/resource/worker paths",
+      "status": "PASS",
+      "evidence": [
+        "provider-lifecycle-tests-v1.log",
+        "transport-age-sampler-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-32",
+      "requirement": "Provider cleanup owned by service and orderly relative to worker/DB lifetime",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "provider-lifecycle-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-33",
+      "requirement": "Shutdown idempotent and bounded under cancelled context/exporter stall",
+      "status": "PASS",
+      "evidence": [
+        "provider-lifecycle-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-34",
+      "requirement": "Existing operational diagnostics/redaction preserved; duplicate execution logging removed",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-35",
+      "requirement": "Native send/join/history/Events worker owners remain unchanged; no second ledger/session",
+      "status": "PASS",
+      "evidence": [
+        "native-in-memory-tests-v2.log",
+        "offline-v2/report.json"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-36",
+      "requirement": "In-memory exporters observe exact required signals and technical/business status distinction",
+      "status": "PASS",
+      "evidence": [
+        "privacy-final-tests-v1.log",
+        "native-in-memory-tests-v2.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-37",
+      "requirement": "Meaningful privacy/failure/lifecycle/outcome tests PASS",
+      "status": "PASS",
+      "evidence": [
+        "privacy-final-tests-v1.log",
+        "provider-lifecycle-tests-v1.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-38",
+      "requirement": "Relevant observability/runtime/service/worker race tests PASS",
+      "status": "PASS",
+      "evidence": [
+        "relevant-race-v2.log"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-39",
+      "requirement": "Root tests/vet PASS and no public/persistence/wire regressions",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-vet-v2.log",
+        "offline-v2/report.json"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-40",
+      "requirement": "Architecture100/100 and negative controls PASS; metry/OTel imports only permitted observability/composition",
+      "status": "PASS",
+      "evidence": [
+        "architecture-checks-v2.json"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-41",
+      "requirement": "Complete required offline eval and independent durable effects PASS",
+      "status": "PASS",
+      "evidence": [
+        "offline-v2/report.json",
+        "baseline-v2/report.json"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-42",
+      "requirement": "Frozen baseline/independent harness retained; candidate/build/rawcommands/versions/source hashes/index retained",
+      "status": "PASS",
+      "evidence": [
+        "build-manifest-v2.json",
+        "candidate-checks-v2.json",
+        "artifact-index.json"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-43",
+      "requirement": "Model/live NOT_RUN and SDK IDs deferred SDK-01 explicit; no deployed/live/paid actions",
+      "status": "PASS",
+      "evidence": [
+        "offline-v2/report.json",
+        "baseline-v2/report.json"
+      ],
+      "review_note": "Inspected implementation and indexed evidence; independent targeted tests PASS."
+    },
+    {
+      "id": "T08-44",
+      "requirement": "Two independent samecandidate reviewers100% completeness and correctnessPASS before soleT08commit",
+      "status": "PENDING_ORCHESTRATION_FINALIZATION",
+      "evidence": [
+        "reviewer-completeness.json",
+        "reviewer-correctness.json"
+      ],
+      "review_note": "Candidate is uncommitted and two independent reviews are in progress; no commit-before-review requirement is imposed. This orchestration gate can only finalize after both final verdicts."
+    }
+  ]
+}

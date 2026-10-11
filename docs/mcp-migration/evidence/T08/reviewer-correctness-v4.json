@@ -1,0 +1,69 @@
+{
+  "task": "T08",
+  "role": "independent correctness",
+  "candidate": "9275e2688296dc90758821f156d16651f2afd7cccc36d3bfd91eae9694e8c000",
+  "parent": "bcab7133d00a34db8bfc148fee80480d05c1126f",
+  "verdict": "FAIL",
+  "previous_findings": [
+    {
+      "id": "C1",
+      "status": "FIXED",
+      "evidence": "validateResourceEnvironment is called before enabled exporter/SDK construction, neutral errors; fresh-process missing-value/trailing-entry/invalid-percent tests PASS; disabled configuration ignores malformed environment."
+    },
+    {
+      "id": "C2",
+      "status": "FIXED",
+      "evidence": "Service.call single final audit handles all preflight and projection/encode/budget/panic exits with safe direct finite code allowlist. App observer emits no audit. Regression tests verify0app executions on preflight and1on postexecution failure."
+    }
+  ],
+  "findings": [
+    {
+      "id": "C3",
+      "priority": "P2",
+      "requirements": [
+        "T08-03",
+        "T08-34"
+      ],
+      "path": "docs/contracts/callback.md",
+      "line": 17,
+      "summary": "Delivery observability contract retains an obsolete paragraph promising identifiers and body digest that the authorized safe logging format forbids.",
+      "details": "Lines17–22 state both service records carry event/subscription/queue IDs, SHA256 persisted-body hash and receiver request IDs. Lines25 onward prohibit these same fields; production Worker now emits the safe metadata allowlist. Replace the obsolete paragraph so implementation and normative contract agree."
+    }
+  ],
+  "checked_scope": [
+    "Rechecked all44leaf requirements in §6/T08 against current code/evidence, with leaf44 orchestration pending both independent reports",
+    "Actual provider/observer/runtime/outcome implementation and unchanged native durable owners",
+    "HTTP actual accepted-byte writer and borrowed STDIO framing/cache; no execution span duplication",
+    "Finite metrics dimensions,4096entry/24h opaque cache, queue sampler deadlines",
+    "Owned SDK default-off, neutral failures, bounded idempotent shutdown and worker/store order",
+    "Config validation and resource environment diagnostic prevention",
+    "Authorized Events safe service/trace logging with both sinks enabled and callback wire unchanged",
+    "Frozen baseline remains4b38637e661c4004766a415342141ddc8f4e7786f1691411c1c4a355a4265101",
+    "Artifact-index696entries checked: only reviewer live race log changed while recording; root must refresh index after reviews"
+  ],
+  "checks": [
+    {
+      "command": "go test -race -count=1 ./internal/observability ./internal/service ./internal/mcpserver ./internal/toolruntime ./internal/events",
+      "result": "PASS",
+      "evidence": "reviewer-correctness-v4-race.log"
+    },
+    {
+      "check": "full offline candidate",
+      "result": "PASS50/50cases480/480assertions",
+      "evidence": "offline-v4/report.json"
+    },
+    {
+      "check": "independent frozen baseline",
+      "result": "PASS25/25cases240/240assertions",
+      "evidence": "baseline-v4/report.json"
+    },
+    {
+      "check": "architecture and negative controls",
+      "result": "PASS recorded",
+      "evidence": "architecture-checks-v4.json"
+    }
+  ],
+  "model_live": "NOT_RUN",
+  "sdk_ids": "Deferred to SDK-01; not reopened here",
+  "production_edits": "none"
+}

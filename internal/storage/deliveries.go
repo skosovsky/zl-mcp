@@ -166,6 +166,7 @@ func (s *Store) FanoutProfileEvents(ctx context.Context, at time.Time, p Deliver
 }
 
 type EventDelivery struct {
+	CreatedAt      *time.Time // Original event creation; nil if unavailable.
 	ID             int64
 	EventID        string
 	SubscriptionID string
@@ -204,8 +205,9 @@ func (s *Store) ClaimDelivery(ctx context.Context, at time.Time, p DeliveryPolic
 	for {
 		var d EventDelivery
 		var deadline, profile, scope, kind string
+		var created *string
 		var ref domain.ConversationRef
-		err := tx.QueryRowContext(ctx, `SELECT d.id,d.event_id,d.subscription_id,d.generation,d.payload,d.attempts,d.deadline,s.callback,s.secret,s.principal,s.group_id,s.profile,s.scope,s.conversation_type,COALESCE(m.conversation_type,s.conversation_type),COALESCE(m.conversation_id,s.group_id) FROM event_deliveries d JOIN event_subscriptions s ON s.id=d.subscription_id LEFT JOIN messages m ON m.seq=d.message_seq WHERE d.state='pending' AND julianday(d.next_attempt_at)<=julianday(?) AND NOT EXISTS(SELECT 1 FROM event_deliveries busy WHERE busy.subscription_id=d.subscription_id AND busy.state='sending') AND NOT EXISTS(SELECT 1 FROM event_deliveries earlier WHERE earlier.subscription_id=d.subscription_id AND earlier.id<d.id AND earlier.state IN ('pending','sending')) ORDER BY d.id LIMIT 1`, ts).Scan(&d.ID, &d.EventID, &d.SubscriptionID, &d.Generation, &d.Payload, &d.Attempts, &deadline, &d.Callback, &d.Secret, &d.Principal, &d.GroupID, &profile, &scope, &kind, &ref.Type, &ref.ID)
+		err := tx.QueryRowContext(ctx, `SELECT d.id,d.event_id,d.subscription_id,d.generation,d.payload,d.attempts,d.deadline,s.callback,s.secret,s.principal,s.group_id,s.profile,s.scope,s.conversation_type,COALESCE(m.conversation_type,s.conversation_type),COALESCE(m.conversation_id,s.group_id),ev.created_at FROM event_deliveries d LEFT JOIN message_events ev ON ev.event_id=d.event_id JOIN event_subscriptions s ON s.id=d.subscription_id LEFT JOIN messages m ON m.seq=d.message_seq WHERE d.state='pending' AND julianday(d.next_attempt_at)<=julianday(?) AND NOT EXISTS(SELECT 1 FROM event_deliveries busy WHERE busy.subscription_id=d.subscription_id AND busy.state='sending') AND NOT EXISTS(SELECT 1 FROM event_deliveries earlier WHERE earlier.subscription_id=d.subscription_id AND earlier.id<d.id AND earlier.state IN ('pending','sending')) ORDER BY d.id LIMIT 1`, ts).Scan(&d.ID, &d.EventID, &d.SubscriptionID, &d.Generation, &d.Payload, &d.Attempts, &deadline, &d.Callback, &d.Secret, &d.Principal, &d.GroupID, &profile, &scope, &kind, &ref.Type, &ref.ID, &created)
 		if errors.Is(err, sql.ErrNoRows) {
 			if err := tx.Commit(); err != nil {
 				return nil, err
@@ -220,6 +222,11 @@ func (s *Store) ClaimDelivery(ctx context.Context, at time.Time, p DeliveryPolic
 				return nil, err
 			}
 			continue
+		}
+		if created != nil {
+			if stamp, e := time.Parse(time.RFC3339Nano, *created); e == nil {
+				d.CreatedAt = &stamp
+			}
 		}
 		d.Deadline, err = time.Parse(time.RFC3339Nano, deadline)
 		if err != nil {
