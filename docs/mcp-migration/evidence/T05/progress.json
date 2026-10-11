@@ -1,0 +1,23 @@
+{
+  "task": "T05",
+  "status": "ACCEPTED_READY_FOR_SOLE_COMMIT",
+  "parent_sha": "775d3a271110b2771a9cc0ac63d3f51151481e53",
+  "required_total": 42,
+  "remaining": [
+    "sole atomic T05 commit"
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01",
+  "completed": [
+    "public toolsy pin, typed authority/access ports, strict binder/runtime",
+    "native SDK first-slice dispatch with current policy",
+    "runtime negative/foreign/revocation/cancellation/concurrency tests PASS",
+    "actual SDK handler counters and single admission proof PASS",
+    "architecture100/100+negative controls PASS"
+  ],
+  "sessions": {},
+  "source_digest_sha256": "4860680b8d2b0b4e878d6332248a40c316e59da983438c892fe9a905353369c6",
+  "completeness_percent": 100,
+  "correctness": "PASS"
+}

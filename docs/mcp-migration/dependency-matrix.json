@@ -1,5 +1,5 @@
 {
-  "revision": 1,
+  "revision": 2,
   "selected_toolchain": "go version go1.27.1 darwin/arm64",
   "root_directive": "1.27.1",
   "GOWORK": "off",
@@ -25,7 +25,8 @@
       },
       "go_directive": "1.27.1",
       "integration_task": "T05",
-      "probe": "PASS isolated consumer public API test"
+      "probe": "PASS isolated consumer public API test",
+      "root_runtime_consumer": "internal/toolruntime (T05); direct require v0.20.0; no OperationProfile/result cache/session journal"
     },
     {
       "Path": "github.com/skosovsky/metry",

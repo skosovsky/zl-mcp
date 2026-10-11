@@ -85,7 +85,7 @@ func TestReadBoundaryShortensNativePageOnceAndRechecksResourceAccess(t *testing.
 		}
 	}
 	reads := &observedReads{Reader: storeadapter.New(owner)}
-	ports := ReadPorts{Search: &search.Handler{Reads: reads}, Conversations: &conversations.Handler{Reads: reads}}
+	ports := ReadPorts{Search: &search.Handler{Reads: reads}, Conversations: &conversations.Handler{Reads: reads}, Authority: reads}
 	server, err := New(owner, dir, ports)
 	if err != nil {
 		t.Fatal(err)

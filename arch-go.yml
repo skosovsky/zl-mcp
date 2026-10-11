@@ -868,6 +868,13 @@
         "external": [
           "^github\\.com/skosovsky/toolsy(/[\\w.-]+)*$",
           "^github\\.com/santhosh\\-tekuri/jsonschema/v6(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^encoding/json$",
+          "^errors$",
+          "^fmt$",
+          "^strconv$"
         ]
       }
     },
@@ -891,7 +898,9 @@
           "^context$",
           "^database/sql$",
           "^encoding/json$",
-          "^errors$"
+          "^errors$",
+          "^os$",
+          "^strconv$"
         ]
       }
     },

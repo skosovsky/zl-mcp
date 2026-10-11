@@ -1,0 +1,42 @@
+{
+  "task": "T05",
+  "reviewer": "B",
+  "role": "independent correctness",
+  "verdict": "PASS",
+  "status": "PASS",
+  "candidate_source_digest": "4860680b8d2b0b4e878d6332248a40c316e59da983438c892fe9a905353369c6",
+  "candidate_source_tree": "92cf51946c3a08c81a9564ad9d6684c3bb0947e4",
+  "parent_sha": "775d3a271110b2771a9cc0ac63d3f51151481e53",
+  "independence": "Own source/spec/evidence review performed before reading reviewer A verdict; no implementation edits.",
+  "findings": [],
+  "inspected": [
+    "Common task invariants, execution ordering section4.1, schema section4.2, T05 scope and 42 leaf requirements",
+    "Private runtime owner binding, BYOT subject/scope and current identity reread, zero/foreign/direct policy denial",
+    "Native search preflight extraction and cursor/filter/access precedence, no FTS preflight and single app dispatch",
+    "Legacy binding/defaults/zero/null/additional properties/formats/Unicode and opaque IDs",
+    "Toolsy public RegistryView/NewProxyTool policy/output schema integration; per-call environment/result; no durable execution/cache/retry",
+    "Actual native SDK registration, unchanged safe wire/result projection/native shrinking/resources; exactly one admission",
+    "Unchanged account/schema/DB/session/worker ownership; deferred nonfirstslice routes",
+    "Architecture narrow import allowances without widened backend exceptions; root dependency pins; offline trace/effect reports"
+  ],
+  "independent_checks": [
+    {
+      "command": "python3 scripts/mcp-migration/candidate.py",
+      "result": "PASS exact candidate digest match"
+    },
+    {
+      "command": "Verify artifact-index bytes/SHA256 against files",
+      "result": "PASS 330 indexed artifacts; no mismatches"
+    },
+    {
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test -race ./internal/toolruntime ./internal/mcpserver -run 'TestReadRuntime|TestRuntimeSDK|TestReadBoundary|TestMigration' -count=1",
+      "exit_status": 0,
+      "result": "PASS toolruntime 7.264s; mcpserver15.878s"
+    }
+  ],
+  "acceptance": "Correctness PASS for declared T05 offline scope. No normative errors found. Final paired completeness gate remains separately owned by reviewer A/root.",
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01",
+  "performance_gate": "T09; no T05 performance acceptance claim"
+}

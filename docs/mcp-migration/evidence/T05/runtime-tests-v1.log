@@ -1,0 +1,6 @@
+# github.com/skosovsky/zl-mcp/internal/toolruntime [github.com/skosovsky/zl-mcp/internal/toolruntime.test]
+internal/toolruntime/reads_test.go:76:88: cannot use 1 (untyped int constant) as *int value in struct literal
+FAIL	github.com/skosovsky/zl-mcp/internal/toolruntime [build failed]
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	6.805s
+ok  	github.com/skosovsky/zl-mcp/internal/storage	4.381s
+FAIL

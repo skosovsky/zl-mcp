@@ -1,0 +1,4 @@
+# github.com/skosovsky/zl-mcp/internal/toolruntime
+internal/toolruntime/reads.go:116:20: builder.Register undefined (type *toolsy.RegistryBuilder has no field or method Register)
+FAIL	github.com/skosovsky/zl-mcp/internal/toolruntime [build failed]
+FAIL

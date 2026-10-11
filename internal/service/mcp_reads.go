@@ -11,5 +11,5 @@ import (
 // mcpReadPorts composes stateless capabilities around the existing borrowed owner.
 func mcpReadPorts(owner *storage.Store) mcpserver.ReadPorts {
 	reader := storeadapter.New(owner)
-	return mcpserver.ReadPorts{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader}}
+	return mcpserver.ReadPorts{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader}, Authority: reader}
 }

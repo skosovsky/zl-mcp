@@ -22,6 +22,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/control"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
+	"github.com/skosovsky/zl-mcp/internal/toolruntime"
 )
 
 var descriptions = map[string]string{
@@ -60,7 +61,7 @@ type Service struct {
 	Control       ControlPort
 	input         map[string]*jsonschema.Schema
 	output        map[string]*jsonschema.Schema
-	search        *search.Handler
+	runtime       *toolruntime.Reads
 	conversations *conversations.Handler
 }
 
@@ -75,7 +76,12 @@ func NewWithControl(store *storage.Store, backend ControlPort, reads ReadPorts) 
 	if store == nil || reads.Search == nil || reads.Conversations == nil || reads.Search.Reads == nil || reads.Conversations.Reads == nil {
 		return nil, fmt.Errorf("storage owner and typed read ports are required")
 	}
-	s := &Service{Store: store, Control: backend, search: reads.Search, conversations: reads.Conversations, input: map[string]*jsonschema.Schema{}, output: map[string]*jsonschema.Schema{}}
+	s := &Service{Store: store, Control: backend, conversations: reads.Conversations, input: map[string]*jsonschema.Schema{}, output: map[string]*jsonschema.Schema{}}
+	var runtimeErr error
+	s.runtime, runtimeErr = toolruntime.NewReads(reads.Search, reads.Conversations, reads.Authority)
+	if runtimeErr != nil {
+		return nil, runtimeErr
+	}
 	server := mcp.NewServer(&mcp.Implementation{Name: "zl-mcp", Version: "0.1.0-dev"}, nil)
 	for _, name := range contracts.Names() {
 		inp, e := contracts.Compile(name, "input")
@@ -193,6 +199,14 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 		}
 		slog.Info("mcp_call", "tool", name, "principal", os.Getuid(), "correlation_id", uuid.NewString(), "code", code, "duration_ms", time.Since(started).Milliseconds())
 	}()
+	var binding toolruntime.Binding
+	if s.runtime.Supports(name) {
+		var bindErr error
+		binding, bindErr = s.runtime.Bind(ctx)
+		if bindErr != nil {
+			return failure(bindErr)
+		}
+	}
 	allowed, budgetErr := s.Store.AllowRead(ctx)
 	if budgetErr != nil {
 		return failure(budgetErr)
@@ -200,16 +214,9 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 	if !allowed {
 		return failure(&domain.Error{Code: "RATE_LIMITED", Message: "Too many local calls.", Retryable: true, NextAction: domain.NextAction{Instruction: "Wait one second before retrying."}, Details: map[string]any{"retry_after_ms": 1000}})
 	}
-	args := map[string]any{}
-	if len(raw) > 0 && json.Unmarshal(raw, &args) != nil {
-		return failure(domain.Invalid("Arguments must be a JSON object."))
-	}
-	for _, field := range []string{"limit", "before", "after"} {
-		if v, ok := args[field].(string); ok {
-			if n, e := strconv.Atoi(v); e == nil {
-				args[field] = float64(n)
-			}
-		}
+	args, bindErr := toolruntime.BindArguments(raw)
+	if bindErr != nil {
+		return failure(bindErr)
 	}
 	if e := s.input[name].Validate(args); e != nil {
 		return failure(domain.Invalid("Arguments do not match the tool schema; check types, required fields, ranges and RFC3339 dates."))
@@ -245,16 +252,21 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 		}
 	case "zalo_get_conversation":
 		result, e = s.Store.Conversation(ctx, conversationRef(args))
-	case "zalo_get_conversation_message_context":
-		var value conversations.ConversationContext
-		value, e = s.conversations.ConversationContext(ctx, contextRequest(args, false))
+	case "zalo_search_messages", "zalo_search_conversation_messages", "zalo_get_message_context", "zalo_get_conversation_message_context":
+		var execution *toolruntime.Result
+		execution, e = s.runtime.Execute(ctx, binding, name, raw)
 		if e == nil {
-			result, e = conversationReadResult(value)
-		}
-	case "zalo_search_conversation_messages":
-		conversationPage, e = s.search.Conversation(ctx, conversationSearchRequest(args))
-		if e == nil {
-			result, e = conversationReadResult(conversationPage.Result)
+			groupPage, conversationPage = execution.GroupSearch, execution.ConversationSearch
+			switch {
+			case groupPage != nil:
+				result = groupSearchResult(groupPage.Result)
+			case conversationPage != nil:
+				result, e = conversationReadResult(conversationPage.Result)
+			case execution.GroupContext != nil:
+				result = groupContextResult(*execution.GroupContext)
+			case execution.ConversationContext != nil:
+				result, e = conversationReadResult(*execution.ConversationContext)
+			}
 		}
 
 	case "zalo_get_status":
@@ -275,17 +287,6 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 		q, cancel := context.WithTimeout(ctx, 6*time.Second)
 		result, e = s.Control.Call(q, name, args)
 		cancel()
-	case "zalo_get_message_context":
-		var value conversations.GroupContext
-		value, e = s.conversations.GroupContext(ctx, contextRequest(args, true))
-		if e == nil {
-			result = groupContextResult(value)
-		}
-	case "zalo_search_messages":
-		groupPage, e = s.search.Group(ctx, groupSearchRequest(args))
-		if e == nil {
-			result = groupSearchResult(groupPage.Result)
-		}
 
 	}
 	if e != nil {

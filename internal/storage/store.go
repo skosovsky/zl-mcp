@@ -440,59 +440,85 @@ func searchText(q string) string {
 	}
 	return strings.Join(words, " AND ")
 }
-func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *string, string, cursor, error) {
+
+type preparedSearch struct {
+	q            Search
+	query        string
+	since, until time.Time
+	cursor       cursor
+}
+
+// prepareSearch keeps validation, cursor and access error ordering shared by
+// scoped admission and the original FTS path. It never executes an FTS query.
+func (s *Store) prepareSearch(ctx context.Context, q Search) (preparedSearch, error) {
 	if q.Limit == 0 {
 		q.Limit = 20
 	}
 	if q.Limit < 1 || q.Limit > 50 {
-		return nil, nil, "", cursor{}, domain.Invalid("limit must be an integer between 1 and 50.")
+		return preparedSearch{}, domain.Invalid("limit must be an integer between 1 and 50.")
 	}
 	query := searchText(q.Query)
 	if query == "" {
-		return nil, nil, "", cursor{}, domain.Invalid("query must contain at least one word.")
+		return preparedSearch{}, domain.Invalid("query must contain at least one word.")
 	}
 	if q.GroupID != "" && !s.Allowed(q.GroupID) {
-		return nil, nil, "", cursor{}, domain.Invalid("Selected group is outside the collection allowlist.")
+		return preparedSearch{}, domain.Invalid("Selected group is outside the collection allowlist.")
 	}
 	var since, until time.Time
 	var err error
 	if q.Since != "" {
 		since, err = time.Parse(time.RFC3339, q.Since)
 		if err != nil {
-			return nil, nil, "", cursor{}, domain.Invalid("since must use RFC3339, for example 2026-10-01T00:00:00Z.")
+			return preparedSearch{}, domain.Invalid("since must use RFC3339, for example 2026-10-01T00:00:00Z.")
 		}
 	}
 	if q.Until != "" {
 		until, err = time.Parse(time.RFC3339, q.Until)
 		if err != nil {
-			return nil, nil, "", cursor{}, domain.Invalid("until must use RFC3339, for example 2026-10-01T00:00:00Z.")
+			return preparedSearch{}, domain.Invalid("until must use RFC3339, for example 2026-10-01T00:00:00Z.")
 		}
 	}
 	if !since.IsZero() && !until.IsZero() && !since.Before(until) {
-		return nil, nil, "", cursor{}, domain.Invalid("since must precede until.")
+		return preparedSearch{}, domain.Invalid("since must precede until.")
 	}
 	c := cursor{Fingerprint: fingerprint(q), SnapshotAt: now()}
 	if q.Cursor != "" {
 		if err = s.DecodeCursor(q.Cursor, &c); err != nil {
-			return nil, nil, "", cursor{}, err
+			return preparedSearch{}, err
 		}
 		if c.Fingerprint != fingerprint(q) {
-			return nil, nil, "", cursor{}, domain.Invalid("Cursor filters differ from the original query.")
+			return preparedSearch{}, domain.Invalid("Cursor filters differ from the original query.")
 		}
 	} else {
 		if err = s.DB.QueryRowContext(ctx, "SELECT coalesce(max(seq),0) FROM messages").Scan(&c.Snapshot); err != nil {
-			return nil, nil, "", cursor{}, err
+			return preparedSearch{}, err
 		}
 	}
+	if q.General && ((q.ConversationType != "" && q.ConversationType != "group" && q.ConversationType != "direct") || (q.ConversationID != "" && q.ConversationType == "")) {
+		return preparedSearch{}, domain.Invalid("A concrete conversation requires its type.")
+	}
+	if q.General && q.ConversationID != "" && !s.AllowsConversation(domain.ConversationRef{Type: q.ConversationType, ID: q.ConversationID}) {
+		return preparedSearch{}, subscriptionPermission("Conversation is outside the collection policy.")
+	}
+
+	return preparedSearch{q: q, query: query, since: since, until: until, cursor: c}, nil
+}
+
+// CheckSearchAccess applies the exact native preflight without selecting messages.
+func (s *Store) CheckSearchAccess(ctx context.Context, q Search) error {
+	_, err := s.prepareSearch(ctx, q)
+	return err
+}
+
+func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *string, string, cursor, error) {
+	p, err := s.prepareSearch(ctx, q)
+	if err != nil {
+		return nil, nil, "", cursor{}, err
+	}
+	q, query, since, until, c := p.q, p.query, p.since, p.until, p.cursor
 	clauses := []string{"messages_fts MATCH ?", "m.seq<=?"}
 	if !q.General {
 		clauses = append(clauses, "m.conversation_type='group'")
-	}
-	if q.General && ((q.ConversationType != "" && q.ConversationType != "group" && q.ConversationType != "direct") || (q.ConversationID != "" && q.ConversationType == "")) {
-		return nil, nil, "", cursor{}, domain.Invalid("A concrete conversation requires its type.")
-	}
-	if q.General && q.ConversationID != "" && !s.AllowsConversation(domain.ConversationRef{Type: q.ConversationType, ID: q.ConversationID}) {
-		return nil, nil, "", cursor{}, subscriptionPermission("Conversation is outside the collection policy.")
 	}
 
 	args := []any{query, c.Snapshot}

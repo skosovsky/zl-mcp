@@ -224,8 +224,8 @@ func (s *Store) Context(ctx context.Context, g, id string, before, after int) (m
 	return s.context(ctx, domain.ConversationRef{Type: domain.ConversationGroup, ID: g}, id, before, after, false)
 }
 func (s *Store) context(ctx context.Context, ref domain.ConversationRef, id string, before, after int, general bool) (map[string]any, error) {
-	if before < 0 || before > 20 || after < 0 || after > 20 {
-		return nil, domain.Invalid("Context window must be between 0 and 20.")
+	if err := s.CheckContextAccess(ref, id, before, after, general); err != nil {
+		return nil, err
 	}
 	read := func(id string) (domain.Message, error) {
 		if general {

@@ -1,0 +1,82 @@
+{
+  "task": "T05",
+  "candidate_source_digest": "4860680b8d2b0b4e878d6332248a40c316e59da983438c892fe9a905353369c6",
+  "environment": {
+    "GOWORK": "off",
+    "GOPATH": "/tmp/zl-migration-go-path",
+    "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+    "GOCACHE": "/tmp/zl-migration-go-cache"
+  },
+  "checks": [
+    {
+      "command": "go test ./...",
+      "log": "root-tests.log",
+      "sha256": "e9147c7fae72ac276abefd04fedc1eed93d319b7ecc4ae00fd1eade4188fd266",
+      "exit_status": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "go vet ./...",
+      "log": "vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_status": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "go test -race ./internal/toolruntime ./internal/mcpserver ./internal/storage ./internal/adapters/... ./internal/app/...",
+      "log": "race.log",
+      "sha256": "5de8d15181b35f3c16c292a8da477a125356261e508cfd2f4a3a040476874a4a",
+      "exit_status": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "go test ./internal/toolruntime ./internal/mcpserver ./internal/storage",
+      "log": "runtime-tests-v2.log",
+      "sha256": "cc9ca597cd09157bdb18ef3e3f2cf6280ff5aeef6c7d97334e8842d015da99c2",
+      "exit_status": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "python3 scripts/mcp-migration/architecture.py --binary /tmp/zl-migration-tools/arch-go --evidence /tmp/zl-t05-architecture-v2.json",
+      "log": "architecture-v2.log",
+      "sha256": "daa6f81949c8282ba9c4b41e2e9a17692bda8fc437067c0f8b55a151053226a1",
+      "exit_status": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "python3 scripts/mcp-migration/build_eval.py --output /tmp/zl-t05-build-v1",
+      "log": "build-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_status": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "/tmp/zl-t05-build-v1/zl-mcp-eval-candidate --root \"$PWD\" --output /tmp/zl-t05-offline-v1 --repeats 2",
+      "log": "offline-v1.log",
+      "sha256": "e095bc7b932220bf4676733a9b2fdecb8b24755531423e351022e3c25236a72d",
+      "exit_status": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "/tmp/zl-t05-build-v1/zl-mcp-eval-candidate --root \"$PWD\" --child-binary /tmp/zl-t05-build-v1/zl-mcp-eval-baseline --output /tmp/zl-t05-baseline-v1",
+      "log": "baseline-v1.log",
+      "sha256": "a0d0f89d7ac228040d225b48279db8ee147b461a0ce4537b8a509bab1247b772",
+      "exit_status": 0,
+      "status": "PASS"
+    }
+  ],
+  "baseline_binary_identical_to_T04": true,
+  "baseline_sha256": "4b38637e661c4004766a415342141ddc8f4e7786f1691411c1c4a355a4265101",
+  "initial_attempts": [
+    {
+      "log": "runtime-compile.log",
+      "exit_status": 1,
+      "finding": "incorrect RegistryBuilder method name; corrected to pinned public Add API"
+    },
+    {
+      "log": "runtime-tests-v1.log",
+      "exit_status": 1,
+      "finding": "synthetic fixture MemberCount field pointer mismatch; unnecessary field removed"
+    }
+  ]
+}

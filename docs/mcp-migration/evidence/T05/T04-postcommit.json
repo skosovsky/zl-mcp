@@ -1,0 +1,13 @@
+{
+  "commit": "775d3a271110b2771a9cc0ac63d3f51151481e53",
+  "tree": "60af52019288de4c5e461cd2d36f4578c184b52e",
+  "subject": "refactor(search): extract application handlers and read ports",
+  "accepted_source_digest": "9101f22bd6effc1458f0ea7b0cfb549f8565cb13a7fbaac33c574639a6ba33e0",
+  "actual_source_digest": "9101f22bd6effc1458f0ea7b0cfb549f8565cb13a7fbaac33c574639a6ba33e0",
+  "source_match": true,
+  "completeness": 100,
+  "correctness": "PASS",
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01"
+}

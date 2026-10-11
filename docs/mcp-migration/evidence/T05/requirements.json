@@ -1,0 +1,187 @@
+{
+  "task": "T05",
+  "parent_sha": "775d3a271110b2771a9cc0ac63d3f51151481e53",
+  "required_total": 42,
+  "formula": "100 * verified_pass / required_total",
+  "requirements": [
+    {
+      "id": "T05-01",
+      "requirement": "Accepted T04 SHA/tree/source verified; earlier task evidence not reopened"
+    },
+    {
+      "id": "T05-02",
+      "requirement": "Consumer runtime contract fixed before implementation; initial/final candidate recorded"
+    },
+    {
+      "id": "T05-03",
+      "requirement": "Pinned public toolsy v0.20.0 root module consumer, no sibling replace/vendor edits"
+    },
+    {
+      "id": "T05-04",
+      "requirement": "Normative internal/toolruntime exclusively owns toolsy integration"
+    },
+    {
+      "id": "T05-05",
+      "requirement": "Native SDK AddTool and transport/resource registrations retained"
+    },
+    {
+      "id": "T05-06",
+      "requirement": "Four first-slice search/context tools execute through RegistryView.Execute"
+    },
+    {
+      "id": "T05-07",
+      "requirement": "Immutable root registry/view built once; invocation-owned call/environment"
+    },
+    {
+      "id": "T05-08",
+      "requirement": "Trusted subject/scope resolved by host, never from model args/message content"
+    },
+    {
+      "id": "T05-09",
+      "requirement": "Account/current collection policy enforced; untrusted/direct invocation denied before app dispatch"
+    },
+    {
+      "id": "T05-10",
+      "requirement": "Call from other capability owner/scope cannot reuse authorization"
+    },
+    {
+      "id": "T05-11",
+      "requirement": "Compatibility binder only baseline limit/before/after numeric strings and defaults"
+    },
+    {
+      "id": "T05-12",
+      "requirement": "Schema source docs/contracts retained byte-for-byte, no generated substitute"
+    },
+    {
+      "id": "T05-13",
+      "requirement": "Host strict AssertFormat validation remains authoritative"
+    },
+    {
+      "id": "T05-14",
+      "requirement": "Malformed/null/missing/unknown fields rejected before handler"
+    },
+    {
+      "id": "T05-15",
+      "requirement": "RFC3339 format, alias/ref/additionalProperties remain enforced"
+    },
+    {
+      "id": "T05-16",
+      "requirement": "Explicit zero and numeric bounds retain baseline behavior"
+    },
+    {
+      "id": "T05-17",
+      "requirement": "Opaque IDs above2^53 and Unicode remain exact"
+    },
+    {
+      "id": "T05-18",
+      "requirement": "First-slice app handler invocation count exactly one"
+    },
+    {
+      "id": "T05-19",
+      "requirement": "FTS/budget trimming remain single-query continuation, not repeated execution"
+    },
+    {
+      "id": "T05-20",
+      "requirement": "Other reads/commands/archive/source_id routes remain previous paths untilT06/T07"
+    },
+    {
+      "id": "T05-21",
+      "requirement": "Native full-message resources independently recheck current policy via app ports"
+    },
+    {
+      "id": "T05-22",
+      "requirement": "Existing admission/rate-limit called exactly once before dispatch"
+    },
+    {
+      "id": "T05-23",
+      "requirement": "Existing deadlines/cancellation propagate through view and app ports"
+    },
+    {
+      "id": "T05-24",
+      "requirement": "Domain errors survive toolsy wrapping, safe existing wire mapper retained"
+    },
+    {
+      "id": "T05-25",
+      "requirement": "Runtime validation/policy/internal errors map to bounded existing domain envelopes"
+    },
+    {
+      "id": "T05-26",
+      "requirement": "Existing result schemas and text/structured/resource-link projection retain parity"
+    },
+    {
+      "id": "T05-27",
+      "requirement": "Original64KiB wire sizing/context clipping/resource1MiB budgets remain unchanged"
+    },
+    {
+      "id": "T05-28",
+      "requirement": "Annotations/descriptions/catalog sorting exactly baseline"
+    },
+    {
+      "id": "T05-29",
+      "requirement": "OperationProfile/filejournal/result cache/retry dispatch not introduced"
+    },
+    {
+      "id": "T05-30",
+      "requirement": "No persistence/DB/session/worker/ledger ownership change"
+    },
+    {
+      "id": "T05-31",
+      "requirement": "Runtime lifetime composition borrowed; no percall shutdown/shared cancellation leak"
+    },
+    {
+      "id": "T05-32",
+      "requirement": "No MCP/SQL/storage/managers/ai-libs imports in app/domain"
+    },
+    {
+      "id": "T05-33",
+      "requirement": "No SDK export/protocol parser/new transport introduced in runtime"
+    },
+    {
+      "id": "T05-34",
+      "requirement": "No widened backend architecture exceptions; architecture100/100+negative controls"
+    },
+    {
+      "id": "T05-35",
+      "requirement": "Relevant HTTP/STDIO/resources/discovery/input/contract tests PASS"
+    },
+    {
+      "id": "T05-36",
+      "requirement": "Meaningful runtime invocation/unauthorized/malformed counters PASS"
+    },
+    {
+      "id": "T05-37",
+      "requirement": "Race checks on shared registry/concurrent distinct calls PASS"
+    },
+    {
+      "id": "T05-38",
+      "requirement": "Root tests/vet and production graph isolation PASS"
+    },
+    {
+      "id": "T05-39",
+      "requirement": "Frozen baseline remains original business with accepted T03 overlay"
+    },
+    {
+      "id": "T05-40",
+      "requirement": "Offline evaluation search/context/resources and existing safety suite PASS"
+    },
+    {
+      "id": "T05-41",
+      "requirement": "Raw command/source/binary/eval evidence retained with NOT_RUN model/live and SDK deferred"
+    },
+    {
+      "id": "T05-42",
+      "requirement": "Two independent samecandidate reviewers100% completeness and correctnessPASS before sole task commit"
+    }
+  ],
+  "non_goals": [
+    "T06 all reads/archive/Events",
+    "T07 commands",
+    "T08 metrics",
+    "T09 performance",
+    "SDK-01 ID fix",
+    "model/live execution"
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01"
+}

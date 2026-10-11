@@ -1,0 +1,3 @@
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	0.976s
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	5.963s
+ok  	github.com/skosovsky/zl-mcp/internal/storage	(cached)

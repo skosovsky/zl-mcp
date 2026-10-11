@@ -219,3 +219,9 @@ func conversationResult(ctx context.Context, reads ReadPort, r ConversationReque
 	out.CoverageSummary = summary
 	return out, err
 }
+
+// AccessPort preserves native preflight/cursor error ordering before dispatch.
+type AccessPort interface {
+	CheckGroupSearch(context.Context, GroupRequest) error
+	CheckConversationSearch(context.Context, ConversationRequest) error
+}

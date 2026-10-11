@@ -29,7 +29,7 @@ func TestMCPHistoryImportDiscoveryStatusAndReads(t *testing.T) {
 		t.Fatal(err)
 	}
 	reader := storeadapter.New(s)
-	server, err := mcpserver.NewWithControl(s, &historyimport.Manager{Store: s}, mcpserver.ReadPorts{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader}})
+	server, err := mcpserver.NewWithControl(s, &historyimport.Manager{Store: s}, mcpserver.ReadPorts{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader}, Authority: reader})
 	if err != nil {
 		t.Fatal(err)
 	}

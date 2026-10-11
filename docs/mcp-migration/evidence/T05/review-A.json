@@ -1,0 +1,477 @@
+{
+  "task": "T05",
+  "reviewer": "A independent completeness",
+  "parent_sha": "775d3a271110b2771a9cc0ac63d3f51151481e53",
+  "candidate_source_digest": "4860680b8d2b0b4e878d6332248a40c316e59da983438c892fe9a905353369c6",
+  "source_tree_sha1": "92cf51946c3a08c81a9564ad9d6684c3bb0947e4",
+  "required_total": 42,
+  "verified_pass": 42,
+  "completeness_percent": 100,
+  "formula": "100 * verified_pass / required_total",
+  "status": "PASS",
+  "requirements": [
+    {
+      "id": "T05-01",
+      "requirement": "Accepted T04 SHA/tree/source verified; earlier task evidence not reopened",
+      "evidence": [
+        "T04-postcommit.json",
+        "git HEAD accepted775d3a2; no earlier evidence diff"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-02",
+      "requirement": "Consumer runtime contract fixed before implementation; initial/final candidate recorded",
+      "evidence": [
+        "toolruntime-boundary.md",
+        "initial-candidate.json",
+        "candidate-final.json",
+        "candidate-source-tree.json; independently recomputed exact source digest"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-03",
+      "requirement": "Pinned public toolsy v0.20.0 root module consumer, no sibling replace/vendor edits",
+      "evidence": [
+        "go.mod toolsy v0.20.0",
+        "dependency.log",
+        "go.sum; no third_party/sibling diff"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-04",
+      "requirement": "Normative internal/toolruntime exclusively owns toolsy integration",
+      "evidence": [
+        "internal/toolruntime/reads.go",
+        "architecture-v2.json production graph"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-05",
+      "requirement": "Native SDK AddTool and transport/resource registrations retained",
+      "evidence": [
+        "internal/mcpserver/server.go AddTool/AddResource/ResourceTemplate retained",
+        "no HTTP/STDIO transport diff"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-06",
+      "requirement": "Four first-slice search/context tools execute through RegistryView.Execute",
+      "evidence": [
+        "internal/toolruntime/reads.go Execute invokes private RegistryView.Execute",
+        "runtime_invocation_test.go",
+        "review-A-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-07",
+      "requirement": "Immutable root registry/view built once; invocation-owned call/environment",
+      "evidence": [
+        "internal/toolruntime/reads.go NewReads immutable builder/view, per Execute ToolCall/NewRunEnv"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-08",
+      "requirement": "Trusted subject/scope resolved by host, never from model args/message content",
+      "evidence": [
+        "internal/toolruntime/reads.go private subject/scope/Binding owner",
+        "internal/adapters/store/authority.go ReadIdentity",
+        "internal/storage/read_authority.go account/revision"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-09",
+      "requirement": "Account/current collection policy enforced; untrusted/direct invocation denied before app dispatch",
+      "evidence": [
+        "toolruntime decide resolves ReadIdentity and Check*Access before dispatch",
+        "reads_test.go revocation/current-policy/direct denial counters",
+        "review-A-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-10",
+      "requirement": "Call from other capability owner/scope cannot reuse authorization",
+      "evidence": [
+        "reads_test.go TestReadRuntimeRejectsUntrustedAndForeignCalls zero/foreign/direct view deny",
+        "review-A-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-11",
+      "requirement": "Compatibility binder only baseline limit/before/after numeric strings and defaults",
+      "evidence": [
+        "internal/toolruntime/binder.go unchanged baseline conversion logic",
+        "git diff server.go",
+        "normalization tests"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-12",
+      "requirement": "Schema source docs/contracts retained byte-for-byte, no generated substitute",
+      "evidence": [
+        "git diff docs/contracts empty",
+        "toolruntime NewProxyTool contracts.Document input/output"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-13",
+      "requirement": "Host strict AssertFormat validation remains authoritative",
+      "evidence": [
+        "docs/contracts/contracts.go Compile AssertFormat",
+        "Execute and decide compiled schema validation"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-14",
+      "requirement": "Malformed/null/missing/unknown fields rejected before handler",
+      "evidence": [
+        "reads_test.go TestReadRuntimeInvalidArgumentsNeverDispatch",
+        "root MCP contract/migration input tests",
+        "root-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-15",
+      "requirement": "RFC3339 format, alias/ref/additionalProperties remain enforced",
+      "evidence": [
+        "original contracts compilation unchanged",
+        "runtime RFC3339 tests",
+        "root-tests.log contracts suite"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-16",
+      "requirement": "Explicit zero and numeric bounds retain baseline behavior",
+      "evidence": [
+        "binder intArg preserves numeric0/missing fallback",
+        "context zero success/search0 invalid schema tests",
+        "review-A-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-17",
+      "requirement": "Opaque IDs above2^53 and Unicode remain exact",
+      "evidence": [
+        "reads_test.go big string IDs/Unicode",
+        "runtime_invocation_test.go actual SDK resource",
+        "review-A-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-18",
+      "requirement": "First-slice app handler invocation count exactly one",
+      "evidence": [
+        "runtime_invocation_test.go counters four accepted tools exactly1 each, rejected0",
+        "review-A-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-19",
+      "requirement": "FTS/budget trimming remain single-query continuation, not repeated execution",
+      "evidence": [
+        "Result GroupExecution/ConversationExecution retains native Page continuation",
+        "mcpserver budget loops unchanged",
+        "read_boundary_test.go observed pages/trims",
+        "review-A-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-20",
+      "requirement": "Other reads/commands/archive/source_id routes remain previous paths untilT06/T07",
+      "evidence": [
+        "server.go diff only four slice branches; other branches original",
+        "conversations.go/http.go unchanged",
+        "binder extracted byte-equivalent logic"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-21",
+      "requirement": "Native full-message resources independently recheck current policy via app ports",
+      "evidence": [
+        "native resource handlers continue app Message calls",
+        "read_boundary_test.go current denial after prior read",
+        "root-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-22",
+      "requirement": "Existing admission/rate-limit called exactly once before dispatch",
+      "evidence": [
+        "runtime_invocation_test.go actual SQLite statement triggers count tool calls+resource exactly7",
+        "review-A-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-23",
+      "requirement": "Existing deadlines/cancellation propagate through view and app ports",
+      "evidence": [
+        "Execute ctx -> RegistryView.Execute -> dispatch/app adapters unchanged inherited context",
+        "reads_test.go cancellation",
+        "root tests deadlines"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-24",
+      "requirement": "Domain errors survive toolsy wrapping, safe existing wire mapper retained",
+      "evidence": [
+        "mapError errors.As domain.Error, policy Decision.Err",
+        "existing failure safe wire mapper unchanged",
+        "reads_test.go domain/technical failure"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-25",
+      "requirement": "Runtime validation/policy/internal errors map to bounded existing domain envelopes",
+      "evidence": [
+        "runtime invalidSchema/permission fixed bounded domain fields",
+        "failure projects private technical cause via domain.AsError",
+        "offline error evidence"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-26",
+      "requirement": "Existing result schemas and text/structured/resource-link projection retain parity",
+      "evidence": [
+        "MCP encode/project output untouched",
+        "NewProxyTool WithOutputSchema original docs",
+        "root discovery/contract tests and offline report"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-27",
+      "requirement": "Original64KiB wire sizing/context clipping/resource1MiB budgets remain unchanged",
+      "evidence": [
+        "MCP size/trim code unchanged64KiB",
+        "storage context clipping retained20KiB",
+        "native resource1MiB unchanged",
+        "boundary budget tests"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-28",
+      "requirement": "Annotations/descriptions/catalog sorting exactly baseline",
+      "evidence": [
+        "server AddTool descriptors/annotations unchanged",
+        "contracts names order unchanged",
+        "root discovery snapshots PASS"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-29",
+      "requirement": "OperationProfile/filejournal/result cache/retry dispatch not introduced",
+      "evidence": [
+        "runtime only builder/view/policy/NewRunEnv/ProxyTool; no OperationProfile/session/filejournal/cache/retry",
+        "production graph"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-30",
+      "requirement": "No persistence/DB/session/worker/ledger ownership change",
+      "evidence": [
+        "storage changes preflight factoring only; no SQL schema/migration change",
+        "borrowed Reader authority",
+        "service/evalfixture lifetime unchanged"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-31",
+      "requirement": "Runtime lifetime composition borrowed; no percall shutdown/shared cancellation leak",
+      "evidence": [
+        "immutable runtime root retains borrowed handlers, invocation-owned values",
+        "no runtime close/session/cancel fields",
+        "concurrent invocation test/race.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-32",
+      "requirement": "No MCP/SQL/storage/managers/ai-libs imports in app/domain",
+      "evidence": [
+        "app/domain production imports no SDK/SQL/concrete/ai libs",
+        "architecture-v2.json active100/100"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-33",
+      "requirement": "No SDK export/protocol parser/new transport introduced in runtime",
+      "evidence": [
+        "toolruntime imports only host/contracts/apps/domain/jsonschema/toolsy",
+        "no SDK export/parser/transport"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-34",
+      "requirement": "No widened backend architecture exceptions; architecture100/100+negative controls",
+      "evidence": [
+        "arch-go.yml diff narrow standard imports only",
+        "architecture-v2.json100/100+10 isolated+all-build controls"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-35",
+      "requirement": "Relevant HTTP/STDIO/resources/discovery/input/contract tests PASS",
+      "evidence": [
+        "root-tests.log actual all packages including contracts/MCP/service/historyimport",
+        "runtime-tests-v2.log",
+        "offline report transport suite"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-36",
+      "requirement": "Meaningful runtime invocation/unauthorized/malformed counters PASS",
+      "evidence": [
+        "reads_test.go and runtime_invocation_test.go substantive realstore/SDK counters",
+        "review-A-tests.log independent -count=1"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-37",
+      "requirement": "Race checks on shared registry/concurrent distinct calls PASS",
+      "evidence": [
+        "race.log",
+        "TestReadRuntimeConcurrentInvocationIsolation32 distinct calls through same view",
+        "review-A-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-38",
+      "requirement": "Root tests/vet and production graph isolation PASS",
+      "evidence": [
+        "root-tests.log",
+        "vet.log",
+        "architecture-v2.json production graph isolation"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-39",
+      "requirement": "Frozen baseline remains original business with accepted T03 overlay",
+      "evidence": [
+        "build-v1 build manifest baseline original8d913c4 +T03 overlay da3d7b6",
+        "checks.json baseline identical T04",
+        "baseline-v1/report.json"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-40",
+      "requirement": "Offline evaluation search/context/resources and existing safety suite PASS",
+      "evidence": [
+        "offline-v1/report.json50/50 cases480/480 assertions",
+        "baseline-v1/report.json25/25 cases240/240",
+        "raw traces/effects inspected/index hashes verified"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-41",
+      "requirement": "Raw command/source/binary/eval evidence retained with NOT_RUN model/live and SDK deferred",
+      "evidence": [
+        "checks.json command/hash/status; all log hashes independently matched",
+        "artifact-index.json all artifacts independently SHA verified",
+        "model/liveNOT_RUN SDK deferred explicit"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T05-42",
+      "requirement": "Two independent samecandidate reviewers100% completeness and correctnessPASS before sole task commit",
+      "evidence": [
+        "review-A.json independent first report41/42 before B read",
+        "review-B.json independent correctness PASS zero findings same source digest/tree",
+        "candidate.py recomputed unchanged source digest after peer gate"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    }
+  ],
+  "findings": [],
+  "independent_checks": [
+    {
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test -count=1 ./internal/toolruntime ./internal/mcpserver -run 'TestReadRuntime|TestRuntimeSDKDispatchAndSingleAdmission|TestReadBoundary'",
+      "log": "review-A-tests.log",
+      "exit_status": 0
+    }
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01",
+  "scope": "T05 limited offline; T01-T04 not reopened; performance T09",
+  "final_gate_recheck": "B PASS and source unchanged verified; all42equal leaves PASS; commit remains parent responsibility."
+}

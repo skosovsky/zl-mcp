@@ -66,3 +66,9 @@ func (h *Handler) Message(ctx context.Context, r MessageRequest) (domain.Message
 	}
 	return h.Reads.Message(ctx, r)
 }
+
+// AccessPort checks current context access before a handler selects its anchor.
+type AccessPort interface {
+	CheckGroupContext(context.Context, ContextRequest) error
+	CheckConversationContext(context.Context, ContextRequest) error
+}

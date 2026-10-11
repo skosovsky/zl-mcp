@@ -1,0 +1,5 @@
+ok  	github.com/skosovsky/zl-mcp/internal/storage	4.011s
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	(cached)
+?   	github.com/skosovsky/zl-mcp/internal/app/search	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/shared	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/adapters/store	[no test files]

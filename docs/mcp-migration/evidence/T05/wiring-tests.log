@@ -1,0 +1,5 @@
+?   	github.com/skosovsky/zl-mcp/internal/toolruntime	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	6.496s
+ok  	github.com/skosovsky/zl-mcp/internal/service	11.118s
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	0.916s
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	1.334s
