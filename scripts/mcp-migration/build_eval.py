@@ -12,6 +12,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = '8d913c48b797f54f277ffc1106e6bf28be9e697d'
+HARNESS = 'da3d7b6f0369f85e58d17b546c933b362c342224'
 
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -24,6 +25,8 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     env = dict(os.environ, GOWORK='off')
     manifest = {'status': 'FAIL', 'baseline_sha': BASELINE,
+                'harness_overlay_sha': HARNESS,
+                'harness_overlay_tree': subprocess.check_output(['git', 'rev-parse', HARNESS + '^{tree}'], cwd=ROOT, text=True).strip(),
                 'baseline_tree': subprocess.check_output(['git', 'rev-parse', BASELINE + '^{tree}'], cwd=ROOT, text=True).strip(),
                 'candidate_parent_sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                 'toolchain': subprocess.check_output(['go', 'version'], env=env, text=True).strip(),
@@ -36,15 +39,16 @@ def main():
             archive = subprocess.check_output(['git', 'archive', BASELINE], cwd=ROOT)
             with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
                 tar.extractall(source, filter='data')
-            overlays = [ROOT / 'go.mod', ROOT / 'go.sum', ROOT / 'internal/service/archive_port.go']
-            for package in ['internal/evaluation', 'internal/evalfixture', 'cmd/zl-mcp-eval']:
-                overlays.extend(p for p in (ROOT / package).rglob('*.go') if not p.name.endswith('_test.go'))
-            for path in sorted(overlays):
-                relative = path.relative_to(ROOT)
+            # Never copy candidate app/composition changes into the frozen baseline.
+            listed = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', HARNESS], cwd=ROOT, text=True).splitlines()
+            overlays = [name for name in listed if name in ['go.mod', 'go.sum', 'internal/service/archive_port.go'] or
+                        (name.startswith(('internal/evaluation/', 'internal/evalfixture/', 'cmd/zl-mcp-eval/')) and name.endswith('.go') and not name.endswith('_test.go'))]
+            for relative in sorted(overlays):
+                data = subprocess.check_output(['git', 'show', HARNESS + ':' + relative], cwd=ROOT)
                 target = source / relative
                 target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_bytes(path.read_bytes())
-                manifest['overlay'].append({'path': str(relative), 'sha256': sha(path)})
+                target.write_bytes(data)
+                manifest['overlay'].append({'path': relative, 'sha256': hashlib.sha256(data).hexdigest(), 'source_commit': HARNESS})
             manifest['overlay_purpose'] = 'Only fixture/driver plus forwarding archive constructor and pinned harness dependency/toolchain; frozen business implementations unchanged'
             for name, work in [('baseline', source), ('candidate', ROOT)]:
                 binary = output / ('zl-mcp-eval-' + name)

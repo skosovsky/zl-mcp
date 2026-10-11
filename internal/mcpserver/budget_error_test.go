@@ -30,7 +30,7 @@ func TestOversizedRecordAndCoverageReturnActionableErrors(t *testing.T) {
 	if err = store.Put(ctx, domain.Message{GroupID: "g", ID: "m", SenderID: "sender", SentAt: time.Now(), Text: "Ремонт", Source: "live"}); err != nil {
 		t.Fatal(err)
 	}
-	server, err := New(store, dir)
+	server, err := New(store, dir, migrationReadPorts(store))
 	if err != nil {
 		t.Fatal(err)
 	}

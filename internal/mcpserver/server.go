@@ -17,6 +17,8 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/skosovsky/zl-mcp/docs/contracts"
+	"github.com/skosovsky/zl-mcp/internal/app/conversations"
+	"github.com/skosovsky/zl-mcp/internal/app/search"
 	"github.com/skosovsky/zl-mcp/internal/control"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
@@ -54,21 +56,26 @@ type ControlPort interface {
 }
 
 type Service struct {
-	Store   *storage.Store
-	Control ControlPort
-	input   map[string]*jsonschema.Schema
-	output  map[string]*jsonschema.Schema
+	Store         *storage.Store
+	Control       ControlPort
+	input         map[string]*jsonschema.Schema
+	output        map[string]*jsonschema.Schema
+	search        *search.Handler
+	conversations *conversations.Handler
 }
 
-func New(store *storage.Store, dir string) (*mcp.Server, error) {
-	return NewWithControl(store, control.New(dir))
+func New(store *storage.Store, dir string, reads ReadPorts) (*mcp.Server, error) {
+	return NewWithControl(store, control.New(dir), reads)
 }
 
-func NewWithControl(store *storage.Store, backend ControlPort) (*mcp.Server, error) {
+func NewWithControl(store *storage.Store, backend ControlPort, reads ReadPorts) (*mcp.Server, error) {
 	if backend == nil {
 		return nil, fmt.Errorf("membership control port is required")
 	}
-	s := &Service{Store: store, Control: backend, input: map[string]*jsonschema.Schema{}, output: map[string]*jsonschema.Schema{}}
+	if store == nil || reads.Search == nil || reads.Conversations == nil || reads.Search.Reads == nil || reads.Conversations.Reads == nil {
+		return nil, fmt.Errorf("storage owner and typed read ports are required")
+	}
+	s := &Service{Store: store, Control: backend, search: reads.Search, conversations: reads.Conversations, input: map[string]*jsonschema.Schema{}, output: map[string]*jsonschema.Schema{}}
 	server := mcp.NewServer(&mcp.Implementation{Name: "zl-mcp", Version: "0.1.0-dev"}, nil)
 	for _, name := range contracts.Names() {
 		inp, e := contracts.Compile(name, "input")
@@ -139,7 +146,7 @@ func NewWithControl(store *storage.Store, backend ControlPort) (*mcp.Server, err
 		if e != nil {
 			return nil, e
 		}
-		m, e := store.Message(ctx, g, id)
+		m, e := s.conversations.Message(ctx, conversations.MessageRequest{Conversation: domain.ConversationRef{Type: domain.ConversationGroup, ID: g}, MessageID: id, LegacyGroup: true})
 		if e != nil {
 			return nil, fmt.Errorf("message unavailable or access denied")
 		}
@@ -208,7 +215,8 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 		return failure(domain.Invalid("Arguments do not match the tool schema; check types, required fields, ranges and RFC3339 dates."))
 	}
 	var result map[string]any
-	var page *storage.SearchPage
+	var groupPage *search.GroupExecution
+	var conversationPage *search.ConversationExecution
 	var e error
 	switch name {
 	case "zalo_list_archive_sources":
@@ -238,13 +246,17 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 	case "zalo_get_conversation":
 		result, e = s.Store.Conversation(ctx, conversationRef(args))
 	case "zalo_get_conversation_message_context":
-		result, e = s.Store.ConversationContext(ctx, conversationRef(args), str(args, "message_id"), integer(args, "before", 5), integer(args, "after", 5))
-	case "zalo_search_conversation_messages":
-		q := conversationSearch(args)
-		page, e = s.Store.Page(ctx, q)
+		var value conversations.ConversationContext
+		value, e = s.conversations.ConversationContext(ctx, contextRequest(args, false))
 		if e == nil {
-			result, e = s.Store.ConversationSearchResult(ctx, q, page)
+			result, e = conversationReadResult(value)
 		}
+	case "zalo_search_conversation_messages":
+		conversationPage, e = s.search.Conversation(ctx, conversationSearchRequest(args))
+		if e == nil {
+			result, e = conversationReadResult(conversationPage.Result)
+		}
+
 	case "zalo_get_status":
 		result, e = s.Store.State(ctx)
 	case "zalo_list_groups":
@@ -264,11 +276,15 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 		result, e = s.Control.Call(q, name, args)
 		cancel()
 	case "zalo_get_message_context":
-		result, e = s.Store.Context(ctx, str(args, "group_id"), str(args, "message_id"), integer(args, "before", 5), integer(args, "after", 5))
-	case "zalo_search_messages":
-		page, e = s.Store.Page(ctx, storage.Search{Query: str(args, "query"), GroupID: str(args, "group_id"), SenderID: str(args, "sender_id"), Since: str(args, "since"), Until: str(args, "until"), Limit: integer(args, "limit", 20), Cursor: str(args, "cursor")})
+		var value conversations.GroupContext
+		value, e = s.conversations.GroupContext(ctx, contextRequest(args, true))
 		if e == nil {
-			result, e = s.searchResult(ctx, args, page)
+			result = groupContextResult(value)
+		}
+	case "zalo_search_messages":
+		groupPage, e = s.search.Group(ctx, groupSearchRequest(args))
+		if e == nil {
+			result = groupSearchResult(groupPage.Result)
 		}
 
 	}
@@ -316,13 +332,11 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 				result, e = s.Store.Conversations(ctx, str(args, "conversation_type"), str(args, "query"), len(values)-1, str(args, "cursor"))
 			}
 		case "zalo_search_conversation_messages":
-			if len(page.Hits) < 2 {
-				return failure(domain.ResponseTooLarge("One search record or coverage exceeds the response budget.", "Select a conversation with less metadata or report the limitation."))
-			}
-			e = s.Store.ShortenPage(page, len(page.Hits)-1)
+			e = conversationPage.Shorten(ctx)
 			if e == nil {
-				result, e = s.Store.ConversationSearchResult(ctx, conversationSearch(args), page)
+				result, e = conversationReadResult(conversationPage.Result)
 			}
+
 		case "zalo_list_groups":
 			groups := result["groups"].([]domain.Group)
 			if len(groups) < 2 {
@@ -330,13 +344,11 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 			}
 			result, e = s.Store.Groups(ctx, str(args, "query"), len(groups)-1, str(args, "cursor"))
 		case "zalo_search_messages":
-			if len(page.Hits) < 2 {
-				return failure(domain.ResponseTooLarge("One search record or its coverage exceeds the response budget.", "Select a different group with less metadata. If a selected group still exceeds the limit, report the limitation rather than repeating the same query."))
-			}
-			e = s.Store.ShortenPage(page, len(page.Hits)-1)
+			e = groupPage.Shorten(ctx)
 			if e == nil {
-				result, e = s.searchResult(ctx, args, page)
+				result = groupSearchResult(groupPage.Result)
 			}
+
 		default:
 			return failure(domain.ResponseTooLarge("Result exceeds the response budget.", "Report that this result cannot fit within the response limit; do not repeat the same request blindly."))
 		}
@@ -365,43 +377,4 @@ func (s *Service) encode(name string, result map[string]any) (*mcp.CallToolResul
 		}
 	}
 	return &mcp.CallToolResult{StructuredContent: wire, Content: contents}, nil
-}
-func (s *Service) searchResult(ctx context.Context, args map[string]any, page *storage.SearchPage) (map[string]any, error) {
-	coverage := []domain.Coverage{}
-	seen := map[string]bool{}
-	for _, h := range page.Hits {
-		if seen[h.GroupID] {
-			continue
-		}
-		seen[h.GroupID] = true
-		c, err := s.Store.Coverage(ctx, h.GroupID)
-		if err != nil {
-			return nil, err
-		}
-		coverage = append(coverage, c)
-	}
-	if len(page.Hits) == 0 && str(args, "group_id") != "" {
-		c, err := s.Store.Coverage(ctx, str(args, "group_id"))
-		if err != nil {
-			return nil, err
-		}
-		coverage = append(coverage, c)
-	}
-	var reason *string
-	if len(page.Hits) == 0 {
-		v := "no_matches"
-		state, err := s.Store.State(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if state["stored_message_count"].(int) == 0 || (str(args, "group_id") != "" && len(coverage) == 1 && coverage[0].EarliestStoredAt == nil) {
-			v = "no_collected_data"
-		}
-		reason = &v
-	}
-	summary, err := s.Store.Summary(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return map[string]any{"messages": page.Hits, "has_more": page.NextCursor != nil, "next_cursor": page.NextCursor, "empty_reason": reason, "coverage": coverage, "coverage_summary": summary, "snapshot_at": page.SnapshotAt}, nil
 }

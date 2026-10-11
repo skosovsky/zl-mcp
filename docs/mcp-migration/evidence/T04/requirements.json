@@ -1,0 +1,180 @@
+{
+  "task": "T04",
+  "parent_sha": "da3d7b6f0369f85e58d17b546c933b362c342224",
+  "required_total": 40,
+  "formula": "100 * verified_pass / required_total",
+  "requirements": [
+    {
+      "id": "T04-01",
+      "requirement": "Accepted T03 SHA/tree/source digest verified; no previous task reopened"
+    },
+    {
+      "id": "T04-02",
+      "requirement": "Initial/final candidate parent and source digest recorded before review"
+    },
+    {
+      "id": "T04-03",
+      "requirement": "Contract/ADR and consumer-owned typed read DTOs/ports fixed before implementation"
+    },
+    {
+      "id": "T04-04",
+      "requirement": "Normative internal/app/search and internal/app/conversations packages exist"
+    },
+    {
+      "id": "T04-05",
+      "requirement": "Normative internal/adapters/store implements both capability read ports"
+    },
+    {
+      "id": "T04-06",
+      "requirement": "App imports only domain/shared/pure standard types; no MCP/SQL/storage/managers/ai-libs"
+    },
+    {
+      "id": "T04-07",
+      "requirement": "No universal map[string]any app API or generic bus/repository"
+    },
+    {
+      "id": "T04-08",
+      "requirement": "Both group and typed-conversation search invoke app handlers"
+    },
+    {
+      "id": "T04-09",
+      "requirement": "Both group and typed-conversation context invoke app handlers"
+    },
+    {
+      "id": "T04-10",
+      "requirement": "Group and typed-conversation full-message resources invoke same app read ports"
+    },
+    {
+      "id": "T04-11",
+      "requirement": "Consumer-owned search page and native continuation remain invocation-owned"
+    },
+    {
+      "id": "T04-12",
+      "requirement": "FTS executes once; response shrink uses native continuation without new FTS query"
+    },
+    {
+      "id": "T04-13",
+      "requirement": "Group search hit order/IDs/excerpts/citations unchanged"
+    },
+    {
+      "id": "T04-14",
+      "requirement": "Typed direct/group search namespaces and opaque IDs remain distinct and precise"
+    },
+    {
+      "id": "T04-15",
+      "requirement": "Signed cursor fingerprint/high-water/snapshot continuation preserved"
+    },
+    {
+      "id": "T04-16",
+      "requirement": "Group coverage deduplication, empty explicit group and summary preserved"
+    },
+    {
+      "id": "T04-17",
+      "requirement": "Typed coverage deduplication/empty selected conversation and summary preserved"
+    },
+    {
+      "id": "T04-18",
+      "requirement": "Empty reasons/no-collected-data versus no-matches preserved"
+    },
+    {
+      "id": "T04-19",
+      "requirement": "Context anchor/neighbor order/reply handling preserved"
+    },
+    {
+      "id": "T04-20",
+      "requirement": "Context clipping20KiB/omitted IDs/next_action unchanged"
+    },
+    {
+      "id": "T04-21",
+      "requirement": "Typed message/coverage projection and null/empty array semantics preserved"
+    },
+    {
+      "id": "T04-22",
+      "requirement": "Existing64KiB wire response sizing/schema validation/resource links preserved"
+    },
+    {
+      "id": "T04-23",
+      "requirement": "Full-text resource1MiB cap and URI grammar unchanged"
+    },
+    {
+      "id": "T04-24",
+      "requirement": "Resource access rechecks current collection policy independent of prior search"
+    },
+    {
+      "id": "T04-25",
+      "requirement": "Bounded error projection sanitizes storage errors; NOT_FOUND parity preserved"
+    },
+    {
+      "id": "T04-26",
+      "requirement": "Existing input schema formats/defaults/numeric-string normalization/zero bounds unchanged"
+    },
+    {
+      "id": "T04-27",
+      "requirement": "Admission and cancellation remain single original gates"
+    },
+    {
+      "id": "T04-28",
+      "requirement": "Descriptors/catalog/annotations/text and structured projection unchanged"
+    },
+    {
+      "id": "T04-29",
+      "requirement": "No DB/schema/cursor/grant/ledger/queue persistence contract change"
+    },
+    {
+      "id": "T04-30",
+      "requirement": "No second DB/session/workers or reads ownership/shutdown added"
+    },
+    {
+      "id": "T04-31",
+      "requirement": "Service and fixture compose borrowed adapter and typed handlers; wire has no adapter import"
+    },
+    {
+      "id": "T04-32",
+      "requirement": "Internal construction callsites updated atomically; external MCP protocol preserved"
+    },
+    {
+      "id": "T04-33",
+      "requirement": "Archive/source_id routes remain exact legacy ControlPort; common source read contract documented"
+    },
+    {
+      "id": "T04-34",
+      "requirement": "Other read/command/Event routes remain baseline with existing exact exceptions"
+    },
+    {
+      "id": "T04-35",
+      "requirement": "Frozen T01 business baseline/T03 harness builds retain versioned overlay, independent fixture"
+    },
+    {
+      "id": "T04-36",
+      "requirement": "Relevant contract/storage/MCP HTTP/STDIO/resource tests PASS"
+    },
+    {
+      "id": "T04-37",
+      "requirement": "Application/fake-port boundary/FTS-trim counters and permission controls PASS"
+    },
+    {
+      "id": "T04-38",
+      "requirement": "Offline evaluation required search/context/resources subset and existing safety suite PASS"
+    },
+    {
+      "id": "T04-39",
+      "requirement": "Architecture100/100 and production dependency isolation PASS with no new backend exception"
+    },
+    {
+      "id": "T04-40",
+      "requirement": "Two independent same-candidate reviews completeness100% and correctnessPASS before sole taskcommit"
+    }
+  ],
+  "non_goals": [
+    "T05 toolsy runtime integration",
+    "T06 full read/archive/Event migration",
+    "T07 commands migration",
+    "T08 telemetry",
+    "SDK-01 IDfix",
+    "model/live execution",
+    "performance comparison (T09)"
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01"
+}

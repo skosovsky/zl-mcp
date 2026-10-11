@@ -1,0 +1,6 @@
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	1.556s
+?   	github.com/skosovsky/zl-mcp/internal/app/search	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/shared	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/adapters/store	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	69.787s
+ok  	github.com/skosovsky/zl-mcp/internal/storage	141.810s

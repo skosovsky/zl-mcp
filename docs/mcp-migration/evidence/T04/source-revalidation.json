@@ -1,0 +1,16 @@
+{
+  "baseline_v2_sha256": "4b38637e661c4004766a415342141ddc8f4e7786f1691411c1c4a355a4265101",
+  "baseline_v3_sha256": "4b38637e661c4004766a415342141ddc8f4e7786f1691411c1c4a355a4265101",
+  "baseline_binary_identical": true,
+  "overlay_identical": true,
+  "candidate_v2_to_final_changed_files": [
+    "internal/storage/conversation_views.go"
+  ],
+  "change": "restore exact original permission message Conversation is outside collection policy.",
+  "revalidated": [
+    "final-storage-mcp.log",
+    "offline-v3/report.json",
+    "build-v3/build-manifest.json"
+  ],
+  "final_digest": "9101f22bd6effc1458f0ea7b0cfb549f8565cb13a7fbaac33c574639a6ba33e0"
+}

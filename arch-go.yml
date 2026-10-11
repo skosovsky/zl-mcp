@@ -181,7 +181,10 @@
           "^github\\.com/skosovsky/zl\\-mcp/internal/historyimport$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/messaging$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup$",
-          "^github\\.com/skosovsky/zl\\-mcp/internal/service$"
+          "^github\\.com/skosovsky/zl\\-mcp/internal/service$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$"
         ],
         "external": [
           "^github\\.com/modelcontextprotocol/go\\-sdk/mcp$"
@@ -883,6 +886,12 @@
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
           "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^database/sql$",
+          "^encoding/json$",
+          "^errors$"
         ]
       }
     },

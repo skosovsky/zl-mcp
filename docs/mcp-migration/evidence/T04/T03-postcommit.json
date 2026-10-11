@@ -1,0 +1,14 @@
+{
+  "commit": "da3d7b6f0369f85e58d17b546c933b362c342224",
+  "tree": "808da81df0e34c6342a98571af3c17d153cd6677",
+  "subject": "test(eval): add evaly harness and reproducible MCP baseline",
+  "accepted_source_digest": "ef92dd136f7e5ac40e057f741a162a5e90703988b8090ade6ba785f033354a48",
+  "actual_source_digest": "ef92dd136f7e5ac40e057f741a162a5e90703988b8090ade6ba785f033354a48",
+  "source_match": true,
+  "worktree_status_before_t04": "",
+  "completeness": 100,
+  "correctness": "PASS",
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01"
+}

@@ -31,14 +31,20 @@ func coverageView(c domain.Coverage, ref domain.ConversationRef) map[string]any 
 	v["conversation_id"] = ref.ID
 	return v
 }
-func (s *Store) ConversationCoverage(ctx context.Context, ref domain.ConversationRef) (map[string]any, error) {
+
+// ConversationCoverageValue preserves native domain values for read adapters.
+// The existing map view delegates to the same access check and SQL implementation.
+func (s *Store) ConversationCoverageValue(ctx context.Context, ref domain.ConversationRef) (domain.Coverage, error) {
 	if !ref.Valid() {
-		return nil, domain.Invalid("Typed conversation required.")
+		return domain.Coverage{}, domain.Invalid("Typed conversation required.")
 	}
 	if !s.AllowsConversation(ref) {
-		return nil, subscriptionPermission("Conversation is outside collection policy.")
+		return domain.Coverage{}, subscriptionPermission("Conversation is outside collection policy.")
 	}
-	c, err := s.conversationCoverage(ctx, ref)
+	return s.conversationCoverage(ctx, ref)
+}
+func (s *Store) ConversationCoverage(ctx context.Context, ref domain.ConversationRef) (map[string]any, error) {
+	c, err := s.ConversationCoverageValue(ctx, ref)
 	if err != nil {
 		return nil, err
 	}

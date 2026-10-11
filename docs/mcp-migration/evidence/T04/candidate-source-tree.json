@@ -1,0 +1,6 @@
+{
+  "parent_sha": "da3d7b6f0369f85e58d17b546c933b362c342224",
+  "source_digest_sha256": "9101f22bd6effc1458f0ea7b0cfb549f8565cb13a7fbaac33c574639a6ba33e0",
+  "source_tree_sha1": "0e3e9d0b0b3011af860e57a0d5d2148aa7553666",
+  "scope": "source tree excludes evidence and spec-review; same canonical candidate.py paths"
+}

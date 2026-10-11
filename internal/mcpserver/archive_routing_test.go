@@ -31,7 +31,7 @@ func TestArchiveRequestsNeverFallBackToCorpus(t *testing.T) {
 	}
 	defer store.Close()
 	backend := &archiveRoutingControl{}
-	service := &Service{Store: store, Control: backend, input: map[string]*jsonschema.Schema{}, output: map[string]*jsonschema.Schema{}}
+	service := withMigrationReads(&Service{Store: store, Control: backend, input: map[string]*jsonschema.Schema{}, output: map[string]*jsonschema.Schema{}})
 	for _, name := range []string{"zalo_list_archive_sources", "zalo_list_conversations", "zalo_list_conversation_messages"} {
 		service.input[name], err = contracts.Compile(name, "input")
 		if err != nil {

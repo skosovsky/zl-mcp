@@ -1,0 +1,448 @@
+{
+  "task": "T04",
+  "reviewer": "A independent completeness",
+  "parent_sha": "da3d7b6f0369f85e58d17b546c933b362c342224",
+  "candidate_source_digest": "9101f22bd6effc1458f0ea7b0cfb549f8565cb13a7fbaac33c574639a6ba33e0",
+  "source_tree_sha1": "0e3e9d0b0b3011af860e57a0d5d2148aa7553666",
+  "required_total": 40,
+  "verified_pass": 40,
+  "completeness_percent": 100,
+  "formula": "100 * verified_pass / required_total",
+  "status": "PASS",
+  "requirements": [
+    {
+      "id": "T04-01",
+      "requirement": "Accepted T03 SHA/tree/source digest verified; no previous task reopened",
+      "evidence": [
+        "T03-postcommit.json",
+        "git HEAD da3d7b6f0369f85e58d17b546c933b362c342224"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-02",
+      "requirement": "Initial/final candidate parent and source digest recorded before review",
+      "evidence": [
+        "initial-candidate.json",
+        "candidate-final.json",
+        "candidate-source-tree.json",
+        "reviewer A independently recomputed candidate.py and obtained exact equality"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-03",
+      "requirement": "Contract/ADR and consumer-owned typed read DTOs/ports fixed before implementation",
+      "evidence": [
+        "docs/mcp-migration/read-boundary.md",
+        "initial-candidate.json",
+        "requirements.json"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-04",
+      "requirement": "Normative internal/app/search and internal/app/conversations packages exist",
+      "evidence": [
+        "internal/app/search/read.go",
+        "internal/app/conversations/read.go"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-05",
+      "requirement": "Normative internal/adapters/store implements both capability read ports",
+      "evidence": [
+        "internal/adapters/store/read.go compile-time conformance to both ReadPort interfaces"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-06",
+      "requirement": "App imports only domain/shared/pure standard types; no MCP/SQL/storage/managers/ai-libs",
+      "evidence": [
+        "app packages imports",
+        "architecture-v2.json active compliance/coverage100"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-07",
+      "requirement": "No universal map[string]any app API or generic bus/repository",
+      "evidence": [
+        "app typed requests/results/ReadPort methods; no map API"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-08",
+      "requirement": "Both group and typed-conversation search invoke app handlers",
+      "evidence": [
+        "internal/mcpserver/server.go search cases",
+        "offline-v3/report.json"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-09",
+      "requirement": "Both group and typed-conversation context invoke app handlers",
+      "evidence": [
+        "internal/mcpserver/server.go context cases",
+        "internal/mcpserver/conversations_test.go"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-10",
+      "requirement": "Group and typed-conversation full-message resources invoke same app read ports",
+      "evidence": [
+        "internal/mcpserver/server.go legacy resource",
+        "internal/mcpserver/conversations.go typed resource"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-11",
+      "requirement": "Consumer-owned search page and native continuation remain invocation-owned",
+      "evidence": [
+        "search.Page private shortening capability and execution-local page",
+        "adapters/store Reader.page captures native page"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-12",
+      "requirement": "FTS executes once; response shrink uses native continuation without new FTS query",
+      "evidence": [
+        "internal/mcpserver/read_boundary_test.go pages=1,trims=1; rerun PASS"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-13",
+      "requirement": "Group search hit order/IDs/excerpts/citations unchanged",
+      "evidence": [
+        "root-tests.log",
+        "storage Page reused without changes",
+        "app group result unchanged hit values"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-14",
+      "requirement": "Typed direct/group search namespaces and opaque IDs remain distinct and precise",
+      "evidence": [
+        "internal/mcpserver/conversations_test.go identity collision",
+        "read_boundary_test.go IDs9007199254740993..995",
+        "app/conversations/read_test.go"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-15",
+      "requirement": "Signed cursor fingerprint/high-water/snapshot continuation preserved",
+      "evidence": [
+        "read_boundary_test.go late backdated insert excluded; cursor preserves remaining original row/snapshot",
+        "pagination_test.go",
+        "native ShortenPage unchanged"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-16",
+      "requirement": "Group coverage deduplication, empty explicit group and summary preserved",
+      "evidence": [
+        "app/search groupResult exact prior MCP searchResult extraction",
+        "root-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-17",
+      "requirement": "Typed coverage deduplication/empty selected conversation and summary preserved",
+      "evidence": [
+        "app/search conversationResult exact prior storage ConversationSearchResult logic",
+        "conversations_test.go"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-18",
+      "requirement": "Empty reasons/no-collected-data versus no-matches preserved",
+      "evidence": [
+        "app/search groupResult/conversationResult",
+        "storage State retained",
+        "offline-v3 cases no-collected/no-matches"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-19",
+      "requirement": "Context anchor/neighbor order/reply handling preserved",
+      "evidence": [
+        "adapters/store GroupContext and ConversationContext delegate existing storage contexts",
+        "conversations_test.go",
+        "root-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-20",
+      "requirement": "Context clipping20KiB/omitted IDs/next_action unchanged",
+      "evidence": [
+        "existing storage clipping untouched",
+        "typed omission/next_action DTOs",
+        "budget_error_test.go",
+        "offline-v3 report"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-21",
+      "requirement": "Typed message/coverage projection and null/empty array semantics preserved",
+      "evidence": [
+        "app/shared/read.go typed DTOs",
+        "GroupContext direct domain values",
+        "conversation map roundtrip adapter and wire",
+        "conversations_test.go empty neighbor arrays"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-22",
+      "requirement": "Existing64KiB wire response sizing/schema validation/resource links preserved",
+      "evidence": [
+        "server.go encode/size and schema gates unchanged",
+        "read_boundary_test.go <=64KiB",
+        "pagination_test.go"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-23",
+      "requirement": "Full-text resource1MiB cap and URI grammar unchanged",
+      "evidence": [
+        "resource1MiB checks/URI parsing unchanged except port invocation",
+        "conversations_test.go escaped resource",
+        "root-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-24",
+      "requirement": "Resource access rechecks current collection policy independent of prior search",
+      "evidence": [
+        "read_boundary_test.go repeat resource calls denied after port policy revocation",
+        "existing Store.Message/ConversationMessage access checks reused"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-25",
+      "requirement": "Bounded error projection sanitizes storage errors; NOT_FOUND parity preserved",
+      "evidence": [
+        "adapters/store readError exact server.failure NOT_FOUND text",
+        "server.failure unchanged private error sanitization",
+        "migration_inputs_test.go NOT_FOUND assertions"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-26",
+      "requirement": "Existing input schema formats/defaults/numeric-string normalization/zero bounds unchanged",
+      "evidence": [
+        "unchanged input schemas/normalize/validation/integer logic",
+        "migration_inputs_test.go",
+        "root-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-27",
+      "requirement": "Admission and cancellation remain single original gates",
+      "evidence": [
+        "unchanged Service.call admission/deferred release and context propagation",
+        "resources admission unchanged",
+        "offline-v3 safety cases"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-28",
+      "requirement": "Descriptors/catalog/annotations/text and structured projection unchanged",
+      "evidence": [
+        "migration_baseline_test.go frozen catalogs",
+        "migration_inputs_test.go text/structured normalization regression test",
+        "server.encode unchanged"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-29",
+      "requirement": "No DB/schema/cursor/grant/ledger/queue persistence contract change",
+      "evidence": [
+        "storage diff only typed coverage value delegates same policy/SQL; no schema/data edits"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-30",
+      "requirement": "No second DB/session/workers or reads ownership/shutdown added",
+      "evidence": [
+        "Reader borrows owner without Open/Close; handlers stateless",
+        "service/mcp_reads.go",
+        "evalfixture/read_ports.go"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-31",
+      "requirement": "Service and fixture compose borrowed adapter and typed handlers; wire has no adapter import",
+      "evidence": [
+        "service/mcp_reads.go",
+        "evalfixture/read_ports.go",
+        "mcpserver imports app only, no adapters"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-32",
+      "requirement": "Internal construction callsites updated atomically; external MCP protocol preserved",
+      "evidence": [
+        "constructor callsites updated in root tests",
+        "root-tests.log includes history/service/MCP/fixture",
+        "HTTP/STDIO tests unchanged expectations"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-33",
+      "requirement": "Archive/source_id routes remain exact legacy ControlPort; common source read contract documented",
+      "evidence": [
+        "read-boundary.md source contract",
+        "server.go archive Control routes unchanged",
+        "archive_routing_test.go"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-34",
+      "requirement": "Other read/command/Event routes remain baseline with existing exact exceptions",
+      "evidence": [
+        "server/conversations diff limited first slice; existing Store/Control paths remain",
+        "architecture-v2.json exact exceptions"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-35",
+      "requirement": "Frozen T01 business baseline/T03 harness builds retain versioned overlay, independent fixture",
+      "evidence": [
+        "scripts/mcp-migration/build_eval.py frozen git show HARNESS/T01 business",
+        "build-v3/build-manifest.json overlay source commits",
+        "baseline-v2/report.json"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-36",
+      "requirement": "Relevant contract/storage/MCP HTTP/STDIO/resource tests PASS",
+      "evidence": [
+        "checks.json hashed logs verified by reviewer A",
+        "root-tests.log",
+        "final-storage-mcp.log",
+        "reviewer A go test app/MCP/storage PASS"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-37",
+      "requirement": "Application/fake-port boundary/FTS-trim counters and permission controls PASS",
+      "evidence": [
+        "read_boundary_test.go real SDK wire/Store counters",
+        "app/conversations/read_test.go fake-port collision predispatch rejection",
+        "boundary-tests.log"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-38",
+      "requirement": "Offline evaluation required search/context/resources subset and existing safety suite PASS",
+      "evidence": [
+        "offline-v3/report.json50/50 cases480/480 assertions",
+        "baseline-v2/report.json25/25 cases240/240 assertions",
+        "all artifact-index hashes independently verified"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-39",
+      "requirement": "Architecture100/100 and production dependency isolation PASS with no new backend exception",
+      "evidence": [
+        "architecture-v2.json active compliance100/coverage100,10isolated controls and4all-build source controls PASS",
+        "production_graph PASS",
+        "arch-go.yml adds exact fixture app/adapter paths only"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    },
+    {
+      "id": "T04-40",
+      "requirement": "Two independent same-candidate reviews completeness100% and correctnessPASS before sole taskcommit",
+      "evidence": [
+        "review-A.json first independent report completed before reading B",
+        "review-B.json independent samecandidate PASS zero findings",
+        "review-B-tests.log uncached relevant suite PASS hash independently verified",
+        "final source digest revalidation exact; no source changes since reviews",
+        "sole taskcommit remains subsequent authorized action after acceptance"
+      ],
+      "status": "PASS",
+      "missing_work": ""
+    }
+  ],
+  "findings": [],
+  "independence": "No implementation; did not read reviewer B verdict before this first report. Inspected normative scope, contracts, changed code, frozen overlay, raw reports/check logs and hashes; independently reran app/MCP/storage tests and candidate digest/artifact integrity.",
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01",
+  "acceptance_scope": "T04 limited offline; no performance acceptance claimed; original SDK baseline limitation retained pending SDK-01.",
+  "final_gate_recheck": "B first independent report validated after A first report; both exact source digest/tree/parent agree. All40 leaves verified. Commit may now follow; no task commit existed before reviews."
+}

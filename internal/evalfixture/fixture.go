@@ -268,10 +268,10 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	if opts.Offline {
 		f.offline, err = newOffline(runCtx, f, opts)
 		if err == nil {
-			f.Server, err = mcpserver.NewWithControl(f.Store, f.offline)
+			f.Server, err = mcpserver.NewWithControl(f.Store, f.offline, fixtureReadPorts(f.Store))
 		}
 	} else {
-		f.Server, err = mcpserver.New(f.Store, dir)
+		f.Server, err = mcpserver.New(f.Store, dir, fixtureReadPorts(f.Store))
 	}
 	if err != nil {
 		return nil, err

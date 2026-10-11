@@ -53,7 +53,7 @@ func TestMigrationInputCharacterization(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			svc := &Service{Store: store, input: map[string]*jsonschema.Schema{tc.tool: schema}, output: map[string]*jsonschema.Schema{tc.tool: output}}
+			svc := withMigrationReads(&Service{Store: store, input: map[string]*jsonschema.Schema{tc.tool: schema}, output: map[string]*jsonschema.Schema{tc.tool: output}})
 			// Act
 			result := svc.call(ctx, tc.tool, json.RawMessage(tc.raw))
 			// Assert

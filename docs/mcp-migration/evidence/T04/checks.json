@@ -1,0 +1,76 @@
+{
+  "task": "T04",
+  "candidate_source_digest": "9101f22bd6effc1458f0ea7b0cfb549f8565cb13a7fbaac33c574639a6ba33e0",
+  "environment": {
+    "GOWORK": "off",
+    "GOPATH": "/tmp/zl-migration-go-path",
+    "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+    "GOCACHE": "/tmp/zl-migration-go-cache"
+  },
+  "checks": [
+    {
+      "command": "go test ./...",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "root-tests.log",
+      "sha256": "4a788bedfad3a54ac388db3d09d6ecacd43a3e9efc4b7c145db575ff53f31d9f"
+    },
+    {
+      "command": "go vet ./...",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "vet.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "go test -race ./internal/app/... ./internal/adapters/... ./internal/mcpserver ./internal/storage",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "race.log",
+      "sha256": "e3aad9a02567df2111713d888a3682a306dd0dc821ba636b28e4802d5bc54faa"
+    },
+    {
+      "command": "go test ./internal/storage ./internal/mcpserver (after restoring exact permission wording)",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "final-storage-mcp.log",
+      "sha256": "f7e12642ad477ca1b8455e865306dd33e051d9b2ceafcc56bc8a3f5022c8a7e3"
+    },
+    {
+      "command": "go test ./internal/app/... ./internal/mcpserver -run 'TestLegacyGroupCapability|TestReadBoundary'",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "boundary-tests.log",
+      "sha256": "94451a0c4c7458ed3634469a4533a44e866f9e501103520c22d07524297250d8"
+    },
+    {
+      "command": "python3 scripts/mcp-migration/architecture.py --binary /tmp/zl-migration-tools/arch-go --evidence /tmp/zl-t04-architecture-v2.json",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "architecture-v2.log",
+      "sha256": "daa6f81949c8282ba9c4b41e2e9a17692bda8fc437067c0f8b55a151053226a1"
+    },
+    {
+      "command": "python3 scripts/mcp-migration/build_eval.py --output /tmp/zl-t04-build-v3",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "build-v3.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "/tmp/zl-t04-build-v3/zl-mcp-eval-candidate --root \"$PWD\" --output /tmp/zl-t04-offline-v3 --repeats 2",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "offline-v3.log",
+      "sha256": "e095bc7b932220bf4676733a9b2fdecb8b24755531423e351022e3c25236a72d"
+    },
+    {
+      "command": "/tmp/zl-t04-build-v2/zl-mcp-eval-candidate --root \"$PWD\" --child-binary /tmp/zl-t04-build-v2/zl-mcp-eval-baseline --output /tmp/zl-t04-baseline-v2",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "baseline-v2.log",
+      "sha256": "a0d0f89d7ac228040d225b48279db8ee147b461a0ce4537b8a509bab1247b772"
+    }
+  ],
+  "source_revalidation": "Only restoration of exact baseline permission text after full checks; final storage/MCP tests and fresh final binary/offline rerun. All other source files match initial checked candidate; race completed after correction."
+}

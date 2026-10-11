@@ -1,0 +1,4 @@
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	0.402s
+?   	github.com/skosovsky/zl-mcp/internal/app/search	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/shared	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	0.935s

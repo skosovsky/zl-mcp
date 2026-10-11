@@ -21,7 +21,7 @@ func TestDeliveryDiagnosticsResourceThroughHTTP(t *testing.T) {
 	}
 	defer store.Close()
 	token := strings.Repeat("t", 64)
-	handler, err := NewHTTP(store, dir, token)
+	handler, err := NewHTTP(store, dir, token, migrationReadPorts(store))
 	if err != nil {
 		t.Fatal(err)
 	}

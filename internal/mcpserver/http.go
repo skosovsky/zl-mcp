@@ -28,15 +28,15 @@ type HTTPService struct {
 	principal string
 }
 
-func NewHTTP(store *storage.Store, dir, token string) (*HTTPService, error) {
-	return NewHTTPWithControl(store, dir, token, control.New(dir))
+func NewHTTP(store *storage.Store, dir, token string, reads ReadPorts) (*HTTPService, error) {
+	return NewHTTPWithControl(store, dir, token, control.New(dir), reads)
 }
 
-func NewHTTPWithControl(store *storage.Store, dir, token string, backend ControlPort) (*HTTPService, error) {
+func NewHTTPWithControl(store *storage.Store, dir, token string, backend ControlPort, reads ReadPorts) (*HTTPService, error) {
 	if len(token) < 32 {
 		return nil, errors.New("MCP bearer token must contain at least 32 bytes")
 	}
-	server, err := NewWithControl(store, backend)
+	server, err := NewWithControl(store, backend, reads)
 	if err != nil {
 		return nil, err
 	}

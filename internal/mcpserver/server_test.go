@@ -29,7 +29,7 @@ func TestMCPDiscoverySearchContextAndResourceAuthorization(t *testing.T) {
 	if e = store.Put(ctx, domain.Message{GroupID: "g", ID: "m", SenderID: "s", SentAt: time.Now(), Text: "Ремонт. " + strings.Repeat("a", 9000), Source: "live"}); e != nil {
 		t.Fatal(e)
 	}
-	server, e := New(store, dir)
+	server, e := New(store, dir, migrationReadPorts(store))
 	if e != nil {
 		t.Fatal(e)
 	}

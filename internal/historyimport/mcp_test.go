@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	storeadapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
+	"github.com/skosovsky/zl-mcp/internal/app/conversations"
+	"github.com/skosovsky/zl-mcp/internal/app/search"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/historyimport"
 	"github.com/skosovsky/zl-mcp/internal/mcpserver"
@@ -25,7 +28,8 @@ func TestMCPHistoryImportDiscoveryStatusAndReads(t *testing.T) {
 	if err = s.BindAccount(ctx, "synthetic-account"); err != nil {
 		t.Fatal(err)
 	}
-	server, err := mcpserver.NewWithControl(s, &historyimport.Manager{Store: s})
+	reader := storeadapter.New(s)
+	server, err := mcpserver.NewWithControl(s, &historyimport.Manager{Store: s}, mcpserver.ReadPorts{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader}})
 	if err != nil {
 		t.Fatal(err)
 	}

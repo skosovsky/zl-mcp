@@ -31,7 +31,7 @@ func TestConversationMCPSearchContextCatalogueAndFullText(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	server, err := New(store, dir)
+	server, err := New(store, dir, migrationReadPorts(store))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -82,7 +82,7 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 	target, _ := url.Parse(receiver.URL)
 	client := &http.Client{Transport: localReceiverTransport{target: target, base: receiver.Client().Transport}}
 	token := strings.Repeat("t", 32)
-	service, err := NewHTTP(store, dir, token)
+	service, err := NewHTTP(store, dir, token, migrationReadPorts(store))
 	if err != nil {
 		t.Fatal(err)
 	}

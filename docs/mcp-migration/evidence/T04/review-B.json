@@ -1,0 +1,54 @@
+{
+  "reviewer": "B",
+  "role": "independent correctness",
+  "task": "T04",
+  "parent_sha": "da3d7b6f0369f85e58d17b546c933b362c342224",
+  "source_digest_sha256": "9101f22bd6effc1458f0ea7b0cfb549f8565cb13a7fbaac33c574639a6ba33e0",
+  "source_tree_sha1": "0e3e9d0b0b3011af860e57a0d5d2148aa7553666",
+  "status": "PASS",
+  "findings": [],
+  "independence": {
+    "implemented_candidate": false,
+    "read_other_verdict_before_first_report": false
+  },
+  "scope": "T04 first typed search/context/full-message slice and borrowed composition; frozen T03 evaluation overlay. Previously accepted T01-T03 not reopened. Other reads/archive/commands remain predeclared exceptions.",
+  "inspection": [
+    "Compared search assembly and continuation with removed MCP searchResult and existing Store.ConversationSearchResult: order, typed identity, selected empty coverage, summaries, counts and exact RESPONSE_TOO_LARGE strings preserved.",
+    "Compared typed context/message/coverage DTO JSON fields with domain JSON and storage conversation projections; null/empty arrays, pointer values, gaps, time values and omitted IDs preserved. Group context keeps native values and clipping; generic conversation conversion confined to adapter/transport.",
+    "Verified current Store access methods remain used for each resource invocation; group/direct namespace guards precede legacy dispatch; constructor composition borrows one owner without session, worker or DB lifecycle changes.",
+    "Inspected unchanged schema/admission/cancellation/error/result encode/resource URI/size routes, narrow arch-go imports and frozen build overlay from accepted T03 SHA. No changes to docs/contracts, dependencies or third_party.",
+    "Recomputed canonical source digest and verified exact equality to candidate-final; checks log hashes verified independently. Inspected final offline and frozen baseline reports and raw evidence with original text-structured equality grading."
+  ],
+  "evidence": [
+    "read-boundary.md",
+    "requirements.json",
+    "candidate-final.json",
+    "candidate-source-tree.json",
+    "checks.json",
+    "architecture-v2.json",
+    "offline-v3/report.json",
+    "baseline-v2/report.json",
+    "build-v3/build-manifest.json",
+    "review-B-tests.log"
+  ],
+  "extra_checks": [
+    {
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test -count=1 ./internal/app/... ./internal/mcpserver ./internal/storage",
+      "exit_status": 0,
+      "status": "PASS",
+      "log": "review-B-tests.log",
+      "sha256": "9f020b9efc3e84594d0eeb29ffdf731254550d95f1d2d642ce73f8ad227c5781"
+    },
+    {
+      "command": "Independent candidate recomputation and checks.json log hash validation",
+      "status": "PASS"
+    }
+  ],
+  "acceptance_limitations": {
+    "model_gate": "NOT_RUN",
+    "live_gate": "NOT_RUN",
+    "sdk_id_gate": "DEFERRED_TO_SDK-01",
+    "performance": "No T04 comparison claimed; T09 remains required"
+  },
+  "conclusion": "No unresolved correctness errors found in normative T04 scope; PASS is an evidence-based review, not a proof of absence of every bug."
+}

@@ -1,0 +1,23 @@
+{
+  "task": "T04",
+  "status": "ACCEPTED_READY_FOR_SOLE_COMMIT",
+  "source_digest_sha256": "9101f22bd6effc1458f0ea7b0cfb549f8565cb13a7fbaac33c574639a6ba33e0",
+  "parent_sha": "da3d7b6f0369f85e58d17b546c933b362c342224",
+  "requirements": 40,
+  "completed": [
+    "typed app/read ports/store adapter/composition",
+    "HTTP STDIO resource contract tests",
+    "root tests and vet PASS",
+    "architecture100/100 controls PASS",
+    "boundary FTS trimming and current policy controls PASS",
+    "interim candidate50/50 assertions480/480 baseline25/25 assertions240/240"
+  ],
+  "remaining": [
+    "sole atomic T04 commit"
+  ],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "sdk_id_gate": "DEFERRED_TO_SDK-01",
+  "completeness_percent": 100,
+  "correctness": "PASS"
+}
