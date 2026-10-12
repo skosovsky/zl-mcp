@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -38,7 +39,7 @@ func NewHTTP(token string, reads Ports, protocol EventsProtocolPort) (*HTTPServi
 	if protocol == nil {
 		return nil, errors.New("Events protocol port is required")
 	}
-	return &HTTPService{Events: protocol, tokenHash: sha256.Sum256([]byte(token)), principal: "local:" + strconv.Itoa(os.Getuid()), sdk: mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return server }, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true})}, nil
+	return &HTTPService{Events: protocol, tokenHash: sha256.Sum256([]byte(token)), principal: "local:" + strconv.Itoa(os.Getuid()), sdk: mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return server }, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true, PropagateRequestCancellation: true})}, nil
 }
 
 type rpcRequest struct {
@@ -164,6 +165,17 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Accept must contain both 'application/json' and 'text/event-stream'", http.StatusBadRequest)
 			return
 		}
+		var id any
+		decoder := json.NewDecoder(bytes.NewReader(request.ID))
+		decoder.UseNumber()
+		idDecodeErr := decoder.Decode(&id)
+		validated, idError := jsonrpc.MakeID(id)
+		// Invalid numeric IDs cannot be echoed by any subsequent admission error.
+		// Other malformed/missing IDs retain the established metadata-error order.
+		if _, numeric := id.(json.Number); numeric && idError != nil {
+			writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Invalid request ID."})
+			return
+		}
 		if r.Header.Get("Mcp-Method") != request.Method {
 			writeRPCStatus(w, http.StatusBadRequest, request.ID, &protocolError{Code: mcp.CodeHeaderMismatch, Message: "Missing or mismatched Mcp-Method header."})
 			return
@@ -193,14 +205,11 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			writeRPCStatus(w, http.StatusBadRequest, request.ID, &protocolError{Code: mcp.CodeUnsupportedProtocolVersion, Message: "Unsupported protocol version.", Data: map[string]any{"supported": []string{"2026-07-28"}, "requested": version}})
 			return
 		}
-		var id any
-		if len(request.ID) == 0 || json.Unmarshal(request.ID, &id) != nil {
+		if len(request.ID) == 0 || idDecodeErr != nil || id == nil {
 			writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Events require a request ID."})
 			return
 		}
-		switch id.(type) {
-		case string, float64:
-		default:
+		if idError != nil || !validated.IsValid() {
 			writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Invalid request ID."})
 			return
 		}
@@ -215,18 +224,11 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if request.Method == "server/discover" {
 		capture := &jsonResponseCapture{header: http.Header{}}
 		s.sdk.ServeHTTP(capture, r)
-		var response map[string]any
-		if capture.status == http.StatusOK && json.Unmarshal(capture.body.Bytes(), &response) == nil {
-			if result, ok := response["result"].(map[string]any); ok {
-				if capabilities, ok := result["capabilities"].(map[string]any); ok {
-					capabilities["events"] = map[string]any{}
-				}
-				wire, err := json.Marshal(response)
-				if err == nil {
-					capture.body.Reset()
-					capture.body.Write(wire)
-					capture.header.Del("Content-Length")
-				}
+		if capture.status == http.StatusOK {
+			if wire, err := addEventsCapability(capture.body.Bytes()); err == nil {
+				capture.body.Reset()
+				capture.body.Write(wire)
+				capture.header.Del("Content-Length")
 			}
 		}
 		for key, values := range capture.header {
@@ -240,6 +242,36 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.sdk.ServeHTTP(w, r)
+}
+
+// addEventsCapability preserves every SDK envelope field as raw JSON, especially
+// the ID. It only re-encodes the capability extension it owns.
+func addEventsCapability(wire []byte) ([]byte, error) {
+	var response, result, capabilities map[string]json.RawMessage
+	if err := json.Unmarshal(wire, &response); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(response["result"], &result); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(result["capabilities"], &capabilities); err != nil {
+		return nil, err
+	}
+	if response == nil || result == nil || capabilities == nil {
+		return nil, errors.New("missing discovery capabilities")
+	}
+	capabilities["events"] = json.RawMessage("{}")
+	encoded, err := json.Marshal(capabilities)
+	if err != nil {
+		return nil, err
+	}
+	result["capabilities"] = encoded
+	encoded, err = json.Marshal(result)
+	if err != nil {
+		return nil, err
+	}
+	response["result"] = encoded
+	return json.Marshal(response)
 }
 
 // Discovery in stateless JSON mode is a finite response. SDK errors are forwarded

@@ -1,0 +1,18 @@
+{
+  "task": "SDK-01",
+  "timestamp_utc": "2026-10-12T15:21:27.302962+00:00",
+  "condition": "Authorized immutable remote SDK incompatible with mandatory ID05 null-ID error framing",
+  "consecutive_goal_turns": 1,
+  "candidate_source_digest_sha256": "1c9b1220c19d864b1077b4822be09ec9a96af76b8eb6ce9ac0e7d2068ef15044",
+  "dependency": "github.com/skosovsky/go-sdk v1.8.1-0.20261012144231-5ec4c4212548",
+  "actual_gate": "FAIL 6framingcases, cleanuptrue; codec28/28PASS",
+  "independent_confirmations": [
+    "authorized-fork-review-A-v1.json",
+    "authorized-fork-review-B-v2.json"
+  ],
+  "reviewed_remediation": "remote-fork-id05-handoff-v1.md; correction12/12 readiness100% andcorrectnessPASS, isolatedfulltest/race/vet/buildPASS",
+  "root_patch_adopted": false,
+  "SDK_task_commit": false,
+  "live_process_handles": [],
+  "next_action": "Request new compatible remote pin or explicit scope decision; no decoder bypass, local patch or vendor adoption assumed"
+}

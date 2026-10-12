@@ -1,0 +1,8 @@
+=== RUN   TestNativeBinaryTerminalStartupAcceptance
+=== RUN   TestNativeBinaryTerminalStartupAcceptance/restart-0
+=== RUN   TestNativeBinaryTerminalStartupAcceptance/restart-1
+--- PASS: TestNativeBinaryTerminalStartupAcceptance (2.01s)
+    --- PASS: TestNativeBinaryTerminalStartupAcceptance/restart-0 (0.87s)
+    --- PASS: TestNativeBinaryTerminalStartupAcceptance/restart-1 (1.05s)
+PASS
+ok  	github.com/skosovsky/zl-mcp/internal/mobilebackup	2.519s

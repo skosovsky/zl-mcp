@@ -1,0 +1,9 @@
+{
+  "task": "SDK-01",
+  "numeric_parser": "Existing SDK jsonrpc.MakeID with json.Number; numeric cap 128 bytes inherited, no independent parser",
+  "discover": "Preserve actual SDK envelope ID as RawMessage when injecting Events capability; never synthesize from caller ID",
+  "Events": "Validate ID losslessly before RPC admission errors/dispatch; string/numeric distinction, signed int64 and integral notation; invalid returns existing Events RPC error -32600 id:null with HTTP200",
+  "HTTP_cancellation": "Use supported PropagateRequestCancellation option for protocol2026-07-28 HTTP disconnect lifecycle; STDIO notification cancellation remains existing SDK owner; native durable workers/UUID unchanged",
+  "snapshots": "Update only known erroneous numeric-large expected ID to9007199254740993; original T01 fixture/commit and before-fix evidence retained",
+  "no_business_rewrite": true
+}

@@ -1,0 +1,18 @@
+numeric length=1024 id=<nil> reject=true
+numeric length=1025 id=<nil> reject=true
+numeric length=11 id=0 reject=false
+numeric length=11 id=<nil> reject=true
+numeric length=12 id=<nil> reject=true
+numeric length=20 id=9007199254740993 reject=false
+float reject=false
+float reject=false
+float reject=false
+float reject=false
+http status=400 contenttype=text/plain; charset=utf-8 body=malformed payload: parse error: invalid numeric ID "1.5": ID is not an integer
+
+panic: read pipe: i/o timeout
+
+goroutine 1 [running]:
+main.main()
+	/tmp/zl-sdk01-authorized-fork-framing.go:8 +0xd34
+exit status 2

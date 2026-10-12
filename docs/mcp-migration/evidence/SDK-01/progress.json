@@ -1,0 +1,40 @@
+{
+  "task": "SDK-01",
+  "status": "ACCEPTED_PRECOMMIT_20_OF_20_CORRECTNESS_PASS",
+  "parent_sha": "bb3eadc785366588b88bdc83c4d7693c89b96090",
+  "requirements": "requirements-v4.json20leaves",
+  "before_fix_codec": {
+    "records": 28,
+    "pass": 16,
+    "fail": 12,
+    "SDK": "v1.8.0",
+    "evidence": "codec-before.jsonl"
+  },
+  "upstream": {
+    "toolsy": "v0.20.5",
+    "selectedSDK": "v1.8.1-0.20261012184819-4347cd438f3c"
+  },
+  "dependency_exception": "Explicit userremote replace applied; localvendorproposal notadopted",
+  "next_action": "Create soleatomicSDK01commit; verify inT10",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "task_commit_created": false,
+  "proposal": "fork-framing-proposal-manifest-v1.json",
+  "proposal_reviews": [
+    "fork-framing-proposal-review-A-v1.json readiness12/12 100%",
+    "fork-framing-proposal-review-B-v1.json correctnessPASS"
+  ],
+  "proposal_checks": "fork-framing-proposal-checks-v1.json fullnestedtest/race/vet/buildPASS",
+  "ID01_ID07": "Initial/finalrootfixturesPASS; formalindependentreviews pending",
+  "active_processes": [],
+  "latest_evidence": "checks-4347-v3.json",
+  "candidate_source_digest_sha256": "1f903b7acd219cda0a97a769e4157ad00b0633204c0ade1a661d47dee29cf43e",
+  "performance": "performance-comparison-4347-v1.json PASS all9gates; historicalFAIL retained",
+  "source_integrity": "selected-sdk-source-manifest.json PASS226/226 recovered ZIP; full nested checks v2 PASS",
+  "blocker": "performance-blocker-v1.json",
+  "blocked_audit": "performance-blocked-audit-v3.json",
+  "reviews": [
+    "final-review-A-4347-v1.json",
+    "final-review-B-4347-v1.json"
+  ]
+}

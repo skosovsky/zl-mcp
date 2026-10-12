@@ -1,0 +1,43 @@
+{
+  "revision": 3,
+  "timestamp_utc": "2026-10-12T19:01:49.500046+00:00",
+  "user_authorization": "Обнови тулси и сделай replace github.com/modelcontextprotocol/go-sdk => github.com/skosovsky/go-sdk v1.8.1-0.20261012184819-4347cd438f3c",
+  "toolsy": {
+    "Path": "github.com/skosovsky/toolsy",
+    "Version": "v0.20.5",
+    "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.5.info",
+    "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.5.mod",
+    "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.5.zip",
+    "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.5",
+    "Sum": "h1:82dpAtA9o3lglu6yLUg+N3w9xaeJTKUhp0hXk06QD5Q=",
+    "GoModSum": "h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=",
+    "Origin": {
+      "VCS": "git",
+      "URL": "https://github.com/skosovsky/toolsy",
+      "Hash": "3747edec09adf0472ba4d3b4749c5fa1f3cb6c62",
+      "Ref": "refs/tags/v0.20.5"
+    }
+  },
+  "SDK": {
+    "Path": "github.com/skosovsky/go-sdk",
+    "Version": "v1.8.1-0.20261012184819-4347cd438f3c",
+    "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012184819-4347cd438f3c.info",
+    "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012184819-4347cd438f3c.mod",
+    "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012184819-4347cd438f3c.zip",
+    "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/go-sdk@v1.8.1-0.20261012184819-4347cd438f3c",
+    "Sum": "h1:P7uSAkLIvV5UUydgWtZJgaBWH0xxYfrGgMeXcdZyO3g=",
+    "GoModSum": "h1:dL7u98E/zjJTGzEq+j30jQ8K2k1mb6LeAH4inEcSGts=",
+    "Origin": {
+      "VCS": "git",
+      "URL": "https://github.com/skosovsky/go-sdk",
+      "Hash": "4347cd438f3ca6075fa594defcdd95580aa56fa2"
+    }
+  },
+  "scope": "Exact authorized remote SDK fork + official toolsy v0.20.5; no local vendor/patch/sibling edits",
+  "wire_contract": "Signedint64 exact; integraldecimal/exponent; stringtype/value; numericcap128; invalidID -32600 id:null, HTTP400 application/json or STDIO response+recovery; no dispatch",
+  "historical_ID05_FAIL": "5ec4pin results retained; newpin requires fresh evidence",
+  "ID01-ID07": "PENDING fulltaskacceptance",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "historical_performance_FAIL": "performance-comparison-v1.json and all raw runs preserved; gates unchanged; fresh affected performance required"
+}

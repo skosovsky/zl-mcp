@@ -1,0 +1,113 @@
+{
+  "task": "SDK-01",
+  "parent_sha": "bb3eadc785366588b88bdc83c4d7693c89b96090",
+  "requirements_total": 20,
+  "equal_weight": true,
+  "frozen_before_implementation": true,
+  "leaf_requirements": [
+    {
+      "id": "ID01",
+      "requirement": "SDK request and response decode/encode preserve exact signed int64 at 2^53-1/2^53/2^53+1/2^53+2 and int64 min/max; string/numeric distinct; integral decimal/exponent exact",
+      "status": "PENDING"
+    },
+    {
+      "id": "ID02",
+      "requirement": "Raw HTTP neighboring large IDs, concurrent handlers and out-of-order replies correlate exactly",
+      "status": "PENDING"
+    },
+    {
+      "id": "ID03",
+      "requirement": "Actual STDIO bridge subprocess roundtrip/concurrent IDs preserve external correlation",
+      "status": "PENDING"
+    },
+    {
+      "id": "ID04",
+      "requirement": "Supported cancellation paths affect only selected invocation; reused IDs not damaged by old completion; SDK codec and STDIO cancellation mandatory; typed json.Number checked",
+      "status": "PENDING"
+    },
+    {
+      "id": "ID05",
+      "requirement": "Fractional/outside-int64 and excessive length/exponent rejected boundedly without dispatch/panic/unbounded resources; error id null; budgets and framing executable",
+      "status": "PENDING"
+    },
+    {
+      "id": "ID06",
+      "requirement": "Discover, resources, protocol errors and Events HTTP wrapper preserve valid envelope IDs and enforce same numeric contract",
+      "status": "PENDING"
+    },
+    {
+      "id": "ID07",
+      "requirement": "Synthetic write with lost response followed by same domain UUID/new envelope ID produces no duplicate native dispatch",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-08",
+      "requirement": "Before-fix original SDK reproduction retained; clients use raw JSON/json.Number",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-09",
+      "requirement": "Official fixed release preferred; inspect actual code and current issue/PR/release state",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-10",
+      "requirement": "Explicit user-authorized remote fork replace github.com/modelcontextprotocol/go-sdk=>github.com/skosovsky/go-sdk v1.8.1-0.20261012144231-5ec4c4212548; official toolsyv0.20.3 upgrade; verify actual-code provenance/licenses/tests/numeric contract/removal; no local vendor or sibling/fork edits",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-11",
+      "requirement": "Wrappers updated losslessly with minimal existing DTO/decode changes; no second MCP transport/parser, no business number rewrite",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-12",
+      "requirement": "Domain IDs, persistence/authority/permissions/durable owners and no-resend contract preserved; no zcago/sibling edits",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-13",
+      "requirement": "Root tests/race/vet, wire suite and CGO-free targets PASS",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-14",
+      "requirement": "Full offline eval and parity PASS except explicitly corrected numeric envelope baseline",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-15",
+      "requirement": "For patched SDK full nested tests/race/vet/build PASS; immutable pin and removal gates",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-16",
+      "requirement": "Repeat affected performance on dependency change against authorized v3 budget and frozen allocation baseline",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-17",
+      "requirement": "Dependency matrix and before/after evidence synchronized; source/candidate hashes and all evidence indexed",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-18",
+      "requirement": "Model/live NOT_RUN; no deployment/LaunchAgent/live account/paid eval/publication",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-19",
+      "requirement": "Two independent samecandidate reviewers completeness100% and correctnessPASS before sole exact SDK-01 commit",
+      "status": "PENDING"
+    },
+    {
+      "id": "SDK-20",
+      "requirement": "One atomic commit fix(mcp): preserve JSON-RPC IDs across SDK and wrappers; only after accepted T09, before T10",
+      "status": "PENDING"
+    }
+  ],
+  "revision": 2,
+  "amendment": "authorized-fork-contract-v1.json",
+  "original_requirements": "requirements.json",
+  "frozen_before_pin_changes": true
+}

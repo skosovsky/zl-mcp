@@ -1,0 +1,97 @@
+{
+  "task": "SDK-01",
+  "reviewer": "/root/sdk01_final_correctness",
+  "review_type": "independent_final_correctness",
+  "revision": 1,
+  "parent_sha": "bb3eadc785366588b88bdc83c4d7693c89b96090",
+  "source_digest_sha256": "edad4d6b9590770c1220b7489363f1842a19213a818c7e01ccc9d805c38a3f14",
+  "verdict": "NOT_ACCEPTED",
+  "correctness": "NOT_ACCEPTED",
+  "blocking_findings": [
+    {
+      "scenario": "read",
+      "gate": "alloc_bytes_pass",
+      "actual": 529595.888,
+      "limit": 516337.79519999993
+    },
+    {
+      "scenario": "search",
+      "gate": "alloc_bytes_pass",
+      "actual": 582071.784,
+      "limit": 558227.2416
+    },
+    {
+      "scenario": "context",
+      "gate": "p95_pass",
+      "actual": 0.007131584,
+      "limit": 0.0069967799
+    },
+    {
+      "scenario": "context",
+      "gate": "alloc_bytes_pass",
+      "actual": 573871.736,
+      "limit": 546305.1264
+    }
+  ],
+  "unresolved_wire_code_findings": [],
+  "reviewed_behaviors": [
+    "Exact numeric/string IDs and bounded invalid numeric rejection before application dispatch",
+    "HTTP neighboring IDs and supported disconnect cancellation",
+    "Actual STDIO numeric cancellation and ID reuse",
+    "Lossless actual SDK discover envelope and Events numeric validation",
+    "Native durable UUID retention after lost response",
+    "Strict current-candidate precision correction only for explicitly named frozen baseline fact"
+  ],
+  "diagnosis": "Isolated SDK raw method decode costs32848B/op and4allocs/op; suggests source of roughly33KiB dependency increase; no latency attribution or performance waiver.",
+  "source_manifest_invalid_draft": "selected-sdk-source-manifest-invalid-v1.json retained, not acceptance evidence",
+  "evidence": [
+    {
+      "path": "requirements-v3.json",
+      "sha256": "ce228bda0f2bf38ed2c74e000582c3823b85707a02b4b5adaac9560323989893"
+    },
+    {
+      "path": "candidate-implementation-v2.json",
+      "sha256": "8675ddf8c4b643ccb9eaf9d7a661f8d42967aaf8b3a6036196df8c41a53d3e51"
+    },
+    {
+      "path": "checks-checkpoint-v2.json",
+      "sha256": "052b24fd53294b2edeeb6f19bafe0c02d66c1000fa8108bad26b40c2fcddb3f3"
+    },
+    {
+      "path": "selected-sdk-source-manifest.json",
+      "sha256": "0dd724cdc15c30ea30ef220f1fa5dd25c16c7e85c49947098859538c39417775"
+    },
+    {
+      "path": "performance-comparison-v1.json",
+      "sha256": "ecbb02606a4467ec1b77be7acc15a3b5a079cbeb3ac0f69e7274578fc37081b8"
+    },
+    {
+      "path": "performance-v1/manifest.json",
+      "sha256": "94aa7f35a91b8d69d1840790e01be291514dbde0029d2aded2fff0307df6ef52"
+    },
+    {
+      "path": "review-correctness-allocation-probe.json",
+      "sha256": "a55178f1bb51dcddd6a0707dbad201906128568fcbd91cf74879f0c8cfc428e0"
+    },
+    {
+      "path": "review-correctness-allocation-probe.log",
+      "sha256": "77dabdb0b82734acd11d52062c74c53ab544cc87ffbfeef51c8604bef5e7e17d"
+    },
+    {
+      "path": "review-correctness-allocation-probe.go.txt",
+      "sha256": "f617037e23b75cdef5551ca4cee7ab032ed63fd1e92a84b4291fe3b4a3a6f2fc"
+    },
+    {
+      "path": "root-race-v2.log",
+      "sha256": "72ec33cd75c16100eb9e02fba7200836136e6f3cb312d9f91c3f9c8e6171b323"
+    },
+    {
+      "path": "paired-v2/canonical-parity.json",
+      "sha256": "ee8d6ea99f6d52d58c561e1976d4e7c1c7df06de72c122b2217d422e9df9fdf2"
+    }
+  ],
+  "decision_required": "Compatible dependency update or explicitly scoped dependency patch; preserve existing budget gates.",
+  "commit_authorized_by_this_review": false,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

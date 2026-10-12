@@ -1,0 +1,54 @@
+{
+  "cleanup": true,
+  "failures": 0,
+  "records": [
+    {
+      "body": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"invalid numeric request ID\"}}",
+      "content_type": "application/json",
+      "http_status": 400,
+      "numeric_token_bytes": 3,
+      "protocol_error_with_null_id": true,
+      "transport": "HTTP"
+    },
+    {
+      "body": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"invalid numeric request ID\"}}",
+      "content_type": "application/json",
+      "http_status": 400,
+      "numeric_token_bytes": 19,
+      "protocol_error_with_null_id": true,
+      "transport": "HTTP"
+    },
+    {
+      "body": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"invalid numeric request ID\"}}",
+      "content_type": "application/json",
+      "http_status": 400,
+      "numeric_token_bytes": 20,
+      "protocol_error_with_null_id": true,
+      "transport": "HTTP"
+    },
+    {
+      "body": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"invalid numeric request ID\"}}",
+      "content_type": "application/json",
+      "http_status": 400,
+      "numeric_token_bytes": 11,
+      "protocol_error_with_null_id": true,
+      "transport": "HTTP"
+    },
+    {
+      "body": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"invalid numeric request ID\"}}",
+      "content_type": "application/json",
+      "http_status": 400,
+      "numeric_token_bytes": 129,
+      "protocol_error_with_null_id": true,
+      "transport": "HTTP"
+    },
+    {
+      "SDK_Read_error": "EOF",
+      "protocol_error_with_null_id": true,
+      "response_bytes": 91,
+      "transport": "STDIO_IOTransport"
+    }
+  ],
+  "status": "PASS",
+  "synthetic_only": true
+}

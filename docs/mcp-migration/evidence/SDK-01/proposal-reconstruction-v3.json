@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "patch_sha256": "8d5f6fbb8728f319ed8aeb0a8fe020a79cd80cf8f7b7099afa51231d837b67b9",
+  "tree_digest_sha256": "8a36ff34a6f9c9115a95a662dd203f4e1e51380f8399b508032346d38b6c6800",
+  "all_files": 221,
+  "base": "official unmodified v1.8.0 freshcopy",
+  "root_dependency_adopted": false
+}

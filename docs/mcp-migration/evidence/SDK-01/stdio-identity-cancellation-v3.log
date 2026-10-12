@@ -1,0 +1,27 @@
+=== RUN   TestSDK01ActualSTDIOIdentityBoundsAndOutOfOrder
+2026/10/12 23:25:38 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=369
+2026/10/12 23:25:38 INFO mcp_discovery method=tools/list protocol=2026-07-28 http_status=200 duration_ms=2 response_bytes=114822 tool_count=22 archive_inventory_present=true has_more=false catalogue_sha256=4e51c61976f8d4600efca5d397b9921ab8763f629830b90d590ad0742844fe04
+2026/10/12 23:25:38 INFO mcp_discovery method=resources/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=604
+2026/10/12 23:25:38 INFO mcp_discovery method=resources/templates/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=583
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=IAUY5AWHGKM76AX3IOAB6JCT2I code=OK outcome=success duration_ms=2
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=DAJMCCKKRMACU4JW6IKSUR5DAJ code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=NQFSLJCEMHARQH6MYQ35DWPP4J code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=2BT2ZTIQL6VWFYHORPRSQFJFRM code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=HKFXABBNMRQ7UEJDDWAHAZ7AKF code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=JVGSHF7BWZNZVVRYKWLOSCMTPK code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=GRBR7GZ3TOREGF2QBAY5TSYIHC code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=NNFJLRTI44I3YOTB5RHEHS2XUQ code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=6VYXKICVZJTXQRVMUVK6MBF4TI code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=HJD3HQ7WIWORSWDCVOKNM4PVML code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=FN7LJK7W7P3I7A2KSNSGV3CCNL code=OK outcome=success duration_ms=1
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=WN3XGAMBSEOJ6GYB6O4UZ52PDI code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=E75LJVNN2R47V2MKKMRFNERXUV code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=62HLZ5NC7YVD4D6CD5K6YOFITG code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_status correlation_id=7MBQVGACKR3VUZO3DIK66UCU2Q code=OK outcome=success duration_ms=0
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_message_context correlation_id=IPIAJJDLZMYZX5T6CKE55JZJ2S code=OK outcome=success duration_ms=1
+2026/10/12 23:25:38 INFO mcp_call tool=zalo_get_message_context correlation_id=VE5RCLQQYIOEFHGJSWFJ5M3ZVP code=OK outcome=success duration_ms=2
+--- PASS: TestSDK01ActualSTDIOIdentityBoundsAndOutOfOrder (2.62s)
+=== RUN   TestSDK01ActualSTDIOCancellationAndIDReusePrivacy
+--- PASS: TestSDK01ActualSTDIOCancellationAndIDReusePrivacy (1.86s)
+PASS
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	4.984s

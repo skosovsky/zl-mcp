@@ -1,0 +1,200 @@
+{
+  "task": "SDK-01",
+  "parent_sha": "bb3eadc785366588b88bdc83c4d7693c89b96090",
+  "requirements_total": 20,
+  "equal_weight": true,
+  "frozen_before_implementation": true,
+  "leaf_requirements": [
+    {
+      "id": "ID01",
+      "requirement": "SDK request and response decode/encode preserve exact signed int64 at 2^53-1/2^53/2^53+1/2^53+2 and int64 min/max; string/numeric distinct; integral decimal/exponent exact",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "internal/mcpserver/sdk_identity_test.go",
+        "root-test-4347-v1.log",
+        "sdk-test-4347-v1.log"
+      ]
+    },
+    {
+      "id": "ID02",
+      "requirement": "Raw HTTP neighboring large IDs, concurrent handlers and out-of-order replies correlate exactly",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "internal/mcpserver/sdk_lifecycle_test.go",
+        "root-race-4347-v1.log"
+      ]
+    },
+    {
+      "id": "ID03",
+      "requirement": "Actual STDIO bridge subprocess roundtrip/concurrent IDs preserve external correlation",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "internal/mcpserver/sdk_stdio_identity_test.go",
+        "root-race-4347-v1.log"
+      ]
+    },
+    {
+      "id": "ID04",
+      "requirement": "Supported cancellation paths affect only selected invocation; reused IDs not damaged by old completion; SDK codec and STDIO cancellation mandatory; typed json.Number checked",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "internal/mcpserver/sdk_identity_test.go",
+        "internal/mcpserver/sdk_lifecycle_test.go",
+        "internal/mcpserver/sdk_stdio_identity_test.go",
+        "review-B-4347-overlay-manifest-v1.json"
+      ]
+    },
+    {
+      "id": "ID05",
+      "requirement": "Fractional/outside-int64 and excessive length/exponent rejected boundedly without dispatch/panic/unbounded resources; error id null; budgets and framing executable",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "internal/mcpserver/sdk_identity_test.go",
+        "internal/mcpserver/sdk_stdio_identity_test.go",
+        "docs/mcp-migration/sdk-id-contract.md"
+      ]
+    },
+    {
+      "id": "ID06",
+      "requirement": "Discover, resources, protocol errors and Events HTTP wrapper preserve valid envelope IDs and enforce same numeric contract",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "internal/mcpserver/sdk_identity_test.go",
+        "internal/mcpserver/http.go"
+      ]
+    },
+    {
+      "id": "ID07",
+      "requirement": "Synthetic write with lost response followed by same domain UUID/new envelope ID produces no duplicate native dispatch",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "internal/mcpserver/sdk_lifecycle_test.go"
+      ]
+    },
+    {
+      "id": "SDK-08",
+      "requirement": "Before-fix original SDK reproduction retained; clients use raw JSON/json.Number",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "codec-before.jsonl",
+        "candidate-initial.json"
+      ]
+    },
+    {
+      "id": "SDK-09",
+      "requirement": "Official fixed release preferred; inspect actual code and current issue/PR/release state",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "upstream-release.json",
+        "upstream-issue.json",
+        "upstream-pr.json",
+        "authorized-fork-contract-v3.json"
+      ]
+    },
+    {
+      "id": "SDK-10",
+      "requirement": "Explicit user-authorized remote fork replace github.com/modelcontextprotocol/go-sdk=>github.com/skosovsky/go-sdk v1.8.1-0.20261012184819-4347cd438f3c and officialtoolsyv0.20.5; actualprovenance/licenses/tests/numericcontract/removal verified; no localvendor/sibling/fork edits",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "authorized-fork-contract-v3.json",
+        "fork-4347cd-download.json",
+        "toolsy-v0.20.5-download.json",
+        "selected-sdk-4347-source-manifest-v1.json"
+      ]
+    },
+    {
+      "id": "SDK-11",
+      "requirement": "Wrappers updated losslessly with minimal existing DTO/decode changes; no second MCP transport/parser, no business number rewrite",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "internal/mcpserver/http.go",
+        "architecture-4347-v3.json"
+      ]
+    },
+    {
+      "id": "SDK-12",
+      "requirement": "Domain IDs, persistence/authority/permissions/durable owners and no-resend contract preserved; no zcago/sibling edits",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "root-test-4347-v1.log",
+        "restart-old-new-4347-v1.log",
+        "restart-new-old-4347-v1.log"
+      ]
+    },
+    {
+      "id": "SDK-13",
+      "requirement": "Root tests/race/vet, wire suite and CGO-free targets PASS",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "checks-4347-v1.json",
+        "platform-build-manifest-4347-v1.json"
+      ]
+    },
+    {
+      "id": "SDK-14",
+      "requirement": "Full offline eval and parity PASS except explicitly corrected numeric envelope baseline",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "paired-4347-v1/report.json",
+        "offline-4347-v1/report.json"
+      ]
+    },
+    {
+      "id": "SDK-15",
+      "requirement": "For patched SDK full nested tests/race/vet/build PASS; immutable pin and removal gates",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "selected-sdk-4347-source-manifest-v1.json"
+      ]
+    },
+    {
+      "id": "SDK-16",
+      "requirement": "Repeat affected performance on dependency change against authorized v3 budget and frozen allocation baseline",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "performance-4347-v1.log"
+      ]
+    },
+    {
+      "id": "SDK-17",
+      "requirement": "Dependency matrix and before/after evidence synchronized; source/candidate hashes and all evidence indexed",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "docs/mcp-migration/dependency-matrix.json",
+        "candidate-4347-v1.json"
+      ]
+    },
+    {
+      "id": "SDK-18",
+      "requirement": "Model/live NOT_RUN; no deployment/LaunchAgent/live account/paid eval/publication",
+      "status": "PENDING_REVIEW",
+      "evidence": [
+        "checks-4347-v1.json"
+      ]
+    },
+    {
+      "id": "SDK-19",
+      "requirement": "Two independent samecandidate reviewers completeness100% and correctnessPASS before sole exact SDK-01 commit",
+      "status": "PENDING_REVIEW",
+      "evidence": []
+    },
+    {
+      "id": "SDK-20",
+      "requirement": "One atomic commit fix(mcp): preserve JSON-RPC IDs across SDK and wrappers; only after accepted T09, before T10",
+      "status": "PENDING_REVIEW",
+      "evidence": []
+    }
+  ],
+  "revision": 4,
+  "amendment": "authorized-fork-contract-v3.json",
+  "original_requirements": "requirements.json",
+  "frozen_before_pin_changes": true,
+  "status": "DRAFT_NOT_ACCEPTANCE",
+  "source_digest_sha256": "1f903b7acd219cda0a97a769e4157ad00b0633204c0ade1a661d47dee29cf43e",
+  "remaining": [
+    "performance full comparison",
+    "standalone offline two repeats",
+    "final independent reviewers",
+    "sole SDKcommit"
+  ]
+}

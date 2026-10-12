@@ -184,3 +184,12 @@ ZL_MCP_RESTART_PEER_BINARY to their absolute paths, run the native terminal star
 acceptance test, then reverse their order. Each sequence reuses one temporary
 synthetic state and stops/joins the first process before opening its peer; no
 installed service, session or live account is used.
+
+
+SDK-01 numeric identity and cancellation contract is documented in
+`docs/mcp-migration/sdk-id-contract.md`. The SDK module uses the explicitly
+user-authorized immutable remote fork replacement; no local SDK vendor is used.
+Run `go test ./internal/mcpserver -run TestSDK01 -count=1` for the raw identity,
+HTTP lifecycle, actual STDIO subprocess, privacy and durable-UUID fixtures.
+The full task also requires unmodified SDK nested checks, root checks,
+offline/paired evaluation and fresh affected performance measurements.

@@ -1,0 +1,7 @@
+{
+  "pin": "v1.8.1-0.20261012153430-1e3d51f2f580",
+  "pristine": "/tmp/zl-sdk01-selected-pristine-v1",
+  "overlay": "/tmp/zl-sdk01-selected-overlay-v1",
+  "overlay_scope": "One test-only file, no production/module edits; actualSDKcanceller/conn exercises blocked old Write/new reusedID and neighbor isolation",
+  "source_in_root": "Remote immutable module, no vendor"
+}

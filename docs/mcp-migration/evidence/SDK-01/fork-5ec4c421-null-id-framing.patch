@@ -1,0 +1,161 @@
+diff --git a/internal/jsonrpc2/messages.go b/internal/jsonrpc2/messages.go
+--- a/internal/jsonrpc2/messages.go
++++ b/internal/jsonrpc2/messages.go
+@@ -135,6 +135,9 @@
+ 
+ func (msg *Response) marshal(to *wireCombined) {
+ 	to.ID = msg.ID.value
++	if !msg.ID.IsValid() && msg.Error != nil {
++		to.ID = json.RawMessage("null")
++	}
+ 	to.Error = toWireError(msg.Error)
+ 	to.Result = msg.Result
+ }
+@@ -196,6 +199,9 @@
+ 	Error      *WireError      `json:"error,omitempty"`
+ }
+ 
++// ErrInvalidNumericRequestID marks rejected numeric request envelopes.
++var ErrInvalidNumericRequestID = fmt.Errorf("%w: invalid numeric request ID", ErrParse)
++
+ func DecodeMessage(data []byte) (Message, error) {
+ 	msg := wireDecode{}
+ 	if err := internaljson.Unmarshal(data, &msg); err != nil {
+@@ -206,6 +212,9 @@
+ 	}
+ 	id, err := DecodeID(msg.ID)
+ 	if err != nil {
++		if len(msg.Method) > 0 && len(msg.ID) > 0 && (msg.ID[0] == '-' || (msg.ID[0] >= '0' && msg.ID[0] <= '9')) {
++			return nil, ErrInvalidNumericRequestID
++		}
+ 		return nil, err
+ 	}
+ 	if len(msg.Method) > 0 {
+diff --git a/mcp/sdk01_framing_test.go b/mcp/sdk01_framing_test.go
+new file mode 100644
+--- /dev/null
++++ b/mcp/sdk01_framing_test.go
+@@ -0,0 +1,84 @@
++// Copyright 2026 The Go MCP SDK Authors. All rights reserved.
++// Use of this source code is governed by the license
++// that can be found in the LICENSE file.
++
++package mcp
++
++import (
++	"bytes"
++	"context"
++	"encoding/json"
++	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
++	"io"
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"testing"
++	"time"
++)
++
++type sdk01Writer struct{ bytes.Buffer }
++
++func (*sdk01Writer) Close() error { return nil }
++
++func TestSDK01InvalidNumericHTTP(t *testing.T) {
++	for _, id := range []string{"1.5", "9223372036854775808", "-9223372036854775809", "1e100000000", "0." + strings.Repeat("0", 127)} {
++		// Arrange.
++		calls := 0
++		server := NewServer(&Implementation{Name: "synthetic", Version: "test"}, nil)
++		server.AddTool(&Tool{Name: "probe", InputSchema: map[string]any{"type": "object"}}, func(context.Context, *CallToolRequest) (*CallToolResult, error) {
++			calls++
++			return &CallToolResult{}, nil
++		})
++		handler := NewStreamableHTTPHandler(func(*http.Request) *Server { return server }, &StreamableHTTPOptions{Stateless: true, JSONResponse: true})
++		req := httptest.NewRequest(http.MethodPost, "http://localhost/mcp", strings.NewReader(`{"jsonrpc":"2.0","id":`+id+`,"method":"tools/call","params":{"name":"probe","arguments":{}}}`))
++		req.Header.Set("Content-Type", "application/json")
++		req.Header.Set("Accept", "application/json, text/event-stream")
++		result := httptest.NewRecorder()
++		// Act.
++		handler.ServeHTTP(result, req)
++		// Assert.
++		var envelope struct {
++			ID    json.RawMessage
++			Error struct{ Code int }
++		}
++		if err := json.Unmarshal(result.Body.Bytes(), &envelope); err != nil {
++			t.Fatal(err)
++		}
++		if result.Code != 400 || string(envelope.ID) != "null" || envelope.Error.Code != -32600 || calls != 0 {
++			t.Fatalf("status%d calls%d body%s", result.Code, calls, result.Body)
++		}
++	}
++}
++
++func TestSDK01InvalidNumericSTDIOFrameRecovery(t *testing.T) {
++	// Arrange: many invalid frames then valid adjacent-large ID, no recursion.
++	data := strings.Repeat(`{"jsonrpc":"2.0","id":1.5,"method":"ping"}`+"\n", 1000) + `{"jsonrpc":"2.0","id":9007199254740993,"method":"ping"}` + "\n"
++	writer := &sdk01Writer{}
++	conn := newIOConn(rwc{rc: io.NopCloser(strings.NewReader(data)), wc: writer})
++	t.Cleanup(func() { conn.Close() })
++	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
++	defer cancel()
++	// Act.
++	message, err := conn.Read(ctx)
++	// Assert.
++	if err != nil {
++		t.Fatal(err)
++	}
++	if message.(*jsonrpc.Request).ID.Raw() != int64(9007199254740993) {
++		t.Fatal("valid ID lost")
++	}
++	decoder := json.NewDecoder(bytes.NewReader(writer.Bytes()))
++	for range 1000 {
++		var envelope struct {
++			ID    json.RawMessage
++			Error struct{ Code int }
++		}
++		if err := decoder.Decode(&envelope); err != nil {
++			t.Fatal(err)
++		}
++		if string(envelope.ID) != "null" || envelope.Error.Code != -32600 {
++			t.Fatal("invalid frame error")
++		}
++	}
++}
+diff --git a/mcp/streamable.go b/mcp/streamable.go
+--- a/mcp/streamable.go
++++ b/mcp/streamable.go
+@@ -1609,6 +1609,10 @@
+ 	// logic.
+ 	incoming, isBatch, err := readBatch(body)
+ 	if err != nil {
++		if errors.Is(err, jsonrpc2.ErrInvalidNumericRequestID) {
++			writeJSONRPCError(w, http.StatusBadRequest, jsonrpc.ID{}, &jsonrpc.Error{Code: jsonrpc.CodeInvalidRequest, Message: "invalid numeric request ID"})
++			return
++		}
+ 		http.Error(w, fmt.Sprintf("malformed payload: %v", err), http.StatusBadRequest)
+ 		return
+ 	}
+diff --git a/mcp/transport.go b/mcp/transport.go
+--- a/mcp/transport.go
++++ b/mcp/transport.go
+@@ -673,6 +673,7 @@
+ }
+ 
+ func (t *ioConn) Read(ctx context.Context) (jsonrpc.Message, error) {
++readNext:
+ 	// As a matter of principle, enforce that reads on a closed context return an
+ 	// error.
+ 	select {
+@@ -703,6 +704,13 @@
+ 
+ 	msgs, batch, err := readBatch(raw)
+ 	if err != nil {
++		if errors.Is(err, jsonrpc2.ErrInvalidNumericRequestID) {
++			response := &jsonrpc.Response{Error: &jsonrpc.Error{Code: jsonrpc.CodeInvalidRequest, Message: "invalid numeric request ID"}}
++			if err := t.Write(ctx, response); err != nil {
++				return nil, err
++			}
++			goto readNext
++		}
+ 		return nil, err
+ 	}
+ 	var protocolVersion string

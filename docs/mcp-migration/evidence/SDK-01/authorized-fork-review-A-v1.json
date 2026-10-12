@@ -1,0 +1,61 @@
+{
+  "review": "Independent authorized remote dependency compatibility review",
+  "reviewer": "/root/sdk_exception_completeness",
+  "candidate_root_source_sha256": "1c9b1220c19d864b1077b4822be09ec9a96af76b8eb6ce9ac0e7d2068ef15044",
+  "remote_dependency": {
+    "module": "github.com/skosovsky/go-sdk",
+    "version": "v1.8.1-0.20261012144231-5ec4c4212548",
+    "origin_sha": "5ec4c42125489a54f8324e2b81396847befcd2c3",
+    "sum": "h1:Di0PEfFAnVnIHE5QNCjHw1p5er5vTDGeGL/n6ATmiS4=",
+    "go_mod_sum": "h1:dL7u98E/zjJTGzEq+j30jQ8K2k1mb6LeAH4inEcSGts="
+  },
+  "verdict": "FAIL_COMPATIBLE_DEPENDENCY_GATE_ID05",
+  "task_acceptance": false,
+  "ID01-ID07": "NOT_ACCEPTED; complete root gate suite still required",
+  "confirmed_blocker": {
+    "requirement": "Spec4.4: invalid fractional/outside-int64/excessive numeric request must return protocol error id:null before application dispatch",
+    "HTTP": "Five independently tested fractional/outside-int64/extreme exponent/129-byte tokens yield HTTP400 text/plain without JSON-RPC envelope or id:null",
+    "STDIO_IOTransport": "Invalid1.5 returns SDK decode error, writes0response bytes, peer read times out; no id:null protocol error",
+    "root_evidence_confirmation": "authorized-fork-framing-v2.json sixFAIL independently reproduced",
+    "sources": {
+      "internal/jsonrpc2/messages.go:199": "DecodeMessage returns DecodeID error directly",
+      "internal/jsonrpc2/messages.go:136": "Invalid-ID error Response encoding omits nil ID via omitempty; no explicit null-ID encoding path",
+      "mcp/transport.go:704": "IOTransport Read returns readBatch error directly; no protocol error response",
+      "mcp/streamable.go:1610": "HTTP readBatch error is http.Error malformed payload plain400"
+    }
+  },
+  "actual_code_observations": [
+    "Exact raw envelope ID decoding and bounded128-byte decimal parser improve original precision, matching root codec28/28PASS; they do not satisfy invalid request error framing.",
+    "CancelledParams numeric RequestID uses json.Number and synchronous CancelCause improves cancellation correlation; full adversarial ID04/rootsubprocess lifecycle still required.",
+    "Caller MakeID(float64) truncation remains existing behavior; cannot recover already-rounded callers and must not claim arbitrary float64 correction.",
+    "Previous tmp proposal readiness100% applies only to different8a36ff-tree and is not evidence for current authorized remote fork."
+  ],
+  "remaining_normative_requirements": [
+    "ID01 complete boundary/type/decimal/exponent request and response proof",
+    "ID02 actual raw HTTP concurrent/out-of-order neighboring large-ID correlation",
+    "ID03 actual STDIO bridge subprocess concurrent external correlation",
+    "ID04 cancellation selected-only/neighbors/reuse/disconnect proof on supported paths",
+    "ID05 compatible SDK null-ID framing plus bounded rejection/no dispatch/resource budgets",
+    "ID06 lossless discover/resources/protocol errors/Events wrappers under same numeric contract",
+    "ID07 synthetic lost-response write same domain UUID/new envelopeID cannot duplicate upstream effect",
+    "Exactcandidate full nested/root tests/race/vet/build,CGO-free/offline/parity/affectedperformance and taskreviewer gates"
+  ],
+  "resolution_scope": "Requires compatible new immutable remote fork pin or explicit user decision about permitted dependency fix/contract. Existing remote replace authorization does not authorize local vendor/fork publication or waive id:null contract. Do not bypass SDK or add second parser.",
+  "source_hashes": {
+    "internal/jsonrpc2/messages.go": "ccfca9faae8135cbe466a66b529d800135a1cf565bdccee57a051cae083cced6",
+    "mcp/transport.go": "9b8dd8e07ad09cc617a9beabcda73bb98dc184d135f0579da7010ab2ff05e240",
+    "mcp/streamable.go": "4789b03dceaafeaf1148e72b8923b672ff43e7270d4a97c74b4e60a07fc825b5",
+    "mcp/protocol.go": "e069a889fee5b82cbb0a4051df08a73c1a0c0e29bd25da78a862268c02db8ed2",
+    "internal/jsonrpc2/conn.go": "e167be43c9cd0eef5b17950f84d60055e65f79dafec48c6fdad3ed6fdf2e0c6f"
+  },
+  "independent_harness": {
+    "source": "authorized-fork-review-A-smoke-v1.go.txt",
+    "log": "authorized-fork-review-A-smoke-v1.log",
+    "synthetic_only": true,
+    "cleanup": true
+  },
+  "peer_report_read": false,
+  "production_edits": false,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

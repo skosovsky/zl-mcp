@@ -1,0 +1,622 @@
+diff --git a/internal/json/json.go b/internal/json/json.go
+--- a/internal/json/json.go
++++ b/internal/json/json.go
+@@ -82,3 +82,13 @@
+ 	}
+ 	return nil
+ }
++
++// UnmarshalUseNumber retains the existing depth and case-sensitive field rules.
++func UnmarshalUseNumber(data []byte, v any) error {
++	if err := checkMaxDepth(data, defaultMaxDepth); err != nil {
++		return err
++	}
++	d := NewDecoder(bytes.NewReader(data))
++	d.dec.UseNumber()
++	return d.Decode(v)
++}
+diff --git a/internal/jsonrpc2/messages.go b/internal/jsonrpc2/messages.go
+--- a/internal/jsonrpc2/messages.go
++++ b/internal/jsonrpc2/messages.go
+@@ -9,6 +9,10 @@
+ 	"encoding/json"
+ 	"errors"
+ 	"fmt"
++	"math"
++	"math/big"
++	"strconv"
++	"strings"
+ 
+ 	internaljson "github.com/modelcontextprotocol/go-sdk/internal/json"
+ )
+@@ -19,8 +23,13 @@
+ 	value any
+ }
+ 
++// ErrInvalidNumericRequestID marks rejected numeric request envelopes.
++var ErrInvalidNumericRequestID = fmt.Errorf("%w: invalid numeric request ID", ErrParse)
++
+ // MakeID coerces the given Go value to an ID. The value should be the
+-// default JSON marshaling of a Request identifier: nil, float64, or string.
++// JSON representation of a Request identifier: nil, float64, json.Number, or string.
++// A json.Number must represent an integer within the int64 range.
++// Use json.Number when decoding JSON to avoid losing integer precision.
+ //
+ // Returns an error if the value type was not a valid Request ID type.
+ //
+@@ -31,12 +40,49 @@
+ 	switch v := v.(type) {
+ 	case nil:
+ 		return ID{}, nil
++	case json.Number:
++		i, err := integerID(v)
++		if err != nil {
++			return ID{}, fmt.Errorf("%w: invalid numeric ID: %v", ErrParse, err)
++		}
++		return Int64ID(i), nil
+ 	case float64:
++		if math.IsNaN(v) || math.IsInf(v, 0) || math.Trunc(v) != v || v < -0x1p63 || v >= 0x1p63 {
++			return ID{}, fmt.Errorf("%w: invalid numeric ID", ErrParse)
++		}
+ 		return Int64ID(int64(v)), nil
+ 	case string:
+ 		return StringID(v), nil
+ 	}
+ 	return ID{}, fmt.Errorf("%w: invalid ID type %T", ErrParse, v)
++}
++
++// integerID accepts integral decimal and exponent forms as well as integer literals.
++func integerID(n json.Number) (int64, error) {
++	if len(n) > 1024 {
++		return 0, fmt.Errorf("numeric ID exceeds 1024 bytes")
++	}
++	if i, err := n.Int64(); err == nil {
++		return i, nil
++	}
++	// Check magnitude before using big.Rat, so a short input with a very large
++	// exponent cannot cause an unbounded allocation.
++	f, err := strconv.ParseFloat(string(n), 64)
++	if err != nil || f < -0x1p63 || f > 0x1p63 {
++		return 0, fmt.Errorf("ID out of int64 range")
++	}
++	if f == 0 {
++		mantissa, _, _ := strings.Cut(strings.ToLower(string(n)), "e")
++		if strings.Trim(mantissa, "-+.0") == "" {
++			return 0, nil
++		}
++		return 0, fmt.Errorf("ID is not an integer")
++	}
++	r, ok := new(big.Rat).SetString(string(n))
++	if !ok || !r.IsInt() || !r.Num().IsInt64() {
++		return 0, fmt.Errorf("ID is not an int64 integer")
++	}
++	return r.Num().Int64(), nil
+ }
+ 
+ // Message is the interface to all jsonrpc2 message types.
+@@ -122,6 +168,9 @@
+ 
+ func (msg *Response) marshal(to *wireCombined) {
+ 	to.ID = msg.ID.value
++	if !msg.ID.IsValid() && msg.Error != nil {
++		to.ID = json.RawMessage("null")
++	}
+ 	to.Error = toWireError(msg.Error)
+ 	to.Result = msg.Result
+ }
+@@ -185,7 +234,7 @@
+ 
+ func DecodeMessage(data []byte) (Message, error) {
+ 	msg := wireDecode{}
+-	if err := internaljson.Unmarshal(data, &msg); err != nil {
++	if err := internaljson.UnmarshalUseNumber(data, &msg); err != nil {
+ 		return nil, fmt.Errorf("unmarshaling jsonrpc message: %w", err)
+ 	}
+ 	if msg.VersionTag != wireVersion {
+@@ -193,6 +242,9 @@
+ 	}
+ 	id, err := MakeID(msg.ID)
+ 	if err != nil {
++		if _, numeric := msg.ID.(json.Number); numeric && len(msg.Method) > 0 {
++			return nil, ErrInvalidNumericRequestID
++		}
+ 		return nil, err
+ 	}
+ 	if len(msg.Method) > 0 {
+diff --git a/internal/jsonrpc2/sdk01_hardening_test.go b/internal/jsonrpc2/sdk01_hardening_test.go
+new file mode 100644
+--- /dev/null
++++ b/internal/jsonrpc2/sdk01_hardening_test.go
+@@ -0,0 +1,60 @@
++// Copyright 2026 The Go MCP SDK Authors. All rights reserved.
++// Use of this source code is governed by the license
++// that can be found in the LICENSE file.
++
++package jsonrpc2_test
++
++import (
++	"encoding/json"
++	"errors"
++	"github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2"
++	"math"
++	"strings"
++	"testing"
++)
++
++func TestSDK01NumericBudget(t *testing.T) {
++	// Arrange: accepted mathematical zero at the exact token bound, then one byte over.
++	boundary := "0." + strings.Repeat("0", 1022)
++	for _, tc := range []struct {
++		value string
++		valid bool
++	}{
++		{boundary, true}, {boundary + "0", false}, {"1e100000000", false}, {"1e-100000000", false},
++		{"0e999999999", true}, {"9223372036854775807.0", true}, {"-9223372036854775808.0", true},
++		{"9223372036854775808.0", false}, {"-9223372036854775809.0", false},
++	} {
++		// Act.
++		_, err := jsonrpc2.MakeID(json.Number(tc.value))
++		// Assert.
++		if (err == nil) != tc.valid {
++			t.Errorf("length%d valid%v error%v", len(tc.value), tc.valid, err)
++		}
++	}
++}
++
++func TestSDK01FloatAdmission(t *testing.T) {
++	for _, v := range []float64{1.5, math.NaN(), math.Inf(1), math.Inf(-1), 0x1p63, -0x1p64} {
++		// Arrange/Act.
++		_, err := jsonrpc2.MakeID(v)
++		// Assert.
++		if !errors.Is(err, jsonrpc2.ErrParse) {
++			t.Errorf("invalid float %v accepted", v)
++		}
++	}
++}
++
++func TestSDK01NullIDError(t *testing.T) {
++	// Arrange.
++	response := &jsonrpc2.Response{Error: jsonrpc2.ErrInvalidRequest}
++	// Act.
++	raw, err := jsonrpc2.EncodeMessage(response)
++	var envelope map[string]json.RawMessage
++	if err == nil {
++		err = json.Unmarshal(raw, &envelope)
++	}
++	// Assert.
++	if err != nil || string(envelope["id"]) != "null" {
++		t.Fatalf("response %s error%v", raw, err)
++	}
++}
+diff --git a/internal/jsonrpc2/wire_test.go b/internal/jsonrpc2/wire_test.go
+--- a/internal/jsonrpc2/wire_test.go
++++ b/internal/jsonrpc2/wire_test.go
+@@ -185,3 +185,60 @@
+ 		t.Errorf("encoded message does not match\nGot:\n%s\nWant:\n%s", g, w)
+ 	}
+ }
++
++// TestIntegerIDs covers request/response correlation without decoding through float64.
++func TestIntegerIDs(t *testing.T) {
++	for _, id := range []int64{0, 42, 9007199254740992, 9007199254740993, -9007199254740993, 9223372036854775807, -9223372036854775808} {
++		for _, response := range []bool{false, true} {
++			var want jsonrpc2.Message = newCall(id, "ping", nil)
++			if response {
++				want = newResponse(id, "pong", nil)
++			}
++			encoded, err := jsonrpc2.EncodeMessage(want)
++			if err != nil {
++				t.Fatal(err)
++			}
++
++			got, err := jsonrpc2.DecodeMessage(encoded)
++
++			if err != nil {
++				t.Fatal(err)
++			}
++			if !reflect.DeepEqual(got, want) {
++				t.Errorf("DecodeMessage(%s) = %#v, want %#v", encoded, got, want)
++			}
++			roundtrip, err := jsonrpc2.EncodeMessage(got)
++			if err != nil {
++				t.Fatal(err)
++			}
++			checkJSON(t, roundtrip, encoded)
++		}
++	}
++}
++
++func TestDecodeInvalidIntegerID(t *testing.T) {
++	for _, literal := range []string{"9223372036854775808", "-9223372036854775809", "1.5", "1e100000000", "1e-100000000"} {
++		data := []byte(`{"jsonrpc":"2.0","id":` + literal + `,"method":"ping"}`)
++
++		_, err := jsonrpc2.DecodeMessage(data)
++
++		if !errors.Is(err, jsonrpc2.ErrParse) {
++			t.Errorf("DecodeMessage(%s) error = %v, want ErrParse", data, err)
++		}
++	}
++}
++
++func TestIntegralIDNotation(t *testing.T) {
++	for literal, want := range map[string]int64{"1e3": 1000, "1000.0": 1000, "100000e-2": 1000, "9007199254740993.0": 9007199254740993, "90071992547409930e-1": 9007199254740993, "0e999999999": 0} {
++		data := []byte(`{"jsonrpc":"2.0","id":` + literal + `,"method":"ping"}`)
++
++		msg, err := jsonrpc2.DecodeMessage(data)
++
++		if err != nil {
++			t.Fatal(err)
++		}
++		if got := msg.(*jsonrpc2.Request).ID; got != jsonrpc2.Int64ID(want) {
++			t.Errorf("ID = %v, want %d", got, want)
++		}
++	}
++}
+diff --git a/jsonrpc/jsonrpc.go b/jsonrpc/jsonrpc.go
+--- a/jsonrpc/jsonrpc.go
++++ b/jsonrpc/jsonrpc.go
+@@ -22,7 +22,9 @@
+ )
+ 
+ // MakeID coerces the given Go value to an ID. The value should be the
+-// default JSON marshaling of a Request identifier: nil, float64, or string.
++// JSON representation of a Request identifier: nil, float64, json.Number, or string.
++// A json.Number must represent a integer within the int64 range.
++// Use json.Number when decoding JSON to avoid losing integer precision.
+ //
+ // Returns an error if the value type was not a valid Request ID type.
+ func MakeID(v any) (ID, error) {
+diff --git a/mcp/id_precision_test.go b/mcp/id_precision_test.go
+new file mode 100644
+--- /dev/null
++++ b/mcp/id_precision_test.go
+@@ -0,0 +1,45 @@
++// Copyright 2025 The Go MCP SDK Authors. All rights reserved.
++// Use of this source code is governed by the license
++// that can be found in the LICENSE file.
++
++package mcp_test
++
++import (
++	"encoding/json"
++	"testing"
++
++	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
++	"github.com/modelcontextprotocol/go-sdk/mcp"
++)
++
++func TestCancelledParamsRequestIDPrecision(t *testing.T) {
++	for _, literal := range []string{`9007199254740993`, `-9007199254740993`, `9223372036854775807`, `-9223372036854775808`, `42`, `"9007199254740993"`, `null`} {
++		t.Run(literal, func(t *testing.T) {
++			data := []byte(`{"requestId":` + literal + `,"reason":"stop","_meta":{"number":42}}`)
++			var params mcp.CancelledParams
++
++			err := json.Unmarshal(data, &params)
++
++			if err != nil {
++				t.Fatal(err)
++			}
++			id, err := jsonrpc.MakeID(params.RequestID)
++			if err != nil {
++				t.Fatal(err)
++			}
++			encoded, err := json.Marshal(id.Raw())
++			if err != nil {
++				t.Fatal(err)
++			}
++			if string(encoded) != literal {
++				t.Errorf("request ID = %s, want %s", encoded, literal)
++			}
++			if params.Reason != "stop" {
++				t.Errorf("reason = %q", params.Reason)
++			}
++			if params.Meta["number"] != float64(42) {
++				t.Errorf("metadata decoding changed: %#v", params.Meta)
++			}
++		})
++	}
++}
+diff --git a/mcp/protocol.go b/mcp/protocol.go
+--- a/mcp/protocol.go
++++ b/mcp/protocol.go
+@@ -423,11 +423,28 @@
+ 	// An optional string describing the reason for the cancellation. This may be
+ 	// logged or presented to the user.
+ 	Reason string `json:"reason,omitempty"`
+-	// The ID of the request to cancel.
++	// The ID of the request to cancel. Numeric IDs decoded from JSON are
++	// represented as json.Number to preserve integer precision.
+ 	//
+ 	// This must correspond to the ID of a request previously issued in the same
+ 	// direction.
+ 	RequestID any `json:"requestId"`
++}
++
++// UnmarshalJSON preserves numeric request IDs without changing metadata decoding.
++func (x *CancelledParams) UnmarshalJSON(data []byte) error {
++	type plain CancelledParams
++	wire := struct {
++		*plain
++		RequestID json.RawMessage `json:"requestId"`
++	}{plain: (*plain)(x)}
++	if err := internaljson.Unmarshal(data, &wire); err != nil {
++		return err
++	}
++	if len(wire.RequestID) == 0 {
++		return nil
++	}
++	return internaljson.UnmarshalUseNumber(wire.RequestID, &x.RequestID)
+ }
+ 
+ func (x *CancelledParams) isParams()              {}
+diff --git a/mcp/review_B_cancellation_test.go b/mcp/review_B_cancellation_test.go
+new file mode 100644
+--- /dev/null
++++ b/mcp/review_B_cancellation_test.go
+@@ -0,0 +1,129 @@
++// Copyright 2026 The Go MCP SDK Authors. All rights reserved.
++// Use of this source code is governed by the license
++// that can be found in the LICENSE file.
++
++package mcp
++
++import (
++	"context"
++	"encoding/json"
++	"io"
++	"sync"
++	"testing"
++	"time"
++
++	"github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2"
++)
++
++type reviewBPipe struct {
++	incoming  chan jsonrpc2.Message
++	closed    chan struct{}
++	once      sync.Once
++	entered   chan struct{}
++	release   chan struct{}
++	blockOnce sync.Once
++	written   chan struct{}
++}
++
++func (p *reviewBPipe) Read(ctx context.Context) (jsonrpc2.Message, error) {
++	select {
++	case m := <-p.incoming:
++		return m, nil
++	case <-p.closed:
++		return nil, io.EOF
++	case <-ctx.Done():
++		return nil, ctx.Err()
++	}
++}
++func (p *reviewBPipe) Write(ctx context.Context, m jsonrpc2.Message) error {
++	p.blockOnce.Do(func() { close(p.entered); <-p.release })
++	p.written <- struct{}{}
++	return nil
++}
++func (p *reviewBPipe) Close() error { p.once.Do(func() { close(p.closed) }); return nil }
++
++func TestReviewBSynchronousCancellationAndBlockedOldCompletion(t *testing.T) {
++	// Arrange: an async old invocation and an independently tracked neighbor.
++	p := &reviewBPipe{incoming: make(chan jsonrpc2.Message, 8), closed: make(chan struct{}), entered: make(chan struct{}), release: make(chan struct{}), written: make(chan struct{}, 8)}
++	seen := make(chan context.Context, 8)
++	oldFinish := make(chan struct{})
++	newFinish := make(chan struct{})
++	neighborFinish := make(chan struct{})
++	c := jsonrpc2.NewConnection(context.Background(), jsonrpc2.ConnectionConfig{Reader: p, Writer: p, Closer: p, Bind: func(*jsonrpc2.Connection) jsonrpc2.Handler {
++		return jsonrpc2.HandlerFunc(func(ctx context.Context, r *jsonrpc2.Request) (any, error) {
++			jsonrpc2.Async(ctx)
++			seen <- ctx
++			switch r.Method {
++			case "old":
++				<-oldFinish
++			case "new":
++				<-newFinish
++			case "neighbor":
++				<-neighborFinish
++			}
++			return "complete", nil
++		})
++	}})
++	defer c.Close()
++	next := func() context.Context {
++		t.Helper()
++		select {
++		case ctx := <-seen:
++			return ctx
++		case <-time.After(2 * time.Second):
++			t.Fatal("handler missing")
++			return nil
++		}
++	}
++	id := jsonrpc2.Int64ID(9007199254740993)
++	p.incoming <- &jsonrpc2.Request{ID: id, Method: "old"}
++	old := next()
++	p.incoming <- &jsonrpc2.Request{ID: jsonrpc2.Int64ID(9007199254740994), Method: "neighbor"}
++	neighbor := next()
++	// Act: actual MCP preempter must bind cancellation before returning.
++	cancel := &canceller{conn: c}
++	cancel.Preempt(context.Background(), &jsonrpc2.Request{Method: notificationCancelled, Params: json.RawMessage(`{"requestId":9007199254740993}`)})
++	// Assert: immediate cancellation, with no scheduler wait and no neighbor cancellation.
++	if old.Err() != context.Canceled {
++		t.Fatal("preempter returned before selected invocation was cancelled")
++	}
++	if neighbor.Err() != nil {
++		t.Fatal("neighbor cancelled")
++	}
++	// Arrange: old completion blocks after map deletion, new invocation reuses exact ID.
++	close(oldFinish)
++	select {
++	case <-p.entered:
++	case <-time.After(2 * time.Second):
++		t.Fatal("old response not blocked")
++	}
++	p.incoming <- &jsonrpc2.Request{ID: id, Method: "new"}
++	newctx := next()
++	// Act: finish old response after new invocation has registered.
++	close(p.release)
++	select {
++	case <-p.written:
++	case <-time.After(2 * time.Second):
++		t.Fatal("old completion stuck")
++	}
++	// Assert: old completion did not cancel/delete new or neighbor state.
++	if newctx.Err() != nil {
++		t.Fatal("old completion cancelled reused invocation")
++	}
++	cancel.Preempt(context.Background(), &jsonrpc2.Request{Method: notificationCancelled, Params: json.RawMessage(`{"requestId":9007199254740993}`)})
++	if newctx.Err() != context.Canceled {
++		t.Fatal("old completion deleted new cancellation entry")
++	}
++	if neighbor.Err() != nil {
++		t.Fatal("neighbor cancelled after ID reuse")
++	}
++	close(newFinish)
++	close(neighborFinish)
++	for range 2 {
++		select {
++		case <-p.written:
++		case <-time.After(2 * time.Second):
++			t.Fatal("completion stuck")
++		}
++	}
++}
+diff --git a/mcp/sdk01_framing_test.go b/mcp/sdk01_framing_test.go
+new file mode 100644
+--- /dev/null
++++ b/mcp/sdk01_framing_test.go
+@@ -0,0 +1,84 @@
++// Copyright 2026 The Go MCP SDK Authors. All rights reserved.
++// Use of this source code is governed by the license
++// that can be found in the LICENSE file.
++
++package mcp
++
++import (
++	"bytes"
++	"context"
++	"encoding/json"
++	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
++	"io"
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"testing"
++	"time"
++)
++
++type sdk01Writer struct{ bytes.Buffer }
++
++func (*sdk01Writer) Close() error { return nil }
++
++func TestSDK01InvalidNumericHTTP(t *testing.T) {
++	for _, id := range []string{"1.5", "9223372036854775808", "-9223372036854775809", "1e100000000", "0." + strings.Repeat("0", 1023)} {
++		// Arrange.
++		calls := 0
++		server := NewServer(&Implementation{Name: "synthetic", Version: "test"}, nil)
++		server.AddTool(&Tool{Name: "probe", InputSchema: map[string]any{"type": "object"}}, func(context.Context, *CallToolRequest) (*CallToolResult, error) {
++			calls++
++			return &CallToolResult{}, nil
++		})
++		handler := NewStreamableHTTPHandler(func(*http.Request) *Server { return server }, &StreamableHTTPOptions{Stateless: true, JSONResponse: true})
++		req := httptest.NewRequest(http.MethodPost, "http://localhost/mcp", strings.NewReader(`{"jsonrpc":"2.0","id":`+id+`,"method":"tools/call","params":{"name":"probe","arguments":{}}}`))
++		req.Header.Set("Content-Type", "application/json")
++		req.Header.Set("Accept", "application/json, text/event-stream")
++		result := httptest.NewRecorder()
++		// Act.
++		handler.ServeHTTP(result, req)
++		// Assert.
++		var envelope struct {
++			ID    json.RawMessage
++			Error struct{ Code int }
++		}
++		if err := json.Unmarshal(result.Body.Bytes(), &envelope); err != nil {
++			t.Fatal(err)
++		}
++		if result.Code != 400 || string(envelope.ID) != "null" || envelope.Error.Code != -32600 || calls != 0 {
++			t.Fatalf("status%d calls%d body%s", result.Code, calls, result.Body)
++		}
++	}
++}
++
++func TestSDK01InvalidNumericSTDIOFrameRecovery(t *testing.T) {
++	// Arrange: many invalid frames then valid adjacent-large ID, no recursion.
++	data := strings.Repeat(`{"jsonrpc":"2.0","id":1.5,"method":"ping"}`+"\n", 1000) + `{"jsonrpc":"2.0","id":9007199254740993,"method":"ping"}` + "\n"
++	writer := &sdk01Writer{}
++	conn := newIOConn(rwc{rc: io.NopCloser(strings.NewReader(data)), wc: writer})
++	t.Cleanup(func() { conn.Close() })
++	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
++	defer cancel()
++	// Act.
++	message, err := conn.Read(ctx)
++	// Assert.
++	if err != nil {
++		t.Fatal(err)
++	}
++	if message.(*jsonrpc.Request).ID.Raw() != int64(9007199254740993) {
++		t.Fatal("valid ID lost")
++	}
++	decoder := json.NewDecoder(bytes.NewReader(writer.Bytes()))
++	for range 1000 {
++		var envelope struct {
++			ID    json.RawMessage
++			Error struct{ Code int }
++		}
++		if err := decoder.Decode(&envelope); err != nil {
++			t.Fatal(err)
++		}
++		if string(envelope.ID) != "null" || envelope.Error.Code != -32600 {
++			t.Fatal("invalid frame error")
++		}
++	}
++}
+diff --git a/mcp/streamable.go b/mcp/streamable.go
+--- a/mcp/streamable.go
++++ b/mcp/streamable.go
+@@ -1438,6 +1438,10 @@
+ 	// logic.
+ 	incoming, isBatch, err := readBatch(body)
+ 	if err != nil {
++		if errors.Is(err, jsonrpc2.ErrInvalidNumericRequestID) {
++			writeJSONRPCError(w, http.StatusBadRequest, jsonrpc.ID{}, &jsonrpc.Error{Code: jsonrpc.CodeInvalidRequest, Message: "invalid numeric request ID"})
++			return
++		}
+ 		http.Error(w, fmt.Sprintf("malformed payload: %v", err), http.StatusBadRequest)
+ 		return
+ 	}
+diff --git a/mcp/transport.go b/mcp/transport.go
+--- a/mcp/transport.go
++++ b/mcp/transport.go
+@@ -266,7 +266,7 @@
+ 		if err != nil {
+ 			return nil, err
+ 		}
+-		go c.conn.Cancel(id)
++		c.conn.Cancel(id)
+ 	}
+ 	return nil, jsonrpc2.ErrNotHandled
+ }
+@@ -666,6 +666,7 @@
+ }
+ 
+ func (t *ioConn) Read(ctx context.Context) (jsonrpc.Message, error) {
++readNext:
+ 	// As a matter of principle, enforce that reads on a closed context return an
+ 	// error.
+ 	select {
+@@ -696,6 +697,13 @@
+ 
+ 	msgs, batch, err := readBatch(raw)
+ 	if err != nil {
++		if errors.Is(err, jsonrpc2.ErrInvalidNumericRequestID) {
++			response := &jsonrpc.Response{Error: &jsonrpc.Error{Code: jsonrpc.CodeInvalidRequest, Message: "invalid numeric request ID"}}
++			if err := t.Write(ctx, response); err != nil {
++				return nil, err
++			}
++			goto readNext
++		}
+ 		return nil, err
+ 	}
+ 	var protocolVersion string

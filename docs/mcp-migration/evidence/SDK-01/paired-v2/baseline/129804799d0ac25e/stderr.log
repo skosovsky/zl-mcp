@@ -1,0 +1,2 @@
+2026/10/12 17:04:05 INFO mcp_call tool=zalo_list_conversation_messages principal=501 correlation_id=2f7d7130-93a0-4fec-8246-d5aacb2cd6ff code=OK duration_ms=0
+2026/10/12 17:04:05 INFO mcp_call tool=zalo_list_conversation_messages principal=501 correlation_id=8e955015-2f40-4620-9a3f-6802469270f2 code=OK duration_ms=0

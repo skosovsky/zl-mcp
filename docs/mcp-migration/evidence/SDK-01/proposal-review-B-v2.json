@@ -1,0 +1,37 @@
+{
+  "review": "independent correctness of hardened dependency exception; not SDK-01 acceptance",
+  "status": "READY_FOR_USER_DEPENDENCY_EXCEPTION_REVIEW",
+  "prior_report": "proposal-review-B.json",
+  "resolved": [
+    "B01 helper backport retains depth/case-sensitive decoding",
+    "B02 finite/integral/signed-int64 float64 guard",
+    "B03 actual MCP canceller resolves synchronously",
+    "B04 invalid numeric request HTTP400/-32600/id:null and STDIO response then iterative read continuation",
+    "B05 numeric literal limit1024 bytes before conversions with fixed error messages"
+  ],
+  "executable_adversarial_check": {
+    "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test -race ./mcp -run TestReviewB -count=20",
+    "cwd": "/tmp/zl-sdk01-proposal-v1",
+    "exit_code": 0,
+    "output": "ok github.com/modelcontextprotocol/go-sdk/mcp 1.872s",
+    "test_source": "proposal-review-B-cancellation-test.go.txt",
+    "test_sha256": "2730d713bfa3d3d28ff0e3687b43d7ce213b2c022fdd2e9e24dc39c9b5aa8380",
+    "covers": [
+      "Preempt has cancelled exact requested9007199254740993 invocation before return",
+      "adjacent9007199254740994 remains active",
+      "old response writer blocks after incoming map deletion",
+      "new invocation reuses old ID while old writer is blocked",
+      "old completion neither cancels nor deletes new invocation entry",
+      "later same-ID cancellation still reaches new invocation",
+      "neighbor remains active throughout"
+    ]
+  },
+  "remaining_nonblocking_note": "Public MakeID(json.Number) accepts some caller-provided invalid JSON spellings such as +1 and01 through strconv.Int64; remote JSON admission rejects these. Optional API hardening, not demonstrated violation of valid JSON-wire signed-int64 contract. Already rounded caller float64 cannot be restored.",
+  "remaining_mandatory_task_gates": [
+    "user approves concrete pinned dependency exception before adoption",
+    "full nested SDK test/race/vet/build",
+    "root ID01-ID07 including actual HTTP/STDIO/Events wrappers and durable-write loss case",
+    "root migration gates and CGO-free builds"
+  ],
+  "review_scope": "No adoption/sibling/third_party changes; isolatedproposal test only, copy preserved as evidence. Null-ID error responses are newly encoded correctly; existing decode rejection of unsolicited null-ID response remains baseline behavior and does not affect admitted valid invocation correlation."
+}

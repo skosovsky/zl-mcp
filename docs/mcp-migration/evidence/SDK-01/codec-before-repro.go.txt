@@ -1,0 +1,37 @@
+package main
+
+import (
+ "encoding/json"
+ "fmt"
+ "github.com/modelcontextprotocol/go-sdk/jsonrpc"
+)
+
+func main() {
+ cases := []struct{input, want string}{
+ {"9007199254740991","9007199254740991"}, {"9007199254740992","9007199254740992"},
+ {"9007199254740993","9007199254740993"}, {"9007199254740994","9007199254740994"},
+ {"-9223372036854775808","-9223372036854775808"}, {"9223372036854775807","9223372036854775807"},
+ {"9007199254740993.0","9007199254740993"}, {"9.007199254740993e15","9007199254740993"},
+ {`"9007199254740993"`,`"9007199254740993"`}, {`"1"`,`"1"`}, {"1","1"},
+ {"1.5","REJECT"}, {"9223372036854775808","REJECT"}, {"-9223372036854775809","REJECT"},
+ }
+ for _, c := range cases {
+  for _, response := range []bool{false,true} {
+   suffix := `,"method":"ping"}`
+   if response { suffix = `,"result":"ok"}` }
+   input := []byte(`{"jsonrpc":"2.0","id":`+c.input+suffix)
+   message, err := jsonrpc.DecodeMessage(input)
+   record := map[string]any{"input_id":c.input,"expected_id":c.want,"response":response,"pass":false}
+   if err != nil { record["error"] = err.Error(); record["pass"] = c.want=="REJECT" } else {
+    encoded, err := jsonrpc.EncodeMessage(message)
+    if err != nil { record["error"]=err.Error() } else {
+     var envelope map[string]json.RawMessage
+     if err := json.Unmarshal(encoded,&envelope); err != nil { panic(err) }
+     record["actual_id"] = string(envelope["id"])
+     record["pass"] = string(envelope["id"])==c.want
+    }
+   }
+   data,err := json.Marshal(record); if err != nil { panic(err) }; fmt.Println(string(data))
+  }
+ }
+}

@@ -1,0 +1,11 @@
+=== RUN   TestSDK01ActualSTDIOIdentityBoundsAndOutOfOrder
+    sdk_stdio_identity_test.go:184: STDIO framing EOF $HOME is not defined
+        
+--- FAIL: TestSDK01ActualSTDIOIdentityBoundsAndOutOfOrder (3.36s)
+=== RUN   TestSDK01ActualSTDIOCancellationAndIDReusePrivacy
+    sdk_stdio_identity_test.go:244: STDIO framing EOF $HOME is not defined
+        
+--- FAIL: TestSDK01ActualSTDIOCancellationAndIDReusePrivacy (1.80s)
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/mcpserver	5.662s
+FAIL

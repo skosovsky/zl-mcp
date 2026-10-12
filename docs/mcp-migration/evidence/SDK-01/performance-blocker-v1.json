@@ -1,0 +1,33 @@
+{
+  "task": "SDK-01",
+  "status": "BLOCKER_REQUIRES_DEPENDENCY_DECISION",
+  "candidate_source_digest_sha256": "edad4d6b9590770c1220b7489363f1842a19213a818c7e01ccc9d805c38a3f14",
+  "pin": "v1.8.1-0.20261012153430-1e3d51f2f580",
+  "toolsy": "v0.20.4",
+  "performance": "performance-comparison-v1.json",
+  "measurement_exit_status": 0,
+  "comparison_exit_status": 1,
+  "calls": 15000,
+  "errors": 0,
+  "failed_gates": [
+    "read B/op",
+    "search B/op",
+    "context B/op",
+    "context p95"
+  ],
+  "diagnosis": {
+    "selected_sdk_file": "internal/jsonrpc2/messages.go:223",
+    "new_method_decode": "internaljson.Unmarshal(msg.Method, &method)",
+    "isolated_method_decode_bytes_per_op": 32848,
+    "isolated_method_decode_allocations_per_op": 4,
+    "probe_source": "review-correctness-allocation-probe.go.txt",
+    "probe_log": "review-correctness-allocation-probe.log",
+    "limit": "Cost confirmed in isolated benchmark; whole-path delta approximately matches; latency cause unproven"
+  },
+  "preserved_gates": "2026-10-12-candidate-latency-plus10-v3",
+  "next_action": "Await user new fork pin or explicit scoped dependency patch authorization; repeat affected checks. No budget amendment assumed.",
+  "scope": "No SDK/source patch adopted; root source frozen; no sibling/third_party changes",
+  "task_commit_created": false,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

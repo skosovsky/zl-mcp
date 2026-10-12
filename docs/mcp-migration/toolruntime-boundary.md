@@ -62,3 +62,9 @@ T09 final pin: official v0.20.2, origin36eb5b661ab4569051e5b17175dc44f3dd132b9c,
 replaces v0.20.1. Execution/privacy/persistence contracts are unchanged. Performance
 acceptance uses explicit user revision2026-10-12: allocations<=2.0 and B/op<=1.20;
 p95<=1.15. Earlier failures retain their original criteria.
+
+
+SDK-01 user-authorized dependency update selects official toolsy v0.20.5 and
+remote SDK fork v1.8.1-0.20261012184819-4347cd438f3c. T09's accepted v0.20.2
+measurements remain historical evidence. No local toolsy/SDK patch or vendor
+is used; runtime policy/schema/authority and durable owners remain unchanged.

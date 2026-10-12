@@ -1,0 +1,118 @@
+{
+  "review": "SDK-01 dependency-exception preparation independent completeness",
+  "reviewer": "/root/sdk_exception_completeness",
+  "task_acceptance": false,
+  "parent_commit": "bb3eadc785366588b88bdc83c4d7693c89b96090",
+  "candidate_scope": "Official v1.8.0 plus preserved PR1375 diff; local hardening still proposed, not adopted",
+  "proposal_head_sha": "9174a3ffc71cf5c7617a6c64afca0802b855f770",
+  "proposal_diff_sha256": "44afb11654541c99213b6c764974d4480a07405f4b13e3c6a392bb077a512a75",
+  "official_license_sha256": "af679003d933f045393a6a029f43da113f9ae364eac651d9ae268392985580f5",
+  "preparation_checklist_total": 12,
+  "preparation_complete": 6,
+  "preparation_completeness_percent": 50.0,
+  "verdict": "INCOMPLETE_PROPOSAL_NOT_TASK_ACCEPTANCE",
+  "checklist": [
+    {
+      "id": "P01",
+      "status": "PASS",
+      "requirement": "Immutable proposed PR commit identified",
+      "evidence_or_gap": "9174a3ffc71cf5c7617a6c64afca0802b855f770"
+    },
+    {
+      "id": "P02",
+      "status": "PASS",
+      "requirement": "Official base selected and proposal isolated; no root dependency adoption",
+      "evidence_or_gap": "proposal-isolation.json; git status only SDK-01 evidence untracked"
+    },
+    {
+      "id": "P03",
+      "status": "PASS",
+      "requirement": "Current official PR status captured",
+      "evidence_or_gap": "upstream-pr.json: state open, merged_at null"
+    },
+    {
+      "id": "P04",
+      "status": "PASS",
+      "requirement": "Minimal proposed diff preserved",
+      "evidence_or_gap": "upstream-proposed.diff changes envelope decoder, integer conversion, cancellation requestId and tests only; no new module dependencies"
+    },
+    {
+      "id": "P05",
+      "status": "PASS",
+      "requirement": "20 leaf task contract frozen before root implementation",
+      "evidence_or_gap": "requirements.json"
+    },
+    {
+      "id": "P06",
+      "status": "PASS",
+      "requirement": "Original SDK repro retained",
+      "evidence_or_gap": "codec-before-repro.go.txt, codec-before.jsonl, codec-before.log"
+    },
+    {
+      "id": "P07",
+      "status": "PENDING",
+      "requirement": "Explicit license/provenance bundle for eventual distribution",
+      "evidence_or_gap": "Preserve full official LICENSE with mixed Apache-2.0/MIT transition statement, copyright headers, module sums/base SHA, PR patch SHA and local hardening SHA"
+    },
+    {
+      "id": "P08",
+      "status": "PENDING",
+      "requirement": "Complete reviewed bounded numeric patch",
+      "evidence_or_gap": "PR has no numeric lexeme length cap; root proposes 1024-byte cap, inspect exact hardened diff/tests before approval"
+    },
+    {
+      "id": "P09",
+      "status": "PENDING",
+      "requirement": "Invalid numeric request produces protocol error id:null before dispatch",
+      "evidence_or_gap": "PR changes codec but official HTTP readBatch failure sends plain HTTP400; IO DecodeMessage failure terminates connection. Need minimal existing transport changes and executable framing fixtures"
+    },
+    {
+      "id": "P10",
+      "status": "PENDING",
+      "requirement": "Upstream full nested tests/race/vet/build evidence",
+      "evidence_or_gap": "Preserve every upstream test; actual complete results required for exact candidate, not PR body claims"
+    },
+    {
+      "id": "P11",
+      "status": "PENDING",
+      "requirement": "Removal conditions and approved vendoring destination",
+      "evidence_or_gap": "Explicit unmodified official release must pass same ID01-ID07 plus nested/root/offline/performance/CGO-free gates; no floating branch; no adoption before user approval"
+    },
+    {
+      "id": "P12",
+      "status": "PENDING",
+      "requirement": "All seven ID gates proved for proposed candidate",
+      "evidence_or_gap": "Full codec/HTTP/subprocess/cancellation/wrappers/no-resend executable evidence not yet available; this review is proposal preparation only"
+    }
+  ],
+  "numeric_contract_findings": [
+    "Exact signed int64, integral decimal/exponent and string/numeric distinction are addressed by PR core conversion; upstream tests omit several required boundaries (2^53-1 and 2^53+2) and rejection variants, so root ID fixtures must supplement.",
+    "A fixed numeric-lexeme length budget before Int64/ParseFloat/big.Rat is required; document 1024 bytes if selected, test at limit and limit+1 including zero/extreme exponent and balanced long mantissa/exponent.",
+    "Legacy MakeID(float64) path still truncates fractional and cannot recover already rounded inputs; do not claim arbitrary caller float64 correction. Raw clients must use json.Number.",
+    "CancelledParams.RequestID becomes json.Number; metadata stays float64 as before. Missing requestId on reused CancelledParams receiver should be explicitly considered/tested to avoid stale value reliance.",
+    "Invalid numeric rejection framing must be executable, id:null, with bounded error output and no handler dispatch. Raw invalid literal reflected in PR error message is bounded only after lexeme cap."
+  ],
+  "cancellation_analysis": {
+    "sdk_owner": "internal/jsonrpc2/conn.go",
+    "structural_observation": "acceptRequest rejects duplicate active ID; processResult removes incomingByID before sending response; final req.cancel acts on old invocation pointer. No ID-key cleanup after response write is visible in this owner.",
+    "required_adversarial_test": "Block old response Write, submit new invocation with reused ID after old map removal, finish old Write/cancellation, then cancel new invocation and prove its identity/state survives; adjacent large IDs remain independent.",
+    "bridge_telemetry_map": "internal/service/bridge.go requests is telemetry bookkeeping only; ID-key deletion there is not cancellation authority and not claimed as cancellation defect."
+  },
+  "scope_respected": {
+    "root_go_or_vendor_edited": false,
+    "sibling_or_zcago_edited": false,
+    "peer_report_read": false,
+    "live_services_or_paid_evals": false
+  },
+  "reviewed_sources": [
+    "docs/task-mcp-architecture-ai-libs.md section4.4",
+    "requirements.json",
+    "upstream-proposed.diff",
+    "upstream-pr.json",
+    "proposal-isolation.json",
+    "official v1.8.0 internal/jsonrpc2/messages.go and conn.go",
+    "official v1.8.0 mcp/transport.go and streamable.go",
+    "official v1.8.0 LICENSE and AGENTS.md",
+    "internal/service/bridge.go"
+  ]
+}

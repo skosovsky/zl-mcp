@@ -1,0 +1,8 @@
+go: downloading golang.org/x/tools v0.42.0
+# github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2
+internal/jsonrpc2/messages.go:224:25: undefined: internaljson.UnmarshalUseNumber
+ok  	github.com/modelcontextprotocol/go-sdk/internal/json	0.588s
+FAIL	github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2 [build failed]
+FAIL	github.com/modelcontextprotocol/go-sdk/jsonrpc [build failed]
+FAIL	github.com/modelcontextprotocol/go-sdk/mcp [build failed]
+FAIL

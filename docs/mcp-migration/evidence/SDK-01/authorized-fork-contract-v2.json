@@ -1,0 +1,42 @@
+{
+  "revision": 2,
+  "timestamp_utc": "2026-10-12T16:04:22.054612+00:00",
+  "user_authorization": "Еще раз обнови тулси - и сделай replace github.com/modelcontextprotocol/go-sdk => github.com/skosovsky/go-sdk v1.8.1-0.20261012153430-1e3d51f2f580",
+  "toolsy": {
+    "Path": "github.com/skosovsky/toolsy",
+    "Version": "v0.20.4",
+    "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.4.info",
+    "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.4.mod",
+    "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.4.zip",
+    "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.4",
+    "Sum": "h1:WoKtVS054N9o2H39Dyvrq0uVQ1/hP25F71TU3O90r74=",
+    "GoModSum": "h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=",
+    "Origin": {
+      "VCS": "git",
+      "URL": "https://github.com/skosovsky/toolsy",
+      "Hash": "5bd14c27606541ceb38e7f6286f7b356faad123c",
+      "Ref": "refs/tags/v0.20.4"
+    }
+  },
+  "SDK": {
+    "Path": "github.com/skosovsky/go-sdk",
+    "Version": "v1.8.1-0.20261012153430-1e3d51f2f580",
+    "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012153430-1e3d51f2f580.info",
+    "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012153430-1e3d51f2f580.mod",
+    "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012153430-1e3d51f2f580.zip",
+    "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/go-sdk@v1.8.1-0.20261012153430-1e3d51f2f580",
+    "Sum": "h1:UwJd8isAyB9BIxExgd5ovLBsrCNiJJar0ixedQW8mbo=",
+    "GoModSum": "h1:dL7u98E/zjJTGzEq+j30jQ8K2k1mb6LeAH4inEcSGts=",
+    "Origin": {
+      "VCS": "git",
+      "URL": "https://github.com/skosovsky/go-sdk",
+      "Hash": "1e3d51f2f580b47730f8726dad64f71451e38e96"
+    }
+  },
+  "scope": "Exact remote fork + officialtoolsy0.20.4; no localvendor/patch/sibling edits",
+  "wire_contract": "Signedint64 exact; integraldecimal/exponent; stringtype/value; numericcap128; invalidID -32600 id:null, HTTP400 application/json or STDIO response+recovery; no dispatch",
+  "historical_ID05_FAIL": "5ec4pin results retained; newpin requires fresh evidence",
+  "ID01-ID07": "PENDING fulltaskacceptance",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

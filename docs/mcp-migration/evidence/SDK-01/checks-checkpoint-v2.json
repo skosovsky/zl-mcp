@@ -1,0 +1,112 @@
+{
+  "task": "SDK-01",
+  "source_digest_sha256": "edad4d6b9590770c1220b7489363f1842a19213a818c7e01ccc9d805c38a3f14",
+  "environment": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache",
+  "records": [
+    {
+      "command": "go test ./...",
+      "log": "root-test-v2.log",
+      "exit_status": 0,
+      "sha256": "a739defc7a453b618219804141c7c8a3f866f4c1d09df1b724e14e89727ba6ff"
+    },
+    {
+      "command": "go test -race ./...",
+      "log": "root-race-v2.log",
+      "exit_status": 0,
+      "sha256": "72ec33cd75c16100eb9e02fba7200836136e6f3cb312d9f91c3f9c8e6171b323"
+    },
+    {
+      "command": "go vet ./...",
+      "log": "root-vet-v2.log",
+      "exit_status": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "go test ./... (pristine SDK)",
+      "log": "selected-sdk-full-test-v1.log",
+      "exit_status": 0,
+      "sha256": "89516a9143f2b4a519d7c6206ee006c1228454023eba5590e39357b413612e2f"
+    },
+    {
+      "command": "go test -race ./... (pristine SDK)",
+      "log": "selected-sdk-full-race-v1.log",
+      "exit_status": 0,
+      "sha256": "83cf4e92afe80dfe18c2ddfb1383256a039b22cd32e9ff627efb0b203f1f4ccc"
+    },
+    {
+      "command": "go vet ./... (pristine SDK)",
+      "log": "selected-sdk-full-vet-v1.log",
+      "exit_status": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "go build ./... (pristine SDK)",
+      "log": "selected-sdk-full-build-v1.log",
+      "exit_status": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "go test -race ./mcp -run TestReviewBSynchronousCancellationAndBlockedOldCompletion -count=20 (test-only overlay)",
+      "log": "selected-sdk-cancellation-reuse-race-v1.log",
+      "exit_status": 0,
+      "sha256": "7b2a261f12a9fe1040e75b151e690434d70537fb2ae770b2f8ba138d135972ad"
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts/mcp-migration -p test_*.py -v",
+      "log": "python-checks-v1.log",
+      "exit_status": 0,
+      "sha256": "4ea7f4d0fa00d60c3328d22dae616e0e048168c0b692cae828f5d25bbef8f095"
+    },
+    {
+      "command": "native startup acceptance baseline then candidate",
+      "log": "restart-old-new-v2.log",
+      "exit_status": 0,
+      "sha256": "99a569828641743b26bcbd9b44bf9f1b4f54a1c88afd9dc757bfba70d4962fd5"
+    },
+    {
+      "command": "native startup acceptance candidate then baseline",
+      "log": "restart-new-old-v2.log",
+      "exit_status": 0,
+      "sha256": "58fb738a23bbb465920b7dac01680325383c8c9f130fd8f3c8d5ca2710f2e4b0"
+    },
+    {
+      "command": "go test ./...",
+      "exit_status": 0,
+      "log": "selected-sdk-full-test-v2.log",
+      "sha256": "89d6a1fc5a15c5e674559a8e35a19b6187f1d0507fff1548a1a5ec98745c5cc6"
+    },
+    {
+      "command": "go test -race ./...",
+      "exit_status": 0,
+      "log": "selected-sdk-full-race-v2.log",
+      "sha256": "dc23fd83f4f5c33597644304ce83dd77eb502f97a12ed22bfcac05d8b115deaa"
+    },
+    {
+      "command": "go vet ./...",
+      "exit_status": 0,
+      "log": "selected-sdk-full-vet-v2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "go build ./...",
+      "exit_status": 0,
+      "log": "selected-sdk-full-build-v2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "architecture": "architecture-v2.json PASS100/100 with negative/source controls",
+  "platforms": "platform-build-manifest-v1.json PASS",
+  "build": "build-manifest-v2.json PASS same source digest",
+  "offline": "offline-v2/report.json PASS50/50 cases480/480 assertions",
+  "paired": "paired-v2/report.json PASS50fullpairs;2explicitbaselineSDKIDcorrections, candidate exact",
+  "consumer": "toolsy-v0.20.4-consumer-probe.json PASS",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "remaining": [
+    "Resolve performance dependency blocker without unilateral gate change",
+    "Independent task review100/PASS",
+    "SoleSDK01commit"
+  ],
+  "performance": "performance-comparison-v1.json FAIL, not acceptance",
+  "source_integrity": "selected-sdk-source-manifest.json PASS226/226"
+}

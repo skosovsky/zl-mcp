@@ -1,0 +1,15 @@
+{
+  "task": "SDK-01",
+  "status": "DEPENDENCY_ID05_FAIL_PREPARING_REMEDIATION",
+  "candidate_source_digest_sha256": "f7b846955bad650b3e17b9cd1b7d02c5b9d9606b572b5127126d5d69680f2206",
+  "authorized_replace": "github.com/modelcontextprotocol/go-sdk=>github.com/skosovsky/go-sdk v1.8.1-0.20261012144231-5ec4c4212548",
+  "toolsy": "v0.20.3 consumerprobePASS",
+  "codec": "28/28 PASS, not full ID01 acceptance",
+  "ID05": "FAIL: actual public SDK HTTP invalidnumeric1.5 returns400 text/plain withoutid:null; IOTransport Read terminates with parseerror and no response; legacyfloat64 MakeID truncation also unchanged, but direct wire exact parser fixed",
+  "evidence": "authorized-fork-framing.log (timeout/panic from inherited diagnostic harness retained, requires bounded clean repro)",
+  "next_action": "Clean fail-closed repro and reviewed minimal correction to exact fork before requesting compatible pin/scope decision",
+  "task_commit_created": false,
+  "root_implementation_unchanged": true,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

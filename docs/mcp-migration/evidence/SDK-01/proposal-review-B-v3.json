@@ -1,0 +1,46 @@
+{
+  "review": "independent correctness revalidation of exact final dependency-exception proposal",
+  "proposal_revision": 3,
+  "correctness": "PASS",
+  "scope": "Dependency-exception readiness only; NOT SDK-01 task acceptance or authorization to adopt",
+  "proposal_tree_digest_sha256": "8a36ff34a6f9c9115a95a662dd203f4e1e51380f8399b508032346d38b6c6800",
+  "patch_sha256": "8d5f6fbb8728f319ed8aeb0a8fe020a79cd80cf8f7b7099afa51231d837b67b9",
+  "verified": {
+    "all_module_files": 221,
+    "exact_file_inventory": true,
+    "individual_hashes_and_sizes": true,
+    "canonical_tree_digest": true,
+    "patch_bytes": 19854,
+    "changed_files": [
+      "internal/json/json.go",
+      "internal/jsonrpc2/messages.go",
+      "internal/jsonrpc2/sdk01_hardening_test.go",
+      "internal/jsonrpc2/wire_test.go",
+      "jsonrpc/jsonrpc.go",
+      "mcp/id_precision_test.go",
+      "mcp/protocol.go",
+      "mcp/review_B_cancellation_test.go",
+      "mcp/sdk01_framing_test.go",
+      "mcp/streamable.go",
+      "mcp/transport.go"
+    ],
+    "upstream_LICENSE_preserved": true,
+    "SDK_go_mod_go_sum_unchanged": true,
+    "full_nested_test_race_vet_build_exit_zero_and_log_hashes": true,
+    "earlier_adversarial_cancellation_20_race_runs": true
+  },
+  "production_logic_review": "Unchanged from hardened B-v2 reviewed logic. Final test header/gofmt and declaration comments do not weaken numeric bounds, synchronous invocation selection, or null-ID framing. No new errors found.",
+  "numeric_contract": "Exact valid signed-int64 JSON numeric IDs, integral decimal/exponent equivalence, string separation;1024byte numeric lexeme cap; invalid request error fixed -32600/id:null HTTP400 or STDIO; numeric response failures stay codec errors. Already rounded caller float64 irrecoverable.",
+  "disclosed_limitations": [
+    "Existing SDK DecodeMessage rejection of null-ID error response is disclosed; no arbitrary precision claim",
+    "Public malformed json.Number spellings remain a caller-only lexical issue because remote JSON admission rejects them"
+  ],
+  "mandatory_before_task_acceptance": [
+    "Separate user approves scoped third_party/go-sdk dependency exception",
+    "Root wrappers and complete ID01-ID07 runtime evidence",
+    "Root/nested tests/race/vet/build and CGO-free builds",
+    "Offline eval/parity/performance on adopted final candidate",
+    "Two independent SDK-01 task acceptance reviews"
+  ],
+  "decision": "Exact reviewed bundle is ready to request user dependency-exception approval; no adoption performed by reviewer."
+}

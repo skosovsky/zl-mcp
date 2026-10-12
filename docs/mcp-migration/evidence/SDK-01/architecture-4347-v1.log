@@ -1,0 +1,16 @@
+stat /workspace/zl-mcp/.tools/arch-go: no such file or directory
+Traceback (most recent call last):
+  File "/workspace/zl-mcp/scripts/mcp-migration/architecture.py", line 223, in <module>
+    main()
+    ~~~~^^
+  File "/workspace/zl-mcp/scripts/mcp-migration/architecture.py", line 205, in main
+    build_info = subprocess.check_output(['go', 'version', '-m', str(binary)], text=True)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 473, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               **kwargs).stdout
+               ^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['go', 'version', '-m', '/workspace/zl-mcp/.tools/arch-go']' returned non-zero exit status 1.

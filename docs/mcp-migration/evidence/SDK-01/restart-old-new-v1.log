@@ -1,0 +1,17 @@
+go: downloading github.com/google/uuid v1.6.0
+go: downloading github.com/ulikunitz/xz v0.5.17
+go: downloading modernc.org/sqlite v1.60.1
+go: downloading golang.org/x/text v0.42.0
+go: downloading github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
+go: downloading modernc.org/libc v1.77.1
+go: downloading golang.org/x/sys v0.48.0
+go: downloading github.com/dustin/go-humanize v1.0.1
+go: downloading github.com/ncruces/go-strftime v1.0.0
+go: downloading modernc.org/mathutil v1.7.1
+go: downloading modernc.org/memory v1.12.1
+go: downloading github.com/mattn/go-isatty v0.0.24
+go: downloading github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec
+# github.com/skosovsky/zl-mcp/internal/mobilebackup
+/tmp/zl-migration-mod-cache/github.com/santhosh-tekuri/jsonschema/v6@v6.0.3/loader.go:78:12: pattern metaschemas: no matching files found
+FAIL	github.com/skosovsky/zl-mcp/internal/mobilebackup [setup failed]
+FAIL

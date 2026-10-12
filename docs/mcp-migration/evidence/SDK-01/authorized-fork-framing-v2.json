@@ -1,0 +1,55 @@
+{
+  "cleanup": true,
+  "failures": 6,
+  "records": [
+    {
+      "body": "malformed payload: parse error: invalid numeric ID \"1.5\": ID is not an integer\n",
+      "content_type": "text/plain; charset=utf-8",
+      "http_status": 400,
+      "numeric_token_bytes": 3,
+      "protocol_error_with_null_id": false,
+      "transport": "HTTP"
+    },
+    {
+      "body": "malformed payload: parse error: invalid numeric ID \"9223372036854775808\": ID is outside the signed 64-bit range\n",
+      "content_type": "text/plain; charset=utf-8",
+      "http_status": 400,
+      "numeric_token_bytes": 19,
+      "protocol_error_with_null_id": false,
+      "transport": "HTTP"
+    },
+    {
+      "body": "malformed payload: parse error: invalid numeric ID \"-9223372036854775809\": ID is outside the signed 64-bit range\n",
+      "content_type": "text/plain; charset=utf-8",
+      "http_status": 400,
+      "numeric_token_bytes": 20,
+      "protocol_error_with_null_id": false,
+      "transport": "HTTP"
+    },
+    {
+      "body": "malformed payload: parse error: invalid numeric ID \"1e999999999\": ID is outside the signed 64-bit range\n",
+      "content_type": "text/plain; charset=utf-8",
+      "http_status": 400,
+      "numeric_token_bytes": 11,
+      "protocol_error_with_null_id": false,
+      "transport": "HTTP"
+    },
+    {
+      "body": "malformed payload: parse error: numeric ID exceeds 128 bytes\n",
+      "content_type": "text/plain; charset=utf-8",
+      "http_status": 400,
+      "numeric_token_bytes": 129,
+      "protocol_error_with_null_id": false,
+      "transport": "HTTP"
+    },
+    {
+      "SDK_Read_error": "parse error: invalid numeric ID \"1.5\": ID is not an integer",
+      "protocol_error_with_null_id": false,
+      "read_error": "read pipe: i/o timeout",
+      "response_bytes": 0,
+      "transport": "STDIO_IOTransport"
+    }
+  ],
+  "status": "FAIL",
+  "synthetic_only": true
+}

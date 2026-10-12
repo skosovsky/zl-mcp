@@ -1,0 +1,5 @@
+2026/10/12 17:04:11 INFO mcp_call tool=zalo_search_messages correlation_id=GKEXPE3YXSQJO2K5FUHTNYNTXE code=OK outcome=success duration_ms=1
+2026/10/12 17:04:11 INFO mcp_call tool=zalo_search_messages correlation_id=7TEDLCZUIZFAY7PV7QDBINSYKA code=INVALID_ARGUMENT outcome=error duration_ms=0
+2026/10/12 17:04:11 INFO mcp_call tool=zalo_search_messages correlation_id=64NFY6L5MFSWTZOIIOMZULNOM3 code=INVALID_ARGUMENT outcome=error duration_ms=0
+2026/10/12 17:04:11 INFO mcp_call tool=zalo_send_direct_message correlation_id=4GW2MFSQ7DONKWKAHFOUC2UXI6 code=INVALID_ARGUMENT outcome=error duration_ms=0
+2026/10/12 17:04:11 INFO mcp_call tool=zalo_get_status correlation_id=LWGQVPUUXXRG4B2RMWBZTFZY46 code=INVALID_ARGUMENT outcome=error duration_ms=0

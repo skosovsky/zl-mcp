@@ -1,0 +1,106 @@
+{
+  "review": "SDK-01 dependency-exception preparation independent completeness",
+  "reviewer": "/root/sdk_exception_completeness",
+  "proposal_revision": 3,
+  "candidate_proposal_tree_sha256": "8a36ff34a6f9c9115a95a662dd203f4e1e51380f8399b508032346d38b6c6800",
+  "candidate_patch_sha256": "8d5f6fbb8728f319ed8aeb0a8fe020a79cd80cf8f7b7099afa51231d837b67b9",
+  "parent_commit": "bb3eadc785366588b88bdc83c4d7693c89b96090",
+  "requirements_total": 12,
+  "requirements_complete": 12,
+  "completeness_percent": 100.0,
+  "verdict": "PASS_DEPENDENCY_EXCEPTION_PROPOSAL_READINESS",
+  "root_task_acceptance": false,
+  "ID01-ID07": "PENDING root adoption/task acceptance",
+  "denominator_scope_note": "Twelve exception-only preparation requirements. Earlier P12 incorrectly required completed future root ID gates before dependency approval; revised explicitly to assess disclosure/enforcement of future gates, not waive them. SDK-01 original20 leaves unchanged.",
+  "leaf_requirements": [
+    {
+      "id": "P01",
+      "status": "PASS",
+      "requirement": "Immutable official base and PR commit",
+      "evidence": "manifest base3f3b699\u2026, PR9174a3f\u2026"
+    },
+    {
+      "id": "P02",
+      "status": "PASS",
+      "requirement": "Proposal isolated, no adoption before explicit approval",
+      "evidence": "Root go.mod/go.sum independently byte-equal to HEAD; tmp-only proposal"
+    },
+    {
+      "id": "P03",
+      "status": "PASS",
+      "requirement": "Official release/issue/PR captured and actual v1.8.0 repro retained",
+      "evidence": "upstream-{release,issue,pr}.json; codec-before.jsonl"
+    },
+    {
+      "id": "P04",
+      "status": "PASS",
+      "requirement": "Minimal complete diff and immutable prospective pin",
+      "evidence": "Patch19854 bytes/11 files; scoped future replace; no SDK module-file changes"
+    },
+    {
+      "id": "P05",
+      "status": "PASS",
+      "requirement": "Explicit signed int64/string/decimal/exponent numeric contract",
+      "evidence": "numeric-contract-proposal-v2.json; dependency-exception-v3.md"
+    },
+    {
+      "id": "P06",
+      "status": "PASS",
+      "requirement": "Bounded conversion and rejection",
+      "evidence": "1024-byte cap before arithmetic; independent external1024/1025, hugeexp, finite float smoke"
+    },
+    {
+      "id": "P07",
+      "status": "PASS",
+      "requirement": "Existing transport fixed framing and recovery",
+      "evidence": "Independent HTTP400 application/json -32600 id:null; IOTransport emits null error then reads validid7; no second parser"
+    },
+    {
+      "id": "P08",
+      "status": "PASS",
+      "requirement": "Cancellation changes reviewed with adversarial tests",
+      "evidence": "Synchronous existing SDK Cancel lookup; processResult removal-before-write, old cancel uses invocation pointer; full race suite includes regression test"
+    },
+    {
+      "id": "P09",
+      "status": "PASS",
+      "requirement": "Upstream source/tests/license retained",
+      "evidence": "221 manifest records independently match; all upstream test files retained; LICENSE identical mixed-license transition; headers retained"
+    },
+    {
+      "id": "P10",
+      "status": "PASS",
+      "requirement": "Complete nested checks for immutable proposed source",
+      "evidence": "Final v3test/race/vet/build exit0 and independent logSHA verification; historicalFAIL preserved"
+    },
+    {
+      "id": "P11",
+      "status": "PASS",
+      "requirement": "Reproducible provenance and removal/rollback conditions",
+      "evidence": "Full tree8a36ff\u2026 and patch8d5f\u2026 verified; reconstructionmatches221 files; same future ID/root/offline/performance gates required before upstream removal"
+    },
+    {
+      "id": "P12",
+      "status": "PASS",
+      "requirement": "Approval scope and future task gates explicitly separated",
+      "evidence": "Dependency exception permits subsequent adoption only after user approval; all root ID01-ID07/wrappers/checks/performance/two task reviewers remainPENDING; not claimedPASS"
+    }
+  ],
+  "findings": [],
+  "independent_verifications": {
+    "all_manifest_file_records": 221,
+    "tree_digest_matches": true,
+    "patch_hash_matches": true,
+    "license_copy_matches": true,
+    "log_hashes_and_exit_attestation_match": true,
+    "root_pin_unchanged": true,
+    "own_external_http_stdio_bounds_smoke": "proposal-review-A-smoke-v2.log and source"
+  },
+  "limitations": [
+    "SDK decoder still rejects null-ID error response; proposal discloses this baseline limitation; raw JSON fixtures verify outbound error framing.",
+    "Approval is not SDK-01 acceptance. Root ID01-ID07, wrappers/offline/parity/performance and task reviewers remain required.",
+    "Model/live NOT_RUN."
+  ],
+  "peer_report_read": false,
+  "root_or_sibling_production_edits_by_reviewer": false
+}

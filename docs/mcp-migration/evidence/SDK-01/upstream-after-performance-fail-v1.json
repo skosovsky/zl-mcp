@@ -1,0 +1,27 @@
+{
+  "status": "READ_ONLY_SELECTED_INTEGRATION_BRANCH_UNCHANGED",
+  "head": "944ac1970ff05cf145fd5b28054d7ec5464ec550",
+  "selected_pin_unchanged": "v1.8.1-0.20261012153430-1e3d51f2f580",
+  "files": {
+    "internal/jsonrpc2/messages.go": {
+      "url": "https://raw.githubusercontent.com/skosovsky/go-sdk/944ac1970ff05cf145fd5b28054d7ec5464ec550/internal/jsonrpc2/messages.go",
+      "sha256": "e338dafb6a14886436507ea370370e716eb6b2eb19e635fb72d1744ec387f7bc",
+      "method_unmarshal_matches": [
+        "if err := internaljson.Unmarshal(msg.Method, &method); err != nil {"
+      ]
+    },
+    "internal/json/json.go": {
+      "url": "https://raw.githubusercontent.com/skosovsky/go-sdk/944ac1970ff05cf145fd5b28054d7ec5464ec550/internal/json/json.go",
+      "sha256": "c50c5600dbab9fad889592eb2daab1265169410e0c564d40535005b54617f5fe",
+      "method_unmarshal_matches": [
+        "func Unmarshal(data []byte, v any) error {",
+        "return NewDecoder(bytes.NewReader(data)).Decode(v)"
+      ]
+    }
+  },
+  "authorization": "Await user dependency selection; remote HEAD alone is not acceptance",
+  "selected_integration_branch": "integration/exact-ids-cancellation",
+  "selected_branch_head": "1e3d51f2f580b47730f8726dad64f71451e38e96",
+  "main_head": "944ac1970ff05cf145fd5b28054d7ec5464ec550",
+  "clarification": "Default main is distinct from authorized integration branch; no updated selected branch observed. Main does not provide selected exact-ID patch, not a compatible replacement."
+}

@@ -1,0 +1,21 @@
+=== RUN   TestSDK01HTTPNeighboringIDsOutOfOrder
+2026/10/12 23:20:25 INFO mcp_call tool=zalo_get_message_context correlation_id=ZPCY3645M72CPNOJB755YEKZ7A code=OK outcome=success duration_ms=2
+2026/10/12 23:20:25 INFO mcp_call tool=zalo_get_message_context correlation_id=IHE45F34RLPF6LOIZPWYJ6NNPP code=OK outcome=success duration_ms=3
+--- PASS: TestSDK01HTTPNeighboringIDsOutOfOrder (0.15s)
+=== RUN   TestSDK01HTTPDisconnectCancelsOnlySelectedInvocation
+2026/10/12 23:20:25 INFO mcp_call tool=zalo_get_message_context correlation_id=4DCXESWMWPSG6AXTPIQMNVKGHR code=STORAGE_ERROR outcome=error duration_ms=1
+2026/10/12 23:20:25 INFO mcp_call tool=zalo_get_message_context correlation_id=FCB55SEQPYR5CZ3YIU3X2N3CSG code=OK outcome=success duration_ms=1
+2026/10/12 23:20:25 INFO mcp_call tool=zalo_get_message_context correlation_id=QYMDNZW5BPSZXOW7WQD4HONEYK code=OK outcome=success duration_ms=1
+--- PASS: TestSDK01HTTPDisconnectCancelsOnlySelectedInvocation (0.14s)
+=== RUN   TestSDK01LostReplyRetainsDurableUUIDAndNeverResends
+=== RUN   TestSDK01LostReplyRetainsDurableUUIDAndNeverResends/confirmed
+2026/10/12 23:20:25 INFO mcp_call tool=zalo_send_direct_message correlation_id=J7BPRZVI6DH7AU6F6WEDRSIKKB code=OK outcome=success duration_ms=1
+2026/10/12 23:20:25 INFO mcp_call tool=zalo_send_direct_message correlation_id=IBWVZWALYBTCRIZ24KHJWJUVJH code=OK outcome=success duration_ms=0
+=== RUN   TestSDK01LostReplyRetainsDurableUUIDAndNeverResends/unknown
+2026/10/12 23:20:25 INFO mcp_call tool=zalo_send_direct_message correlation_id=LBOMPYSZRCPE462HUZUIHN7JM3 code=OK outcome=success duration_ms=1
+2026/10/12 23:20:25 INFO mcp_call tool=zalo_send_direct_message correlation_id=4I7QO644DGQTPZVBG3CP3EC4NG code=OK outcome=success duration_ms=0
+--- PASS: TestSDK01LostReplyRetainsDurableUUIDAndNeverResends (0.27s)
+    --- PASS: TestSDK01LostReplyRetainsDurableUUIDAndNeverResends/confirmed (0.14s)
+    --- PASS: TestSDK01LostReplyRetainsDurableUUIDAndNeverResends/unknown (0.14s)
+PASS
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	1.234s

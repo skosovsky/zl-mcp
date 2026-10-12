@@ -1,0 +1,15 @@
+{
+	"Path": "github.com/skosovsky/go-sdk",
+	"Version": "v1.8.1-0.20261012184819-4347cd438f3c",
+	"Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012184819-4347cd438f3c.info",
+	"GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012184819-4347cd438f3c.mod",
+	"Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012184819-4347cd438f3c.zip",
+	"Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/go-sdk@v1.8.1-0.20261012184819-4347cd438f3c",
+	"Sum": "h1:P7uSAkLIvV5UUydgWtZJgaBWH0xxYfrGgMeXcdZyO3g=",
+	"GoModSum": "h1:dL7u98E/zjJTGzEq+j30jQ8K2k1mb6LeAH4inEcSGts=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://github.com/skosovsky/go-sdk",
+		"Hash": "4347cd438f3ca6075fa594defcdd95580aa56fa2"
+	}
+}

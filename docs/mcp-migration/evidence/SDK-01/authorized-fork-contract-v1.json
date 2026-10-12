@@ -1,0 +1,41 @@
+{
+  "task": "SDK-01",
+  "timestamp_utc": "2026-10-12T15:07:52.727719+00:00",
+  "user_authorization": "Обнови тулси и сделай replace github.com/modelcontextprotocol/go-sdk => github.com/skosovsky/go-sdk v1.8.1-0.20261012144231-5ec4c4212548",
+  "adoption_scope": "Pinned remote module replacement only; no local vendor patch, no sibling/fork publication edits",
+  "SDK": {
+    "Path": "github.com/skosovsky/go-sdk",
+    "Version": "v1.8.1-0.20261012144231-5ec4c4212548",
+    "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012144231-5ec4c4212548.info",
+    "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012144231-5ec4c4212548.mod",
+    "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012144231-5ec4c4212548.zip",
+    "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/go-sdk@v1.8.1-0.20261012144231-5ec4c4212548",
+    "Sum": "h1:Di0PEfFAnVnIHE5QNCjHw1p5er5vTDGeGL/n6ATmiS4=",
+    "GoModSum": "h1:dL7u98E/zjJTGzEq+j30jQ8K2k1mb6LeAH4inEcSGts=",
+    "Origin": {
+      "VCS": "git",
+      "URL": "https://github.com/skosovsky/go-sdk",
+      "Hash": "5ec4c42125489a54f8324e2b81396847befcd2c3"
+    }
+  },
+  "toolsy": {
+    "Path": "github.com/skosovsky/toolsy",
+    "Version": "v0.20.3",
+    "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.3.info",
+    "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.3.mod",
+    "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.3.zip",
+    "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.3",
+    "Sum": "h1:cU+esgIa/n3pPJaTE63F6dGxK4EOIY/gGZpySPt2XKY=",
+    "GoModSum": "h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=",
+    "Origin": {
+      "VCS": "git",
+      "URL": "https://github.com/skosovsky/toolsy",
+      "Hash": "632035dfe491e3d2a39669a16c37744205ae624e",
+      "Ref": "refs/tags/v0.20.3"
+    }
+  },
+  "proposal_v3": "Historical proposal NOT ADOPTED; actual authorized fork differs and requires independent actual-code ID gates",
+  "numeric_contract": "Exact signed int64/integral decimal/exponent, bounded invalid rejection before dispatch, invalid request protocol error id:null; fork numeric cap128 bytes; root wrappers must match; all task gates remain mandatory",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

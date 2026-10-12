@@ -118,3 +118,40 @@ func TestRetainedPairedCaptureParity(t *testing.T) {
 		t.Fatalf("retained captures differ: %+v", result)
 	}
 }
+
+func TestSDKBaselineCorrectionIsOneFieldAndCandidateMustBeExact(t *testing.T) {
+	// Arrange: frozen legacy SDK and corrected candidate, including independent native/string IDs.
+	baseline := []byte(`{"case_id":"numeric-precision","facts":{"sdk-envelope-9007199254740993":"9007199254740992","string-envelope":"\"9007199254740993\"","native_message_id":"9007199254740995"},"trace":[],"effects":{"sends":0}}`)
+	candidate := mutateParity(t, baseline, func(out map[string]any) {
+		out["facts"].(map[string]any)["sdk-envelope-9007199254740993"] = "9007199254740993"
+	})
+	compare := func(raw []byte) ParityRecord {
+		return compareSDKCaptures([]parityCapture{{"numeric-precision", baseline}}, []parityCapture{{"numeric-precision", raw}})
+	}
+	// Act.
+	record := compare(candidate)
+	// Assert: the explicit exception is recorded, never silent masking.
+	if record.Status != "PASS" || len(record.Pairs[0].BaselineCorrections) != 1 {
+		t.Fatal(record)
+	}
+	for _, kind := range []string{"still-rounded", "native-id", "string-id", "extra-fact", "effect"} {
+		altered := mutateParity(t, candidate, func(out map[string]any) {
+			facts := out["facts"].(map[string]any)
+			switch kind {
+			case "still-rounded":
+				facts["sdk-envelope-9007199254740993"] = "9007199254740992"
+			case "native-id":
+				facts["native_message_id"] = "9007199254740994"
+			case "string-id":
+				facts["string-envelope"] = "different"
+			case "extra-fact":
+				facts["unasserted"] = true
+			case "effect":
+				out["effects"].(map[string]any)["sends"] = 1
+			}
+		})
+		if compare(altered).Status != "FAIL" {
+			t.Fatalf("%s mutation hidden", kind)
+		}
+	}
+}

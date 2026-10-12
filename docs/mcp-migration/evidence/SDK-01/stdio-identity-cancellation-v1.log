@@ -1,0 +1,5 @@
+# github.com/skosovsky/zl-mcp/internal/mcpserver [github.com/skosovsky/zl-mcp/internal/mcpserver.test]
+internal/mcpserver/sdk_stdio_identity_test.go:183:14: undefined: httptest
+internal/mcpserver/sdk_stdio_identity_test.go:243:14: undefined: httptest
+FAIL	github.com/skosovsky/zl-mcp/internal/mcpserver [build failed]
+FAIL

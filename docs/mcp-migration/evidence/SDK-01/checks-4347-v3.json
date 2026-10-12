@@ -1,0 +1,93 @@
+{
+  "task": "SDK-01",
+  "source_digest_sha256": "1f903b7acd219cda0a97a769e4157ad00b0633204c0ade1a661d47dee29cf43e",
+  "records": [
+    {
+      "command": "go test ./...",
+      "exit_status": 0,
+      "log": "root-test-4347-v1.log",
+      "sha256": "ae535f4bce1ec4073459a6bcaf4693c820fe6c4da0ab81699052548c8ceaadd3"
+    },
+    {
+      "command": "go test -race ./...",
+      "exit_status": 0,
+      "log": "root-race-4347-v1.log",
+      "sha256": "c482c46e6b6c11de0a7b115cabd05451db4493600c90894c800c4f362e0e9ad5"
+    },
+    {
+      "command": "go vet ./...",
+      "exit_status": 0,
+      "log": "root-vet-4347-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "go test ./... (pristine selected SDK)",
+      "exit_status": 0,
+      "log": "sdk-test-4347-v1.log",
+      "sha256": "7b698644c92efe976574fd329d2546cdb66a36532c13d888341f2b3cb6bbb246"
+    },
+    {
+      "command": "go test -race ./... (pristine selected SDK)",
+      "exit_status": 0,
+      "log": "sdk-race-4347-v1.log",
+      "sha256": "63ffb91e6988dfb57fbe9d7b630b7f6ed56dad696ca5236ff00057d067e1c674"
+    },
+    {
+      "command": "go vet ./... (pristine selected SDK)",
+      "exit_status": 0,
+      "log": "sdk-vet-4347-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "go build ./... (pristine selected SDK)",
+      "exit_status": 0,
+      "log": "sdk-build-4347-v1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts/mcp-migration -p test_*.py -v",
+      "exit_status": 0,
+      "log": "python-4347-v1.log",
+      "sha256": "52f96e525df2158e791bb9fc4732c895bafa0d2c2a94dd50933d5a915f97cc81"
+    },
+    {
+      "command": "native restart baseline\u2192candidate",
+      "exit_status": 0,
+      "log": "restart-old-new-4347-v1.log",
+      "sha256": "e2d2fcaf0707bafcf5e7445c3d44902eaaf0cd4c46c828725c72c40c74902253"
+    },
+    {
+      "command": "native restart candidate\u2192baseline",
+      "exit_status": 0,
+      "log": "restart-new-old-4347-v1.log",
+      "sha256": "0c80912d498c1d25a6d8f643a7e7bb077aeb81b2b39e095feca58fb165695f0d"
+    },
+    {
+      "command": "python3 scripts/mcp-migration/compare_performance.py --baseline T03/performance-baseline/manifest.json --candidate performance-4347-v1/manifest.json --baseline-build T03/baseline-build-manifest-v2.json --candidate-build build-manifest-4347-v1.json",
+      "exit_status": 0,
+      "report": "performance-comparison-4347-v1.json",
+      "sha256": "0a378e8c6503adeb99321830e8a76929e09a4fec512752e5827d6c2a528da142"
+    },
+    {
+      "command": "zl-mcp-eval-candidate --root repository --output /tmp/zl-sdk01-offline-4347-v2 --repeats 2",
+      "exit_status": 0,
+      "log": "offline-4347-v2.log",
+      "sha256": "e095bc7b932220bf4676733a9b2fdecb8b24755531423e351022e3c25236a72d"
+    }
+  ],
+  "source_integrity": "selected-sdk-4347-source-manifest-v1.json PASS227/227",
+  "architecture": "architecture-4347-v3.json",
+  "consumer": "toolsy-v0.20.5-consumer-probe.json",
+  "build": "build-manifest-4347-v1.json",
+  "platforms": "platform-build-manifest-4347-v1.json",
+  "offline": "offline-4347-v2/report.json PASS50/50cases480/480assertions",
+  "paired": "paired-4347-v1/report.json",
+  "cancellation_overlay": "review-B-4347-overlay-manifest-v1.json",
+  "performance": "performance-comparison-4347-v1.json PASS all9gates; 15000calls0errors",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "remaining": [
+    "Independent final100/PASS",
+    "Sole SDK01commit"
+  ]
+}

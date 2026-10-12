@@ -1,0 +1,42 @@
+{
+  "review": "Independent actual authorized remote-fork correctness compatibility review",
+  "pin": "github.com/skosovsky/go-sdk v1.8.1-0.20261012144231-5ec4c4212548",
+  "status": "COMPATIBILITY_BLOCKER",
+  "task_acceptance": "NOT_PASS",
+  "findings": [
+    {
+      "id": "FB01",
+      "severity": "blocker",
+      "gate": "ID05",
+      "evidence": "Independent publicSDK repro go run /tmp/zl-sdk-review-B-fork-framing.go exits1:5HTTPinvalidnumericrequests produce plaintext400; IOTransport invalidnumericrequest emits no response and Read returnsparseerror; cleanuptrue;6/6requirednullIDerrorsFAIL",
+      "artifact": "authorized-fork-review-B-framing.json",
+      "required": "Compatible dependency existing-code framing correction or explicit revisedcontract. No secondhosttransport/parser bypass."
+    },
+    {
+      "id": "FB02",
+      "severity": "integration_privacy",
+      "gate": "T08 invariant / SDK integration",
+      "evidence": "Actual fork mcp/transport.go logs rawcancelrequest ID and arbitraryreason atDEBUG. IndependentsyntheticHTTPServerOptions.Logger DEBUG cancellation produced reasonSYNTHETIC_SECRET_TEXT and idsynthetic-id-private. Host NewServer niloptsinheritsdefaultlogger. DefaultINFOsuppressesis notallowlistproof.",
+      "required": "Root controlledSDKloggerprojection or proveeveryproductionSDKloggerpath suppresses rawreason/ID under supporteddebugsettings; privacytest. Can be scopedrootadapterfix.",
+      "repro": "authorized-fork-review-B-privacy-repro.go.txt"
+    },
+    {
+      "id": "FB03",
+      "severity": "public_API_limitation",
+      "evidence": "Actual fork MakeID(float64) retains directInt64cast, permitting fractional/nonfinite/out-of-range caller values. Raw wire codec andcustomCancelParams use exactnumericpath, so no demonstratedraw-wire failure.",
+      "required": "Do notclaimpublicfloat64validated; ensurehostwrappers do notfeedfloat64 IDs. Futureupstreamhardeningrecommended."
+    }
+  ],
+  "positive_source_review": [
+    "RawMessage IDdecode and128byteboundeddecimalparser avoidfloat64wireconversion",
+    "Parser computesboundedexponent148; exactdecimalintegrality, leadingzero/syntaxguard, signedint64bounds",
+    "Cancellation synchronously resolves oldinvocation and conveyscause, eliminating previous deferredlookup hazard"
+  ],
+  "pending": [
+    "RootID01-ID07 fullruntime gates",
+    "Compatible ID05 framing dependency/userdecision",
+    "SDKprivacy integration",
+    "Fullfinaltaskindependentreviews"
+  ],
+  "scope": "No modulecache, rootdependency, forkpublication, vendor or sibling edits;isolatedpublicrepros andownreports only."
+}

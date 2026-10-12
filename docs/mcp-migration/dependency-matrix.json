@@ -1,33 +1,33 @@
 {
-  "revision": 4,
+  "revision": 7,
   "selected_toolchain": "go version go1.27.1 darwin/arm64",
   "root_directive": "1.27.1",
   "GOWORK": "off",
-  "replace_policy": "no absolute sibling replacement; existing ./third_party/zcago preserved unchanged",
+  "replace_policy": "Existing ./third_party/zcago unchanged; explicit user-authorized remote SDK fork replace in SDK-01; no localSDK vendor or sibling replacements",
   "modules": [
     {
       "Path": "github.com/skosovsky/toolsy",
-      "Version": "v0.20.2",
-      "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.2.info",
-      "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.2.mod",
-      "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.2.zip",
-      "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.2",
-      "Sum": "h1:Mpe2AJzJd/+ZFfCXMzD5DstiF+qdeWT6+z+IpHEFsf0=",
+      "Version": "v0.20.5",
+      "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.5.info",
+      "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.5.mod",
+      "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.5.zip",
+      "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.5",
+      "Sum": "h1:82dpAtA9o3lglu6yLUg+N3w9xaeJTKUhp0hXk06QD5Q=",
       "GoModSum": "h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=",
       "Origin": {
         "VCS": "git",
         "URL": "https://github.com/skosovsky/toolsy",
-        "Hash": "36eb5b661ab4569051e5b17175dc44f3dd132b9c",
-        "Ref": "refs/tags/v0.20.2"
+        "Hash": "3747edec09adf0472ba4d3b4749c5fa1f3cb6c62",
+        "Ref": "refs/tags/v0.20.5"
       },
       "contract_sha256": {
         "docs/execution-contract.md": "601ffe8c1f93ee31fb712842375d492cbca32c26f4561e76b1f708a057e4d045"
       },
-      "integration_task": "T09",
+      "integration_task": "SDK-01 explicit user upgrade; accepted T09 pin v0.20.2 retained historically",
       "go_directive": "1.27.1",
-      "probe": "PASS consumer-probe-v0.20.2.json, root/nested tests/race/vet andpaired50/50",
-      "root_runtime_consumer": "internal/toolruntime; official v0.20.2, no localpatch/profile/cache/siblingreplace",
-      "evidence": "docs/mcp-migration/evidence/T09/consumer-probe-v0.20.2.json"
+      "probe": "Authoritative results: SDK-01/toolsy-v0.20.5-consumer-probe.json and task acceptance report",
+      "root_runtime_consumer": "internal/toolruntime; official v0.20.5, no local patch",
+      "evidence": "docs/mcp-migration/evidence/SDK-01/toolsy-v0.20.5-consumer-probe.json"
     },
     {
       "Path": "github.com/skosovsky/metry",
@@ -99,5 +99,28 @@
   "runtime_dependencies": "not added before responsible task T03/T05/T08; arch-go installed outside production",
   "consumer_probe": "docs/mcp-migration/evidence/T02/consumer-probe.json",
   "model_gate": "NOT_RUN",
-  "live_gate": "NOT_RUN"
+  "live_gate": "NOT_RUN",
+  "sdk_exception": {
+    "required_module": "github.com/modelcontextprotocol/go-sdk v1.8.0",
+    "replacement": {
+      "Path": "github.com/skosovsky/go-sdk",
+      "Version": "v1.8.1-0.20261012184819-4347cd438f3c",
+      "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012184819-4347cd438f3c.info",
+      "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012184819-4347cd438f3c.mod",
+      "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/go-sdk/@v/v1.8.1-0.20261012184819-4347cd438f3c.zip",
+      "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/go-sdk@v1.8.1-0.20261012184819-4347cd438f3c",
+      "Sum": "h1:P7uSAkLIvV5UUydgWtZJgaBWH0xxYfrGgMeXcdZyO3g=",
+      "GoModSum": "h1:dL7u98E/zjJTGzEq+j30jQ8K2k1mb6LeAH4inEcSGts=",
+      "Origin": {
+        "VCS": "git",
+        "URL": "https://github.com/skosovsky/go-sdk",
+        "Hash": "4347cd438f3ca6075fa594defcdd95580aa56fa2"
+      }
+    },
+    "authorization": "docs/mcp-migration/evidence/SDK-01/authorized-fork-contract-v3.json",
+    "actual_gate_status": "Authoritative ID01-ID07/checks/performance/reviews recorded in SDK-01 task acceptance report; historical FAILs retained",
+    "evidence": "docs/mcp-migration/evidence/SDK-01/acceptance.json",
+    "local_vendor_created": false,
+    "removal": "Unmodified official SDK must pass full same ID01-ID07/offline/performance contract before removing scoped fork replacement"
+  }
 }

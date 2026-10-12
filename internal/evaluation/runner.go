@@ -308,7 +308,7 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 			return report, e
 		}
 		report.Comparison = &comparison
-		parity := compareCaptures(captures["offline-baseline"], captures["offline-candidate"])
+		parity := compareSDKCaptures(captures["offline-baseline"], captures["offline-candidate"])
 		report.Parity = &parity
 		if e := os.WriteFile(filepath.Join(opts.ReportDir, "canonical-parity.json"), marshaled(parity), 0600); e != nil {
 			return report, e

@@ -1,0 +1,40 @@
+ok  	github.com/modelcontextprotocol/go-sdk	1.575s
+ok  	github.com/modelcontextprotocol/go-sdk/auth	1.576s
+ok  	github.com/modelcontextprotocol/go-sdk/auth/extauth	1.517s
+?   	github.com/modelcontextprotocol/go-sdk/conformance/everything-client	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/conformance/everything-server	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/auth/client	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/auth/enterprise	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/auth/server	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/client/listfeatures	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/client/loadtest	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/client/middleware	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/http	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/basic	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/completion	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/custom-method	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/custom-transport	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/distributed	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/elicitation	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/everything	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/hello	[no test files]
+ok  	github.com/modelcontextprotocol/go-sdk/examples/server/memory	1.458s
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/middleware	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/proxy	[no test files]
+ok  	github.com/modelcontextprotocol/go-sdk/examples/server/sequentialthinking	1.450s
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/sse	[no test files]
+ok  	github.com/modelcontextprotocol/go-sdk/examples/server/toolschemas	1.451s
+ok  	github.com/modelcontextprotocol/go-sdk/internal/authutil	1.450s
+ok  	github.com/modelcontextprotocol/go-sdk/internal/docs	1.492s
+ok  	github.com/modelcontextprotocol/go-sdk/internal/json	1.469s
+ok  	github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2	1.415s
+ok  	github.com/modelcontextprotocol/go-sdk/internal/mcpgodebug	1.436s
+?   	github.com/modelcontextprotocol/go-sdk/internal/oauthtest	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/internal/readme	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/internal/readme/client	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/internal/readme/server	[no test files]
+ok  	github.com/modelcontextprotocol/go-sdk/internal/util	1.391s
+?   	github.com/modelcontextprotocol/go-sdk/internal/xcontext	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/jsonrpc	[no test files]
+ok  	github.com/modelcontextprotocol/go-sdk/mcp	38.034s
+ok  	github.com/modelcontextprotocol/go-sdk/oauthex	1.645s

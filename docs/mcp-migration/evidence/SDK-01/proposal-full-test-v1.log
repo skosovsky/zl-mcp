@@ -1,0 +1,60 @@
+go: downloading github.com/golang-jwt/jwt/v5 v5.3.1
+--- FAIL: TestCopyrightHeaders (0.01s)
+    copyright_test.go:49: Header comment for internal/jsonrpc2/sdk01_hardening_test.go does not match expected copyright header.
+        got:
+        Copyright 2026 The Go MCP SDK Authors. All rights reserved.
+        Use of this source code is governed by the license in LICENSE.
+        
+        want matching:Copyright \d{4} The Go MCP SDK Authors. All rights reserved.
+        Use of this source code is governed by (the license\n|an MIT-style\nlicense )that can be found in the LICENSE file.
+    copyright_test.go:47: File mcp/review_B_cancellation_test.go must start with a copyright header matching Copyright \d{4} The Go MCP SDK Authors. All rights reserved.
+        Use of this source code is governed by (the license\n|an MIT-style\nlicense )that can be found in the LICENSE file.
+    copyright_test.go:49: Header comment for mcp/sdk01_framing_test.go does not match expected copyright header.
+        got:
+        Copyright 2026 The Go MCP SDK Authors. All rights reserved.
+        Use of this source code is governed by the license in LICENSE.
+        
+        want matching:Copyright \d{4} The Go MCP SDK Authors. All rights reserved.
+        Use of this source code is governed by (the license\n|an MIT-style\nlicense )that can be found in the LICENSE file.
+FAIL
+FAIL	github.com/modelcontextprotocol/go-sdk	0.399s
+ok  	github.com/modelcontextprotocol/go-sdk/auth	0.510s
+ok  	github.com/modelcontextprotocol/go-sdk/auth/extauth	0.480s
+?   	github.com/modelcontextprotocol/go-sdk/conformance/everything-client	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/conformance/everything-server	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/auth/client	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/auth/enterprise	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/auth/server	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/client/listfeatures	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/client/loadtest	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/client/middleware	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/http	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/basic	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/completion	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/custom-method	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/custom-transport	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/distributed	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/elicitation	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/everything	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/hello	[no test files]
+ok  	github.com/modelcontextprotocol/go-sdk/examples/server/memory	0.466s
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/middleware	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/proxy	[no test files]
+ok  	github.com/modelcontextprotocol/go-sdk/examples/server/sequentialthinking	0.445s
+?   	github.com/modelcontextprotocol/go-sdk/examples/server/sse	[no test files]
+ok  	github.com/modelcontextprotocol/go-sdk/examples/server/toolschemas	0.911s
+ok  	github.com/modelcontextprotocol/go-sdk/internal/authutil	0.452s
+ok  	github.com/modelcontextprotocol/go-sdk/internal/docs	0.881s
+ok  	github.com/modelcontextprotocol/go-sdk/internal/json	(cached)
+ok  	github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2	0.166s
+ok  	github.com/modelcontextprotocol/go-sdk/internal/mcpgodebug	0.414s
+?   	github.com/modelcontextprotocol/go-sdk/internal/oauthtest	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/internal/readme	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/internal/readme/client	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/internal/readme/server	[no test files]
+ok  	github.com/modelcontextprotocol/go-sdk/internal/util	0.416s
+?   	github.com/modelcontextprotocol/go-sdk/internal/xcontext	[no test files]
+?   	github.com/modelcontextprotocol/go-sdk/jsonrpc	[no test files]
+ok  	github.com/modelcontextprotocol/go-sdk/mcp	28.845s
+ok  	github.com/modelcontextprotocol/go-sdk/oauthex	0.549s
+FAIL

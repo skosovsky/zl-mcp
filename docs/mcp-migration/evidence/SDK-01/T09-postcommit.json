@@ -1,0 +1,12 @@
+{
+  "commit": "bb3eadc785366588b88bdc83c4d7693c89b96090",
+  "message": "refactor(mcp): remove migration glue and verify behavior parity",
+  "tree": "b8f501523c83c370b467d2a1a90cf51149a395a3",
+  "source_digest_sha256": "31f2ed00782291f6ee9f18b86fb9a0c00e800cde2f2b59cc1505b3631a519fbe",
+  "committed_artifacts_verified": 3220,
+  "review_A": "62/62 100% PASS",
+  "review_B": "PASS",
+  "performance": "v3 user-approved retrospective latency budget PASS, original v4 FAIL preserved",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

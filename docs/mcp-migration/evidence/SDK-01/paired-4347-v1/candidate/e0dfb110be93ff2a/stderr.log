@@ -1,0 +1,5 @@
+2026/10/12 19:04:06 INFO mcp_call tool=zalo_read_subscription_events correlation_id=3UT7IFU55VQZDB7IMMNEXMCQP4 code=OK outcome=success duration_ms=3
+2026/10/12 19:04:06 INFO mcp_call tool=zalo_read_subscription_events correlation_id=QGPHP7SZYO3GW35AQII2SDBMKK code=OK outcome=success duration_ms=1
+2026/10/12 19:04:06 INFO mcp_call tool=zalo_ack_subscription_events correlation_id=6L4SVH6GTXYIMNAARAVSNNIEL6 code=OK outcome=success duration_ms=1
+2026/10/12 19:04:06 INFO mcp_call tool=zalo_ack_subscription_events correlation_id=IMKYPY3VZTLNEQSZ2CV7N54BBP code=OK outcome=success duration_ms=0
+2026/10/12 19:04:07 INFO mcp_call tool=zalo_read_subscription_events correlation_id=LWGD6R67MXV2GAGDHCBLK7ICWB code=OK outcome=success duration_ms=1

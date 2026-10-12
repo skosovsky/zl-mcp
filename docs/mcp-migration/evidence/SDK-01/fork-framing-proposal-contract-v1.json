@@ -1,0 +1,8 @@
+{
+  "base_pin": "v1.8.1-0.20261012144231-5ec4c4212548",
+  "scope": "Three existing SDK production files; no new parser/transport or numeric policy; isolated only, not adopted",
+  "numeric_cap_bytes": 128,
+  "error": "Invalid numeric request ID: HTTP400 application/json or STDIO protocol -32600 id:null; no application dispatch and no raw error body; STDIO read loop resumes; invalid response remains codec error",
+  "unchanged": "Exact decimal numeric parser, string IDs, cancellation cause/lookup, float64MakeID legacy behavior, upstreamtests/module/licenses unchanged",
+  "root_scope": "Authorized root remote replace kept exactly; proposed patch awaits separate dependency resolution"
+}

@@ -1,0 +1,10 @@
+{
+ "authorization":"Task4.4 explicit numeric envelope ID baseline correction",
+ "case":"numeric-precision",
+ "field":"facts.sdk-envelope-9007199254740993",
+ "baseline_allowed":["9007199254740992","9007199254740993"],
+ "candidate_required":"9007199254740993",
+ "normalization":"Only baseline old value changes to precise value, and each pair records the correction. A still-rounded candidate fails even against a rounded baseline.",
+ "all_other_fields":"Full canonical comparison unchanged; native/domain IDs, strings, trace/effects and numbers remain exact",
+ "historical_failure":"Initialpaired48/50 FAIL retained"
+}

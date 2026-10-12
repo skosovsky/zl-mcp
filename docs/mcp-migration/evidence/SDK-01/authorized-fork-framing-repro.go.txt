@@ -1,0 +1,44 @@
+package main
+import (
+ "bufio"
+ "context"
+ "encoding/json"
+ "fmt"
+ "net"
+ "net/http"
+ "net/http/httptest"
+ "os"
+ "strings"
+ "time"
+ "github.com/modelcontextprotocol/go-sdk/mcp"
+)
+func main(){
+ results:=[]map[string]any{}
+ server:=mcp.NewServer(&mcp.Implementation{Name:"synthetic",Version:"test"},nil)
+ handler:=mcp.NewStreamableHTTPHandler(func(*http.Request)*mcp.Server{return server},&mcp.StreamableHTTPOptions{Stateless:true,JSONResponse:true})
+ for _,id:=range []string{"1.5","9223372036854775808","-9223372036854775809","1e999999999","0."+strings.Repeat("0",127)} {
+  request:=httptest.NewRequest("POST","http://localhost/mcp",strings.NewReader(`{"jsonrpc":"2.0","id":`+id+`,"method":"ping"}`))
+  request.Header.Set("Content-Type","application/json");request.Header.Set("Accept","application/json, text/event-stream")
+  response:=httptest.NewRecorder();handler.ServeHTTP(response,request)
+  var envelope struct{ID json.RawMessage;Error struct{Code int}}
+  parseErr:=json.Unmarshal(response.Body.Bytes(),&envelope)
+  results=append(results,map[string]any{"transport":"HTTP","numeric_token_bytes":len(id),"http_status":response.Code,"content_type":response.Header().Get("Content-Type"),"protocol_error_with_null_id":parseErr==nil&&string(envelope.ID)=="null"&&envelope.Error.Code==-32600,"body":response.Body.String()})
+ }
+ ctx,cancel:=context.WithTimeout(context.Background(),3*time.Second);defer cancel()
+ serverPipe,peer:=net.Pipe();defer peer.Close()
+ connection,err:=(&mcp.IOTransport{Reader:serverPipe,Writer:serverPipe}).Connect(ctx)
+ if err!=nil{panic(err)}
+ readResult:=make(chan error,1);go func(){_,err:=connection.Read(ctx);readResult<-err}()
+ peer.SetWriteDeadline(time.Now().Add(time.Second));_,writeErr:=peer.Write([]byte(`{"jsonrpc":"2.0","id":1.5,"method":"ping"}`+"\n"))
+ peer.SetReadDeadline(time.Now().Add(time.Second));line,readErr:=bufio.NewReader(peer).ReadBytes('\n')
+ var envelope struct{ID json.RawMessage;Error struct{Code int}}
+ parseErr:=json.Unmarshal(line,&envelope)
+ record:=map[string]any{"transport":"STDIO_IOTransport","protocol_error_with_null_id":parseErr==nil&&string(envelope.ID)=="null"&&envelope.Error.Code==-32600,"response_bytes":len(line)}
+ if writeErr!=nil{record["write_error"]=writeErr.Error()};if readErr!=nil{record["read_error"]=readErr.Error()}
+ connection.Close()
+ select{case err:=<-readResult:if err!=nil{record["SDK_Read_error"]=err.Error()};case<-time.After(time.Second):record["cleanup_error"]="read goroutine did not stop"}
+ results=append(results,record)
+ failed:=0;for _,r:=range results{if r["protocol_error_with_null_id"]!=true{failed++}}
+ result:=map[string]any{"status":"PASS","failures":failed,"records":results,"synthetic_only":true,"cleanup":record["cleanup_error"]==nil};if failed>0{result["status"]="FAIL"}
+ encoded,err:=json.MarshalIndent(result,"","  ");if err!=nil{panic(err)};fmt.Println(string(encoded));if failed>0{os.Exit(1)}
+}

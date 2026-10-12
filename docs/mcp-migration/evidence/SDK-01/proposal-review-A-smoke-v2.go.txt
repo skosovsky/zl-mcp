@@ -1,0 +1,9 @@
+package main
+import("bufio";"context";"encoding/json";"fmt";"math";"net";"net/http";"net/http/httptest";"strings";"time";"github.com/modelcontextprotocol/go-sdk/jsonrpc";"github.com/modelcontextprotocol/go-sdk/mcp")
+func main(){
+ for _,n:=range []string{"0."+strings.Repeat("0",1022),"0."+strings.Repeat("0",1023),"0e999999999","1e999999999","1e-999999999","90071992547409930e-1"}{ id,e:=jsonrpc.MakeID(json.Number(n)); fmt.Printf("numeric length=%d id=%v reject=%v\n",len(n),id.Raw(),e!=nil) }
+ for _,f:=range []float64{1.5,math.Inf(1),math.NaN(),math.Ldexp(1,63)}{_,e:=jsonrpc.MakeID(f);fmt.Printf("float reject=%v\n",e!=nil)}
+ srv:=mcp.NewServer(&mcp.Implementation{Name:"review",Version:"1"},nil);h:=mcp.NewStreamableHTTPHandler(func(_ *http.Request)*mcp.Server{return srv},&mcp.StreamableHTTPOptions{Stateless:true});q:=httptest.NewRequest("POST","http://example/mcp",strings.NewReader(`{"jsonrpc":"2.0","id":1.5,"method":"ping"}`));q.Header.Set("Content-Type","application/json");q.Header.Set("Accept","application/json, text/event-stream");w:=httptest.NewRecorder();h.ServeHTTP(w,q);fmt.Printf("http status=%d contenttype=%s body=%s\n",w.Code,w.Header().Get("Content-Type"),w.Body.String())
+ ctx,cancel:=context.WithTimeout(context.Background(),3*time.Second);defer cancel(); a,b:=net.Pipe();defer b.Close(); c,e:=(&mcp.IOTransport{Reader:a,Writer:a}).Connect(ctx);if e!=nil{panic(e)};defer c.Close();done:=make(chan bool,1);go func(){m,e:=c.Read(ctx);r,ok:=m.(*jsonrpc.Request);done<-e==nil&&ok&&r.ID.Raw()==int64(7)}();
+ if _,e=b.Write([]byte(`{"jsonrpc":"2.0","id":1.5,"method":"ping"}`+"\n"));e!=nil{panic(e)};b.SetReadDeadline(time.Now().Add(time.Second));line,e:=bufio.NewReader(b).ReadBytes('\n');if e!=nil{panic(e)};var raw map[string]json.RawMessage;json.Unmarshal(line,&raw);fmt.Printf("stdio invalid id=%s error=%s\n",raw["id"],raw["error"]);b.Write([]byte(`{"jsonrpc":"2.0","id":7,"method":"ping"}`+"\n"));fmt.Printf("stdio continued=%v\n",<-done)
+}

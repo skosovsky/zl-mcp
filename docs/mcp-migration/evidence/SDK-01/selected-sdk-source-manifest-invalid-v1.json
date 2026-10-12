@@ -1,0 +1,8 @@
+{
+  "pin": "v1.8.1-0.20261012153430-1e3d51f2f580",
+  "origin_sha": "1e3d51f2f580b47730f8726dad64f71451e38e96",
+  "all_pristine_files_unchanged_after_tests": false,
+  "files": [],
+  "status": "INVALID_EMPTY_DRAFT_NOT_ACCEPTANCE",
+  "reason": "Source copy disappeared before post-test indexing; empty list cannot establish integrity."
+}

@@ -1,0 +1,34 @@
+{
+  "review": "Independent minimal compatible-fork framing proposal readiness",
+  "status": "PASS_CORRECTIVE_PROPOSAL_REVIEW",
+  "not_task_acceptance": true,
+  "not_adopted": true,
+  "base_origin_sha": "5ec4c42125489a54f8324e2b81396847befcd2c3",
+  "proposal_tree_digest_sha256": "36992e168844dbdac502f10cd7884b841f0496655a845fe384682a1f41a0379a",
+  "patch_sha256": "bee2dda9bf755459f6dc9c64ec4f23650bbb09613ce9ca72fab779db39daeb43",
+  "patch_bytes": 5406,
+  "verified_changed_files": [
+    "internal/jsonrpc2/messages.go",
+    "mcp/sdk01_framing_test.go",
+    "mcp/streamable.go",
+    "mcp/transport.go"
+  ],
+  "independent_metadata_checks": "Every manifestfilecontenthash/size and canonicaldigest verified; exactdiff againstauthorizedcachebase; module/license/connection/logger unchanged",
+  "correctness_assessment": [
+    "Classifier only changes decodedinvalidnumericrequests withmethodkey andnumeric-leadinglexeme; malformedJSON/string/bool/response ID errors retainexistingpaths",
+    "128byte decimalparser untouched; fixedinvalid-IDreply neither roundsnorreflectsrawtoken",
+    "HTTP400 JSON-RPC-32600 nullID preventsdispatch; sameunderlyingSDKhandlers used",
+    "STDIOexistingRead emitsoneerror andcontinuesviaiterative label; no recursion ornewparser",
+    "nil-IDerrorresponses now explicitlyencodenull; unsolicitednullIDresponse decode remains existinglimitation",
+    "SyncCancelCause and discarddefaultlogger unchanged"
+  ],
+  "backpressure": "STDIOerrorWriteusesexistingSDKserializedWrite. A peer that stopsreadingcanblock underlyingwriter aswithordinaryresponses; transportclosure/context-specificwriter behavior remain existingmechanisms. No unboundedrecursive stack orqueuederroraccumulation introduced. Rootrealbridge cancellation/cleanup gates stillmandatory.",
+  "test_review": "HTTPfixturescheckzeroapplicationdispatch and framing;1000STDIOinvalidframes followedbyvalid9007199254740993 checkiterativerecovery. Parentfullnestedchecks pendingatdispatch; no fabricatedfullcheckPASS.",
+  "future_conditions": [
+    "Userpinnedcompatibleforkupdateauthorization; no localvendor/adoption implied",
+    "Fullnestedtest/race/vet/build exacttree",
+    "RootID01-ID07 andoffline/parity/performance onactualnewpin",
+    "RoottaskreviewersbeforeatomicSDK01commit"
+  ],
+  "scope": "Read-onlyproposal review; ownreport only; no peerreport read or sourceedits."
+}

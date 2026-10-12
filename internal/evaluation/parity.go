@@ -16,11 +16,12 @@ import (
 
 // ParityRecord supplements assertion quality with complete behavior equality.
 type CanonicalPair struct {
-	CaseID          string `json:"case_id"`
-	Repeat          int    `json:"repeat"`
-	BaselineSHA256  string `json:"baseline_sha256"`
-	CandidateSHA256 string `json:"candidate_sha256"`
-	Status          string `json:"status"`
+	CaseID              string   `json:"case_id"`
+	Repeat              int      `json:"repeat"`
+	BaselineSHA256      string   `json:"baseline_sha256"`
+	CandidateSHA256     string   `json:"candidate_sha256"`
+	Status              string   `json:"status"`
+	BaselineCorrections []string `json:"baseline_corrections,omitempty"`
 }
 type ParityRecord struct {
 	Pairs    []CanonicalPair `json:"pairs"`
@@ -372,7 +373,54 @@ func canonicalCapture(raw []byte) ([]byte, error) {
 	out["_harness_dynamic_time_order"] = order
 	return json.Marshal(out)
 }
+
+// sdkIDBaselineCorrection is the explicit task4.4 exception for the one frozen
+// SDK envelope fact. A rounded candidate is always an error; no business value
+// or unrelated capture field is normalized.
+func sdkIDBaselineCorrection(baseline, candidate []byte) ([]byte, []string, error) {
+	const field = "sdk-envelope-9007199254740993"
+	const corrected = "9007199254740993"
+	left, err := exactJSON(baseline)
+	if err != nil {
+		return nil, nil, err
+	}
+	right, err := exactJSON(candidate)
+	if err != nil {
+		return nil, nil, err
+	}
+	b, bok := left.(map[string]any)
+	c, cok := right.(map[string]any)
+	if !bok || !cok || b["case_id"] != "numeric-precision" || c["case_id"] != "numeric-precision" {
+		return nil, nil, fmt.Errorf("invalid SDK identity case capture")
+	}
+	bf, bok := b["facts"].(map[string]any)
+	cf, cok := c["facts"].(map[string]any)
+	if !bok || !cok || cf[field] != corrected {
+		return nil, nil, fmt.Errorf("candidate SDK envelope ID is not exact")
+	}
+	if bf[field] == corrected {
+		return baseline, nil, nil
+	}
+	if bf[field] != "9007199254740992" {
+		return nil, nil, fmt.Errorf("unexpected frozen SDK identity fact")
+	}
+	bf[field] = corrected
+	encoded, err := json.Marshal(b)
+	return encoded, []string{"facts." + field + ":9007199254740992->" + corrected}, err
+}
+
+// compareCaptures retains historical pure-parity semantics for archived T09
+// captures, which predate the mandatory SDK repair.
 func compareCaptures(baseline, candidate []parityCapture) ParityRecord {
+	return compareCaptureRecords(baseline, candidate, false)
+}
+
+// compareSDKCaptures is the current acceptance path and enforces the repaired
+// SDK identity even when a legacy baseline shares the old rounding behavior.
+func compareSDKCaptures(baseline, candidate []parityCapture) ParityRecord {
+	return compareCaptureRecords(baseline, candidate, true)
+}
+func compareCaptureRecords(baseline, candidate []parityCapture, requireSDKIdentity bool) ParityRecord {
 	record := ParityRecord{Status: "PASS"}
 	indexed := map[string][]parityCapture{}
 	for _, capture := range candidate {
@@ -388,9 +436,18 @@ func compareCaptures(baseline, candidate []parityCapture) ParityRecord {
 			record.Failures = append(record.Failures, label+":missing candidate")
 			continue
 		}
-		left, e1 := canonicalCapture(b.raw)
+		baselineRaw := b.raw
+		var corrections []string
+		var correctionError error
+		if requireSDKIdentity && b.caseID == "numeric-precision" {
+			baselineRaw, corrections, correctionError = sdkIDBaselineCorrection(b.raw, peers[i].raw)
+		}
+		left, e1 := canonicalCapture(baselineRaw)
 		right, e2 := canonicalCapture(peers[i].raw)
-		pair := CanonicalPair{CaseID: b.caseID, Repeat: i + 1, Status: "FAIL"}
+		if correctionError != nil {
+			e1 = correctionError
+		}
+		pair := CanonicalPair{CaseID: b.caseID, Repeat: i + 1, Status: "FAIL", BaselineCorrections: corrections}
 		if e1 == nil {
 			sum := sha256.Sum256(left)
 			pair.BaselineSHA256 = hex.EncodeToString(sum[:])

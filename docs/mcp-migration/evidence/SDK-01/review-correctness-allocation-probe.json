@@ -1,0 +1,26 @@
+{
+  "task": "SDK-01",
+  "review": "correctness",
+  "status": "DIAGNOSIS_ONLY_PERFORMANCE_FAIL_RETAINED",
+  "candidate_source": "edad4d6b9590770c1220b7489363f1842a19213a818c7e01ccc9d805c38a3f14",
+  "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache go test ./internal/jsonrpc2 -run ^$ -bench ^BenchmarkSDK01Review -benchmem -benchtime=1000x -count=3",
+  "working_directory": "/tmp/zl-sdk01-final-correctness-allocation-probe",
+  "exit_status": 0,
+  "overlay": "review-correctness-allocation-probe.go.txt",
+  "log": "review-correctness-allocation-probe.log",
+  "production_files_compared": 226,
+  "production_changed": [],
+  "isolated_method_decode_B_per_op": 32848,
+  "isolated_method_decode_allocs_per_op": 4,
+  "references": [
+    "internal/jsonrpc2/messages.go:223",
+    "internal/json/json.go:44",
+    "github.com/segmentio/encoding/json/json.go:386,421"
+  ],
+  "limitations": [
+    "Focused isolated cost; not full scoped performance acceptance",
+    "No latency attribution",
+    "Official v1.8.0 source diff not performed by this reviewer",
+    "No SDK/root production changes"
+  ]
+}

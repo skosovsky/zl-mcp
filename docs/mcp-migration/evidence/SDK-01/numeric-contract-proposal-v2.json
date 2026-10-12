@@ -1,0 +1,11 @@
+{
+  "revision": "proposal-v2",
+  "adopted": false,
+  "numeric_domain": "Exact signed int64, integral decimal/exponent; string/numeric distinct",
+  "numeric_lexeme_max_bytes": 1024,
+  "invalid_numeric_request_error": "HTTP400 application/json or STDIO JSONRPC -32600 id:null, no dispatch, fixed error without raw ID; STDIO continues reading",
+  "cancellation": "Synchronous existing invocation lookup and cancel",
+  "float64": "Finite integral int64 only; already-rounded input unrecoverable",
+  "metadata": "Only numeric cancellation RequestID uses json.Number; metadata unchanged",
+  "removal": "Unmodified official release must pass ID01-ID07, offline parity and fixed performance budgets"
+}

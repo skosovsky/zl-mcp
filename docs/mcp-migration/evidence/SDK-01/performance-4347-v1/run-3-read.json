@@ -1,0 +1,36 @@
+{
+  "run": 3,
+  "kind": "read",
+  "status": "PASS",
+  "command": [
+    "/private/tmp/zl-sdk01-build-4347-v1/zl-mcp-eval-candidate",
+    "--root",
+    "/workspace/zl-mcp",
+    "--measure-kind",
+    "read",
+    "--measure-calls",
+    "1000",
+    "--state-dir",
+    "/tmp/local-temp/zl-mcp-bench-72n2gib3"
+  ],
+  "exit_status": 0,
+  "measurement": {
+    "kind": "read",
+    "calls": 1000,
+    "warmup": 50,
+    "errors": 0,
+    "bytes": 1033000,
+    "p95_seconds": 0.007076333,
+    "allocations_per_op": 1586.957,
+    "alloc_bytes_per_op": 496352.512,
+    "elapsed_seconds": 121.645791834,
+    "go": "go1.27.1",
+    "os": "darwin",
+    "arch": "arm64",
+    "concurrency": 1,
+    "pacing_millis": 110,
+    "admission_enabled": true,
+    "exporters_enabled": false,
+    "cleanup": true
+  }
+}

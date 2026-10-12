@@ -1,0 +1,13 @@
+numeric length=1024 id=0 reject=false
+numeric length=1025 id=<nil> reject=true
+numeric length=11 id=0 reject=false
+numeric length=11 id=<nil> reject=true
+numeric length=12 id=<nil> reject=true
+numeric length=20 id=9007199254740993 reject=false
+float reject=true
+float reject=true
+float reject=true
+float reject=true
+http status=400 contenttype=application/json body={"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"invalid numeric request ID"}}
+stdio invalid id=null error={"code":-32600,"message":"invalid numeric request ID"}
+stdio continued=true

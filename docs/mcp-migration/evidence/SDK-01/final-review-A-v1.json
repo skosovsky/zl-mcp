@@ -1,0 +1,239 @@
+{
+  "reviewer": "/root/sdk01_final_completeness",
+  "role": "independent completeness",
+  "review_kind": "preliminary blocker review; not final acceptance",
+  "timestamp_utc": "2026-10-12T17:22:58.349464+00:00",
+  "task": "SDK-01",
+  "parent_sha": "bb3eadc785366588b88bdc83c4d7693c89b96090",
+  "source_digest_sha256": "edad4d6b9590770c1220b7489363f1842a19213a818c7e01ccc9d805c38a3f14",
+  "requirements_source": "requirements-v3.json",
+  "requirements_total": 20,
+  "equal_weight": true,
+  "verified_pass_leaves": 16,
+  "completeness_percent": 80,
+  "status": "BLOCKED",
+  "leaf_requirements": [
+    {
+      "id": "ID01",
+      "requirement": "SDK request and response decode/encode preserve exact signed int64 at 2^53-1/2^53/2^53+1/2^53+2 and int64 min/max; string/numeric distinct; integral decimal/exponent exact",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/sdk_identity_test.go: TestSDK01CodecIdentityRequestsAndResponses",
+        "root-test-v2.log",
+        "root-race-v2.log"
+      ]
+    },
+    {
+      "id": "ID02",
+      "requirement": "Raw HTTP neighboring large IDs, concurrent handlers and out-of-order replies correlate exactly",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/sdk_lifecycle_test.go: TestSDK01HTTPNeighboringIDsOutOfOrder",
+        "root-race-v2.log"
+      ]
+    },
+    {
+      "id": "ID03",
+      "requirement": "Actual STDIO bridge subprocess roundtrip/concurrent IDs preserve external correlation",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/sdk_stdio_identity_test.go: TestSDK01ActualSTDIOIdentityBoundsAndOutOfOrder",
+        "root-race-v2.log"
+      ]
+    },
+    {
+      "id": "ID04",
+      "requirement": "Supported cancellation paths affect only selected invocation; reused IDs not damaged by old completion; SDK codec and STDIO cancellation mandatory; typed json.Number checked",
+      "status": "PASS",
+      "evidence": [
+        "TestSDK01HTTPDisconnectCancelsOnlySelectedInvocation",
+        "TestSDK01ActualSTDIOCancellationAndIDReusePrivacy",
+        "TestSDK01CancellationNumericDynamicTypeAndMetadata",
+        "selected-sdk-cancellation-overlay.go.txt",
+        "selected-sdk-cancellation-reuse-race-v1.log"
+      ]
+    },
+    {
+      "id": "ID05",
+      "requirement": "Fractional/outside-int64 and excessive length/exponent rejected boundedly without dispatch/panic/unbounded resources; error id null; budgets and framing executable",
+      "status": "PASS",
+      "evidence": [
+        "TestSDK01RejectInvalidIDsBeforeApplicationDispatch",
+        "TestSDK01ActualSTDIOIdentityBoundsAndOutOfOrder",
+        "authorized-1e3d51-framing.json",
+        "docs/mcp-migration/sdk-id-contract.md"
+      ]
+    },
+    {
+      "id": "ID06",
+      "requirement": "Discover, resources, protocol errors and Events HTTP wrapper preserve valid envelope IDs and enforce same numeric contract",
+      "status": "PASS",
+      "evidence": [
+        "TestSDK01HTTPWrappersPreserveEnvelopeIdentity",
+        "internal/mcpserver/http.go: addEventsCapability and Events ID admission"
+      ]
+    },
+    {
+      "id": "ID07",
+      "requirement": "Synthetic write with lost response followed by same domain UUID/new envelope ID produces no duplicate native dispatch",
+      "status": "PASS",
+      "evidence": [
+        "TestSDK01LostReplyRetainsDurableUUIDAndNeverResends: confirmed and unknown",
+        "root-race-v2.log"
+      ]
+    },
+    {
+      "id": "SDK-08",
+      "requirement": "Before-fix original SDK reproduction retained; clients use raw JSON/json.Number",
+      "status": "PASS",
+      "evidence": [
+        "codec-before.jsonl",
+        "codec-before-repro.go.txt",
+        "SDK identity oracle uses RawMessage/UseNumber and independent test-only big.Rat"
+      ]
+    },
+    {
+      "id": "SDK-09",
+      "requirement": "Official fixed release preferred; inspect actual code and current issue/PR/release state",
+      "status": "PASS",
+      "evidence": [
+        "upstream-release.json",
+        "upstream-issue.json",
+        "upstream-pr.json",
+        "Selected immutable SDK ZIP actual implementation independently read"
+      ]
+    },
+    {
+      "id": "SDK-10",
+      "requirement": "Explicit user-authorized remote fork replace github.com/modelcontextprotocol/go-sdk=>github.com/skosovsky/go-sdk v1.8.1-0.20261012153430-1e3d51f2f580 and officialtoolsyv0.20.4; actualprovenance/licenses/tests/numericcontract/removal verified; no localvendor/sibling/fork edits",
+      "status": "PASS",
+      "evidence": [
+        "authorized-fork-contract-v2.json",
+        "go.mod/go.sum",
+        "fork-1e3d51-download.json",
+        "toolsy-v0.20.4-download.json",
+        "selected-sdk-source-manifest.json"
+      ]
+    },
+    {
+      "id": "SDK-11",
+      "requirement": "Wrappers updated losslessly with minimal existing DTO/decode changes; no second MCP transport/parser, no business number rewrite",
+      "status": "PASS",
+      "evidence": [
+        "internal/mcpserver/http.go scoped RawMessage/UseNumber changes; existing SDK MakeID reused"
+      ]
+    },
+    {
+      "id": "SDK-12",
+      "requirement": "Domain IDs, persistence/authority/permissions/durable owners and no-resend contract preserved; no zcago/sibling edits",
+      "status": "PASS",
+      "evidence": [
+        "git diff name scope unchanged third_party/zcago",
+        "Lost-reply native durable UUID tests",
+        "offline-v2/report.json",
+        "paired-v2/report.json"
+      ]
+    },
+    {
+      "id": "SDK-13",
+      "requirement": "Root tests/race/vet, wire suite and CGO-free targets PASS",
+      "status": "PASS",
+      "evidence": [
+        "checks-checkpoint-v2.json",
+        "architecture-v2.json",
+        "platform-build-manifest-v1.json",
+        "build-manifest-v2.json"
+      ]
+    },
+    {
+      "id": "SDK-14",
+      "requirement": "Full offline eval and parity PASS except explicitly corrected numeric envelope baseline",
+      "status": "PASS",
+      "evidence": [
+        "offline-v2/report.json PASS50/50cases480/480assertions",
+        "paired-v2/report.json PASS50pairs and exactly2explicit SDK fact corrections",
+        "internal/evaluation/parity_test.go negative correction fixtures"
+      ]
+    },
+    {
+      "id": "SDK-15",
+      "requirement": "For patched SDK full nested tests/race/vet/build PASS; immutable pin and removal gates",
+      "status": "PASS",
+      "evidence": [
+        "selected-sdk-source-manifest.json: independently verified226/226 source hashes and ZIP SHA256",
+        "selected-sdk-full-test-v2.log",
+        "selected-sdk-full-race-v2.log",
+        "selected-sdk-full-vet-v2.log",
+        "selected-sdk-full-build-v2.log",
+        "docs/mcp-migration/sdk-id-contract.md removal gates"
+      ]
+    },
+    {
+      "id": "SDK-16",
+      "requirement": "Repeat affected performance on dependency change against authorized v3 budget and frozen allocation baseline",
+      "status": "FAIL",
+      "evidence": [
+        "performance-comparison-v1.json FAIL"
+      ]
+    },
+    {
+      "id": "SDK-17",
+      "requirement": "Dependency matrix and before/after evidence synchronized; source/candidate hashes and all evidence indexed",
+      "status": "PARTIAL",
+      "evidence": [
+        "candidate-implementation-v2.json independently verified952/952 file hashes",
+        "artifact-index-v7.json historical old pin; final index pending",
+        "dependency-matrix.json final status pending"
+      ]
+    },
+    {
+      "id": "SDK-18",
+      "requirement": "Model/live NOT_RUN; no deployment/LaunchAgent/live account/paid eval/publication",
+      "status": "PASS",
+      "evidence": [
+        "offline-v2/report.json and paired-v2/report.json model/live NOT_RUN",
+        "Only synthetic services/processes and isolated dependency checks authorized/run"
+      ]
+    },
+    {
+      "id": "SDK-19",
+      "requirement": "Two independent samecandidate reviewers completeness100% and correctnessPASS before sole exact SDK-01 commit",
+      "status": "PENDING",
+      "evidence": [
+        "This is preliminary independent A review; no final100/PASS acceptance"
+      ]
+    },
+    {
+      "id": "SDK-20",
+      "requirement": "One atomic commit fix(mcp): preserve JSON-RPC IDs across SDK and wrappers; only after accepted T09, before T10",
+      "status": "PENDING",
+      "evidence": [
+        "HEAD bb3eadc785366588b88bdc83c4d7693c89b96090 accepted T09; SDK01 is uncommitted until blocker resolution"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "requirement": "SDK-16",
+      "severity": "blocking",
+      "detail": "Authorized v3 performance contract not met: read/search/context B/op FAIL; context p95 FAIL. Allocation objects all PASS and read/search p95 PASS do not close byte/latency failures. Preserve FAIL and obtain compatible implementation/dependency or explicit user gate decision; no unilateral budget change."
+    },
+    {
+      "requirement": "SDK-17",
+      "severity": "pending",
+      "detail": "Final complete current evidence index and synchronized dependency acceptance status remain pending; historical indexes do not establish complete current artifact set."
+    }
+  ],
+  "precommit_convention": "SDK-19 final independent review and SDK-20 sole atomic exact-message commit are lifecycle gates; SDK-20 is structurally ready for commit after acceptance, but no commit or final acceptance is asserted while SDK-16 fails. No denominator reduction or partial credit inflation.",
+  "independent_verifications": [
+    "952 candidate source files match recorded SHA256",
+    "15 checkpoint logs match recorded SHA256 and exit0",
+    "226 selected SDK source files match manifest after nested tests; cachedZIP SHA256 matches",
+    "50 paired canonical captures PASS; exactly2 scoped baseline corrections; model/live NOT_RUN",
+    "toolsy0.20.2 and0.20.4 published root module ZIPs contain224 byte-identical Go files and identical go.mod/go.sum; only README and lint config differ"
+  ],
+  "implementation_findings": [],
+  "model_gate": "NOT_RUN",
+  "live_gate": "NOT_RUN",
+  "scope": "No builds/tests launched by reviewer; implementation/dependencies unchanged; only this authorized report written."
+}

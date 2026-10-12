@@ -1,0 +1,18 @@
+{
+  "goal_turn": 3,
+  "blocked_condition_repeated_consecutive_turns": 3,
+  "status": "BLOCKED",
+  "selected_branch_verified_head": "1e3d51f2f580b47730f8726dad64f71451e38e96",
+  "performance_status": "FAIL",
+  "failed_gates": [
+    "read B/op",
+    "search B/op",
+    "context B/op",
+    "context p95"
+  ],
+  "user_decision": "Pending updated fork pin or explicit scoped dependency patch authorization",
+  "why_no_safe_next_action": "Selected dependency fails mandatory performance gate. Patching dependency needs user scope decision; budgets cannot be amended unilaterally; committing SDK01 or starting T10 bypasses ordered acceptance. Checks have completed; no live process to await.",
+  "preservation": "No source/dependency/budget change; all indexed artifacts verified; task acceptance not asserted",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

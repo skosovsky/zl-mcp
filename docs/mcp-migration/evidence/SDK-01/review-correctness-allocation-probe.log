@@ -1,0 +1,15 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2
+cpu: Apple M1 Max
+BenchmarkSDK01ReviewNumericRequestDecode-10     	    1000	      5846 ns/op	   65941 B/op	      14 allocs/op
+BenchmarkSDK01ReviewNumericRequestDecode-10     	    1000	      4863 ns/op	   65936 B/op	      14 allocs/op
+BenchmarkSDK01ReviewNumericRequestDecode-10     	    1000	      4942 ns/op	   65941 B/op	      14 allocs/op
+BenchmarkSDK01ReviewNumericResponseDecode-10    	    1000	      2481 ns/op	   33072 B/op	       9 allocs/op
+BenchmarkSDK01ReviewNumericResponseDecode-10    	    1000	      2546 ns/op	   33072 B/op	       9 allocs/op
+BenchmarkSDK01ReviewNumericResponseDecode-10    	    1000	      2491 ns/op	   33072 B/op	       9 allocs/op
+BenchmarkSDK01ReviewRawMethodUnmarshal-10       	    1000	      2298 ns/op	   32848 B/op	       4 allocs/op
+BenchmarkSDK01ReviewRawMethodUnmarshal-10       	    1000	      2296 ns/op	   32848 B/op	       4 allocs/op
+BenchmarkSDK01ReviewRawMethodUnmarshal-10       	    1000	      2352 ns/op	   32848 B/op	       4 allocs/op
+PASS
+ok  	github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2	0.587s

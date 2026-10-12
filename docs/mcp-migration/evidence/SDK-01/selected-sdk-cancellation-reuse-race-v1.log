@@ -1,0 +1,42 @@
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+=== RUN   TestReviewBSynchronousCancellationAndBlockedOldCompletion
+--- PASS: TestReviewBSynchronousCancellationAndBlockedOldCompletion (0.00s)
+PASS
+ok  	github.com/modelcontextprotocol/go-sdk/mcp	1.691s

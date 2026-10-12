@@ -1,0 +1,20 @@
+package jsonrpc2
+import (
+ "testing"
+ internaljson "github.com/modelcontextprotocol/go-sdk/internal/json"
+)
+func BenchmarkSDK01ReviewNumericRequestDecode(b *testing.B) {
+ raw:=[]byte(`{"jsonrpc":"2.0","id":9007199254740993,"method":"tools/call","params":{}}`)
+ b.ReportAllocs(); b.ResetTimer()
+ for i:=0;i<b.N;i++ { if _,err:=DecodeMessage(raw);err!=nil {b.Fatal(err)} }
+}
+func BenchmarkSDK01ReviewNumericResponseDecode(b *testing.B) {
+ raw:=[]byte(`{"jsonrpc":"2.0","id":9007199254740993,"result":{}}`)
+ b.ReportAllocs(); b.ResetTimer()
+ for i:=0;i<b.N;i++ { if _,err:=DecodeMessage(raw);err!=nil {b.Fatal(err)} }
+}
+func BenchmarkSDK01ReviewRawMethodUnmarshal(b *testing.B) {
+ raw:=[]byte(`"tools/call"`)
+ b.ReportAllocs(); b.ResetTimer()
+ for i:=0;i<b.N;i++ {var method string; if err:=internaljson.Unmarshal(raw,&method);err!=nil {b.Fatal(err)}; if method!="tools/call" {b.Fatal(method)} }
+}

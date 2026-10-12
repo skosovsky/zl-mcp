@@ -1,0 +1,8 @@
+{
+  "base": "officialv1.8.0 unchanged copy",
+  "temporary_root": "/tmp/zl-sdk01-proposal-v1",
+  "PR": "1375",
+  "head_sha": "9174a3ffc71cf5c7617a6c64afca0802b855f770",
+  "apply_check": "PASS",
+  "adopted_in_root": false
+}

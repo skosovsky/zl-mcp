@@ -1,0 +1,28 @@
+{"actual_id":"9007199254740991","expected_id":"9007199254740991","input_id":"9007199254740991","pass":true,"response":false}
+{"actual_id":"9007199254740991","expected_id":"9007199254740991","input_id":"9007199254740991","pass":true,"response":true}
+{"actual_id":"9007199254740992","expected_id":"9007199254740992","input_id":"9007199254740992","pass":true,"response":false}
+{"actual_id":"9007199254740992","expected_id":"9007199254740992","input_id":"9007199254740992","pass":true,"response":true}
+{"actual_id":"9007199254740993","expected_id":"9007199254740993","input_id":"9007199254740993","pass":true,"response":false}
+{"actual_id":"9007199254740993","expected_id":"9007199254740993","input_id":"9007199254740993","pass":true,"response":true}
+{"actual_id":"9007199254740994","expected_id":"9007199254740994","input_id":"9007199254740994","pass":true,"response":false}
+{"actual_id":"9007199254740994","expected_id":"9007199254740994","input_id":"9007199254740994","pass":true,"response":true}
+{"actual_id":"-9223372036854775808","expected_id":"-9223372036854775808","input_id":"-9223372036854775808","pass":true,"response":false}
+{"actual_id":"-9223372036854775808","expected_id":"-9223372036854775808","input_id":"-9223372036854775808","pass":true,"response":true}
+{"actual_id":"9223372036854775807","expected_id":"9223372036854775807","input_id":"9223372036854775807","pass":true,"response":false}
+{"actual_id":"9223372036854775807","expected_id":"9223372036854775807","input_id":"9223372036854775807","pass":true,"response":true}
+{"actual_id":"9007199254740993","expected_id":"9007199254740993","input_id":"9007199254740993.0","pass":true,"response":false}
+{"actual_id":"9007199254740993","expected_id":"9007199254740993","input_id":"9007199254740993.0","pass":true,"response":true}
+{"actual_id":"9007199254740993","expected_id":"9007199254740993","input_id":"9.007199254740993e15","pass":true,"response":false}
+{"actual_id":"9007199254740993","expected_id":"9007199254740993","input_id":"9.007199254740993e15","pass":true,"response":true}
+{"actual_id":"\"9007199254740993\"","expected_id":"\"9007199254740993\"","input_id":"\"9007199254740993\"","pass":true,"response":false}
+{"actual_id":"\"9007199254740993\"","expected_id":"\"9007199254740993\"","input_id":"\"9007199254740993\"","pass":true,"response":true}
+{"actual_id":"\"1\"","expected_id":"\"1\"","input_id":"\"1\"","pass":true,"response":false}
+{"actual_id":"\"1\"","expected_id":"\"1\"","input_id":"\"1\"","pass":true,"response":true}
+{"actual_id":"1","expected_id":"1","input_id":"1","pass":true,"response":false}
+{"actual_id":"1","expected_id":"1","input_id":"1","pass":true,"response":true}
+{"error":"parse error: invalid numeric request ID","expected_id":"REJECT","input_id":"1.5","pass":true,"response":false}
+{"error":"parse error: invalid numeric ID: ID is not an int64 integer","expected_id":"REJECT","input_id":"1.5","pass":true,"response":true}
+{"error":"parse error: invalid numeric request ID","expected_id":"REJECT","input_id":"9223372036854775808","pass":true,"response":false}
+{"error":"parse error: invalid numeric ID: ID is not an int64 integer","expected_id":"REJECT","input_id":"9223372036854775808","pass":true,"response":true}
+{"error":"parse error: invalid numeric request ID","expected_id":"REJECT","input_id":"-9223372036854775809","pass":true,"response":false}
+{"error":"parse error: invalid numeric ID: ID is not an int64 integer","expected_id":"REJECT","input_id":"-9223372036854775809","pass":true,"response":true}

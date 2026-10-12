@@ -1,0 +1,105 @@
+{
+  "review": "Independent completeness review of minimal correction readiness",
+  "reviewer": "/root/sdk_exception_completeness",
+  "proposal_tree_sha256": "36992e168844dbdac502f10cd7884b841f0496655a845fe384682a1f41a0379a",
+  "patch_sha256": "bee2dda9bf755459f6dc9c64ec4f23650bbb09613ce9ca72fab779db39daeb43",
+  "requirements_total": 12,
+  "requirements_complete": 12,
+  "completeness_percent": 100.0,
+  "verdict": "PASS_CORRECTION_PROPOSAL_READINESS",
+  "SDK-01_task_acceptance": false,
+  "current_root_remote_pin_ID05": "FAIL; existing5ec4pin unchanged",
+  "root_local_patch_adopted": false,
+  "leaf_requirements": [
+    {
+      "id": "F01",
+      "status": "PASS",
+      "requirement": "Exact authorized fork base preserved",
+      "evidence": "5ec4c42125489a54f8324e2b81396847befcd2c3"
+    },
+    {
+      "id": "F02",
+      "status": "PASS",
+      "requirement": "Correction immutable/minimal scope",
+      "evidence": "5406-byte patch,3 existing productionfiles+1 regressiontest"
+    },
+    {
+      "id": "F03",
+      "status": "PASS",
+      "requirement": "Current remote blocker retained",
+      "evidence": "authorized-fork-review-A-v1.json and framing-v2FAIL; no fake acceptance"
+    },
+    {
+      "id": "F04",
+      "status": "PASS",
+      "requirement": "Existing decoder classifies invalid numeric request",
+      "evidence": "ErrInvalidNumericRequestID sentinel; numeric IDs only, not custom parser"
+    },
+    {
+      "id": "F05",
+      "status": "PASS",
+      "requirement": "Protocol error encoder emits explicit id:null",
+      "evidence": "nil error Response ID uses RawMessage(null)"
+    },
+    {
+      "id": "F06",
+      "status": "PASS",
+      "requirement": "HTTP error framing",
+      "evidence": "HTTP400 application/json -32600 fixed message, no reflected invalid numeric content"
+    },
+    {
+      "id": "F07",
+      "status": "PASS",
+      "requirement": "IOTransport recovery",
+      "evidence": "Error write then iterative readNext, no recursive invalid-frame retry"
+    },
+    {
+      "id": "F08",
+      "status": "PASS",
+      "requirement": "Independent external framing/bounds smoke",
+      "evidence": "fork-framing-review-A-smoke-v1.log/source; invalid frame thenvalidid7"
+    },
+    {
+      "id": "F09",
+      "status": "PASS",
+      "requirement": "Same six-case failure reproducer becomesPASS",
+      "evidence": "fork-framing-proposal-repro-v1.json sixPASS"
+    },
+    {
+      "id": "F10",
+      "status": "PASS",
+      "requirement": "Nested test/race/vet/build complete",
+      "evidence": "Checks attestationexit0, independent all4 loghash checks, tree unchanged"
+    },
+    {
+      "id": "F11",
+      "status": "PASS",
+      "requirement": "License/modules/numeric/cancellation retained",
+      "evidence": "License and modulefiles byte-identical; changes scope excludes128parser/cancellation"
+    },
+    {
+      "id": "F12",
+      "status": "PASS",
+      "requirement": "Handoff/adoption scope explicit",
+      "evidence": "Ready for user to apply/publish fork correction and supply new immutable pin; root has not adopted localpatch; fullSDKtaskIDgates stillmandatory"
+    }
+  ],
+  "findings": [],
+  "limitations": [
+    "This does not authorize us to publish the fork or adopt local vendor patch. User supplies corrected immutable remote pin after applying/publishing their fork change.",
+    "All root ID01-ID07 plus wrapper/fulltests/offline/parity/performance/two reviewer gates remain required on new adoptedpin.",
+    "MakeID(float64) legacy coercion and null-ID response decoding remain unchanged baseline behavior; raw framing tested without float64."
+  ],
+  "independent_verifications": {
+    "manifest_records_match": 225,
+    "tree_and_patch_sha_match": true,
+    "check_logs_match_attestation": true,
+    "module_files_unchanged": true,
+    "license_unchanged": true,
+    "own_external_HTTP_IOTransport_smoke": true
+  },
+  "peer_report_read": false,
+  "source_changes_by_reviewer": false,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

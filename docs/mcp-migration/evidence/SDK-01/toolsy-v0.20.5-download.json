@@ -1,0 +1,16 @@
+{
+	"Path": "github.com/skosovsky/toolsy",
+	"Version": "v0.20.5",
+	"Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.5.info",
+	"GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.5.mod",
+	"Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.5.zip",
+	"Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.5",
+	"Sum": "h1:82dpAtA9o3lglu6yLUg+N3w9xaeJTKUhp0hXk06QD5Q=",
+	"GoModSum": "h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=",
+	"Origin": {
+		"VCS": "git",
+		"URL": "https://github.com/skosovsky/toolsy",
+		"Hash": "3747edec09adf0472ba4d3b4749c5fa1f3cb6c62",
+		"Ref": "refs/tags/v0.20.5"
+	}
+}

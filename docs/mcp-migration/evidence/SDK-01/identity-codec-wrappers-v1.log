@@ -1,0 +1,317 @@
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740991/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740991/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740991/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740992/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740992/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740992/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740993/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740993/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740993/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740994/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740994/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740994/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9223372036854775807/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9223372036854775807/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9223372036854775807/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/-9223372036854775808/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/-9223372036854775808/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/-9223372036854775808/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740993.0/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740993.0/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9007199254740993.0/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9.007199254740993e15/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9.007199254740993e15/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/9.007199254740993e15/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/100000e-2/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/100000e-2/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/100000e-2/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/0e999999999/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/0e999999999/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/0e999999999/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/-0/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/-0/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/-0/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/1/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/1/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/1/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/"1"/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/"1"/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/"1"/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/"9007199254740993"/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/"9007199254740993"/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/"9007199254740993"/protocol-error
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/"界🍀"/request
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/"界🍀"/response
+=== RUN   TestSDK01CodecIdentityRequestsAndResponses/"界🍀"/protocol-error
+--- PASS: TestSDK01CodecIdentityRequestsAndResponses (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740991/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740991/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740991/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740992/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740992/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740992/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740993/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740993/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740993/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740994/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740994/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740994/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9223372036854775807/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9223372036854775807/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9223372036854775807/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/-9223372036854775808/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/-9223372036854775808/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/-9223372036854775808/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740993.0/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740993.0/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9007199254740993.0/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9.007199254740993e15/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9.007199254740993e15/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/9.007199254740993e15/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/100000e-2/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/100000e-2/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/100000e-2/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/0e999999999/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/0e999999999/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/0e999999999/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/-0/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/-0/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/-0/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/1/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/1/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/1/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/"1"/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/"1"/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/"1"/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/"9007199254740993"/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/"9007199254740993"/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/"9007199254740993"/protocol-error (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/"界🍀"/request (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/"界🍀"/response (0.00s)
+    --- PASS: TestSDK01CodecIdentityRequestsAndResponses/"界🍀"/protocol-error (0.00s)
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740991/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=384
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740991/resources/read
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740991/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=X6WVFKD3IZOD2X7X2B67HGDTV6 code=OK outcome=success duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740991/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4083
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740991/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740992/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=384
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740992/resources/read
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740992/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=W2DEOBR5Q2X64BKZ6LU75EQKNE code=OK outcome=success duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740992/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4083
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740992/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=384
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993/resources/read
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=NV342TC3S3CVSZH36KAXFDFJKM code=OK outcome=success duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4083
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740994/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=384
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740994/resources/read
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740994/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=C26GG5B2HQY7CKZMLX6UKN6NUA code=OK outcome=success duration_ms=1
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740994/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4083
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740994/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9223372036854775807/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=387
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9223372036854775807/resources/read
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9223372036854775807/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=F5YDQTY6LI3JDOMLURYUNLWYGR code=OK outcome=success duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9223372036854775807/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4086
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9223372036854775807/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-9223372036854775808/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=388
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-9223372036854775808/resources/read
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-9223372036854775808/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=Z7N3RJW24T5VUOEYJCJVFXCBPB code=OK outcome=success duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-9223372036854775808/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4087
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-9223372036854775808/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993.0/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=384
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993.0/resources/read
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993.0/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=5RTAQYR22F5FTMDVHJMHUPLCBV code=OK outcome=success duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993.0/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4085
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993.0/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9.007199254740993e15/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=384
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9.007199254740993e15/resources/read
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9.007199254740993e15/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=UVRC4TNELZOJXKPUVWOYOIGYHL code=OK outcome=success duration_ms=1
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9.007199254740993e15/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4087
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9.007199254740993e15/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/100000e-2/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=372
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/100000e-2/resources/read
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/100000e-2/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=RX6YV5UPCGTY7GMDQESLNHHFTG code=OK outcome=success duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/100000e-2/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4076
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/100000e-2/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/0e999999999/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=369
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/0e999999999/resources/read
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/0e999999999/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=DSTBZELPBX44RPB74PLKET3TZ5 code=OK outcome=success duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/0e999999999/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4078
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/0e999999999/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-0/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=369
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-0/resources/read
+    sdk_identity_test.go:180: request failed status200 body{"jsonrpc":"2.0","id":0,"error":{"code":0,"message":"RATE_LIMITED: retry resource read later"}}
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-0/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=HZ7NRFWH2K7D5GXV6T2NXSSCJR code=RATE_LIMITED outcome=error duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-0/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4069
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-0/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/1/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=369
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/1/resources/read
+    sdk_identity_test.go:180: request failed status200 body{"jsonrpc":"2.0","id":1,"error":{"code":0,"message":"RATE_LIMITED: retry resource read later"}}
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/1/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=IOGCQXGXS4GK57LRPHJVUXXXBE code=RATE_LIMITED outcome=error duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/1/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4068
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/1/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"1"/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=371
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"1"/resources/read
+    sdk_identity_test.go:180: request failed status200 body{"jsonrpc":"2.0","id":"1","error":{"code":0,"message":"RATE_LIMITED: retry resource read later"}}
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"1"/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=NL7YVSDTZ2XLZ2VS3SNP25XTHG code=RATE_LIMITED outcome=error duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"1"/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4070
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"1"/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"9007199254740993"/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=386
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"9007199254740993"/resources/read
+    sdk_identity_test.go:180: request failed status200 body{"jsonrpc":"2.0","id":"9007199254740993","error":{"code":0,"message":"RATE_LIMITED: retry resource read later"}}
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"9007199254740993"/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=XQTCH2JYVVTY2YZSQJYNWGYETO code=RATE_LIMITED outcome=error duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"9007199254740993"/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4085
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"9007199254740993"/events/unknown
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"界🍀"/server/discover
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=377
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"界🍀"/resources/read
+    sdk_identity_test.go:180: request failed status200 body{"jsonrpc":"2.0","id":"界🍀","error":{"code":0,"message":"RATE_LIMITED: retry resource read later"}}
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"界🍀"/tools/call
+2026/10/12 23:16:17 INFO mcp_call tool=zalo_get_status correlation_id=TIHOSTMBIA3KMN6QCEZC2AG2WC code=RATE_LIMITED outcome=error duration_ms=0
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"界🍀"/events/list
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4076
+=== RUN   TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"界🍀"/events/unknown
+--- FAIL: TestSDK01HTTPWrappersPreserveEnvelopeIdentity (0.10s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740991/server/discover (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740991/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740991/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740991/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740991/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740992/server/discover (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740992/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740992/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740992/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740992/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993/server/discover (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740994/server/discover (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740994/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740994/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740994/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740994/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9223372036854775807/server/discover (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9223372036854775807/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9223372036854775807/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9223372036854775807/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9223372036854775807/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-9223372036854775808/server/discover (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-9223372036854775808/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-9223372036854775808/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-9223372036854775808/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-9223372036854775808/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993.0/server/discover (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993.0/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993.0/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993.0/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9007199254740993.0/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9.007199254740993e15/server/discover (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9.007199254740993e15/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9.007199254740993e15/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9.007199254740993e15/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/9.007199254740993e15/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/100000e-2/server/discover (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/100000e-2/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/100000e-2/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/100000e-2/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/100000e-2/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/0e999999999/server/discover (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/0e999999999/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/0e999999999/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/0e999999999/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/0e999999999/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-0/server/discover (0.00s)
+    --- FAIL: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-0/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-0/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-0/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/-0/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/1/server/discover (0.00s)
+    --- FAIL: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/1/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/1/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/1/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/1/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"1"/server/discover (0.00s)
+    --- FAIL: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"1"/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"1"/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"1"/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"1"/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"9007199254740993"/server/discover (0.00s)
+    --- FAIL: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"9007199254740993"/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"9007199254740993"/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"9007199254740993"/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"9007199254740993"/events/unknown (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"界🍀"/server/discover (0.00s)
+    --- FAIL: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"界🍀"/resources/read (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"界🍀"/tools/call (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"界🍀"/events/list (0.00s)
+    --- PASS: TestSDK01HTTPWrappersPreserveEnvelopeIdentity/"界🍀"/events/unknown (0.00s)
+=== RUN   TestSDK01RejectInvalidIDsBeforeEventsDispatch
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=84
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=400 duration_ms=0 response_bytes=82
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=84
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=400 duration_ms=0 response_bytes=82
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=84
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=400 duration_ms=0 response_bytes=82
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=84
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=400 duration_ms=0 response_bytes=82
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=84
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=400 duration_ms=0 response_bytes=82
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=84
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=400 duration_ms=0 response_bytes=82
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=84
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=400 duration_ms=0 response_bytes=82
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=84
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=400 duration_ms=0 response_bytes=82
+2026/10/12 23:16:17 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=84
+2026/10/12 23:16:17 INFO mcp_discovery method=server/discover protocol=2026-07-28 http_status=400 duration_ms=1 response_bytes=82
+--- PASS: TestSDK01RejectInvalidIDsBeforeEventsDispatch (0.09s)
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/mcpserver	0.848s
+FAIL

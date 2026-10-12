@@ -1,0 +1,103 @@
+{
+  "task": "SDK-01",
+  "reviewer": "/root/sdk01_final_correctness",
+  "review_type": "independent_final_correctness",
+  "parent_sha": "bb3eadc785366588b88bdc83c4d7693c89b96090",
+  "source_digest_sha256": "1f903b7acd219cda0a97a769e4157ad00b0633204c0ade1a661d47dee29cf43e",
+  "requirements": "requirements-v4.json",
+  "verdict": "PASS",
+  "correctness": "PASS",
+  "unresolved_findings": [],
+  "reviewed_behaviors": [
+    "Signedint64 identity, numeric/string separation, decimal/exponent values and bounded invalid numeric rejection",
+    "Real HTTP/STDIO neighboring requests, supported carrier cancellation and ID reuse",
+    "Independent20repeat race regression: old blocked response completion cannot damage newly reused ID",
+    "Events validation before admission and lossless actualSDK discovery envelope",
+    "Lost-response durable native UUID states sent/unknown without resend",
+    "Current paired candidate exactness with only explicitly named frozen precision fact correction",
+    "4347scalar method decode change preserves contract and removes streaming allocation cost"
+  ],
+  "verified_evidence": {
+    "artifact_index_files": 2657,
+    "all_indexed_file_sha256_verified": true,
+    "all_candidate_file_sha256_verified": true,
+    "all12check_record_exit0_and_sha256_verified": true,
+    "pristine_SDK_files": 227,
+    "independent_overlay_production_hashes_unchanged": true,
+    "offline_cases": 50,
+    "offline_assertions": 480,
+    "canonical_pairs": 50,
+    "explicit_baseline_precision_corrections": 2,
+    "performance_gates": 9,
+    "performance_calls": 15000,
+    "performance_errors": 0
+  },
+  "acceptance_scope": "Restricted offline acceptance under explicitly authorized v3 budgets; not original baseline latency parity",
+  "historical_failures_retained": [
+    "final-review-B-v1.json",
+    "performance-comparison-v1.json",
+    "selected-sdk-source-manifest-invalid-v1.json"
+  ],
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "commit_gate": "Ready for sole exactmessageSDK01commit only after independentcompleteness100%; postcommitproof remains required",
+  "expected_commit_message": "fix(mcp): preserve JSON-RPC IDs across SDK and wrappers",
+  "evidence": [
+    {
+      "path": "requirements-v4.json",
+      "sha256": "cd2c5509a1b1b04611c80923a093fd924842a3ca8a08ba83065365a81ffafa78"
+    },
+    {
+      "path": "candidate-4347-v1.json",
+      "sha256": "ac9a6b90a23c6c989b1f28543e2fd99c8dfcd9d9eec779f8d1c5e2eb31988391"
+    },
+    {
+      "path": "checks-4347-v3.json",
+      "sha256": "d4f31a32009e7de2a403fca35ee8dd618ddd2741d411f1ecdb50c18882be7e14"
+    },
+    {
+      "path": "selected-sdk-4347-source-manifest-v1.json",
+      "sha256": "4669ef32bad344483fddcb4af4896b7400ccc0336bf4ef993a0d0f6fd297e995"
+    },
+    {
+      "path": "performance-comparison-4347-v1.json",
+      "sha256": "0a378e8c6503adeb99321830e8a76929e09a4fec512752e5827d6c2a528da142"
+    },
+    {
+      "path": "performance-4347-v1/manifest.json",
+      "sha256": "465181beb6457142a21bd20e875f6079007adcb7fe26032161a2fa9aa9941473"
+    },
+    {
+      "path": "review-B-4347-overlay-manifest-v1.json",
+      "sha256": "407d3cdc502e0d1631d86e340946ad92017c4fa4eea9139ccfd47a14d9020975"
+    },
+    {
+      "path": "review-B-4347-cancellation-race-v1.log",
+      "sha256": "8b369cad8ad00c8f1a80b40afc831b762a0ed6fd1a13bf6d1f40b18cf80c3c69"
+    },
+    {
+      "path": "artifact-index-v9.json",
+      "sha256": "1d32bb8a9294bea8c34017e4b43d9994bb8581d56b171a6943fcbca53158a034"
+    },
+    {
+      "path": "offline-4347-v2/report.json",
+      "sha256": "5246e908d2fd3e7e8a2ca73a34e335372015a045b913c2388c911c049c0af1a3"
+    },
+    {
+      "path": "paired-4347-v1/canonical-parity.json",
+      "sha256": "ee8d6ea99f6d52d58c561e1976d4e7c1c7df06de72c122b2217d422e9df9fdf2"
+    },
+    {
+      "path": "architecture-4347-v3.json",
+      "sha256": "bce53c96a9b915dc5d7b4bfd919d72a5f00da9132a50f79898e132cbb7b056e4"
+    },
+    {
+      "path": "platform-build-manifest-4347-v1.json",
+      "sha256": "ca794a409f0b1e21e453ceea5249beaa8c2c9404b383c73f19dd56e5c81a03c0"
+    },
+    {
+      "path": "authorized-fork-contract-v3.json",
+      "sha256": "5e53bff74672b3d60c3ed13befa7e045fb15d05214ef817912543eb6d0f05546"
+    }
+  ]
+}

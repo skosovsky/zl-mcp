@@ -1,0 +1,4 @@
+ok  	github.com/modelcontextprotocol/go-sdk/internal/json	(cached)
+ok  	github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2	0.419s
+?   	github.com/modelcontextprotocol/go-sdk/jsonrpc	[no test files]
+ok  	github.com/modelcontextprotocol/go-sdk/mcp	33.478s
