@@ -1,0 +1,13 @@
+test_baseline_binary_cannot_masquerade_as_candidate (test_compare_performance.PerformanceGateTests.test_baseline_binary_cannot_masquerade_as_candidate) ... ok
+test_duplicate_run_and_changed_threshold_cannot_pass (test_compare_performance.PerformanceGateTests.test_duplicate_run_and_changed_threshold_cannot_pass) ... ok
+test_invalid_counts_and_matching_changed_protocol_cannot_pass (test_compare_performance.PerformanceGateTests.test_invalid_counts_and_matching_changed_protocol_cannot_pass) ... ok
+test_invalid_measurements_fail_closed (test_compare_performance.PerformanceGateTests.test_invalid_measurements_fail_closed) ... ok
+test_matching_missing_provenance_cannot_pass (test_compare_performance.PerformanceGateTests.test_matching_missing_provenance_cannot_pass) ... ok
+test_reported_summary_cannot_hide_latency_regression (test_compare_performance.PerformanceGateTests.test_reported_summary_cannot_hide_latency_regression) ... ok
+test_same_complete_raw_runs_pass (test_compare_performance.PerformanceGateTests.test_same_complete_raw_runs_pass) ... ok
+test_zero_baseline_and_different_machine_cannot_pass (test_compare_performance.PerformanceGateTests.test_zero_baseline_and_different_machine_cannot_pass) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.053s
+
+OK

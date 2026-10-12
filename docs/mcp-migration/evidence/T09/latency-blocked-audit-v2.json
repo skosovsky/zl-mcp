@@ -1,0 +1,14 @@
+{
+  "task": "T09",
+  "timestamp_utc": "2026-10-12T13:12:27.768843+00:00",
+  "condition": "Original p95 gate fails under confirmed host contention; idle repeat pending",
+  "consecutive_goal_turns": 2,
+  "previous_turn": "Progress: matched parallel frozen baseline establishes approximately 2x host slowdown; no acceptance baseline replacement",
+  "current_turn": "Read-only current process sampling confirms CrossOver/game 139.4%CPU, fileproviderd 78.9%, browser renderer 116.6%; user processes untouched",
+  "live_measurement_handles": [],
+  "classification": "No performance progress; not a verified process wait",
+  "safe_next_action": "Repeat all 15 candidate measurements only after host contention falls; preserve original baseline and p95 threshold",
+  "user_reply": "Pending; no authorization to close apps inferred",
+  "source_digest_sha256": "b6b51db253ddab35174a8a09d934f6145627c04c27cf88d60076f703c0b4ef84",
+  "task_commit_created": false
+}

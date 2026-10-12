@@ -31,7 +31,7 @@ func TestCollectorStatusKeepsNullCompatibilityAndRejectsStaleAccountBeforeRead(t
 	// Arrange: the trusted host account can change while a startup call is queued.
 	base, reader := readRuntime(t)
 	authority := &catalogAuthority{observedReader: reader}
-	r, err := NewReads(base.search, &conversations.Handler{Reads: reader, Catalog: authority}, authority)
+	r, err := New(base.search, &conversations.Handler{Reads: reader, Catalog: authority}, authority)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "orders": [
+    "baseline→candidate",
+    "candidate→baseline"
+  ],
+  "evidence": [
+    "restart-old-new-v1.log",
+    "restart-new-old-v1.log"
+  ],
+  "build_manifest": "build-manifest-v2.json",
+  "state": "same isolated synthetic SQLite state reused across sequential stopped/joined processes in each order",
+  "assertions": [
+    "terminal history state partial retained",
+    "staging snapshot removed",
+    "zero imported messages/Events",
+    "snapshot key and spent UUID identity unchanged",
+    "second process ready and graceful shutdown"
+  ],
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

@@ -15,6 +15,7 @@ import (
 func main() { os.Exit(run()) }
 func run() int {
 	root := flag.String("root", ".", "repository with versioned synthetic assets")
+	baselineBinary := flag.String("baseline-binary", "", "absolute frozen binary for offline paired acceptance; no model execution")
 	profile := flag.String("profile", "offline", "offline or explicit opt-in model profile (requires authorized driver)")
 	driver := flag.String("model-driver", "", "explicit authorized absolute host driver; absent model profile is NOT_RUN")
 	output := flag.String("output", "/tmp/zl-mcp-offline-report", "new report directory")
@@ -113,7 +114,7 @@ func run() int {
 	if !filepath.IsAbs(*dataset) {
 		*dataset = filepath.Join(absoluteRoot, *dataset)
 	}
-	report, runErr := evaluation.Run(context.Background(), evaluation.Options{Root: absoluteRoot, Binary: *binary, ReportDir: absoluteOutput, DatasetPath: *dataset, Profile: *profile, ModelDriver: *driver, RunBudget: *budget, Seed: *seed, Repeats: *repeats})
+	report, runErr := evaluation.Run(context.Background(), evaluation.Options{Root: absoluteRoot, Binary: *binary, BaselineBinary: *baselineBinary, ReportDir: absoluteOutput, DatasetPath: *dataset, Profile: *profile, ModelDriver: *driver, RunBudget: *budget, Seed: *seed, Repeats: *repeats})
 	if runErr != nil {
 		report.Reason = runErr.Error()
 		if report.ExitStatus == 0 {

@@ -1,0 +1,24 @@
+{
+  "task": "T09",
+  "status": "NOT_ACCEPTED",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "source_digest_sha256": "c99dc823184fa330fc5bc25c2a01d43db7e0dcba6414cdaaff6956417c6e586c",
+  "completeness_percent": 93.44262295081967,
+  "correctness": "FAIL",
+  "reviewers": [
+    "reviewer-completeness-v3.json",
+    "reviewer-correctness-v3.json"
+  ],
+  "remaining_findings": [
+    "Mandatory fixed performance thresholds FAIL; explicit dependency scope decision pending"
+  ],
+  "harness_findings": "CLOSED independently by both reviewers",
+  "performance_evidence": "performance-comparison-v2.json",
+  "paired_evidence": "paired-v4/report.json",
+  "negative_pair_evidence": "mutated-paired-v2/report.json",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01",
+  "task_commit_created": false,
+  "next_task_started": false
+}

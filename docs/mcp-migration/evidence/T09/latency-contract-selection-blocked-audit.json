@@ -1,0 +1,11 @@
+{
+  "task": "T09",
+  "timestamp_utc": "2026-10-12T13:43:16.176758+00:00",
+  "consecutive_goal_turns": 3,
+  "condition": "Explicit user amendment requested, but pending selection determines actual numeric p95 contract",
+  "classification": "Previous turn prepared option values; current turn verifies unchanged source and original FAIL. No live process wait. No dependent implementation permitted until selection arrives.",
+  "source_digest_sha256": "b6b51db253ddab35174a8a09d934f6145627c04c27cf88d60076f703c0b4ef84",
+  "pending_question": "Candidate actual +10% or matched frozen control actual +10%, as absolute p95 limits replacing prior ratio gate",
+  "safe_next_action": "Wait for required numeric contract clarification; no baseline fabrication, old report overwrite or PASS assertion",
+  "decision": "Goal blocked pending clarification"
+}

@@ -38,7 +38,7 @@ func TestMCPHistoryImportDiscoveryStatusAndReads(t *testing.T) {
 	reader := storeadapter.New(s)
 	backend := &historyimport.Manager{Store: s}
 	operations := operationsadapter.NewReader(backend)
-	server, err := mcpserver.New(mcpserver.ReadPorts{Operations: toolruntime.OperationReads{Messaging: &messaging.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}}, Archives: &archives.Handler{Reads: operationsadapter.NewArchiveReader(backend)}, Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader, LiveGroups: operations}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader}})
+	server, err := mcpserver.New(mcpserver.Ports{Operations: toolruntime.Capabilities{Messaging: &messaging.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}}, Archives: &archives.Handler{Reads: operationsadapter.NewArchiveReader(backend)}, Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader, LiveGroups: operations}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader}})
 	if err != nil {
 		t.Fatal(err)
 	}

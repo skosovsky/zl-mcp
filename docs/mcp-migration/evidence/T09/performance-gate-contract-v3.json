@@ -1,0 +1,21 @@
+{
+  "revision": "2026-10-12-candidate-latency-plus10-v3",
+  "user_authorization": "Да: candidate +10% — новые пределы p95.",
+  "latency_policy": "Absolute per-kind p95 limits calibrated from existing candidate median-of-five p95 plus 10%; replaces original frozen-baseline x1.15 latency gate only",
+  "p95_limits_seconds": {
+    "read": 0.0078683,
+    "search": 0.007072633700000001,
+    "context": 0.006996779900000001
+  },
+  "calibration_manifest": "performance-v3/manifest.json",
+  "calibration_manifest_sha256": "b97d9000df4c5e282e07857e15c655f2688ecee06c3dff4d36f1a8fb1e0afad1",
+  "calibration_binary_sha256": "78729b32ae7db6b810d522ca8a4a5551d8eb7b6ddbf03b5afe970ff9a750caaf",
+  "calibration_source_digest_sha256": "b6b51db253ddab35174a8a09d934f6145627c04c27cf88d60076f703c0b4ef84",
+  "allocations_ratio": 2.0,
+  "alloc_bytes_ratio": 1.2,
+  "allocation_baseline": "Original accepted frozen T03, unchanged",
+  "retrospective_authorization": true,
+  "measurement_reuse": "Existing 15 complete error-free runs may be reassessed; no fresh benchmark requested or performed",
+  "limitation": "PASS is budget acceptance after user-approved retrospective recalibration; does not demonstrate latency parity with original frozen T03 baseline",
+  "historical_result": "performance-comparison-v4.json remains FAIL under v2 contract"
+}

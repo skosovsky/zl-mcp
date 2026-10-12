@@ -51,7 +51,7 @@ func TestOperationReadsUseScopedExecutorAndNeverReplaceFailuresWithCommands(t *t
 		"zalo_inspect_invite":            membership.Invite{Name: "Cà phê 🍀", Membership: "unknown"},
 	}}
 	reader := adapter.NewReader(backend)
-	r, err := NewReads(base.search, base.conversations, authority, OperationReads{Messaging: &messaging.Handler{Reads: reader}, History: &history.Handler{Reads: reader}, Membership: &membership.Handler{Reads: reader}})
+	r, err := New(base.search, base.conversations, authority, Capabilities{Messaging: &messaging.Handler{Reads: reader}, History: &history.Handler{Reads: reader}, Membership: &membership.Handler{Reads: reader}})
 	if err != nil {
 		t.Fatal(err)
 	}

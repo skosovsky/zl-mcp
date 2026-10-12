@@ -1,0 +1,18 @@
+go: downloading golang.org/x/mod v0.21.0
+go: downloading golang.org/x/sync v0.17.0
+?   	github.com/amrakk/zcago	[no test files]
+ok  	github.com/amrakk/zcago/api	6.950s
+?   	github.com/amrakk/zcago/config	[no test files]
+?   	github.com/amrakk/zcago/errs	[no test files]
+?   	github.com/amrakk/zcago/internal/cryptox	[no test files]
+?   	github.com/amrakk/zcago/internal/httpx	[no test files]
+?   	github.com/amrakk/zcago/internal/jsonx	[no test files]
+?   	github.com/amrakk/zcago/internal/logger	[no test files]
+?   	github.com/amrakk/zcago/internal/timex	[no test files]
+ok  	github.com/amrakk/zcago/internal/websocketx	1.916s
+ok  	github.com/amrakk/zcago/listener	1.965s
+ok  	github.com/amrakk/zcago/listener/events	1.898s
+ok  	github.com/amrakk/zcago/model	1.908s
+?   	github.com/amrakk/zcago/session	[no test files]
+ok  	github.com/amrakk/zcago/session/auth	1.933s
+?   	github.com/amrakk/zcago/version	[no test files]

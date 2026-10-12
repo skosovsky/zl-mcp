@@ -1,0 +1,16 @@
+{
+  "diagnostic_code_removed": [
+    "internal/toolruntime/manifest_benchmark_test.go",
+    "BenchmarkScopedExecution and testing.TB-only helper changes"
+  ],
+  "temporary_files_removed": [
+    "/tmp/zl-T09-profile-v0.20.1",
+    "/tmp/zl-T09-toolsy-v0.20.1-alloc.pprof",
+    "/tmp/zl-T09-host-projection-probe",
+    "/tmp/zl-T09-host-projection-eval"
+  ],
+  "previous_tmp_state": "Prior task temporary directories were already absent after environment change",
+  "root_dependency_overrides": "Only pre-existing ./third_party/zcago; no proposal adopted",
+  "historical_evidence": "Retained, including every FAIL/report/profile/proposal",
+  "new_diagnostic_evidence": "Retained only profile/source/commands in evidence; current official dependency unpatched"
+}

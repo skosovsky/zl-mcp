@@ -1,0 +1,15 @@
+{
+  "purpose": "Diagnostic currenthostfrozenbaseline control, notreplacementofacceptedbaseline",
+  "command": [
+    "/tmp/zl-T09-build-v6/zl-mcp-eval-baseline",
+    "--root",
+    "/workspace/zl-mcp",
+    "--measure-kind",
+    "read",
+    "--measure-calls",
+    "1000",
+    "--state-dir",
+    "/tmp/zl-T09-baseline-latency-7gxrxj3c"
+  ],
+  "exit_status": 0
+}

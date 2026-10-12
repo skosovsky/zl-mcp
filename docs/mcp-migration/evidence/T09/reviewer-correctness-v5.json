@@ -1,0 +1,77 @@
+{
+  "task": "T09",
+  "reviewer": "independent correctness",
+  "source_digest_sha256": "31f2ed00782291f6ee9f18b86fb9a0c00e800cde2f2b59cc1505b3631a519fbe",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "verdict": "PASS",
+  "findings": [],
+  "peer_report_consulted": false,
+  "requirements_contract": "requirements-v3.json,62leafs",
+  "task_commit_authorization": "Correctness gate PASS only; soleT09commit still requires independent samecandidate completeness100% and finalized task evidence. No commit performed byreviewer.",
+  "artifact_index_verified": {
+    "path": "artifact-index-v16.json",
+    "count": 3213,
+    "mismatches": 0
+  },
+  "previous_findings": {
+    "C09-01": "Resolved under explicit user-approved versioned acceptance amendments. Original latency/allocationFAIL retained; new PASS has restricted budget acceptance interpretation.",
+    "C09-02": "Complete canonical paired behavior comparison retained; actualchangedmessage-text negative reprofails. Freshofficial20.2paired50completepairsPASS.",
+    "C09-03": "Allphysicalscalars/counts/provenance/binaryroles validated; negative/nonfinite/missing/bool/stringmalformed evidenceFAIL. Separateobject/allocatedbyte gates tested.",
+    "C09-04": "set-e prerequisitefailurepropagation confirmed via actualMakefaultinjectiontest",
+    "C09-05": "EnormousJSONintegeractualCLIreturns nonzero and durableFAILreport"
+  },
+  "performance": {
+    "contract": "performance-gate-contract-v3.json",
+    "revision": "2026-10-12-candidate-latency-plus10-v3",
+    "independent_reassessment": "correctness-v5-performance.json PASS with all9kind/gatebooleans true",
+    "raw_measurements": "performance-v3/manifest.json same15completeerrorfreeruns; no fresh measurement claimed/performed",
+    "absolute_p95_limits_seconds": {
+      "read": 0.0078683,
+      "search": 0.0070726337,
+      "context": 0.0069967799
+    },
+    "objects_ratio_limit": 2.0,
+    "allocated_bytes_ratio_limit": 1.2,
+    "zero_baseline_limit": 0,
+    "baseline": "OriginalacceptedfrozenT03 unchanged,15runs eachkind5x1000",
+    "calibration_integrity": "Manifestsha256matchescontract; eachlimit independentlyderivedmedian-of5candidatep95*1.10",
+    "historical_failure": "performance-comparison-v4.json FAIL retained; earlierFAILs/rawprofiles/reviews immutable",
+    "limitation": "PASS establishes user-authorized retrospectively calibrated budget acceptance. It does not demonstrate original frozen-baseline latency parity, original1.20objectgate, or latency improvement."
+  },
+  "source_build_provenance": {
+    "dependency": "Officialtoolsyv0.20.2,pin/modulechecksum/origin36eb5b661ab4569051e5b17175dc44f3dd132b9c; no localtoolsyreplace/vendor/siblingpatch",
+    "build": "build-manifest-v6.json",
+    "baseline_original": "8d913c48b797f54f277ffc1106e6bf28be9e697d",
+    "evaluation_overlay": "acceptedT03da3d7b6f0369f85e58d17b546c933b362c342224",
+    "equivalence": "Independentlycompared everycandidatefilehash sincebuild; differencesonlydocs/development,dependency-matrix,pairedcontract,task-spec andtwoPythonverifier/testfiles. NoGo/modulechange; compiled/rootchecks/native/offline/paired evidence applicable."
+  },
+  "independent_checks": [
+    "candidate.py reproduces exactfrozen31f2edsource",
+    "3213indexed SHA256 andbytes matched",
+    "20Python unittestdiscover testsPASS including allboundary/negative/malformed/provenance/object-byte/latedbuildcases",
+    "go test ./internal/toolruntime ./internal/evaluation -count=1 PASS under official20.2",
+    "Fullperformance verifier CLI witharchivedbaseline/candidatebuild manifests independentlyPASS",
+    "Calibrated absolutebudgets recomputedandfixed; incomingmanifest cannotrecalibrate",
+    "Fullcanonicalcomparison exactUseNumber,independenttext/structuredprojections,nativeIDs/null/missing/order,limiteddynamicaliases preservingtemporalorder/window/referenceidentity reviewed"
+  ],
+  "inspected_current_evidence": [
+    "root-tests-v5/root-race-v4/root-vet-v5 PASS",
+    "nested-test-v3/nested-race-v3/nested-vet-v3 PASS",
+    "architecture-v6 strict100compliance/100coverage andnegative/allbuildsourcecontrolsPASS",
+    "platform-build-manifest-v3 threeCGOfreeplatformsPASS",
+    "offline-v6 all50cases480assertionsPASS",
+    "paired-v6 both50cases480assertionsand50canonicalpairsPASS",
+    "restart-old-new-v3/restart-new-old-v3 sameisolatednativeSQLite state,sequentialstoppedWaitprocessesPASS",
+    "all22names/contracts/annotations/resource/template andcurrentpolicy/nativeownership unchanged",
+    "No productiondiagnosticbenchmark/proposal/localpatch/tempmodoverride remains; historicalevidence preserved",
+    "T01-T08acceptedcommits preserved; no T09 commit exists; SDKIDseparategate pending"
+  ],
+  "scope_limitations": [
+    "No deployment,LaunchAgentrestart,liveaccount,paidmodel or publication executed",
+    "Model/livegates NOT_RUN; correctnessPASSlimited mandatoryofflineT09acceptance",
+    "SDKID01-ID07 deferredtoSDK-01 asexplicitlyauthorized; notmisrepresented asT09PASS"
+  ],
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01"
+}

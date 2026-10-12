@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-12",
+  "source": "Explicit user message: \u0420\u0430\u0437\u0440\u0435\u0448\u0430\u0435\u043c \u0431\u043e\u043b\u044c\u0448\u0435 \u043e\u0431\u044a\u0435\u043a\u0442\u043e\u0432, \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u044f \u0431\u044e\u0434\u0436\u0435\u0442 \u0432\u044b\u0434\u0435\u043b\u044f\u0435\u043c\u044b\u0445 \u0431\u0430\u0439\u0442\u043e\u0432",
+  "revision": "2026-10-12-objects-and-bytes-v2",
+  "p95_ratio": 1.15,
+  "allocations_ratio": 2.0,
+  "alloc_bytes_ratio": 1.2,
+  "zero_baselines": "Corresponding candidate value must remain zero",
+  "original_contract": "p95<=1.15,allocations<=1.20; historical measurements and FAIL/reviews retainedunchanged",
+  "applicability": "Prospective T09 final acceptance and later T10, no reopeningacceptedT01-T08",
+  "reason": "User authorizes more small objects while retaining allocated-byte budget",
+  "baseline": "Accepted frozenT03 originalsource/toolchain/15rawrecords unchanged; B/op derived from existing recorded alloc_bytes_per_op",
+  "required_measurement": "Fresh finalcandidate5independentrunsx1000 calls/read/search/context, samehostGo/fixtures/exportersdisabled; no paid/live"
+}

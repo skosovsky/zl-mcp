@@ -1,0 +1,37 @@
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp	[no test files]
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval	[no test files]
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval-fixture	[no test files]
+ok  	github.com/skosovsky/zl-mcp/docs/contracts	1.963s
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/operations	1.548s
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/store	2.342s
+?   	github.com/skosovsky/zl-mcp/internal/app/archives	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	1.457s
+ok  	github.com/skosovsky/zl-mcp/internal/app/eventaccess	1.532s
+?   	github.com/skosovsky/zl-mcp/internal/app/history	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/membership	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/messaging	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/search	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/shared	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/collector	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/config	1.727s
+?   	github.com/skosovsky/zl-mcp/internal/control	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/domain	1.479s
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	9.766s
+--- FAIL: TestIncompletePairedSidesCannotPassComparison (0.00s)
+    paired_test.go:46: open /workspace/zl-mcp/docs/evals/dataset.json: no such file or directory
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/evaluation	2.387s
+ok  	github.com/skosovsky/zl-mcp/internal/events	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	8.777s
+ok  	github.com/skosovsky/zl-mcp/internal/local	1.501s
+ok  	github.com/skosovsky/zl-mcp/internal/logging	1.680s
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	42.545s
+ok  	github.com/skosovsky/zl-mcp/internal/messaging	6.935s
+ok  	github.com/skosovsky/zl-mcp/internal/mobilebackup	26.114s
+ok  	github.com/skosovsky/zl-mcp/internal/netpolicy	1.468s
+ok  	github.com/skosovsky/zl-mcp/internal/observability	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/service	42.108s
+ok  	github.com/skosovsky/zl-mcp/internal/storage	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	12.753s
+ok  	github.com/skosovsky/zl-mcp/internal/zalo	4.570s
+FAIL

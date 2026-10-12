@@ -76,7 +76,7 @@ func TestCommandOwnerCrashHelper(t *testing.T) {
 	manager := &Manager{Store: owner, Sender: sender, Enabled: true, Recipients: map[string]bool{"synthetic-peer": true}}
 	reader := storeadapter.New(owner)
 	operations := operationsadapter.NewReader(manager)
-	runtime, err := toolruntime.NewReads(&search.Handler{Reads: reader}, &conversations.Handler{Reads: reader}, reader, toolruntime.OperationReads{
+	runtime, err := toolruntime.New(&search.Handler{Reads: reader}, &conversations.Handler{Reads: reader}, reader, toolruntime.Capabilities{
 		Messaging: &messagingapp.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}, Events: &eventaccess.Handler{Journal: reader, Commands: reader},
 	})
 	if err != nil {

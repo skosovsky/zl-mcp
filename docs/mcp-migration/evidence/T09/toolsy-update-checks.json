@@ -1,0 +1,77 @@
+{
+  "environment": {
+    "GOWORK": "off",
+    "GOPATH": "/tmp/zl-migration-go-path",
+    "GOMODCACHE": "/tmp/zl-migration-mod-cache",
+    "GOCACHE": "/tmp/zl-migration-go-cache"
+  },
+  "checks": [
+    {
+      "name": "root_tests",
+      "command": "go test ./...",
+      "log": "root-tests-v4.log",
+      "exit_status": 0
+    },
+    {
+      "name": "root_race",
+      "command": "go test -race ./...",
+      "log": "root-race-v3.log",
+      "exit_status": 0
+    },
+    {
+      "name": "root_vet",
+      "command": "go vet ./...",
+      "log": "root-vet-v4.log",
+      "exit_status": 0
+    },
+    {
+      "name": "nested_tests",
+      "command": "go test ./... (cwd third_party/zcago)",
+      "log": "nested-tests-v2.log",
+      "exit_status": 0
+    },
+    {
+      "name": "nested_race",
+      "command": "go test -race ./... (cwd third_party/zcago)",
+      "log": "nested-race-v2.log",
+      "exit_status": 0
+    },
+    {
+      "name": "nested_vet",
+      "command": "go vet ./... (cwd third_party/zcago)",
+      "log": "nested-vet-v2.log",
+      "exit_status": 0
+    },
+    {
+      "name": "architecture",
+      "command": "python3 scripts/mcp-migration/architecture.py --binary /tmp/zl-migration-tools/arch-go --evidence docs/mcp-migration/evidence/T09/architecture-v4.json",
+      "log": "architecture-v4.log",
+      "exit_status": 0
+    },
+    {
+      "name": "consumer",
+      "command": "python3 scripts/mcp-migration/dependency_probe.py docs/mcp-migration/evidence/T09/consumer-probe-v0.20.1.json",
+      "log": "consumer-probe-v0.20.1.log",
+      "exit_status": 0
+    },
+    {
+      "name": "restart_old_new",
+      "command": "ZL_MCP_ACCEPTANCE_BINARY=/tmp/zl-T09-build-v5/zl-mcp-baseline ZL_MCP_RESTART_PEER_BINARY=/tmp/zl-T09-build-v5/zl-mcp-candidate go test ./internal/mobilebackup -run TestNativeBinaryTerminalStartupAcceptance -count=1 -v",
+      "log": "restart-old-new-v2.log",
+      "exit_status": 0
+    },
+    {
+      "name": "restart_new_old",
+      "command": "ZL_MCP_ACCEPTANCE_BINARY=/tmp/zl-T09-build-v5/zl-mcp-candidate ZL_MCP_RESTART_PEER_BINARY=/tmp/zl-T09-build-v5/zl-mcp-baseline go test ./internal/mobilebackup -run TestNativeBinaryTerminalStartupAcceptance -count=1 -v",
+      "log": "restart-new-old-v2.log",
+      "exit_status": 0
+    }
+  ],
+  "python_tests": {
+    "command": "python3 -m unittest discover -s scripts/mcp-migration -p 'test_*.py' -v",
+    "log": "python-tests-v6.log",
+    "result": "14testsOK; subsequent separate non-escalatedsysctlcommandfailed permission, no test failure"
+  },
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

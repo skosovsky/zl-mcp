@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/workspace/zl-mcp/scripts/mcp-migration/compare_performance.py", line 205, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/workspace/zl-mcp/scripts/mcp-migration/compare_performance.py", line 193, in main
+    result = compare(*manifests, args.baseline_build, args.candidate_build)
+  File "/workspace/zl-mcp/scripts/mcp-migration/compare_performance.py", line 111, in compare
+    errors = validate(baseline, "baseline", baseline_build) + validate(candidate, "candidate", candidate_build)
+                                                              ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/zl-mcp/scripts/mcp-migration/compare_performance.py", line 63, in validate
+    if not finite_number(m.get(field)):
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/workspace/zl-mcp/scripts/mcp-migration/compare_performance.py", line 16, in finite_number
+    return type(value) in (int, float) and math.isfinite(value) and value >= 0
+                                           ~~~~~~~~~~~~~^^^^^^^
+OverflowError: int too large to convert to float

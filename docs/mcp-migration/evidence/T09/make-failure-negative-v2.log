@@ -1,0 +1,6 @@
+test_failed_build_does_not_execute_candidate (test_make_gates.MakeGateTests.test_failed_build_does_not_execute_candidate) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.380s
+
+OK

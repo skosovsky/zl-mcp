@@ -1,0 +1,23 @@
+{
+  "Path": "github.com/skosovsky/toolsy",
+  "Version": "v0.20.2",
+  "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.2.info",
+  "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.2.mod",
+  "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.2.zip",
+  "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.2",
+  "Sum": "h1:Mpe2AJzJd/+ZFfCXMzD5DstiF+qdeWT6+z+IpHEFsf0=",
+  "GoModSum": "h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=",
+  "Origin": {
+    "VCS": "git",
+    "URL": "https://github.com/skosovsky/toolsy",
+    "Hash": "36eb5b661ab4569051e5b17175dc44f3dd132b9c",
+    "Ref": "refs/tags/v0.20.2"
+  },
+  "contract_sha256": {
+    "docs/execution-contract.md": "601ffe8c1f93ee31fb712842375d492cbca32c26f4561e76b1f708a057e4d045"
+  },
+  "integration_task": "T09",
+  "go_directive": "1.27.1",
+  "probe": "PENDING fresh v0.20.2 checks",
+  "root_runtime_consumer": "internal/toolruntime; official v0.20.2, no localpatch/profile/cache/siblingreplace"
+}

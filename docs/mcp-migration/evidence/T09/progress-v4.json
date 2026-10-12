@@ -1,0 +1,53 @@
+{
+  "task": "T09",
+  "status": "PERFORMANCE_FAILED_DEPENDENCY_SCOPE_DECISION_REQUIRED",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "requirements": 61,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01",
+  "remaining": [
+    "Explicit user scope decision for compatible toolsy performance fix or upstream pin",
+    "Fixed full performance gates PASS after authorized fix; preserve initial failures",
+    "Fresh independent same-candidate reviews100% completeness and correctnessPASS",
+    "Sole T09 commit before SDK-01"
+  ],
+  "implementation": "Full canonical paired trace/input/output/effect comparison supplements RunPaired/Compare; fail-closed performance provenance/numeric validation and Make prerequisite failure propagation corrected",
+  "checks": {
+    "cleanup_tests_v2": "PASS",
+    "paired_initial_tests": "PASS",
+    "paired_v1": "PASS; both50/50 cases,480/480 assertions; Compare pass",
+    "performance_gate_negative_tests": "PASS4/4",
+    "performance_v1": "Completed15/15 error-free raw runs; fixed thresholds FAIL all3kinds",
+    "root_tests_v2": "PASS",
+    "root_vet_v2": "PASS",
+    "root_race_v2": "PASS",
+    "nested_tests_v1": "PASS",
+    "nested_vet_v1": "PASS",
+    "nested_race_v1": "PASS",
+    "architecture_v1": "PASS100/100 with10negative and4sourcecontrols",
+    "cgo_free_darwin_arm64": "PASS",
+    "cgo_free_darwin_amd64": "PASS",
+    "cgo_free_linux_amd64": "PASS",
+    "native_restart_old_new": "PASS same syntheticstate sequentialprocesses",
+    "native_restart_new_old": "PASS same syntheticstate sequentialprocesses",
+    "paired_negative_v3": "PASS",
+    "root_tests": "root-tests-v3.log PASS",
+    "root_vet": "root-vet-v3.log PASS",
+    "evaluation_race": "evaluation-race-v3.log PASS",
+    "paired": "paired-v4/report.json PASS",
+    "performance": "performance-comparison-v2.json FAIL; fixed thresholds unchanged",
+    "architecture": "architecture-v3.json PASS100/100 with all negative/source/production graph controls; v2 missing specific stdlib imports FAIL retained"
+  },
+  "blocker": "blocker-dependency-performance.json",
+  "source_digest_sha256": "c99dc823184fa330fc5bc25c2a01d43db7e0dcba6414cdaaff6956417c6e586c",
+  "remediation": "remediation-candidate-v4.json",
+  "review_status": "Independentv3 completeness57/61 (93.4426%) FAIL; correctnessFAIL solely fixed mandatory performance; harness findings closed",
+  "reviews": [
+    "reviewer-completeness-v3.json",
+    "reviewer-correctness-v3.json"
+  ],
+  "active_processes": [],
+  "task_commit_created": false,
+  "next_task_started": false
+}

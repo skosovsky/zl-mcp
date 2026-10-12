@@ -1,0 +1,21 @@
+{
+  "status": "PROPOSAL_ONLY_NOT_ADOPTED",
+  "pinned_module": "github.com/skosovsky/toolsy@v0.20.0",
+  "pinned_commit": "fb4c809c07ea65d618536ee3c0e8a6de1b4bdc23",
+  "original_requirements_sha256": "fdcbcd3fa2bbbec9aae02ad24822d280c632ab089f6ee64cf0cdd608d78ecb91",
+  "isolated_copy": "/tmp/zl-T09-toolsy-performance-proposal",
+  "patch": "toolsy-performance-proposed.patch",
+  "scope": "Specialize map[string]any and []any snapshot cloning to avoid per-element reflect holders, preserving memoized cycles/alias graphs and reflection fallback for all other BYOT types. No policy, dispatch, validation, retry or schema representation changes.",
+  "adoption_requires": "Explicit scope/dependency exception approval, independent patch reviews, compatible immutable pin, full consumer/public-contract checks and all fixed performance gates.",
+  "original_dependencies_unchanged": true,
+  "no_neighbor_or_third_party_edits": true,
+  "proposed_requirements_sha256": "56888cd20979a6bf2828c6a7865ff1b315ab7f167cad8e31c7c45c59f11824b2",
+  "probe_results": {
+    "toolsy_root_race_contract_tests": "PASS",
+    "manifest_pre_dispatch_allocations_original": 3513,
+    "manifest_pre_dispatch_allocations_proposed": 912,
+    "scoped_search_allocations_proposed": 2719,
+    "fixed_full_sdk_read_allocation_limit": 1041.168,
+    "assessment": "Partial proposal does not establish a compatible performance-accepted dependency. Do not adopt or claim gate closure."
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "status": "PASS",
+  "errors": [],
+  "summaries": {
+    "baseline": {
+      "read": {
+        "p95_seconds": 0.003563834,
+        "allocations_per_op": 867.64,
+        "calls": 5000,
+        "errors": 0,
+        "response_bytes": 5163000
+      },
+      "search": {
+        "p95_seconds": 0.003375625,
+        "allocations_per_op": 1144.27,
+        "calls": 5000,
+        "errors": 0,
+        "response_bytes": 13251948
+      },
+      "context": {
+        "p95_seconds": 0.003545208,
+        "allocations_per_op": 1066.053,
+        "calls": 5000,
+        "errors": 0,
+        "response_bytes": 9581000
+      }
+    },
+    "candidate": {
+      "read": {
+        "p95_seconds": -1,
+        "allocations_per_op": -1,
+        "calls": 5000,
+        "errors": 0,
+        "response_bytes": 5163000
+      },
+      "search": {
+        "p95_seconds": -1,
+        "allocations_per_op": -1,
+        "calls": 5000,
+        "errors": 0,
+        "response_bytes": 13251948
+      },
+      "context": {
+        "p95_seconds": -1,
+        "allocations_per_op": -1,
+        "calls": 5000,
+        "errors": 0,
+        "response_bytes": 9581000
+      }
+    }
+  },
+  "gates": {
+    "read": {
+      "p95_pass": true,
+      "allocations_pass": true,
+      "p95_limit_seconds": 0.0040984090999999995,
+      "allocations_limit_per_op": 1041.168
+    },
+    "search": {
+      "p95_pass": true,
+      "allocations_pass": true,
+      "p95_limit_seconds": 0.00388196875,
+      "allocations_limit_per_op": 1373.124
+    },
+    "context": {
+      "p95_pass": true,
+      "allocations_pass": true,
+      "p95_limit_seconds": 0.0040769892,
+      "allocations_limit_per_op": 1279.2636
+    }
+  },
+  "fixed_thresholds": {
+    "p95": 1.15,
+    "allocations": 1.2,
+    "zero_baseline": 0
+  }
+}

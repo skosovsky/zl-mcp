@@ -1,0 +1,107 @@
+{
+  "status": "PASS",
+  "errors": [],
+  "summaries": {
+    "baseline": {
+      "read": {
+        "p95_seconds": 0.003563834,
+        "allocations_per_op": 867.64,
+        "alloc_bytes_per_op": 430281.496,
+        "calls": 5000,
+        "errors": 0,
+        "response_bytes": 5163000
+      },
+      "search": {
+        "p95_seconds": 0.003375625,
+        "allocations_per_op": 1144.27,
+        "alloc_bytes_per_op": 465189.368,
+        "calls": 5000,
+        "errors": 0,
+        "response_bytes": 13251948
+      },
+      "context": {
+        "p95_seconds": 0.003545208,
+        "allocations_per_op": 1066.053,
+        "alloc_bytes_per_op": 455254.272,
+        "calls": 5000,
+        "errors": 0,
+        "response_bytes": 9581000
+      }
+    },
+    "candidate": {
+      "read": {
+        "p95_seconds": 0.007153,
+        "allocations_per_op": 1585.7,
+        "alloc_bytes_per_op": 495971.416,
+        "calls": 5000,
+        "errors": 0,
+        "response_bytes": 5163000
+      },
+      "search": {
+        "p95_seconds": 0.006429667,
+        "allocations_per_op": 2124.235,
+        "alloc_bytes_per_op": 547051.704,
+        "calls": 5000,
+        "errors": 0,
+        "response_bytes": 13249854
+      },
+      "context": {
+        "p95_seconds": 0.006360709,
+        "allocations_per_op": 2053.564,
+        "alloc_bytes_per_op": 539645.728,
+        "calls": 5000,
+        "errors": 0,
+        "response_bytes": 9583000
+      }
+    }
+  },
+  "gates": {
+    "read": {
+      "p95_pass": true,
+      "allocations_pass": true,
+      "alloc_bytes_pass": true,
+      "p95_limit_seconds": 0.0078683,
+      "allocations_limit_per_op": 1735.28,
+      "alloc_bytes_limit_per_op": 516337.79519999993
+    },
+    "search": {
+      "p95_pass": true,
+      "allocations_pass": true,
+      "alloc_bytes_pass": true,
+      "p95_limit_seconds": 0.0070726337,
+      "allocations_limit_per_op": 2288.54,
+      "alloc_bytes_limit_per_op": 558227.2416
+    },
+    "context": {
+      "p95_pass": true,
+      "allocations_pass": true,
+      "alloc_bytes_pass": true,
+      "p95_limit_seconds": 0.0069967799,
+      "allocations_limit_per_op": 2132.106,
+      "alloc_bytes_limit_per_op": 546305.1264
+    }
+  },
+  "fixed_thresholds": {
+    "p95_limits_seconds": {
+      "read": 0.0078683,
+      "search": 0.0070726337,
+      "context": 0.0069967799
+    },
+    "allocations": 2.0,
+    "alloc_bytes": 1.2,
+    "zero_baseline": 0
+  },
+  "gate_contract_revision": "2026-10-12-candidate-latency-plus10-v3",
+  "latency_acceptance_basis": "User-authorized retrospective candidate +10% fixed budgets; not original frozen-baseline latency parity",
+  "measurement_gate_metadata_revision": "2026-10-12-objects-and-bytes-v2",
+  "inputs": [
+    {
+      "path": "/workspace/zl-mcp/docs/mcp-migration/evidence/T03/performance-baseline/manifest.json",
+      "sha256": "812ca94c04f9b983ec212e82666b46514f36a0f3f7598049b7ab609b5b57a7f1"
+    },
+    {
+      "path": "/workspace/zl-mcp/docs/mcp-migration/evidence/T09/performance-v3/manifest.json",
+      "sha256": "b97d9000df4c5e282e07857e15c655f2688ecee06c3dff4d36f1a8fb1e0afad1"
+    }
+  ]
+}

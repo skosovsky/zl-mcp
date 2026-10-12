@@ -1,0 +1,26 @@
+{
+  "task": "T09",
+  "status": "PENDING_USER_SELECTION_NOT_AN_ACCEPTANCE_CONTRACT",
+  "timestamp_utc": "2026-10-12T13:42:36.897057+00:00",
+  "user_request": "Давай поднимем basecline до фактических значения + 10%. И укажем PASS",
+  "interpretation_question": "Candidate actual +10% as new absolute p95 limits, or matched frozen control actual +10% as new absolute p95 limits?",
+  "candidate_option_seconds": {
+    "read": 0.0078683,
+    "search": 0.007072633700000001,
+    "context": 0.006996779900000001
+  },
+  "frozen_control_option_seconds": {
+    "read": 0.0079947087,
+    "search": 0.008102783700000001,
+    "context": 0.007467212500000001
+  },
+  "multiplication_semantics": "Question proposes absolute limits replacing original 1.15 multiplier; do not multiply by 1.15 again",
+  "unchanged_allocations_ratio": 2.0,
+  "unchanged_alloc_bytes_ratio": 1.2,
+  "evidence_limitations": "Candidate contains 5x1000/kind; frozen control is diagnostic 1x1000/kind, not an independent 5-run acceptance baseline",
+  "historical_result": "Original performance-comparison-v4.json remains FAIL",
+  "source_digest_sha256": "b6b51db253ddab35174a8a09d934f6145627c04c27cf88d60076f703c0b4ef84",
+  "pending": true,
+  "fresh_blocked_audit_turn": 2,
+  "next_action": "Await explicit user selection before implementing dependent contract, verifier or PASS report; no repeated benchmark or task commit"
+}

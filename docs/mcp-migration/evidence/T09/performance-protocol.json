@@ -1,0 +1,19 @@
+{
+  "task": "T09",
+  "baseline_manifest": "docs/mcp-migration/evidence/T03/performance-baseline/manifest.json",
+  "baseline_source": "8d913c48b797f54f277ffc1106e6bf28be9e697d",
+  "p95_threshold": 1.15,
+  "allocations_threshold": 1.20,
+  "zero_baseline_threshold": 0,
+  "runs": 5,
+  "calls_per_kind_per_run": 1000,
+  "warmup_calls": 50,
+  "pacing_millis": 110,
+  "parallel_kinds": 3,
+  "concurrency_per_kind": 1,
+  "exporters_enabled": false,
+  "candidate_measurement": "/tmp/zl-T09-performance-v1",
+  "candidate_build": "/tmp/zl-T09-build-v1",
+  "measurement_overlap": "Initial paired offline process overlapped performance warmup/early first-run calls; retained as workload provenance. Do not claim this proves superiority. If a threshold fails, repeat requires recording this concrete workload anomaly before a new isolated run; thresholds remain fixed.",
+  "acceptance": "Compare every raw run with fixed thresholds; both latency and allocations must PASS for all3kinds. No changing thresholds or discarding failures."
+}

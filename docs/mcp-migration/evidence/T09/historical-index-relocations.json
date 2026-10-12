@@ -1,0 +1,11 @@
+{
+  "purpose": "Historic immutable index progress paths map to retained exact snapshot files; other paths unchanged",
+  "relocations": {
+    "artifact-index-v2.json": {
+      "progress.json": "progress-v2.json"
+    },
+    "artifact-index-v3.json": {
+      "progress.json": "progress-v3.json"
+    }
+  }
+}

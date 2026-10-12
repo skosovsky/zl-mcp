@@ -1,0 +1,38 @@
+{
+  "task": "T09",
+  "status": "ACCEPTED_PRECOMMIT",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "requirements": 62,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01",
+  "remaining": [
+    "SoleT09commit"
+  ],
+  "implementation": "Full canonical paired trace/input/output/effect comparison supplements RunPaired/Compare; fail-closed performance provenance/numeric validation and Make prerequisite failure propagation corrected",
+  "checks": {
+    "root_nested_python_consumer_restart": "toolsy-v0.20.2-checks.json: all listed exit statuses zero",
+    "architecture": "architecture-v6.json PASS",
+    "builds": "build-manifest-v6.json and platform-build-manifest-v3.json PASS",
+    "offline": "offline-v6/report.json PASS 50/50 cases 480/480 assertions",
+    "paired": "paired-v6/report.json PASS both 50/50 cases 480/480 assertions and 50 canonical pairs",
+    "performance": "performance-comparison-v5.json PASS by user-approved retrospective latency budgets; v4 FAIL retained"
+  },
+  "blocker": "latency-anomaly-proof-v1.json; latest revalidation latency-blocked-audit-v3.json",
+  "source_digest_sha256": "31f2ed00782291f6ee9f18b86fb9a0c00e800cde2f2b59cc1505b3631a519fbe",
+  "remediation": "remediation-candidate-v4.json",
+  "review_status": "62/62 100% and correctnessPASS on samecandidate",
+  "reviews": [
+    "reviewer-completeness-v5.json",
+    "reviewer-correctness-v5.json"
+  ],
+  "active_processes": [],
+  "task_commit_created": false,
+  "next_task_started": false,
+  "dependency": "toolsyv0.20.2",
+  "next_action": "Sole authorized atomic T09 commit then SDK-01",
+  "latest_evidence": "review-candidate-report-v4.json",
+  "performance_contract": "performance-gate-contract-v3.json",
+  "draft_correction": "Verifier isauthoritative; allgatesPASSdraftcorrected",
+  "user_decision": "user-latency-handoff-decision.json"
+}

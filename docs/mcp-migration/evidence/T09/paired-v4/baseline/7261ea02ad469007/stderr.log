@@ -1,0 +1,3 @@
+2026/10/11 19:20:01 INFO mcp_call tool=zalo_send_direct_message principal=501 correlation_id=2cc368b9-0a78-4c46-839a-83ef22f128fc code=OK duration_ms=7
+2026/10/11 19:20:02 INFO mcp_call tool=zalo_send_direct_message principal=501 correlation_id=d9befc46-9748-40af-81ac-5ca1d57d7f9d code=OK duration_ms=0
+2026/10/11 19:20:02 INFO mcp_call tool=zalo_send_direct_message principal=501 correlation_id=6c4f69c9-1fa0-4bd7-8dde-9da7c4fe832d code=REQUEST_CONFLICT duration_ms=0

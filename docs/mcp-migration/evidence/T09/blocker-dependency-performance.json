@@ -1,0 +1,69 @@
+{
+  "task": "T09",
+  "status": "USER_DECISION_REQUIRED",
+  "candidate_source_sha256": "f47a15379f4bc61c31d8c64581320ff12879a6a965aac92c861947d17a9c73ad",
+  "reason": "Fixed performance gates fail; the selected toolsy public RegistryView/NewProxyTool/WithOutputSchema path allocates 3513 objects per call before native dispatch, above the1041.168 full-read limit. Published v0.18.0/v0.19.0/v0.19.2 probes show the same cost; latest published v0.20.0. A compatible performance-accepted dependency has not been obtained.",
+  "performance_rows": [
+    {
+      "kind": "read",
+      "baseline_p95_seconds": 0.003563834,
+      "candidate_p95_seconds": 0.006115417,
+      "p95_ratio": 1.7159657267987227,
+      "baseline_allocations": 867.64,
+      "candidate_allocations": 5507.032,
+      "allocation_ratio": 6.347139366557559
+    },
+    {
+      "kind": "search",
+      "baseline_p95_seconds": 0.003375625,
+      "candidate_p95_seconds": 0.005657334,
+      "p95_ratio": 1.6759367524532494,
+      "baseline_allocations": 1144.27,
+      "candidate_allocations": 6929.356,
+      "allocation_ratio": 6.055700140701058
+    },
+    {
+      "kind": "context",
+      "baseline_p95_seconds": 0.003545208,
+      "candidate_p95_seconds": 0.005925083,
+      "p95_ratio": 1.671293475587328,
+      "baseline_allocations": 1066.053,
+      "candidate_allocations": 6543.978,
+      "allocation_ratio": 6.138510937073485
+    }
+  ],
+  "fixed_gates": {
+    "p95_ratio": 1.15,
+    "allocation_ratio": 1.2,
+    "unchanged": true
+  },
+  "evidence": [
+    "performance-comparison-v1.json",
+    "performance-v1/manifest.json",
+    "allocation-profile-v1.pprof",
+    "allocation-profile-top-v1.txt",
+    "allocation-profile-cumulative-v1.txt",
+    "manifest-predispatch-benchmark-v1.log",
+    "toolsy-official-versions.json",
+    "toolsy-v0.18.0-compatibility-bench.log",
+    "toolsy-v0.19.0-compatibility-bench.log",
+    "toolsy-v0.19.2-consumer-bench.log",
+    "dependency-performance-proposal.json",
+    "toolsy-performance-proposed.patch",
+    "toolsy-proposed-clone-contract-tests-v2.log",
+    "toolsy-proposed-consumer-bench-v1.log"
+  ],
+  "proposal": "Authorize separate toolsy dependency performance-fix scope and reviewed immutable dependency exception (including third_party/toolsy if needed) in zl-mcp. First isolated proposal preserves ordinary JSON schema maps, clone cycles/alias memoization, typed/BYOT fallback and all policy/validation/dispatch behavior. It lowers predispatch3513→912 but scopedsearch remains2719; it is not a final compatible pin and must not be adopted until all contracts/performance/review gates pass. No publication.",
+  "alternative": "Keep current dependency/scope unchanged and wait for an upstream compatible immutable pin; T09 remains unaccepted.",
+  "forbidden_workarounds": [
+    "No threshold relaxation",
+    "No weakening or removing schemas/validation/policy",
+    "No opaque schema representation to evade protected manifest snapshots",
+    "No dispatcher bypass",
+    "No discarding failed performance data"
+  ],
+  "original_dependency_unchanged": true,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01"
+}

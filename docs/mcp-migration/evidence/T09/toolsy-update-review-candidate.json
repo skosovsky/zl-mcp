@@ -1,0 +1,49 @@
+{
+  "task": "T09",
+  "source_digest_sha256": "99590f01cab2140b92c48e93b60ba2a7984104e144655ec01915f6217db12186",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "status": "NOT_ACCEPTED_ALLOCATIONS",
+  "requirements_total": 61,
+  "updated_dependency": "Officialtoolsyv0.20.1 origin2b4c9419792bc843ff92c0cf64b35f83330a389d",
+  "cleanup": "analysis-cleanup.json; diagnostic code/overrides removed, no isolated patch adopted",
+  "checks": "toolsy-update-checks.json",
+  "platforms": "platform-build-manifest-v2.json",
+  "offline": "offline-v5/report.json:PASS50/50cases480/480assertions",
+  "paired": "paired-v5/report.json:PASS50/50cases480/480assertions;50canonicalpairsPASS",
+  "restart": "restart-old-new-v2.log/restart-new-old-v2.log:bothPASS",
+  "performance": "performance-comparison-v3.json:latency allPASS; allocations allFAIL",
+  "candidate_performance": {
+    "read": {
+      "p95_seconds": 0.002310583,
+      "allocations_per_op": 1597.071,
+      "calls": 5000,
+      "errors": 0,
+      "response_bytes": 5161000
+    },
+    "search": {
+      "p95_seconds": 0.002767167,
+      "allocations_per_op": 2139.612,
+      "calls": 5000,
+      "errors": 0,
+      "response_bytes": 13247856
+    },
+    "context": {
+      "p95_seconds": 0.002676667,
+      "allocations_per_op": 2066.969,
+      "calls": 5000,
+      "errors": 0,
+      "response_bytes": 9585000
+    }
+  },
+  "profile": "allocation-profile-v0.20.1-call-focus.txt; realSDKcalls250isolatedsourcecopy, not acceptance; originalmisroutedno-tests andsocket-path failures retained",
+  "profile_findings": {
+    "policy_manifest_defensive_clones": 71500,
+    "read_calls": 250,
+    "allocations_per_call": 286,
+    "result_preparation_validation": 177.204
+  },
+  "review_status": "Pending independent fullreview; must notcommit orstartSDK01 until100/PASS",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01"
+}

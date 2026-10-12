@@ -1,0 +1,79 @@
+{
+  "task": "T09",
+  "reviewer": "independent correctness",
+  "source_digest_sha256": "d84d955706302fd7ac3e12f35d498837b98f08669912b8f37871c4e31a2dbfda",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "verdict": "FAIL",
+  "accepted": false,
+  "peer_report_consulted": false,
+  "previous_report_retained": true,
+  "artifact_index_verified": {
+    "path": "artifact-index-v2.json",
+    "count": 1492,
+    "mismatches": 0
+  },
+  "closed_findings": [
+    {
+      "id": "C09-02",
+      "status": "FIXED",
+      "proof": "New canonicalCapture compares full traces, inputs, independently decoded text/structured outputs, facts and native effect counts with exact JSON numbers. Only documented fixture-generated fields normalize, retaining reuse/equality/order/window bounds. Fresh paired-v4 canonical50/50 PASS; actual prior whole-run mutated-child now FAIL parity24/25 despite all240assertions PASS. Independent FullCaptureParity/paired negative tests PASS."
+    },
+    {
+      "id": "C09-03",
+      "status": "FIXED_FOR_ORIGINAL_REPRO",
+      "proof": "finite nonnegative scalar/type checks reject -1/NaN/Infinity/bool/string/missing values; compiler/platform/build provenance and binary role now validated. All9 performance verifier tests independently PASS. Additional enormous-integer fail-closed gap C09-05 remains."
+    },
+    {
+      "id": "C09-04",
+      "status": "FIXED",
+      "proof": "set -eu now propagates prerequisite build failure in eval-paired. Independent late-failure test verifies nonzero and candidate never executed. Candidate benchmark default/build role digest checks correct."
+    }
+  ],
+  "findings": [
+    {
+      "id": "C09-01",
+      "severity": "P1",
+      "source": "docs/mcp-migration/evidence/T09/performance-comparison-v2.json",
+      "requirements": [
+        "T09-53",
+        "T09-54",
+        "T09-57"
+      ],
+      "repro": "Fixed verifier with archived build provenance still reports FAIL for all three latency and allocation gates.",
+      "consequence": "Mandatory T09 performance acceptance is unmet. No compatible adopted dependency or approved scope expansion; no T09 commit/SDK-01 transition permitted.",
+      "expected_fix": "Obtain authorized compatible immutable dependency and pass unchanged performance gates, preserving all schema/policy/native/public contracts and failed evidence."
+    },
+    {
+      "id": "C09-05",
+      "severity": "P2",
+      "source": "scripts/mcp-migration/compare_performance.py:16",
+      "requirements": [
+        "T09-52",
+        "T09-57"
+      ],
+      "repro": "Set one candidate measurement p95_seconds to JSON integer10**1000; run verifier CLI with valid archived provenance. math.isfinite raises OverflowError; exit1, traceback, output report absent. correctness-v2-huge-integer.log; input retained /tmp/t09-correctness-huge-integer.json.",
+      "consequence": "Malformed physical measurement encoded as valid JSON does not produce required durable FAIL evidence; current fail-closed numerical validation can crash.",
+      "expected_fix": "Bound numeric conversions or catch overflow at finite validation and CLI; reject enormous int/float and preserve JSON FAIL report. Add realCLI regression covering enormous p95/alloc values and missing report prevention."
+    }
+  ],
+  "checks_independently_repeated": [
+    "candidate.py matches exact frozen source d84d955706302fd7ac3e12f35d498837b98f08669912b8f37871c4e31a2dbfda",
+    "1492 artifact hashes and byte lengths match",
+    "Go FullCaptureParity/paired negative tests PASS",
+    "Python performance9tests PASS",
+    "Make late-build failure1test PASS",
+    "Enormous-integer CLI adversarial repro confirms missing report"
+  ],
+  "checks_inspected": [
+    "fresh paired-v4 both sides complete50/50 cases480/480 assertions and canonical50matchedPASS",
+    "mutated-paired-v2 FAIL solely canonicalnormal-search while existingassertionsallPASS",
+    "root/vetv3/evaluationracev3 reports PASS",
+    "architecture-v3 strict compliance/coverage100 controlsPASS",
+    "buildv4 to frozenv3 source equivalence noGo/modulechange",
+    "root/nested/race/platform/native shared-state restart evidence retained from previous candidate; exact internal naming cleanup/native business contracts remain unchanged",
+    "no third_party/sibling/dependency patch adopted"
+  ],
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01"
+}

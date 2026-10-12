@@ -54,17 +54,17 @@ type Service struct {
 	admission     shared.AdmissionPort
 	input         map[string]*jsonschema.Schema
 	output        map[string]*jsonschema.Schema
-	runtime       *toolruntime.Reads
+	runtime       *toolruntime.Runtime
 	conversations *conversations.Handler
 }
 
-func New(reads ReadPorts) (*mcp.Server, error) {
+func New(reads Ports) (*mcp.Server, error) {
 	if reads.Search == nil || reads.Conversations == nil || reads.Search.Reads == nil || reads.Conversations.Reads == nil || reads.Conversations.Catalog == nil || reads.Admission == nil || reads.Events == nil || reads.Events.Diagnostics == nil || reads.Events.Journal == nil || reads.Archives == nil || reads.Archives.Reads == nil || reads.Conversations.DirectoryReads == nil || reads.Conversations.LiveGroups == nil || reads.Operations.Messaging == nil || reads.Operations.History == nil || reads.Operations.Membership == nil || reads.Operations.Messaging.Commands == nil || reads.Operations.History.Commands == nil || reads.Operations.Membership.Commands == nil || reads.Events.Commands == nil {
 		return nil, fmt.Errorf("storage owner and typed read ports are required")
 	}
 	s := &Service{admission: reads.Admission, events: reads.Events, archives: reads.Archives, conversations: reads.Conversations, input: map[string]*jsonschema.Schema{}, output: map[string]*jsonschema.Schema{}}
 	var runtimeErr error
-	s.runtime, runtimeErr = toolruntime.NewReads(reads.Search, reads.Conversations, reads.Authority, reads.operationReads())
+	s.runtime, runtimeErr = toolruntime.New(reads.Search, reads.Conversations, reads.Authority, reads.capabilities())
 	if runtimeErr != nil {
 		return nil, runtimeErr
 	}

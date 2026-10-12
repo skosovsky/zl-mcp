@@ -1,0 +1,5 @@
+--- FAIL: TestRetainedPairedCaptureParity (0.02s)
+    parity_test.go:118: retained captures differ: {Status:FAIL Matched:48 Failures:[pagination/repeat-1:capture differs or invalid pagination/repeat-2:capture differs or invalid]}
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/evaluation	1.634s
+FAIL

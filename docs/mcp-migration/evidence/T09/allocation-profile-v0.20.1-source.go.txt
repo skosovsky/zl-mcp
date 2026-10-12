@@ -1,0 +1,10 @@
+package evaluation
+import("context";"os";"path/filepath";"runtime";"runtime/pprof";"testing";"time";"github.com/modelcontextprotocol/go-sdk/mcp";"github.com/skosovsky/zl-mcp/internal/evalfixture")
+func TestDiagnosticAllocationProfile(t *testing.T){
+ runtime.MemProfileRate=1
+ ctx:=context.Background();state,e:=os.MkdirTemp("/tmp","zl-prof-");if e!=nil{t.Fatal(e)};defer os.RemoveAll(state);effects:=filepath.Join(state,"effects.jsonl");if err:=os.WriteFile(effects,nil,0600);err!=nil{t.Fatal(err)}
+ f,err:=evalfixture.New(ctx,evalfixture.Options{Offline:true,StateDir:filepath.Join(state,"state"),EffectsFile:effects,Fixtures:filepath.Join("..","..","docs","evals","fixtures.json")});if err!=nil{t.Fatal(err)};defer f.Close()
+ c,err:=connect(ctx,f);if err!=nil{t.Fatal(err)};defer c.close()
+ for i:=0;i<250;i++{time.Sleep(110*time.Millisecond);r,err:=c.session.CallTool(ctx,&mcp.CallToolParams{Name:"zalo_list_groups",Arguments:map[string]any{}});if err!=nil||r==nil||r.IsError{t.Fatal(err,r)};_ =marshaled(r)}
+ runtime.GC();out,err:=os.Create("/tmp/zl-T09-toolsy-v0.20.1-alloc.pprof");if err!=nil{t.Fatal(err)};defer out.Close();if err=pprof.Lookup("allocs").WriteTo(out,0);err!=nil{t.Fatal(err)}
+}

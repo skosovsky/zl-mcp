@@ -1,0 +1,36 @@
+{
+  "task": "T09",
+  "status": "CONFIRMED_HOST_LATENCY_ANOMALY_PENDING_IDLE_REPEAT",
+  "acceptance": "Originalbaselineandp95<=1.15unchanged; diagnostic1run notacceptancebaseline",
+  "foreground_load_observed": "CrossOver/game approximately145%CPU,fileproviderd75.7%,WindowServer28.8%,browserprocesses27.4/26.1%,clientrenderer25.3%; apps notclosed/settingsnotchanged",
+  "candidate_run": "performance-v3:15rawruns,objectsandB/opallPASS,allp95FAIL",
+  "diagnostic_single_baseline": "baseline-latency-control-v1.stdout.json:1000calls0errorsp95.003216459 (differentparallelsetting; insufficientbyitself)",
+  "diagnostic_matched_parallel": "baseline-parallel-latency-control-v1.json:parallel_kinds3,concurrency1,1000calls/kind,all0errors/cleanupPASS",
+  "results": {
+    "read": {
+      "accepted_frozen_p95": 0.003563834,
+      "current_diagnostic_frozen_p95": 0.007267917,
+      "diagnostic_host_slowdown_ratio": 2.0393534042270205,
+      "candidate_p95": 0.007153,
+      "candidate_vs_diagnostic_baseline_ratio": 0.9841884545461925
+    },
+    "search": {
+      "accepted_frozen_p95": 0.003375625,
+      "current_diagnostic_frozen_p95": 0.007366167,
+      "diagnostic_host_slowdown_ratio": 2.1821638955748934,
+      "candidate_p95": 0.006429667,
+      "candidate_vs_diagnostic_baseline_ratio": 0.8728646798260208
+    },
+    "context": {
+      "accepted_frozen_p95": 0.003545208,
+      "current_diagnostic_frozen_p95": 0.006788375,
+      "diagnostic_host_slowdown_ratio": 1.9148030242513274,
+      "candidate_p95": 0.006360709,
+      "candidate_vs_diagnostic_baseline_ratio": 0.9370002393798221
+    }
+  },
+  "repeat_justification": "Frozenbaseline also slows ~2x undercurrenthostload withsameparallelsettings; this is concrete environment anomaly, not changingthresholds orselectingcandidate outliers",
+  "next_action": "Repeat finalcandidate5x1000onlyafterlowerhostload; useraskedwhethercanpausegame; elapsedtimeisnotresponse",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

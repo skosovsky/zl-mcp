@@ -994,7 +994,9 @@
           "^io$",
           "^net$",
           "^net/http$",
-          "^sort$"
+          "^sort$",
+          "^encoding/base64$",
+          "^regexp$"
         ]
       }
     },

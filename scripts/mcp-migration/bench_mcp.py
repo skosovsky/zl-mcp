@@ -58,9 +58,18 @@ def main():
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--build-manifest', required=True, type=Path)
     args = parser.parse_args()
+    build = json.loads(args.build_manifest.read_text())
+    digest = sha(args.binary)
+    matches = [b for b in build.get('builds', []) if b.get('binary_sha256') == digest
+               and b.get('binary') == str(args.binary.resolve())
+               and b.get('target', './cmd/zl-mcp-eval') == './cmd/zl-mcp-eval'
+               and b.get('kind') in ('baseline', 'candidate') and b.get('exit_status') == 0]
+    if build.get('status') != 'PASS' or len(matches) != 1:
+        raise ValueError('benchmark requires a verified successful evaluation build')
+    role = matches[0]['kind']
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
-    manifest = {'status': 'FAIL', 'binary_sha256': sha(args.binary),
+    manifest = {'status': 'FAIL', 'binary_sha256': digest, 'build_role': role,
                 'build_manifest_sha256': sha(args.build_manifest), 'build_manifest': str(args.build_manifest),
                 'machine': platform.uname()._asdict(), 'cpu_count': os.cpu_count(),
                 'cpu_model': args.cpu_model or platform.processor() or 'unavailable',
@@ -70,7 +79,8 @@ def main():
                 'concurrency_per_kind': 1, 'parallel_kinds': 3, 'admission_enabled': True,
                 'exporters_enabled': False, 'pacing_millis': 110, 'run_budget_seconds': 1200,
                 'trial_budget_seconds': 900, 'p95_ratio_threshold': 1.15,
-                'allocations_ratio_threshold': 1.20, 'zero_baseline_allocation_threshold': 0,
+                'allocations_ratio_threshold': 2.0, 'alloc_bytes_ratio_threshold': 1.20,
+                'performance_gate_revision': '2026-10-12-objects-and-bytes-v2', 'zero_baseline_allocation_threshold': 0,
                 'records': [], 'summary': {}}
     started = time.monotonic()
     try:
@@ -88,6 +98,7 @@ def main():
             manifest['summary'][kind] = {
                 'median_of_run_p95_seconds': statistics.median(v['p95_seconds'] for v in values),
                 'median_allocations_per_op': statistics.median(v['allocations_per_op'] for v in values),
+                'median_alloc_bytes_per_op': statistics.median(v['alloc_bytes_per_op'] for v in values),
                 'measured_calls': sum(v['calls'] for v in values), 'errors': sum(v['errors'] for v in values),
                 'response_bytes': sum(v['bytes'] for v in values)}
         manifest['status'] = 'PASS'

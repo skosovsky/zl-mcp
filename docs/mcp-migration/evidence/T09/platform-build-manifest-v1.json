@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "binaries": [
+    {
+      "platform": "darwin-arm64",
+      "CGO_ENABLED": "0",
+      "sha256": "845f3708e6ba7689b6cdeb9adf48e73173c669fe6221419343142247866239e5",
+      "bytes": 41546834,
+      "log": "build-darwin-arm64-v1.log"
+    },
+    {
+      "platform": "darwin-amd64",
+      "CGO_ENABLED": "0",
+      "sha256": "a6077a8f0adbade049426cc9636ab3562121c1cbafd8681122c8eb665748ab19",
+      "bytes": 43686528,
+      "log": "build-darwin-amd64-v1.log"
+    },
+    {
+      "platform": "linux-amd64",
+      "CGO_ENABLED": "0",
+      "sha256": "dd5d289e5ad1d10dc5b2873c6c16dad59f5cccacc9f8be4bf54e27f2e9faa179",
+      "bytes": 42494375,
+      "log": "build-linux-amd64-v1.log"
+    }
+  ],
+  "toolchain": "go1.27.1"
+}

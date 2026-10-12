@@ -48,7 +48,7 @@ func TestFinalAuditIncludesPreflightAndPostExecutionFailures(t *testing.T) {
 	defer owner.Close()
 	ports := migrationReadPorts(owner)
 	authority := &auditAuthority{Reader: storeadapter.New(owner)}
-	runtime, err := toolruntime.NewReads(ports.Search, ports.Conversations, authority, ports.operationReads())
+	runtime, err := toolruntime.New(ports.Search, ports.Conversations, authority, ports.capabilities())
 	if err != nil {
 		t.Fatal(err)
 	}

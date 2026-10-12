@@ -16,9 +16,9 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/toolruntime"
 )
 
-func migrationReadPorts(owner *storage.Store, backend ...operationsadapter.Backend) ReadPorts {
+func migrationReadPorts(owner *storage.Store, backend ...operationsadapter.Backend) Ports {
 	reader := storeadapter.New(owner)
-	ports := ReadPorts{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader}}
+	ports := Ports{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader}}
 	selected := operationsadapter.Backend(control.New(""))
 	if len(backend) == 1 && backend[0] != nil {
 		selected = backend[0]
@@ -27,7 +27,7 @@ func migrationReadPorts(owner *storage.Store, backend ...operationsadapter.Backe
 		operations := operationsadapter.NewReader(selected)
 		ports.Archives = &archives.Handler{Reads: operationsadapter.NewArchiveReader(selected)}
 		ports.Conversations.LiveGroups = operations
-		ports.Operations = toolruntime.OperationReads{Messaging: &messaging.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}}
+		ports.Operations = toolruntime.Capabilities{Messaging: &messaging.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}}
 	}
 	return ports
 }
@@ -42,7 +42,7 @@ func withMigrationReads(fixture *migrationService) *Service {
 	reads := migrationReadPorts(fixture.Store, fixture.Control)
 	service := &Service{input: fixture.input, output: fixture.output}
 	var err error
-	service.runtime, err = toolruntime.NewReads(reads.Search, reads.Conversations, reads.Authority, reads.operationReads())
+	service.runtime, err = toolruntime.New(reads.Search, reads.Conversations, reads.Authority, reads.capabilities())
 	if err != nil {
 		panic(err)
 	}

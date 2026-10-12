@@ -1,0 +1,13 @@
+# github.com/skosovsky/zl-mcp/internal/toolruntime
+internal/toolruntime/runtime.go:140:93: searchHandler.Runtime undefined (type *search.Handler has no field or method Runtime)
+internal/toolruntime/runtime.go:140:131: conversationHandler.Runtime undefined (type *conversations.Handler has no field or method Runtime)
+internal/toolruntime/runtime.go:167:18: v.Archives.Runtime undefined (type *archives.Handler has no field or method Runtime)
+internal/toolruntime/runtime.go:173:84: v.Messaging.Runtime undefined (type *messaging.Handler has no field or method Runtime)
+internal/toolruntime/runtime.go:173:112: v.History.Runtime undefined (type *history.Handler has no field or method Runtime)
+internal/toolruntime/runtime.go:173:143: v.Membership.Runtime undefined (type *membership.Handler has no field or method Runtime)
+FAIL	github.com/skosovsky/zl-mcp/internal/toolruntime [build failed]
+FAIL	github.com/skosovsky/zl-mcp/internal/mcpserver [build failed]
+FAIL	github.com/skosovsky/zl-mcp/internal/evalfixture [build failed]
+FAIL	github.com/skosovsky/zl-mcp/internal/service [build failed]
+FAIL	github.com/skosovsky/zl-mcp/internal/historyimport [build failed]
+FAIL

@@ -10,7 +10,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/skosovsky/evaly v0.4.2
 	github.com/skosovsky/metry v0.10.1
-	github.com/skosovsky/toolsy v0.20.0
+	github.com/skosovsky/toolsy v0.20.2
 	github.com/ulikunitz/xz v0.5.17
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.47.0

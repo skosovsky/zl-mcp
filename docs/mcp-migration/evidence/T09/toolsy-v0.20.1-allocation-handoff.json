@@ -1,0 +1,60 @@
+{
+  "task": "T09",
+  "status": "USER_DECISION_REQUIRED_AFTER_OFFICIAL_UPDATE",
+  "official_toolsy": "v0.20.1",
+  "origin": "2b4c9419792bc843ff92c0cf64b35f83330a389d",
+  "source_digest": "99590f01cab2140b92c48e93b60ba2a7984104e144655ec01915f6217db12186",
+  "performance_evidence": "performance-comparison-v3.json",
+  "raw": "performance-v2/manifest.json",
+  "fixed_thresholds": {
+    "p95": 1.15,
+    "allocations": 1.2
+  },
+  "results": {
+    "read": {
+      "allocations": 1597.071,
+      "limit": 1041.168,
+      "p95_seconds": 0.002310583,
+      "p95_pass": true
+    },
+    "search": {
+      "allocations": 2139.612,
+      "limit": 1373.124,
+      "p95_seconds": 0.002767167,
+      "p95_pass": true
+    },
+    "context": {
+      "allocations": 2066.969,
+      "limit": 1279.2636,
+      "p95_seconds": 0.002676667,
+      "p95_pass": true
+    }
+  },
+  "confirmed_profile": {
+    "real_sdk_fixture_calls": 250,
+    "policy_manifest_clones": 71500,
+    "allocations_per_read": 286,
+    "source": "toolsy/requirements.go cloneManifestForPolicy,OutputSchema275/read +Parameters11/read",
+    "result_preparation": "prepareFreshResultChunk:177.204/read includingdecode/structuralvalidation",
+    "profile_path": "allocation-profile-v0.20.1.pprof"
+  },
+  "contract_constraints": [
+    "Keep full ordinary input/outputschemas, outputvalidation and strictformats",
+    "Keep current subject/account/policy revalidation on everycall",
+    "Keep defensive mutation isolation, raw/nativeIDs, timeout/persistence/effectowners",
+    "No opaque schema bypass, disabledpolicy/validation orrelaxedperformance thresholds",
+    "No sibling/third_party modifications or publication without explicitscope authorization"
+  ],
+  "host_assessment": "Both reviewers identify safe consolidation prospects but no proven saving sufficient for556/read766/search788/context. Removed isolateddirectDTOprojection prototype aftercharacterizationfailure; not adopted. Do not claim mathematical impossibility ofallhostoptimization.",
+  "decision": "Authorize separate library performance work/immutabledependencyexception, or keep current scope and waitforanotherperformance-compatibleupstream pin.",
+  "reviews": [
+    "reviewer-completeness-v4.json:58/61=95.081967%FAIL",
+    "reviewer-correctness-v4.json:FAIL solelyallocations"
+  ],
+  "all_other_offline_checks": "PASS fresh v0.20.1",
+  "cleanup": "Temporary proposals/modfiles/diagnosticbenchmarks/profile/projectionmodule removed; only official module dependency remains; historical evidence retained",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01",
+  "no_t09_commit": true
+}

@@ -1,0 +1,859 @@
+{
+  "task": "T09",
+  "review": "independent completeness",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "source_digest_sha256": "c99dc823184fa330fc5bc25c2a01d43db7e0dcba6414cdaaff6956417c6e586c",
+  "status": "FAIL",
+  "verified_pass": 57,
+  "required_total": 61,
+  "completeness_percent": 93.44262295081967,
+  "equal_weight": true,
+  "peer_report_read_before_first_report": false,
+  "source_files_verified": 949,
+  "t09_artifacts_verified": 1502,
+  "t08_artifacts_verified": 709,
+  "independent_checks": [
+    {
+      "command": "Verify artifact-index-v3.json and candidate-checks-v4.json SHA256/bytes",
+      "result": "1502artifacts and949sourcefiles allmatch"
+    },
+    {
+      "command": "Compare candidate-checks-v3/v4 sourcefile hashes",
+      "result": "Only scripts/mcp-migration/compare_performance.py and test_compare_performance.py changed; noGo/module changes"
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts/mcp-migration -p test_compare_performance.py",
+      "exit_status": 0,
+      "result": "10testsPASS0.319s; actualCLI enormousnumbers rejectdurably"
+    },
+    {
+      "command": "finite_number(10**400)",
+      "result": "False without exception"
+    }
+  ],
+  "leaf_requirements": [
+    {
+      "id": "T09-01",
+      "requirement": "Accepted T08 commit/tree/source and every indexed committed artifact verified; T01–T08 not reopened",
+      "status": "PASS",
+      "evidence": [
+        "T08-postcommit.json",
+        "../T08/artifact-index.json",
+        "git HEAD61d8b6c31ccdcbc107ae92114000ba677e53110d"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-02",
+      "requirement": "Leaf requirements and initial candidate fixed before T09 implementation",
+      "status": "PASS",
+      "evidence": [
+        "requirements.json",
+        "initial-candidate.json"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-03",
+      "requirement": "Cleanup scope inventoried; no supported legacy tools, backend owners or edges removed",
+      "status": "PASS",
+      "evidence": [
+        "cleanup-inventory.json",
+        "internal/toolruntime/runtime.go",
+        "internal/mcpserver/ports.go",
+        "cleanup-tests-v2.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-04",
+      "requirement": "No unused migration shims or temporary production branches remain",
+      "status": "PASS",
+      "evidence": [
+        "cleanup-inventory.json",
+        "internal/toolruntime/runtime.go",
+        "internal/mcpserver/ports.go",
+        "cleanup-tests-v2.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-05",
+      "requirement": "Toolruntime naming describes all scoped read/command capabilities; no read-only migration naming misleading the final API",
+      "status": "PASS",
+      "evidence": [
+        "cleanup-inventory.json",
+        "internal/toolruntime/runtime.go",
+        "internal/mcpserver/ports.go",
+        "cleanup-tests-v2.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-06",
+      "requirement": "All architecture exceptions closed; consciously retained backend edges documented",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/architecture-exceptions.json",
+        "docs/mcp-migration/architecture.md",
+        "architecture-v1.json"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-07",
+      "requirement": "Architecture and development docs reflect final composition and executable commands",
+      "status": "PASS",
+      "evidence": [
+        "Makefile BENCH_ROLE defaultcandidate/set-eu",
+        "docs/development.md updatedperformance command",
+        "scripts/mcp-migration/bench_mcp.py build digest/role check",
+        "make-failure-negative-v2.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-08",
+      "requirement": "CI runs required architecture/offline/root/nested gates with correct pinned toolchain",
+      "status": "PASS",
+      "evidence": [
+        "Makefile",
+        ".github/workflows/go.yml",
+        "docs/development.md",
+        "docs/mcp-migration/paired-offline-contract.md"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-09",
+      "requirement": "Pinned Go/toolsy/metry/evaly/SDK and compatible dependency matrix retained; no sibling or third_party edits",
+      "status": "PASS",
+      "evidence": [
+        "go.mod",
+        "go.sum",
+        "docs/mcp-migration/dependency-matrix.json",
+        "candidate-checks-v1.json",
+        "git diff -- third_party (empty)"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-10",
+      "requirement": "Bring Your Own Types boundaries retained; no SDK or infrastructure DTO in app/domain",
+      "status": "PASS",
+      "evidence": [
+        "docs/mcp-migration/architecture-exceptions.json",
+        "docs/mcp-migration/architecture.md",
+        "architecture-v1.json"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-11",
+      "requirement": "All22 tool names/descriptions/input/output/annotations and resource/template contracts preserved",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-12",
+      "requirement": "Numeric-string/zero/null/missing/Unicode/RFC3339/UUID input parity preserved",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-13",
+      "requirement": "Current trusted identity/policy binding and caller-forged authority rejection preserved",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-14",
+      "requirement": "Strict input and output validation plus bounded error shaping preserved",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-15",
+      "requirement": "Current policy revalidated for subsequent reads/resources/status and shortening",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-16",
+      "requirement": "One admitted app execution per MCP call; no duplicate upstream effect or mutation",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-17",
+      "requirement": "Native read ordering/cursors/snapshot/page-shortening and precise string IDs preserved",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-18",
+      "requirement": "Native admission remains outside app execution with no bypass or second admission",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-19",
+      "requirement": "Send account lock, prepare/claim/complete ownership and idempotency unchanged",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-20",
+      "requirement": "Ambiguous send unknown cannot dispatch again with same UUID; conflicting payload rejected",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-21",
+      "requirement": "Send cancellation/panic/restart paths preserve durable state and fresh bounded completion",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-22",
+      "requirement": "Join approval/policy/local lock and durable request/result ownership retained",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-23",
+      "requirement": "History checkpoint/pause/cancel/limits/source semantics and no-late-page-commit retained",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-24",
+      "requirement": "History import creates no synthetic Events and does not weaken source completeness claims",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-25",
+      "requirement": "Events verification/signing/address/lease/receipt/retry/ordering/journal ownership retained",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-26",
+      "requirement": "Archive account/source/visibility/TTL/tombstone/identity contracts retained; no quote anchors",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-27",
+      "requirement": "Persistence schemas/mixed-version ownership unchanged; no tracing persistence or fabricated creation timestamps",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "unchanged accepted T08 native owners/contracts; candidate946sourcehash records verified"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-28",
+      "requirement": "One service-owned metry provider; default no network or second bridge provider",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "../T08/reviewer-completeness.json",
+        "../T08/reviewer-correctness.json",
+        "unchanged accepted T08 telemetry/transport/native observation sources"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-29",
+      "requirement": "Exactly one metry app ExecutorWrap and independent typed business outcomes",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "../T08/reviewer-completeness.json",
+        "../T08/reviewer-correctness.json",
+        "unchanged accepted T08 telemetry/transport/native observation sources"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-30",
+      "requirement": "Request-operation-worker memory correlation bounded and distinct from native IDs",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "../T08/reviewer-completeness.json",
+        "../T08/reviewer-correctness.json",
+        "unchanged accepted T08 telemetry/transport/native observation sources"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-31",
+      "requirement": "All seven host signals and executor calls/duration observed with finite dimensions",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "../T08/reviewer-completeness.json",
+        "../T08/reviewer-correctness.json",
+        "unchanged accepted T08 telemetry/transport/native observation sources"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-32",
+      "requirement": "Logs/spans/exporters exclude forbidden content including nested fields, malformed resource env and hostile formatter/panic",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "../T08/reviewer-completeness.json",
+        "../T08/reviewer-correctness.json",
+        "unchanged accepted T08 telemetry/transport/native observation sources"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-33",
+      "requirement": "Authorized bounded Events diagnostic contract and single final MCP audit retained",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "../T08/reviewer-completeness.json",
+        "../T08/reviewer-correctness.json",
+        "unchanged accepted T08 telemetry/transport/native observation sources"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-34",
+      "requirement": "Exporter failure/timeout never changes business result, blocks send or retries command",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "../T08/reviewer-completeness.json",
+        "../T08/reviewer-correctness.json",
+        "unchanged accepted T08 telemetry/transport/native observation sources"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-35",
+      "requirement": "Telemetry shutdown bounded after workers join and before shared DB close; nil/disabled paths safe",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "../T08/reviewer-completeness.json",
+        "../T08/reviewer-correctness.json",
+        "unchanged accepted T08 telemetry/transport/native observation sources"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-36",
+      "requirement": "Actual HTTP/STDIO/resource bytes measured without rewriting wire or IDs",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-race-v2.log",
+        "../T08/reviewer-completeness.json",
+        "../T08/reviewer-correctness.json",
+        "unchanged accepted T08 telemetry/transport/native observation sources"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-37",
+      "requirement": "Full offline candidate evaluation 100% and all assertions PASS; safety violations0",
+      "status": "PASS",
+      "evidence": [
+        "offline-v3/report.json",
+        "offline-v3/*/stdout.json",
+        "offline-v3/*/effects.json"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-38",
+      "requirement": "Frozen baseline independent evaluation 100% PASS with original business source and disclosed T03 harness overlay",
+      "status": "PASS",
+      "evidence": [
+        "paired-v3/report.json",
+        "paired-v3/baseline/*/output.json",
+        "paired-v3/candidate/*/output.json",
+        "build-manifest-v3.json",
+        "internal/evaluation/runner.go",
+        "internal/evaluation/grader.go"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-39",
+      "requirement": "Paired baseline/candidate evaluation executed; equivalent outputs/effects across all mandatory synthetic cases",
+      "status": "PASS",
+      "evidence": [
+        "internal/evaluation/parity.go",
+        "internal/evaluation/parity_test.go",
+        "paired-v4/report.json:50/50canonicalpairs equalhashes",
+        "mutated-paired-v2/report.json:FAIL24/25pairs despite240/240assertions",
+        "docs/mcp-migration/paired-offline-contract.md"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-40",
+      "requirement": "All normalized/raw captures preserve exact JSON numbers via UseNumber; current SDK large numeric-ID limitation explicit until SDK-01",
+      "status": "PASS",
+      "evidence": [
+        "internal/evaluation/client.go",
+        "internal/evaluation/grader.go",
+        "docs/task-mcp-architecture-ai-libs.md§4.4",
+        "paired-v3 raw traces"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-41",
+      "requirement": "Root Go tests PASS",
+      "status": "PASS",
+      "evidence": [
+        "root-tests-v2.log",
+        "root-tests-v3.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-42",
+      "requirement": "Root Go vet PASS",
+      "status": "PASS",
+      "evidence": [
+        "root-vet-v2.log",
+        "root-vet-v3.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-43",
+      "requirement": "Relevant root race tests PASS for authority/runtime/native workers/storage/telemetry/transport/evaluation",
+      "status": "PASS",
+      "evidence": [
+        "root-race-v2.log",
+        "evaluation-race-v3.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-44",
+      "requirement": "Existing nested third_party module tests/vet/race PASS without edits",
+      "status": "PASS",
+      "evidence": [
+        "nested-tests-v1.log",
+        "nested-vet-v1.log",
+        "nested-race-v1.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-45",
+      "requirement": "arch-go pinned v2.1.2 compliance100 and coverage100 PASS",
+      "status": "PASS",
+      "evidence": [
+        "architecture-v3.json",
+        "architecture-v3.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-46",
+      "requirement": "All isolated negative architecture controls nonzero and all-build source controls PASS",
+      "status": "PASS",
+      "evidence": [
+        "architecture-v3.json",
+        "architecture-v3.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-47",
+      "requirement": "Production go list -deps excludes evaly/evaluation/evalfixture and observes restricted SDK/ai library boundaries",
+      "status": "PASS",
+      "evidence": [
+        "architecture-v3.json",
+        "architecture-v3.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-48",
+      "requirement": "CGO-free darwin/arm64 build PASS",
+      "status": "PASS",
+      "evidence": [
+        "platform-build-manifest-v1.json",
+        "build-darwin-arm64-v1.log",
+        "build-linux-amd64-v1.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-49",
+      "requirement": "CGO-free linux/amd64 build PASS",
+      "status": "PASS",
+      "evidence": [
+        "platform-build-manifest-v1.json",
+        "build-darwin-arm64-v1.log",
+        "build-linux-amd64-v1.log"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-50",
+      "requirement": "Old/new frozen/candidate synthetic-state restart compatibility verified both directions with persisted records/effects",
+      "status": "PASS",
+      "evidence": [
+        "native-restart-compatibility-v1.json",
+        "restart-old-new-v1.log",
+        "restart-new-old-v1.log",
+        "internal/mobilebackup/native_binary_test.go"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-51",
+      "requirement": "Performance same Apple M1 Max/OS/Go/fixture/concurrency/exporters-disabled settings disclosed",
+      "status": "PASS",
+      "evidence": [
+        "performance-protocol.json",
+        "performance-v1/manifest.json",
+        "performance-comparison-v1.json",
+        "build-manifest-v1.json",
+        "../T03/performance-baseline/manifest.json",
+        "scripts/mcp-migration/compare_performance.py"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-52",
+      "requirement": "Five independent post-warmup runs >=1000 calls each for read/search/context; counts/errors/response bytes/CPU recorded",
+      "status": "PASS",
+      "evidence": [
+        "performance-protocol.json",
+        "performance-v1/manifest.json",
+        "performance-comparison-v1.json",
+        "build-manifest-v1.json",
+        "../T03/performance-baseline/manifest.json",
+        "scripts/mcp-migration/compare_performance.py"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-53",
+      "requirement": "Median-of-run p95 candidate <=1.15 frozen baseline for each read/search/context",
+      "status": "FAIL",
+      "evidence": [
+        "performance-comparison-v2.json",
+        "performance-v1/manifest.json",
+        "scripts/mcp-migration/compare_performance.py",
+        "performance-verifier-tests-v5.log"
+      ],
+      "missing_work": "Actual fixed performance threshold remains exceeded; resolve dependencyscope and rerun. No performance acceptance until eachkind latency<=1.15 and allocations<=1.20."
+    },
+    {
+      "id": "T09-54",
+      "requirement": "Allocations/op candidate <=1.20 frozen baseline for each read/search/context; zero baseline implies zero",
+      "status": "FAIL",
+      "evidence": [
+        "performance-comparison-v2.json",
+        "performance-v1/manifest.json",
+        "scripts/mcp-migration/compare_performance.py",
+        "performance-verifier-tests-v5.log"
+      ],
+      "missing_work": "Actual fixed performance threshold remains exceeded; resolve dependencyscope and rerun. No performance acceptance until eachkind latency<=1.15 and allocations<=1.20."
+    },
+    {
+      "id": "T09-55",
+      "requirement": "Performance thresholds not changed after results; initial failures preserved; any repeat backed by concrete anomaly",
+      "status": "PASS",
+      "evidence": [
+        "performance-protocol.json",
+        "performance-v1/manifest.json",
+        "performance-comparison-v1.json",
+        "build-manifest-v1.json",
+        "../T03/performance-baseline/manifest.json",
+        "scripts/mcp-migration/compare_performance.py"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-56",
+      "requirement": "Performance baseline original frozen source rebuilt T02 compiler distinguished from original rollback binary",
+      "status": "PASS",
+      "evidence": [
+        "performance-protocol.json",
+        "performance-v1/manifest.json",
+        "performance-comparison-v1.json",
+        "build-manifest-v1.json",
+        "../T03/performance-baseline/manifest.json",
+        "scripts/mcp-migration/compare_performance.py"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-57",
+      "requirement": "Regression findings corrected in T09 with relevant revalidation, no acceptance narrowing",
+      "status": "FAIL",
+      "evidence": [
+        "blocker-dependency-performance.json",
+        "performance-comparison-v1.json",
+        "reviewer-completeness.json"
+      ],
+      "missing_work": "Mandatory performance regressions remain unresolved; all other completeness findings closed."
+    },
+    {
+      "id": "T09-58",
+      "requirement": "Model gate explicitly NOT_RUN and no claim of full model/live acceptance",
+      "status": "PASS",
+      "evidence": [
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "progress.json",
+        "commands and raw synthetic traces inspected"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-59",
+      "requirement": "No deployment/LaunchAgent restart/live account/paid eval/publication performed",
+      "status": "PASS",
+      "evidence": [
+        "offline-v3/report.json",
+        "paired-v3/report.json",
+        "progress.json",
+        "commands and raw synthetic traces inspected"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-60",
+      "requirement": "Candidate source/build hashes, exact commands, versions, raw parity/effects/performance artifacts durably indexed",
+      "status": "PASS",
+      "evidence": [
+        "candidate-checks-v4.json:949hashesverified",
+        "artifact-index-v3.json:1502hashesverified",
+        "build-manifest-v4.json",
+        "remediation-candidate-v4.json"
+      ],
+      "missing_work": ""
+    },
+    {
+      "id": "T09-61",
+      "requirement": "Two independent samecandidate reviewers completeness100% and correctnessPASS before sole T09 commit",
+      "status": "FAIL",
+      "evidence": [
+        "reviewer-completeness.json",
+        "review-candidate-report.json"
+      ],
+      "missing_work": "Both independent review acceptances and mandatory gates are not PASS; no T09 commit permitted."
+    }
+  ],
+  "findings": [
+    {
+      "id": "C-T09-01",
+      "severity": "blocking",
+      "requirements": [
+        "T09-53",
+        "T09-54",
+        "T09-57"
+      ],
+      "location": "docs/mcp-migration/evidence/T09/performance-comparison-v1.json",
+      "counterexample": "read p95 .006115417 vs limit .0040984091; allocations5507.032 vs1041.168. search andcontext also exceed both fixed thresholds.",
+      "consequence": "T09 acceptance impossible until fixed thresholds pass; dependency probe/patch proposal not adopted evidence.",
+      "fix_expectation": "Resolve dependency/scope blocker with user; implement authorized compatible fix, retain failures, rerun fixed performance and affected gates.",
+      "status": "OPEN"
+    },
+    {
+      "id": "C-T09-02",
+      "severity": "blocking",
+      "requirements": [
+        "T09-53",
+        "T09-54"
+      ],
+      "location": "scripts/mcp-migration/compare_performance.py:18-84",
+      "counterexample": "Deepcopy real T03 baseline as candidate, set every candidate measurement p95_seconds=-1 and allocations_per_op=-1: compare returns PASS. Remove cpu_model,cpu_count,fixture_sha256 and every measurement go/os/arch from BOTH baseline andcandidate: returns PASS.",
+      "consequence": "Incomplete or impossible evidence can pass mandatory verifier.",
+      "fix_expectation": "Require all mandatory fields with appropriate types, finite nonnegative measurements, positive required counts/settings, nonempty provenance; fail closed with preserved failure report; add negative tests.",
+      "status": "CLOSED",
+      "closure": "Prior negative/nonfinite/missing fields probes now rejected;9testsPASS. New enormous integer edge tracked separately C-T09-05."
+    },
+    {
+      "id": "C-T09-03",
+      "severity": "blocking",
+      "requirements": [
+        "T09-07"
+      ],
+      "location": "docs/development.md performance instructions; Makefile bench-mcp",
+      "counterexample": "Documented make bench-mcp hardcodes --binary build/zl-mcp-eval-baseline; passing its results as PERFORMANCE_CANDIDATE compares baseline against baseline.",
+      "consequence": "Documented final command never measures candidate and verifier does not reject substituted build role.",
+      "fix_expectation": "Provide precise candidate measurement target/parameter; verify source/build role and measured binary SHA against pinned build manifest.",
+      "status": "CLOSED",
+      "closure": "Candidate benchmark default and verified build digest/role; updated executable documentation."
+    },
+    {
+      "id": "C-T09-04",
+      "severity": "blocking",
+      "requirements": [
+        "T09-39"
+      ],
+      "location": "internal/evaluation/runner.go:285 and internal/evaluation/grader.go:20-160",
+      "counterexample": "normal-search grader asserts success/schema/projections and contains m-101,g-1,user-7. Changing m-101 excerpt consistently in text+structured content leaves every assertion PASS; Compare AssertionObjective sees equal grades despite different wire content. No full paired canonical-output comparison is implemented or separately evidenced.",
+      "consequence": "Paired grade parity cannot prove §4.3 canonical field parity for all mandatory cases.",
+      "fix_expectation": "Compare normalized complete captures across corresponding baseline/candidate cases/repeats, including text and structured projections separately, resources and effects. Volatile timestamps/cursors/operation IDs must be compared by explicit contract; negative changed-unasserted-field tests must fail.",
+      "status": "CLOSED",
+      "closure": "Full canonical capture equality implemented; fresh50/50pairsPASS and actual changed unasserted-content child gateFAIL."
+    },
+    {
+      "id": "C-T09-05",
+      "status": "CLOSED",
+      "severity": "blocking",
+      "requirements": [
+        "T09-53",
+        "T09-54",
+        "T09-57"
+      ],
+      "location": "scripts/mcp-migration/compare_performance.py finite_number and main",
+      "counterexample": "Replace p95_seconds in a valid JSON baseline manifest with integer10**400; invoke CLI --baseline input --candidate input --output freshreport. Exit1, uncaught OverflowError:int too large to convert to float; no report created. Direct finite_number(10**400) reproduces.",
+      "consequence": "Invalid measurement does stop process but violates fail-closed durableFAIL evidence contract and documentation; automated review loses report.",
+      "fix_expectation": "Handle enormous integer conversion/overflow as invalid measurement; CLI must create durableFAIL report and return1 with no traceback. Add actualCLIregression test.",
+      "closure": "finite_number rejects enormous integers via bounded conversion; independently10Python testsPASS including actualCLI10**1000 in all4physicalfields durableFAIL with noTraceback."
+    }
+  ],
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01",
+  "scope_note": "Unchanged accepted T08 behavior inspected through exact source hash records and broad current root/race/offline evidence; T01–T08 not reopened. SDK ID defect remains separate per explicit scope.",
+  "review_revision": 3,
+  "previous_review": "reviewer-completeness-v2.json"
+}

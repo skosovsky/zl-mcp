@@ -1,0 +1,4 @@
+2026/10/11 19:19:53 INFO mcp_call tool=zalo_import_conversation_history correlation_id=HWDEOWZPS5SEZSEOZPC6SZV2LY code=OK outcome=success duration_ms=1
+2026/10/11 19:19:53 INFO mcp_call tool=zalo_cancel_history_import correlation_id=MZY26PDHJ5YJE3GYCRKOPFHEAL code=OK outcome=success duration_ms=1
+2026/10/11 19:19:53 INFO mcp_call tool=zalo_get_history_import_status correlation_id=ODDTPHD3KPPOHOFDSIBFXWJZGV code=OK outcome=success duration_ms=1
+2026/10/11 19:19:53 INFO mcp_call tool=zalo_import_conversation_history correlation_id=US46ZLROPG2ELBYYJQR42UB3ME code=OK outcome=success duration_ms=1

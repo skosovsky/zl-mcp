@@ -1,0 +1,10 @@
+{
+  "task": "T09",
+  "resumed_goal_turn": 1,
+  "previous_blocked_state_resumed_by_user": true,
+  "classification": "PROGRESS: officialpinv0.20.1+cleanup, freshfullchecks/paired/builds/restart,15rawperformance runs; latencygateclosed, allocationgatepreservedFAIL; concreteprofiles+discardedcharacterizationfailingprototype+independentreview/handoff",
+  "goal_status": "active",
+  "blocking_condition": "No performance-acceptedcompatibledependency yet; furtherlibraryscope requiresuserdecision",
+  "review_scope_hash": "99590f01cab2140b92c48e93b60ba2a7984104e144655ec01915f6217db12186",
+  "no_scope_expansion_no_commit": true
+}

@@ -1,0 +1,46 @@
+test_partial_line_does_not_bypass_deadline (test_baseline.WatchdogTests.test_partial_line_does_not_bypass_deadline) ... ok
+test_stderr_flood_is_bounded (test_baseline.WatchdogTests.test_stderr_flood_is_bounded) ... ok
+test_successful_worker_cannot_leave_descendant (test_bench_mcp.DescendantCleanupTest.test_successful_worker_cannot_leave_descendant) ... /bin/sh: /bin/ps: Operation not permitted
+/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py:1139: ResourceWarning: subprocess 52464 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/workspace/zl-mcp/scripts/mcp-migration/test_bench_mcp.py:33: ResourceWarning: unclosed file <_io.TextIOWrapper name=3 encoding='UTF-8'>
+  state = os.popen(f'ps -o stat= -p {pid}').read().strip()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_baseline_binary_cannot_masquerade_as_candidate (test_compare_performance.PerformanceGateTests.test_baseline_binary_cannot_masquerade_as_candidate) ... ok
+test_duplicate_run_and_changed_threshold_cannot_pass (test_compare_performance.PerformanceGateTests.test_duplicate_run_and_changed_threshold_cannot_pass) ... ok
+test_enormous_json_integer_cli_preserves_fail_report (test_compare_performance.PerformanceGateTests.test_enormous_json_integer_cli_preserves_fail_report) ... ok
+test_invalid_counts_and_matching_changed_protocol_cannot_pass (test_compare_performance.PerformanceGateTests.test_invalid_counts_and_matching_changed_protocol_cannot_pass) ... ok
+test_invalid_measurements_fail_closed (test_compare_performance.PerformanceGateTests.test_invalid_measurements_fail_closed) ... ok
+test_malformed_json_cli_preserves_fail_report (test_compare_performance.PerformanceGateTests.test_malformed_json_cli_preserves_fail_report) ... ok
+test_matching_missing_provenance_cannot_pass (test_compare_performance.PerformanceGateTests.test_matching_missing_provenance_cannot_pass) ... ok
+test_more_objects_cannot_hide_allocated_byte_regression (test_compare_performance.PerformanceGateTests.test_more_objects_cannot_hide_allocated_byte_regression) ... ok
+test_only_authorized_gate_revision_and_budgets_can_pass (test_compare_performance.PerformanceGateTests.test_only_authorized_gate_revision_and_budgets_can_pass) ... ok
+test_reported_summary_cannot_hide_latency_regression (test_compare_performance.PerformanceGateTests.test_reported_summary_cannot_hide_latency_regression) ... ok
+test_same_complete_raw_runs_pass (test_compare_performance.PerformanceGateTests.test_same_complete_raw_runs_pass) ... ok
+test_small_objects_cannot_hide_object_count_regression (test_compare_performance.PerformanceGateTests.test_small_objects_cannot_hide_object_count_regression) ... ok
+test_zero_allocated_byte_baseline_requires_zero (test_compare_performance.PerformanceGateTests.test_zero_allocated_byte_baseline_requires_zero) ... ok
+test_zero_baseline_and_different_machine_cannot_pass (test_compare_performance.PerformanceGateTests.test_zero_baseline_and_different_machine_cannot_pass) ... ok
+test_baseline_binary_cannot_masquerade_as_candidate (test_compare_performance.RecalibratedLatencyTests.test_baseline_binary_cannot_masquerade_as_candidate) ... ok
+test_duplicate_run_and_changed_threshold_cannot_pass (test_compare_performance.RecalibratedLatencyTests.test_duplicate_run_and_changed_threshold_cannot_pass) ... ok
+test_enormous_json_integer_cli_preserves_fail_report (test_compare_performance.RecalibratedLatencyTests.test_enormous_json_integer_cli_preserves_fail_report) ... ok
+test_fixed_budgets_pass_at_boundary_and_fail_above (test_compare_performance.RecalibratedLatencyTests.test_fixed_budgets_pass_at_boundary_and_fail_above) ... ok
+test_input_cannot_recalibrate_budget (test_compare_performance.RecalibratedLatencyTests.test_input_cannot_recalibrate_budget) ... ok
+test_invalid_counts_and_matching_changed_protocol_cannot_pass (test_compare_performance.RecalibratedLatencyTests.test_invalid_counts_and_matching_changed_protocol_cannot_pass) ... ok
+test_invalid_measurements_fail_closed (test_compare_performance.RecalibratedLatencyTests.test_invalid_measurements_fail_closed) ... ok
+test_malformed_json_cli_preserves_fail_report (test_compare_performance.RecalibratedLatencyTests.test_malformed_json_cli_preserves_fail_report) ... ok
+test_matching_missing_provenance_cannot_pass (test_compare_performance.RecalibratedLatencyTests.test_matching_missing_provenance_cannot_pass) ... ok
+test_more_objects_cannot_hide_allocated_byte_regression (test_compare_performance.RecalibratedLatencyTests.test_more_objects_cannot_hide_allocated_byte_regression) ... ok
+test_only_authorized_gate_revision_and_budgets_can_pass (test_compare_performance.RecalibratedLatencyTests.test_only_authorized_gate_revision_and_budgets_can_pass) ... ok
+test_reported_summary_cannot_hide_latency_regression (test_compare_performance.RecalibratedLatencyTests.test_reported_summary_cannot_hide_latency_regression) ... ok
+test_same_complete_raw_runs_pass (test_compare_performance.RecalibratedLatencyTests.test_same_complete_raw_runs_pass) ... ok
+test_small_objects_cannot_hide_object_count_regression (test_compare_performance.RecalibratedLatencyTests.test_small_objects_cannot_hide_object_count_regression) ... ok
+test_zero_allocated_byte_baseline_requires_zero (test_compare_performance.RecalibratedLatencyTests.test_zero_allocated_byte_baseline_requires_zero) ... ok
+test_zero_baseline_and_different_machine_cannot_pass (test_compare_performance.RecalibratedLatencyTests.test_zero_baseline_and_different_machine_cannot_pass) ... ok
+test_failed_build_does_not_execute_candidate (test_make_gates.MakeGateTests.test_failed_build_does_not_execute_candidate) ... ok
+
+----------------------------------------------------------------------
+Ran 34 tests in 2.076s
+
+OK

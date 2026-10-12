@@ -1,0 +1,8 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/skosovsky/zl-mcp/internal/toolruntime
+cpu: Apple M1 Max
+BenchmarkManifestPreDispatch-10    	     200	    203910 ns/op	  216874 B/op	     912 allocs/op
+BenchmarkScopedExecution-10        	     200	    910538 ns/op	  319483 B/op	    2719 allocs/op
+PASS
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	0.969s

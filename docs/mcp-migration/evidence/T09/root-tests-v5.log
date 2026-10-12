@@ -1,0 +1,33 @@
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp	[no test files]
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval	[no test files]
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval-fixture	[no test files]
+ok  	github.com/skosovsky/zl-mcp/docs/contracts	0.584s
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/operations	0.552s
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/store	0.618s
+?   	github.com/skosovsky/zl-mcp/internal/app/archives	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	0.467s
+ok  	github.com/skosovsky/zl-mcp/internal/app/eventaccess	0.510s
+?   	github.com/skosovsky/zl-mcp/internal/app/history	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/membership	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/messaging	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/search	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/shared	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/collector	10.711s
+ok  	github.com/skosovsky/zl-mcp/internal/config	0.604s
+?   	github.com/skosovsky/zl-mcp/internal/control	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/domain	0.467s
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	2.738s
+ok  	github.com/skosovsky/zl-mcp/internal/evaluation	3.802s
+ok  	github.com/skosovsky/zl-mcp/internal/events	2.361s
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	2.654s
+ok  	github.com/skosovsky/zl-mcp/internal/local	0.414s
+ok  	github.com/skosovsky/zl-mcp/internal/logging	0.507s
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	16.854s
+ok  	github.com/skosovsky/zl-mcp/internal/messaging	1.313s
+ok  	github.com/skosovsky/zl-mcp/internal/mobilebackup	17.280s
+ok  	github.com/skosovsky/zl-mcp/internal/netpolicy	0.432s
+ok  	github.com/skosovsky/zl-mcp/internal/observability	1.904s
+ok  	github.com/skosovsky/zl-mcp/internal/service	18.486s
+ok  	github.com/skosovsky/zl-mcp/internal/storage	16.089s
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	5.616s
+ok  	github.com/skosovsky/zl-mcp/internal/zalo	5.897s

@@ -1,0 +1,5 @@
+--- FAIL: TestDiagnosticAllocationProfile (0.04s)
+    diagnostic_alloc_test.go:6: state_dir is too long for the Unix socket; use a shorter absolute path (socket path must be less than 104 bytes)
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/evaluation	0.612s
+FAIL

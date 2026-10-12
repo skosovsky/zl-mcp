@@ -1,0 +1,35 @@
+{
+  "task": "T09",
+  "status": "ACCEPTED_PRECOMMIT_OFFLINE_REVISED_BUDGET",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "source_digest_sha256": "31f2ed00782291f6ee9f18b86fb9a0c00e800cde2f2b59cc1505b3631a519fbe",
+  "requirements": "requirements-v3.json:62 leaves",
+  "performance_contract": "performance-gate-contract-v3.json",
+  "performance": "performance-comparison-v5.json PASS under explicit retrospective candidate +10% latency budget; original v4 FAIL retained",
+  "measurement_reuse": "performance-v3 raw 15 runs reused, no fresh benchmark",
+  "build_source_equivalence": {
+    "prior_candidate_digest": "b6b51db253ddab35174a8a09d934f6145627c04c27cf88d60076f703c0b4ef84",
+    "changed_files": [
+      "docs/development.md",
+      "docs/mcp-migration/paired-offline-contract.md",
+      "docs/task-mcp-architecture-ai-libs.md",
+      "scripts/mcp-migration/compare_performance.py",
+      "scripts/mcp-migration/test_compare_performance.py"
+    ],
+    "Go_and_module_unchanged": true,
+    "build": "build-manifest-v6.json"
+  },
+  "checks": "toolsy-v0.20.2-checks.json remains valid for unchanged Go/modules; performance-gate-v3-tests-final.log new Python checks PASS",
+  "architecture": "architecture-v6.json PASS; architectural imports unchanged",
+  "offline": "offline-v6/report.json50/50 cases480/480assertions PASS",
+  "paired": "paired-v6/report.json50 canonicalpairs PASS",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01",
+  "commit_created": false,
+  "reviews": {
+    "completeness": "reviewer-completeness-v5.json:62/62 100% PASS",
+    "correctness": "reviewer-correctness-v5.json:PASS no findings"
+  },
+  "acceptance_limitation": "Retrospective user-approved absolute latency budgets; no original frozen-baseline latency parity; model/live NOT_RUN; IDs deferred SDK-01"
+}

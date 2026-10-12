@@ -1,0 +1,85 @@
+{
+  "task": "T09",
+  "reviewer": "independent correctness",
+  "source_digest_sha256": "f47a15379f4bc61c31d8c64581320ff12879a6a965aac92c861947d17a9c73ad",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "verdict": "FAIL",
+  "accepted": false,
+  "peer_report_consulted": false,
+  "artifact_index_verified": {
+    "count": 701,
+    "mismatches": 0
+  },
+  "findings": [
+    {
+      "id": "C09-01",
+      "severity": "P1",
+      "source": "docs/mcp-migration/evidence/T09/performance-comparison-v1.json",
+      "requirements": [
+        "T09-53",
+        "T09-54",
+        "T09-57"
+      ],
+      "repro": "Run fixed compare_performance.py against sealed T03 baseline and T09 performance-v1 manifest. All three latency/allocation gates FAIL.",
+      "consequence": "Mandatory performance acceptance unavailable; toolsy compatibility blocker remains unresolved. No T09 commit or transition to SDK-01 permitted.",
+      "expected_fix": "Obtain explicitly authorized, immutable compatible dependency preserving all contracts, then remeasure same fixed gates; retain failures. No threshold or schema/policy narrowing."
+    },
+    {
+      "id": "C09-02",
+      "severity": "P1",
+      "source": "internal/evaluation/runner.go:285",
+      "requirements": [
+        "T09-39",
+        "T09-57"
+      ],
+      "repro": "correctness-parity-negative-probe.json and correctness-parity-mutated-child.py: replace actual normal-search excerpts in candidate only, preserve native IDs and consistent text/structured content. Whole paired run returns PASS exit0 25/25 cases 240/240 assertions, Comparison pass.",
+      "consequence": "Assertion quality comparison accepts actual baseline/candidate behavior differences. Paired output equivalence is not proved, and semantic regressions in unchecked fields can pass mandatory CI parity.",
+      "expected_fix": "Add explicit deterministic matched case/repeat trace/output/effect parity comparison with precise documented normalization of legitimately dynamic fields and UseNumber. Preserve independent validation and evaly.Compare. Negative tests must reject changed message text, changed schema-valid metadata, IDs and effects while allowing only declared dynamic differences."
+    },
+    {
+      "id": "C09-03",
+      "severity": "P2",
+      "source": "scripts/mcp-migration/compare_performance.py:41",
+      "requirements": [
+        "T09-52",
+        "T09-53",
+        "T09-54",
+        "T09-57"
+      ],
+      "repro": "Clone sealed T03 manifest as candidate and set all measurement p95_seconds/allocations_per_op to -1. compare() returns PASS with no errors; correctness-negative-performance-probe.json captures result.",
+      "consequence": "Invalid measurement values can produce false performance acceptance; raw rows are used without validating physical numeric domain.",
+      "expected_fix": "Validate all required measurement scalars and run settings before summarization: finite nonnegative latencies/allocations/bytes, integer valid counts, required compiler/platform identities. Malformed/missing/nonfinite/negative data must produce explicit FAIL and durable report, not a crash or PASS. Add adversarial tests."
+    },
+    {
+      "id": "C09-04",
+      "severity": "P2",
+      "source": "Makefile:53",
+      "requirements": [
+        "T09-08",
+        "T09-57"
+      ],
+      "repro": "Isolated PATH python3 stub creates a candidate executable then exits1 simulating late build provenance failure. make eval-paired continues executing the candidate and exits0; correctness-make-failure-probe.log. build_eval.py can fail after successful binary creation during go version/provenance/manifest writes.",
+      "consequence": "Required CI paired gate drops the build/provenance command failure; only final executable exit reaches make.",
+      "expected_fix": "Chain mktemp/build/eval using && or explicit checked exits/set -e. Fault-injection test must show any failed prerequisite returns nonzero and evaluation is not executed."
+    }
+  ],
+  "verified_evidence": [
+    "candidate.py independently reproduces f47a15379f4bc61c31d8c64581320ff12879a6a965aac92c861947d17a9c73ad",
+    "701 indexed artifact SHA256 and bytes matched",
+    "root tests/vet/race v2 logs PASS; earlier FAIL logs retained",
+    "nested tests/vet/race v1 logs PASS",
+    "architecture-v1 PASS with strict graph/negative controls",
+    "three CGO-free platform builds manifest PASS",
+    "offline-v3 50/50 480/480 and paired-v3 both sides complete; these prove declared assertions, not full output equality",
+    "both sequential shared synthetic native terminal-history restart orders PASS; process Wait/Close ordering reviewed",
+    "production cleanup is mostly exact internal type/file rename; no sibling/third_party or persistence edits adopted",
+    "mandatory performance FAIL preserved and blocker explicitly recorded"
+  ],
+  "limitations": [
+    "Review does not claim T09 accepted while findings remain.",
+    "Known SDK numerical ID issue deferred to SDK-01 as authorized; not counted as T09 blocker.",
+    "No deployment, installed service, live account, paid model or publication executed."
+  ],
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

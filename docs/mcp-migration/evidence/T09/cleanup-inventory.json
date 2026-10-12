@@ -1,0 +1,37 @@
+{
+  "task": "T09",
+  "before_implementation": true,
+  "changes": [
+    {
+      "path": "internal/toolruntime/reads.go",
+      "action": "Rename internal Reads/NewReads/OperationReads to Runtime/New/Capabilities and file runtime.go. All22 production tool registrations retained; partial capability construction remains deliberate test/consumer isolation, not migration fallback."
+    },
+    {
+      "path": "internal/mcpserver/reads.go",
+      "action": "Rename internal ReadPorts to Ports; operationReads helper becomes capabilities. Composition/test callers updated; no public wire/schema changes."
+    },
+    {
+      "path": "Makefile/.github/workflows/go.yml/docs/development.md",
+      "action": "Expose documented executable paired parity/performance acceptance commands and final CI gate ownership; fixed baseline thresholds retained."
+    }
+  ],
+  "retained": [
+    {
+      "path": "internal/service/archive_port.go",
+      "reason": "Actively used by independent synthetic archive evaluation. Borrowed native archive implementation forwarding is an allowed preserved backend edge, not unused migration glue. Original baseline overlay retains frozen T03 version."
+    },
+    {
+      "path": "internal/storage/*migration*.go",
+      "reason": "Real durable schema migrations predate this architecture migration and cannot be removed as cleanup."
+    },
+    {
+      "path": "internal/mcpserver legacy tool registrations/resources",
+      "reason": "Supported public behavior retained; no narrowing of tools/resources."
+    },
+    {
+      "path": "internal/toolruntime policy identity zl-local-read-v1",
+      "reason": "Stable internal policy key intentionally retained; type cleanup does not change policy semantics."
+    }
+  ],
+  "no_sibling_or_third_party_edits": true
+}

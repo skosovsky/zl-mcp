@@ -1,0 +1,17 @@
+{
+  "purpose": "Independent correctness adversarial test; not candidate acceptance",
+  "candidate_source_sha256": "f47a15379f4bc61c31d8c64581320ff12879a6a965aac92c861947d17a9c73ad",
+  "command": "/private/tmp/zl-T09-build-v3/zl-mcp-eval-candidate --root \"$PWD\" --child-binary /tmp/t09-correctness-mutated-child.py --baseline-binary /private/tmp/zl-T09-build-v3/zl-mcp-eval-baseline --output /tmp/t09-correctness-mutated-paired --repeats 1",
+  "mutation": "normal-search message excerpts replaced; native IDs/effects unchanged; text and structured content kept consistent",
+  "observed": {
+    "status": "PASS",
+    "exit_status": 0,
+    "passed_cases": 25,
+    "expected_cases": 25,
+    "passed_assertions": 240,
+    "expected_assertions": 240
+  },
+  "comparison_verdict": "pass",
+  "raw_report_path": "/tmp/t09-correctness-mutated-paired/report.json",
+  "raw_report_sha256": "8e60910266a52bf6b5440e9016e5a1160b4916d7cf7accfb8cd3111de6c23264"
+}

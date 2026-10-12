@@ -1,0 +1,16 @@
+?   	github.com/amrakk/zcago	[no test files]
+ok  	github.com/amrakk/zcago/api	5.071s
+?   	github.com/amrakk/zcago/config	[no test files]
+?   	github.com/amrakk/zcago/errs	[no test files]
+?   	github.com/amrakk/zcago/internal/cryptox	[no test files]
+?   	github.com/amrakk/zcago/internal/httpx	[no test files]
+?   	github.com/amrakk/zcago/internal/jsonx	[no test files]
+?   	github.com/amrakk/zcago/internal/logger	[no test files]
+?   	github.com/amrakk/zcago/internal/timex	[no test files]
+ok  	github.com/amrakk/zcago/internal/websocketx	1.477s
+ok  	github.com/amrakk/zcago/listener	1.518s
+ok  	github.com/amrakk/zcago/listener/events	1.458s
+ok  	github.com/amrakk/zcago/model	1.431s
+?   	github.com/amrakk/zcago/session	[no test files]
+ok  	github.com/amrakk/zcago/session/auth	1.458s
+?   	github.com/amrakk/zcago/version	[no test files]

@@ -151,3 +151,36 @@ Dependency pins and contracts: docs/mcp-migration/dependency-matrix.json.
 Exact temporary migration edges: docs/mcp-migration/architecture-exceptions.json.
 Evidence: docs/mcp-migration/evidence/T02. Architecture static imports do not prove
 account ownership, no resend, persistence, authorization or lifecycle: behavioral gates remain.
+
+## Final architecture migration checks (T09)
+
+`make check` runs root and nested tests/race/vet, executable architecture controls,
+CGO-free platform builds, offline evaluation and paired frozen/candidate eval.
+CI fetches the frozen commits and runs paired eval through evaly.RunPaired and
+Compare with independent synthetic state. All model/live gates stay NOT_RUN.
+
+The internal Runtime/Capabilities and MCP Ports types describe all 22 tools;
+supported legacy tool names and borrowed native owners remain. All architecture
+exceptions are closed. The active archive evaluation constructor is a preserved
+native forwarding edge, not a temporary fallback.
+
+Performance acceptance uses the original T03 five-run baseline on the same host,
+Go, fixture, concurrency/pacing and disabled exporters. Run `make bench-mcp BENCH_ROLE=candidate BENCH_CPU_MODEL="Apple M1 Max"`, then
+`make performance-acceptance PERFORMANCE_CANDIDATE=/absolute/results/manifest.json`.
+The verifier recomputes medians from all 15 raw runs. User revision
+2026-10-12-candidate-latency-plus10-v3 replaces the latency ratio with fixed absolute
+p95 budgets: read 7.8683 ms, search 7.0726337 ms, context 6.9967799 ms.
+These were calibrated retrospectively from the measured candidate plus 10%;
+existing raw runs are reused. This budget PASS does not demonstrate latency parity
+with the original frozen baseline. Historical v2 FAIL is retained. Allocations ×2.0
+and allocated bytes/op ×1.20 still use the unchanged T03 baseline; it rejects missing/duplicate runs, changed thresholds and
+incompatible machine/settings. These host-specific thresholds cannot be claimed
+from unrelated Linux/macOS CI hardware. Preserve every failed run and document
+a concrete anomaly before any repeat.
+
+For offline native restart compatibility, `build_eval.py --native --output /tmp/new-dir`
+builds frozen/candidate service binaries. Set ZL_MCP_ACCEPTANCE_BINARY and
+ZL_MCP_RESTART_PEER_BINARY to their absolute paths, run the native terminal startup
+acceptance test, then reverse their order. Each sequence reuses one temporary
+synthetic state and stops/joins the first process before opening its peer; no
+installed service, session or live account is used.

@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/workspace/zl-mcp/scripts/mcp-migration/architecture.py", line 223, in <module>
+    main()
+    ~~~~^^
+  File "/workspace/zl-mcp/scripts/mcp-migration/architecture.py", line 211, in main
+    raise RuntimeError('active architecture rules failed')
+RuntimeError: active architecture rules failed

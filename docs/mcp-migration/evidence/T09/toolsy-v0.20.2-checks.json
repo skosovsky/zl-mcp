@@ -1,0 +1,81 @@
+{
+  "environment": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache",
+  "records": [
+    {
+      "name": "root_tests",
+      "command": "go test ./...",
+      "log": "root-tests-v5.log",
+      "exit_status": 0
+    },
+    {
+      "name": "root_race",
+      "command": "go test -race ./...",
+      "log": "root-race-v4.log",
+      "exit_status": 0
+    },
+    {
+      "name": "root_vet",
+      "command": "go vet ./...",
+      "log": "root-vet-v5.log",
+      "exit_status": 0
+    },
+    {
+      "name": "nested_tests",
+      "command": "go test ./... (cwdthird_party/zcago)",
+      "log": "nested-test-v3.log",
+      "exit_status": 0
+    },
+    {
+      "name": "nested_race",
+      "command": "go test -race ./... (cwdthird_party/zcago)",
+      "log": "nested-race-v3.log",
+      "exit_status": 0
+    },
+    {
+      "name": "nested_vet",
+      "command": "go vet ./... (cwdthird_party/zcago)",
+      "log": "nested-vet-v3.log",
+      "exit_status": 0
+    },
+    {
+      "name": "architecture",
+      "command": "python3 scripts/mcp-migration/architecture.py --binary /tmp/zl-migration-tools/arch-go --evidence docs/mcp-migration/evidence/T09/architecture-v6.json",
+      "log": "architecture-v6.log",
+      "exit_status": 0
+    },
+    {
+      "name": "python",
+      "command": "python3 -m unittest discover -s scripts/mcp-migration -p 'test_*.py' -v",
+      "log": "performance-gate-v2-tests-final.log",
+      "exit_status": 0
+    },
+    {
+      "name": "consumer",
+      "command": "python3 scripts/mcp-migration/dependency_probe.py docs/mcp-migration/evidence/T09/consumer-probe-v0.20.2.json",
+      "log": "consumer-probe-v0.20.2.log",
+      "exit_status": 0
+    },
+    {
+      "name": "restart_old_new",
+      "command": "ZL_MCP_ACCEPTANCE_BINARY=/tmp/zl-T09-build-v6/zl-mcp-baseline ZL_MCP_RESTART_PEER_BINARY=/tmp/zl-T09-build-v6/zl-mcp-candidate go test ./internal/mobilebackup -run TestNativeBinaryTerminalStartupAcceptance -count=1 -v",
+      "log": "restart-old-new-v3.log",
+      "exit_status": 0
+    },
+    {
+      "name": "restart_new_old",
+      "command": "ZL_MCP_ACCEPTANCE_BINARY=/tmp/zl-T09-build-v6/zl-mcp-candidate ZL_MCP_RESTART_PEER_BINARY=/tmp/zl-T09-build-v6/zl-mcp-baseline go test ./internal/mobilebackup -run TestNativeBinaryTerminalStartupAcceptance -count=1 -v",
+      "log": "restart-new-old-v3.log",
+      "exit_status": 0
+    }
+  ],
+  "build": "build-manifest-v6.json",
+  "source_digest": "b6b51db253ddab35174a8a09d934f6145627c04c27cf88d60076f703c0b4ef84",
+  "binary_source_equivalence": {
+    "changed_since_build": [
+      "docs/mcp-migration/dependency-matrix.json"
+    ],
+    "Go/module/source_identical": true
+  },
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

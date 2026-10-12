@@ -1,0 +1,48 @@
+--- a/requirements.go
++++ b/requirements.go
+@@ -216,6 +216,15 @@
+ 		c.seen[key] = out
+ 		out.Elem().Set(c.clone(v.Elem()))
+ 	case reflect.Map:
++		if values, ok := v.Interface().(map[string]any); ok {
++			copied := make(map[string]any, len(values))
++			out = reflect.ValueOf(copied)
++			c.seen[key] = out
++			for name, value := range values {
++				copied[name] = c.cloneInterface(value)
++			}
++			return out
++		}
+ 		out = reflect.MakeMapWithSize(v.Type(), v.Len())
+ 		c.seen[key] = out
+ 		iter := v.MapRange()
+@@ -223,6 +232,15 @@
+ 			out.SetMapIndex(iter.Key(), c.clone(iter.Value()))
+ 		}
+ 	case reflect.Slice:
++		if values, ok := v.Interface().([]any); ok {
++			copied := make([]any, len(values))
++			out = reflect.ValueOf(copied)
++			c.seen[key] = out
++			for i, value := range values {
++				copied[i] = c.cloneInterface(value)
++			}
++			return out
++		}
+ 		out = reflect.MakeSlice(v.Type(), v.Len(), v.Len())
+ 		c.seen[key] = out
+ 		for i := range v.Len() {
+@@ -258,3 +276,13 @@
+ 	}
+ 	return out
+ }
++
++// cloneInterface avoids allocating reflect interface holders for ordinary JSON
++// containers. Unknown BYOT values keep the same reflection fallback and memo.
++func (c *valueCloner) cloneInterface(value any) any {
++	cloned := c.clone(reflect.ValueOf(value))
++	if !cloned.IsValid() {
++		return nil
++	}
++	return cloned.Interface()
++}

@@ -1,0 +1,23 @@
+{
+  "task": "T09",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "source_digest_sha256": "b6b51db253ddab35174a8a09d934f6145627c04c27cf88d60076f703c0b4ef84",
+  "status": "MANDATORY_OFFLINE_GATES_PASS_PENDING_INDEPENDENT_REVIEWS",
+  "requirements": "requirements-v2.json:62equallyweighted leaves; original61 unchangedexcept explicitlyuserrevised54/55 +new62B/opgate",
+  "performance_contract": "performance-gate-contract-v2.json; explicit userauthorization before newv0.20.2 implementation/measurement",
+  "pin": "toolsyv0.20.2 official36eb5b661ab4569051e5b17175dc44f3dd132b9c",
+  "checks": "toolsy-v0.20.2-checks.json:root+nestedtests/race/vet,18Pythonnegatives,publicconsumerprobePASS",
+  "architecture": "architecture-v6.json:100/100andnegative/source/productiongraphPASS",
+  "builds": "build-manifest-v6.json +platform-build-manifest-v3.json",
+  "native_restart": "restart-old-new-v3.log/restart-new-old-v3.logPASS same preparedstate perorder",
+  "offline": "offline-v6/report.json50/50cases480/480assertionsPASS",
+  "paired": "paired-v6/report.json both50/50cases480/480assertionsPASS+50fullcanonicalpairsPASS",
+  "performance": "performance-comparison-v4.json:allp95/objects/allocatedbytesPASS,15rawindependentv3runs5x1000/kind0errors",
+  "historical_failures": "RetainedasFAILunderoldcriteria; no reclassification/narrowedbaseline",
+  "cleanup": "analysis-cleanup.json:diagnosticbenchmarks/localoverrides/proposal/profile/projectiontempcodegone,no adoptedlocalpatch",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01",
+  "reviews": "PENDING samefrozencandidate independent100%/PASS",
+  "no_t09_commit": true
+}

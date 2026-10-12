@@ -1,0 +1,165 @@
+File: zl-T09-runtime-tests-v1
+Type: alloc_objects
+Time: 2026-10-12 01:47:31 +07
+Showing nodes accounting for 1176968, 93.50% of 1258734 total
+Dropped 736 nodes (cum <= 6293)
+      flat  flat%   sum%        cum   cum%
+         0     0%     0%    1258480   100%  testing.(*B).runN
+         2 0.00016% 0.00016%    1258363   100%  github.com/skosovsky/zl-mcp/internal/toolruntime.BenchmarkScopedExecution
+         0     0% 0.00016%    1158286 92.02%  testing.(*B).launch
+         0     0% 0.00016%    1065400 84.64%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).Execute
+       402 0.032% 0.032%    1065400 84.64%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).execute
+         0     0% 0.032%    1054427 83.77%  github.com/skosovsky/toolsy.(*Registry).Execute (inline)
+         0     0% 0.032%    1054427 83.77%  github.com/skosovsky/toolsy.(*Registry).execute (inline)
+       603 0.048%  0.08%    1054427 83.77%  github.com/skosovsky/toolsy.(*Registry).executeWithSummary
+         0     0%  0.08%    1054427 83.77%  github.com/skosovsky/toolsy.(*RegistryView).Execute
+       201 0.016% 0.096%    1052618 83.63%  github.com/skosovsky/toolsy.(*Registry).runToolWithValidationAndExecute
+         0     0% 0.096%     788462 62.64%  github.com/skosovsky/toolsy.(*valueCloner).clone
+     10088   0.8%   0.9%     788462 62.64%  github.com/skosovsky/toolsy.(*valueCloner).cloneReference
+         0     0%   0.9%     788462 62.64%  github.com/skosovsky/toolsy.cloneMutableValue
+         0     0%   0.9%     788462 62.64%  github.com/skosovsky/toolsy.cloneReflectValue (inline)
+         0     0%   0.9%     777999 61.81%  github.com/skosovsky/toolsy.deepCloneMap
+    667291 53.01% 53.91%     667291 53.01%  reflect.unsafe_New
+         0     0% 53.91%     491647 39.06%  github.com/skosovsky/toolsy.cloneManifestForPolicy
+         0     0% 53.91%     356729 28.34%  reflect.copyVal
+         0     0% 53.91%     297930 23.67%  github.com/skosovsky/toolsy.(*tool).Execute
+       201 0.016% 53.93%     297327 23.62%  github.com/skosovsky/toolsy.rawArgsValidatedExecute.func1
+         0     0% 53.93%     286178 22.74%  reflect.New
+       402 0.032% 53.96%     285260 22.66%  github.com/skosovsky/toolsy.executePreparedResult
+         0     0% 53.96%     284858 22.63%  github.com/skosovsky/toolsy.ExecutePrepared
+       603 0.048% 54.01%     284657 22.61%  github.com/skosovsky/toolsy.executePreparedResult.func2
+       201 0.016% 54.02%     284054 22.57%  github.com/skosovsky/toolsy.rawArgsValidatedExecute.func1.1
+         0     0% 54.02%     283853 22.55%  github.com/skosovsky/zl-mcp/internal/toolruntime.New.func1
+         0     0% 54.02%     276220 21.94%  github.com/skosovsky/toolsy.(*tool).Manifest
+         0     0% 54.02%     243651 19.36%  github.com/skosovsky/toolsy.executePreparedResult.func2.1
+         0     0% 54.02%     243651 19.36%  github.com/skosovsky/toolsy.rawArgsValidatedExecute.func1.1.1
+         0     0% 54.02%     205623 16.34%  github.com/skosovsky/toolsy.prepareResultChunk
+        10 0.00079% 54.02%     188215 14.95%  github.com/skosovsky/zl-mcp/internal/toolruntime.readRuntime
+      2460   0.2% 54.22%     187033 14.86%  github.com/skosovsky/toolsy/internal/jsonschemax.Decode
+        26 0.0021% 54.22%     185970 14.77%  github.com/skosovsky/zl-mcp/internal/toolruntime.New
+         0     0% 54.22%     177952 14.14%  reflect.(*MapIter).Key
+         0     0% 54.22%     177952 14.14%  reflect.(*MapIter).Value
+      3087  0.25% 54.47%     157674 12.53%  github.com/santhosh-tekuri/jsonschema/v6.(*Schema).validate
+      1608  0.13% 54.59%     153558 12.20%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validate
+         0     0% 54.59%     152550 12.12%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).objValidate
+     16011  1.27% 55.87%     152550 12.12%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validateVal
+         0     0% 55.87%     142841 11.35%  github.com/skosovsky/toolsy.executePreparedResult.func1
+        24 0.0019% 55.87%     134898 10.72%  github.com/skosovsky/toolsy.NewProxyTool
+     22462  1.78% 57.65%     128226 10.19%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validateSelf
+         0     0% 57.65%     122094  9.70%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validateRef
+         0     0% 57.65%     114062  9.06%  github.com/santhosh-tekuri/jsonschema/v6.(*Compiler).Compile
+         0     0% 57.65%     112268  8.92%  github.com/skosovsky/toolsy.compileResultContract
+       201 0.016% 57.67%     110144  8.75%  github.com/skosovsky/toolsy.prepareChunk
+         0     0% 57.67%     105706  8.40%  github.com/skosovsky/toolsy/internal/jsonschemax.Compile
+         0     0% 57.67%     102138  8.11%  github.com/santhosh-tekuri/jsonschema/v6.(*roots).resolveFragment
+         0     0% 57.67%     102136  8.11%  github.com/santhosh-tekuri/jsonschema/v6.(*roots).orLoad
+        96 0.0076% 57.68%     102135  8.11%  github.com/santhosh-tekuri/jsonschema/v6.(*roots).addRoot
+         0     0% 57.68%     100810  8.01%  github.com/skosovsky/toolsy.prepareFreshResultChunk
+         0     0% 57.68%     100158  7.96%  testing.(*B).run1.func1
+         0     0% 57.68%      98073  7.79%  github.com/skosovsky/toolsy.validateChunk
+         0     0% 57.68%      95460  7.58%  github.com/skosovsky/toolsy/internal/jsonschemax.validateJSON
+         0     0% 57.68%      94304  7.49%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).condValidate
+         0     0% 57.68%      93442  7.42%  encoding/json/v2.Unmarshal
+         0     0% 57.68%      93337  7.42%  encoding/json/v2.unmarshalDecode
+         0     0% 57.68%      92107  7.32%  encoding/json/v2.makeMapArshaler.func3
+         0     0% 57.68%      91291  7.25%  encoding/json/v2.makeInterfaceArshaler.func2
+        48 0.0038% 57.68%      90534  7.19%  github.com/skosovsky/toolsy/internal/jsonschemax.validateJSON.func1
+     45938  3.65% 61.33%      90464  7.19%  encoding/json.(*Decoder).Token
+         0     0% 61.33%      84861  6.74%  github.com/santhosh-tekuri/jsonschema/v6.(*Schema).Validate (partial-inline)
+         0     0% 61.33%      84194  6.69%  encoding/json.(*Decoder).Decode
+         0     0% 61.33%      80153  6.37%  reflect.MakeMapWithSize
+     80153  6.37% 67.70%      80153  6.37%  reflect.makemap
+         0     0% 67.70%      78185  6.21%  reflect.Value.SetMapIndex
+         0     0% 67.70%      78185  6.21%  reflect.mapassign_faststr
+     78185  6.21% 73.91%      78185  6.21%  reflect.mapassign_faststr0
+         0     0% 73.91%      72813  5.78%  github.com/santhosh-tekuri/jsonschema/v6.(*roots).validate
+         0     0% 73.91%      69875  5.55%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validateRefs
+         0     0% 73.91%      64263  5.11%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).arrValidate
+         0     0% 73.91%      47085  3.74%  encoding/json/v2.makeSliceArshaler.func3
+         0     0% 73.91%      43507  3.46%  encoding/json/v2.newAddressableValue
+     39502  3.14% 77.05%      39502  3.14%  github.com/santhosh-tekuri/jsonschema/v6.unevalFrom
+     38473  3.06% 80.10%      38473  3.06%  github.com/santhosh-tekuri/jsonschema/v6.(*scope).child (inline)
+         0     0% 80.10%      38028  3.02%  github.com/skosovsky/toolsy.(*Registry).wrapYieldWithCallMeta.func1
+       201 0.016% 80.12%      37277  2.96%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).dispatch
+       201 0.016% 80.13%      37076  2.95%  github.com/skosovsky/zl-mcp/internal/app/search.(*Handler).Group
+     18477  1.47% 81.60%      36546  2.90%  reflect.MakeSlice
+     33087  2.63% 84.23%      34100  2.71%  encoding/json/jsontext.Token.String (inline)
+       124 0.0099% 84.24%      29226  2.32%  github.com/santhosh-tekuri/jsonschema/v6.(*roots).collectResources
+       136 0.011% 84.25%      29210  2.32%  github.com/santhosh-tekuri/jsonschema/v6.(*roots)._collectResources
+     23970  1.90% 86.16%      28918  2.30%  github.com/santhosh-tekuri/jsonschema/v6.SchemaPath.collect
+         0     0% 86.16%      24391  1.94%  reflect.Value.Set
+         0     0% 86.16%      24391  1.94%  reflect.Value.assignTo
+         0     0% 86.16%      24391  1.94%  reflect.packEface (inline)
+         0     0% 86.16%      24391  1.94%  reflect.packEfaceData
+         0     0% 86.16%      24391  1.94%  reflect.valueInterface
+         2 0.00016% 86.16%      21117  1.68%  github.com/skosovsky/toolsy.(*Registry).View
+        10 0.00079% 86.16%      20994  1.67%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*observedReader).GroupPage
+         0     0% 86.16%      20984  1.67%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).GroupPage
+       201 0.016% 86.17%      20984  1.67%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).page
+       201 0.016% 86.19%      20582  1.64%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).Page
+      4422  0.35% 86.54%      20381  1.62%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).searchPage
+         0     0% 86.54%      20352  1.62%  github.com/skosovsky/toolsy.(*Registry).ManifestSet
+         4 0.00032% 86.54%      20352  1.62%  github.com/skosovsky/toolsy.manifestSetFromToolMap
+        20 0.0016% 86.54%      20348  1.62%  github.com/skosovsky/toolsy.addToolToManifestSet
+         0     0% 86.54%      18656  1.48%  database/sql.(*DB).retry
+     18069  1.44% 87.98%      18069  1.44%  reflect.unsafe_NewArray
+         0     0% 87.98%      17933  1.42%  database/sql.(*DB).QueryContext
+         0     0% 87.98%      17933  1.42%  database/sql.(*DB).QueryContext.func1
+      1815  0.14% 88.12%      17933  1.42%  database/sql.(*DB).query
+         0     0% 88.12%      17201  1.37%  github.com/skosovsky/toolsy.deepCopySchemaFromMap
+         0     0% 88.12%      16413  1.30%  github.com/skosovsky/toolsy.PolicyFunc.Decide
+         0     0% 88.12%      16413  1.30%  github.com/skosovsky/toolsy.evaluatePolicy
+         0     0% 88.12%      16413  1.30%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).decide
+      1834  0.15% 88.27%      16328  1.30%  database/sql.(*DB).queryDC
+       201 0.016% 88.28%      15881  1.26%  github.com/skosovsky/zl-mcp/internal/app/search.groupResult
+         0     0% 88.28%      15820  1.26%  encoding/json.Unmarshal (inline)
+         0     0% 88.28%      14955  1.19%  database/sql.withLock
+         0     0% 88.28%      14430  1.15%  database/sql.(*DB).queryDC.func1
+         0     0% 88.28%      13618  1.08%  database/sql.ctxDriverQuery
+         0     0% 88.28%      13618  1.08%  modernc.org/sqlite.(*conn).QueryContext
+         0     0% 88.28%      13618  1.08%  modernc.org/sqlite.(*conn).query
+         0     0% 88.28%      13538  1.08%  math/big.(*Rat).SetString
+     13042  1.04% 89.32%      13042  1.04%  math/big.nat.make (inline)
+         0     0% 89.32%      12626  1.00%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).numValidate
+         0     0% 89.32%      12262  0.97%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).GroupCoverage
+         0     0% 89.32%      12262  0.97%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).Coverage (inline)
+      2009  0.16% 89.48%      12262  0.97%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).conversationCoverage
+       124 0.0099% 89.49%      11878  0.94%  github.com/santhosh-tekuri/jsonschema/v6.(*Compiler).doCompile
+       642 0.051% 89.54%      11785  0.94%  modernc.org/sqlite.(*stmt).query
+      9703  0.77% 90.31%      11457  0.91%  encoding/json/jsontext.(*decoderState).fetch
+       804 0.064% 90.37%      11267   0.9%  github.com/skosovsky/toolsy.cloneToolEnvelope
+       628  0.05% 90.42%      10997  0.87%  github.com/santhosh-tekuri/jsonschema/v6.(*Compiler).compileObject
+         0     0% 90.42%      10997  0.87%  github.com/santhosh-tekuri/jsonschema/v6.(*Compiler).compileValue
+         4 0.00032% 90.42%      10931  0.87%  github.com/skosovsky/toolsy.newRegistryViewSnapshot
+        48 0.0038% 90.43%      10908  0.87%  github.com/skosovsky/zl-mcp/docs/contracts.Document
+         0     0% 90.43%      10873  0.86%  github.com/skosovsky/toolsy.registryManifestDigest
+         0     0% 90.43%      10620  0.84%  encoding/json/jsontext.(*Decoder).ReadToken (inline)
+         0     0% 90.43%      10620  0.84%  encoding/json/jsontext.(*decoderState).ReadToken
+         0     0% 90.43%      10463  0.83%  github.com/skosovsky/toolsy.deepCloneValue (inline)
+         0     0% 90.43%      10369  0.82%  github.com/santhosh-tekuri/jsonschema/v6.(*objCompiler).compile
+       402 0.032% 90.46%      10295  0.82%  database/sql.(*DB).QueryRowContext (partial-inline)
+         6 0.00048% 90.46%      10142  0.81%  github.com/skosovsky/toolsy.(*RegistryBuilder).Build
+         0     0% 90.46%      10132   0.8%  github.com/skosovsky/toolsy.buildToolManifest
+      6277   0.5% 90.96%       9716  0.77%  modernc.org/sqlite.newRows
+       402 0.032% 90.99%       9669  0.77%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*observedReader).ReadIdentity
+         8 0.00064% 90.99%       9629  0.76%  github.com/skosovsky/zl-mcp/docs/contracts.Compile
+       648 0.051% 91.04%       9356  0.74%  github.com/santhosh-tekuri/jsonschema/v6.(*objCompiler).compileDraft4
+       175 0.014% 91.06%       9177  0.73%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).ReadIdentity
+      9082  0.72% 91.78%       9082  0.72%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).strValidate
+         0     0% 91.78%       8959  0.71%  database/sql.(*Rows).Next
+         0     0% 91.78%       8897  0.71%  encoding/json/jsontext.(*decoderState).consumeString
+      1206 0.096% 91.88%       8775   0.7%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).ReadIdentity
+      2057  0.16% 92.04%       8760   0.7%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).numValidate.func1 (inline)
+         0     0% 92.04%       8351  0.66%  database/sql.(*Rows).Next.func1
+      1835  0.15% 92.18%       8351  0.66%  database/sql.(*Rows).nextLocked
+       402 0.032% 92.22%       7711  0.61%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).prepareSearch
+         0     0% 92.22%       6732  0.53%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).handleMeta
+      5752  0.46% 92.67%       6732  0.53%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).metaResource
+        43 0.0034% 92.68%       6586  0.52%  encoding/json/v2.makeStringArshaler.func2
+         0     0% 92.68%       6572  0.52%  encoding/json/jsontext.(*Decoder).ReadValue (inline)
+         0     0% 92.68%       6572  0.52%  encoding/json/jsontext.(*decoderState).ReadValue
+      6543  0.52% 93.20%       6543  0.52%  encoding/json/v2.makeString
+         0     0% 93.20%       6533  0.52%  encoding/json.Marshal (inline)
+         0     0% 93.20%       6533  0.52%  encoding/json/v2.Marshal
+      3873  0.31% 93.50%       6516  0.52%  modernc.org/sqlite.(*rows).Next
+         0     0% 93.50%       6407  0.51%  github.com/santhosh-tekuri/jsonschema/v6.isInteger

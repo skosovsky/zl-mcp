@@ -1,0 +1,4 @@
+2026/10/12 12:42:30 INFO mobile_account_archive_acquired files=3 direct_files=2 group_files=1
+2026/10/12 12:42:30 INFO mcp_call tool=zalo_list_archive_sources correlation_id=N2L7DNAZQCT4Q33HRMK3XT3MIQ code=OK outcome=success duration_ms=1
+2026/10/12 12:42:30 INFO mcp_call tool=zalo_list_conversation_messages correlation_id=WJQNKMGEE3YRMBMB5RLTGEPI46 code=OK outcome=success duration_ms=4
+2026/10/12 12:42:30 INFO mcp_call tool=zalo_list_conversation_messages correlation_id=I27O5VHRGVPTVWVCQAGG4BB7DN code=OK outcome=success duration_ms=5

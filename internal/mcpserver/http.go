@@ -27,7 +27,7 @@ type HTTPService struct {
 	principal string
 }
 
-func NewHTTP(token string, reads ReadPorts, protocol EventsProtocolPort) (*HTTPService, error) {
+func NewHTTP(token string, reads Ports, protocol EventsProtocolPort) (*HTTPService, error) {
 	if len(token) < 32 {
 		return nil, errors.New("MCP bearer token must contain at least 32 bytes")
 	}

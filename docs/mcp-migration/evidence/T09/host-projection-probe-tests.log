@@ -1,0 +1,40 @@
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_list_archive_sources correlation_id=GZ2UJ6JXS4F2ECBQQNNLUSF66S code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_list_conversations correlation_id=ESUQ3CY6Y6K6O5XZH6FFMCXS46 code=SOURCE_UNAVAILABLE outcome=error duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_list_conversation_messages correlation_id=42XXTJ2LKW54572YQJ3VAA3ZHX code=SOURCE_UNAVAILABLE outcome=error duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_list_conversations correlation_id=4NPNN452LLU64PNPMD4XRDHBEI code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_list_groups correlation_id=N7HB7NO4XKMBK6EN42XCBVLVFJ code=RESPONSE_TOO_LARGE outcome=error duration_ms=3
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_search_messages correlation_id=BKCR43YB4DRWWI5IN2VAHKKIJQ code=RESPONSE_TOO_LARGE outcome=error duration_ms=3
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_search_messages correlation_id=56XMAQVBM3DK6DTQBGFTL73WUO code=RESPONSE_TOO_LARGE outcome=error duration_ms=10
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_get_message_context correlation_id=A7KXA6WBWQGJQXDMBOXNRNDZQP code=RESPONSE_TOO_LARGE outcome=error duration_ms=2
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_get_status correlation_id=RUI5QSJQ26DB2DR4EAY3DR7AQH code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_list_groups correlation_id=XA32RGS23WGCLALLGVZCCRUABC code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_get_group correlation_id=NMML6LGYLYGOBVUN762MBURYPV code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_event_delivery_started correlation_id=TOCLZ532ILH54XLBBX7FGNYY5C attempt=1 body_bytes=6674
+2026/10/12 16:10:42 INFO mcp_event_delivery_finished correlation_id=TOCLZ532ILH54XLBBX7FGNYY5C attempt=1 body_bytes=6674 elapsed_ms=0 http_status=204 outcome=delivered reason=accepted receipt_persisted=true
+2026/10/12 16:10:42 INFO mcp_event_delivery_started correlation_id=X4TWCMKC36GOYIJDLLU5EVVJ7A attempt=1 body_bytes=6672
+2026/10/12 16:10:42 INFO mcp_event_delivery_finished correlation_id=X4TWCMKC36GOYIJDLLU5EVVJ7A attempt=1 body_bytes=6672 elapsed_ms=0 http_status=204 outcome=delivered reason=accepted receipt_persisted=true
+2026/10/12 16:10:42 INFO mcp_discovery method=events/list protocol=2026-07-28 http_status=200 duration_ms=0 response_bytes=4068
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_list_event_subscriptions correlation_id=7RE3Z6HOOBJSD3RQOZGWHOWXFX code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_read_subscription_events correlation_id=PXOB5BKRLRZXW6DAOY4FLRFDS2 code=OK outcome=success duration_ms=1
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_ack_subscription_events correlation_id=ZBUYY7SGONPTMH7K7VCWNJBGKD code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_ack_subscription_events correlation_id=L5QTUP3L3R3U5WFAL5K562YPRE code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_read_subscription_events correlation_id=27ZEFWLPS6VVY2H6XVH7UIWWHM code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_search_conversation_messages correlation_id=TSJYA7ERH7SEE3T4C6F3JNXAE5 code=OK outcome=success duration_ms=1
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_search_conversation_messages correlation_id=5ZNRTMCHH2D3TTPOQ3PK3QOMGZ code=OK outcome=success duration_ms=1
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_get_conversation_message_context correlation_id=2PKYNKFUMPZSVCKKQU4BGB22NA code=OK outcome=success duration_ms=1
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_list_conversations correlation_id=KMM2Q2U43MQ6TUJQYV6RGK7EHN code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_get_conversation correlation_id=2DX73AGNJEGZ7KG3DHNCCMLPKW code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_list_conversation_messages correlation_id=KGAQNGIR2TU6UUVJGQQ6BVMTN5 code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_list_conversations correlation_id=5GHYJ2VIPBUVPCIFBZPYL3CKSH code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_get_conversation correlation_id=7NZ3SRAIJOQGRDHEBGX2RXJBNK code=OK outcome=success duration_ms=0
+2026/10/12 16:10:42 INFO mcp_call tool=zalo_search_conversation_messages correlation_id=FFIQ3TU556ZRUDVWJA2EHPNMZ2 code=INVALID_ARGUMENT outcome=error duration_ms=0
+--- FAIL: TestMigrationInputCharacterization (0.95s)
+    --- FAIL: TestMigrationInputCharacterization/null-object-baseline (0.06s)
+        migration_inputs_test.go:77: compatibility snapshot changed: testdata/migration/input-null-object-baseline.json
+    --- FAIL: TestMigrationInputCharacterization/missing-object-baseline (0.07s)
+        migration_inputs_test.go:77: compatibility snapshot changed: testdata/migration/input-missing-object-baseline.json
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/mcpserver	8.890s
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	1.494s
+ok  	github.com/skosovsky/zl-mcp/internal/evaluation	1.634s
+FAIL

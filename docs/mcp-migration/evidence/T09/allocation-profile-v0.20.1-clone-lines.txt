@@ -1,0 +1,64 @@
+Total: 954135
+ROUTINE ======================== github.com/skosovsky/toolsy.(*valueCloner).cloneJSONReference in /tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.1/requirements.go
+     71500     132700 (flat, cum) 13.91% of Total
+         .          .    274:func (c *valueCloner) cloneJSONReference(v reflect.Value, key cloneReference) (reflect.Value, bool) {
+         .          .    275:	if !v.CanInterface() {
+         .          .    276:		return reflect.Value{}, false
+         .          .    277:	}
+         .          .    278:	if values, ok := reflect.TypeAssert[map[string]any](v); ok {
+     28000      28000    279:		copied := make(map[string]any, len(values))
+         .          .    280:		out := reflect.ValueOf(copied)
+      2211       2211    281:		c.seen[key] = out
+         .          .    282:		for name, value := range values {
+     27000      71000    283:			copied[name] = c.cloneAny(value)
+         .          .    284:		}
+         .          .    285:		return out, true
+         .          .    286:	}
+         .          .    287:	if values, ok := reflect.TypeAssert[[]any](v); ok {
+      6750       6750    288:		copied := make([]any, len(values))
+      7000       7000    289:		out := reflect.ValueOf(copied)
+       539        539    290:		c.seen[key] = out
+         .          .    291:		for i, value := range values {
+         .      17200    292:			copied[i] = c.cloneAny(value)
+         .          .    293:		}
+         .          .    294:		return out, true
+         .          .    295:	}
+         .          .    296:	return reflect.Value{}, false
+         .          .    297:}
+ROUTINE ======================== github.com/skosovsky/toolsy.cloneManifestForPolicy in /tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.1/requirements.go
+         0      71500 (flat, cum)  7.49% of Total
+         .          .     93:func cloneManifestForPolicy(m ToolManifest) ToolManifest {
+         .          .     94:	out := m
+         .       2750     95:	out.Parameters = deepCloneMap(m.Parameters)
+         .      68750     96:	out.OutputSchema = deepCloneMap(m.OutputSchema)
+         .          .     97:	out.Tags = append([]string(nil), m.Tags...)
+         .          .     98:	out.Requirements = cloneRequirements(m.Requirements)
+         .          .     99:	return out
+         .          .    100:}
+         .          .    101:
+ROUTINE ======================== github.com/skosovsky/toolsy.prepareResultChunk in /tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.1/result_contract.go
+         0      44301 (flat, cum)  4.64% of Total
+         .          .     63:func prepareResultChunk(c Chunk, validator schemaValidator) (Chunk, error) {
+         .      10051     64:	prepared, value, err := prepareChunkDecoded(c)
+         .          .     65:	if err != nil {
+         .          .     66:		return Chunk{}, err
+         .          .     67:	}
+         .          .     68:	if c.Event != EventResult || c.IsError || c.EmptyResult || c.Noop {
+         .          .     69:		return prepared, nil
+         .          .     70:	}
+         .          .     71:	if len(c.Data) == 0 {
+         .          .     72:		if validator != nil {
+         .          .     73:			return Chunk{}, NewInternalError(&ResultContractError{Kind: "missing_value", Cause: nil})
+         .          .     74:		}
+         .          .     75:		return prepared, nil
+         .          .     76:	}
+         .        250     77:	if !jsonMimeType(c.MimeType) {
+         .          .     78:		return prepared, nil
+         .          .     79:	}
+         .          .     80:	if validator != nil {
+         .      34000     81:		if err := validator.Validate(value); err != nil {
+         .          .     82:			return Chunk{}, NewInternalError(&ResultContractError{Kind: "schema_mismatch", Cause: err})
+         .          .     83:		}
+         .          .     84:	}
+         .          .     85:	return prepared, nil
+         .          .     86:}

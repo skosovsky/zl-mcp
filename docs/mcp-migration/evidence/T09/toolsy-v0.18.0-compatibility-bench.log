@@ -1,0 +1,8 @@
+go: downloading github.com/skosovsky/toolsy v0.18.0
+goos: darwin
+goarch: arm64
+pkg: github.com/skosovsky/zl-mcp/internal/toolruntime
+cpu: Apple M1 Max
+BenchmarkManifestPreDispatch-10    	     100	    266793 ns/op	  258509 B/op	    3513 allocs/op
+PASS
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	1.443s

@@ -1,0 +1,314 @@
+{
+  "task": "T09",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "requirements_total": 61,
+  "equal_weight": true,
+  "frozen_before_implementation": true,
+  "leaf_requirements": [
+    {
+      "id": "T09-01",
+      "requirement": "Accepted T08 commit/tree/source and every indexed committed artifact verified; T01–T08 not reopened",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-02",
+      "requirement": "Leaf requirements and initial candidate fixed before T09 implementation",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-03",
+      "requirement": "Cleanup scope inventoried; no supported legacy tools, backend owners or edges removed",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-04",
+      "requirement": "No unused migration shims or temporary production branches remain",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-05",
+      "requirement": "Toolruntime naming describes all scoped read/command capabilities; no read-only migration naming misleading the final API",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-06",
+      "requirement": "All architecture exceptions closed; consciously retained backend edges documented",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-07",
+      "requirement": "Architecture and development docs reflect final composition and executable commands",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-08",
+      "requirement": "CI runs required architecture/offline/root/nested gates with correct pinned toolchain",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-09",
+      "requirement": "Pinned Go/toolsy/metry/evaly/SDK and compatible dependency matrix retained; no sibling or third_party edits",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-10",
+      "requirement": "Bring Your Own Types boundaries retained; no SDK or infrastructure DTO in app/domain",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-11",
+      "requirement": "All22 tool names/descriptions/input/output/annotations and resource/template contracts preserved",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-12",
+      "requirement": "Numeric-string/zero/null/missing/Unicode/RFC3339/UUID input parity preserved",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-13",
+      "requirement": "Current trusted identity/policy binding and caller-forged authority rejection preserved",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-14",
+      "requirement": "Strict input and output validation plus bounded error shaping preserved",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-15",
+      "requirement": "Current policy revalidated for subsequent reads/resources/status and shortening",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-16",
+      "requirement": "One admitted app execution per MCP call; no duplicate upstream effect or mutation",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-17",
+      "requirement": "Native read ordering/cursors/snapshot/page-shortening and precise string IDs preserved",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-18",
+      "requirement": "Native admission remains outside app execution with no bypass or second admission",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-19",
+      "requirement": "Send account lock, prepare/claim/complete ownership and idempotency unchanged",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-20",
+      "requirement": "Ambiguous send unknown cannot dispatch again with same UUID; conflicting payload rejected",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-21",
+      "requirement": "Send cancellation/panic/restart paths preserve durable state and fresh bounded completion",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-22",
+      "requirement": "Join approval/policy/local lock and durable request/result ownership retained",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-23",
+      "requirement": "History checkpoint/pause/cancel/limits/source semantics and no-late-page-commit retained",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-24",
+      "requirement": "History import creates no synthetic Events and does not weaken source completeness claims",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-25",
+      "requirement": "Events verification/signing/address/lease/receipt/retry/ordering/journal ownership retained",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-26",
+      "requirement": "Archive account/source/visibility/TTL/tombstone/identity contracts retained; no quote anchors",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-27",
+      "requirement": "Persistence schemas/mixed-version ownership unchanged; no tracing persistence or fabricated creation timestamps",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-28",
+      "requirement": "One service-owned metry provider; default no network or second bridge provider",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-29",
+      "requirement": "Exactly one metry app ExecutorWrap and independent typed business outcomes",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-30",
+      "requirement": "Request-operation-worker memory correlation bounded and distinct from native IDs",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-31",
+      "requirement": "All seven host signals and executor calls/duration observed with finite dimensions",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-32",
+      "requirement": "Logs/spans/exporters exclude forbidden content including nested fields, malformed resource env and hostile formatter/panic",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-33",
+      "requirement": "Authorized bounded Events diagnostic contract and single final MCP audit retained",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-34",
+      "requirement": "Exporter failure/timeout never changes business result, blocks send or retries command",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-35",
+      "requirement": "Telemetry shutdown bounded after workers join and before shared DB close; nil/disabled paths safe",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-36",
+      "requirement": "Actual HTTP/STDIO/resource bytes measured without rewriting wire or IDs",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-37",
+      "requirement": "Full offline candidate evaluation 100% and all assertions PASS; safety violations0",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-38",
+      "requirement": "Frozen baseline independent evaluation 100% PASS with original business source and disclosed T03 harness overlay",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-39",
+      "requirement": "Paired baseline/candidate evaluation executed; equivalent outputs/effects across all mandatory synthetic cases",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-40",
+      "requirement": "All normalized/raw captures preserve exact JSON numbers via UseNumber; current SDK large numeric-ID limitation explicit until SDK-01",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-41",
+      "requirement": "Root Go tests PASS",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-42",
+      "requirement": "Root Go vet PASS",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-43",
+      "requirement": "Relevant root race tests PASS for authority/runtime/native workers/storage/telemetry/transport/evaluation",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-44",
+      "requirement": "Existing nested third_party module tests/vet/race PASS without edits",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-45",
+      "requirement": "arch-go pinned v2.1.2 compliance100 and coverage100 PASS",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-46",
+      "requirement": "All isolated negative architecture controls nonzero and all-build source controls PASS",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-47",
+      "requirement": "Production go list -deps excludes evaly/evaluation/evalfixture and observes restricted SDK/ai library boundaries",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-48",
+      "requirement": "CGO-free darwin/arm64 build PASS",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-49",
+      "requirement": "CGO-free linux/amd64 build PASS",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-50",
+      "requirement": "Old/new frozen/candidate synthetic-state restart compatibility verified both directions with persisted records/effects",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-51",
+      "requirement": "Performance same Apple M1 Max/OS/Go/fixture/concurrency/exporters-disabled settings disclosed",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-52",
+      "requirement": "Five independent post-warmup runs >=1000 calls each for read/search/context; counts/errors/response bytes/CPU recorded",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-53",
+      "requirement": "Median-of-run p95 candidate <=1.15 frozen baseline for each read/search/context",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-54",
+      "requirement": "Allocations/op candidate <=1.20 frozen baseline for each read/search/context; zero baseline implies zero",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-55",
+      "requirement": "Performance thresholds not changed after results; initial failures preserved; any repeat backed by concrete anomaly",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-56",
+      "requirement": "Performance baseline original frozen source rebuilt T02 compiler distinguished from original rollback binary",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-57",
+      "requirement": "Regression findings corrected in T09 with relevant revalidation, no acceptance narrowing",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-58",
+      "requirement": "Model gate explicitly NOT_RUN and no claim of full model/live acceptance",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-59",
+      "requirement": "No deployment/LaunchAgent restart/live account/paid eval/publication performed",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-60",
+      "requirement": "Candidate source/build hashes, exact commands, versions, raw parity/effects/performance artifacts durably indexed",
+      "status": "PENDING"
+    },
+    {
+      "id": "T09-61",
+      "requirement": "Two independent samecandidate reviewers completeness100% and correctnessPASS before sole T09 commit",
+      "status": "PENDING"
+    }
+  ]
+}

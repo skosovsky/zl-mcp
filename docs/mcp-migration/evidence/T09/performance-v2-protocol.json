@@ -1,0 +1,20 @@
+{
+  "machine": {
+    "system": "Darwin",
+    "node": "local-macos-host",
+    "release": "27.0.0",
+    "version": "Darwin Kernel Version 27.0.0: Tue Aug 11 21:22:49 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T6000",
+    "machine": "arm64",
+    "processor": "arm"
+  },
+  "cpu_count": 10,
+  "cpu_model": "Apple M1 Max",
+  "cpu_model_command": "sysctl -n machdep.cpu.brand_string, escalated readonly, exit0",
+  "build": "build-manifest-v5.json",
+  "prior_failure": "performance-comparison-v2.json",
+  "thresholds_unchanged": {
+    "p95": 1.15,
+    "allocations": 1.2
+  },
+  "repeat_reason": "Official upstream toolsyv0.20.1 performance fix; authorized dependencyupdate, not rerunning unchanged failing candidate"
+}

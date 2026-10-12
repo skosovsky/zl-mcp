@@ -1,0 +1,26 @@
+{
+  "task": "T09",
+  "candidate_source_sha256": "c99dc823184fa330fc5bc25c2a01d43db7e0dcba6414cdaaff6956417c6e586c",
+  "previous_goal_turn_classification": "NO_PROGRESS: unchanged source/evidence/mandatory performance blocker, latest upstream stillv0.20.0; no scope decision received",
+  "current_turn_classification": "NO_PROGRESS: source and1512 indexed artifacts reverified, all reviewers completed, latest upstream unchanged; dependent implementation prohibited by scope gate",
+  "same_blocking_condition_consecutive_turns": 3,
+  "blocked_threshold": 3,
+  "goal_status": "blocked transition required after this audit",
+  "authoritative_verification": {
+    "HEAD": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+    "candidate_source_matches": true,
+    "artifact_index_verified": "artifact-index-v5.json:1512/1512 SHA256 and byte lengths match",
+    "latest_official_toolsy": "go list -m -json github.com/skosovsky/toolsy@latest: v0.20.0, origin fb4c809c07ea65d618536ee3c0e8a6de1b4bdc23",
+    "latest_query_exit_status": 0,
+    "review_completeness": "reviewer-completeness-v3.json FAIL57/61",
+    "review_correctness": "reviewer-correctness-v3.json FAIL solely performance",
+    "active_processes": [],
+    "reviewer_agents": "collaboration.list_agents: both T09 reviewers completed; no running child agents"
+  },
+  "required_next_action": "Explicit user decision on separate toolsy performance fix/dependency-exception scope, or a compatible new upstream immutable pin",
+  "authorization_not_received": true,
+  "no_scope_expansion_or_commit": true,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "impasse": "No remaining authorized independent implementation: harness findings closed; T09 fixed performance cannot be accepted with selected compatible public API; scope extension or compatible upstream change required. Cannot commit T09 or start SDK-01/T10 before acceptance."
+}

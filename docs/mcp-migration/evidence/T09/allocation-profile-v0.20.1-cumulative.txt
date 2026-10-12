@@ -1,0 +1,250 @@
+File: evaluation.test
+Type: alloc_objects
+Time: 2026-10-12 15:57:54 +07
+Showing nodes accounting for 876237, 91.84% of 954135 total
+Dropped 874 nodes (cum <= 4770)
+      flat  flat%   sum%        cum   cum%
+       500 0.052% 0.052%     608237 63.75%  github.com/skosovsky/zl-mcp/internal/evaluation.TestDiagnosticAllocationProfile
+         0     0% 0.052%     608127 63.74%  testing.tRunner
+        14 0.0015% 0.054%     582207 61.02%  github.com/skosovsky/zl-mcp/internal/evalfixture.New
+        87 0.0091% 0.063%     576060 60.38%  github.com/skosovsky/zl-mcp/internal/mcpserver.New
+         0     0% 0.063%     448168 46.97%  github.com/santhosh-tekuri/jsonschema/v6.(*Compiler).Compile
+       460 0.048%  0.11%     398683 41.78%  github.com/santhosh-tekuri/jsonschema/v6.(*roots).addRoot
+         0     0%  0.11%     398683 41.78%  github.com/santhosh-tekuri/jsonschema/v6.(*roots).orLoad
+         0     0%  0.11%     398672 41.78%  github.com/santhosh-tekuri/jsonschema/v6.(*roots).resolveFragment
+      4845  0.51%  0.62%     359600 37.69%  github.com/santhosh-tekuri/jsonschema/v6.(*Schema).validate
+      5068  0.53%  1.15%     354018 37.10%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validate
+         0     0%  1.15%     349188 36.60%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).objValidate
+     23896  2.50%  3.65%     349188 36.60%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validateVal
+     72461  7.59% 11.25%     340018 35.64%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validateSelf
+         0     0% 11.25%     327489 34.32%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*Connection).handleAsync.func2
+       136 0.014% 11.26%     325353 34.10%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validateRef
+         0     0% 11.26%     321690 33.72%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.HandlerFunc.Handle
+       251 0.026% 11.29%     321690 33.72%  github.com/modelcontextprotocol/go-sdk/mcp.(*ServerSession).handle
+         0     0% 11.29%     315019 33.02%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).condValidate
+         0     0% 11.29%     308064 32.29%  github.com/modelcontextprotocol/go-sdk/mcp.handleReceive[go.shape.*uint8]
+         0     0% 11.29%     301463 31.60%  github.com/modelcontextprotocol/go-sdk/mcp.defaultReceivingMethodHandler[go.shape.*uint8]
+         0     0% 11.29%     301463 31.60%  github.com/modelcontextprotocol/go-sdk/mcp.serverMethod[go.shape.*uint8,go.shape.*uint8].func1
+         0     0% 11.29%     301463 31.60%  github.com/modelcontextprotocol/go-sdk/mcp.serverMultiRoundTripMiddleware.func1.1
+         0     0% 11.29%     301437 31.59%  github.com/modelcontextprotocol/go-sdk/mcp.(*Server).callTool
+         0     0% 11.29%     301437 31.59%  github.com/modelcontextprotocol/go-sdk/mcp.newServerMethodInfo[go.shape.*github.com/modelcontextprotocol/go-sdk/mcp.CallToolParamsRaw,go.shape.*uint8,go.shape.struct { github.com/modelcontextprotocol/go-sdk/mcp.Meta "json:\"_meta,omitempty\""; Name string "json:\"name\""; Arguments encoding/json/jsontext.Value "json:\"arguments,omitempty\""; InputResponses github.com/modelcontextprotocol/go-sdk/mcp.InputResponseMap "json:\"inputResponses,omitempty\""; RequestState string "json:\"requestState,omitempty\"" }].func2
+         0     0% 11.29%     301437 31.59%  github.com/skosovsky/zl-mcp/internal/mcpserver.(*Service).call
+         0     0% 11.29%     301437 31.59%  github.com/skosovsky/zl-mcp/internal/mcpserver.New.func1
+        52 0.0054% 11.30%     298651 31.30%  github.com/skosovsky/zl-mcp/internal/toolruntime.New
+         0     0% 11.30%     287331 30.11%  github.com/santhosh-tekuri/jsonschema/v6.(*roots).validate
+         0     0% 11.30%     274429 28.76%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validateRefs
+        71 0.0074% 11.30%     261868 27.45%  github.com/skosovsky/zl-mcp/docs/contracts.Compile
+        66 0.0069% 11.31%     231440 24.26%  github.com/skosovsky/toolsy.NewProxyTool
+         0     0% 11.31%     221925 23.26%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).Execute
+       500 0.052% 11.36%     221925 23.26%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).execute
+         0     0% 11.36%     217653 22.81%  github.com/skosovsky/toolsy.(*Registry).Execute (inline)
+         0     0% 11.36%     217653 22.81%  github.com/skosovsky/toolsy.(*Registry).execute (inline)
+       750 0.079% 11.44%     217653 22.81%  github.com/skosovsky/toolsy.(*Registry).executeWithSummary
+         0     0% 11.44%     217653 22.81%  github.com/skosovsky/toolsy.(*RegistryView).Execute
+       250 0.026% 11.47%     215653 22.60%  github.com/skosovsky/toolsy.(*Registry).runToolWithValidationAndExecute
+         0     0% 11.47%     210573 22.07%  github.com/skosovsky/toolsy/internal/jsonschemax.Compile
+         0     0% 11.47%     209955 22.00%  github.com/skosovsky/toolsy.compileResultContract
+         0     0% 11.47%     141286 14.81%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).arrValidate
+         0     0% 11.47%     134404 14.09%  github.com/skosovsky/toolsy.(*tool).Execute
+       250 0.026% 11.49%     133654 14.01%  github.com/skosovsky/toolsy.rawArgsValidatedExecute.func1
+       500 0.052% 11.55%     132152 13.85%  github.com/skosovsky/toolsy.executePreparedResult
+         0     0% 11.55%     131652 13.80%  github.com/skosovsky/toolsy.ExecutePrepared
+       718 0.075% 11.62%     131620 13.79%  github.com/skosovsky/toolsy.executePreparedResult.func2
+       250 0.026% 11.65%     130902 13.72%  github.com/skosovsky/toolsy.rawArgsValidatedExecute.func1.1
+         0     0% 11.65%     130652 13.69%  github.com/skosovsky/zl-mcp/internal/toolruntime.New.func1
+       520 0.054% 11.70%     110900 11.62%  github.com/santhosh-tekuri/jsonschema/v6.(*roots).collectResources
+       581 0.061% 11.76%     110887 11.62%  github.com/santhosh-tekuri/jsonschema/v6.(*roots)._collectResources
+     91153  9.55% 21.32%     109569 11.48%  github.com/santhosh-tekuri/jsonschema/v6.SchemaPath.collect
+         0     0% 21.32%     108690 11.39%  github.com/skosovsky/toolsy.(*valueCloner).clone
+         0     0% 21.32%     108690 11.39%  github.com/skosovsky/toolsy.(*valueCloner).cloneReference
+         0     0% 21.32%     108690 11.39%  github.com/skosovsky/toolsy.cloneMutableValue
+         0     0% 21.32%     108690 11.39%  github.com/skosovsky/toolsy.cloneReflectValue (inline)
+    105940 11.10% 32.42%     105940 11.10%  github.com/skosovsky/toolsy.(*valueCloner).cloneJSONReference
+         0     0% 32.42%     104324 10.93%  github.com/skosovsky/toolsy.(*valueCloner).cloneAny
+     97928 10.26% 42.68%      97928 10.26%  github.com/santhosh-tekuri/jsonschema/v6.unevalFrom
+     96313 10.09% 52.78%      96313 10.09%  github.com/santhosh-tekuri/jsonschema/v6.(*scope).child (inline)
+         0     0% 52.78%      91180  9.56%  github.com/skosovsky/toolsy.deepCloneMap
+         0     0% 52.78%      88935  9.32%  encoding/json/v2.Unmarshal
+         0     0% 52.78%      88814  9.31%  encoding/json/v2.unmarshalDecode
+         0     0% 52.78%      88405  9.27%  encoding/json.Unmarshal (inline)
+         0     0% 52.78%      86511  9.07%  encoding/json/v2.makeMapArshaler.func3
+     86009  9.01% 61.79%      86009  9.01%  reflect.unsafe_New
+         0     0% 61.79%      81489  8.54%  encoding/json/v2.makeInterfaceArshaler.func2
+         0     0% 61.79%      72249  7.57%  github.com/santhosh-tekuri/jsonschema/v6.(*Schema).Validate (partial-inline)
+       250 0.026% 61.82%      72101  7.56%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).dispatch
+       250 0.026% 61.84%      71851  7.53%  github.com/skosovsky/zl-mcp/internal/app/conversations.(*Handler).Groups
+         0     0% 61.84%      71601  7.50%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).Groups
+         0     0% 61.84%      71500  7.49%  github.com/skosovsky/toolsy.cloneManifestForPolicy
+      3750  0.39% 62.24%      65224  6.84%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).Groups
+         0     0% 62.24%      64361  6.75%  reflect.New
+       318 0.033% 62.27%      62457  6.55%  github.com/skosovsky/zl-mcp/docs/contracts.Document
+         0     0% 62.27%      56801  5.95%  github.com/skosovsky/toolsy.executePreparedResult.func2.1
+         0     0% 62.27%      56801  5.95%  github.com/skosovsky/toolsy.rawArgsValidatedExecute.func1.1.1
+         0     0% 62.27%      56231  5.89%  encoding/json/v2.newAddressableValue
+       558 0.058% 62.33%      49288  5.17%  github.com/santhosh-tekuri/jsonschema/v6.(*Compiler).doCompile
+      1250  0.13% 62.46%      48972  5.13%  github.com/skosovsky/zl-mcp/internal/mcpserver.(*Service).encode
+         0     0% 62.46%      47809  5.01%  github.com/modelcontextprotocol/go-sdk/internal/json.Unmarshal
+      2000  0.21% 62.67%      47687  5.00%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).State
+      2184  0.23% 62.90%      45963  4.82%  github.com/santhosh-tekuri/jsonschema/v6.(*Compiler).compileObject
+         0     0% 62.90%      45963  4.82%  github.com/santhosh-tekuri/jsonschema/v6.(*Compiler).compileValue
+         0     0% 62.90%      45230  4.74%  github.com/modelcontextprotocol/go-sdk/internal/json.(*Decoder).Decode (inline)
+         0     0% 62.90%      45230  4.74%  github.com/segmentio/encoding/json.(*Decoder).Decode
+         0     0% 62.90%      44301  4.64%  github.com/skosovsky/toolsy.prepareFreshResultChunk
+         0     0% 62.90%      44301  4.64%  github.com/skosovsky/toolsy.prepareResultChunk
+         0     0% 62.90%      43779  4.59%  github.com/santhosh-tekuri/jsonschema/v6.(*objCompiler).compile
+         0     0% 62.90%      43061  4.51%  encoding/json/v2.makeSliceArshaler.func3
+         0     0% 62.90%      42651  4.47%  github.com/segmentio/encoding/json.Parse
+      2266  0.24% 63.14%      40399  4.23%  github.com/santhosh-tekuri/jsonschema/v6.(*objCompiler).compileDraft4
+         0     0% 63.14%      39125  4.10%  database/sql.(*DB).retry
+         0     0% 63.14%      38417  4.03%  database/sql.(*DB).QueryContext
+         0     0% 63.14%      38417  4.03%  database/sql.(*DB).QueryContext.func1
+      2504  0.26% 63.40%      38417  4.03%  database/sql.(*DB).query
+      2530  0.27% 63.66%      36049  3.78%  database/sql.(*DB).queryDC
+      7793  0.82% 64.48%      34041  3.57%  github.com/segmentio/encoding/json.decoder.decodeMapStringInterface
+         0     0% 64.48%      33021  3.46%  github.com/skosovsky/toolsy/internal/jsonschemax.Decode
+      8275  0.87% 65.35%      33015  3.46%  github.com/skosovsky/toolsy/internal/jsonschemax.(*valueParser).object
+      7589   0.8% 66.14%      33015  3.46%  github.com/skosovsky/toolsy/internal/jsonschemax.(*valueParser).value
+         0     0% 66.14%      33015  3.46%  github.com/skosovsky/toolsy/internal/jsonschemax.decodeValid
+     12939  1.36% 67.50%      29607  3.10%  github.com/segmentio/encoding/json.decoder.decodeInterface
+         0     0% 67.50%      27625  2.90%  encoding/json/v2.marshalEncode
+         0     0% 67.50%      26917  2.82%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).handleMeta
+     23202  2.43% 69.93%      26917  2.82%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).metaResource
+         0     0% 69.93%      26421  2.77%  database/sql.withLock
+         0     0% 69.93%      26405  2.77%  encoding/json.Marshal (inline)
+         0     0% 69.93%      26405  2.77%  encoding/json/v2.Marshal
+         1 0.0001% 69.93%      26253  2.75%  github.com/skosovsky/toolsy.(*Registry).View
+         0     0% 69.93%      25432  2.67%  database/sql.(*DB).queryDC.func1
+         0     0% 69.93%      25162  2.64%  database/sql.ctxDriverQuery
+         0     0% 69.93%      25162  2.64%  modernc.org/sqlite.(*conn).QueryContext
+         0     0% 69.93%      25162  2.64%  modernc.org/sqlite.(*conn).query
+         0     0% 69.93%      24271  2.54%  github.com/segmentio/encoding/json.constructStructDecodeFunc.func1
+         0     0% 69.93%      24271  2.54%  github.com/segmentio/encoding/json.decoder.decodeStruct
+       782 0.082% 70.01%      22633  2.37%  modernc.org/sqlite.(*stmt).query
+       250 0.026% 70.04%      22551  2.36%  github.com/skosovsky/toolsy.prepareChunkDecoded
+         0     0% 70.04%      22273  2.33%  database/sql.(*Rows).Next
+      3504  0.37% 70.41%      21776  2.28%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).collectionRefs
+         0     0% 70.41%      21720  2.28%  github.com/modelcontextprotocol/go-sdk/mcp.(*ClientSession).CallTool
+         0     0% 70.41%      21019  2.20%  database/sql.(*Rows).Next.func1
+      2530  0.27% 70.67%      21019  2.20%  database/sql.(*Rows).nextLocked
+      3824   0.4% 71.07%      20842  2.18%  github.com/skosovsky/toolsy/internal/jsonschemax.(*valueParser).array
+         0     0% 71.07%      20720  2.17%  github.com/modelcontextprotocol/go-sdk/mcp.clientMultiRoundTripMiddleware.func1.1
+         0     0% 71.07%      20720  2.17%  github.com/modelcontextprotocol/go-sdk/mcp.defaultSendingMethodHandler
+         0     0% 71.07%      20720  2.17%  github.com/modelcontextprotocol/go-sdk/mcp.handleSend[go.shape.*uint8]
+         0     0% 71.07%      20469  2.15%  github.com/modelcontextprotocol/go-sdk/mcp.call
+         0     0% 71.07%      19800  2.08%  github.com/modelcontextprotocol/go-sdk/mcp.remarshal
+         0     0% 71.07%      19732  2.07%  github.com/skosovsky/toolsy.(*Registry).ManifestSet
+         8 0.00084% 71.07%      19732  2.07%  github.com/skosovsky/toolsy.manifestSetFromToolMap
+        44 0.0046% 71.08%      19724  2.07%  github.com/skosovsky/toolsy.addToolToManifestSet
+       500 0.052% 71.13%      19497  2.04%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).Summary
+       500 0.052% 71.18%      19060  2.00%  database/sql.(*DB).QueryRowContext (partial-inline)
+      1250  0.13% 71.31%      18502  1.94%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).CollectionStatus
+     11784  1.24% 72.55%      18489  1.94%  modernc.org/sqlite.(*rows).Next
+         0     0% 72.55%      18301  1.92%  github.com/skosovsky/toolsy.validateChunkDecoded
+       699 0.073% 72.62%      17579  1.84%  github.com/santhosh-tekuri/jsonschema/v6.(*objCompiler).enqueueMap
+         0     0% 72.62%      17339  1.82%  github.com/santhosh-tekuri/jsonschema/v6.(*Compiler).enqueue
+         0     0% 72.62%      17210  1.80%  encoding/json/v2.makeMapArshaler.func2
+         0     0% 72.62%      16885  1.77%  github.com/santhosh-tekuri/jsonschema/v6.goRegexpCompile
+         0     0% 72.62%      16885  1.77%  regexp.Compile (inline)
+        73 0.0077% 72.63%      16885  1.77%  regexp.compile
+      2184  0.23% 72.86%      16840  1.76%  github.com/santhosh-tekuri/jsonschema/v6.newSchema (inline)
+         0     0% 72.86%      16755  1.76%  github.com/santhosh-tekuri/jsonschema/v6.(*objCompiler).enqueuePtr (inline)
+         0     0% 72.86%      16467  1.73%  reflect.packEface (inline)
+         0     0% 72.86%      16467  1.73%  reflect.packEfaceData
+         0     0% 72.86%      16467  1.73%  reflect.valueInterface
+         0     0% 72.86%      16466  1.73%  reflect.Value.Set
+         0     0% 72.86%      16466  1.73%  reflect.Value.assignTo
+         2 0.00021% 72.86%      16374  1.72%  github.com/skosovsky/toolsy.newRegistryViewSnapshot
+         0     0% 72.86%      16323  1.71%  github.com/skosovsky/toolsy.registryManifestDigest
+         0     0% 72.86%      14833  1.55%  github.com/skosovsky/toolsy.deepCopySchemaFromMap
+     13811  1.45% 74.31%      14816  1.55%  github.com/segmentio/encoding/json.decoder.decodeString
+         0     0% 74.31%      14760  1.55%  github.com/skosovsky/toolsy.(*tool).Manifest
+         0     0% 74.31%      14760  1.55%  github.com/skosovsky/toolsy.cloneToolManifest
+         0     0% 74.31%      14760  1.55%  github.com/skosovsky/toolsy.deepCopySchema (inline)
+      4251  0.45% 74.75%      14656  1.54%  github.com/santhosh-tekuri/jsonschema/v6.(*urlPtr).String
+         0     0% 74.75%      14626  1.53%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*AsyncCall).Await
+       240 0.025% 74.78%      14557  1.53%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).ReadIdentity
+        66 0.0069% 74.78%      14538  1.52%  github.com/modelcontextprotocol/go-sdk/mcp.(*Server).AddTool
+      1000   0.1% 74.89%      14297  1.50%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).ReadIdentity
+      9252  0.97% 75.86%      13980  1.47%  github.com/santhosh-tekuri/jsonschema/v6.jsonPointer.append
+         0     0% 75.86%      13851  1.45%  github.com/segmentio/encoding/json.decoder.decodeSlice
+       250 0.026% 75.88%      13828  1.45%  github.com/modelcontextprotocol/go-sdk/mcp.(*CallToolResult).UnmarshalJSON
+         0     0% 75.88%      13828  1.45%  github.com/segmentio/encoding/json.constructJSONUnmarshalerDecodeFunc.func1
+         0     0% 75.88%      13828  1.45%  github.com/segmentio/encoding/json.decoder.decodeJSONUnmarshaler
+     13325  1.40% 77.28%      13327  1.40%  github.com/skosovsky/toolsy/internal/jsonschemax.(*valueParser).text
+      8814  0.92% 78.20%      12905  1.35%  modernc.org/sqlite.newRows
+         0     0% 78.20%      12678  1.33%  encoding/json/v2.makeInterfaceArshaler.func1
+         0     0% 78.20%      12500  1.31%  github.com/skosovsky/toolsy.(*Registry).wrapYieldWithCallMeta.func1
+         0     0% 78.20%      12500  1.31%  github.com/skosovsky/toolsy.prepareChunk
+       502 0.053% 78.26%      12371  1.30%  github.com/modelcontextprotocol/go-sdk/mcp.validateRequestMeta
+       501 0.053% 78.31%      11269  1.18%  github.com/skosovsky/zl-mcp/internal/storage.historyAccount
+       250 0.026% 78.34%      11046  1.16%  github.com/skosovsky/zl-mcp/internal/mcpserver.conversationReadResult
+     10716  1.12% 79.46%      10716  1.12%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).strValidate
+        10 0.001% 79.46%      10002  1.05%  encoding/json/v2.makeStructArshaler.func2
+      1004  0.11% 79.56%       9869  1.03%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.jsonMarshal
+         0     0% 79.56%       9606  1.01%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*Connection).readIncoming
+      9295  0.97% 80.54%       9295  0.97%  modernc.org/sqlite.interruptOnDone
+         0     0% 80.54%       8992  0.94%  github.com/skosovsky/toolsy.PolicyFunc.Decide
+         0     0% 80.54%       8992  0.94%  github.com/skosovsky/toolsy.evaluatePolicy
+         0     0% 80.54%       8992  0.94%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).decide
+      8892  0.93% 81.47%       8952  0.94%  fmt.Sprintf
+         0     0% 81.47%       8650  0.91%  math/big.(*Rat).SetString
+         0     0% 81.47%       8616   0.9%  encoding/json/v2.makeMethodArshaler.func3
+       750 0.079% 81.55%       8565   0.9%  github.com/modelcontextprotocol/go-sdk/mcp.(*CallToolResult).MarshalJSON
+         0     0% 81.55%       8441  0.88%  github.com/santhosh-tekuri/jsonschema/v6.RegexpEngine.validate (inline)
+         0     0% 81.55%       8378  0.88%  reflect.Value.SetMapIndex
+         0     0% 81.55%       8378  0.88%  reflect.mapassign_faststr
+      8378  0.88% 82.43%       8378  0.88%  reflect.mapassign_faststr0
+         0     0% 82.43%       8349  0.88%  github.com/modelcontextprotocol/go-sdk/mcp.(*ioConn).Read
+      1004  0.11% 82.53%       8349  0.88%  github.com/modelcontextprotocol/go-sdk/mcp.readBatch
+      1077  0.11% 82.65%       8203  0.86%  github.com/santhosh-tekuri/jsonschema/v6.AllProp.collect
+         0     0% 82.65%       8198  0.86%  github.com/santhosh-tekuri/jsonschema/v6.encode
+         0     0% 82.65%       8130  0.85%  regexp.compileOnePass
+      2529  0.27% 82.91%       8087  0.85%  database/sql.(*Rows).initContextClose
+       118 0.012% 82.92%       8002  0.84%  regexp.makeOnePass
+      1500  0.16% 83.08%       8001  0.84%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).conversationGapCounts
+         0     0% 83.08%       7861  0.82%  encoding/json.(*Encoder).Encode
+         0     0% 83.08%       7808  0.82%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.marshalToRaw
+         0     0% 83.08%       7750  0.81%  reflect.MakeMap (inline)
+         0     0% 83.08%       7750  0.81%  reflect.MakeMapWithSize
+      7750  0.81% 83.89%       7750  0.81%  reflect.makemap
+      5438  0.57% 84.46%       7628   0.8%  regexp.makeOnePass.func1
+      7587   0.8% 85.26%       7600   0.8%  database/sql.(*Rows).close
+         0     0% 85.26%       7581  0.79%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).Bind
+      6909  0.72% 85.98%       6909  0.72%  math/big.nat.make (inline)
+      5005  0.52% 86.51%       6898  0.72%  github.com/santhosh-tekuri/jsonschema/v6.jsonPointer.append2
+         0     0% 86.51%       6856  0.72%  encoding/json/v2.MarshalEncode
+         0     0% 86.51%       6831  0.72%  github.com/segmentio/encoding/json.constructPointerDecodeFunc.func1
+         0     0% 86.51%       6831  0.72%  github.com/segmentio/encoding/json.decoder.decodePointer
+      2844   0.3% 86.80%       6816  0.71%  github.com/santhosh-tekuri/jsonschema/v6.Prop.collect
+      6705   0.7% 87.51%       6705   0.7%  modernc.org/sqlite.(*conn).columnText
+      4596  0.48% 87.99%       6696   0.7%  regexp/syntax.(*Regexp).Simplify
+         0     0% 87.99%       6594  0.69%  database/sql.(*Row).Scan
+         6 0.00063% 87.99%       6572  0.69%  github.com/skosovsky/zl-mcp/internal/mcpserver.(*Service).addConversationResources
+      1002  0.11% 88.09%       6502  0.68%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).conversationMessageCounts
+       250 0.026% 88.12%       6377  0.67%  github.com/skosovsky/zl-mcp/internal/adapters/store.catalogValue[go.shape.struct { Groups []github.com/skosovsky/zl-mcp/internal/domain.Group "json:\"groups\""; HasMore bool "json:\"has_more\""; NextCursor *string "json:\"next_cursor\""; EmptyReason *string "json:\"empty_reason\""; CatalogUpdatedAt *string "json:\"catalog_updated_at\""; Stale bool "json:\"stale\"" }]
+      6353  0.67% 88.79%       6353  0.67%  slices.Clone[go.shape.[]string,go.shape.string] (inline)
+         0     0% 88.79%       6351  0.67%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).instanceLocation (inline)
+       250 0.026% 88.81%       6301  0.66%  github.com/modelcontextprotocol/go-sdk/mcp.newMethodInfo[go.shape.*github.com/modelcontextprotocol/go-sdk/mcp.CallToolParamsRaw,go.shape.*uint8,go.shape.struct { github.com/modelcontextprotocol/go-sdk/mcp.Meta "json:\"_meta,omitempty\""; Name string "json:\"name\""; Arguments encoding/json/jsontext.Value "json:\"arguments,omitempty\""; InputResponses github.com/modelcontextprotocol/go-sdk/mcp.InputResponseMap "json:\"inputResponses,omitempty\""; RequestState string "json:\"requestState,omitempty\"" }].func1
+         0     0% 88.81%       6177  0.65%  reflect.Value.Grow
+         0     0% 88.81%       6177  0.65%  reflect.Value.grow
+      6177  0.65% 89.46%       6177  0.65%  reflect.growslice
+       505 0.053% 89.51%       5861  0.61%  github.com/modelcontextprotocol/go-sdk/mcp.decodeMetaValue[go.shape.*uint8]
+       502 0.053% 89.57%       5843  0.61%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*Connection).Call
+       251 0.026% 89.59%       5799  0.61%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*Connection).processResult
+       251 0.026% 89.62%       5792  0.61%  github.com/modelcontextprotocol/go-sdk/mcp.extractRequestMeta
+        61 0.0064% 89.62%       5732   0.6%  encoding/json/v2.makeStringArshaler.func2
+       234 0.025% 89.65%       5715   0.6%  github.com/santhosh-tekuri/jsonschema/v6.(*objCompiler).enqueueArr
+      5665  0.59% 90.24%       5665  0.59%  encoding/json/v2.makeString
+      2555  0.27% 90.51%       5612  0.59%  context.WithCancel
+      2636  0.28% 90.79%       5272  0.55%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).error (inline)
+         0     0% 90.79%       5216  0.55%  reflect.Value.MapIndex
+         0     0% 90.79%       5216  0.55%  reflect.copyVal
+         0     0% 90.79%       5065  0.53%  database/sql.(*Rows).Close
+         0     0% 90.79%       5002  0.52%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).AllowRead
+         0     0% 90.79%       5002  0.52%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).AllowRead
+       250 0.026% 90.81%       5002  0.52%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).allowReadAt
+         5 0.00052% 90.81%       4927  0.52%  github.com/skosovsky/toolsy.(*RegistryBuilder).Build
+         0     0% 90.81%       4920  0.52%  github.com/skosovsky/toolsy.ManifestSet.Manifest
+         0     0% 90.81%       4920  0.52%  github.com/skosovsky/toolsy.buildToolManifest
+      4878  0.51% 91.32%       4878  0.51%  strings.(*Builder).WriteString (inline)
+      4875  0.51% 91.84%       4875  0.51%  strings.genSplit

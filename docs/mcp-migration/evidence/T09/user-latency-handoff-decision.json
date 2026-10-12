@@ -1,0 +1,14 @@
+{
+  "task": "T09",
+  "date_utc": "2026-10-12T13:14:59.976881+00:00",
+  "user_decision": "Оставляем приложения работать; сохрани latency FAIL и handoff.",
+  "status": "BLOCKED_LATENCY_FAIL_HANDOFF",
+  "source_digest_sha256": "b6b51db253ddab35174a8a09d934f6145627c04c27cf88d60076f703c0b4ef84",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "performance_report": "performance-comparison-v4.json",
+  "acceptance": "Not accepted; no p95 waiver or baseline replacement authorized",
+  "actions": "No app closures, new benchmark, deployment, commit or subsequent task",
+  "resume": "Requires explicit continuation and suitable host conditions for full fixed-contract measurements; then two independent reviews",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

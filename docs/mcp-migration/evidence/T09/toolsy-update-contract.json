@@ -1,0 +1,33 @@
+{
+  "task": "T09",
+  "user_authorization": "toolsy \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d - \u043f\u043e\u0447\u0438\u0441\u0442\u0438 \u0443 \u0441\u0435\u0431\u044f \u043e\u0441\u0442\u0430\u0442\u043a\u0438 \u043e\u0442 \u0430\u043d\u0430\u043b\u0438\u0437\u0430 \u044d\u0442\u043e\u0439 \u043f\u0440\u043e\u0431\u043b\u0435\u043c\u044b \u0438 \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0430\u0439",
+  "requirements": "Original61leafrequirements unchanged; same fixedp95<=1.15/allocations<=1.20, schemas/policy/persistence unchanged",
+  "official_pin": {
+    "Path": "github.com/skosovsky/toolsy",
+    "Version": "v0.20.1",
+    "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.1.info",
+    "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.1.mod",
+    "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.1.zip",
+    "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.1",
+    "Sum": "h1:jhc6D4MXQL/s20aZNnR8Q6X+MniHmcR+eDt2F2ie65M=",
+    "GoModSum": "h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=",
+    "Origin": {
+      "VCS": "git",
+      "URL": "https://github.com/skosovsky/toolsy",
+      "Hash": "2b4c9419792bc843ff92c0cf64b35f83330a389d",
+      "Ref": "refs/tags/v0.20.1"
+    },
+    "contract_sha256": {
+      "docs/execution-contract.md": "601ffe8c1f93ee31fb712842375d492cbca32c26f4561e76b1f708a057e4d045"
+    },
+    "integration_task": "T09",
+    "go_directive": "1.27.1",
+    "probe": "PENDING new public consumer/root contract verification",
+    "root_runtime_consumer": "internal/toolruntime; official v0.20.1, no patch/local replace/profile/result cache/session journal"
+  },
+  "cleanup": "Remove only owned temporary proposal/older-pin modfiles and diagnostic benchmark code. Preserve historic raw failures/profiles/proposal/reviews as evidence; no patches adopted.",
+  "baseline": "Frozen original business/T03harness and accepted T03performance remain unchanged",
+  "acceptance": "Fresh root/nested/race/vet/architecture/build/paired/performance and two independent reviewers before soleT09commit",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

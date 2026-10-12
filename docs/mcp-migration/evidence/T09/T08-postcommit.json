@@ -1,0 +1,12 @@
+{
+  "task": "T08",
+  "commit": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "tree": "271cc965ee703e641ae202d90be21413bcb36d1e",
+  "source_digest_sha256": "3de785e5375edc889d9a9a403d8b3d5696e6c6e0520cffb29ae2113df740a1aa",
+  "completeness": "44/44 100% PASS",
+  "correctness": "PASS",
+  "committed_artifacts_verified": 709,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01"
+}

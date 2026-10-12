@@ -1,0 +1,22 @@
+{
+  "official_toolsy": "v0.20.2",
+  "gate_revision": "performance-gate-contract-v2.json",
+  "machine": {
+    "system": "Darwin",
+    "node": "local-macos-host",
+    "release": "27.0.0",
+    "version": "Darwin Kernel Version 27.0.0: Tue Aug 11 21:22:49 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T6000",
+    "machine": "arm64",
+    "processor": "arm"
+  },
+  "cpu_count": 10,
+  "cpu_model": "Apple M1 Max",
+  "build": "build-manifest-v6.json",
+  "reason_for_repeat": "Newofficialupstreampin andexplicituserprospective performancecontractv2; priorFAILs retainednotreclassified",
+  "thresholds": {
+    "p95": 1.15,
+    "allocations": 2.0,
+    "alloc_bytes": 1.2
+  },
+  "baseline_unchanged": true
+}

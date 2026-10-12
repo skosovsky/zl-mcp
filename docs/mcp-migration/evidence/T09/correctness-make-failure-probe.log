@@ -1,0 +1,4 @@
+task_pair_root=$(mktemp -d /tmp/zl-mcp-paired.XXXXXX); \
+	GOWORK=off python3 scripts/mcp-migration/build_eval.py --output "$task_pair_root/build"; \
+	"$task_pair_root/build/zl-mcp-eval-candidate" --root "/workspace/zl-mcp" --baseline-binary "$task_pair_root/build/zl-mcp-eval-baseline" --output "$task_pair_root/paired" --repeats 2
+injected build/manifest failure after binary creation

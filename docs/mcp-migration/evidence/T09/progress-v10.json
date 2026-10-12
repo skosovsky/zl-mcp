@@ -1,0 +1,39 @@
+{
+  "task": "T09",
+  "status": "BLOCKED_HOST_LATENCY_ANOMALY",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "requirements": 62,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01",
+  "remaining": [
+    "Idlehost finalcandidate5x1000p95PASS; originalbaseline/p95limitsunchanged",
+    "Freshindependent62/62 andcorrectnessPASS reviews",
+    "SoleT09commit"
+  ],
+  "implementation": "Full canonical paired trace/input/output/effect comparison supplements RunPaired/Compare; fail-closed performance provenance/numeric validation and Make prerequisite failure propagation corrected",
+  "checks": {
+    "root_nested_python_consumer_restart": "toolsy-v0.20.2-checks.json: all listed exit statuses zero",
+    "architecture": "architecture-v6.json PASS",
+    "builds": "build-manifest-v6.json and platform-build-manifest-v3.json PASS",
+    "offline": "offline-v6/report.json PASS 50/50 cases 480/480 assertions",
+    "paired": "paired-v6/report.json PASS both 50/50 cases 480/480 assertions and 50 canonical pairs",
+    "performance": "performance-comparison-v4.json: allocations and B/op PASS, all p95 FAIL; performance-v3 raw runs retained"
+  },
+  "blocker": "latency-anomaly-proof-v1.json; latest revalidation latency-blocked-audit-v3.json",
+  "source_digest_sha256": "b6b51db253ddab35174a8a09d934f6145627c04c27cf88d60076f703c0b4ef84",
+  "remediation": "remediation-candidate-v4.json",
+  "review_status": "Fresh62leafindependentreviews pending",
+  "reviews": [
+    "reviewer-completeness-v4.json",
+    "reviewer-correctness-v4.json"
+  ],
+  "active_processes": [],
+  "task_commit_created": false,
+  "next_task_started": false,
+  "dependency": "toolsyv0.20.2",
+  "next_action": "After lower host load: fresh full 5x1000 measurements per kind, original p95 baseline and limits; then independent 62/62 and correctness PASS reviews before sole T09 commit",
+  "latest_evidence": "latency-blocked-audit-v3.json",
+  "performance_contract": "performance-gate-contract-v2.json",
+  "draft_correction": "Verifier isauthoritative; allgatesPASSdraftcorrected"
+}

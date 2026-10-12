@@ -20,6 +20,7 @@ def sha(path):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--native', action='store_true', help='also build old/new synthetic native restart executables')
     args = parser.parse_args()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -50,17 +51,21 @@ def main():
                 target.write_bytes(data)
                 manifest['overlay'].append({'path': relative, 'sha256': hashlib.sha256(data).hexdigest(), 'source_commit': HARNESS})
             manifest['overlay_purpose'] = 'Only fixture/driver plus forwarding archive constructor and pinned harness dependency/toolchain; frozen business implementations unchanged'
+            targets = [('zl-mcp-eval', './cmd/zl-mcp-eval')]
+            if args.native:
+                targets.append(('zl-mcp', './cmd/zl-mcp'))
             for name, work in [('baseline', source), ('candidate', ROOT)]:
-                binary = output / ('zl-mcp-eval-' + name)
-                command = ['go', 'build', '-trimpath', '-o', str(binary), './cmd/zl-mcp-eval']
-                result = subprocess.run(command, cwd=work, env=env, capture_output=True, timeout=180)
-                (output / (name + '.build.log')).write_bytes(result.stdout + result.stderr)
-                record = {'kind': name, 'command': command, 'exit_status': result.returncode, 'binary': str(binary)}
-                manifest['builds'].append(record)
-                if result.returncode:
-                    raise RuntimeError(f'{name} build failed')
-                record['binary_sha256'] = sha(binary)
-                record['build_info'] = subprocess.check_output(['go', 'version', '-m', str(binary)], text=True)
+                for prefix, package in targets:
+                    binary = output / (prefix + '-' + name)
+                    command = ['go', 'build', '-trimpath', '-o', str(binary), package]
+                    result = subprocess.run(command, cwd=work, env=env, capture_output=True, timeout=180)
+                    (output / ((name if prefix == 'zl-mcp-eval' else prefix + '-' + name) + '.build.log')).write_bytes(result.stdout + result.stderr)
+                    record = {'kind': name, 'target': package, 'command': command, 'exit_status': result.returncode, 'binary': str(binary)}
+                    manifest['builds'].append(record)
+                    if result.returncode:
+                        raise RuntimeError(f'{name} build failed')
+                    record['binary_sha256'] = sha(binary)
+                    record['build_info'] = subprocess.check_output(['go', 'version', '-m', str(binary)], text=True)
             manifest['status'] = 'PASS'
     finally:
         (output / 'build-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')

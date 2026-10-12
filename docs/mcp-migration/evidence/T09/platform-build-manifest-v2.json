@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "records": [
+    {
+      "platform": "darwin/arm64",
+      "CGO_ENABLED": "0",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -trimpath -o /tmp/zl-T09-v5-darwin-arm64 ./cmd/zl-mcp",
+      "exit_status": 0,
+      "binary_sha256": "72b068b90a91f28d490b80acd233a92b36fe20f856e71f0665f8bd2207e90d30",
+      "log": "build-darwin-arm64-v2.log"
+    },
+    {
+      "platform": "darwin/amd64",
+      "CGO_ENABLED": "0",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -trimpath -o /tmp/zl-T09-v5-darwin-amd64 ./cmd/zl-mcp",
+      "exit_status": 0,
+      "binary_sha256": "acbf1e5ebd97b7221f1d3acbbc36422122cae6e44996d1fe9a552462f763453e",
+      "log": "build-darwin-amd64-v2.log"
+    },
+    {
+      "platform": "linux/amd64",
+      "CGO_ENABLED": "0",
+      "command": "GOWORK=off GOPATH=/tmp/zl-migration-go-path GOMODCACHE=/tmp/zl-migration-mod-cache GOCACHE=/tmp/zl-migration-go-cache CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o /tmp/zl-T09-v5-linux-amd64 ./cmd/zl-mcp",
+      "exit_status": 0,
+      "binary_sha256": "b36d9d35e6b9ffc020f9cbfcfab9afd9485da6cf0c9d09f9e471b0d0869b4a0e",
+      "log": "build-linux-amd64-v2.log"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "task": "T09",
+  "source_digest_sha256": "790129abc733a5781feac571624d8f71e34871c211125d357976a519cd9c3ba7",
+  "status": "NOT_ACCEPTED_PERFORMANCE_BLOCKER",
+  "prior_reviews": "reviewer-completeness-v1.json and reviewer-correctness-v1.json retained, candidate f47a... failed",
+  "remediation": {
+    "full_capture_parity": "paired-v4/report.json:50 complete pairs and equal canonical hashes; 50/50 cases480/480 assertions",
+    "mutated_child": "mutated-paired-v2/report.json:FAIL exit1,24/25 canonicalpairs even with25/25cases240/240assertions",
+    "invalid_performance_evidence": "performance-verifier-tests-v3.log:8testsPASS",
+    "make_late_build_failure": "make-failure-negative-v2.log:PASS; candidate not executed",
+    "benchmark_role": "Makefile candidate default and bench_mcp.py build digest/role validation"
+  },
+  "checks": {
+    "root_tests": "root-tests-v3.log PASS",
+    "root_vet": "root-vet-v3.log PASS",
+    "evaluation_race": "evaluation-race-v3.log PASS",
+    "paired": "paired-v4/report.json PASS",
+    "performance": "performance-comparison-v2.json FAIL; fixed thresholds unchanged"
+  },
+  "binary_source_equivalence": {
+    "build_manifest": "build-manifest-v4.json",
+    "changed_paths_since_build": [
+      "docs/mcp-migration/paired-offline-contract.md",
+      "scripts/mcp-migration/bench_mcp.py",
+      "scripts/mcp-migration/compare_performance.py",
+      "scripts/mcp-migration/test_compare_performance.py",
+      "scripts/mcp-migration/test_make_gates.py"
+    ],
+    "no_Go_or_module_change": true,
+    "interpretation": "same Go executable source; new changes only Python verifier/benchmark/Make tests/documentation"
+  },
+  "dependency_scope": "No adoption of isolated toolsy patch or sibling/third_party edits; pending explicit user decision",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01"
+}

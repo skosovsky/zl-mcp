@@ -1,0 +1,10 @@
+{
+  "status": "ISOLATED_PROPOSAL_NOT_ADOPTED",
+  "source_digest": "99590f01cab2140b92c48e93b60ba2a7984104e144655ec01915f6217db12186",
+  "scope": "Pass typednativeDTO directly to existing finalencode, eliminating marshal\u2192decode\u2192marshal roundtrip. Keep same final strictschema validation/wiremap/SDKrepresentation, fullpolicy/outputschemas/admission/bytebudget; no rawschema tricks.",
+  "requirements": "Publicwirefields/null/IDs/format/error/resourceLinks/pagination/nativeeffect invariants must remain equal; no newdependency orlibrarychanges",
+  "directory": "/tmp/zl-T09-host-projection-probe",
+  "acceptance": "Prototype must have tests+fullcanonicalpaired and measured benefit before rootadoption; mandatoryfixed5x1000performance remainsrequired",
+  "result": "NOT_ADOPTED: characterization tests fail for null/missing object baseline because JSON text object key order changes. No root implementation change; no failed prototype accepted.",
+  "temporary_directory_removed": true
+}

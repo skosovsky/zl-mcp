@@ -53,6 +53,10 @@ github.com/skosovsky/metry v0.10.1 h1:BLl242PXNWwk4+bWyVph3sKKgoPBhQi66bPjZtnIcB
 github.com/skosovsky/metry v0.10.1/go.mod h1:DF+cRevcaXSlbby6IjYhhdS7k6BCpL+5ohfgHFV7/bo=
 github.com/skosovsky/toolsy v0.20.0 h1:nUgLZz3mGKKu47atAN04kFkF3HIhjLR8psUDwN9SHrs=
 github.com/skosovsky/toolsy v0.20.0/go.mod h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=
+github.com/skosovsky/toolsy v0.20.1 h1:jhc6D4MXQL/s20aZNnR8Q6X+MniHmcR+eDt2F2ie65M=
+github.com/skosovsky/toolsy v0.20.1/go.mod h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=
+github.com/skosovsky/toolsy v0.20.2 h1:Mpe2AJzJd/+ZFfCXMzD5DstiF+qdeWT6+z+IpHEFsf0=
+github.com/skosovsky/toolsy v0.20.2/go.mod h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=
 github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE=
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
 github.com/ulikunitz/xz v0.5.17 h1:flR0y/x1hgM8EGV1AW3Xll6T413G0glV8UfBwR617V4=

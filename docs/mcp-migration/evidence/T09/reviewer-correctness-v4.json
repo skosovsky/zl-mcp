@@ -1,0 +1,88 @@
+{
+  "task": "T09",
+  "reviewer": "independent correctness",
+  "source_digest_sha256": "99590f01cab2140b92c48e93b60ba2a7984104e144655ec01915f6217db12186",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "verdict": "FAIL",
+  "accepted": false,
+  "peer_report_consulted": false,
+  "artifact_index_verified": {
+    "path": "artifact-index-v7.json",
+    "count": 2349,
+    "mismatches": 0
+  },
+  "findings": [
+    {
+      "id": "C09-01",
+      "severity": "P1",
+      "source": "docs/mcp-migration/evidence/T09/performance-comparison-v3.json",
+      "requirements": [
+        "T09-54",
+        "T09-57"
+      ],
+      "repro": "Officialtoolsyv0.20.1 full5x1000measurements perkind0errors; recomputed candidateallocations exceed unchanged1.20baseline all3kinds. Latency now independently inspectedPASS all3kinds.",
+      "consequence": "T09 mandatory allocations gate remains unmet. No T09 acceptance/commit or nexttask allowed.",
+      "expected_fix": "Preserve all public/persistence/schema/policy/nativecontracts; establish concrete compatible allocation reduction then fresh unchanged fullperformance gates. HistoricalFAIL retained."
+    }
+  ],
+  "closed_findings": [
+    "C09-02 canonical behavior parity fixed and fresh officialdependency paired-v5 full50pairsPASS",
+    "C09-03 invalid negative/nonfinite/type/provenance measurements failclosed",
+    "C09-04 Make prerequisite failures propagated",
+    "C09-05 enormous integer CLI preservesFAILreport",
+    "Previous latency component ofC09-01 nowPASS; allocation component remainsFAIL"
+  ],
+  "performance_rows": [
+    {
+      "kind": "read",
+      "p95_pass": true,
+      "allocations": 1597.071,
+      "limit": 1041.168,
+      "excess": 555.903
+    },
+    {
+      "kind": "search",
+      "p95_pass": true,
+      "allocations": 2139.612,
+      "limit": 1373.124,
+      "excess": 766.488
+    },
+    {
+      "kind": "context",
+      "p95_pass": true,
+      "allocations": 2066.969,
+      "limit": 1279.2636,
+      "excess": 787.7054
+    }
+  ],
+  "dependency_review": {
+    "version": "v0.20.1",
+    "origin": "2b4c9419792bc843ff92c0cf64b35f83330a389d",
+    "official_download_integrity": "go.mod/go.sum match recorded module origin and sums; no toolsyreplace/vendor/localpatch",
+    "clone_boundary": "New exactJSON-container fastpath preserves reference memo before recursion and BYOT fallback; production still gets protected policy manifest clones. Existing strictpolicy/execution/resultschema checks retained.",
+    "consumer_probe": "consumer-probe-v0.20.1.json PASS, noreplace",
+    "compiled_source_equivalence": "build-manifest-v5 source compared with99590f independently: only docs/mcp-migration/dependency-matrix.json differs; Go/module sources identical"
+  },
+  "checks_verified": [
+    "Exactcandidate.py99590fhash",
+    "2349indexed artifact SHA256/bytes match",
+    "Independent go test ./internal/toolruntime ./internal/evaluation -count=1 PASS with officialpin",
+    "Fresh root/nestedtests+races+vets logsPASS",
+    "architecture-v4 strict100/100controlsPASS",
+    "platform-build-manifest-v2 threeCGOfreeplatformsPASS",
+    "offline-v5 all50cases480assertionsPASS",
+    "paired-v5 bothcomplete50cases480assertions+full50canonicalpairsPASS",
+    "restart-old-new-v2/restart-new-old-v2 bothsequentialsharedsyntheticstatePASS",
+    "Diagnosticbenchmarks/testingTB-onlyhelpers removed; no third_party/sibling/temporarymodfileoverride adopted"
+  ],
+  "host_only_optimization_assessment": {
+    "evidence": "Retained realSDK250readprofile call-focus/source: clone71500/250=286perread; preparedresultvalidation44301/250=177.204perread; profileisdiagnosticnotperformanceacceptance.",
+    "safe_prospects": "Invocation-owned immutable decodedarguments may avoid repeated host decode/revalidation only if ownership/rawbytes equivalence/currentauthority/strictschema guarantees are kept and proven. Fresh transport projections may avoid repeated JSONroundtrip while preservingUseNumber/errorcode/format/outputvalidation/budgets. No host-onlysaving implementation or measurement currently proves gates.",
+    "limitations": "44/read JSON projection alone is below556/readrequiredsaving. Library-owned clone+prepare463/read also below556/read excess; cannot infer sufficiency or exact additive reduction fromcumulativeprofile. Protected schema/policyvalidation cannot be disabled, obfuscated or bypassed.",
+    "recommendation": "Profile-guided host-only experiments are permissible within contracts, but no proven host-only gate-closing path exists in currentevidence. Further compatible upstream optimization may be necessary; do not substitute that inference for measuredproof or silentlyadoptpatch."
+  },
+  "no_additional_correctness_defects_found": true,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01"
+}

@@ -52,3 +52,13 @@ so invalid query/date/cursor/selection ordering is identical. Preflight selects
 no messages and never runs FTS. Domain/technical errors survive the policy wrapper.
 Policy evaluation rereads identity/scope and native access immediately before the
 single app dispatch; Store checks access again when selecting the actual data.
+
+T09 dependency update: official toolsy v0.20.1 replaces v0.20.0 after the
+upstream performance fix. Existing execution, validation, authorization and
+BYOT contracts above remain mandatory; no isolated diagnostic patch is adopted.
+The dependency matrix records the immutable origin and fresh acceptance evidence.
+
+T09 final pin: official v0.20.2, origin36eb5b661ab4569051e5b17175dc44f3dd132b9c,
+replaces v0.20.1. Execution/privacy/persistence contracts are unchanged. Performance
+acceptance uses explicit user revision2026-10-12: allocations<=2.0 and B/op<=1.20;
+p95<=1.15. Earlier failures retain their original criteria.

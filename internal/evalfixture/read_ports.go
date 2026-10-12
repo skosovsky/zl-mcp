@@ -15,8 +15,8 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/toolruntime"
 )
 
-func fixtureReadPorts(owner *storage.Store, backend operationsadapter.Backend) mcpserver.ReadPorts {
+func fixtureReadPorts(owner *storage.Store, backend operationsadapter.Backend) mcpserver.Ports {
 	reader := storeadapter.New(owner)
 	operations := operationsadapter.NewReader(backend)
-	return mcpserver.ReadPorts{Archives: &archives.Handler{Reads: operationsadapter.NewArchiveReader(backend)}, Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader, LiveGroups: operations}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader}, Operations: toolruntime.OperationReads{Messaging: &messaging.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}}}
+	return mcpserver.Ports{Archives: &archives.Handler{Reads: operationsadapter.NewArchiveReader(backend)}, Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader, LiveGroups: operations}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader}, Operations: toolruntime.Capabilities{Messaging: &messaging.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}}}
 }

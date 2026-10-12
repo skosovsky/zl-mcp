@@ -1,0 +1,23 @@
+{
+  "Path": "github.com/skosovsky/toolsy",
+  "Version": "v0.20.1",
+  "Info": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.1.info",
+  "GoMod": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.1.mod",
+  "Zip": "/tmp/zl-migration-mod-cache/cache/download/github.com/skosovsky/toolsy/@v/v0.20.1.zip",
+  "Dir": "/tmp/zl-migration-mod-cache/github.com/skosovsky/toolsy@v0.20.1",
+  "Sum": "h1:jhc6D4MXQL/s20aZNnR8Q6X+MniHmcR+eDt2F2ie65M=",
+  "GoModSum": "h1:uOads5+FMotCJ4w2+ku37BhcyEIQjnZpVsfvHRvjnHY=",
+  "Origin": {
+    "VCS": "git",
+    "URL": "https://github.com/skosovsky/toolsy",
+    "Hash": "2b4c9419792bc843ff92c0cf64b35f83330a389d",
+    "Ref": "refs/tags/v0.20.1"
+  },
+  "contract_sha256": {
+    "docs/execution-contract.md": "601ffe8c1f93ee31fb712842375d492cbca32c26f4561e76b1f708a057e4d045"
+  },
+  "integration_task": "T09",
+  "go_directive": "1.27.1",
+  "probe": "PENDING new public consumer/root contract verification",
+  "root_runtime_consumer": "internal/toolruntime; official v0.20.1, no patch/local replace/profile/result cache/session journal"
+}

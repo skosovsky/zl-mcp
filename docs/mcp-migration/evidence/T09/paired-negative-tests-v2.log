@@ -1,0 +1,5 @@
+--- FAIL: TestIncompletePairedSidesCannotPassComparison (0.00s)
+    paired_test.go:46: open /workspace/zl-mcp/docs/evals/dataset.json: no such file or directory
+FAIL
+FAIL	github.com/skosovsky/zl-mcp/internal/evaluation	0.364s
+FAIL

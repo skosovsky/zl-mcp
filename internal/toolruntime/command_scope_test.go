@@ -57,7 +57,7 @@ func TestCommandsRejectUntrustedScopeBeforeEffectsAndNeverRetryOwnerFailure(t *t
 			failure := &domain.Error{Code: "PERMISSION_DENIED", Message: "Native command authority revoked."}
 			recorder := &commandRecorder{err: failure}
 			operations := adapter.NewReader(recorder)
-			r, err := NewReads(base.search, base.conversations, authority, OperationReads{
+			r, err := New(base.search, base.conversations, authority, Capabilities{
 				Messaging: &messaging.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}, Events: &eventaccess.Handler{Journal: reader, Commands: recorder},
 			})
 			if err != nil {

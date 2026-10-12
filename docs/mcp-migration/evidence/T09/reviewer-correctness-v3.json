@@ -1,0 +1,45 @@
+{
+  "task": "T09",
+  "reviewer": "independent correctness",
+  "source_digest_sha256": "c99dc823184fa330fc5bc25c2a01d43db7e0dcba6414cdaaff6956417c6e586c",
+  "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+  "verdict": "FAIL",
+  "accepted": false,
+  "peer_report_consulted": false,
+  "previous_reports_retained": true,
+  "artifact_index_verified": {
+    "path": "artifact-index-v3.json",
+    "count": 1502,
+    "mismatches": 0
+  },
+  "closed_findings": [
+    "C09-02 full canonical parity: previous independent v2 review verified fix",
+    "C09-03 negative/nonfinite malformed measurement handling: previous independent v2 review verified original fix",
+    "C09-04 Make prerequisite error propagation: previous independent v2 review verified fix",
+    {
+      "id": "C09-05",
+      "status": "FIXED",
+      "proof": "finite_number catches OverflowError and rejects enormously large JSON integers. Independently reran all10tests and original actualCLI repro with p95_seconds10**1000; exit1, durableFAIL JSON with candidate invalid measurement p95_seconds, no traceback. Tests cover all4physicalfields."
+    }
+  ],
+  "findings": [
+    {
+      "id": "C09-01",
+      "severity": "P1",
+      "source": "docs/mcp-migration/evidence/T09/performance-comparison-v2.json",
+      "requirements": [
+        "T09-53",
+        "T09-54",
+        "T09-57"
+      ],
+      "repro": "Fixed archived baseline/candidate comparison remains FAIL for p95 and allocations in all3kinds. No production dependency changes since measured candidate.",
+      "consequence": "T09 mandatory performance acceptance unmet; correctness finalPASS, T09 commit and next task prohibited.",
+      "expected_fix": "Obtain explicitly authorized immutable compatible dependency, preserve public/schema/policy/native contracts, and remeasure unchanged thresholds with failure evidence retained."
+    }
+  ],
+  "no_additional_findings_in_changed_scope": true,
+  "source_equivalence": "Only Python finite validator and regression test changed since d84; no Go/module changes. Carryforward compiled/runtime evidence remains applicable.",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "sdk_ids": "DEFERRED_TO_SDK-01"
+}
