@@ -88,7 +88,7 @@ func TestConfigDecisionEquivalence(t *testing.T) {
 		{"exact-net", "internal/config", "net/http", "dependency", true},
 		{"shadow-prefix", "internal/foo/internal/domain", "context", "coverage", true},
 	}
-	for _, c := range append(append([]controlCase{}, cases...), extra...) {
+	for _, c := range append(append([]controlCase{}, cases[:10]...), extra...) {
 		t.Run(c.name, func(t *testing.T) {
 			// Act: both configs are evaluated by the actual pinned matcher.
 			before, err := synthetic(ctx, b, old, controlFiles(c))
@@ -113,8 +113,27 @@ func TestConfigDecisionEquivalence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, config := range [][]byte{old, current} {
-		r, err := synthetic(ctx, b, config, files)
+	// The approved H06 transport package is checked separately, not against historical config.
+	var historicalFiles []File
+	for _, f := range files {
+		if strings.HasPrefix(f.File, "internal/mobilebackup/archiveport/") {
+			continue
+		}
+		kept := f
+		kept.Imports = nil
+		for _, i := range f.Imports {
+			if i != module+"/internal/mobilebackup/archiveport" {
+				kept.Imports = append(kept.Imports, i)
+			}
+		}
+		historicalFiles = append(historicalFiles, kept)
+	}
+	for i, config := range [][]byte{old, current} {
+		graph := files
+		if i == 0 {
+			graph = historicalFiles
+		}
+		r, err := synthetic(ctx, b, config, graph)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -224,5 +243,40 @@ func TestCommandDeadline(t *testing.T) {
 	// Assert: cancellation waits for cleanup and reports failure within a bounded time.
 	if err == nil || time.Since(started) > 3*time.Second {
 		t.Fatalf("deadline handling err=%v duration=%v", err, time.Since(started))
+	}
+}
+
+func TestHTTPPortPolicyTightening(t *testing.T) {
+	// Arrange: historical config permits domain HTTP and lacks a separate consumer-owned port rule.
+	prior, current := configs(t)
+	b := binary(t)
+	ctx := context.Background()
+	c := controlCase{"domain-http", "internal/domain", "net/http", "positive", false}
+	// Act.
+	before, err := synthetic(ctx, b, prior, controlFiles(c))
+	if err != nil {
+		t.Fatal(err)
+	}
+	after, err := synthetic(ctx, b, current, controlFiles(c))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Assert: only this explicit historical dependency tightening is expected.
+	if !passing(before) {
+		t.Fatal("prior domain HTTP allowance unexpectedly absent")
+	}
+	c.fail = true
+	c.kind = "dependency"
+	if err = expected(c, after); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range cases[11:] {
+		r, err := synthetic(ctx, b, current, controlFiles(c))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = expected(c, r); err != nil {
+			t.Fatal(err)
+		}
 	}
 }

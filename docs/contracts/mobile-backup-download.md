@@ -47,6 +47,13 @@ No session cookies or private archive were read for this static investigation.
 
 ### Internal current-session port
 
+The consumer-owned Go interface is `archiveport.Transport` in
+`internal/mobilebackup/archiveport`. Its signature remains
+`ConsumeMobileArchive(context.Context, *http.Request, *http.Client, func(context.Context, *http.Response) ([]byte, error)) ([]byte, error)`.
+The downloader, collector guard and native adapter share this port. Domain owns
+no HTTP transport interface or compatibility alias; Go HTTP types stay in the
+consumer-owned port. Compile-time assertions cover the guard and native adapter.
+
 `ConsumeMobileArchive(ctx, request, validatedClient, consume)` executes one GET
 through the current SDK account's cookie jar, retaining the supplied validated
 transport. Requests must be HTTPS with no explicit Cookie/Authorization/proxy

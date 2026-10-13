@@ -1,0 +1,17 @@
+{
+  "leaves": [
+    "consumer-owned archiveport identical HTTP signature; domain declaration removed without alias",
+    "all downloader/collector/service/native consumers and compile-time assertions updated",
+    "domain HTTP deny and narrow port allowlist through sole arch-go matcher",
+    "session lifetime/cookie/cancellation/buffer clearing/no retry unchanged",
+    "downloader/collector/service/native tests and race PASS",
+    "root/tools tests/race/vet and patched zcago checks PASS",
+    "three CGO-free platform builds PASS",
+    "mandatory CI/check without Python or old HEAD build; standalone offline50/50 480/480",
+    "fresh five-run paced15k performance raw/provenance and fixed9gates PASS",
+    "all scenario disposition documented; historical evidence/initial user edits/sibling/third_party preserved",
+    "final completeness100% and correctnessPASS on candidate before soleH06 commit; rollbackhandoff/model-liveNOT_RUN"
+  ],
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

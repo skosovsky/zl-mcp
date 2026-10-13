@@ -13,7 +13,7 @@ The architecture migration was accepted at `518f7e9af861e46a840bd71a7a410acaf43e
 | H05 | Legacy Python Codex runner/exporter | Unique scenario/trigger/follow-up checks in Go graders and synthetic fixtures; model driver stays opt-in |
 | H06 | HTTP transport interface in domain | Identical consumer-owned archive port and native lifecycle guarantees |
 
-No product schema, persistence, authority or effect contract is retired. Old-vs-new capture equality and the rounded old-SDK exception are migration assertions; current precision must still be exact. Scenario IDs in `docs/evals/migration-v1.json` remain permanent synthetic service scenarios despite the historical filename. Legacy model scenario disposition is recorded when H05 is implemented; its runners remain until that coverage review passes.
+No product schema, persistence, authority or effect contract is retired. Old-vs-new capture equality and the rounded old-SDK exception are migration assertions; current precision must still be exact. Scenario IDs in `docs/evals/migration-v1.json` remain permanent synthetic service scenarios despite the historical filename. The 35 legacy model checkpoint cases and their disposition are recorded in `docs/model-checkpoints.md`; active Python runners/exporters are retired.
 
 ## Reproduction of historical acceptance
 
@@ -32,3 +32,9 @@ Architecture uses pinned arch-go v2.1.2 as its sole dependency matcher. The sepa
 Performance tooling now builds only the current service evaluation executable. Its Go runner preserves five paced runs of read/search/context and all raw records; the verifier recomputes medians and validates the retained T03 baseline/build metadata without executing an old binary. Objects <=2x, bytes <=1.20x and approved fixed p95 limits remain unchanged. The final real 15,000-call run follows H06; H04 tooling acceptance uses strict negative tests, retained raw replay and a current-only build.
 
 Model checkpoints retain unique legacy scenario/skill/follow-up intentions as Go graders and synthetic observations. Historical runner/export selection and human-review claims are retired from current tooling; replay is explicitly CHECKPOINTS_ONLY with model/live NOT_RUN and no human-answer certification. Current full model preflight remains incomplete and does not execute a driver.
+
+## Maintenance and rollback handoff
+
+Run `make check` for product changes. Architecture tooling, CLI watchdogs and synthetic model-checkpoint replay use Go and require no Python. Run the separate paced performance gate for changes affecting dispatch, serialization, memory or read/search/context paths. Its retained T03 metadata is a fixed reference, not a binary to rebuild. Human review, live acceptance and full model execution need separate authorization; checkpoint replay cannot replace them.
+
+To undo harness retirement, use the six H01–H06 commits in reverse order in a separate reviewable checkout, preserving any dependency/cleanup edits already present. Restoration of migration tools does not authorize rerunning old acceptance against mixed source, deploying, or running model/live checks. To reproduce the original migration, use the immutable T10 checkout described above and its recorded rollback handoff. Historical results and earlier failed gates remain evidence.

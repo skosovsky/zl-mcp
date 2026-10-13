@@ -1,0 +1,35 @@
+{
+  "candidate": "7c082fb48ad3de73ade43a8e5cb7a9327e9a395d34ec2c1d3f7f6c2235cbf9ee",
+  "completeness": {
+    "agent": "arch_go_architecture_review",
+    "passed": 11,
+    "total": 11,
+    "percent": 100,
+    "overall_H01_H06": "PASS"
+  },
+  "correctness": {
+    "agent": "cleanup_correctness",
+    "status": "PASS",
+    "overall_H01_H06": "PASS",
+    "open_findings": 0
+  },
+  "checks": "makecheckroot/tools/zcago tests/race/vet architecture14+6 threeCGO-freebuilds standaloneoffline50/50 480/480 Python0 native2startups15kperformance9/9PASS",
+  "performance": {
+    "records": 15,
+    "calls": 15000,
+    "errors": 0,
+    "gates_passed": 9,
+    "gates_total": 9,
+    "p95_ms": {
+      "read": 6.926125,
+      "search": 6.593125,
+      "context": 6.659875
+    },
+    "run1_context_exceedance_retained": true
+  },
+  "commit_readiness": "READY_FOR_SOLE_H06_COMMIT;five_previous_step_commits_verified",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "human_model_review": "NOT_PERFORMED",
+  "scope": "offline-only;approvedfixedperformancebudgets;nooriginallatencyparityclaim"
+}

@@ -11,6 +11,7 @@ import (
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/mobilebackup"
+	"github.com/skosovsky/zl-mcp/internal/mobilebackup/archiveport"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
@@ -66,7 +67,7 @@ func (p *membershipPort) captureAccountArchiveWithDownloader(parent context.Cont
 	source, offers := api.(domain.MobileBackupSource)
 	mapper, mappings := api.(domain.MobileIdentitySource)
 	owner, scoped := api.(domain.MobileBackupScope)
-	transport, authenticated := api.(domain.MobileArchiveTransport)
+	transport, authenticated := api.(archiveport.Transport)
 	if !offers || !mappings || !scoped || !authenticated {
 		return mobilebackup.RetainedArchiveManifest{}, mobilebackup.ErrOfferExecution
 	}

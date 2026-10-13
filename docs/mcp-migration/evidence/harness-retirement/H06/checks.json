@@ -1,0 +1,25 @@
+{
+  "commands": [
+    {
+      "command": "PATH=no-python make check (tools/root/zcago test,race,vet architecture three-platformbuilds offline)",
+      "exit_code": 0,
+      "log": "zl-h06-make-check.log",
+      "sha256": "a87f9d9a15507f7704192f1a24af7b411b3087ec7f05b76c0820f70aabbe4776"
+    },
+    {
+      "command": "PATH=no-python ZL_MCP_ACCEPTANCE_BINARY=current go test -race ./internal/mobilebackup -run ^TestNativeBinaryTerminalStartupAcceptance$ -count=1",
+      "exit_code": 0,
+      "log": "zl-h06-native-acceptance.log",
+      "sha256": "f3693c48499e062eb38487a6f1f1989e82d9cf1b5ee5de46e83649c4ae936ca7"
+    }
+  ],
+  "python_invocations": 0,
+  "native_startups": 2,
+  "machine": {
+    "cpu": "Apple M1 Max",
+    "logicalcpu": 10,
+    "release": "27.0.0"
+  },
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

@@ -8,6 +8,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/historyimport"
 	"github.com/skosovsky/zl-mcp/internal/mobilebackup"
+	"github.com/skosovsky/zl-mcp/internal/mobilebackup/archiveport"
 )
 
 func (p *membershipPort) CleanupHistorySnapshots(ctx context.Context) error {
@@ -53,7 +54,7 @@ func (p *membershipPort) withHistorySession(parent context.Context, downloader *
 	source, offers := api.(domain.MobileBackupSource)
 	mapper, mappings := api.(domain.MobileIdentitySource)
 	owner, scoped := api.(domain.MobileBackupScope)
-	transport, authenticated := api.(domain.MobileArchiveTransport)
+	transport, authenticated := api.(archiveport.Transport)
 	if !offers || !mappings || !scoped || !authenticated {
 		return domain.ErrHistoryUnsupported
 	}

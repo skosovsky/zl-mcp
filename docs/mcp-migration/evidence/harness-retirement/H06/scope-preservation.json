@@ -1,0 +1,321 @@
+{
+  "initial_files": [
+    {
+      "path": "docs/mcp-migration/dependency-update-2026-10-13.md",
+      "original_sha256": "0a3bc64271ffccf09a814d40cf92388c05fc07f514d2a9dc7bee859a3e4372c7",
+      "current_sha256": "0a3bc64271ffccf09a814d40cf92388c05fc07f514d2a9dc7bee859a3e4372c7",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/artifact-index.json",
+      "original_sha256": "56d3e0d54bab439a3ced052b9a26b6345e95884c9fa6b44e814c8d6158c56a84",
+      "current_sha256": "56d3e0d54bab439a3ced052b9a26b6345e95884c9fa6b44e814c8d6158c56a84",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/build-manifest.json",
+      "original_sha256": "819cece4325933524bc2a00964e4d0f6471db088b50cd7ee55a624755d9aeedd",
+      "current_sha256": "819cece4325933524bc2a00964e4d0f6471db088b50cd7ee55a624755d9aeedd",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/canonical-parity.json",
+      "original_sha256": "ee8d6ea99f6d52d58c561e1976d4e7c1c7df06de72c122b2217d422e9df9fdf2",
+      "current_sha256": "ee8d6ea99f6d52d58c561e1976d4e7c1c7df06de72c122b2217d422e9df9fdf2",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/offline-report.json",
+      "original_sha256": "a1b7fca44d53b0d3d80bfe8464784ab3fbf798c97a3e78a43997fb6856deaf19",
+      "current_sha256": "a1b7fca44d53b0d3d80bfe8464784ab3fbf798c97a3e78a43997fb6856deaf19",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/paired-report.json",
+      "original_sha256": "ab5e091ab90291154167680da3570fa1901307c353546daa1a0d7d4fea4219df",
+      "current_sha256": "ab5e091ab90291154167680da3570fa1901307c353546daa1a0d7d4fea4219df",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance-comparison.json",
+      "original_sha256": "82aec97037e07d365f8d1be09e3ffcca8ff9c16741cb3b676a20f4f3b82e2ca9",
+      "current_sha256": "82aec97037e07d365f8d1be09e3ffcca8ff9c16741cb3b676a20f4f3b82e2ca9",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/manifest.json",
+      "original_sha256": "b1388566890e7beb766bfc8cf24e38c6e2a22377da69d23f5d13f228869ba925",
+      "current_sha256": "b1388566890e7beb766bfc8cf24e38c6e2a22377da69d23f5d13f228869ba925",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-1-context.json",
+      "original_sha256": "d541e5a753b8301d5d95ee5ec832e3adc7094e0b0e0817aef98ec9616daebd76",
+      "current_sha256": "d541e5a753b8301d5d95ee5ec832e3adc7094e0b0e0817aef98ec9616daebd76",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-1-context.stderr",
+      "original_sha256": "dc24bd0d9f2bda325918ea8cb60985e7882434e4cabe908aaf607a08a0181a66",
+      "current_sha256": "dc24bd0d9f2bda325918ea8cb60985e7882434e4cabe908aaf607a08a0181a66",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-1-read.json",
+      "original_sha256": "e1dab9713f931c3029acf55b88374671f57859a7521ca1b862d35efbc8909f0b",
+      "current_sha256": "e1dab9713f931c3029acf55b88374671f57859a7521ca1b862d35efbc8909f0b",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-1-read.stderr",
+      "original_sha256": "3f35e425b21158c86aafb93c1904341b00a1b98f3960a4aa1816cdf31461fdde",
+      "current_sha256": "3f35e425b21158c86aafb93c1904341b00a1b98f3960a4aa1816cdf31461fdde",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-1-search.json",
+      "original_sha256": "22ed766dfcde67fd4b86fdbaebc222f919c8a0a42432f9ddd985cc280e83233b",
+      "current_sha256": "22ed766dfcde67fd4b86fdbaebc222f919c8a0a42432f9ddd985cc280e83233b",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-1-search.stderr",
+      "original_sha256": "675664281ddce2240044ef94bd3b2cbba122a20f6740e22b1fd9ddd7fc1a8399",
+      "current_sha256": "675664281ddce2240044ef94bd3b2cbba122a20f6740e22b1fd9ddd7fc1a8399",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-2-context.json",
+      "original_sha256": "ae615c89af46ff576fffaafa058a02036fc57c912d9cdbfa953243d3d5a5725d",
+      "current_sha256": "ae615c89af46ff576fffaafa058a02036fc57c912d9cdbfa953243d3d5a5725d",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-2-context.stderr",
+      "original_sha256": "15d4507bcc6e34ed3a8023cde331fa6abd68f2ae99fad608df631973c3cc4863",
+      "current_sha256": "15d4507bcc6e34ed3a8023cde331fa6abd68f2ae99fad608df631973c3cc4863",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-2-read.json",
+      "original_sha256": "c1060bb1f495035841a6de18e8a5a7248ff34bb030a47aad8feba2d60072d48c",
+      "current_sha256": "c1060bb1f495035841a6de18e8a5a7248ff34bb030a47aad8feba2d60072d48c",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-2-read.stderr",
+      "original_sha256": "260d8a0ba8d955b2987378afb58f6bb54e8217b7b56b1ed84d76a135c4759f95",
+      "current_sha256": "260d8a0ba8d955b2987378afb58f6bb54e8217b7b56b1ed84d76a135c4759f95",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-2-search.json",
+      "original_sha256": "72a7749cd822cfe8fae68cbf170565c7711aa460c49e7d3ba49747f212d24185",
+      "current_sha256": "72a7749cd822cfe8fae68cbf170565c7711aa460c49e7d3ba49747f212d24185",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-2-search.stderr",
+      "original_sha256": "16ee6366ca4533ec92655accfd995f21ea504c6590e9405d77381564b003bd2f",
+      "current_sha256": "16ee6366ca4533ec92655accfd995f21ea504c6590e9405d77381564b003bd2f",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-3-context.json",
+      "original_sha256": "9e4c63fc634c1aabb9a174d803481f5bf89e49f7e9e105c42aaefba4c3d09142",
+      "current_sha256": "9e4c63fc634c1aabb9a174d803481f5bf89e49f7e9e105c42aaefba4c3d09142",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-3-context.stderr",
+      "original_sha256": "2104114d4ca4b0342dacc3d875049f170ec2eb04ea7f4842414d791324de8bbd",
+      "current_sha256": "2104114d4ca4b0342dacc3d875049f170ec2eb04ea7f4842414d791324de8bbd",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-3-read.json",
+      "original_sha256": "b2816c55641871ee12eec8668224bb7c45ddb04385f17877308f2be80d4fd136",
+      "current_sha256": "b2816c55641871ee12eec8668224bb7c45ddb04385f17877308f2be80d4fd136",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-3-read.stderr",
+      "original_sha256": "6dfb383d651bae8a48e8d30fee4c055514630b5cfecb1fa6f2d7439e2c488d4c",
+      "current_sha256": "6dfb383d651bae8a48e8d30fee4c055514630b5cfecb1fa6f2d7439e2c488d4c",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-3-search.json",
+      "original_sha256": "1a6c708b6a9f64a1f5548e16dd40793647440d9b1d57fd92e5a15883710c7e5b",
+      "current_sha256": "1a6c708b6a9f64a1f5548e16dd40793647440d9b1d57fd92e5a15883710c7e5b",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-3-search.stderr",
+      "original_sha256": "7872919cdcadefc2b1fc38a87809a5d0d40d876aca4b3042526d8c00e7cd7168",
+      "current_sha256": "7872919cdcadefc2b1fc38a87809a5d0d40d876aca4b3042526d8c00e7cd7168",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-4-context.json",
+      "original_sha256": "6f812132fdddf78ed3a3756c93ac5473f7121340eddd7af00484122ddfb83904",
+      "current_sha256": "6f812132fdddf78ed3a3756c93ac5473f7121340eddd7af00484122ddfb83904",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-4-context.stderr",
+      "original_sha256": "b0a821a27c4b74a57362bf62fd95eb14045e4c1727da764eaa9e7289e4f3e14d",
+      "current_sha256": "b0a821a27c4b74a57362bf62fd95eb14045e4c1727da764eaa9e7289e4f3e14d",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-4-read.json",
+      "original_sha256": "c53955d2a3afb1720aa75fbf9749bab3ffb2e29f06a32187a0e995505ac0c3c7",
+      "current_sha256": "c53955d2a3afb1720aa75fbf9749bab3ffb2e29f06a32187a0e995505ac0c3c7",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-4-read.stderr",
+      "original_sha256": "d73096b3d3c35e884dab50fd36ea1d0ffbc5f68d100dd98d1827f8d39f0398c7",
+      "current_sha256": "d73096b3d3c35e884dab50fd36ea1d0ffbc5f68d100dd98d1827f8d39f0398c7",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-4-search.json",
+      "original_sha256": "a875c73e39c4389d912cf1b5776470f2df445ac84a3d224fed1088283d1f3222",
+      "current_sha256": "a875c73e39c4389d912cf1b5776470f2df445ac84a3d224fed1088283d1f3222",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-4-search.stderr",
+      "original_sha256": "70b1ae3b822bf1274071bcbf7b5f7d3d787334e4909053d58e8e6e070fd808bb",
+      "current_sha256": "70b1ae3b822bf1274071bcbf7b5f7d3d787334e4909053d58e8e6e070fd808bb",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-5-context.json",
+      "original_sha256": "0c7b4f21b6a6d15ce494dfd0c60e563b5e1fdd18d271cce262683ad943e6c1f8",
+      "current_sha256": "0c7b4f21b6a6d15ce494dfd0c60e563b5e1fdd18d271cce262683ad943e6c1f8",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-5-context.stderr",
+      "original_sha256": "01207f81254fb50b9929b0f9c2955d326b72dc0c76b05fa81b276b37dce73f4c",
+      "current_sha256": "01207f81254fb50b9929b0f9c2955d326b72dc0c76b05fa81b276b37dce73f4c",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-5-read.json",
+      "original_sha256": "6fd48981f45bcf42a222588fc162a5519c4c25292678b433727174894a2ceaee",
+      "current_sha256": "6fd48981f45bcf42a222588fc162a5519c4c25292678b433727174894a2ceaee",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-5-read.stderr",
+      "original_sha256": "f007dbf2c3b006fa83cafd521cb0fe48c9ca4fe60f80f58d14a1e81a20917456",
+      "current_sha256": "f007dbf2c3b006fa83cafd521cb0fe48c9ca4fe60f80f58d14a1e81a20917456",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-5-search.json",
+      "original_sha256": "e91b6d4551c3f6fc0c4e755d12fa6d1b02e4d0d94135723517404953e0a9c119",
+      "current_sha256": "e91b6d4551c3f6fc0c4e755d12fa6d1b02e4d0d94135723517404953e0a9c119",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/performance/run-5-search.stderr",
+      "original_sha256": "8ae03053e0e91d0f55951a692980bd2d72984fb4b2b81d3fb3220fb0e61332e3",
+      "current_sha256": "8ae03053e0e91d0f55951a692980bd2d72984fb4b2b81d3fb3220fb0e61332e3",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/preinit-authorization.json",
+      "original_sha256": "93e1205135d1620862bf3ec0d2fee74a85a9d5dbf7f98551f636a95c5efc1799",
+      "current_sha256": "93e1205135d1620862bf3ec0d2fee74a85a9d5dbf7f98551f636a95c5efc1799",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/preinit-review.json",
+      "original_sha256": "d20a624215beb83b87cba16a112ce74d0ed180c617822c2fe515f983a00ac699",
+      "current_sha256": "d20a624215beb83b87cba16a112ce74d0ed180c617822c2fe515f983a00ac699",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/evidence/dependency-update-2026-10-13/reviewers.json",
+      "original_sha256": "04cd08505b595d75dd2dd0269b3cc995d75611cd31cf540d772d7a26ec48bfa3",
+      "current_sha256": "04cd08505b595d75dd2dd0269b3cc995d75611cd31cf540d772d7a26ec48bfa3",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "internal/adapters/store/conversation_load_test.go",
+      "original_sha256": "ee040eac2be5dc4ee8ab805c6848cb0f9e3ecb63ebe5b6994a07458acb8c568b",
+      "current_sha256": "ee040eac2be5dc4ee8ab805c6848cb0f9e3ecb63ebe5b6994a07458acb8c568b",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/development.md",
+      "original_sha256": "8dcec4b4818d3420dc1405bb2d15098cbf02f009551332d7152035b1f47849c5",
+      "current_sha256": "25d1d66dd1f0bac11084d772d826bd8a4fbe56f0ed01e29569a419bf10c2bc8d",
+      "status": "OWN_HUNKS_ONLY;initial_changes_preserved"
+    },
+    {
+      "path": "docs/mcp-migration/dependency-matrix.json",
+      "original_sha256": "2f935abe168d5cded0c0bb06b15651ac9e7834d5d4fe9dcc28972aa3ec45bd50",
+      "current_sha256": "2f935abe168d5cded0c0bb06b15651ac9e7834d5d4fe9dcc28972aa3ec45bd50",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/sdk-id-contract.md",
+      "original_sha256": "d35b95e211c621cb46628f3dbeb7b706695640803bad1e21ee5130311cf57448",
+      "current_sha256": "d35b95e211c621cb46628f3dbeb7b706695640803bad1e21ee5130311cf57448",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/mcp-migration/toolruntime-boundary.md",
+      "original_sha256": "d96ac50bf9312c55f222fb14fbd6712155f399799f007b91f42cbebc7b1d81e1",
+      "current_sha256": "d96ac50bf9312c55f222fb14fbd6712155f399799f007b91f42cbebc7b1d81e1",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "docs/task-mcp-architecture-ai-libs.md",
+      "original_sha256": "d92955895b10d4c72df0c4428ab11903c923f6f0242e86065b23060fa9b36e8a",
+      "current_sha256": "d92955895b10d4c72df0c4428ab11903c923f6f0242e86065b23060fa9b36e8a",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "go.mod",
+      "original_sha256": "ab28af2ed65b725cfc2ab2cb8581931adb29cc04d2dd93d709109ee35b6fe7cf",
+      "current_sha256": "ab28af2ed65b725cfc2ab2cb8581931adb29cc04d2dd93d709109ee35b6fe7cf",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "go.sum",
+      "original_sha256": "41174347a43b0c922425264270a8c8949132f578b7901cd78098064827ff881e",
+      "current_sha256": "41174347a43b0c922425264270a8c8949132f578b7901cd78098064827ff881e",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "internal/service/account_archive.go",
+      "original_sha256": "4c603904ece61f1fd9c6c507c513a9347911f13a0aa9a6f4378f15ff82d8dc2a",
+      "current_sha256": "d58e3bbe863cb8e9b6a67272aff6bce29b313f6232ef4619885aa069f555400e",
+      "status": "OWN_HUNKS_ONLY;initial_changes_preserved"
+    },
+    {
+      "path": "internal/storage/conversation_load_test.go",
+      "original_sha256": null,
+      "current_sha256": null,
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "internal/storage/conversation_views.go",
+      "original_sha256": "6ec2e56ebf7554fbc8c07b133a5c900e8b3511836eb1992dc10ca7c726848b18",
+      "current_sha256": "6ec2e56ebf7554fbc8c07b133a5c900e8b3511836eb1992dc10ca7c726848b18",
+      "status": "UNCHANGED"
+    }
+  ],
+  "historical_changed": [],
+  "third_party_changed": [],
+  "user_edits_staged": false,
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

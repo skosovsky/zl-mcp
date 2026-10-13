@@ -293,6 +293,10 @@ var cases = []controlCase{
 	{"shadow-package-uncovered", "internal/foo/zl-mcp/internal/domain", "", "coverage", true},
 	{"app-root-positive", "internal/app/search", module + "/internal/domain", "positive", false},
 	{"app-subpackage-positive", "internal/app/search/sub", module + "/internal/domain", "positive", false},
+	{"domain-http", "internal/domain", "net/http", "dependency", true},
+	{"archiveport-standard", "internal/mobilebackup/archiveport", "net/http", "positive", false},
+	{"archiveport-storage", "internal/mobilebackup/archiveport", module + "/internal/storage", "dependency", true},
+	{"archiveport-external", "internal/mobilebackup/archiveport", "github.com/google/uuid", "dependency", true},
 }
 
 func controlFiles(c controlCase) []File {

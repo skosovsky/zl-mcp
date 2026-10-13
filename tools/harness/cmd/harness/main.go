@@ -49,7 +49,7 @@ func run(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	fmt.Println("architecture PASS: host and all-build compliance/coverage 100%, closed exceptions, production graph, 10 isolated and 6 source controls")
+	fmt.Println("architecture PASS: host and all-build compliance/coverage 100%, closed exceptions, production graph, 14 isolated and 6 source controls")
 	return 0
 }
 func main() { os.Exit(run(os.Args[1:])) }

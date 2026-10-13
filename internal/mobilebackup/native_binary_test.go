@@ -96,16 +96,10 @@ func TestNativeBinaryTerminalStartupAcceptance(t *testing.T) {
 	if err = os.WriteFile(config, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
-	binaries := []string{binary}
-	if peer := os.Getenv("ZL_MCP_RESTART_PEER_BINARY"); peer != "" {
-		if !filepath.IsAbs(peer) {
-			t.Fatal("restart peer binary must be absolute")
-		}
-		binaries = append(binaries, peer)
-	}
-	for i, selected := range binaries {
+	// Repeat startup with the current executable; old-binary migration comparison is retired.
+	for i := range 2 {
 		t.Run(fmt.Sprintf("restart-%d", i), func(t *testing.T) {
-			command := exec.Command(selected, "-config", config, "service")
+			command := exec.Command(binary, "-config", config, "service")
 			command.Env = append(os.Environ(), "HOME="+state)
 			output, err := os.OpenFile(filepath.Join(state, fmt.Sprintf("startup-%d.log", i)), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 			if err != nil {

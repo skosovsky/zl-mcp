@@ -1,3 +1,5 @@
+> Historical migration contract: accepted at T10 (`518f7e9`). These commands and old-binary selectors are retired from current tooling. Reproduce only in that immutable checkout; use `make check` for current product acceptance.
+
 # Paired offline acceptance
 
 `zl-mcp-eval --baseline-binary /absolute/frozen-binary --profile offline`

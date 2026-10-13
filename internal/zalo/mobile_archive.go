@@ -5,14 +5,13 @@ import (
 	"net/http"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
+	"github.com/skosovsky/zl-mcp/internal/mobilebackup/archiveport"
 )
 
-type mobileArchiveRequester interface {
-	ConsumeMobileArchive(context.Context, *http.Request, *http.Client, func(context.Context, *http.Response) ([]byte, error)) ([]byte, error)
-}
+var _ archiveport.Transport = (*Client)(nil)
 
 func (c *Client) ConsumeMobileArchive(ctx context.Context, req *http.Request, client *http.Client, consume func(context.Context, *http.Response) ([]byte, error)) ([]byte, error) {
-	source, ok := c.api.(mobileArchiveRequester)
+	source, ok := c.api.(archiveport.Transport)
 	if !ok {
 		return nil, domain.ErrHistoryUnsupported
 	}

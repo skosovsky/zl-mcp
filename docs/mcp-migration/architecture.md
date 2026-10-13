@@ -2,7 +2,7 @@
 
 `make architecture` runs pinned arch-go/v2 v2.1.2 and the separate Go module
 `tools/harness`. `arch-go.yml` is ordinary YAML with compliance and coverage
-thresholds of 100%. It has 33 package selectors: compatible allow/deny rules
+thresholds of 100%. It has 34 package selectors: compatible allow/deny rules
 share a selector, while capability and existing backend boundaries remain explicit.
 There is no generic production package catch-all.
 
@@ -32,8 +32,10 @@ arch-go configuration. The source-controlled architecture-exceptions manifest mu
 remain present with an empty exceptions array; temporary edges cannot silently
 bypass these gates.
 
-Ten isolated controls check domain SQL, app SDK, MCP storage, production evaluation,
-domain subpackages, unknown/root/shadow packages and positive app root/subpackages.
+Fourteen isolated controls check domain SQL, app SDK, MCP storage, production
+evaluation, domain subpackages, unknown/root/shadow packages, positive app
+root/subpackages, domain HTTP rejection and archive-port storage/external
+rejection or HTTP acceptance.
 They receive a byte-for-byte copy of the active config, with no allowlist edits.
 A negative dependency control must produce a compliance failure naming the injected
 import; a coverage control must fail coverage. A loader error or missing report
@@ -63,3 +65,10 @@ do not prove permissions, operation ownership, absence of resend, persistence,
 response budgets or telemetry privacy; standalone synthetic behavioral checks remain
 mandatory. Migration acceptance reports are historical records. Model/live execution
 remains NOT_RUN unless separately authorized.
+
+The HTTP current-session contract is consumer-owned by mobilebackup/archiveport.
+Domain explicitly denies net/http and its subpackages. The archive port permits
+only context/net/http and explicitly denies internal/external dependencies; the
+existing broader mobilebackup selector does not override this restrictive rule.
+H06 tests separately verify this approved tightening against the immutable test-only original
+JSON config; prior migration evidence remains unchanged.

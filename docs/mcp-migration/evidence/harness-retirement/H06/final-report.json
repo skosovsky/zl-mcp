@@ -1,0 +1,47 @@
+{
+  "scope": "H01-H06 permanentGoverification;offline-only",
+  "candidate": "7c082fb48ad3de73ade43a8e5cb7a9327e9a395d34ec2c1d3f7f6c2235cbf9ee",
+  "commits_before_H06": [
+    "e58eda224b811c36274beb007035cd47a6d20241 refactor(eval): retire completed migration comparison",
+    "a6ad05d1c4682523167779c4feff007fb2da5549 test(eval): keep permanent CLI failure and cleanup controls",
+    "784f98113e3ef08400611b4563865feedd8b7882 refactor(architecture): enforce exact YAML rules through Go tooling",
+    "0b653b77ae2124d2fcb1e6dd720365f6978954d2 refactor(performance): measure current service with Go harness",
+    "d475db4112583fc90678cc19c40a815ed058310a refactor(eval): retain offline model checkpoints without Python runners"
+  ],
+  "H06": "ACCEPTED_READY_FOR_SOLE_COMMIT;subject: refactor(domain): move archive HTTP port to its consumer",
+  "checks": "makecheckroot/tools/zcago tests/race/vet architecture14+6 threeCGO-freebuilds standaloneoffline50/50 480/480 Python0 native2startups15kperformance9/9PASS",
+  "performance": "5runs3kinds1000calls;50warmup110ms;raw15records0errors9gatesPASS;run1contextp95exceedanceretained",
+  "historical_reproduction": "immutableT10 518f7e9;docs/harness-maintenance.md",
+  "rollback": "reverse sixcommits inreviewablecheckout;preserveinitialdirtyedits;no deployment authorization",
+  "user_changes": "initialdependency/cleanupedits excludedfromnewcommits,exactworkingtreefingerprintrecorded",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "human_model_review": "NOT_PERFORMED;checkpointPASS technicalonly",
+  "acceptance": "completeness11/11 100%;correctnessPASS;overallH01-H06PASS",
+  "performance_medians": {
+    "context": {
+      "alloc_bytes_per_op": 540843.672,
+      "allocations_per_op": 2058.086,
+      "calls": 5000,
+      "errors": 0,
+      "p95_seconds": 0.006659875,
+      "response_bytes": 9583000
+    },
+    "read": {
+      "alloc_bytes_per_op": 496452.664,
+      "allocations_per_op": 1587.115,
+      "calls": 5000,
+      "errors": 0,
+      "p95_seconds": 0.006926125,
+      "response_bytes": 5165000
+    },
+    "search": {
+      "alloc_bytes_per_op": 548725.152,
+      "allocations_per_op": 2129.62,
+      "calls": 5000,
+      "errors": 0,
+      "p95_seconds": 0.006593125,
+      "response_bytes": 13251892
+    }
+  }
+}

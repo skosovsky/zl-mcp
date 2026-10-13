@@ -11,14 +11,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/skosovsky/zl-mcp/internal/domain"
+	"github.com/skosovsky/zl-mcp/internal/mobilebackup/archiveport"
 	"github.com/skosovsky/zl-mcp/internal/netpolicy"
 )
 
 var ErrDownload = errors.New("mobile backup download failed")
 
 type Downloader struct {
-	session domain.MobileArchiveTransport
+	session archiveport.Transport
 	hosts   map[string]bool
 	client  *http.Client
 }
@@ -119,7 +119,7 @@ func readDownload(ctx context.Context, response *http.Response, expected uint64)
 }
 
 // WithSession binds a copy; the original remains an anonymous codec test candidate.
-func (d *Downloader) WithSession(source domain.MobileArchiveTransport) (*Downloader, error) {
+func (d *Downloader) WithSession(source archiveport.Transport) (*Downloader, error) {
 	if !d.Ready() || source == nil {
 		return nil, ErrDownload
 	}

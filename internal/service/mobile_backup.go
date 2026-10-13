@@ -7,6 +7,7 @@ import (
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/mobilebackup"
+	"github.com/skosovsky/zl-mcp/internal/mobilebackup/archiveport"
 )
 
 // runPreparedMobileOffer is an internal port, not a tool or CLI dispatch method.
@@ -66,7 +67,7 @@ func (p *membershipPort) consumePreparedMobileArchive(parent context.Context, id
 	source, offers := p.current.API.(domain.MobileBackupSource)
 	mapper, mappings := p.current.API.(domain.MobileIdentitySource)
 	owner, scoped := p.current.API.(domain.MobileBackupScope)
-	archiveTransport, authenticated := p.current.API.(domain.MobileArchiveTransport)
+	archiveTransport, authenticated := p.current.API.(archiveport.Transport)
 	if !offers || !mappings || !scoped || !authenticated {
 		return mobilebackup.SelectedArchive{}, mobilebackup.ErrArchive
 	}
