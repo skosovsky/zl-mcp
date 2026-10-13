@@ -4,7 +4,7 @@ import sys
 import time
 import unittest
 
-from baseline import BoundedJSONReader
+from subprocess_reader import BoundedJSONReader
 
 
 class WatchdogTests(unittest.TestCase):

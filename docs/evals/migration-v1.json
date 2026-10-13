@@ -546,14 +546,11 @@
           "value": "Cà phê 🍀"
         },
         {
-          "name": "SDK-before-fix-evidence-explicit",
+          "name": "SDK-numeric-envelope-exact",
           "step": -1,
           "path": "sdk-envelope-9007199254740993",
-          "op": "one-of",
-          "value": [
-            "9007199254740992",
-            "9007199254740993"
-          ]
+          "op": "equal",
+          "value": "9007199254740993"
         },
         {
           "name": "SDK-string-envelope-exact",

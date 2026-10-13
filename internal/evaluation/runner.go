@@ -13,22 +13,18 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/skosovsky/evaly"
 )
 
 type Options struct {
-	Root, Binary, BaselineBinary, ReportDir, DatasetPath, Profile, ModelDriver string
-	RunBudget                                                                  time.Duration
-	Seed                                                                       int64
-	Repeats                                                                    int
+	Root, Binary, ReportDir, DatasetPath, Profile, ModelDriver string
+	RunBudget                                                  time.Duration
+	Seed                                                       int64
+	Repeats                                                    int
 }
 type Report struct {
-	Parity             *ParityRecord           `json:"parity,omitempty"`
-	BaselineExperiment *evaly.ExperimentRecord `json:"baseline_experiment,omitempty"`
-	Comparison         *evaly.Comparison       `json:"comparison,omitempty"`
 	Status             string                  `json:"status"`
 	ExitStatus         int                     `json:"exit_status"`
 	ModelGate          string                  `json:"model_gate"`
@@ -133,12 +129,6 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 	if opts.Profile != "offline" && opts.Profile != "model" {
 		return report, fmt.Errorf("unknown evaluation profile")
 	}
-	if opts.BaselineBinary != "" && !filepath.IsAbs(opts.BaselineBinary) {
-		return report, fmt.Errorf("paired baseline binary must be absolute")
-	}
-	if opts.BaselineBinary != "" && opts.Profile != "offline" {
-		return report, fmt.Errorf("paired evaluation is offline-only")
-	}
 	if opts.Profile == "model" && opts.ModelDriver == "" {
 		report.Manifest = map[string]any{"profile": opts.Profile, "case_budget_seconds": 180, "max_tool_calls": 30, "run_budget_seconds": opts.RunBudget.Seconds(), "model_gate": "NOT_RUN", "live_gate": "NOT_RUN"}
 		report.Reason = "Model profile requires a separately authorized host agent driver; no model executed"
@@ -169,7 +159,7 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 		report.ExpectedAssertions += (len(cs.Checks) + 6) * opts.Repeats
 	}
 	info, _ := debug.ReadBuildInfo()
-	report.Manifest = map[string]any{"profile": opts.Profile, "dataset_revision": ds.Revision, "dataset_sha256": hashFile(opts.DatasetPath), "fixture_sha256": hashFile(filepath.Join(opts.Root, "docs/evals/fixtures.json")), "archive_fixture_sha256": hashFile(filepath.Join(opts.Root, "internal/mobilebackup/testdata/format1-account-vector.json")), "binary_sha256": hashFile(opts.Binary), "go": runtime.Version(), "os": runtime.GOOS, "arch": runtime.GOARCH, "module_build_info": info, "seed": opts.Seed, "repeats": opts.Repeats, "concurrency": 1, "run_budget_seconds": opts.RunBudget.Seconds(), "case_budget_seconds": 60, "stdout_max_bytes": 4 << 20, "stderr_max_bytes": 4 << 20, "tokens": nil, "tokens_unavailable_reason": "offline scripted clients expose no model usage", "grader_revision": ds.GraderRevision, "model_gate": "NOT_RUN", "live_gate": "NOT_RUN", "sdk_id_gate": "DEFERRED_TO_SDK-01"}
+	report.Manifest = map[string]any{"profile": opts.Profile, "dataset_revision": ds.Revision, "dataset_sha256": hashFile(opts.DatasetPath), "fixture_sha256": hashFile(filepath.Join(opts.Root, "docs/evals/fixtures.json")), "archive_fixture_sha256": hashFile(filepath.Join(opts.Root, "internal/mobilebackup/testdata/format1-account-vector.json")), "binary_sha256": hashFile(opts.Binary), "go": runtime.Version(), "os": runtime.GOOS, "arch": runtime.GOARCH, "module_build_info": info, "seed": opts.Seed, "repeats": opts.Repeats, "concurrency": 1, "run_budget_seconds": opts.RunBudget.Seconds(), "case_budget_seconds": 60, "stdout_max_bytes": 4 << 20, "stderr_max_bytes": 4 << 20, "tokens": nil, "tokens_unavailable_reason": "offline scripted clients expose no model usage", "grader_revision": ds.GraderRevision, "model_gate": "NOT_RUN", "live_gate": "NOT_RUN"}
 	// Only attach build provenance when the recorded executable digest matches.
 	buildPath := filepath.Join(filepath.Dir(opts.Binary), "build-manifest.json")
 	if raw, e := os.ReadFile(buildPath); e == nil {
@@ -203,8 +193,6 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 	if err != nil {
 		return report, err
 	}
-	var captureMu sync.Mutex
-	captures := map[string][]parityCapture{}
 	makeConfig := func(binary, traceDir, id string) evaly.RunConfig[Case, Output, Case, *environment] {
 		opts := opts
 		opts.Binary, opts.ReportDir = binary, traceDir
@@ -236,6 +224,11 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 				decoder := json.NewDecoder(bytes.NewReader(raw))
 				decoder.UseNumber()
 				decodeErr := decoder.Decode(&output)
+				if decodeErr == nil {
+					if trailingErr := decoder.Decode(new(any)); trailingErr != io.EOF {
+						decodeErr = fmt.Errorf("trailing child output")
+					}
+				}
 				if processErr != nil {
 					output.Complete = false
 					output.Failure = processErr.Error() + ": " + output.Failure
@@ -256,20 +249,6 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 						return evaly.TargetResult[Output]{Output: output}, writeErr
 					}
 				}
-				captureValue, captureErr := exactJSON(marshaled(output))
-				if captureErr != nil {
-					return evaly.TargetResult[Output]{Output: output}, captureErr
-				}
-				captureObject := captureValue.(map[string]any)
-				captureObject["capture_start_at"] = before.UTC().Format(time.RFC3339Nano)
-				captureObject["capture_end_at"] = time.Now().UTC().Format(time.RFC3339Nano)
-				captureRaw := marshaled(captureObject)
-				if e := os.WriteFile(filepath.Join(e.traceDir, "parity-capture.json"), captureRaw, 0600); e != nil {
-					return evaly.TargetResult[Output]{Output: output}, e
-				}
-				captureMu.Lock()
-				captures[id] = append(captures[id], parityCapture{caseID: cs.ID, raw: captureRaw})
-				captureMu.Unlock()
 				for i, kind := range []string{"operation", "effects", "lifecycle"} {
 					if recordErr := trial.Evidence.Record(ctx, evaly.Event{Version: 1, Sequence: i + 1, Kind: kind, Payload: marshaled(map[string]any{"case": cs.ID, "complete": output.Complete}), References: []string{filepath.Base(e.traceDir) + "/output.json"}}); recordErr != nil {
 						return evaly.TargetResult[Output]{Output: output}, recordErr
@@ -285,42 +264,7 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 			Plan:       evaly.RunPlan{Repeats: opts.Repeats, Concurrency: 1, MaxAttempts: 1, Timeout: caseBudget, CleanupTimeout: 5 * time.Second, Seed: opts.Seed, AssertionPolicy: "all"},
 			Provenance: evaly.Provenance{Target: "real-mcp-offline-v1", Tools: "contracts-22", Policy: "case-tools-effects-v1", Unknown: []string{"model", "prompt"}}}
 	}
-	var experiment evaly.Experiment
-	if opts.BaselineBinary == "" {
-		experiment, err = evaly.Run(run, makeConfig(opts.Binary, opts.ReportDir, "offline"))
-	} else {
-		baselineDir, candidateDir := filepath.Join(opts.ReportDir, "baseline"), filepath.Join(opts.ReportDir, "candidate")
-		if e := os.Mkdir(baselineDir, 0700); e != nil {
-			return report, e
-		}
-		if e := os.Mkdir(candidateDir, 0700); e != nil {
-			return report, e
-		}
-		var baseline evaly.Experiment
-		baseline, experiment, err = evaly.RunPaired(run, makeConfig(opts.BaselineBinary, baselineDir, "offline-baseline"), makeConfig(opts.Binary, candidateDir, "offline-candidate"), "offline-parity-v1")
-		if err != nil {
-			return report, err
-		}
-		br := baseline.Record()
-		report.BaselineExperiment = &br
-		comparison, e := evaly.Compare(baseline, experiment, evaly.AssertionObjective{ID: "offline-contracts", Revision: ds.GraderRevision, Policy: "all"}, evaly.GatePolicy{Revision: "offline-parity-v1", MinimumMatchedCases: len(ds.Cases), MinimumMatchedCoverage: 1, MinimumCoverage: 1, QualityThreshold: 1, MaximumRegression: 0, BootstrapSamples: 1000, Seed: opts.Seed})
-		if e != nil {
-			return report, e
-		}
-		report.Comparison = &comparison
-		parity := compareSDKCaptures(captures["offline-baseline"], captures["offline-candidate"])
-		report.Parity = &parity
-		if e := os.WriteFile(filepath.Join(opts.ReportDir, "canonical-parity.json"), marshaled(parity), 0600); e != nil {
-			return report, e
-		}
-		baselineBytes, readErr := os.ReadFile(opts.BaselineBinary)
-		if readErr != nil {
-			return report, readErr
-		}
-		sum := sha256.Sum256(baselineBytes)
-		report.Manifest["baseline_binary_sha256"] = hex.EncodeToString(sum[:])
-		opts.ReportDir = candidateDir
-	}
+	experiment, err := evaly.Run(run, makeConfig(opts.Binary, opts.ReportDir, "offline"))
 	report.Manifest["elapsed_seconds"] = time.Since(started).Seconds()
 	if err != nil {
 		return report, err
@@ -383,17 +327,6 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 	if report.PassedCases == report.ExpectedCases && report.PassedAssertions == report.ExpectedAssertions && len(report.SkippedCases) == 0 && run.Err() == nil {
 		report.Status = "PASS"
 		report.ExitStatus = 0
-	}
-	if report.Comparison != nil {
-		baselineHealthy := len(report.BaselineExperiment.Trials) == report.ExpectedCases
-		for _, trial := range report.BaselineExperiment.Trials {
-			quality, scored := evaly.AssertionOutcome(trial.Grades, "all")
-			baselineHealthy = baselineHealthy && quality && scored && trial.Status == evaly.Completed && trial.Cleanup.State == "completed" && trial.UsageError == "" && len(trial.Grades) == 1 && len(trial.SkippedGraders) == 0 && evaly.CompleteFor(trial.Evidence, "operation") && evaly.CompleteFor(trial.Evidence, "effects") && evaly.CompleteFor(trial.Evidence, "lifecycle")
-		}
-		if !baselineHealthy || report.Comparison.Verdict != evaly.GatePass || report.Parity == nil || report.Parity.Status != "PASS" || report.Parity.Matched != report.ExpectedCases {
-			report.Status = "FAIL"
-			report.ExitStatus = 1
-		}
 	}
 	return report, nil
 }

@@ -46,7 +46,9 @@ func TestExternalWatchdogAndOutputBounds(t *testing.T) {
 				t.Fatal(err)
 			}
 			timeout := 300 * time.Millisecond
-			if mode == "normal" {
+			if mode == "normal" || mode == "flood" {
+				// Allow race-instrumented helper startup; flood still terminates
+				// through its output bound, independently of the watchdog.
 				timeout = 2 * time.Second
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), timeout)

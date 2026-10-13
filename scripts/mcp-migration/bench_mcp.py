@@ -12,7 +12,7 @@ import statistics
 import subprocess
 import tempfile
 import time
-from baseline import BoundedJSONReader
+from subprocess_reader import BoundedJSONReader
 
 ROOT = Path(__file__).resolve().parents[2]
 KINDS = ['read', 'search', 'context']

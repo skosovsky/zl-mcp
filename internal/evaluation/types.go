@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 )
@@ -53,6 +54,9 @@ func decode(raw []byte) (any, error) {
 	var value any
 	if err := d.Decode(&value); err != nil {
 		return nil, err
+	}
+	if err := d.Decode(new(any)); err != io.EOF {
+		return nil, fmt.Errorf("trailing JSON content")
 	}
 	return value, nil
 }

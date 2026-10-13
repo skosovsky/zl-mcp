@@ -1,74 +1,27 @@
 #!/usr/bin/env python3
-"""Build frozen business baseline with disclosed evaluation-only source overlay."""
-import argparse
-import hashlib
-import io
-import json
-import os
+"""Transitional current-only evaluation build; replaced by Go in H04."""
+import argparse, hashlib, json, os, subprocess
 from pathlib import Path
-import subprocess
-import tarfile
-import tempfile
-
-ROOT = Path(__file__).resolve().parents[2]
-BASELINE = '8d913c48b797f54f277ffc1106e6bf28be9e697d'
-HARNESS = 'da3d7b6f0369f85e58d17b546c933b362c342224'
-
-def sha(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
+ROOT=Path(__file__).resolve().parents[2]
 def main():
-    parser = argparse.ArgumentParser()
+    parser=argparse.ArgumentParser()
     parser.add_argument('--output', required=True, type=Path)
-    parser.add_argument('--native', action='store_true', help='also build old/new synthetic native restart executables')
-    args = parser.parse_args()
-    output = args.output.resolve()
-    output.mkdir(parents=True, exist_ok=False)
-    env = dict(os.environ, GOWORK='off')
-    manifest = {'status': 'FAIL', 'baseline_sha': BASELINE,
-                'harness_overlay_sha': HARNESS,
-                'harness_overlay_tree': subprocess.check_output(['git', 'rev-parse', HARNESS + '^{tree}'], cwd=ROOT, text=True).strip(),
-                'baseline_tree': subprocess.check_output(['git', 'rev-parse', BASELINE + '^{tree}'], cwd=ROOT, text=True).strip(),
-                'candidate_parent_sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-                'toolchain': subprocess.check_output(['go', 'version'], env=env, text=True).strip(),
-                'original_t01_build_manifest': 'docs/mcp-migration/evidence/T01/build-manifest.json',
-                'overlay': [], 'builds': [],
-                'candidate_sources': json.loads(subprocess.check_output(['python3', 'scripts/mcp-migration/candidate.py'], cwd=ROOT, text=True))}
+    args=parser.parse_args(); out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
+    env=dict(os.environ,GOWORK='off')
+    files=[]
+    for name in sorted(set(subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard','-z'],cwd=ROOT).decode().split('\0'))):
+        path=ROOT/name
+        if not name or name.startswith('docs/mcp-migration/evidence/') or name=='docs/mcp-migration/spec-review.md' or not path.is_file():continue
+        files.append(dict(path=name,sha256=hashlib.sha256(path.read_bytes()).hexdigest(),executable=bool(path.stat().st_mode&0o111)))
+    sources=dict(source_digest_sha256=hashlib.sha256(json.dumps(files,sort_keys=True,separators=(',',':')).encode()).hexdigest(),files=files)
+    manifest=dict(status='FAIL',candidate_parent_sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),toolchain=subprocess.check_output(['go','version'],text=True).strip(),candidate_sources=sources,builds=[])
     try:
-        with tempfile.TemporaryDirectory(prefix='zl-frozen-eval-source-') as directory:
-            source = Path(directory)
-            archive = subprocess.check_output(['git', 'archive', BASELINE], cwd=ROOT)
-            with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
-                tar.extractall(source, filter='data')
-            # Never copy candidate app/composition changes into the frozen baseline.
-            listed = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', HARNESS], cwd=ROOT, text=True).splitlines()
-            overlays = [name for name in listed if name in ['go.mod', 'go.sum', 'internal/service/archive_port.go'] or
-                        (name.startswith(('internal/evaluation/', 'internal/evalfixture/', 'cmd/zl-mcp-eval/')) and name.endswith('.go') and not name.endswith('_test.go'))]
-            for relative in sorted(overlays):
-                data = subprocess.check_output(['git', 'show', HARNESS + ':' + relative], cwd=ROOT)
-                target = source / relative
-                target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_bytes(data)
-                manifest['overlay'].append({'path': relative, 'sha256': hashlib.sha256(data).hexdigest(), 'source_commit': HARNESS})
-            manifest['overlay_purpose'] = 'Only fixture/driver plus forwarding archive constructor and pinned harness dependency/toolchain; frozen business implementations unchanged'
-            targets = [('zl-mcp-eval', './cmd/zl-mcp-eval')]
-            if args.native:
-                targets.append(('zl-mcp', './cmd/zl-mcp'))
-            for name, work in [('baseline', source), ('candidate', ROOT)]:
-                for prefix, package in targets:
-                    binary = output / (prefix + '-' + name)
-                    command = ['go', 'build', '-trimpath', '-o', str(binary), package]
-                    result = subprocess.run(command, cwd=work, env=env, capture_output=True, timeout=180)
-                    (output / ((name if prefix == 'zl-mcp-eval' else prefix + '-' + name) + '.build.log')).write_bytes(result.stdout + result.stderr)
-                    record = {'kind': name, 'target': package, 'command': command, 'exit_status': result.returncode, 'binary': str(binary)}
-                    manifest['builds'].append(record)
-                    if result.returncode:
-                        raise RuntimeError(f'{name} build failed')
-                    record['binary_sha256'] = sha(binary)
-                    record['build_info'] = subprocess.check_output(['go', 'version', '-m', str(binary)], text=True)
-            manifest['status'] = 'PASS'
-    finally:
-        (output / 'build-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
-
-if __name__ == '__main__':
-    main()
+        binary=out/'zl-mcp-eval-candidate';command=['go','build','-trimpath','-o',str(binary),'./cmd/zl-mcp-eval']
+        run=subprocess.run(command,cwd=ROOT,env=env,capture_output=True,timeout=180)
+        (out/'candidate.build.log').write_bytes(run.stdout+run.stderr)
+        record=dict(kind='candidate',target='./cmd/zl-mcp-eval',command=command,exit_status=run.returncode,binary=str(binary));manifest['builds'].append(record)
+        if run.returncode:raise RuntimeError('current build failed')
+        record.update(binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),build_info=subprocess.check_output(['go','version','-m',str(binary)],text=True))
+        manifest['status']='PASS'
+    finally:(out/'build-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+if __name__=='__main__':main()

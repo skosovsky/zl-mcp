@@ -3,7 +3,7 @@ TOOLS_BIN ?= $(CURDIR)/.tools
 ARCH_GO := $(TOOLS_BIN)/arch-go
 ARCHITECTURE_EVIDENCE ?=
 
-.PHONY: tools architecture dependency-probe test race vet nested-test nested-race nested-vet build-platforms check
+.PHONY: tools architecture test race vet nested-test nested-race nested-vet build-platforms check
 
 tools:
 	mkdir -p "$(TOOLS_BIN)"
@@ -11,9 +11,6 @@ tools:
 
 architecture: tools
 	GOWORK=off python3 scripts/mcp-migration/architecture.py --binary "$(ARCH_GO)" $(if $(ARCHITECTURE_EVIDENCE),--evidence "$(ARCHITECTURE_EVIDENCE)",)
-
-dependency-probe:
-	GOWORK=off python3 scripts/mcp-migration/dependency_probe.py /tmp/zl-mcp-consumer-probe.json
 
 test:
 	go test ./...
@@ -33,8 +30,8 @@ build-platforms:
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -trimpath -o bin/zl-mcp-darwin-amd64 ./cmd/zl-mcp
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o bin/zl-mcp-linux-amd64 ./cmd/zl-mcp
 
-# Full synthetic offline parity is mandatory; performance uses the recorded host baseline.
-check: test race vet nested-test nested-race nested-vet architecture build-platforms eval-offline check-mcp-parity
+# Standalone synthetic service contracts are mandatory; migration parity is complete.
+check: test race vet nested-test nested-race nested-vet architecture build-platforms eval-offline
 
 EVAL_OUTPUT ?= /tmp/zl-mcp-offline-$$(date +%s)-$$$$
 .PHONY: eval-offline
@@ -42,19 +39,13 @@ eval-offline:
 	GOWORK=off go run ./cmd/zl-mcp-eval --root "$(CURDIR)" --profile offline --output "$(EVAL_OUTPUT)" --run-budget 30m --repeats 2
 
 .PHONY: bench-mcp
-BENCH_ROLE ?= candidate
 BENCH_CPU_MODEL ?=
 bench-mcp:
 	set -eu; task_bench_root=$$(mktemp -d /tmp/zl-mcp-bench.XXXXXX); \
 	GOWORK=off python3 scripts/mcp-migration/build_eval.py --output "$$task_bench_root/build" && \
-	python3 scripts/mcp-migration/bench_mcp.py --binary "$$task_bench_root/build/zl-mcp-eval-$(BENCH_ROLE)" $(if $(BENCH_CPU_MODEL),--cpu-model "$(BENCH_CPU_MODEL)",) --build-manifest "$$task_bench_root/build/build-manifest.json" --output "$$task_bench_root/results"
+	python3 scripts/mcp-migration/bench_mcp.py --binary "$$task_bench_root/build/zl-mcp-eval-candidate" $(if $(BENCH_CPU_MODEL),--cpu-model "$(BENCH_CPU_MODEL)",) --build-manifest "$$task_bench_root/build/build-manifest.json" --output "$$task_bench_root/results"
 
-.PHONY: eval-paired performance-acceptance
-eval-paired:
-	set -eu; task_pair_root=$$(mktemp -d /tmp/zl-mcp-paired.XXXXXX); \
-	GOWORK=off python3 scripts/mcp-migration/build_eval.py --output "$$task_pair_root/build"; \
-	"$$task_pair_root/build/zl-mcp-eval-candidate" --root "$(CURDIR)" --baseline-binary "$$task_pair_root/build/zl-mcp-eval-baseline" --output "$$task_pair_root/paired" --repeats 2
-
+.PHONY: performance-acceptance
 PERFORMANCE_BASELINE ?= docs/mcp-migration/evidence/T03/performance-baseline/manifest.json
 PERFORMANCE_BASELINE_BUILD ?= docs/mcp-migration/evidence/T03/baseline-build-manifest-v2.json
 PERFORMANCE_CANDIDATE ?=
@@ -62,8 +53,7 @@ PERFORMANCE_REPORT ?= /tmp/zl-mcp-performance-comparison.json
 performance-acceptance:
 	python3 scripts/mcp-migration/compare_performance.py --baseline "$(PERFORMANCE_BASELINE)" --candidate "$(PERFORMANCE_CANDIDATE)" --baseline-build "$(PERFORMANCE_BASELINE_BUILD)" --output "$(PERFORMANCE_REPORT)"
 
-.PHONY: check-mcp-parity eval-model
-check-mcp-parity: eval-paired
+.PHONY: eval-model
 
 # A missing separately authorized driver produces NOT_RUN and a nonzero exit.
 # This opt-in target is excluded from check and CI.

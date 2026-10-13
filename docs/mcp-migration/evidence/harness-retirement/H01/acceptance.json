@@ -1,0 +1,24 @@
+{
+  "candidate": "030119562a0ff2bbce454f8d3433aabcb03b0b0e5fa09f6ef47c91d456d18c09",
+  "completeness": {
+    "agent": "arch_go_architecture_review",
+    "passed": 8,
+    "total": 8,
+    "percent": 100
+  },
+  "correctness": {
+    "agent": "cleanup_correctness",
+    "status": "PASS"
+  },
+  "checks": {
+    "evaluation_unit_race_vet": "PASS",
+    "offline": "PASS50/50cases480/480assertions"
+  },
+  "initial_findings": [
+    "real dataset still allowed rounded SDK ID",
+    "empty checkout with"
+  ],
+  "findings_status": "FIXED",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

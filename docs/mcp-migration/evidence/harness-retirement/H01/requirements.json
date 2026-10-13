@@ -1,0 +1,19 @@
+{
+  "leaves": [
+    "retire frozen baseline CI/CLI",
+    "remove paired evaluation and baseline correction",
+    "retain standalone product assertions and exact JSON",
+    "retire migration scripts/probes/digest command",
+    "preserve current-only performance build pending H04",
+    "preserve historical evidence and initial dirty edits",
+    "document historical reproduction and six-step disposition",
+    "offline 50/50 cases 480/480 assertions"
+  ],
+  "scope": "H01",
+  "checks": {
+    "evaluation_test": "PASS",
+    "offline": "PASS50/50cases480/480assertions",
+    "model": "NOT_RUN",
+    "live": "NOT_RUN"
+  }
+}

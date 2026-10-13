@@ -142,61 +142,34 @@ The nested patched module is not modified; run it with the same selected root Go
 and checks the active import rules at compliance=100%/coverage=100%, the production
 `go list -deps` graph and isolated negative/positive controls. The pinned executable
 reports "master" via --version; build information (`go version -m`) is the verified pin.
-`make dependency-probe` recreates the isolated GOWORK=off consumer (no replace).
-`make check` runs root/nested test/race/vet, architecture, three CGO-free platform
-builds, two-repeat offline evaluation and `make check-mcp-parity` (the paired
-frozen/candidate runner). Performance acceptance is a separate host-bound gate.
-`make eval-model` is excluded from check/CI: without a separately authorized
-`MODEL_DRIVER=/absolute/driver` it writes NOT_RUN and exits nonzero. Model execution
-requires a separate instruction; no model/live run is included in this migration.
+`make check` runs root/nested tests/race/vet, architecture, three CGO-free platform
+builds and two-repeat standalone offline evaluation. Frozen-baseline parity is
+completed migration acceptance and is no longer a current CI gate.
+`make eval-model` remains excluded from check/CI and requires separate authorization.
 
 Dependency pins and contracts: docs/mcp-migration/dependency-matrix.json.
 Exact temporary migration edges: docs/mcp-migration/architecture-exceptions.json.
 Evidence: docs/mcp-migration/evidence/T02. Architecture static imports do not prove
 account ownership, no resend, persistence, authorization or lifecycle: behavioral gates remain.
 
-## Final architecture migration checks (T10)
+## Permanent checks after migration
 
-`make check` runs root and nested tests/race/vet, executable architecture controls,
-CGO-free platform builds, offline evaluation and paired frozen/candidate eval.
-CI fetches the frozen commits and runs paired eval through evaly.RunPaired and
-Compare with independent synthetic state. All model/live gates stay NOT_RUN.
+The accepted T10 migration, frozen-baseline comparison and native old/new restart
+results remain historical. Reproduce those tools from the immutable accepted
+commit in [harness maintenance](harness-maintenance.md), not current source.
+The current service preserves all 22 tool contracts and existing native owners.
+Standalone offline scenarios and SDK identity/lifecycle tests remain mandatory.
 
-The internal Runtime/Capabilities and MCP Ports types describe all 22 tools;
-supported legacy tool names and borrowed native owners remain. All architecture
-exceptions are closed. The active archive evaluation constructor is a preserved
-native forwarding edge, not a temporary fallback.
+Performance is a separate host-bound gate. The transitional current-only build
+and benchmark scripts are replaced by Go tooling in H04; their fixed allocation,
+byte and absolute p95 budgets are not recalibrated. No old executable is rebuilt
+for current performance acceptance.
 
-Performance acceptance uses the original T03 five-run baseline on the same host,
-Go, fixture, concurrency/pacing and disabled exporters. Run `make bench-mcp BENCH_ROLE=candidate BENCH_CPU_MODEL="Apple M1 Max"`, then
-`make performance-acceptance PERFORMANCE_CANDIDATE=/absolute/results/manifest.json`.
-The verifier recomputes medians from all 15 raw runs. User revision
-2026-10-12-candidate-latency-plus10-v3 replaces the latency ratio with fixed absolute
-p95 budgets: read 7.8683 ms, search 7.0726337 ms, context 6.9967799 ms.
-These were calibrated retrospectively from the measured candidate plus 10%;
-existing raw runs are reused. This budget PASS does not demonstrate latency parity
-with the original frozen baseline. Historical v2 FAIL is retained. Allocations ×2.0
-and allocated bytes/op ×1.20 still use the unchanged T03 baseline; it rejects missing/duplicate runs, changed thresholds and
-incompatible machine/settings. These host-specific thresholds cannot be claimed
-from unrelated Linux/macOS CI hardware. Preserve every failed run and document
-a concrete anomaly before any repeat.
+SDK identity and cancellation contract: [sdk-id-contract](mcp-migration/sdk-id-contract.md).
+Run `go test ./internal/mcpserver -run TestSDK01 -count=1` for wire identity,
+HTTP/STDIO lifecycle, privacy and durable-UUID regressions. Model/live gates stay
+NOT_RUN unless separately executed and accepted. No deployment is authorized.
 
-For offline native restart compatibility, `build_eval.py --native --output /tmp/new-dir`
-builds frozen/candidate service binaries. Set ZL_MCP_ACCEPTANCE_BINARY and
-ZL_MCP_RESTART_PEER_BINARY to their absolute paths, run the native terminal startup
-acceptance test, then reverse their order. Each sequence reuses one temporary
-synthetic state and stops/joins the first process before opening its peer; no
-installed service, session or live account is used.
-
-
-SDK-01 numeric identity and cancellation contract is documented in
-`docs/mcp-migration/sdk-id-contract.md`. The SDK module uses the explicitly
-user-authorized immutable remote fork replacement; no local SDK vendor is used.
-Run `go test ./internal/mcpserver -run TestSDK01 -count=1` for the raw identity,
-HTTP lifecycle, actual STDIO subprocess, privacy and durable-UUID fixtures.
-The full task also requires unmodified SDK nested checks, root checks,
-offline/paired evaluation and fresh affected performance measurements.
-
-Final acceptance and rollback handoff: `docs/mcp-migration/final-report.md` and
-`docs/mcp-migration/rollback.md`. Machine-readable acceptance and independent
-reviews are under `docs/mcp-migration/evidence/T10/`.
+Historical acceptance and rollback: [final report](mcp-migration/final-report.md)
+and [handoff](mcp-migration/rollback.md). Current tooling retirement and gates:
+[harness maintenance](harness-maintenance.md).
