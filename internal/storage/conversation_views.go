@@ -85,64 +85,6 @@ func (s *Store) ConversationSummary(ctx context.Context) (map[string]any, error)
 	}
 	return map[string]any{"conversation_count": len(refs), "history_complete": false, "conversations_with_known_gaps": gaps["direct"] + gaps["group"]}, nil
 }
-func (s *Store) ConversationSearchResult(ctx context.Context, q Search, p *SearchPage) (map[string]any, error) {
-	hits := []map[string]any{}
-	coverage := []map[string]any{}
-	seen := map[domain.ConversationRef]bool{}
-	for _, h := range p.Hits {
-		b, err := json.Marshal(h)
-		if err != nil {
-			return nil, err
-		}
-		v := map[string]any{}
-		if err = json.Unmarshal(b, &v); err != nil {
-			return nil, err
-		}
-		delete(v, "group_id")
-		delete(v, "group_name")
-		v["conversation_type"] = h.Conversation.Type
-		v["conversation_id"] = h.Conversation.ID
-		v["conversation_name"] = h.GroupName
-		hits = append(hits, v)
-		if !seen[h.Conversation] {
-			c, err := s.ConversationCoverage(ctx, h.Conversation)
-			if err != nil {
-				return nil, err
-			}
-			coverage = append(coverage, c)
-			seen[h.Conversation] = true
-		}
-	}
-	var reason any
-	if len(hits) == 0 {
-		reason = "no_matches"
-		if q.ConversationID != "" {
-			ref := domain.ConversationRef{Type: q.ConversationType, ID: q.ConversationID}
-			c, err := s.ConversationCoverage(ctx, ref)
-			if err != nil {
-				return nil, err
-			}
-			coverage = append(coverage, c)
-			if c["earliest_stored_at"] == nil {
-				reason = "no_collected_data"
-			}
-		} else {
-			state, err := s.State(ctx)
-			if err != nil {
-				return nil, err
-			}
-			if state["stored_message_count"] == 0 {
-				reason = "no_collected_data"
-			}
-		}
-	}
-	summary, err := s.ConversationSummary(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return map[string]any{"messages": hits, "has_more": p.NextCursor != nil, "next_cursor": p.NextCursor, "empty_reason": reason, "coverage": coverage, "coverage_summary": summary, "snapshot_at": p.SnapshotAt}, nil
-}
-
 func (s *Store) Conversations(ctx context.Context, kind, query string, limit int, token string) (map[string]any, error) {
 	if limit == 0 {
 		limit = 20

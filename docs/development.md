@@ -46,10 +46,10 @@ go test -race ./internal/messaging ./internal/storage ./internal/events ./intern
 Run the isolated corpus load check separately:
 
 ```sh
-go test ./internal/storage -run '^$' -bench BenchmarkManyConversations -benchtime=3x -count=1
+go test ./internal/adapters/store -run '^$' -bench BenchmarkManyConversations -benchtime=3x -count=1
 ```
 
-It persists 8,000 synthetic messages in 4,000 conversations through the production Put path and checks catalogue pagination, aggregate status, search with coverage and context. Report timings as measurements of the machine and build, not as a fixed SLA. No live Zalo account or installed state is used.
+It persists 8,000 synthetic messages in 4,000 conversations through the production Put path and checks catalogue pagination, aggregate status, search with coverage and context. Search with coverage uses the application handler and store adapter used by the runtime. Report timings as measurements of the machine and build, not as a fixed SLA. No live Zalo account or installed state is used.
 
 The synthetic fixture command and `docs/evals/fixtures.json` support isolated development. Some unit tests also read the project skill files, so keep these fixtures and references when removing generated evaluation output. The opt-in Go/evaly model profile requires a separate explicit run; checkpoint replay is offline and does not certify model or human review.
 

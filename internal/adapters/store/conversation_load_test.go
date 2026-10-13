@@ -1,4 +1,4 @@
-package storage
+package store
 
 import (
 	"context"
@@ -7,14 +7,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/skosovsky/zl-mcp/internal/app/search"
 	"github.com/skosovsky/zl-mcp/internal/domain"
+	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
 func BenchmarkManyConversations(b *testing.B) {
 	// Arrange: exercise real persistence, discovery, FTS and gaps for 2,000 peers
 	// and 2,000 groups with colliding IDs, each holding two synthetic messages.
 	ctx := context.Background()
-	s, err := OpenWithPolicy(ctx, filepath.Join(b.TempDir(), "corpus.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	s, err := storage.OpenWithPolicy(ctx, filepath.Join(b.TempDir(), "corpus.sqlite"), domain.CollectionPolicy{All: true}, 90)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -66,17 +68,17 @@ func BenchmarkManyConversations(b *testing.B) {
 		}
 	})
 	b.Run("search_with_coverage", func(b *testing.B) {
+		// Arrange: use the application handler and the production store adapter.
+		handler := search.Handler{Reads: New(s)}
 		b.ReportAllocs()
+		b.ResetTimer()
 		for range b.N {
 			// Act.
-			q := Search{General: true, Query: "searchable", Limit: 50}
-			page, err := s.Page(ctx, q)
-			if err != nil {
-				b.Fatal(err)
-			}
-			result, err := s.ConversationSearchResult(ctx, q, page)
+			execution, err := handler.Conversation(ctx, search.ConversationRequest{
+				Query: search.Query{Text: "searchable", Limit: 50},
+			})
 			// Assert.
-			if err != nil || len(result["messages"].([]map[string]any)) != 50 || result["coverage_summary"].(map[string]any)["conversations_with_known_gaps"] != 4000 {
+			if err != nil || len(execution.Result.Messages) != 50 || execution.Result.CoverageSummary.ConversationsWithKnownGaps != 4000 {
 				b.Fatalf("search error=%v", err)
 			}
 		}

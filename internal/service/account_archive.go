@@ -129,10 +129,6 @@ func (p *membershipPort) preserveAccountArchive(ctx context.Context, id string) 
 	return p.library.PreserveFrom(ctx, p.archives, id, key)
 }
 
-func (p *membershipPort) inspectAccountArchive(ctx context.Context, id, sinceText, untilText string, offset, limit int, ref domain.ConversationRef, includeMetadata bool) (map[string]any, error) {
-	return p.inspectAccountArchiveFrom(ctx, "cache", id, sinceText, untilText, offset, limit, ref, includeMetadata)
-}
-
 func (p *membershipPort) inspectAccountArchiveFrom(ctx context.Context, sourceStorage, id, sinceText, untilText string, offset, limit int, ref domain.ConversationRef, includeMetadata bool) (map[string]any, error) {
 	if sourceStorage == "" {
 		sourceStorage = "cache"
@@ -190,10 +186,6 @@ func (p *membershipPort) inspectAccountArchiveFrom(ctx context.Context, sourceSt
 		more = false
 	}
 	return map[string]any{"manifest": manifest, "source_storage": sourceStorage, "retention": retention, "since": since.UTC().Format(time.RFC3339Nano), "until": until.UTC().Format(time.RFC3339Nano), "offset": offset, "files": files, "has_more_files": more, "download_performed": false, "import_performed": false, "history_complete": false}, nil
-}
-
-func (p *membershipPort) removeAccountArchive(ctx context.Context, id string) (map[string]any, error) {
-	return p.removeAccountArchiveFrom(ctx, id, "cache")
 }
 
 func (p *membershipPort) removeAccountArchiveFrom(ctx context.Context, id, sourceStorage string) (map[string]any, error) {
