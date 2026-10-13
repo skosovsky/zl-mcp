@@ -1,65 +1,65 @@
-# Executable architecture gates (T02)
+# Permanent executable architecture gates
 
-`arch-go.yml` is JSON syntax accepted as YAML by arch-go/v2 v2.1.2. Thresholds
-are compliance100% and coverage100%. Every current production/support package has
-its own meaningful dependency allowlist; no generic package catch-all is used.
-Existing backend imports are frozen individually. The normative new boundaries
-are domain; each app capability/shared; store/operations adapters; toolruntime;
-observability; evaluation and command composition. Future capability packages have
-separate own/domain/shared imports, no third-party imports and no SQL/network/OS ports.
+`make architecture` runs pinned arch-go/v2 v2.1.2 and the separate Go module
+`tools/harness`. `arch-go.yml` is ordinary YAML with compliance and coverage
+thresholds of 100%. It has 33 package selectors: compatible allow/deny rules
+share a selector, while capability and existing backend boundaries remain explicit.
+There is no generic production package catch-all.
 
-Rules correspond to A01–A09 in the task. SDK remains in MCP wire adapters, the existing
-service/bridge.go and isolated evaluation support. A supplemental Go AST import scan
-restricts the service SDK exception to that exact bridge file. All production source
-imports are parsed regardless of platform, custom build tags or CGO; nested modules,
-testdata and test files are outside the production module scan. The same allowlists
-also check these otherwise host-invisible files and reject uncovered source packages. `go list -deps` independently
-rejects evaluation/evalfixture/evaly in the real service executable. Supplemental graph
-checks ensure toolsy is only in toolruntime, metry/OTel only in observability/explicit
-composition, pure app imports and exact MCP/CLI migration exceptions. Root and subpackage
-patterns are exercised by positive controls; unknown/root packages fail coverage.
+arch-go is the only dependency-pattern matcher. The harness never reimplements
+its allowlists with a separate regexp engine. Root/subpackage patterns use the
+pinned syntax `^github[.]com/skosovsky/zl-mcp/internal/domain.**`; exact dependencies
+use patterns such as `^net$`. Anchoring excludes shadow paths and neighboring names.
+Empty allowlists do not deny imports in this version, so external bans retain an
+explicit `.+` deny. `golang.org/x` is classified as standard by the pinned checker.
+The executable's Go module build info must identify v2.1.2; its displayed `master`
+version is not used for the pin check.
 
-T07 closes all exact temporary edges: MCP imports only typed app/runtime contracts
-and SDK/wire dependencies; it constructs no storage/control/native owner. SQL
-no-row errors become the same safe domain error in backend adapters. The CLI
-entrypoint calls service composition, which owns login, logger, control client and
-private-state wiring with unchanged local authority/validation. The exception
-manifest is empty; native subsystem internal edges remain deliberately retained.
-The checker reads the source-controlled manifest, not an acceptance report.
+Two reports are required. The first checks normal host-visible production imports.
+The second checks a temporary synthetic module whose package imports are the union
+of every production Go file, parsed with Go AST regardless of platform suffix,
+build tags or CGO. Both runs use the same executable and the exact config bytes.
+Nested modules, hidden directories, vendor, testdata and test files are excluded
+from the production module scan. Malformed sources, process failures, missing or
+stale reports and truncated diagnostics fail the gate. Synthetic source files are
+not compiled; arch-go checks their imports, including otherwise host-hidden edges.
 
-Ten isolated controls run the same pinned executable: domain->SQL, app->SDK,
-mcpserver->storage, production->evaluation, domain subpackage->SQL, uncovered package,
-uncovered root and shadow-path packages, and positive app root/subpackages.
-Four additional source controls reject platform/tag-hidden service SDK imports,
-CGO-constrained domain SQL and a platform-only uncovered package. The bare normative fixture has
-no legacy implementation, so its copy of A03 omits documented temporary edges; negative
-controls must fail on the specified dependency/coverage rule, never just a loader error.
-Active repository rules enforce A03/A09 without temporary exceptions. Negative fixture
-results and reasons are retained in evidence/T02/architecture.json.
+Two additional constraints cannot be expressed by package allowlists: SDK imports
+in service are restricted to `internal/service/bridge.go`, and `go list -deps`
+rejects evaluation/evalfixture/evaly in the actual production executable. SDK,
+toolsy, metry and app infrastructure package restrictions otherwise live only in
+arch-go configuration. The source-controlled architecture-exceptions manifest must
+remain present with an empty exceptions array; temporary edges cannot silently
+bypass these gates.
 
-Pinned syntax details are characterized: empty shouldOnlyDependsOn lists do not forbid
-imports; no-external packages have an explicit deny regex `.+`. Standalone `**` is not a
-valid pinned matcher. All package and dependency selectors use anchored full import
-paths with escaped dots; this prevents substring matches from granting false coverage. The pinned checker classifies golang.org/x as standard, so existing unix and Unicode normalization imports appear explicitly in their standard allowlists as well as the
-production graph. This does not authorize another dependency. The supplemental graph
-uses actual Go import paths and catches app infrastructure regardless of that heuristic.
-The executable prints "master" via --version; its Go build module info must identify
-arch-go/v2 v2.1.2. Neither a generic allow-all nor a reduced threshold fixes a failure.
+Ten isolated controls check domain SQL, app SDK, MCP storage, production evaluation,
+domain subpackages, unknown/root/shadow packages and positive app root/subpackages.
+They receive a byte-for-byte copy of the active config, with no allowlist edits.
+A negative dependency control must produce a compliance failure naming the injected
+import; a coverage control must fail coverage. A loader error or missing report
+never counts as successful detection. A regression test deliberately allows MCP
+storage and verifies that the negative control itself fails, independently of the
+production graph check.
 
-Static imports do not prove runtime operation ownership, no resend, permissions,
-persistence compatibility, response budgets or telemetry privacy. Their behavioral
-checks remain mandatory in later tasks. Model/live execution stays NOT_RUN.
+The four historical source controls remain: platform/tag-hidden service SDK,
+CGO-constrained domain SQL and platform-only uncovered package. Two positive hidden
+source controls ensure that allowed Windows/tagged imports are accepted. All source
+controls exercise the same AST scanner and arch-go matcher. Go integration tests
+compare old and new config decisions for current production imports and positive/
+negative fixtures. The old JSON config is test-only evidence, not a runtime fallback.
 
-T08 adds one explicit observability -> app/shared edge for the consumer-owned
-TelemetryPort and Invocation types. The adapter imports no other app capability,
-transport, SQL or native owner. metry/OTel remain inside observability; service
-constructs its one owned provider through the host factory.
+`make tools-test tools-race tools-vet` checks the separate module with `GOWORK=off`;
+these checks are mandatory in `make check` and CI. Architecture subprocesses have
+bounded diagnostics, deadlines, owned process groups and bounded waits; cleanup
+terminates owned descendants on both successful completion and cancellation.
+`ARCHITECTURE_EVIDENCE` optionally records both reports, imports, production dependency
+graph, controls and failure diagnostics as JSON.
 
-The native messaging/collector/historyimport/Events packages and service gain
-only the explicit app/shared observation-port edge. Their existing native
-DB/session owners remain intact. Config gains exact standard errors/net-url/strings
-imports to validate private opt-in settings and return neutral errors.
-
-T08 review correction: MCP final-call audit imports only standard crypto/rand to
-create unrelated random correlation IDs. This exact edge retains no raw caller
-or native identity and introduces no business/SDK dependency.
+A01–A09 remain the normative package boundaries: domain purity, independent app
+capabilities, MCP ports, toolruntime ownership of toolsy, observability ownership of
+metry/OTel, isolated evaluation, limited SDK and service composition. The existing
+service bridge and native owner imports are intentional contracts. Static imports
+do not prove permissions, operation ownership, absence of resend, persistence,
+response budgets or telemetry privacy; standalone synthetic behavioral checks remain
+mandatory. Migration acceptance reports are historical records. Model/live execution
+remains NOT_RUN unless separately authorized.

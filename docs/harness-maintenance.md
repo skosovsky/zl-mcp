@@ -26,3 +26,5 @@ Each H01–H06 has one atomic commit after leaf requirements/candidate fingerpri
 Permanent checks do not execute model/live paths. Those gates remain NOT_RUN. No service installation, LaunchAgent restart, live account, paid model run, publication, sibling library edit or third_party edit is authorized.
 
 CLI acceptance controls are Go tests alongside the evaluation command. They require no model CLI or account: failure, missing child, timeout and model preflight are exercised offline. Process watchdog tests enforce bounded output and cleanup of the owned process group, including descendants.
+
+Architecture uses pinned arch-go v2.1.2 as its sole dependency matcher. The separate Go tooling module parses all production imports irrespective of build constraints, creates an isolated union-import module, and passes an exact copy of the active YAML to the same binary. File-level SDK and production transitive checks remain supplemental. Controls verify the active configuration without editing allowlists. Tooling tests/race/vet are explicit mandatory gates, outside the root production module.

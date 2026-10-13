@@ -1,0 +1,18 @@
+{
+  "sha256": "40313c9f6bfb06ab0efb868eeed1a6a413f2592d271daa39869c98ae00be120f",
+  "checks": "make tools-test tools-race tools-vet architecture PASS",
+  "source_hashes": {
+    ".github/workflows/go.yml": "7a6c92d6553d43ad20ea497c3a3d38a416b0cbac405572789104689ab3c4675d",
+    "Makefile": "299a52645ac93312e981eee98407dc474715f03583e896c513891466cc63aa94",
+    "arch-go.yml": "aaff122104ba71d38fcfb28d2a9e549b3ed2f3bb4d58b30986d0354eb5a8a0f8",
+    "docs/harness-maintenance.md": "182f553ee0fef474b05ed64030c51311813dee27ded6c7475529d9347e2718a3",
+    "docs/mcp-migration/architecture.md": "8d490f51d080a3324ae702382b8d6252461c101bbf731702ee13dbaac05dc405",
+    "tools/harness/cmd/harness/main.go": "c705b8cefd9f0fc7260c03d91c4ccdc2ccd1bb7c34a6d53dc4d25be33531ccfa",
+    "tools/harness/go.mod": "0dd32117bebf9de6629c5223d24467ec96da25d8f98b41d0de99b0a744264415",
+    "tools/harness/go.sum": "e42794fa9b56301ad073de55cac1dea683b320ed951454d8709ffc7156088dd2",
+    "tools/harness/internal/architecture/architecture.go": "a4af4106a4c9aea37795ccda3c627eeef318b0548ec001ff533e73de6393b69e",
+    "tools/harness/internal/architecture/architecture_test.go": "6c3ab1c886550e414c5ad217deb934da0625e5a3b9148512b03b27ac189c7b32",
+    "tools/harness/internal/architecture/testdata/original-config.json": "7f593cdce444539ff4d2e518e7ffe0c3715a6feb6d45ce8d90c8f3f42c5de32b"
+  },
+  "custom_tools_checks": "make tools-test tools-race tools-vet TOOLS_BIN=/tmp/zl-h03-custom-tools PASS"
+}

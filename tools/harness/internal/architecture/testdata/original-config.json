@@ -1,0 +1,1181 @@
+{
+  "version": 1,
+  "threshold": {
+    "compliance": 100,
+    "coverage": 100
+  },
+  "dependenciesRules": [
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/service(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^bufio$",
+          "^context$",
+          "^encoding/json$",
+          "^flag$",
+          "^fmt$",
+          "^io$",
+          "^log/slog$",
+          "^os$",
+          "^os/signal$",
+          "^path/filepath$",
+          "^strconv$",
+          "^strings$",
+          "^syscall$",
+          "^time$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval\\-fixture(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/evalfixture(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/modelcontextprotocol/go\\-sdk/mcp$"
+        ],
+        "standard": [
+          "^context$",
+          "^encoding/json$",
+          "^flag$",
+          "^fmt$",
+          "^log/slog$",
+          "^os$",
+          "^os/signal$",
+          "^syscall$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/santhosh\\-tekuri/jsonschema/v6$"
+        ],
+        "standard": [
+          "^embed$",
+          "^encoding/json$",
+          "^fmt$",
+          "^sort$",
+          "^strings$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/collector(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/google/uuid$"
+        ],
+        "standard": [
+          "^context$",
+          "^crypto/rand$",
+          "^crypto/sha256$",
+          "^database/sql$",
+          "^encoding/hex$",
+          "^encoding/json$",
+          "^errors$",
+          "^io$",
+          "^log/slog$",
+          "^math/big$",
+          "^net$",
+          "^net/http$",
+          "^net/url$",
+          "^strings$",
+          "^sync$",
+          "^sync/atomic$",
+          "^time$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/pelletier/go\\-toml/v2$"
+        ],
+        "standard": [
+          "^fmt$",
+          "^net$",
+          "^os$",
+          "^path/filepath$",
+          "^strconv$",
+          "^syscall$",
+          "^errors$",
+          "^net/url$",
+          "^strings$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^bytes$",
+          "^context$",
+          "^encoding/json$",
+          "^fmt$",
+          "^io$",
+          "^net$",
+          "^net/http$",
+          "^path/filepath$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/google/uuid$"
+        ],
+        "standard": [
+          "^context$",
+          "^crypto/sha256$",
+          "^encoding/hex$",
+          "^encoding/json$",
+          "^errors$",
+          "^net/http$",
+          "^strings$",
+          "^time$",
+          "^unicode/utf8$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/evalfixture(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/collector(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/events$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/historyimport$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/messaging$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/service$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/modelcontextprotocol/go\\-sdk/mcp$"
+        ],
+        "standard": [
+          "^context$",
+          "^crypto/sha256$",
+          "^encoding/hex$",
+          "^encoding/json$",
+          "^fmt$",
+          "^net$",
+          "^net/http$",
+          "^os$",
+          "^path/filepath$",
+          "^strings$",
+          "^sync$",
+          "^time$",
+          "^bytes$",
+          "^io$",
+          "^errors$",
+          "^strconv$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/events(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/santhosh\\-tekuri/jsonschema/v6$"
+        ],
+        "standard": [
+          "^bytes$",
+          "^context$",
+          "^crypto/hmac$",
+          "^crypto/rand$",
+          "^crypto/sha256$",
+          "^crypto/subtle$",
+          "^encoding/base64$",
+          "^encoding/binary$",
+          "^encoding/hex$",
+          "^encoding/json$",
+          "^errors$",
+          "^fmt$",
+          "^io$",
+          "^log/slog$",
+          "^net/http$",
+          "^net/netip$",
+          "^net/url$",
+          "^strconv$",
+          "^strings$",
+          "^sync$",
+          "^time$",
+          "^unicode/utf8$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^database/sql$",
+          "^encoding/json$",
+          "^errors$",
+          "^log/slog$",
+          "^net$",
+          "^time$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^golang\\.org/x/sys/unix$"
+        ],
+        "standard": [
+          "^fmt$",
+          "^os$",
+          "^path/filepath$",
+          "^runtime$",
+          "^golang\\.org/x/sys/unix$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/logging(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/logging(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^golang\\.org/x/sys/unix$",
+          "^gopkg\\.in/natefinch/lumberjack\\.v2$"
+        ],
+        "standard": [
+          "^encoding/json$",
+          "^errors$",
+          "^fmt$",
+          "^io$",
+          "^os$",
+          "^path/filepath$",
+          "^strings$",
+          "^sync$",
+          "^syscall$",
+          "^time$",
+          "^golang\\.org/x/sys/unix$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/google/uuid$",
+          "^github\\.com/modelcontextprotocol/go\\-sdk/mcp$",
+          "^github\\.com/santhosh\\-tekuri/jsonschema/v6$",
+          "^github\\.com/modelcontextprotocol/go\\-sdk/jsonrpc$"
+        ],
+        "standard": [
+          "^bytes$",
+          "^context$",
+          "^crypto/sha256$",
+          "^crypto/subtle$",
+          "^encoding/hex$",
+          "^encoding/json$",
+          "^errors$",
+          "^fmt$",
+          "^io$",
+          "^log/slog$",
+          "^mime$",
+          "^net$",
+          "^net/http$",
+          "^net/url$",
+          "^os$",
+          "^strconv$",
+          "^strings$",
+          "^time$",
+          "^crypto/rand$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^database/sql$",
+          "^encoding/json$",
+          "^errors$",
+          "^time$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/google/uuid$",
+          "^github\\.com/ulikunitz/xz$",
+          "^modernc\\.org/sqlite$",
+          "^modernc\\.org/sqlite/lib$"
+        ],
+        "standard": [
+          "^bytes$",
+          "^context$",
+          "^crypto/aes$",
+          "^crypto/cipher$",
+          "^crypto/rand$",
+          "^crypto/sha256$",
+          "^database/sql$",
+          "^encoding/base64$",
+          "^encoding/binary$",
+          "^encoding/hex$",
+          "^encoding/json$",
+          "^errors$",
+          "^hash/crc32$",
+          "^io$",
+          "^log/slog$",
+          "^maps$",
+          "^math$",
+          "^math/bits$",
+          "^net/http$",
+          "^net/netip$",
+          "^net/url$",
+          "^os$",
+          "^path/filepath$",
+          "^sort$",
+          "^strconv$",
+          "^strings$",
+          "^sync/atomic$",
+          "^time$",
+          "^unicode/utf8$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^errors$",
+          "^net$",
+          "^net/http$",
+          "^net/netip$",
+          "^time$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/service(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/collector(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/config(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/events(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/logging(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/zalo(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/google/uuid$",
+          "^github\\.com/modelcontextprotocol/go\\-sdk/mcp$",
+          "^github\\.com/modelcontextprotocol/go\\-sdk/jsonrpc$"
+        ],
+        "standard": [
+          "^bytes$",
+          "^context$",
+          "^crypto/rand$",
+          "^crypto/sha256$",
+          "^database/sql$",
+          "^encoding/hex$",
+          "^encoding/json$",
+          "^errors$",
+          "^fmt$",
+          "^io$",
+          "^log/slog$",
+          "^maps$",
+          "^net$",
+          "^net/http$",
+          "^net/url$",
+          "^os$",
+          "^path/filepath$",
+          "^strconv$",
+          "^strings$",
+          "^sync$",
+          "^time$",
+          "^flag$",
+          "^bufio$",
+          "^os/signal$",
+          "^syscall$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/google/uuid$",
+          "^golang\\.org/x/text/unicode/norm$",
+          "^modernc\\.org/sqlite$"
+        ],
+        "standard": [
+          "^context$",
+          "^crypto/hmac$",
+          "^crypto/rand$",
+          "^crypto/rsa$",
+          "^crypto/sha256$",
+          "^crypto/x509$",
+          "^database/sql$",
+          "^encoding/base64$",
+          "^encoding/hex$",
+          "^encoding/json$",
+          "^errors$",
+          "^fmt$",
+          "^net/url$",
+          "^os$",
+          "^path/filepath$",
+          "^sort$",
+          "^strconv$",
+          "^strings$",
+          "^sync$",
+          "^sync/atomic$",
+          "^time$",
+          "^unicode$",
+          "^unicode/utf8$",
+          "^golang\\.org/x/text/unicode/norm$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/zalo(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/local(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/mobilebackup(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/amrakk/zcago$",
+          "^github\\.com/amrakk/zcago/api$",
+          "^github\\.com/amrakk/zcago/errs$",
+          "^github\\.com/amrakk/zcago/listener$",
+          "^github\\.com/amrakk/zcago/model$",
+          "^github\\.com/amrakk/zcago/session/auth$"
+        ],
+        "standard": [
+          "^bytes$",
+          "^context$",
+          "^crypto/rand$",
+          "^crypto/rsa$",
+          "^crypto/x509$",
+          "^encoding/base64$",
+          "^encoding/hex$",
+          "^encoding/json$",
+          "^errors$",
+          "^fmt$",
+          "^io$",
+          "^log/slog$",
+          "^net/http$",
+          "^net/http/cookiejar$",
+          "^net/url$",
+          "^os$",
+          "^path/filepath$",
+          "^sort$",
+          "^strconv$",
+          "^strings$",
+          "^sync$",
+          "^time$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^errors$",
+          "^fmt$",
+          "^time$",
+          "^strings$",
+          "^sort$",
+          "^slices$",
+          "^encoding/json$",
+          "^unicode$",
+          "^unicode/utf8$",
+          "^strconv$",
+          "^math$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "standard": [
+          "^database/sql$",
+          "^net/http$",
+          "^net$",
+          "^os$",
+          "^os/exec$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^errors$",
+          "^fmt$",
+          "^time$",
+          "^strings$",
+          "^sort$",
+          "^slices$",
+          "^encoding/json$",
+          "^unicode$",
+          "^unicode/utf8$",
+          "^strconv$",
+          "^math$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "standard": [
+          "^database/sql$",
+          "^net/http$",
+          "^net$",
+          "^os$",
+          "^os/exec$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^errors$",
+          "^fmt$",
+          "^time$",
+          "^strings$",
+          "^sort$",
+          "^slices$",
+          "^encoding/json$",
+          "^unicode$",
+          "^unicode/utf8$",
+          "^strconv$",
+          "^math$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "standard": [
+          "^database/sql$",
+          "^net/http$",
+          "^net$",
+          "^os$",
+          "^os/exec$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^errors$",
+          "^fmt$",
+          "^time$",
+          "^strings$",
+          "^sort$",
+          "^slices$",
+          "^encoding/json$",
+          "^unicode$",
+          "^unicode/utf8$",
+          "^strconv$",
+          "^math$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "standard": [
+          "^database/sql$",
+          "^net/http$",
+          "^net$",
+          "^os$",
+          "^os/exec$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^errors$",
+          "^fmt$",
+          "^time$",
+          "^strings$",
+          "^sort$",
+          "^slices$",
+          "^encoding/json$",
+          "^unicode$",
+          "^unicode/utf8$",
+          "^strconv$",
+          "^math$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "standard": [
+          "^database/sql$",
+          "^net/http$",
+          "^net$",
+          "^os$",
+          "^os/exec$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^errors$",
+          "^fmt$",
+          "^time$",
+          "^strings$",
+          "^sort$",
+          "^slices$",
+          "^encoding/json$",
+          "^unicode$",
+          "^unicode/utf8$",
+          "^strconv$",
+          "^math$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "standard": [
+          "^database/sql$",
+          "^net/http$",
+          "^net$",
+          "^os$",
+          "^os/exec$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^errors$",
+          "^fmt$",
+          "^time$",
+          "^strings$",
+          "^sort$",
+          "^slices$",
+          "^encoding/json$",
+          "^unicode$",
+          "^unicode/utf8$",
+          "^strconv$",
+          "^math$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "standard": [
+          "^database/sql$",
+          "^net/http$",
+          "^net$",
+          "^os$",
+          "^os/exec$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^errors$",
+          "^fmt$",
+          "^time$",
+          "^strings$",
+          "^sort$",
+          "^slices$",
+          "^encoding/json$",
+          "^unicode$",
+          "^unicode/utf8$",
+          "^strconv$",
+          "^math$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/skosovsky/toolsy(/[\\w.-]+)*$",
+          "^github\\.com/santhosh\\-tekuri/jsonschema/v6(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^encoding/json$",
+          "^errors$",
+          "^fmt$",
+          "^strconv$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/storage(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^database/sql$",
+          "^encoding/json$",
+          "^errors$",
+          "^os$",
+          "^strconv$",
+          "^time$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/collector(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/events(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/skosovsky/metry(/[\\w.-]+)*$",
+          "^go\\.opentelemetry\\.io(/[\\w.-]+)*$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/evaluation(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/internal/evaluation(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/docs/contracts(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/domain(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/evalfixture(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/mcpserver(/[\\w.-]+)*$"
+        ],
+        "external": [
+          "^github\\.com/skosovsky/evaly(/[\\w.-]+)*$",
+          "^github\\.com/modelcontextprotocol/go\\-sdk(/[\\w.-]+)*$",
+          "^github\\.com/santhosh\\-tekuri/jsonschema/v6$",
+          "^github\\.com/modelcontextprotocol/go-sdk/jsonrpc$"
+        ],
+        "standard": [
+          "^bytes$",
+          "^context$",
+          "^crypto/sha256$",
+          "^encoding/hex$",
+          "^encoding/json$",
+          "^errors$",
+          "^fmt$",
+          "^os$",
+          "^os/exec$",
+          "^path/filepath$",
+          "^reflect$",
+          "^runtime$",
+          "^runtime/debug$",
+          "^strconv$",
+          "^strings$",
+          "^sync$",
+          "^syscall$",
+          "^time$",
+          "^io$",
+          "^net$",
+          "^net/http$",
+          "^sort$",
+          "^encoding/base64$",
+          "^regexp$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval(/[\\w.-]+)*$",
+      "shouldOnlyDependsOn": {
+        "internal": [
+          "^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval(/[\\w.-]+)*$",
+          "^github\\.com/skosovsky/zl\\-mcp/internal/evaluation(/[\\w.-]+)*$"
+        ],
+        "standard": [
+          "^context$",
+          "^encoding/json$",
+          "^flag$",
+          "^fmt$",
+          "^os$",
+          "^path/filepath$",
+          "^time$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/control(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/historyimport(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/messaging(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/netpolicy(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/conversations(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/search(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/messaging(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/membership(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/history(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/archives(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/eventaccess(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/store(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/adapters/operations(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/cmd/zl\\-mcp\\-eval(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "external": [
+          ".+"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/app/shared(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "standard": [
+          "^database/sql$",
+          "^net/http$",
+          "^net$",
+          "^os$",
+          "^os/exec$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/toolruntime(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "standard": [
+          "^database/sql$",
+          "^net$",
+          "^net/http$"
+        ]
+      }
+    },
+    {
+      "package": "^github\\.com/skosovsky/zl\\-mcp/internal/observability(/[\\w.-]+)*$",
+      "shouldNotDependsOn": {
+        "standard": [
+          "^database/sql$"
+        ]
+      }
+    }
+  ]
+}

@@ -1,16 +1,21 @@
 ARCH_GO_VERSION := v2.1.2
 TOOLS_BIN ?= $(CURDIR)/.tools
-ARCH_GO := $(TOOLS_BIN)/arch-go
+ARCH_GO := $(abspath $(TOOLS_BIN))/arch-go
+HARNESS := $(abspath $(TOOLS_BIN))/zl-mcp-harness
 ARCHITECTURE_EVIDENCE ?=
 
 .PHONY: tools architecture test race vet nested-test nested-race nested-vet build-platforms check
 
 tools:
 	mkdir -p "$(TOOLS_BIN)"
-	GOWORK=off GOBIN="$(TOOLS_BIN)" go install github.com/arch-go/arch-go/v2@$(ARCH_GO_VERSION)
+	GOWORK=off GOBIN="$(abspath $(TOOLS_BIN))" go install github.com/arch-go/arch-go/v2@$(ARCH_GO_VERSION)
 
-architecture: tools
-	GOWORK=off python3 scripts/mcp-migration/architecture.py --binary "$(ARCH_GO)" $(if $(ARCHITECTURE_EVIDENCE),--evidence "$(ARCHITECTURE_EVIDENCE)",)
+harness:
+	mkdir -p "$(TOOLS_BIN)"
+	cd tools/harness && GOWORK=off go build -trimpath -o "$(HARNESS)" ./cmd/harness
+
+architecture: tools harness
+	GOWORK=off "$(HARNESS)" architecture --root "$(CURDIR)" --binary "$(ARCH_GO)" $(if $(ARCHITECTURE_EVIDENCE),--evidence "$(ARCHITECTURE_EVIDENCE)",)
 
 test:
 	go test ./...
@@ -31,7 +36,7 @@ build-platforms:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o bin/zl-mcp-linux-amd64 ./cmd/zl-mcp
 
 # Standalone synthetic service contracts are mandatory; migration parity is complete.
-check: test race vet nested-test nested-race nested-vet architecture build-platforms eval-offline
+check: tools-test tools-race tools-vet test race vet nested-test nested-race nested-vet architecture build-platforms eval-offline
 
 EVAL_OUTPUT ?= /tmp/zl-mcp-offline-$$(date +%s)-$$$$
 .PHONY: eval-offline
@@ -60,3 +65,11 @@ performance-acceptance:
 MODEL_DRIVER ?=
 eval-model:
 	GOWORK=off go run ./cmd/zl-mcp-eval --root "$(CURDIR)" --profile model --model-driver "$(MODEL_DRIVER)" --output "$(EVAL_OUTPUT)" --run-budget 30m
+
+.PHONY: harness tools-test tools-race tools-vet
+tools-test: tools
+	cd tools/harness && ARCH_GO_BINARY="$(ARCH_GO)" GOWORK=off go test ./...
+tools-race: tools
+	cd tools/harness && ARCH_GO_BINARY="$(ARCH_GO)" GOWORK=off go test -race ./...
+tools-vet: tools
+	cd tools/harness && GOWORK=off go vet ./...

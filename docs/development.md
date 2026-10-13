@@ -140,7 +140,9 @@ The nested patched module is not modified; run it with the same selected root Go
 
 `make architecture` installs github.com/arch-go/arch-go/v2@v2.1.2 into ignored `.tools`
 and checks the active import rules at compliance=100%/coverage=100%, the production
-`go list -deps` graph and isolated negative/positive controls. The pinned executable
+`go list -deps` graph and isolated negative/positive controls through the separate
+Go tools/harness module. Its tests/race/vet are mandatory and add no production
+dependency. All-build AST imports use the same arch-go matcher and exact YAML. The pinned executable
 reports "master" via --version; build information (`go version -m`) is the verified pin.
 `make check` runs root/nested tests/race/vet, architecture, three CGO-free platform
 builds and two-repeat standalone offline evaluation. Frozen-baseline parity is

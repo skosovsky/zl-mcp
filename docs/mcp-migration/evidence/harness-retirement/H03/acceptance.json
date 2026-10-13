@@ -1,0 +1,18 @@
+{
+  "candidate": "40313c9f6bfb06ab0efb868eeed1a6a413f2592d271daa39869c98ae00be120f",
+  "completeness": {
+    "agent": "arch_go_architecture_review",
+    "passed": 10,
+    "total": 10,
+    "percent": 100
+  },
+  "correctness": {
+    "agent": "cleanup_correctness",
+    "status": "PASS"
+  },
+  "checks": "tools test/race/vet + host/AST100% +10isolated6sourcePASS; customTOOLS_BINPASS",
+  "initial_finding": "custom tools binary not explicitly passed to tests",
+  "finding_status": "FIXED",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}
