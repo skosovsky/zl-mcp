@@ -1,0 +1,22 @@
+{
+  "candidate": "71e7d0b57abaddb38816fba607faeed95fd351b639b7ac8290f5eefbe0973b2a",
+  "completeness": {
+    "agent": "arch_go_architecture_review",
+    "passed": 10,
+    "total": 10,
+    "percent": 100
+  },
+  "correctness": {
+    "agent": "cleanup_correctness",
+    "status": "PASS"
+  },
+  "checks": "evaluation/CLI unit/race/vet PASS; offline50/50480/480PASS; model/liveNOTRUN",
+  "initial_findings": [
+    "effects keyset accepted missing required key and unknown effect"
+  ],
+  "findings_status": "FIXED;210negativecasesPASS",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN",
+  "human_review": "NOT_PERFORMED",
+  "checkpoint_scope": "CHECKPOINTS_ONLY"
+}

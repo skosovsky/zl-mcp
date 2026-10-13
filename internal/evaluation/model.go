@@ -132,5 +132,5 @@ func RunModelCase(ctx context.Context, opts ChildOptions, cs Case, driver string
 }
 
 // Only the protocol smoke scenario has a model setup today. Offline completeness
-// and the full paired model gate are independent; unsupported cases never run.
+// and the full model gate are independent; unsupported cases never run.
 func modelScenarioSupported(id string) bool { return id == "normal-search" }

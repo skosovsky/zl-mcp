@@ -1,0 +1,11 @@
+{
+  "case_id": "coverage",
+  "answer": "Collector остановлен; неполная история корпуса.",
+  "trace": [{"kind":"tool","name":"zalo_get_status","input":{},"result":{"collector_status":"stopped"}}],
+  "complete": true,
+  "cleanup": true,
+  "exit_code": 0,
+  "effects": {"send":0,"join":0,"history":0},
+  "external_executions": 0,
+  "credentials_reads": 0
+}

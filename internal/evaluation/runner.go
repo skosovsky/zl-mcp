@@ -139,7 +139,7 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 		return report, err
 	}
 	if opts.Profile == "model" {
-		report.Manifest = map[string]any{"profile": "model", "case_budget_seconds": 180, "max_tool_calls": 30, "run_budget_seconds": opts.RunBudget.Seconds(), "model_gate": "NOT_RUN", "full_paired_model_gate": "NOT_RUN", "model_driver_sha256": hashFile(opts.ModelDriver), "model_id": nil, "model_settings": nil, "prompt_revision": nil, "skill_revision": nil, "tokens": nil, "unavailable_reason": "No separately authorized full scenario model driver run"}
+		report.Manifest = map[string]any{"profile": "model", "case_budget_seconds": 180, "max_tool_calls": 30, "run_budget_seconds": opts.RunBudget.Seconds(), "model_gate": "NOT_RUN", "full_model_gate": "NOT_RUN", "model_driver_sha256": hashFile(opts.ModelDriver), "model_id": nil, "model_settings": nil, "prompt_revision": nil, "skill_revision": nil, "tokens": nil, "unavailable_reason": "No separately authorized full scenario model driver run"}
 		for _, cs := range ds.Cases {
 			if !modelScenarioSupported(cs.ID) {
 				report.SkippedCases = append(report.SkippedCases, cs.ID)

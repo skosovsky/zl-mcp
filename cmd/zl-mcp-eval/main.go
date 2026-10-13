@@ -14,6 +14,8 @@ import (
 
 func main() { os.Exit(run()) }
 func run() int {
+	checkpoint := flag.String("grade-checkpoints", "", "offline host observation JSON; checkpoints only, never launches a driver")
+	checkpointDataset := flag.String("checkpoint-dataset", "docs/evals/model-checkpoints-v1.json", "versioned checkpoint dataset")
 	root := flag.String("root", ".", "repository with versioned synthetic assets")
 	profile := flag.String("profile", "offline", "offline or explicit opt-in model profile (requires authorized driver)")
 	driver := flag.String("model-driver", "", "explicit authorized absolute host driver; absent model profile is NOT_RUN")
@@ -36,6 +38,27 @@ func run() int {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 2
+	}
+	if *checkpoint != "" {
+		if *profile != "offline" || *driver != "" || *child != "" || *measure != "" {
+			fmt.Fprintln(os.Stderr, "checkpoint grading is offline only")
+			return 2
+		}
+		if !filepath.IsAbs(*checkpointDataset) {
+			*checkpointDataset = filepath.Join(absoluteRoot, *checkpointDataset)
+		}
+		report, e := evaluation.GradeCheckpointFile(*checkpointDataset, *checkpoint)
+		if e != nil {
+			fmt.Fprintln(os.Stderr, e)
+			return 2
+		}
+		if e = json.NewEncoder(os.Stdout).Encode(report); e != nil {
+			return 1
+		}
+		if report.Status != "PASS" {
+			return 1
+		}
+		return 0
 	}
 	if *measure != "" {
 		if *state == "" || !filepath.IsAbs(*state) {

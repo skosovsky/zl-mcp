@@ -112,3 +112,62 @@ func TestCLIExitCodesAndFailedReports(t *testing.T) {
 		t.Fatal("model preflight executed sentinel driver", err)
 	}
 }
+
+func TestOfflineCheckpointCLI(t *testing.T) {
+	// Arrange: real CLI, synthetic observation and a sentinel executable only.
+	dir := t.TempDir()
+	binary := filepath.Join(dir, "zl-mcp-eval")
+	build := exec.Command("go", "build", "-o", binary, ".")
+	build.Env = append(os.Environ(), "CGO_ENABLED=0")
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build: %v %s", err, output)
+	}
+	root, err := filepath.Abs("../..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	observation := filepath.Join(root, "internal/evaluation/testdata/checkpoints/coverage.json")
+	sentinel := filepath.Join(dir, "sentinel-driver")
+	testBinary, _ := os.Executable()
+	data, err := os.ReadFile(testBinary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(sentinel, data, 0700); err != nil {
+		t.Fatal(err)
+	}
+	for _, control := range []struct {
+		name  string
+		extra []string
+		exit  int
+	}{
+		{"offline", nil, 0}, {"reject-model", []string{"--profile", "model", "--model-driver", sentinel}, 2}, {"reject-driver", []string{"--model-driver", sentinel}, 2},
+	} {
+		t.Run(control.name, func(t *testing.T) {
+			// Act.
+			args := append([]string{"--root", root, "--grade-checkpoints", observation}, control.extra...)
+			output, err := exec.Command(binary, args...).CombinedOutput()
+			exit := 0
+			if err != nil {
+				var e *exec.ExitError
+				if !errors.As(err, &e) {
+					t.Fatal(err)
+				}
+				exit = e.ExitCode()
+			}
+			// Assert.
+			if exit != control.exit {
+				t.Fatalf("exit=%d output=%s", exit, output)
+			}
+			if exit == 0 {
+				var r evaluation.CheckpointReport
+				if err = json.Unmarshal(output, &r); err != nil || r.Scope != "CHECKPOINTS_ONLY" || r.ModelGate != "NOT_RUN" || r.HumanAnswerReview != "NOT_PERFORMED" {
+					t.Fatalf("%s %v", output, err)
+				}
+			}
+		})
+	}
+	if _, err = os.Stat(filepath.Join(dir, "model-was-launched")); !os.IsNotExist(err) {
+		t.Fatal("model driver launched")
+	}
+}

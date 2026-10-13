@@ -1,0 +1,16 @@
+{
+  "leaves": [
+    "inventory disposition old9scenarios2followups20triggers4skillvariants",
+    "unique answer/source/clarification/context/skill/stop/UUID checks preservedGo",
+    "common permissions/schema/effects/lifecycle checks reused notduplicated",
+    "strictversionedsyntheticcheckpointdataset",
+    "usefulofflinecheckpointCLI fakefixtures no modelorproviderlaunch",
+    "unknown/malformed/incomplete/effect/resend/external violationsfail",
+    "checkpointPASSneverfullmodel/humanreviewPASS",
+    "legacyPythonrunner/exporterremovedaftercoveragetests",
+    "Go model profile fullpreflightNOT_RUNpreserved nooldpairedlabel",
+    "historicaltrace/humanreviewevidence untouched"
+  ],
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

@@ -6,7 +6,7 @@ Use the Go version declared in `go.mod`. The first publication provides source; 
 go build -o bin/zl-mcp ./cmd/zl-mcp
 ```
 
-The production executable is a Go binary. Python scripts are optional development tooling and are not needed to run the service. Building a checkout does not update an installed binary or restart its LaunchAgent.
+The production executable and permanent verification harness are Go programs. Building a checkout does not update an installed binary or restart its LaunchAgent.
 
 ## Contracts and tests
 
@@ -51,7 +51,7 @@ go test ./internal/storage -run '^$' -bench BenchmarkManyConversations -benchtim
 
 It persists 8,000 synthetic messages in 4,000 conversations through the production Put path and checks catalogue pagination, aggregate status, search with coverage and context. Report timings as measurements of the machine and build, not as a fixed SLA. No live Zalo account or installed state is used.
 
-The synthetic fixture command and `docs/evals/fixtures.json` support isolated development. Some unit tests also read the project skill files, so keep these fixtures and references when removing generated evaluation output. Optional model-evaluation scripts require a separate explicit run; they are not CI acceptance checks.
+The synthetic fixture command and `docs/evals/fixtures.json` support isolated development. Some unit tests also read the project skill files, so keep these fixtures and references when removing generated evaluation output. The opt-in Go/evaly model profile requires a separate explicit run; checkpoint replay is offline and does not certify model or human review.
 
 ## Dependency maintenance
 
@@ -59,7 +59,7 @@ See [third-party notices](../THIRD_PARTY.md) and [zcago patch notes](../third_pa
 
 ## Public changes
 
-Commit source, contracts, synthetic fixtures, and documentation. Keep sessions, tokens, real configuration, account data, SQLite databases, QR images, logs, generated traces, build outputs, and Python caches outside the public tree. Use example paths and placeholder identifiers in documentation.
+Commit source, contracts, synthetic fixtures, and documentation. Keep sessions, tokens, real configuration, account data, SQLite databases, QR images, logs, generated traces, build outputs, and tooling caches outside the public tree. Use example paths and placeholder identifiers in documentation.
 
 Before publication, validate a fresh checkout with the same application and nested-module checks used by CI. Live-account operations, installed-service changes, and model evals are separate from these checks.
 

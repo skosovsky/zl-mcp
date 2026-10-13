@@ -84,7 +84,7 @@ func TestFullModelGatePreflightNeverLaunchesDriver(t *testing.T) {
 	report, err := Run(context.Background(), opts)
 	_, statErr := os.Stat(marker)
 	// Assert: model subset/scaffolding cannot certify the full gate.
-	if err != nil || report.ExitStatus != 2 || report.ModelGate != "NOT_RUN" || report.Manifest["full_paired_model_gate"] != "NOT_RUN" || len(report.SkippedCases) == 0 || !os.IsNotExist(statErr) {
+	if err != nil || report.ExitStatus != 2 || report.ModelGate != "NOT_RUN" || report.Manifest["full_model_gate"] != "NOT_RUN" || len(report.SkippedCases) == 0 || !os.IsNotExist(statErr) {
 		t.Fatal(report, err, statErr)
 	}
 }

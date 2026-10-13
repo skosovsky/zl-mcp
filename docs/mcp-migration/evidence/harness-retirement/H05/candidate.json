@@ -1,0 +1,28 @@
+{
+  "sha256": "71e7d0b57abaddb38816fba607faeed95fd351b639b7ac8290f5eefbe0973b2a",
+  "checks": "evaluation/CLI unit/race/vet PASS; offline50/50480/480PASS; model/liveNOTRUN",
+  "source_hashes": {
+    "cmd/zl-mcp-eval/main.go": "46f2f55fcdeb3aed9ad824872d7a442c917364f89c0060972a32b5d9aa01d0d6",
+    "cmd/zl-mcp-eval/main_test.go": "4004b706077ca745e4e80080e0cb43296e6f5a9ececb916ad3e08a0bb0f67241",
+    "docs/development.md": "25d1d66dd1f0bac11084d772d826bd8a4fbe56f0ed01e29569a419bf10c2bc8d",
+    "docs/evals/model-checkpoints-v1.json": "3fd080f8f26b762bb26b8f2e533fce320e1ebec92e95a5447342f0466d1e24aa",
+    "docs/evals/running.md": "051cabd293ad3284fc3f284fec4b2cb7a8a75ab540c698b55f7b6b09fc579bf0",
+    "docs/harness-maintenance.md": "cb6d83cf5caf3131b7cde53f522ac40fa318ef751b29dfcd52b94776b12e1cbf",
+    "docs/model-checkpoints.md": "d5ecb4776eb5c93f78bc9337a0d86645f0a93271cbec9f34ec5b7fe53e76d176",
+    "internal/evaluation/benchmark.go": "0addc5f9d306c027d33ccfcb2de7806f8921fbd639e74f1aac83707691d6fe27",
+    "internal/evaluation/checkpoints.go": "a64f5aff697c6670707a5250c3963340e3dfd72d00d62b841339e3f6bcaeccb5",
+    "internal/evaluation/checkpoints_test.go": "853afdd12ff879b4dbe785f146d3e469f74e232df70b63f3c8575d6d8543a9cf",
+    "internal/evaluation/client.go": "be631f00291c5b67f8f1d7f654677c3065ab2b3ba8f4da8ad13f781b1f58232b",
+    "internal/evaluation/contracts_test.go": "1ff278d58f350976d0465fef81ec8ae8dea2cf3d82c5b3a94447f3bd81fc11cd",
+    "internal/evaluation/grader.go": "f6ad49a6883b3a08fdb9b83e515e02a4c7656901b89ce6def3923cdf78005cea",
+    "internal/evaluation/model.go": "bdee922bd990da502f3b9d670d5b5a26b2d253abbc9b8b2ff0fb8dd1e0d5231d",
+    "internal/evaluation/model_test.go": "e5e147a809685d51eee52cf09d3f7bc887259d4bd2be9f03b8923aa57387a571",
+    "internal/evaluation/process.go": "b91a60c3db731c37612b36108777a35724eb3fa7557a405edf13c6dea5449378",
+    "internal/evaluation/process_test.go": "5f535fc45038d3f7e1dfc938c270ffdd020f9a675a5621481b9eb667c25d3238",
+    "internal/evaluation/runner.go": "7789913a385196198c646160462b622d2c080c4f9d34cce9bcf73b374a910b8d",
+    "internal/evaluation/scenarios.go": "d3ac798529eea33e46e1294b7d96df8afcc10b4b0bab25fbaf9e8d56c2d96626",
+    "internal/evaluation/testdata/checkpoints/coverage.json": "b8ae0510779e35978686a7682f3b93dff08066d9e12b53b2fa727a5e45faec9a",
+    "internal/evaluation/types.go": "c18a71af833512af8d2ca8a55c3b3243b369d48f817a07f6c4cfbb06da3c4bea"
+  },
+  "finding_fixed": "exacteffectskeyset210negativecasesPASS"
+}
