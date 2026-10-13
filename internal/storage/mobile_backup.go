@@ -140,7 +140,7 @@ func (s *Store) prepareMobileBackupTx(
 	if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM mobile_backup_attempts").Scan(&total); err != nil {
 		return MobileBackupAttempt{}, err
 	}
-	if total >= 10000 {
+	if total >= maximumMobileAttempts {
 		return MobileBackupAttempt{}, ErrMobileBackupCapacity
 	}
 	if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM mobile_backup_attempts WHERE account_key=? AND state IN ('prepared','dispatching','waiting_for_confirmation','request_result_unknown','mobile_restoring','waiting_for_backup')", account).
@@ -151,10 +151,11 @@ func (s *Store) prepareMobileBackupTx(
 		return MobileBackupAttempt{}, ErrMobileBackupBusy
 	}
 	stamp := now()
+	//nolint:exhaustruct_v5 // MobileBackupAttempt preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	a := MobileBackupAttempt{
 		Request:     r,
 		OperationID: uuid.NewString(),
-		State:       "prepared",
+		State:       statePreparedText,
 		CreatedAt:   stamp,
 		UpdatedAt:   stamp,
 		account:     account,
@@ -202,7 +203,7 @@ func (s *Store) DispatchMobileBackup(
 	if !ok || rsaKey.N.BitLen() != 2048 || rsaKey.E != 65537 {
 		return MobileBackupAttempt{}, ErrMobileBackupState
 	}
-	return s.transitionMobileBackup(ctx, id, revision, "dispatching", public)
+	return s.transitionMobileBackup(ctx, id, revision, stateDispatchingText, public)
 }
 
 func (s *Store) ProgressMobileBackup(
@@ -215,21 +216,22 @@ func (s *Store) ProgressMobileBackup(
 }
 
 func mobileBackupTransition(from, to string) bool {
-	if to == "failed" || to == "cancelled" || to == "interrupted" {
-		return from == "prepared" || from == "dispatching" || from == "waiting_for_confirmation" ||
-			from == "request_result_unknown" ||
-			from == "mobile_restoring" ||
-			from == "waiting_for_backup"
+	if to == stateFailedText || to == stateCancelledText || to == stateInterruptedText {
+		return from == statePreparedText || from == stateDispatchingText || from == stateWaitingForConfirmationText ||
+			from == stateRequestResultUnknownText ||
+			from == stateMobileRestoringText ||
+			from == stateWaitingForBackupText
 	}
-	if from == "prepared" {
-		return to == "dispatching"
+	if from == statePreparedText {
+		return to == stateDispatchingText
 	}
-	if from == "dispatching" {
-		return to == "waiting_for_confirmation" || to == "request_result_unknown"
+	if from == stateDispatchingText {
+		return to == stateWaitingForConfirmationText || to == stateRequestResultUnknownText
 	}
-	if from == "waiting_for_confirmation" || from == "request_result_unknown" || from == "mobile_restoring" ||
-		from == "waiting_for_backup" {
-		return to == "mobile_restoring" || to == "waiting_for_backup" || to == "offer_ready"
+	if from == stateWaitingForConfirmationText || from == stateRequestResultUnknownText ||
+		from == stateMobileRestoringText ||
+		from == stateWaitingForBackupText {
+		return to == stateMobileRestoringText || to == stateWaitingForBackupText || to == "offer_ready"
 	}
 	return false
 }
@@ -250,10 +252,11 @@ func (s *Store) transitionMobileBackup(
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
-	if a.Revision != revision || !mobileBackupTransition(a.State, state) || state == "dispatching" && public == "" {
+	if a.Revision != revision || !mobileBackupTransition(a.State, state) ||
+		state == stateDispatchingText && public == "" {
 		return MobileBackupAttempt{}, ErrMobileBackupState
 	}
-	if state == "dispatching" {
+	if state == stateDispatchingText {
 		if err = s.checkMobileHistoryDispatch(ctx, tx, id); err != nil {
 			return MobileBackupAttempt{}, err
 		}
@@ -324,7 +327,7 @@ func (s *Store) MobileBackupObserver(ctx context.Context, id string) (*domain.Mo
 	if err != nil {
 		return nil, err
 	}
-	if attempt.State != "prepared" {
+	if attempt.State != statePreparedText {
 		return nil, ErrMobileBackupState
 	}
 	var mu sync.Mutex

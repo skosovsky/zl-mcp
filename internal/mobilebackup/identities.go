@@ -54,9 +54,9 @@ func IdentityPayload(r IdentityRequest) ([]byte, error) {
 		if len(ids) == 0 {
 			continue
 		}
-		name := "fids"
+		name := fieldFids
 		if i == 1 {
-			name = "gids"
+			name = fieldGids
 		}
 		values := make([]json.Number, len(ids))
 		for j, id := range ids {
@@ -73,6 +73,7 @@ func IdentityPayload(r IdentityRequest) ([]byte, error) {
 
 // DecodeIdentities accepts already unwrapped plaintext only. It does not perform
 // authenticated requests, infer account identity or resolve missing mappings.
+//
 //nolint:gocognit // This bounded protocol parser validates complete framing/records before publishing and retains its buffer-clearing error paths.
 func DecodeIdentities(r IdentityRequest, data []byte) ([]IdentityPair, error) {
 	if !validIdentityRequest(r) || len(data) == 0 || len(data) > 256<<10 {
@@ -87,7 +88,7 @@ func DecodeIdentities(r IdentityRequest, data []byte) ([]IdentityPair, error) {
 	for decoder.More() {
 		token, err = decoder.Token()
 		name, ok := token.(string)
-		if err != nil || !ok || (name != "fids" && name != "gids") {
+		if err != nil || !ok || (name != fieldFids && name != fieldGids) {
 			return nil, ErrIdentities
 		}
 		if _, exists := arrays[name]; exists {
@@ -106,14 +107,14 @@ func DecodeIdentities(r IdentityRequest, data []byte) ([]IdentityPair, error) {
 	if _, err = decoder.Token(); err != io.EOF {
 		return nil, ErrIdentities
 	}
-	if len(arrays["fids"]) != len(r.Direct) || len(arrays["gids"]) != len(r.Groups) {
+	if len(arrays[fieldFids]) != len(r.Direct) || len(arrays[fieldGids]) != len(r.Groups) {
 		return nil, ErrIdentities
 	}
 	result := make([]IdentityPair, 0, len(r.Direct)+len(r.Groups))
 	for category, ids := range [][]string{r.Direct, r.Groups} {
-		name := "fids"
+		name := fieldFids
 		if category == 1 {
-			name = "gids"
+			name = fieldGids
 		}
 		seen := make(map[string]bool, len(ids))
 		for i, id := range ids {

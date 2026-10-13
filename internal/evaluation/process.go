@@ -45,7 +45,9 @@ func process(ctx context.Context, binary string, args []string, limit int, ownGr
 	}
 	run, cancel := context.WithCancel(ctx)
 	defer cancel()
+	//nolint:exhaustruct_v5 // The mutex and accumulated output start at their zero values; only the output bound is configured.
 	stdout := &boundedBuffer{limit: limit, cancel: cancel}
+	//nolint:exhaustruct_v5 // The mutex and accumulated output start at their zero values; only the output bound is configured.
 	stderr := &boundedBuffer{limit: limit, cancel: cancel}
 	//nolint:noctx // The explicit watchdog owns process-group Kill, Wait and bounded output cleanup.
 	cmd := exec.Command(binary, args...)
@@ -53,6 +55,7 @@ func process(ctx context.Context, binary string, args []string, limit int, ownGr
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	cmd.WaitDelay = 2 * time.Second
+	//nolint:exhaustruct_v5 // Only process-group ownership is overridden; retain default credentials, descriptors and platform attributes.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: ownGroup}
 	if err := cmd.Start(); err != nil {
 		return nil, nil, err

@@ -32,7 +32,7 @@ func archiveString(args map[string]any, name string) string {
 func archiveLimit(args map[string]any) int {
 	value, ok := args["limit"].(float64)
 	if !ok {
-		return 20
+		return defaultArchiveCatalogueLimit
 	}
 	return int(value)
 }
@@ -45,7 +45,7 @@ func (p *membershipPort) archiveConversations(
 	args map[string]any,
 	binding string,
 ) (map[string]any, error) {
-	sourceID := archiveString(args, "source_id")
+	sourceID := archiveString(args, fieldSourceID)
 	source, manifest, err := p.library.ReadBound(ctx, sourceID, binding)
 	if err != nil {
 		return nil, archiveReadUnavailable()
@@ -65,6 +65,7 @@ func (p *membershipPort) archiveConversations(
 	), strings.ToLower(
 		strings.TrimSpace(archiveString(args, "query")),
 	)
+	//nolint:exhaustruct_v5 // archiveCatalogueCursor initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	cursor := archiveCatalogueCursor{
 		Version: 1,
 		Kind:    "catalogue",
@@ -73,7 +74,7 @@ func (p *membershipPort) archiveConversations(
 		Digest:  manifest.Digest,
 		Type:    kind,
 		Query:   query,
-		Members: make([]byte, (len(refs)+7)/8),
+		Members: make([]byte, (len(refs)+membershipBitRoundUp)/membershipByteBits),
 	}
 	token := archiveString(args, "cursor")
 	cursor, err = p.bindCatalogueCursor(ctx, cursor, token, refs, manifest.CapturedAt)
@@ -83,7 +84,8 @@ func (p *membershipPort) archiveConversations(
 	values := []map[string]any{}
 	next := len(refs)
 	for index := cursor.Next; index < len(refs); index++ {
-		if cursor.Members[index/8]&(1<<uint(index%8)) == 0 || !p.store.AllowsConversation(refs[index]) {
+		if cursor.Members[index/membershipByteBits]&(1<<uint(index%membershipByteBits)) == 0 ||
+			!p.store.AllowsConversation(refs[index]) {
 			continue
 		}
 		if len(values) == archiveLimit(args) {
@@ -119,10 +121,10 @@ func (p *membershipPort) archiveConversations(
 	}
 	return map[string]any{
 		"conversations":    values,
-		"has_more":         next < len(refs),
+		fieldHasMore:       next < len(refs),
 		"next_cursor":      nextToken,
 		"catalog_complete": false,
-		"catalog_sources":  []string{"retained_archive"},
+		"catalog_sources":  []string{fieldRetainedArchive},
 		"empty_reason":     emptyReason,
 		"source":           archiveDescriptor(receipt),
 	}, nil
@@ -148,15 +150,15 @@ func (p *membershipPort) archiveConversation(
 		"conversation_type":   ref.Type,
 		"conversation_id":     ref.ID,
 		"name":                nil,
-		"metadata_source":     "retained_archive",
-		"availability":        "unknown",
+		"metadata_source":     fieldRetainedArchive,
+		"availability":        stateUnknownText,
 		"first_discovered_at": captured,
 		"updated_at":          captured,
 		"collection_enabled":  true,
 		"aliases":             []string{},
-		"friendship":          "unknown",
+		"friendship":          stateUnknownText,
 		"has_stored_messages": false,
-		"metadata_sources":    []string{"retained_archive"},
+		"metadata_sources":    []string{fieldRetainedArchive},
 	}, nil
 }
 
@@ -185,7 +187,13 @@ func archiveNameMatches(item map[string]any, query string) bool {
 	return false
 }
 
-func (p *membershipPort) bindCatalogueCursor(ctx context.Context, cursor archiveCatalogueCursor, token string, refs []domain.ConversationRef, captured string) (archiveCatalogueCursor, error) {
+func (p *membershipPort) bindCatalogueCursor(
+	ctx context.Context,
+	cursor archiveCatalogueCursor,
+	token string,
+	refs []domain.ConversationRef,
+	captured string,
+) (archiveCatalogueCursor, error) {
 	if token == "" {
 		for index, ref := range refs {
 			if !p.store.AllowsConversation(ref) || cursor.Type != "" && cursor.Type != ref.Type {
@@ -196,7 +204,7 @@ func (p *membershipPort) bindCatalogueCursor(ctx context.Context, cursor archive
 				return archiveCatalogueCursor{}, err
 			}
 			if archiveNameMatches(item, cursor.Query) {
-				cursor.Members[index/8] |= 1 << uint(index%8)
+				cursor.Members[index/membershipByteBits] |= 1 << uint(index%membershipByteBits)
 			}
 		}
 

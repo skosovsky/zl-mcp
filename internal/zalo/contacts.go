@@ -3,10 +3,10 @@ package zalo
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/amrakk/zcago/errs"
 	"github.com/amrakk/zcago/model"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -22,10 +22,10 @@ func (c *Client) ContactsPage(ctx context.Context, page, limit int) ([]domain.Co
 		return nil, err
 	}
 	if users == nil {
-		return nil, fmt.Errorf("contacts response unavailable")
+		return nil, errors.New("contacts response unavailable")
 	}
 	if len(*users) > limit {
-		return nil, fmt.Errorf("contacts response exceeds requested limit")
+		return nil, errors.New("contacts response exceeds requested limit")
 	}
 	contacts := make([]domain.Contact, 0, len(*users))
 	for _, user := range *users {
@@ -45,5 +45,10 @@ func contactMetadata(user model.User) domain.Contact {
 	if user.IsFr == 1 {
 		friendship = "friend"
 	}
-	return domain.Contact{ID: user.UserId, Name: name, Aliases: []string{user.DisplayName, user.ZaloName}, Friendship: friendship}
+	return domain.Contact{
+		ID:         user.UserId,
+		Name:       name,
+		Aliases:    []string{user.DisplayName, user.ZaloName},
+		Friendship: friendship,
+	}
 }

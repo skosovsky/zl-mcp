@@ -15,17 +15,31 @@ import (
 func TestStorageFailureDoesNotMasqueradeAsMissingSendOrQuote(t *testing.T) {
 	// Arrange.
 	ctx := context.Background()
-	s, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "state.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	s, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(t.TempDir(), "state.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer s.Close()
 	calls := 0
-	m := Manager{Store: s, Enabled: true, Sender: senderFunc(func(context.Context, string, string, *domain.SendQuote) (string, error) {
-		calls++
-		return "unexpected", nil
-	})}
-	args := map[string]any{"recipient_id": "peer", "text": "reply", "reply_to_message_id": "original", "request_id": "70000000-0000-4000-8000-000000000007"}
+	m := Manager{
+		Store:   s,
+		Enabled: true,
+		Sender: senderFunc(func(context.Context, string, string, *domain.SendQuote) (string, error) {
+			calls++
+			return "unexpected", nil
+		}),
+	}
+	args := map[string]any{
+		"recipient_id":        "peer",
+		"text":                "reply",
+		"reply_to_message_id": "original",
+		"request_id":          "70000000-0000-4000-8000-000000000007",
+	}
 	if _, err = s.DB.Exec("DROP TABLE message_quote_metadata"); err != nil {
 		t.Fatal(err)
 	}
@@ -62,10 +76,14 @@ func TestManagerNeverRetriesAmbiguousSend(t *testing.T) {
 	}
 	defer s.Close()
 	var calls atomic.Int32
-	m := Manager{Store: s, Enabled: true, Sender: senderFunc(func(context.Context, string, string, *domain.SendQuote) (string, error) {
-		calls.Add(1)
-		return "", errors.New("private-error-marker")
-	})}
+	m := Manager{
+		Store:   s,
+		Enabled: true,
+		Sender: senderFunc(func(context.Context, string, string, *domain.SendQuote) (string, error) {
+			calls.Add(1)
+			return "", errors.New("private-error-marker")
+		}),
+	}
 	a := map[string]any{"recipient_id": "peer", "text": "hello", "request_id": "30000000-0000-4000-8000-000000000003"}
 	// Act.
 	first, err := m.Call(ctx, "zalo_send_direct_message", a)
@@ -77,7 +95,8 @@ func TestManagerNeverRetriesAmbiguousSend(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Assert.
-	if calls.Load() != 1 || first["status"] != "unknown" || second["status"] != "unknown" || second["reason"] != "upstream_ambiguous" {
+	if calls.Load() != 1 || first["status"] != "unknown" || second["status"] != "unknown" ||
+		second["reason"] != "upstream_ambiguous" {
 		t.Fatal("ambiguous operation repeated or exposed raw error")
 	}
 }
@@ -85,24 +104,52 @@ func TestManagerNeverRetriesAmbiguousSend(t *testing.T) {
 func TestManagerReplyRequiresExactRetainedSourceAndPermission(t *testing.T) {
 	// Arrange.
 	ctx := context.Background()
-	s, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "state.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	s, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(t.TempDir(), "state.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	msg := domain.Message{Conversation: domain.ConversationRef{Type: "direct", ID: "peer"}, ID: "message", SenderID: "peer", Text: "source", SentAt: time.Now(), Source: "live", QuoteMetadata: &domain.QuoteMetadata{ClientMessageID: "client-id", MessageType: "webchat", Timestamp: "1791029400000"}}
+	msg := domain.Message{
+		Conversation: domain.ConversationRef{Type: "direct", ID: "peer"},
+		ID:           "message",
+		SenderID:     "peer",
+		Text:         "source",
+		SentAt:       time.Now(),
+		Source:       "live",
+		QuoteMetadata: &domain.QuoteMetadata{
+			ClientMessageID: "client-id",
+			MessageType:     "webchat",
+			Timestamp:       "1791029400000",
+		},
+	}
 	if err = s.Put(ctx, msg); err != nil {
 		t.Fatal(err)
 	}
 	calls := 0
-	m := Manager{Store: s, Enabled: true, Recipients: map[string]bool{"peer": true}, Sender: senderFunc(func(_ context.Context, p, text string, q *domain.SendQuote) (string, error) {
-		calls++
-		if p != "peer" || q == nil || q.MessageID != "message" || q.Text != "source" || q.Metadata.ClientMessageID != "client-id" {
-			t.Fatal("quote crossed source boundary")
-		}
-		return "accepted", nil
-	})}
-	a := map[string]any{"recipient_id": "other", "text": "reply", "reply_to_message_id": "message", "request_id": "40000000-0000-4000-8000-000000000004"}
+	m := Manager{
+		Store:      s,
+		Enabled:    true,
+		Recipients: map[string]bool{"peer": true},
+		Sender: senderFunc(func(_ context.Context, p, _ string, q *domain.SendQuote) (string, error) {
+			calls++
+			if p != "peer" || q == nil || q.MessageID != "message" || q.Text != "source" ||
+				q.Metadata.ClientMessageID != "client-id" {
+				t.Fatal("quote crossed source boundary")
+			}
+			return "accepted", nil
+		}),
+	}
+	a := map[string]any{
+		"recipient_id":        "other",
+		"text":                "reply",
+		"reply_to_message_id": "message",
+		"request_id":          "40000000-0000-4000-8000-000000000004",
+	}
 	// Act / Assert: denied receiver never sends.
 	if _, err = m.Call(ctx, "zalo_send_direct_message", a); err == nil || calls != 0 {
 		t.Fatal("permission ignored")
@@ -142,10 +189,14 @@ func TestConfirmedResultSurvivesCallerCancellation(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	m := Manager{Store: s, Enabled: true, Sender: senderFunc(func(context.Context, string, string, *domain.SendQuote) (string, error) {
-		cancel()
-		return "confirmed", nil
-	})}
+	m := Manager{
+		Store:   s,
+		Enabled: true,
+		Sender: senderFunc(func(context.Context, string, string, *domain.SendQuote) (string, error) {
+			cancel()
+			return "confirmed", nil
+		}),
+	}
 	a := map[string]any{"recipient_id": "peer", "text": "hello", "request_id": "60000000-0000-4000-8000-000000000006"}
 	// Act.
 	r, err := m.Call(ctx, "zalo_send_direct_message", a)

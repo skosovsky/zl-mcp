@@ -50,6 +50,7 @@ func TestNativeBinaryTerminalStartupAcceptance(t *testing.T) {
 	if err = s.Close(); err != nil {
 		t.Fatal(err)
 	}
+	//nolint:usetesting // A short temporary path keeps macOS Unix socket names within their bound; t.Cleanup owns removal.
 	state, err := os.MkdirTemp("/tmp", "zl-native-")
 	if err != nil {
 		t.Fatal(err)

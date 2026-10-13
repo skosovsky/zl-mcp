@@ -13,7 +13,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/amrakk/zcago/api"
 	"github.com/amrakk/zcago/errs"
@@ -49,7 +48,7 @@ func (c *Client) ReceiveMobileBackupOffer(
 		r,
 		l,
 		progress,
-		func() (*rsa.PrivateKey, error) { return rsa.GenerateKey(rand.Reader, 2048) },
+		func() (*rsa.PrivateKey, error) { return rsa.GenerateKey(rand.Reader, mobileOfferRSAKeyBits) },
 	)
 	if c.AccountID() != owner {
 		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
@@ -68,7 +67,7 @@ func receiveMobileBackupOffer(
 	if parent == nil || owner == "" {
 		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 	}
-	ctx, stop := context.WithTimeout(parent, 180*time.Second)
+	ctx, stop := context.WithTimeout(parent, receiveMobileBackupOfferTimeout)
 	defer stop()
 	if ctx.Err() != nil {
 		return domain.MobileBackupOffer{}, ctx.Err()
@@ -89,7 +88,7 @@ func receiveMobileBackupOffer(
 		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 	}
 	public := base64.StdEncoding.EncodeToString(der)
-	sub, unsubscribe, err := l.SubscribeMobileSync(public, "Web")
+	sub, unsubscribe, err := l.SubscribeMobileSync(public, nativeClientWeb)
 	if err != nil {
 		return domain.MobileBackupOffer{}, domain.ErrMobileBackupRejected
 	}
@@ -112,7 +111,16 @@ func receiveMobileBackupOffer(
 	if dispatchErr != nil {
 		return domain.MobileBackupOffer{}, dispatchErr
 	}
-	session := mobileOfferSession{parent: parent, ctx: ctx, owner: owner, public: public, key: key, mapper: mapper, sub: sub, state: state}
+	session := mobileOfferSession{
+		parent: parent,
+		ctx:    ctx,
+		owner:  owner,
+		public: public,
+		key:    key,
+		mapper: mapper,
+		sub:    sub,
+		state:  state,
+	}
 	return session.wait(unknown)
 }
 
@@ -165,6 +173,7 @@ func mobileBackupOffer(e model.MobileSyncEvent, owner string, key *rsa.PrivateKe
 }
 
 func invalidMobileOffer(reason string) (domain.MobileBackupOffer, error) {
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.Warn("mobile_backup_offer_invalid", "reason", reason)
 	return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 }
@@ -182,7 +191,7 @@ func logMobileControl(event model.MobileSyncEvent, public string) {
 		"key_match",
 		event.PublicKey == public,
 		"pc_match",
-		event.PCName == "Web",
+		event.PCName == nativeClientWeb,
 		"has_url",
 		event.URL != "",
 		"has_encrypted_key",
@@ -201,10 +210,16 @@ func logMobileControl(event model.MobileSyncEvent, public string) {
 	if event.UserAction != nil {
 		args = append(args, "user_action", *event.UserAction)
 	}
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.Info("mobile_backup_control", args...)
 }
 
-func dispatchMobileRequest(ctx context.Context, r mobileBackupRequester, public string, state func(string) error) (bool, error) {
+func dispatchMobileRequest(
+	ctx context.Context,
+	r mobileBackupRequester,
+	public string,
+	state func(string) error,
+) (bool, error) {
 	err := r.RequestMobileBackup(ctx, public)
 	unknown := errors.Is(err, api.ErrMobileBackupUnknown)
 	if err != nil && !unknown {
@@ -241,6 +256,7 @@ func (session *mobileOfferSession) wait(unknown bool) (domain.MobileBackupOffer,
 	for {
 		select {
 		case <-session.sub.Errors:
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.WarnContext(session.parent, "mobile_backup_control_invalid", "stage", "receiver")
 			return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 		default:
@@ -252,6 +268,7 @@ func (session *mobileOfferSession) wait(unknown bool) (domain.MobileBackupOffer,
 			}
 			return domain.MobileBackupOffer{}, session.ctx.Err()
 		case <-session.sub.Errors:
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.WarnContext(session.parent, "mobile_backup_control_invalid", "stage", "receiver")
 			return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 		case event := <-session.sub.Events:
@@ -282,7 +299,7 @@ func (session *mobileOfferSession) control(event model.MobileSyncEvent) (domain.
 }
 
 func (session *mobileOfferSession) confirm(event model.MobileSyncEvent) error {
-	if event.PCName != "Web" || event.UserAction == nil {
+	if event.PCName != nativeClientWeb || event.UserAction == nil {
 		return domain.ErrMobileBackupInvalid
 	}
 	switch *event.UserAction {
@@ -292,6 +309,7 @@ func (session *mobileOfferSession) confirm(event model.MobileSyncEvent) error {
 		if err := session.state("mobile_restoring"); err != nil {
 			return err
 		}
+	//nolint:mnd // Native control IDs 1/3 map to waiting and 2 to restoring; retain the exact codec table.
 	case 1, 3:
 		if err := session.state("waiting_for_backup"); err != nil {
 			return err
@@ -303,7 +321,7 @@ func (session *mobileOfferSession) confirm(event model.MobileSyncEvent) error {
 }
 
 func (session *mobileOfferSession) transfer(event model.MobileSyncEvent) error {
-	if event.PCName != "Web" {
+	if event.PCName != nativeClientWeb {
 		return domain.ErrMobileBackupInvalid
 	}
 	// The native client checks active/idle status before backup failure.
@@ -313,16 +331,19 @@ func (session *mobileOfferSession) transfer(event model.MobileSyncEvent) error {
 		if *event.Status == 2 {
 			kind = "mobile_idle"
 		}
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.InfoContext(session.parent, "mobile_backup_phone_status", "status", kind)
 		return nil
 	}
 	if event.ErrorCode != nil && *event.ErrorCode != 0 {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(session.parent, "mobile_backup_transfer_rejected", "upstream_error_code", *event.ErrorCode)
 		return domain.ErrMobileBackupRejected
 	}
 	if event.ErrorCode != nil && *event.ErrorCode == 0 {
 		// Native handling does not classify a zero-code control as failure.
 		// Retain the original deadline and wait for an explicit offer.
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.InfoContext(session.parent, "mobile_backup_phone_status", "status", "transfer_no_error")
 		return nil
 	}
@@ -336,20 +357,25 @@ func (session *mobileOfferSession) acceptOffer(event model.MobileSyncEvent) (dom
 	}
 	pairs, err := mapMobileIdentities(
 		session.ctx,
+		//nolint:exhaustruct_v5 // MobileIdentityRequest preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 		domain.MobileIdentityRequest{Direct: []string{event.UID}},
 		session.mapper,
 	)
 	if err != nil {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(session.parent, "mobile_backup_account_invalid", "reason", "MAPPING_FAILED")
 		return domain.MobileBackupOffer{}, err
 	}
 	if len(pairs) != 1 || pairs[0].Group || pairs[0].Plain != event.UID || pairs[0].Session != session.owner {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(session.parent, "mobile_backup_account_invalid", "reason", "MAPPED_OWNER_MISMATCH")
 		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 	}
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.InfoContext(session.parent, "mobile_backup_account_verified")
 	select {
 	case <-session.sub.Errors:
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(session.parent, "mobile_backup_control_invalid", "stage", "receiver")
 		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 	default:
@@ -360,6 +386,7 @@ func (session *mobileOfferSession) acceptOffer(event model.MobileSyncEvent) (dom
 	if err := session.state("offer_ready"); err != nil {
 		return domain.MobileBackupOffer{}, err
 	}
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.InfoContext(
 		session.parent,
 		"mobile_backup_producer_counts",

@@ -4,6 +4,7 @@ package evaluation
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -56,12 +57,12 @@ func decode(raw []byte) (any, error) {
 		return nil, err
 	}
 	if err := d.Decode(new(any)); err != io.EOF {
-		return nil, fmt.Errorf("trailing JSON content")
+		return nil, errors.New("trailing JSON content")
 	}
 	return value, nil
 }
 func path(value any, selector string) (any, bool) {
-	for _, part := range strings.Split(selector, ".") {
+	for part := range strings.SplitSeq(selector, ".") {
 		if part == "" {
 			continue
 		}

@@ -22,7 +22,7 @@ func tokenFile(path string) (string, error) {
 
 func createTokenFile(path string) (string, error) {
 	var err error
-	random := make([]byte, 32)
+	random := make([]byte, bearerTokenRandomBytes)
 	if _, err = rand.Read(random); err != nil {
 		return "", err
 	}

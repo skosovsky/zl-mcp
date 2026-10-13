@@ -21,13 +21,25 @@ func TestReplayRepairsQuoteOnlyForMatchingRetainedMessage(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	m := domain.Message{Conversation: domain.ConversationRef{Type: "direct", ID: "peer"}, ID: "original", SenderID: "peer", Text: "retained synthetic text", SentAt: time.Now().UTC(), Source: "live", Direction: "incoming"}
+	m := domain.Message{
+		Conversation: domain.ConversationRef{Type: "direct", ID: "peer"},
+		ID:           "original",
+		SenderID:     "peer",
+		Text:         "retained synthetic text",
+		SentAt:       time.Now().UTC(),
+		Source:       "live",
+		Direction:    "incoming",
+	}
 	if err = s.Put(ctx, m); err != nil {
 		t.Fatal(err)
 	}
 	replay := m
 	replay.Source = "replay"
-	replay.QuoteMetadata = &domain.QuoteMetadata{ClientMessageID: "client-original", MessageType: "webchat", Timestamp: "1791029400000"}
+	replay.QuoteMetadata = &domain.QuoteMetadata{
+		ClientMessageID: "client-original",
+		MessageType:     "webchat",
+		Timestamp:       "1791029400000",
+	}
 	replay.Text = "conflicting body"
 	// Act: mismatching replay cannot attach metadata; matching replay can.
 	if err = s.Put(ctx, replay); err != nil {
@@ -47,7 +59,9 @@ func TestReplayRepairsQuoteOnlyForMatchingRetainedMessage(t *testing.T) {
 		t.Fatal(e)
 	}
 	// Assert: quote repair does not duplicate the message or event, or change text.
-	if mismatch == nil || err != nil || quote.Text != m.Text || quote.Metadata.ClientMessageID != "client-original" || messages != 1 || events != 1 {
+	if mismatch == nil || err != nil || quote.Text != m.Text || quote.Metadata.ClientMessageID != "client-original" ||
+		messages != 1 ||
+		events != 1 {
 		t.Fatalf("quote repair invariant: mismatch=%v err=%v messages=%d events=%d", mismatch, err, messages, events)
 	}
 }
@@ -60,7 +74,11 @@ func TestSendJournalClaimsOnceAndRecoversAmbiguousResult(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r := domain.SendRequest{RecipientID: "peer", Text: "private synthetic text", RequestID: "10000000-0000-4000-8000-000000000001"}
+	r := domain.SendRequest{
+		RecipientID: "peer",
+		Text:        "private synthetic text",
+		RequestID:   "10000000-0000-4000-8000-000000000001",
+	}
 	if _, err = s.PrepareSend(ctx, r); err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +111,9 @@ func TestSendJournalClaimsOnceAndRecoversAmbiguousResult(t *testing.T) {
 	op, err := s.PrepareSend(ctx, r)
 	claimed, claimErr := s.ClaimSend(ctx, r.RequestID)
 	// Assert.
-	if wins.Load() != 1 || err != nil || op.Status != "unknown" || op.Reason == nil || *op.Reason != "interrupted" || claimed || claimErr != nil {
+	if wins.Load() != 1 || err != nil || op.Status != "unknown" || op.Reason == nil || *op.Reason != "interrupted" ||
+		claimed ||
+		claimErr != nil {
 		t.Fatalf("wins=%d status=%s claimed=%v err=%v", wins.Load(), op.Status, claimed, err)
 	}
 	var fingerprint string
@@ -113,7 +133,11 @@ func TestSendJournalRejectsChangedArgumentsAndNeverResendsTerminal(t *testing.T)
 		t.Fatal(err)
 	}
 	defer s.Close()
-	r := domain.SendRequest{RecipientID: "unknown-peer", Text: "hello", RequestID: "20000000-0000-4000-8000-000000000002"}
+	r := domain.SendRequest{
+		RecipientID: "unknown-peer",
+		Text:        "hello",
+		RequestID:   "20000000-0000-4000-8000-000000000002",
+	}
 	if _, err = s.PrepareSend(ctx, r); err != nil {
 		t.Fatal(err)
 	}
@@ -131,7 +155,10 @@ func TestSendJournalRejectsChangedArgumentsAndNeverResendsTerminal(t *testing.T)
 	_, conflict := s.PrepareSend(ctx, r)
 	claimed, claimErr := s.ClaimSend(ctx, r.RequestID)
 	// Assert.
-	if err != nil || op.Status != "sent" || op.MessageID == nil || *op.MessageID != id || op.RetrySafe || !errors.Is(conflict, ErrSendConflict) || claimed || claimErr != nil {
+	if err != nil || op.Status != "sent" || op.MessageID == nil || *op.MessageID != id || op.RetrySafe ||
+		!errors.Is(conflict, ErrSendConflict) ||
+		claimed ||
+		claimErr != nil {
 		t.Fatal("terminal send or conflict invariant failed")
 	}
 }

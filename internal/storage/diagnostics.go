@@ -18,18 +18,20 @@ type DeliveryDiagnostics struct {
 // DeliveryDiagnostics returns only bounded aggregate categories. SQL never
 // selects message bodies, callbacks or credentials for this resource.
 func (s *Store) DeliveryDiagnostics(ctx context.Context, at time.Time) (DeliveryDiagnostics, error) {
+	//nolint:exhaustruct_v5 // DeliveryDiagnostics preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	d := DeliveryDiagnostics{
 		GeneratedAt: at.UTC().Format(time.RFC3339Nano),
 		StateCounts: map[string]int64{
-			"pending":   0,
-			"sending":   0,
-			"delivered": 0,
-			"failed":    0,
-			"cancelled": 0,
-			"other":     0,
+			statePendingText:   0,
+			"sending":          0,
+			stateDeliveredText: 0,
+			stateFailedText:    0,
+			stateCancelledText: 0,
+			"other":            0,
 		},
 		ReasonCounts: map[string]int64{},
 	}
+	//nolint:exhaustruct_v5 // Keep the default isolation level; only read-only behavior is explicitly selected.
 	tx, err := s.DB.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return d, err

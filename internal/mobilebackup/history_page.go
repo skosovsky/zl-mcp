@@ -57,6 +57,7 @@ func (s *SnapshotStore) ReadHistoryPage(
 			fingerprint: r.Fingerprint(),
 			account:     account,
 			examined:    examined,
+			//nolint:exhaustruct_v5 // SQLiteCursor keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 			sqlite: SQLiteCursor{
 				Digest:      digest,
 				Name:        selected.File.Name,
@@ -72,6 +73,7 @@ func (s *SnapshotStore) ReadHistoryPage(
 		return result, err
 	}
 	defer page.Clear()
+	//nolint:exhaustruct_v5 // MobileHistorySnapshot preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	source := domain.MobileHistorySnapshot{
 		ID:                   r.RequestID,
 		Digest:               digest,
@@ -138,7 +140,12 @@ func (s *SnapshotStore) ReadHistoryPage(
 	return result, nil
 }
 
-func bindHistoryPage(request domain.MobileBackupRequest, examined int, previous *domain.MobileHistorySnapshot, after *domain.MobileHistoryPosition) (domain.MobileBackupRequest, error) {
+func bindHistoryPage(
+	request domain.MobileBackupRequest,
+	examined int,
+	previous *domain.MobileHistorySnapshot,
+	after *domain.MobileHistoryPosition,
+) (domain.MobileBackupRequest, error) {
 	r, err := request.Normalize()
 	if err != nil || examined < 0 || examined >= r.MaxMessages ||
 		examined == 0 && (after != nil || previous != nil && !previous.ControlPreludeComplete) ||
@@ -148,13 +155,26 @@ func bindHistoryPage(request domain.MobileBackupRequest, examined int, previous 
 	return r, nil
 }
 
-func historySnapshotMatches(previous *domain.MobileHistorySnapshot, id string, digest [32]byte, createdMS, expiresMS int64) bool {
-	return previous == nil || (previous.ID == id && previous.Digest == digest && previous.CreatedMS == createdMS && previous.ExpiresMS == expiresMS)
+func historySnapshotMatches(
+	previous *domain.MobileHistorySnapshot,
+	id string,
+	digest [32]byte,
+	createdMS, expiresMS int64,
+) bool {
+	return previous == nil ||
+		(previous.ID == id && previous.Digest == digest && previous.CreatedMS == createdMS && previous.ExpiresMS == expiresMS)
 }
 
-func readHistoryControlPrelude(ctx context.Context, selected SelectedArchive, r domain.MobileBackupRequest, account, scratch string, source domain.MobileHistorySnapshot, mapper domain.MobileIdentitySource) (domain.MobileHistoryPage, error) {
+func readHistoryControlPrelude(
+	ctx context.Context,
+	selected SelectedArchive,
+	r domain.MobileBackupRequest,
+	account, scratch string,
+	source domain.MobileHistorySnapshot,
+	mapper domain.MobileIdentitySource,
+) (domain.MobileHistoryPage, error) {
 	var result domain.MobileHistoryPage
-	controls, scanErr := ReadOwnDirectRecallSet(ctx, selected, r, account, scratch, 5000, mapper)
+	controls, scanErr := ReadOwnDirectRecallSet(ctx, selected, r, account, scratch, maximumArchiveControls, mapper)
 	if scanErr != nil {
 		return result, scanErr
 	}

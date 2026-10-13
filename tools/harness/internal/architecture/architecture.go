@@ -67,14 +67,18 @@ type Evidence struct {
 }
 
 // boundedBuffer drains output while preserving only a bounded diagnostic prefix.
+const architectureDiagnosticLimit = 1 << 20
+const architectureCommandTimeout = 60 * time.Second
+
 type boundedBuffer struct {
 	bytes.Buffer
+
 	overflow bool
 }
 
 func (b *boundedBuffer) Write(p []byte) (int, error) {
 	n := len(p)
-	room := (1 << 20) - b.Len()
+	room := architectureDiagnosticLimit - b.Len()
 	if room < n {
 		b.overflow = true
 	}
@@ -87,10 +91,11 @@ func (b *boundedBuffer) Write(p []byte) (int, error) {
 	return n, nil
 }
 func command(ctx context.Context, root, binary string, args ...string) (int, string, string, error) {
-	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, architectureCommandTimeout)
 	defer cancel()
 	//nolint:gosec // G702: the CLI selects a local executable and passes argv directly, never through a shell.
 	cmd := exec.CommandContext(ctx, binary, args...)
+	//nolint:exhaustruct_v5 // Only process-group ownership is overridden; retain default credentials, descriptors and platform attributes.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error {
 		if cmd.Process == nil {
@@ -119,8 +124,7 @@ func command(ctx context.Context, root, binary string, args ...string) (int, str
 		return -1, out.String(), errout.String(), ctx.Err()
 	}
 	if err != nil {
-		var ee *exec.ExitError
-		if errors.As(err, &ee) {
+		if ee, ok := errors.AsType[*exec.ExitError](err); ok {
 			code = ee.ExitCode()
 		} else {
 			return -1, out.String(), errout.String(), err
@@ -138,6 +142,7 @@ func Run(ctx context.Context, binary, root string) (Result, error) {
 		return Result{}, err
 	}
 	code, out, stderr, err := command(ctx, root, binary, "--json")
+	//nolint:exhaustruct_v5 // Result initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	r := Result{Exit: code, Stdout: out, Stderr: stderr}
 	if err != nil {
 		return r, err
@@ -150,7 +155,7 @@ func Run(ctx context.Context, binary, root string) (Result, error) {
 	if err = json.Unmarshal(data, &envelope); err != nil {
 		return r, err
 	}
-	for _, k := range []string{"summary", "compliance", "coverage"} {
+	for _, k := range []string{"summary", "compliance", fieldCoverage} {
 		if _, ok := envelope[k]; !ok {
 			return r, fmt.Errorf("arch-go report missing %s", k)
 		}
@@ -161,7 +166,9 @@ func Run(ctx context.Context, binary, root string) (Result, error) {
 	return r, nil
 }
 func passing(r Result) bool {
-	return r.Exit == 0 && r.Report.Summary.Pass && r.Report.Compliance.Pass && r.Report.Coverage.Pass && r.Report.Compliance.Rate == 100 && r.Report.Coverage.Rate == 100
+	return r.Exit == 0 && r.Report.Summary.Pass && r.Report.Compliance.Pass && r.Report.Coverage.Pass &&
+		r.Report.Compliance.Rate == 100 &&
+		r.Report.Coverage.Rate == 100
 }
 func Scan(root string) ([]File, error) {
 	var files []File
@@ -200,7 +207,11 @@ func security(files []File) error {
 	return nil
 }
 func writeModule(root string, config []byte, files []File) error {
-	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module "+module+"\n\ngo 1.27.1\n"), 0600); err != nil {
+	if err := os.WriteFile(
+		filepath.Join(root, "go.mod"),
+		[]byte("module "+module+"\n\ngo 1.27.1\n"),
+		0600,
+	); err != nil {
 		return err
 	}
 	//nolint:gosec // G703: root is a harness-owned synthetic workspace; files come from the local AST scanner, not a manifest.
@@ -256,21 +267,22 @@ type controlCase struct {
 	fail                        bool
 }
 
+//nolint:gochecknoglobals // Immutable architecture controls are shared by exact-config negative/positive verification.
 var cases = []controlCase{
-	{"domain-sql", "internal/domain", "database/sql", "dependency", true},
-	{"app-sdk", "internal/app/search", "github.com/modelcontextprotocol/go-sdk/mcp", "dependency", true},
-	{"mcp-storage", "internal/mcpserver", module + "/internal/storage", "dependency", true},
-	{"production-evaluation", "cmd/zl-mcp", module + "/internal/evaluation", "dependency", true},
-	{"domain-subpackage-sql", "internal/domain/sub", "database/sql", "dependency", true},
-	{"uncovered-package", "internal/newboundary", "", "coverage", true},
-	{"root-package-uncovered", ".", "", "coverage", true},
-	{"shadow-package-uncovered", "internal/foo/zl-mcp/internal/domain", "", "coverage", true},
-	{"app-root-positive", "internal/app/search", module + "/internal/domain", "positive", false},
-	{"app-subpackage-positive", "internal/app/search/sub", module + "/internal/domain", "positive", false},
-	{"domain-http", "internal/domain", "net/http", "dependency", true},
-	{"archiveport-standard", "internal/mobilebackup/archiveport", "net/http", "positive", false},
-	{"archiveport-storage", "internal/mobilebackup/archiveport", module + "/internal/storage", "dependency", true},
-	{"archiveport-external", "internal/mobilebackup/archiveport", "github.com/google/uuid", "dependency", true},
+	{"domain-sql", "internal/domain", wireDatabaseSQL, wireDependency, true},
+	{"app-sdk", "internal/app/search", wireGithubComModelcontextprotocolGoSdkMcp, wireDependency, true},
+	{"mcp-storage", "internal/mcpserver", module + "/internal/storage", wireDependency, true},
+	{"production-evaluation", "cmd/zl-mcp", module + "/internal/evaluation", wireDependency, true},
+	{"domain-subpackage-sql", "internal/domain/sub", wireDatabaseSQL, wireDependency, true},
+	{"uncovered-package", "internal/newboundary", "", fieldCoverage, true},
+	{"root-package-uncovered", ".", "", fieldCoverage, true},
+	{"shadow-package-uncovered", "internal/foo/zl-mcp/internal/domain", "", fieldCoverage, true},
+	{"app-root-positive", "internal/app/search", module + "/internal/domain", wirePositive, false},
+	{"app-subpackage-positive", "internal/app/search/sub", module + "/internal/domain", wirePositive, false},
+	{"domain-http", "internal/domain", "net/http", wireDependency, true},
+	{"archiveport-standard", wireInternalMobilebackupArchiveport, "net/http", wirePositive, false},
+	{"archiveport-storage", wireInternalMobilebackupArchiveport, module + "/internal/storage", wireDependency, true},
+	{"archiveport-external", wireInternalMobilebackupArchiveport, "github.com/google/uuid", wireDependency, true},
 }
 
 func controlFiles(c controlCase) []File {
@@ -279,8 +291,11 @@ func controlFiles(c controlCase) []File {
 		f.Imports = append(f.Imports, c.dependency)
 	}
 	files := []File{f}
-	if strings.HasPrefix(c.dependency, module+"/") {
-		files = append(files, File{File: strings.TrimPrefix(c.dependency, module+"/") + "/fixture.go", Imports: []string{}})
+	if suffix, local := strings.CutPrefix(c.dependency, module+"/"); local {
+		files = append(
+			files,
+			File{File: suffix + "/fixture.go", Imports: []string{}},
+		)
 	}
 	return files
 }
@@ -294,7 +309,7 @@ func expected(c controlCase, r Result) error {
 	if r.Exit == 0 || r.Report.Summary.Pass {
 		return fmt.Errorf("negative control accepted: %s", c.name)
 	}
-	if c.kind == "coverage" {
+	if c.kind == fieldCoverage {
 		if r.Report.Coverage.Pass {
 			return fmt.Errorf("control did not fail coverage: %s", c.name)
 		}
@@ -348,7 +363,7 @@ func Controls(ctx context.Context, binary string, config []byte) ([]Control, err
 		if err = expected(c, r); err != nil {
 			return controls, err
 		}
-		controls = append(controls, Control{Name: c.name, Status: "PASS", Result: r})
+		controls = append(controls, Control{Name: c.name, Status: codePass, Result: r})
 	}
 	return controls, nil
 }
@@ -356,12 +371,30 @@ func Controls(ctx context.Context, binary string, config []byte) ([]Control, err
 //nolint:gocognit // Each adversarial fixture keeps write, scan, loader validation and verdict together; loader errors must never count as rejection.
 func SourceControls(ctx context.Context, binary string, config []byte) ([]Control, error) {
 	cases := []struct{ name, path, tag, dep, reason string }{
-		{"platform-sdk", "internal/service/illegal_windows.go", "", "github.com/modelcontextprotocol/go-sdk/mcp", "security"},
-		{"tagged-sdk", "internal/service/illegal.go", "//go:build architecture_hidden\n\n", "github.com/modelcontextprotocol/go-sdk/mcp", "security"},
-		{"cgo-sql", "internal/domain/illegal.go", "//go:build cgo\n\n", "database/sql", "dependency"},
-		{"platform-uncovered", "internal/newboundary/illegal_windows.go", "", "", "coverage"},
-		{"platform-domain-positive", "internal/domain/legal_windows.go", "", "context", "positive"},
-		{"tagged-app-positive", "internal/app/search/legal.go", "//go:build architecture_hidden\n\n", module + "/internal/domain", "positive"},
+		{
+			"platform-sdk",
+			"internal/service/illegal_windows.go",
+			"",
+			wireGithubComModelcontextprotocolGoSdkMcp,
+			wireSecurity,
+		},
+		{
+			"tagged-sdk",
+			"internal/service/illegal.go",
+			"//go:build architecture_hidden\n\n",
+			wireGithubComModelcontextprotocolGoSdkMcp,
+			wireSecurity,
+		},
+		{"cgo-sql", "internal/domain/illegal.go", "//go:build cgo\n\n", wireDatabaseSQL, wireDependency},
+		{"platform-uncovered", "internal/newboundary/illegal_windows.go", "", "", fieldCoverage},
+		{"platform-domain-positive", "internal/domain/legal_windows.go", "", "context", wirePositive},
+		{
+			"tagged-app-positive",
+			"internal/app/search/legal.go",
+			"//go:build architecture_hidden\n\n",
+			module + "/internal/domain",
+			wirePositive,
+		},
 	}
 	var out []Control
 	for _, c := range cases {
@@ -387,22 +420,29 @@ func SourceControls(ctx context.Context, binary string, config []byte) ([]Contro
 		if e != nil {
 			return out, e
 		}
-		if c.reason == "security" {
+		if c.reason == wireSecurity {
 			if e = security(files); e == nil || !strings.Contains(e.Error(), "SDK outside existing bridge") {
 				return out, fmt.Errorf("hidden SDK control accepted: %s", c.name)
 			}
-			out = append(out, Control{Name: c.name, Status: "PASS"})
+			//nolint:exhaustruct_v5 // Control initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
+			out = append(out, Control{Name: c.name, Status: codePass})
 			continue
 		}
 		r, e := synthetic(ctx, binary, config, files)
 		if e != nil {
 			return out, e
 		}
-		cc := controlCase{name: c.name, pkg: filepath.Dir(c.path), dependency: c.dep, kind: c.reason, fail: c.reason != "positive"}
+		cc := controlCase{
+			name:       c.name,
+			pkg:        filepath.Dir(c.path),
+			dependency: c.dep,
+			kind:       c.reason,
+			fail:       c.reason != wirePositive,
+		}
 		if e = expected(cc, r); e != nil {
 			return out, e
 		}
-		out = append(out, Control{Name: c.name, Status: "PASS", Result: r})
+		out = append(out, Control{Name: c.name, Status: codePass, Result: r})
 	}
 	return out, nil
 }
@@ -490,7 +530,7 @@ func Check(ctx context.Context, root, binary string) (e Evidence, err error) {
 	if err != nil {
 		return e, err
 	}
-	e.Status = "PASS"
+	e.Status = codePass
 	return e, nil
 }
 

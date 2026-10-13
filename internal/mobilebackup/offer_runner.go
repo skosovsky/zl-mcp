@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log/slog"
 	"sync/atomic"
-	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
@@ -34,6 +33,7 @@ func RunPreparedOffer(
 		e := before(public)
 		if e == nil {
 			claimed.Store(true)
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.InfoContext(ctx, "mobile_backup_progress", "operation_id", id, "state", "dispatching")
 		}
 		return e
@@ -42,6 +42,7 @@ func RunPreparedOffer(
 	observer.Progress = func(state string) error {
 		e := progress(state)
 		if e == nil {
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.InfoContext(ctx, "mobile_backup_progress", "operation_id", id, "state", state)
 		}
 		return e
@@ -62,6 +63,7 @@ func RunPreparedOffer(
 		}
 		err = ErrOfferExecution
 	}
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.WarnContext(
 		ctx,
 		"mobile_backup_failed",
@@ -102,12 +104,18 @@ func offerFailureCode(err error) string {
 	}
 }
 
-func finalizePreparedOffer(ctx context.Context, store *storage.Store, id string, sourceErr error) (domain.MobileBackupOffer, error) {
+func finalizePreparedOffer(
+	ctx context.Context,
+	store *storage.Store,
+	id string,
+	sourceErr error,
+) (domain.MobileBackupOffer, error) {
 	// Request lifetime may be over; finish evidence independently before returning.
-	finish, stop := context.WithTimeout(context.Background(), 15*time.Second)
+	finish, stop := context.WithTimeout(context.Background(), finalizePreparedOfferFinishTimeout)
 	defer stop()
 	attempt, e := store.MobileBackupAttempt(finish, id)
 	if e != nil {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(
 			ctx,
 			"mobile_backup_finalization_failed",
@@ -123,12 +131,14 @@ func finalizePreparedOffer(ctx context.Context, store *storage.Store, id string,
 	switch attempt.State {
 	case "dispatching", "waiting_for_confirmation", "request_result_unknown", "mobile_restoring", "waiting_for_backup":
 		state := "failed"
-		cancelled := ctx.Err() != nil || errors.Is(sourceErr, context.Canceled) || errors.Is(sourceErr, context.DeadlineExceeded)
+		cancelled := ctx.Err() != nil || errors.Is(sourceErr, context.Canceled) ||
+			errors.Is(sourceErr, context.DeadlineExceeded)
 		if cancelled || errors.Is(sourceErr, domain.ErrMobileBackupUnknown) ||
 			errors.Is(sourceErr, domain.ErrAuthenticationRequired) {
 			state = "interrupted"
 		}
 		if _, e = store.ProgressMobileBackup(finish, id, attempt.Revision, state); e != nil {
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.WarnContext(
 				ctx,
 				"mobile_backup_finalization_failed",
@@ -141,6 +151,7 @@ func finalizePreparedOffer(ctx context.Context, store *storage.Store, id string,
 			)
 			return domain.MobileBackupOffer{}, ErrOfferExecution
 		}
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.InfoContext(ctx, "mobile_backup_finalized", "operation_id", id, "state", state)
 	}
 	return domain.MobileBackupOffer{}, ErrOfferExecution

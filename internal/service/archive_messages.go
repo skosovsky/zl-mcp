@@ -108,12 +108,14 @@ func archiveWindow(token archiveReadToken) (time.Time, time.Time, error) {
 }
 func archiveProjectionError(err error) error {
 	if errors.Is(err, mobilebackup.ErrSnapshotControls) {
+		//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 		return &domain.Error{
 			Code:    "SOURCE_CONTROLS_UNCLASSIFIED",
 			Message: "This archived conversation contains controls whose visibility semantics are not verified; no message prefix was returned.",
 			Details: map[string]any{},
 		}
 	}
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 	return &domain.Error{
 		Code:    "SOURCE_UNSUPPORTED",
 		Message: "The selected archived conversation cannot be safely projected.",
@@ -166,13 +168,14 @@ func (p *membershipPort) archiveMessages(
 		ID:   archiveString(args, "conversation_id"),
 	}
 	if !p.store.AllowsConversation(ref) {
+		//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 		return nil, &domain.Error{
 			Code:    "PERMISSION_DENIED",
 			Message: "Conversation is outside collection policy.",
 			Details: map[string]any{},
 		}
 	}
-	sourceID := archiveString(args, "source_id")
+	sourceID := archiveString(args, fieldSourceID)
 	source, manifest, err := p.library.ReadBound(ctx, sourceID, binding)
 	if err != nil {
 		return nil, archiveReadUnavailable()
@@ -186,6 +189,7 @@ func (p *membershipPort) archiveMessages(
 	if order == "" {
 		order = "desc"
 	}
+	//nolint:exhaustruct_v5 // archiveReadToken initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	token := archiveReadToken{
 		Version: 1,
 		Kind:    "cursor",
@@ -255,9 +259,9 @@ func (p *membershipPort) archiveMessages(
 		"source_earliest_at":          earliest,
 		"source_latest_at":            latest,
 		"wal_mode":                    page.WALMode,
-		"history_complete":            false,
-		"examined":                    page.Examined,
-		"rejected":                    page.Rejected,
+		fieldHistoryComplete:          false,
+		fieldExamined:                 page.Examined,
+		stateRejectedText:             page.Rejected,
 		"expired":                     page.Expired,
 		"suppressed_live":             suppressed,
 		"unresolved_senders":          page.UnresolvedSenders,
@@ -273,7 +277,7 @@ func (p *membershipPort) archiveMessages(
 	}
 	return map[string]any{
 		"messages":             values,
-		"has_more":             page.HasMore,
+		fieldHasMore:           page.HasMore,
 		"next_cursor":          next,
 		"empty_reason":         empty,
 		"coverage":             coverage,
@@ -293,7 +297,7 @@ func (p *membershipPort) archiveExcerpt(
 ) (map[string]any, error) {
 	value := record.TransportRecord()
 	runes := []rune(record.Text)
-	truncated := len(runes) > 2048
+	truncated := len(runes) > archiveExcerptRunes
 	value["text_truncated"], value["resource_uri"] = truncated, nil
 	if truncated {
 		value["text"] = string(runes[:2048])
@@ -347,7 +351,11 @@ func (p *membershipPort) archiveResource(ctx context.Context, args any) (map[str
 	return nil, archiveReadUnavailable()
 }
 
-func (p *membershipPort) bindArchiveMessagesCursor(ctx context.Context, token archiveReadToken, sealedToken string) (archiveReadToken, error) {
+func (p *membershipPort) bindArchiveMessagesCursor(
+	ctx context.Context,
+	token archiveReadToken,
+	sealedToken string,
+) (archiveReadToken, error) {
 	if sealed := sealedToken; sealed != "" {
 		saved, openArchiveReadErr := p.openArchiveRead(ctx, "cursor", sealed)
 		if openArchiveReadErr != nil || saved.Account != token.Account || saved.Source != token.Source ||
@@ -366,7 +374,14 @@ func (p *membershipPort) bindArchiveMessagesCursor(ctx context.Context, token ar
 	return token, nil
 }
 
-func (p *membershipPort) archiveMessageValues(ctx context.Context, page *mobilebackup.SnapshotPage, ref domain.ConversationRef, token archiveReadToken, limit int, nowMS int64) ([]map[string]any, int, error) {
+func (p *membershipPort) archiveMessageValues(
+	ctx context.Context,
+	page *mobilebackup.SnapshotPage,
+	ref domain.ConversationRef,
+	token archiveReadToken,
+	limit int,
+	nowMS int64,
+) ([]map[string]any, int, error) {
 	values := []map[string]any{}
 	suppressed := 0
 	for _, record := range page.Records {

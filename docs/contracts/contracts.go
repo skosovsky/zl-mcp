@@ -16,10 +16,12 @@ var Files embed.FS
 
 // Shared history schemas stay flat for MCP clients while avoiding three copies
 // of the same operation status contract.
+//
+//nolint:gochecknoglobals // Closed schema aliases are read-only after package initialization.
 var toolAliases = map[string][2]string{
-	"zalo_import_conversation_history": {"history_import_request", "history_import_operation"},
-	"zalo_get_history_import_status":   {"history_import_operation", "history_import_operation"},
-	"zalo_cancel_history_import":       {"history_import_operation", "history_import_operation"},
+	"zalo_import_conversation_history": {"history_import_request", historyImportOperationSchema},
+	"zalo_get_history_import_status":   {historyImportOperationSchema, historyImportOperationSchema},
+	"zalo_cancel_history_import":       {historyImportOperationSchema, historyImportOperationSchema},
 }
 
 func Names() []string {
@@ -38,9 +40,10 @@ func Names() []string {
 }
 func Document(name, suffix string) (map[string]any, error) {
 	if alias, ok := toolAliases[name]; ok {
-		if suffix == "input" {
+		switch suffix {
+		case "input":
 			name = alias[0]
-		} else if suffix == "output" {
+		case "output":
 			name = alias[1]
 		}
 	}

@@ -20,7 +20,10 @@ func TestTLVStructuralGoldenRepeatsUnknownAndOwnership(t *testing.T) {
 	// Act.
 	result, err := ParseTLV(context.Background(), input)
 	// Assert: repeated/unknown tags preserved, own buffers independent, no serialization.
-	if err != nil || len(result.Fields) != 4 || result.Fields[0].Tag != 6 || result.Fields[1].Tag != 6 || result.Fields[2].Tag != 0xffffffff || string(result.Fields[1].Value) != "de" || len(result.Fields[3].Value) != 0 {
+	if err != nil || len(result.Fields) != 4 || result.Fields[0].Tag != 6 || result.Fields[1].Tag != 6 ||
+		result.Fields[2].Tag != 0xffffffff ||
+		string(result.Fields[1].Value) != "de" ||
+		len(result.Fields[3].Value) != 0 {
 		t.Fatal("TLV structure lost", err)
 	}
 	serialized, _ := json.Marshal(result)

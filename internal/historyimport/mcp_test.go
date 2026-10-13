@@ -123,7 +123,7 @@ func TestMCPHistoryImportDiscoveryStatusAndReads(t *testing.T) {
 	workerCtx, stop := context.WithCancel(ctx)
 	done := make(chan error, 1)
 	go func() {
-		done <- historyimport.Run(workerCtx, s, pageSource(func(ctx context.Context, ref domain.ConversationRef, cursor string, limit int) (domain.HistoryPage, error) {
+		done <- historyimport.Run(workerCtx, s, pageSource(func(_ context.Context, ref domain.ConversationRef, _ string, _ int) (domain.HistoryPage, error) {
 			more := false
 			return domain.HistoryPage{Messages: []domain.Message{message(ref, "historical-message")}, HasMore: &more}, nil
 		}))

@@ -31,5 +31,6 @@ func projectProtocolError(err error) *protocolError {
 		code, message, data := details.RPCDetails()
 		return &protocolError{Code: code, Message: message, Data: data}
 	}
+	//nolint:exhaustruct_v5 // Protocol error details remain absent for this error code; preserve the existing JSON-RPC response.
 	return &protocolError{Code: -32603, Message: "Internal server error."}
 }

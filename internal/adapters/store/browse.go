@@ -16,5 +16,7 @@ func (r *Reader) Conversation(ctx context.Context, ref domain.ConversationRef) (
 	return catalogValue[conversations.Detail](r.owner.Conversation(ctx, ref))
 }
 func (r *Reader) Browse(ctx context.Context, q conversations.BrowseRequest) (conversations.Browse, error) {
-	return catalogValue[conversations.Browse](r.owner.Browse(ctx, q.Conversation, q.Since, q.Until, q.Order, q.Limit, q.Cursor))
+	return catalogValue[conversations.Browse](
+		r.owner.Browse(ctx, q.Conversation, q.Since, q.Until, q.Order, q.Limit, q.Cursor),
+	)
 }

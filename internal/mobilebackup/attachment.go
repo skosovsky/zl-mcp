@@ -33,6 +33,7 @@ func (a *Attachment) Clear() {
 	}
 	for _, v := range []*AttachmentValue{&a.Type, &a.ExtInfo, &a.Action, &a.Params, &a.Title, &a.Href, &a.Thumb, &a.Description, &a.Remains, &a.ZInstantData, &a.ZInstantMessage} {
 		clear(v.Bytes)
+		//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 		*v = AttachmentValue{}
 	}
 	for _, p := range []*int32{a.CategoryID, a.ID, a.ChildNumber} {
@@ -40,6 +41,7 @@ func (a *Attachment) Clear() {
 			*p = 0
 		}
 	}
+	//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 	*a = Attachment{}
 }
 
@@ -62,40 +64,40 @@ func ParseAttachment(ctx context.Context, data []byte) (result Attachment, err e
 		var scalar **int32
 		var text *AttachmentValue
 		switch f.Tag {
-		case 40:
+		case attachmentTypeTag:
 			text = &result.Type
-		case 41:
+		case attachmentCategoryIDTag:
 			scalar = &result.CategoryID
-		case 42:
+		case attachmentIDTag:
 			scalar = &result.ID
-		case 43:
+		case attachmentExtInfoTag:
 			text = &result.ExtInfo
-		case 44:
+		case attachmentChildNumberTag:
 			scalar = &result.ChildNumber
-		case 45:
+		case attachmentActionTag:
 			text = &result.Action
-		case 46:
+		case attachmentParamsTag:
 			text = &result.Params
-		case 47:
+		case attachmentTitleTag:
 			text = &result.Title
-		case 48:
+		case attachmentHrefTag:
 			text = &result.Href
-		case 49:
+		case attachmentThumbTag:
 			text = &result.Thumb
-		case 50:
+		case attachmentDescriptionTag:
 			text = &result.Description
-		case 66:
+		case attachmentRemainsTag:
 			text = &result.Remains
-		case 67:
+		case attachmentInstantDataTag:
 			text = &result.ZInstantData
-		case 68:
+		case attachmentInstantMessageTag:
 			text = &result.ZInstantMessage
 		default:
 			result.UnsupportedFields++
 			continue
 		}
 		if scalar != nil {
-			if *scalar != nil || len(f.Value) != 4 {
+			if *scalar != nil || len(f.Value) != nativeInt32Bytes {
 				return result, ErrTLV
 			}
 			//nolint:gosec // G115: reconstruct the signed two's-complement int32 wire value without changing bits.

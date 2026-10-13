@@ -24,7 +24,7 @@ func (s *RetainedArchiveStore) Sources(ctx context.Context, accountKey string) (
 	if err != nil {
 		return nil, ErrRetainedArchive
 	}
-	entries, err := dir.ReadDir(32)
+	entries, err := dir.ReadDir(archiveLibraryScanEntries)
 	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	dir.Close()
 	if err != nil && !errors.Is(err, io.EOF) || len(entries) > retainedMaxSources+3 {
@@ -65,6 +65,7 @@ type PreservationReceipt struct {
 }
 
 func preservationReceipt(meta retainedMetadata, stored int64) PreservationReceipt {
+	//nolint:exhaustruct_v5 // PreservationReceipt keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	return PreservationReceipt{
 		Source:      retainedManifest(meta, stored),
 		Retention:   "until_owner_deletion",
@@ -143,6 +144,7 @@ func (s *RetainedArchiveStore) preserveAuthenticated(
 	if err != nil {
 		return PreservationReceipt{}, err
 	}
+	//nolint:exhaustruct_v5 // PreservationReceipt keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	return PreservationReceipt{
 		Source:      m,
 		Retention:   "until_owner_deletion",

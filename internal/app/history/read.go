@@ -3,7 +3,6 @@ package history
 
 import (
 	"context"
-	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
@@ -19,7 +18,7 @@ type Handler struct {
 }
 
 func (h *Handler) Status(ctx context.Context, operationID string) (domain.HistoryImportStatus, error) {
-	ctx, cancel := context.WithTimeout(ctx, 35*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, handlerStatusTimeout)
 	defer cancel()
 	return h.Reads.ImportStatus(ctx, operationID)
 }

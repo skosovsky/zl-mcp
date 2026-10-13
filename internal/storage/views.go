@@ -39,9 +39,10 @@ func (s *Store) Groups(ctx context.Context, query string, limit int, token strin
 	e = s.DB.QueryRowContext(ctx, "SELECT value FROM metadata WHERE key='catalog_updated_at'").Scan(&catalog)
 	if errors.Is(e, sql.ErrNoRows) {
 		return nil, &domain.Error{
-			Code:       "COLLECTOR_UNAVAILABLE",
-			Message:    "No group catalog has been collected yet.",
-			Retryable:  true,
+			Code:      "COLLECTOR_UNAVAILABLE",
+			Message:   "No group catalog has been collected yet.",
+			Retryable: true,
+			//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 			NextAction: domain.NextAction{Instruction: "Start zl-mcp collect after login."},
 			Details:    map[string]any{},
 		}
@@ -50,6 +51,7 @@ func (s *Store) Groups(ctx context.Context, query string, limit int, token strin
 		return nil, e
 	}
 	updated := &catalog
+	//nolint:exhaustruct_v5 // This fingerprint projection preserves the established zero/null fields and persisted JSON hash.
 	c := struct {
 		Query string
 		Last  string
@@ -89,9 +91,9 @@ func (s *Store) Groups(ctx context.Context, query string, limit int, token strin
 	}
 	return map[string]any{
 		"groups":             page,
-		"has_more":           next != nil,
-		"next_cursor":        next,
-		"empty_reason":       reason,
+		fieldHasMore:         next != nil,
+		fieldNextCursor:      next,
+		fieldEmptyReason:     reason,
 		"catalog_updated_at": updated,
 		"stale":              time.Since(at) > 6*time.Minute || state["collector_state"] != "connected",
 	}, nil
@@ -108,11 +110,11 @@ func (s *Store) Group(ctx context.Context, id string) (map[string]any, error) {
 	g.CollectionEnabled = s.Allowed(id)
 	ts, _ := time.Parse(time.RFC3339Nano, at)
 	return map[string]any{
-		"group":       g,
-		"description": desc,
-		"membership":  member,
-		"updated_at":  at,
-		"stale":       time.Since(ts) > 6*time.Minute,
+		domain.ConversationGroup: g,
+		"description":            desc,
+		"membership":             member,
+		fieldUpdatedAt:           at,
+		"stale":                  time.Since(ts) > 6*time.Minute,
 	}, nil
 }
 func (s *Store) ReplaceCatalog(ctx context.Context, groups []domain.Group) error {
@@ -168,6 +170,7 @@ func (s *Store) Coverage(ctx context.Context, id string) (domain.Coverage, error
 }
 func (s *Store) conversationCoverage(ctx context.Context, ref domain.ConversationRef) (domain.Coverage, error) {
 	id := ref.ID
+	//nolint:exhaustruct_v5 // Coverage preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	c := domain.Coverage{GroupID: id, KnownGaps: []domain.Gap{}}
 	if s.retention > 0 {
 		v := s.retention
@@ -242,11 +245,11 @@ func (s *Store) Summary(ctx context.Context) (map[string]any, error) {
 	}
 	return map[string]any{
 		"group_count":            groups,
-		"history_complete":       false,
-		"groups_with_known_gaps": gaps["group"],
+		fieldHistoryComplete:     false,
+		"groups_with_known_gaps": gaps[domain.ConversationGroup],
 	}, nil
 }
-func display(m domain.Message) domain.Message { return clip(m, 8000) }
+func display(m domain.Message) domain.Message { return clip(m, contextDisplayRunes) }
 func clip(m domain.Message, limit int) domain.Message {
 	if utf8.RuneCountInString(m.Text) > limit {
 		m.Text = string([]rune(m.Text)[:limit])
@@ -316,7 +319,7 @@ func (s *Store) context(
 		"before":            pre,
 		"after":             post,
 		"reply_to":          reply,
-		"coverage":          coverage,
+		fieldCoverage:       coverage,
 		"context_truncated": false,
 		"omitted_before_id": nil,
 		"omitted_after_id":  nil,
@@ -349,12 +352,13 @@ func (s *Store) State(ctx context.Context) (map[string]any, error) {
 	var b, heartbeat string
 	e := s.DB.QueryRowContext(ctx, "SELECT payload,heartbeat FROM collector_state WHERE id=1").Scan(&b, &heartbeat)
 	var state map[string]any
-	if e == nil {
+	switch {
+	case e == nil:
 		state, e = decodeCollectorState(b, heartbeat)
 		if e != nil {
 			return nil, e
 		}
-	} else if errors.Is(e, sql.ErrNoRows) {
+	case errors.Is(e, sql.ErrNoRows):
 		state = map[string]any{
 			"authenticated":     false,
 			"collector_state":   "stopped",
@@ -363,9 +367,10 @@ func (s *Store) State(ctx context.Context) (map[string]any, error) {
 			"last_persisted_at": nil,
 			"last_error":        nil,
 		}
-	} else {
+	default:
 		return nil, e
 	}
+
 	collection, err := s.CollectionStatus(ctx)
 	if err != nil {
 		return nil, err
@@ -375,8 +380,8 @@ func (s *Store) State(ctx context.Context) (map[string]any, error) {
 	if !countsOK || !conversationsOK {
 		return nil, errors.New("invalid collection status counts")
 	}
-	state["enabled_group_count"] = conversationCounts["group"]
-	state["stored_message_count"] = counts["direct"] + counts["group"]
+	state["enabled_group_count"] = conversationCounts[domain.ConversationGroup]
+	state["stored_message_count"] = counts[domain.ConversationDirect] + counts[domain.ConversationGroup]
 	summary, e := s.Summary(ctx)
 	state["coverage_summary"] = summary
 	return state, e
@@ -423,7 +428,14 @@ func (s *Store) EndGaps(ctx context.Context) error {
 	return e
 }
 
-func (s *Store) contextNeighbors(ctx context.Context, ref domain.ConversationRef, anchor domain.Message, id, operator, direction string, limit int, general bool) ([]domain.Message, error) {
+func (s *Store) contextNeighbors(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	anchor domain.Message,
+	id, operator, direction string,
+	limit int,
+	general bool,
+) ([]domain.Message, error) {
 	rows, queryContextErr := s.DB.QueryContext(
 		ctx,
 		//nolint:gosec // G202: SQL fragments are fixed internal predicates/operators; all client values use placeholders.
@@ -455,7 +467,6 @@ func (s *Store) contextNeighbors(ctx context.Context, ref domain.ConversationRef
 		msgs = append(msgs, display(m))
 	}
 	return msgs, rows.Err()
-
 }
 
 type contextResponseBudget struct {
@@ -485,12 +496,15 @@ func (budget *contextResponseBudget) trim() error {
 		if !ok {
 			return errors.New("invalid clipped context anchor")
 		}
-		if utf8.RuneCountInString(anchorValue.Text) > 1000 {
-			budget.result["anchor"] = clip(anchorValue, max(1000, utf8.RuneCountInString(anchorValue.Text)/2))
+		if utf8.RuneCountInString(anchorValue.Text) > minimumContextExcerptRunes {
+			budget.result["anchor"] = clip(
+				anchorValue,
+				max(minimumContextExcerptRunes, utf8.RuneCountInString(anchorValue.Text)/2),
+			)
 			return nil
 		}
-		if budget.reply != nil && utf8.RuneCountInString(budget.reply.Text) > 1000 {
-			v := clip(*budget.reply, max(1000, utf8.RuneCountInString(budget.reply.Text)/2))
+		if budget.reply != nil && utf8.RuneCountInString(budget.reply.Text) > minimumContextExcerptRunes {
+			v := clip(*budget.reply, max(minimumContextExcerptRunes, utf8.RuneCountInString(budget.reply.Text)/2))
 			budget.reply = &v
 			budget.result["reply_to"] = budget.reply
 			return nil
@@ -501,6 +515,7 @@ func (budget *contextResponseBudget) trim() error {
 		)
 	}
 	budget.result["context_truncated"] = true
+	//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 	budget.result["next_action"] = domain.NextAction{
 		Instruction: "Read omitted message IDs with zalo_get_message_context.",
 	}

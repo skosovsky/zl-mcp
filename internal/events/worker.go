@@ -41,6 +41,7 @@ func NewWorker(queue Queue) (*Worker, error) {
 	if err != nil {
 		return nil, err
 	}
+	//nolint:exhaustruct_v5 // Worker preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	return &Worker{
 		Queue:   queue,
 		Client:  NewCallbackClient(),
@@ -60,8 +61,8 @@ func retryDelay(attempt int) time.Duration {
 	var b [8]byte
 	if _, err := rand.Read(b[:]); err == nil {
 		// +/-20%, bounded without floating point.
-		delta := int64(binary.LittleEndian.Uint64(b[:])%400001) - 200000
-		delay += time.Duration(int64(delay) * delta / 1000000)
+		delta := int64(binary.LittleEndian.Uint64(b[:])%retryJitterChoices) - retryJitterCenter
+		delay += time.Duration(int64(delay) * delta / retryJitterScale)
 	}
 	return delay
 }
@@ -108,7 +109,7 @@ func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.Ev
 	}
 	started := time.Now()
 	statusCode := 0
-	requestCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	requestCtx, cancel := context.WithTimeout(ctx, workerdeliverClaimedTimeout)
 	defer cancel()
 	response, requestErr := shared.ObserveUpstream(
 		requestCtx,
@@ -117,6 +118,7 @@ func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.Ev
 			return postCallback(ctx, w.Client, d.Callback, d.Secret, d.SubscriptionID, d.EventID, d.Payload)
 		},
 	)
+	//nolint:exhaustruct_v5 // DeliveryOutcome preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	outcome := storage.DeliveryOutcome{State: "pending", Reason: "network", RetryAt: at.Add(retryDelay(d.Attempts))}
 	if requestErr == nil {
 		statusCode = response.StatusCode
@@ -135,7 +137,7 @@ func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.Ev
 	}
 	cancel()
 	if outcome.State == "pending" && (d.Attempts >= w.Policy.MaxAttempts || !outcome.RetryAt.Before(d.Deadline)) {
-		outcome.State = "failed"
+		outcome.State = stateFailedText
 		if d.Attempts >= w.Policy.MaxAttempts {
 			outcome.Reason = "attempts"
 		} else {
@@ -144,7 +146,7 @@ func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.Ev
 	}
 	// Shutdown may have cancelled ctx after a completed HTTP attempt. Persist the
 	// outcome with a short independent deadline rather than losing its receipt.
-	finishCtx, finishCancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+	finishCtx, finishCancel := context.WithTimeout(context.WithoutCancel(ctx), workerdeliverClaimedFinishTimeout)
 	defer finishCancel()
 	finishErr := w.Queue.FinishDelivery(finishCtx, *d, outcome, time.Now().UTC())
 	if finishErr == nil {
@@ -176,8 +178,8 @@ func (w *Worker) Run(ctx context.Context) error {
 	}
 	runCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	errs := make(chan error, 5)
-	done := make(chan struct{}, 4)
+	errs := make(chan error, workerErrorBuffer)
+	done := make(chan struct{}, workerCompletionBuffer)
 	for range 4 {
 		go w.runDeliveryWorker(runCtx, cancel, errs, done)
 	}
@@ -199,14 +201,18 @@ func (w *Worker) fanout(ctx context.Context, at time.Time) (int, error) {
 	return w.Queue.FanoutEvents(ctx, at, w.Policy, w.Encoder.Encode)
 }
 
-func classifyDeliveryResponse(response *http.Response, at time.Time, outcome storage.DeliveryOutcome) storage.DeliveryOutcome {
+func classifyDeliveryResponse(
+	response *http.Response,
+	at time.Time,
+	outcome storage.DeliveryOutcome,
+) storage.DeliveryOutcome {
 	switch code := response.StatusCode; {
 	case code >= 200 && code < 300:
 		outcome.State, outcome.Reason = "delivered", "accepted"
-	case code == 410:
-		outcome.State, outcome.Reason, outcome.Gone = "failed", "callback_gone", true
-	case code == 413:
-		outcome.State, outcome.Reason = "failed", "payload_too_large"
+	case code == http.StatusGone:
+		outcome.State, outcome.Reason, outcome.Gone = stateFailedText, "callback_gone", true
+	case code == http.StatusRequestEntityTooLarge:
+		outcome.State, outcome.Reason = stateFailedText, "payload_too_large"
 	case code == 408 || code == 429 || code >= 500:
 		outcome.Reason = "http_transient"
 		if code == 429 || code == 503 {
@@ -215,14 +221,19 @@ func classifyDeliveryResponse(response *http.Response, at time.Time, outcome sto
 			}
 		}
 	default:
-		outcome.State, outcome.Reason = "failed", "http_rejected"
+		outcome.State, outcome.Reason = stateFailedText, "http_rejected"
 	}
 	return outcome
 }
 
-func (w *Worker) runDeliveryWorker(ctx context.Context, cancel context.CancelFunc, errs chan<- error, done chan<- struct{}) {
+func (w *Worker) runDeliveryWorker(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	errs chan<- error,
+	done chan<- struct{},
+) {
 	defer func() { done <- struct{}{} }()
-	timer := time.NewTicker(250 * time.Millisecond)
+	timer := time.NewTicker(deliveryPollInterval)
 	defer timer.Stop()
 	for {
 		select {
@@ -242,7 +253,7 @@ func (w *Worker) runDeliveryWorker(ctx context.Context, cancel context.CancelFun
 }
 
 func (w *Worker) runFanoutWorker(ctx context.Context, errs <-chan error) error {
-	timer := time.NewTicker(250 * time.Millisecond)
+	timer := time.NewTicker(deliveryPollInterval)
 	defer timer.Stop()
 	prune := time.NewTicker(time.Hour)
 	defer prune.Stop()

@@ -15,7 +15,11 @@ func TestServiceTransportConfiguration(t *testing.T) {
 		t.Run(tc.listen, func(t *testing.T) {
 			// Arrange
 			path := filepath.Join(t.TempDir(), "config.toml")
-			if err := os.WriteFile(path, []byte("state_dir = 'state'\n[mcp]\nlisten = '"+tc.listen+"'\ntoken_file = 'token'\n"), 0600); err != nil {
+			if err := os.WriteFile(
+				path,
+				[]byte("state_dir = 'state'\n[mcp]\nlisten = '"+tc.listen+"'\ntoken_file = 'token'\n"),
+				0600,
+			); err != nil {
 				t.Fatal(err)
 			}
 			// Act
@@ -42,7 +46,10 @@ func TestFullEventTraceRequiresSeparateAbsoluteFile(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange.
 			path := filepath.Join(t.TempDir(), "config.toml")
-			content := fmt.Sprintf("state_dir = 'state'\n[logging]\nfile = '/tmp/zl-service.log'\nevent_trace_file = %q\n", tc.trace)
+			content := fmt.Sprintf(
+				"state_dir = 'state'\n[logging]\nfile = '/tmp/zl-service.log'\nevent_trace_file = %q\n",
+				tc.trace,
+			)
 			if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 				t.Fatal(err)
 			}

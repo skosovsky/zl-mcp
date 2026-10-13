@@ -10,11 +10,13 @@ import (
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 type stdioByteObservation struct {
 	queueObservation
+
 	bytes      []int64
 	tools      []string
 	transports []domain.Transport
@@ -27,9 +29,17 @@ func (o *stdioByteObservation) ResponseBytes(_ context.Context, tool string, tra
 }
 func TestBorrowedSTDIOObservationCountsSDKFrameIncludingNewline(t *testing.T) {
 	// Arrange: real SDK IO framing with opaque string ID, Unicode, escaping and no second provider.
-	observer := &stdioByteObservation{queueObservation: queueObservation{recording: true}}
+	observer := &stdioByteObservation{recording: true}
 	var output bytes.Buffer
-	transport := &observedStdioTransport{reader: io.NopCloser(strings.NewReader(`{"jsonrpc":"2.0","id":"9007199254740993","method":"tools/call","params":{"name":"zalo_get_message_context","arguments":{"text":"PRIVATE_SENTINEL_INPUT"}}}` + "\n")), writer: stdioOutput{&output}, observer: observer}
+	transport := &observedStdioTransport{
+		reader: io.NopCloser(
+			strings.NewReader(
+				`{"jsonrpc":"2.0","id":"9007199254740993","method":"tools/call","params":{"name":"zalo_get_message_context","arguments":{"text":"PRIVATE_SENTINEL_INPUT"}}}` + "\n",
+			),
+		),
+		writer:   stdioOutput{&output},
+		observer: observer,
+	}
 	connection, err := transport.Connect(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -53,10 +63,13 @@ func TestBorrowedSTDIOObservationCountsSDKFrameIncludingNewline(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &decoded); err != nil {
 		t.Fatal(err)
 	}
-	if decoded.ID != "9007199254740993" || decoded.Result["text"] != "界🍀 <>&\nquote\"" || !strings.HasSuffix(output.String(), "\n") {
+	if decoded.ID != "9007199254740993" || decoded.Result["text"] != "界🍀 <>&\nquote\"" ||
+		!strings.HasSuffix(output.String(), "\n") {
 		t.Fatal("observer changed SDK frame")
 	}
-	if len(observer.bytes) != 1 || observer.bytes[0] != int64(output.Len()) || observer.tools[0] != "zalo_get_message_context" || observer.transports[0] != domain.TransportSTDIO {
+	if len(observer.bytes) != 1 || observer.bytes[0] != int64(output.Len()) ||
+		observer.tools[0] != "zalo_get_message_context" ||
+		observer.transports[0] != domain.TransportSTDIO {
 		t.Fatal("STDIO actual wire measurement missing")
 	}
 	if strings.Contains(strings.Join(observer.tools, ""), "PRIVATE_SENTINEL") {
@@ -77,8 +90,16 @@ func (failedStdioOutput) Close() error                     { return nil }
 func TestSTDIOWriterFailureIsNotRetriedOrReplaced(t *testing.T) {
 	// Arrange: the real SDK sees an original partial writer error.
 	original := errors.New("PRIVATE_SENTINEL_WRITER_FAILURE")
-	observer := &stdioByteObservation{queueObservation: queueObservation{recording: true}}
-	transport := &observedStdioTransport{reader: io.NopCloser(strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"zalo_get_status"}}` + "\n")), writer: failedStdioOutput{accepted: 7, err: original}, observer: observer}
+	observer := &stdioByteObservation{recording: true}
+	transport := &observedStdioTransport{
+		reader: io.NopCloser(
+			strings.NewReader(
+				`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"zalo_get_status"}}` + "\n",
+			),
+		),
+		writer:   failedStdioOutput{accepted: 7, err: original},
+		observer: observer,
+	}
 	connection, err := transport.Connect(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -89,9 +110,12 @@ func TestSTDIOWriterFailureIsNotRetriedOrReplaced(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Act.
-	err = connection.Write(context.Background(), &jsonrpc.Response{ID: requestMessage.(*jsonrpc.Request).ID, Result: json.RawMessage(`{}`)})
+	err = connection.Write(
+		context.Background(),
+		&jsonrpc.Response{ID: requestMessage.(*jsonrpc.Request).ID, Result: json.RawMessage(`{}`)},
+	)
 	// Assert: partial accepted bytes only, same failure identity and no replay.
-	if err != original || len(observer.bytes) != 1 || observer.bytes[0] != 7 {
+	if !errors.Is(err, original) || len(observer.bytes) != 1 || observer.bytes[0] != 7 {
 		t.Fatal("STDIO measurement changed failed write or counted unaccepted bytes")
 	}
 }

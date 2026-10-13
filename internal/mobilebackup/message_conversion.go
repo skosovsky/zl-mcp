@@ -24,11 +24,13 @@ func (ConvertedArchivePage) GoString() string { return "converted mobile archive
 func (p *ConvertedArchivePage) Clear() {
 	if p != nil {
 		for i := range p.Records {
+			//nolint:exhaustruct_v5 // ExpiringHistoryRecord preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 			p.Records[i] = domain.ExpiringHistoryRecord{}
 		}
 		clear(p.Recalls)
 		clear(p.UnsupportedContentReasons)
 		clear(p.UnsupportedContentKinds)
+		//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 		*p = ConvertedArchivePage{}
 	}
 }
@@ -75,6 +77,7 @@ func InspectPreparedArchivePage(
 	if err != nil {
 		return ArchivePageInspection{}, err
 	}
+	//nolint:exhaustruct_v5 // ArchivePageInspection keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	result := ArchivePageInspection{
 		TextCandidates:     len(converted.Records),
 		Expired:            converted.Expired,
@@ -154,10 +157,10 @@ func convertArchiveCandidates(
 // Called only for validated, unexpired rows rejected by archiveText. Never
 // include private attachment values in the diagnostic category.
 func unsupportedArchiveContentReason(row PreparedRow) string {
-	if row.Kind != "webchat" {
+	if row.Kind != nativeClientWebchat {
 		return "non_text_kind"
 	}
-	if slices.Contains(row.Metadata.UnsupportedTags, 6) {
+	if slices.Contains(row.Metadata.UnsupportedTags, binNetAttachmentTag) {
 		return "unparsed_attachment"
 	}
 	if len(row.Metadata.Attachments) > 1 {
@@ -180,10 +183,10 @@ func archiveText(row PreparedRow) (string, bool, bool, bool) {
 	var supported bool
 	var valid bool
 	text, valid = row.Row.Text, true
-	if row.Kind != "webchat" {
+	if row.Kind != nativeClientWebchat {
 		return text, rich, supported, valid
 	}
-	if slices.Contains(row.Metadata.UnsupportedTags, 6) {
+	if slices.Contains(row.Metadata.UnsupportedTags, binNetAttachmentTag) {
 		return text, rich, supported, valid
 	}
 	if len(row.Metadata.Attachments) == 0 {
@@ -202,7 +205,7 @@ func archiveText(row PreparedRow) (string, bool, bool, bool) {
 		supported = true
 		return text, rich, supported, valid
 	}
-	if string(a.Action.Bytes) != "rtf" {
+	if string(a.Action.Bytes) != contentKindRTF {
 		return text, rich, supported, valid
 	}
 	if a.Title.Present && len(a.Title.Bytes) > 0 {
@@ -212,7 +215,13 @@ func archiveText(row PreparedRow) (string, bool, bool, bool) {
 	return text, rich, supported, valid
 }
 
-func bindArchiveCandidates(ctx context.Context, page PreparedArchivePage, request domain.MobileBackupRequest, account string, nowMS int64) (domain.MobileBackupRequest, int64, int64, error) {
+func bindArchiveCandidates(
+	ctx context.Context,
+	page PreparedArchivePage,
+	request domain.MobileBackupRequest,
+	account string,
+	nowMS int64,
+) (domain.MobileBackupRequest, int64, int64, error) {
 	if ctx == nil || ctx.Err() != nil || !canonicalIdentity(account) || nowMS <= 0 || len(page.Candidates.Rows) > 50 ||
 		page.SourceControls < 0 {
 		return domain.MobileBackupRequest{}, 0, 0, ErrSQLite
@@ -233,11 +242,17 @@ func bindArchiveCandidates(ctx context.Context, page PreparedArchivePage, reques
 	return r, from, to, nil
 }
 
-func validateCandidateRecalls(ctx context.Context, page PreparedArchivePage, r domain.MobileBackupRequest, account string, from, to int64) error {
+func validateCandidateRecalls(
+	ctx context.Context,
+	page PreparedArchivePage,
+	r domain.MobileBackupRequest,
+	account string,
+	from, to int64,
+) error {
 	if len(page.Candidates.OwnRecalls) > page.Candidates.DeferredControls ||
 		len(page.Candidates.OwnRecalls) > page.Candidates.Examined ||
 		len(page.Candidates.OwnRecalls) > page.SourceControls ||
-		len(page.Candidates.OwnRecalls) > min(50, r.MaxMessages) {
+		len(page.Candidates.OwnRecalls) > min(maximumArchivePageRecords, r.MaxMessages) {
 		return ErrSQLite
 	}
 	seenRecalls := map[string]bool{}
@@ -255,7 +270,13 @@ func validateCandidateRecalls(ctx context.Context, page PreparedArchivePage, r d
 	return nil
 }
 
-func validateCandidateRows(ctx context.Context, page PreparedArchivePage, r domain.MobileBackupRequest, account string, from, to int64) error {
+func validateCandidateRows(
+	ctx context.Context,
+	page PreparedArchivePage,
+	r domain.MobileBackupRequest,
+	account string,
+	from, to int64,
+) error {
 	total := 0
 	// Whole-page validation precedes classification and output construction.
 	for _, row := range page.Candidates.Rows {
@@ -269,9 +290,9 @@ func validateCandidateRows(ctx context.Context, page PreparedArchivePage, r doma
 		}
 		kind, known := mobilePayloadKind(row.Row.Type)
 		expiry, declared, e := MessageExpiryMS(row.Row.TimestampMS, row.Row.TTL)
-		direction := "incoming"
+		direction := directionIncoming
 		if row.SenderID == account {
-			direction = "outgoing"
+			direction = directionOutgoing
 		}
 		if ctx.Err() != nil || total > 8<<20 || !known || kind != row.Kind || !canonicalIdentity(row.Row.MessageID) ||
 			!canonicalIdentity(row.Row.ClientID) ||
@@ -304,6 +325,7 @@ func recordUnsupportedCandidate(result *ConvertedArchivePage, row PreparedRow) {
 }
 
 func candidateMessage(row PreparedRow, r domain.MobileBackupRequest, text string, rich bool) (domain.Message, error) {
+	//nolint:exhaustruct_v5 // Message preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	message := domain.Message{
 		Conversation:    r.Ref(),
 		ID:              row.Row.MessageID,
@@ -314,13 +336,13 @@ func candidateMessage(row PreparedRow, r domain.MobileBackupRequest, text string
 		AttachmentTypes: []string{},
 		QuoteMetadata: &domain.QuoteMetadata{
 			ClientMessageID: row.Row.ClientID,
-			MessageType:     "webchat",
+			MessageType:     nativeClientWebchat,
 			Timestamp:       strconv.FormatInt(row.Row.TimestampMS, 10),
 			TTL:             int(row.Row.TTL),
 		},
 	}
 	if rich {
-		message.AttachmentTypes = []string{"rtf"}
+		message.AttachmentTypes = []string{contentKindRTF}
 	}
 	if int64(message.QuoteMetadata.TTL) != row.Row.TTL {
 		return domain.Message{}, ErrSQLite

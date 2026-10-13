@@ -18,8 +18,10 @@ type replayQueue struct {
 type replayPager map[model.ThreadType]*replayQueue
 
 func newReplayPager(includeDirect bool) replayPager {
+	//nolint:exhaustive,exhaustruct_v5 // User replay is opt-in; omitted queues make no direct request and counters start at zero.
 	p := replayPager{model.ThreadTypeGroup: {cursors: map[string]bool{}}}
 	if includeDirect {
+		//nolint:exhaustruct_v5 // replayQueue initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 		p[model.ThreadTypeUser] = &replayQueue{cursors: map[string]bool{}}
 	}
 	return p
@@ -48,9 +50,9 @@ func (p replayPager) Continue(ctx context.Context, source any, meta *model.Repla
 		reason = "missing_cursor"
 	case q.cursors[meta.LastActionID]:
 		reason = "repeated_cursor"
-	case q.pages >= 100:
+	case q.pages >= maximumReplayPages:
 		reason = "page_limit"
-	case q.messages >= 10000:
+	case q.messages >= maximumReplayMessages:
 		reason = "message_limit"
 	}
 	requester, supported := source.(replayRequester)
@@ -59,7 +61,19 @@ func (p replayPager) Continue(ctx context.Context, source any, meta *model.Repla
 	}
 	if reason != "" {
 		q.stopped = true
-		slog.Info("zalo_replay_queue_stopped", "group_queue", meta.Queue == model.ThreadTypeGroup, "reason", reason, "pages", q.pages, "messages", q.messages)
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
+		slog.InfoContext(
+			ctx,
+			"zalo_replay_queue_stopped",
+			"group_queue",
+			meta.Queue == model.ThreadTypeGroup,
+			"reason",
+			reason,
+			"pages",
+			q.pages,
+			"messages",
+			q.messages,
+		)
 		return nil
 	}
 	q.cursors[meta.LastActionID] = true

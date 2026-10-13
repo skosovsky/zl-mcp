@@ -56,7 +56,8 @@ func (r HistoryImportRequest) Normalize() (HistoryImportRequest, error) {
 	if r.MaxMessages == 0 {
 		r.MaxMessages = 1000
 	}
-	if r.PageSize < 1 || r.PageSize > 50 || r.MaxPages < 1 || r.MaxPages > 100 || r.MaxMessages < 1 || r.MaxMessages > 5000 {
+	if r.PageSize < 1 || r.PageSize > 50 || r.MaxPages < 1 || r.MaxPages > 100 || r.MaxMessages < 1 ||
+		r.MaxMessages > 5000 {
 		return r, Invalid("History import limits exceed the contract.")
 	}
 	return r, nil
@@ -71,6 +72,7 @@ func (r HistoryImportRequest) Fingerprint() string {
 
 type HistoryImportStatus struct {
 	HistoryImportRequest
+
 	MobileCoverage       *MobileHistoryCoverage `json:"mobile_coverage,omitempty"`
 	OperationID          string                 `json:"operation_id"`
 	NotificationPolicy   string                 `json:"notification_policy"`

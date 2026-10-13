@@ -58,7 +58,21 @@ func pair(t *testing.T) (Object, Object, string) {
 	for _, r := range array(c["records"]) {
 		array(object(r)["command"])[0] = "/synthetic/candidate"
 	}
-	build := Object{"status": "PASS", "toolchain": "go version go1.27.1 darwin/arm64", "candidate_sources": Object{"source_digest_sha256": strings.Repeat("b", 64)}, "builds": []Object{{"kind": "candidate", "target": "./cmd/zl-mcp-eval", "exit_status": 0, "binary": "/synthetic/candidate", "build_info": "go1.27.1", "binary_sha256": c["binary_sha256"]}}}
+	build := Object{
+		"status":            "PASS",
+		"toolchain":         "go version go1.27.1 darwin/arm64",
+		"candidate_sources": Object{"source_digest_sha256": strings.Repeat("b", 64)},
+		"builds": []Object{
+			{
+				"kind":          "candidate",
+				"target":        "./cmd/zl-mcp-eval",
+				"exit_status":   0,
+				"binary":        "/synthetic/candidate",
+				"build_info":    "go1.27.1",
+				"binary_sha256": c["binary_sha256"],
+			},
+		},
+	}
 	if e := Write(str(c["build_manifest"]), build); e != nil {
 		t.Fatal(e)
 	}
@@ -81,7 +95,12 @@ func TestRawCompletePassAndHistoricalReplay(t *testing.T) {
 	root := repo(t)
 	cand := fixture(t, "docs/mcp-migration/evidence/SDK-01/performance-4347-v1/manifest.json")
 	old := fixture(t, "docs/mcp-migration/evidence/SDK-01/performance-comparison-4347-v1.json")
-	result := Compare(b, cand, filepath.Join(root, "docs/mcp-migration/evidence/T03/baseline-build-manifest-v2.json"), filepath.Join(root, "docs/mcp-migration/evidence/SDK-01/build-manifest-4347-v1.json"))
+	result := Compare(
+		b,
+		cand,
+		filepath.Join(root, "docs/mcp-migration/evidence/T03/baseline-build-manifest-v2.json"),
+		filepath.Join(root, "docs/mcp-migration/evidence/SDK-01/build-manifest-4347-v1.json"),
+	)
 	requireStatus(t, result, "PASS")
 	for _, field := range []string{"summaries", "gates"} {
 		a, _ := json.Marshal(result[field])
@@ -93,23 +112,40 @@ func TestRawCompletePassAndHistoricalReplay(t *testing.T) {
 }
 func TestComparatorNegativeCases(t *testing.T) {
 	cases := map[string]func(Object, Object){
-		"claimed summary": func(b, c Object) {
+		"claimed summary": func(_, c Object) {
 			c["summary"] = Object{"read": Object{"median_of_run_p95_seconds": 0}}
 			for _, r := range array(c["records"]) {
 				object(object(r)["measurement"])["p95_seconds"] = 10
 			}
 		},
-		"different machine": func(b, c Object) { c["cpu_model"] = "other" }, "zero objects": func(b, c Object) {
+		"different machine": func(_, c Object) { c["cpu_model"] = "other" },
+		"zero objects": func(b, _ Object) {
 			for _, r := range array(b["records"]) {
 				object(object(r)["measurement"])["allocations_per_op"] = 0
 			}
-		}, "zero bytes": func(b, c Object) {
+		},
+		"zero bytes": func(b, _ Object) {
 			for _, r := range array(b["records"]) {
 				object(object(r)["measurement"])["alloc_bytes_per_op"] = 0
 			}
 		},
-		"duplicate": func(b, c Object) { array(c["records"])[3] = array(c["records"])[0] }, "missing": func(b, c Object) { c["records"] = array(c["records"])[:14] }, "threshold": func(b, c Object) { c["p95_ratio_threshold"] = 9 }, "revision": func(b, c Object) { c["performance_gate_revision"] = "other" }, "bool zero": func(b, c Object) { c["zero_baseline_allocation_threshold"] = false }, "objects budget": func(b, c Object) { c["allocations_ratio_threshold"] = 3 }, "bytes budget": func(b, c Object) { c["alloc_bytes_ratio_threshold"] = 2 }, "pacing": func(b, c Object) { b["pacing_millis"] = 0; c["pacing_millis"] = 0 }, "admission": func(b, c Object) { b["admission_enabled"] = false; c["admission_enabled"] = false }, "warmup": func(b, c Object) { b["warmup_calls"] = 0; c["warmup_calls"] = 0 }, "masquerade": func(b, c Object) { c["binary_sha256"] = b["binary_sha256"] }, "provenance digest": func(b, c Object) { c["build_manifest_sha256"] = strings.Repeat("c", 64) },
-		"exit": func(b, c Object) { object(array(c["records"])[0])["exit_status"] = 7 }, "cleanup": func(b, c Object) { object(object(array(c["records"])[0])["measurement"])["cleanup"] = false }, "run setting": func(b, c Object) { object(object(array(c["records"])[0])["measurement"])["pacing_millis"] = 0 }, "bad executable": func(b, c Object) { array(object(array(c["records"])[0])["command"])[0] = "wrong" }, "mixed runtime": func(b, c Object) { object(object(array(c["records"])[0])["measurement"])["arch"] = "amd64" },
+		"duplicate":         func(_, c Object) { array(c["records"])[3] = array(c["records"])[0] },
+		"missing":           func(_, c Object) { c["records"] = array(c["records"])[:14] },
+		"threshold":         func(_, c Object) { c["p95_ratio_threshold"] = 9 },
+		"revision":          func(_, c Object) { c["performance_gate_revision"] = "other" },
+		"bool zero":         func(_, c Object) { c["zero_baseline_allocation_threshold"] = false },
+		"objects budget":    func(_, c Object) { c["allocations_ratio_threshold"] = 3 },
+		"bytes budget":      func(_, c Object) { c["alloc_bytes_ratio_threshold"] = 2 },
+		"pacing":            func(b, c Object) { b["pacing_millis"] = 0; c["pacing_millis"] = 0 },
+		"admission":         func(b, c Object) { b["admission_enabled"] = false; c["admission_enabled"] = false },
+		"warmup":            func(b, c Object) { b["warmup_calls"] = 0; c["warmup_calls"] = 0 },
+		"masquerade":        func(b, c Object) { c["binary_sha256"] = b["binary_sha256"] },
+		"provenance digest": func(_, c Object) { c["build_manifest_sha256"] = strings.Repeat("c", 64) },
+		"exit":              func(_, c Object) { object(array(c["records"])[0])["exit_status"] = 7 },
+		"cleanup":           func(_, c Object) { object(object(array(c["records"])[0])["measurement"])["cleanup"] = false },
+		"run setting":       func(_, c Object) { object(object(array(c["records"])[0])["measurement"])["pacing_millis"] = 0 },
+		"bad executable":    func(_, c Object) { array(object(array(c["records"])[0])["command"])[0] = "wrong" },
+		"mixed runtime":     func(_, c Object) { object(object(array(c["records"])[0])["measurement"])["arch"] = "amd64" },
 	}
 	for name, change := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -150,7 +186,7 @@ func TestComparatorNegativeCases(t *testing.T) {
 func TestFixedBudgets(t *testing.T) {
 	b, c, build := pair(t)
 	for _, r := range array(c["records"]) {
-		object(object(r)["measurement"])["p95_seconds"] = P95Limits[str(object(r)["kind"])]
+		object(object(r)["measurement"])["p95_seconds"] = p95Limits()[str(object(r)["kind"])]
 	}
 	requireStatus(t, Compare(b, c, "", build), "PASS")
 	for _, r := range array(c["records"]) {
@@ -196,13 +232,17 @@ func TestDecodePreservesNumberAndRejectsExtra(t *testing.T) {
 }
 func strNumber(v any) string { n, _ := v.(json.Number); return string(n) }
 
+//nolint:gochecknoglobals // TestMain owns the shared worker and cleanup for all tests, including build failure.
 var workerOnce sync.Once
+
+//nolint:gochecknoglobals // TestMain owns the shared worker and cleanup for all tests, including build failure.
 var workerPath string
 var errWorker error
 
 func worker(t *testing.T, mode string) string {
 	t.Helper()
 	workerOnce.Do(func() {
+		//nolint:usetesting // TestMain owns this shared worker directory; a first-test t.TempDir would delete it before subsequent tests.
 		dir, e := os.MkdirTemp("", "zl-go-perf-test-worker-")
 		if e != nil {
 			errWorker = e
@@ -283,7 +323,21 @@ func TestBenchProtocolWithSyntheticWorker(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	m := Object{"status": "PASS", "toolchain": "go version go1.27.1", "candidate_sources": Object{"source_digest_sha256": strings.Repeat("b", 64)}, "builds": []Object{{"kind": "candidate", "target": "./cmd/zl-mcp-eval", "exit_status": 0, "binary": w, "binary_sha256": hash, "build_info": "go1.27.1"}}}
+	m := Object{
+		"status":            "PASS",
+		"toolchain":         "go version go1.27.1",
+		"candidate_sources": Object{"source_digest_sha256": strings.Repeat("b", 64)},
+		"builds": []Object{
+			{
+				"kind":          "candidate",
+				"target":        "./cmd/zl-mcp-eval",
+				"exit_status":   0,
+				"binary":        w,
+				"binary_sha256": hash,
+				"build_info":    "go1.27.1",
+			},
+		},
+	}
 	if e = Write(build, m); e != nil {
 		t.Fatal(e)
 	}
@@ -299,7 +353,7 @@ func TestBenchProtocolWithSyntheticWorker(t *testing.T) {
 	if len(array(manifest["records"])) != 15 {
 		t.Fatal("incomplete records")
 	}
-	for _, kind := range Kinds {
+	for _, kind := range measurementKinds() {
 		s := object(object(manifest["summary"])[kind])
 		if !equal(s["measured_calls"], 5000) {
 			t.Fatal(s)
@@ -387,7 +441,21 @@ func TestBenchmarkPreflightMetadataTimeoutRetainsFailManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	provenance := Object{"status": "PASS", "toolchain": "go version go1.27.1", "candidate_sources": Object{"source_digest_sha256": strings.Repeat("b", 64)}, "builds": []Object{{"kind": "candidate", "target": "./cmd/zl-mcp-eval", "exit_status": 0, "binary": w, "binary_sha256": hash, "build_info": "go1.27.1"}}}
+	provenance := Object{
+		"status":            "PASS",
+		"toolchain":         "go version go1.27.1",
+		"candidate_sources": Object{"source_digest_sha256": strings.Repeat("b", 64)},
+		"builds": []Object{
+			{
+				"kind":          "candidate",
+				"target":        "./cmd/zl-mcp-eval",
+				"exit_status":   0,
+				"binary":        w,
+				"binary_sha256": hash,
+				"build_info":    "go1.27.1",
+			},
+		},
+	}
 	if err = Write(build, provenance); err != nil {
 		t.Fatal(err)
 	}

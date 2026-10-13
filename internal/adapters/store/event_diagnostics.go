@@ -16,9 +16,18 @@ func (r *Reader) DeliveryDiagnostics(ctx context.Context, at time.Time) (eventac
 	}
 	states := native.StateCounts
 	return eventaccess.DeliveryDiagnostics{
-		GeneratedAt: native.GeneratedAt, ActiveSubscriptions: native.ActiveSubscriptions,
-		JournalPending: native.JournalPending, PendingPayloadBytes: native.PendingPayloadBytes,
-		StateCounts:  eventaccess.DeliveryStates{Pending: states["pending"], Sending: states["sending"], Delivered: states["delivered"], Failed: states["failed"], Cancelled: states["cancelled"], Other: states["other"]},
+		GeneratedAt:         native.GeneratedAt,
+		ActiveSubscriptions: native.ActiveSubscriptions,
+		JournalPending:      native.JournalPending,
+		PendingPayloadBytes: native.PendingPayloadBytes,
+		StateCounts: eventaccess.DeliveryStates{
+			Pending:   states["pending"],
+			Sending:   states["sending"],
+			Delivered: states["delivered"],
+			Failed:    states["failed"],
+			Cancelled: states["cancelled"],
+			Other:     states["other"],
+		},
 		ReasonCounts: native.ReasonCounts,
 	}, nil
 }

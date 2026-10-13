@@ -15,10 +15,10 @@ import (
 )
 
 func mobileLedgerMethod(method string) bool {
-	return accountArchiveMethod(method) || method == "cli_prepare_mobile_backup" ||
+	return accountArchiveMethod(method) || method == operationPrepareMobileBackup ||
 		method == "cli_mobile_backup_status" ||
-		method == "cli_cancel_prepared_mobile_backup" ||
-		(method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive")
+		method == operationCancelPreparedMobileBackup ||
+		(method == operationProbeMobileBackupOffer || method == operationProbeMobileBackupArchive)
 }
 
 // uniqueLedgerJSON rejects ambiguous object keys before normal contract decoding.
@@ -29,7 +29,7 @@ func uniqueLedgerJSON(body []byte) bool {
 	d := json.NewDecoder(bytes.NewReader(body))
 	var value func(int) error
 	value = func(depth int) error {
-		if depth > 4 {
+		if depth > maximumLedgerJSONDepth {
 			return domain.Invalid("Invalid ledger request.")
 		}
 		token, err := d.Token()
@@ -80,7 +80,7 @@ func (p *membershipPort) mobileLedgerControl(w http.ResponseWriter, r *http.Requ
 	fail := func(err error) {
 		writeMobileLedgerFailure(w, err)
 	}
-	if r.Method != http.MethodPost || r.URL.Path != "/rpc" || !uniqueLedgerJSON(body) {
+	if r.Method != http.MethodPost || r.URL.Path != controlRPCPath || !uniqueLedgerJSON(body) {
 		fail(domain.Invalid("Use a unique JSON object with POST /rpc."))
 		return
 	}
@@ -135,9 +135,11 @@ func writeMobileLedgerFailure(w http.ResponseWriter, err error) {
 	case errors.Is(err, sql.ErrNoRows):
 		code = "NOT_FOUND"
 	}
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 	de := &domain.Error{
 		Code:    code,
 		Message: "Local mobile attempt request failed.",
+		//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 		NextAction: domain.NextAction{
 			Instruction: "Read the local attempt status; do not dispatch or retry phone work automatically.",
 		},
@@ -150,11 +152,15 @@ func writeMobileLedgerFailure(w http.ResponseWriter, err error) {
 	_ = json.NewEncoder(w).Encode(de)
 }
 
-func (p *membershipPort) runMobileLedgerMethod(ctx context.Context, method string, arguments json.RawMessage) (any, error) {
+func (p *membershipPort) runMobileLedgerMethod(
+	ctx context.Context,
+	method string,
+	arguments json.RawMessage,
+) (any, error) {
 	var e error
 	var probe map[string]any
 	var result storage.MobileBackupAttempt
-	if method == "cli_prepare_mobile_backup" {
+	if method == operationPrepareMobileBackup {
 		var request domain.MobileBackupRequest
 		if json.Unmarshal(arguments, &request) != nil {
 			return nil, domain.Invalid("Invalid mobile attempt request.")
@@ -171,17 +177,17 @@ func (p *membershipPort) runMobileLedgerMethod(ctx context.Context, method strin
 		return nil, domain.Invalid("Invalid mobile attempt reference.")
 	}
 	result, e = p.store.MobileBackupAttempt(ctx, args.ID)
-	if e == nil && (method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive") {
-		if method == "cli_probe_mobile_backup_archive" {
+	if e == nil && (method == operationProbeMobileBackupOffer || method == operationProbeMobileBackupArchive) {
+		if method == operationProbeMobileBackupArchive {
 			probe, e = p.probeMobileArchiveComparison(ctx, args.ID, args.Revision, args.ComparisonSendID)
 		} else {
 			probe, e = p.probeMobileOffer(ctx, args.ID, args.Revision)
 		}
 	}
-	if e == nil && method == "cli_cancel_prepared_mobile_backup" {
-		if result.Revision != args.Revision || result.State != "prepared" && result.State != "cancelled" {
+	if e == nil && method == operationCancelPreparedMobileBackup {
+		if result.Revision != args.Revision || result.State != statePreparedText && result.State != "cancelled" {
 			e = storage.ErrMobileBackupState
-		} else if result.State == "prepared" {
+		} else if result.State == statePreparedText {
 			result, e = p.store.ProgressMobileBackup(ctx, args.ID, args.Revision, "cancelled")
 		}
 	}
@@ -189,7 +195,7 @@ func (p *membershipPort) runMobileLedgerMethod(ctx context.Context, method strin
 		return nil, e
 	}
 	var response any = result
-	if method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive" {
+	if method == operationProbeMobileBackupOffer || method == operationProbeMobileBackupArchive {
 		response = probe
 	}
 	return response, nil

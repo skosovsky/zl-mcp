@@ -8,7 +8,11 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
-func (c *Client) PreloadHistoryPage(ctx context.Context, ref domain.ConversationRef, limit int) (domain.HistoryPage, error) {
+func (c *Client) PreloadHistoryPage(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	limit int,
+) (domain.HistoryPage, error) {
 	if !ref.Valid() || len(ref.ID) > 256 || limit < 1 || limit > 50 {
 		return domain.HistoryPage{}, domain.Invalid("Invalid preload history request.")
 	}
@@ -22,10 +26,16 @@ func (c *Client) PreloadHistoryPage(ctx context.Context, ref domain.Conversation
 	return selectPreloadHistory(snapshot, ref, limit)
 }
 
-func selectPreloadHistory(snapshot domain.PreloadSnapshot, ref domain.ConversationRef, limit int) (domain.HistoryPage, error) {
-	if (ref.Type == domain.ConversationDirect && !snapshot.DirectMessagesAvailable) || (ref.Type == domain.ConversationGroup && !snapshot.GroupMessagesAvailable) {
+func selectPreloadHistory(
+	snapshot domain.PreloadSnapshot,
+	ref domain.ConversationRef,
+	limit int,
+) (domain.HistoryPage, error) {
+	if (ref.Type == domain.ConversationDirect && !snapshot.DirectMessagesAvailable) ||
+		(ref.Type == domain.ConversationGroup && !snapshot.GroupMessagesAvailable) {
 		return domain.HistoryPage{}, domain.ErrHistoryUnsupported
 	}
+	//nolint:exhaustruct_v5 // HistoryPage preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	page := domain.HistoryPage{Messages: []domain.Message{}, LimitedSnapshot: true}
 	for _, m := range snapshot.Messages {
 		if m.Ref() == ref {

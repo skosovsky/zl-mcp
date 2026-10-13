@@ -19,11 +19,15 @@ import (
 
 type mobileServiceSource struct {
 	historyServiceSource
+
 	public string
 	offers atomic.Int32
 }
 
-func (s *mobileServiceSource) ReceiveMobileBackupOffer(ctx context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+func (s *mobileServiceSource) ReceiveMobileBackupOffer(
+	_ context.Context,
+	o *domain.MobileBackupObserver,
+) (domain.MobileBackupOffer, error) {
 	if e := o.BeforeDispatch(s.public); e != nil {
 		return domain.MobileBackupOffer{}, e
 	}
@@ -40,7 +44,12 @@ func TestServiceMobilePortUsesOneCollectorSession(t *testing.T) {
 	// Arrange: real collector/sessionGuard with one source, not a separate backup login.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	s, e := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "corpus.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	s, e := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(t.TempDir(), "corpus.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -48,7 +57,7 @@ func TestServiceMobilePortUsesOneCollectorSession(t *testing.T) {
 	n := new(big.Int).Lsh(big.NewInt(1), 2047)
 	n.Add(n, big.NewInt(1))
 	der, _ := x509.MarshalPKIXPublicKey(&rsa.PublicKey{N: n, E: 65537})
-	source := &mobileServiceSource{historyServiceSource: historyServiceSource{started: make(chan struct{})}, public: base64.StdEncoding.EncodeToString(der)}
+	source := &mobileServiceSource{started: make(chan struct{}), public: base64.StdEncoding.EncodeToString(der)}
 	p := &membershipPort{store: s, lifecycle: ctx}
 	var c config.Config
 	c.Collection.Mode = "all"
@@ -64,7 +73,13 @@ func TestServiceMobilePortUsesOneCollectorSession(t *testing.T) {
 		<-done
 		t.Fatal("collector not ready")
 	}
-	r := domain.MobileBackupRequest{RequestID: "00000000-0000-4000-8000-000000000001", ConversationType: "direct", ConversationID: "synthetic-peer", Since: "2026-09-01T00:00:00Z", Until: "2026-10-01T00:00:00Z"}
+	r := domain.MobileBackupRequest{
+		RequestID:        "00000000-0000-4000-8000-000000000001",
+		ConversationType: "direct",
+		ConversationID:   "synthetic-peer",
+		Since:            "2026-09-01T00:00:00Z",
+		Until:            "2026-10-01T00:00:00Z",
+	}
 	a, e := s.PrepareMobileBackup(ctx, r)
 	if e != nil {
 		cancel()
@@ -78,7 +93,10 @@ func TestServiceMobilePortUsesOneCollectorSession(t *testing.T) {
 	cancel()
 	stopped := <-done
 	// Assert: no second restore, listener or dispatch; a private offer isn't imported.
-	if e != nil || retry == nil || read != nil || saved.State != "offer_ready" || offer.FileSize != 16 || restores.Load() != 1 || source.offers.Load() != 1 || stopped != nil {
+	if e != nil || retry == nil || read != nil || saved.State != "offer_ready" || offer.FileSize != 16 ||
+		restores.Load() != 1 ||
+		source.offers.Load() != 1 ||
+		stopped != nil {
 		t.Fatal("service mobile ownership lost", e, read, stopped)
 	}
 }

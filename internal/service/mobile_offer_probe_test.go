@@ -146,7 +146,11 @@ func TestMobileOfferProbeRejectsNegativePersistedBudget(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = p.store.DB.ExecContext(ctx, `UPDATE mobile_backup_attempts SET request=json_set(request,'$.max_archive_bytes',-1) WHERE operation_id=?`, attempt.OperationID); err != nil {
+	if _, err = p.store.DB.ExecContext(
+		ctx,
+		`UPDATE mobile_backup_attempts SET request=json_set(request,'$.max_archive_bytes',-1) WHERE operation_id=?`,
+		attempt.OperationID,
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act: exercise the diagnostic comparison with the corrupted signed value.

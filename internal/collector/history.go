@@ -2,12 +2,18 @@ package collector
 
 import (
 	"context"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 // HistoryPage shares cancellation and authentication with the service's current
 // session. Unsupported sources never fall back to a second login or listener.
-func (g *sessionGuard) HistoryPage(parent context.Context, ref domain.ConversationRef, cursor string, limit int) (domain.HistoryPage, error) {
+func (g *sessionGuard) HistoryPage(
+	parent context.Context,
+	ref domain.ConversationRef,
+	cursor string,
+	limit int,
+) (domain.HistoryPage, error) {
 	source, ok := g.upstream.(domain.HistorySource)
 	if !ok {
 		return domain.HistoryPage{}, domain.ErrHistoryUnsupported
@@ -21,7 +27,11 @@ func (g *sessionGuard) HistoryPage(parent context.Context, ref domain.Conversati
 	return page, g.observe(err)
 }
 
-func (g *sessionGuard) PreloadHistoryPage(parent context.Context, ref domain.ConversationRef, limit int) (domain.HistoryPage, error) {
+func (g *sessionGuard) PreloadHistoryPage(
+	parent context.Context,
+	ref domain.ConversationRef,
+	limit int,
+) (domain.HistoryPage, error) {
 	source, ok := g.upstream.(domain.PreloadHistorySource)
 	if !ok {
 		return domain.HistoryPage{}, domain.ErrHistoryUnsupported
@@ -35,7 +45,13 @@ func (g *sessionGuard) PreloadHistoryPage(parent context.Context, ref domain.Con
 	return page, g.observe(err)
 }
 
-func (g *sessionGuard) HistoryPageWithPhase(parent context.Context, ref domain.ConversationRef, cursor string, old *bool, limit int) (domain.HistoryPage, error) {
+func (g *sessionGuard) HistoryPageWithPhase(
+	parent context.Context,
+	ref domain.ConversationRef,
+	cursor string,
+	old *bool,
+	limit int,
+) (domain.HistoryPage, error) {
 	source, ok := g.upstream.(domain.PhasedHistorySource)
 	if !ok {
 		if old != nil && *old {

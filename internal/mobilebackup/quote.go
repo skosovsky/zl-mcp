@@ -34,6 +34,7 @@ func (q *QuoteScalars) Clear() {
 			*p = 0
 		}
 	}
+	//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 	*q = QuoteScalars{}
 }
 
@@ -49,29 +50,29 @@ func ParseQuoteScalars(ctx context.Context, data []byte) (result QuoteScalars, e
 			result.Clear()
 		}
 	}()
-	seen := make(map[uint32]bool, 6)
+	seen := make(map[uint32]bool, quoteScalarFieldCount)
 	for _, f := range fields.Fields {
 		if ctx.Err() != nil {
 			return result, ErrTLV
 		}
-		if f.Tag < 80 || f.Tag > 85 {
+		if f.Tag < quoteOwnerIDTag || f.Tag > quoteTTLTag {
 			continue
 		}
 		if seen[f.Tag] {
 			return result, ErrTLV
 		}
 		seen[f.Tag] = true
-		width := 8
-		if f.Tag == 80 || f.Tag == 83 {
-			width = 4
+		width := nativeInt64Bytes
+		if f.Tag == quoteOwnerIDTag || f.Tag == quoteMessageTypeTag {
+			width = nativeInt32Bytes
 		}
 		if len(f.Value) != width {
 			return result, ErrTLV
 		}
-		if width == 4 {
+		if width == nativeInt32Bytes {
 			//nolint:gosec // G115: reconstruct signed two's-complement wire scalars without changing their bits.
 			v := int32(binary.BigEndian.Uint32(f.Value))
-			if f.Tag == 80 {
+			if f.Tag == quoteOwnerIDTag {
 				result.OwnerID = &v
 			} else {
 				result.MessageType = &v
@@ -81,13 +82,13 @@ func ParseQuoteScalars(ctx context.Context, data []byte) (result QuoteScalars, e
 		//nolint:gosec // G115: reconstruct signed two's-complement wire scalars without changing their bits.
 		v := int64(binary.BigEndian.Uint64(f.Value))
 		switch f.Tag {
-		case 81:
+		case quoteClientMessageIDTag:
 			result.ClientMessageID = &v
-		case 82:
+		case quoteGlobalMessageIDTag:
 			result.GlobalMessageID = &v
-		case 84:
+		case quoteTimestampTag:
 			result.Timestamp = &v
-		case 85:
+		case quoteTTLTag:
 			result.TTL = &v
 		}
 	}

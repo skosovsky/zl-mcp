@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -49,7 +50,10 @@ func run(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	fmt.Println("architecture PASS: host and all-build compliance/coverage 100%, closed exceptions, production graph, 14 isolated and 6 source controls")
+	//nolint:forbidigo // This executable writes the documented CLI result to stdout.
+	fmt.Println(
+		"architecture PASS: host and all-build compliance/coverage 100%, closed exceptions, production graph, 14 isolated and 6 source controls",
+	)
 	return 0
 }
 func main() { os.Exit(run(os.Args[1:])) }
@@ -68,7 +72,7 @@ func performanceCommand(args []string) int {
 		cpu := flags.String("cpu-model", "", "verified host CPU model")
 		execute = func() error {
 			if *binary == "" || *build == "" {
-				return fmt.Errorf("--binary and --build-manifest required")
+				return errors.New("--binary and --build-manifest required")
 			}
 			return performance.Bench(context.Background(), *root, *binary, *build, *output, *cpu)
 		}
@@ -79,7 +83,7 @@ func performanceCommand(args []string) int {
 		cb := flags.String("candidate-build", "", "relocated current build manifest")
 		execute = func() error {
 			if *baseline == "" || *candidate == "" {
-				return fmt.Errorf("--baseline and --candidate required")
+				return errors.New("--baseline and --candidate required")
 			}
 			return performance.CompareFiles(*baseline, *candidate, *bb, *cb, *output)
 		}
@@ -98,6 +102,7 @@ func performanceCommand(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
+	//nolint:forbidigo // This executable writes the documented CLI result to stdout.
 	fmt.Println(args[0], "PASS")
 	return 0
 }

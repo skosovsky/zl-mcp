@@ -24,8 +24,10 @@ func (o Outcome) String() string {
 		return "cancelled"
 	case OutcomePanic:
 		return "panic"
+	case OutcomeUnknown:
+		return stateUnknownText
 	default:
-		return "unknown"
+		return stateUnknownText
 	}
 }
 
@@ -52,8 +54,10 @@ func (k WorkKind) String() string {
 		return "events"
 	case WorkCollector:
 		return "collector"
+	case WorkOther:
+		return workOtherText
 	default:
-		return "other"
+		return workOtherText
 	}
 }
 
@@ -110,8 +114,10 @@ func (s OperationState) String() string {
 		return "already_member"
 	case StateDelivered:
 		return "delivered"
+	case StateUnknown:
+		return stateUnknownText
 	default:
-		return "unknown"
+		return stateUnknownText
 	}
 }
 func ObserveState(state string) OperationState {
@@ -140,6 +146,6 @@ func (t Transport) String() string {
 	case TransportResource:
 		return "resource"
 	default:
-		return "other"
+		return workOtherText
 	}
 }

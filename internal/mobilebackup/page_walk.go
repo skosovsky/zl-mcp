@@ -3,7 +3,6 @@ package mobilebackup
 import (
 	"context"
 	"path/filepath"
-	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
@@ -39,10 +38,11 @@ func WalkPreparedArchive(
 		visit == nil {
 		return summary, ErrSQLite
 	}
-	ctx, cancel := context.WithTimeout(parent, 120*time.Second)
+	ctx, cancel := context.WithTimeout(parent, walkPreparedArchiveTimeout)
 	defer cancel()
 	defer func() {
 		if err != nil {
+			//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 			summary = ArchiveWalkSummary{}
 		}
 	}()
@@ -57,6 +57,7 @@ func WalkPreparedArchive(
 			copied := *page.Next
 			next = &copied
 		}
+		//nolint:exhaustruct_v5 // ArchiveWalkSummary keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 		counts := ArchiveWalkSummary{
 			Pages:                     1,
 			Examined:                  page.Examined,

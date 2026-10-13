@@ -46,7 +46,16 @@ func (c TelemetryConfig) Validate() error {
 	for k, v := range c.Headers {
 		headers[k] = v
 	}
-	if err = schema.Validate(map[string]any{"enabled": c.Enabled, "exporter": c.Exporter, "endpoint": c.Endpoint, "headers": headers, "export_timeout_ms": c.ExportTimeoutMS, "shutdown_timeout_ms": c.ShutdownTimeoutMS}); err != nil {
+	if err = schema.Validate(
+		map[string]any{
+			"enabled":             c.Enabled,
+			"exporter":            c.Exporter,
+			"endpoint":            c.Endpoint,
+			"headers":             headers,
+			"export_timeout_ms":   c.ExportTimeoutMS,
+			"shutdown_timeout_ms": c.ShutdownTimeoutMS,
+		},
+	); err != nil {
 		return errors.New("invalid telemetry configuration")
 	}
 	for _, value := range c.Headers {
@@ -58,7 +67,8 @@ func (c TelemetryConfig) Validate() error {
 		return nil
 	}
 	endpoint, err := url.Parse(c.Endpoint)
-	if err != nil || endpoint.Hostname() == "" || endpoint.User != nil || endpoint.RawQuery != "" || endpoint.Fragment != "" {
+	if err != nil || endpoint.Hostname() == "" || endpoint.User != nil || endpoint.RawQuery != "" ||
+		endpoint.Fragment != "" {
 		return errors.New("invalid telemetry endpoint")
 	}
 	if endpoint.Scheme == "https" {

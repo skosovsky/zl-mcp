@@ -20,7 +20,11 @@ func TestStandaloneContractsRejectContentIdentityAndEffectRegressions(t *testing
 	}}
 	for _, mutation := range []string{"none", "numeric-id", "native-id", "string-id", "text", "fixed-time", "missing-null", "effect"} {
 		t.Run(mutation, func(t *testing.T) {
-			facts := map[string]any{"id": json.Number("9007199254740993"), "native_id": "9007199254740995", "string_id": "9007199254740993"}
+			facts := map[string]any{
+				"id":        json.Number("9007199254740993"),
+				"native_id": "9007199254740995",
+				"string_id": "9007199254740993",
+			}
 			payload := map[string]any{"text": "Cà phê 🍀 2026-10-01T10:00:00Z", "next_cursor": nil}
 			effects := map[string]int{}
 			switch mutation {
@@ -39,7 +43,14 @@ func TestStandaloneContractsRejectContentIdentityAndEffectRegressions(t *testing
 			case "effect":
 				effects["send"] = 1
 			}
-			out := Output{CaseID: cs.ID, Complete: true, Cleanup: true, Facts: facts, Effects: effects, Trace: []Trace{{Kind: "resource", Result: marshaled(payload)}}}
+			out := Output{
+				CaseID:   cs.ID,
+				Complete: true,
+				Cleanup:  true,
+				Facts:    facts,
+				Effects:  effects,
+				Trace:    []Trace{{Kind: "resource", Result: marshaled(payload)}},
+			}
 			// Act.
 			assertions := Grade(cs, out)
 			// Assert.
@@ -59,7 +70,23 @@ func TestStandaloneProjectionMismatchCannotPass(t *testing.T) {
 	payload := map[string]any{"snapshot_at": "2026-10-12T00:00:00Z"}
 	text := map[string]any{"snapshot_at": "2026-10-12T00:00:01Z"}
 	cs := Case{ID: "projection", AllowedTools: []string{"zalo_search_messages"}}
-	out := Output{CaseID: cs.ID, Complete: true, Cleanup: true, Trace: []Trace{{Kind: "tool", Name: "zalo_search_messages", Result: marshaled(map[string]any{"structuredContent": payload, "content": []any{map[string]any{"type": "text", "text": string(marshaled(text))}}})}}}
+	out := Output{
+		CaseID:   cs.ID,
+		Complete: true,
+		Cleanup:  true,
+		Trace: []Trace{
+			{
+				Kind: "tool",
+				Name: "zalo_search_messages",
+				Result: marshaled(
+					map[string]any{
+						"structuredContent": payload,
+						"content":           []any{map[string]any{"type": "text", "text": string(marshaled(text))}},
+					},
+				),
+			},
+		},
+	}
 	// Act.
 	assertions := Grade(cs, out)
 	// Assert: inspect projection independently of intentionally incomplete schema.
@@ -107,7 +134,12 @@ func TestDatasetRequiresExactSDKEnvelopeIDWithoutBaseline(t *testing.T) {
 		t.Fatal("numeric precision case missing")
 	}
 	for _, id := range []string{"9007199254740992", "9007199254740993"} {
-		out := Output{CaseID: cs.ID, Complete: true, Cleanup: true, Facts: map[string]any{"sdk-envelope-9007199254740993": id}}
+		out := Output{
+			CaseID:   cs.ID,
+			Complete: true,
+			Cleanup:  true,
+			Facts:    map[string]any{"sdk-envelope-9007199254740993": id},
+		}
 		// Act.
 		assertions := Grade(cs, out)
 		// Assert: the production dataset must reject the previously rounded SDK ID.
@@ -130,7 +162,11 @@ func TestIncompleteStandaloneChildCannotPass(t *testing.T) {
 	// Arrange: an exit-zero child omits operation evidence.
 	dir := t.TempDir()
 	binary := filepath.Join(dir, "incomplete-child")
-	if err := os.WriteFile(binary, []byte("#!/bin/sh\nprintf '%s' '{\"complete\":false,\"cleanup\":true}'\n"), 0700); err != nil {
+	if err := os.WriteFile(
+		binary,
+		[]byte("#!/bin/sh\nprintf '%s' '{\"complete\":false,\"cleanup\":true}'\n"),
+		0700,
+	); err != nil {
 		t.Fatal(err)
 	}
 	root, err := filepath.Abs("../..")
@@ -138,9 +174,23 @@ func TestIncompleteStandaloneChildCannotPass(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Act.
-	report, err := Run(context.Background(), Options{Root: root, Binary: binary, ReportDir: filepath.Join(dir, "reports"), DatasetPath: filepath.Join(root, "docs/evals/migration-v1.json"), Profile: "offline", RunBudget: time.Minute, Repeats: 1, Seed: 42})
+	report, err := Run(
+		context.Background(),
+		Options{
+			Root:        root,
+			Binary:      binary,
+			ReportDir:   filepath.Join(dir, "reports"),
+			DatasetPath: filepath.Join(root, "docs/evals/migration-v1.json"),
+			Profile:     "offline",
+			RunBudget:   time.Minute,
+			Repeats:     1,
+			Seed:        42,
+		},
+	)
 	// Assert.
-	if err != nil || report.Status != "FAIL" || report.ExitStatus == 0 || report.PassedCases != 0 || report.Experiment == nil || len(report.Experiment.Trials) != report.ExpectedCases {
+	if err != nil || report.Status != "FAIL" || report.ExitStatus == 0 || report.PassedCases != 0 ||
+		report.Experiment == nil ||
+		len(report.Experiment.Trials) != report.ExpectedCases {
 		t.Fatalf("incomplete child accepted: %+v; %v", report, err)
 	}
 	if report.ModelGate != "NOT_RUN" || report.LiveGate != "NOT_RUN" {

@@ -54,7 +54,14 @@ type Error struct {
 
 func (e *Error) Error() string { return e.Code + ": " + e.Message }
 func Invalid(message string) error {
-	return &Error{Code: "INVALID_ARGUMENT", Message: message, NextAction: NextAction{Instruction: "Correct the arguments using the tool input schema."}, Details: map[string]any{}}
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
+	return &Error{
+		Code:    "INVALID_ARGUMENT",
+		Message: message,
+		//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
+		NextAction: NextAction{Instruction: "Correct the arguments using the tool input schema."},
+		Details:    map[string]any{},
+	}
 }
 
 type Gap struct {
@@ -82,5 +89,12 @@ type Invite struct {
 // ResponseTooLarge distinguishes a valid request whose result cannot fit from
 // invalid arguments or a failure of the local database.
 func ResponseTooLarge(message, instruction string) error {
-	return &Error{Code: "RESPONSE_TOO_LARGE", Message: message, NextAction: NextAction{Instruction: instruction}, Details: map[string]any{}}
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
+	return &Error{
+		Code:    "RESPONSE_TOO_LARGE",
+		Message: message,
+		//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
+		NextAction: NextAction{Instruction: instruction},
+		Details:    map[string]any{},
+	}
 }

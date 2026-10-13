@@ -22,6 +22,7 @@ func (m *Mention) Clear() {
 			*p = 0
 		}
 	}
+	//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 	*m = Mention{}
 }
 
@@ -43,19 +44,19 @@ func ParseMention(ctx context.Context, data []byte) (result Mention, err error) 
 		}
 		var target **int32
 		switch f.Tag {
-		case 100:
+		case mentionTypeTag:
 			target = &result.Type
-		case 101:
+		case mentionUIDTag:
 			target = &result.UID
-		case 102:
+		case mentionPositionTag:
 			target = &result.Position
-		case 103:
+		case mentionLengthTag:
 			target = &result.Length
 		default:
 			result.UnsupportedFields++
 			continue
 		}
-		if *target != nil || len(f.Value) != 4 {
+		if *target != nil || len(f.Value) != nativeInt32Bytes {
 			return result, ErrTLV
 		}
 		//nolint:gosec // G115: reconstruct the signed two's-complement int32 wire value without changing bits.

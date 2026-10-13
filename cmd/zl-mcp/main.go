@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/skosovsky/zl-mcp/internal/service"
 	"os"
+
+	"github.com/skosovsky/zl-mcp/internal/service"
 )
 
 func main() {

@@ -19,10 +19,12 @@ func TestModelAdmissionBeforeDispatch(t *testing.T) {
 			dispatched++
 			return &mcp.CallToolResult{}, nil
 		})
-		req := &mcp.ServerRequest[*mcp.CallToolParamsRaw]{Params: &mcp.CallToolParamsRaw{Name: "synthetic", Arguments: []byte(`{}`)}}
+		req := &mcp.ServerRequest[*mcp.CallToolParamsRaw]{
+			Params: &mcp.CallToolParamsRaw{Name: "synthetic", Arguments: []byte(`{}`)},
+		}
 		// Act: attempt one more than the fixed model budget.
 		var lastErr error
-		for i := 0; i < 31; i++ {
+		for range 31 {
 			_, lastErr = handler(context.Background(), "tools/call", req)
 		}
 		// Assert: violations are sticky and never dispatch.
@@ -41,7 +43,8 @@ func TestModelOptInAbsentAndUnknownProfile(t *testing.T) {
 	// Act
 	report, err := Run(context.Background(), opts)
 	// Assert
-	if err != nil || report.ModelGate != "NOT_RUN" || report.ExitStatus != 2 || report.Manifest["max_tool_calls"] != 30 {
+	if err != nil || report.ModelGate != "NOT_RUN" || report.ExitStatus != 2 ||
+		report.Manifest["max_tool_calls"] != 30 {
 		t.Fatal(report, err)
 	}
 	// Arrange: a misspelled profile must not silently become a skipped model run.
@@ -60,7 +63,12 @@ func TestCrossTraceIdentityRegression(t *testing.T) {
 		if op == "different-from" {
 			second = first
 		}
-		cs := Case{ID: "case", Checks: []Check{{Name: "identity", Step: 1, Path: "id", Op: op, Value: map[string]any{"step": 0, "path": "id"}}}}
+		cs := Case{
+			ID: "case",
+			Checks: []Check{
+				{Name: "identity", Step: 1, Path: "id", Op: op, Value: map[string]any{"step": 0, "path": "id"}},
+			},
+		}
 		out := Output{CaseID: "case", Trace: []Trace{{Result: []byte(first)}, {Result: []byte(second)}}}
 		// Act
 		assertions := Grade(cs, out)
@@ -79,12 +87,22 @@ func TestFullModelGatePreflightNeverLaunchesDriver(t *testing.T) {
 	if err := os.WriteFile(driver, []byte("#!/bin/sh\ntouch '"+marker+"'\n"), 0700); err != nil {
 		t.Fatal(err)
 	}
-	opts := Options{Profile: "model", ModelDriver: driver, DatasetPath: "../../docs/evals/migration-v1.json", RunBudget: time.Minute, Repeats: 1, ReportDir: dir}
+	opts := Options{
+		Profile:     "model",
+		ModelDriver: driver,
+		DatasetPath: "../../docs/evals/migration-v1.json",
+		RunBudget:   time.Minute,
+		Repeats:     1,
+		ReportDir:   dir,
+	}
 	// Act
 	report, err := Run(context.Background(), opts)
 	_, statErr := os.Stat(marker)
 	// Assert: model subset/scaffolding cannot certify the full gate.
-	if err != nil || report.ExitStatus != 2 || report.ModelGate != "NOT_RUN" || report.Manifest["full_model_gate"] != "NOT_RUN" || len(report.SkippedCases) == 0 || !os.IsNotExist(statErr) {
+	if err != nil || report.ExitStatus != 2 || report.ModelGate != "NOT_RUN" ||
+		report.Manifest["full_model_gate"] != "NOT_RUN" ||
+		len(report.SkippedCases) == 0 ||
+		!os.IsNotExist(statErr) {
 		t.Fatal(report, err, statErr)
 	}
 }

@@ -10,7 +10,12 @@ import (
 
 var _ archiveport.Transport = (*sessionGuard)(nil)
 
-func (g *sessionGuard) ConsumeMobileArchive(parent context.Context, req *http.Request, client *http.Client, consume func(context.Context, *http.Response) ([]byte, error)) ([]byte, error) {
+func (g *sessionGuard) ConsumeMobileArchive(
+	parent context.Context,
+	req *http.Request,
+	client *http.Client,
+	consume func(context.Context, *http.Response) ([]byte, error),
+) ([]byte, error) {
 	source, ok := g.upstream.(archiveport.Transport)
 	if !ok {
 		return nil, domain.ErrHistoryUnsupported

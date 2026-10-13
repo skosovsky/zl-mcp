@@ -8,6 +8,7 @@ import (
 
 	"github.com/amrakk/zcago/api"
 	"github.com/amrakk/zcago/errs"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -25,12 +26,25 @@ func (f *fakePreloadReader) GetConversationPreload(context.Context) (*api.Conver
 func TestConversationPreloadNormalizesTypedIdentitiesAndAvailableRecords(t *testing.T) {
 	// Arrange: namespace collision, exact numeric IDs and both self encodings.
 	source := &fakePreloadReader{page: &api.ConversationPreloadPage{
-		Metadata: []json.RawMessage{json.RawMessage(`{"idTo":9007199254740993,"isGroup":0,"userName":"Synthetic peer","lastMsgId":9007199254740995}`), json.RawMessage(`{"idTo":9007199254740993,"isGroup":1}`)},
-		DirectMessages: []json.RawMessage{
-			json.RawMessage(`{"uidFrom":9007199254740993,"idTo":0,"msgId":9007199254740995,"ts":1791028800000,"content":"Synthetic incoming"}`),
-			json.RawMessage(`{"uidFrom":"owner","idTo":9007199254740993,"msgId":9007199254740996,"cliMsgId":9007199254740998,"ts":1791028800001,"content":"Synthetic outgoing","msgType":"webchat"}`),
+		Metadata: []json.RawMessage{
+			json.RawMessage(
+				`{"idTo":9007199254740993,"isGroup":0,"userName":"Synthetic peer","lastMsgId":9007199254740995}`,
+			),
+			json.RawMessage(`{"idTo":9007199254740993,"isGroup":1}`),
 		},
-		GroupMessages:           []json.RawMessage{json.RawMessage(`{"uidFrom":0,"idTo":9007199254740993,"msgId":9007199254740997,"ts":1791028800002,"content":"Synthetic group"}`)},
+		DirectMessages: []json.RawMessage{
+			json.RawMessage(
+				`{"uidFrom":9007199254740993,"idTo":0,"msgId":9007199254740995,"ts":1791028800000,"content":"Synthetic incoming"}`,
+			),
+			json.RawMessage(
+				`{"uidFrom":"owner","idTo":9007199254740993,"msgId":9007199254740996,"cliMsgId":9007199254740998,"ts":1791028800001,"content":"Synthetic outgoing","msgType":"webchat"}`,
+			),
+		},
+		GroupMessages: []json.RawMessage{
+			json.RawMessage(
+				`{"uidFrom":0,"idTo":9007199254740993,"msgId":9007199254740997,"ts":1791028800002,"content":"Synthetic group"}`,
+			),
+		},
 		UnsupportedMessageCount: 2,
 	}}
 	// Act
@@ -39,10 +53,22 @@ func TestConversationPreloadNormalizesTypedIdentitiesAndAvailableRecords(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	if source.calls != 1 || len(result.Entries) != 2 || result.Entries[0].Conversation.Type != "direct" || result.Entries[1].Conversation.Type != "group" || result.Entries[0].Conversation.ID != "9007199254740993" || *result.Entries[0].LastMessageID != "9007199254740995" || len(result.Messages) != 3 || !result.DirectMessagesAvailable || !result.GroupMessagesAvailable || result.UnsupportedMessageCount != 2 {
+	if source.calls != 1 || len(result.Entries) != 2 || result.Entries[0].Conversation.Type != "direct" ||
+		result.Entries[1].Conversation.Type != "group" ||
+		result.Entries[0].Conversation.ID != "9007199254740993" ||
+		*result.Entries[0].LastMessageID != "9007199254740995" ||
+		len(result.Messages) != 3 ||
+		!result.DirectMessagesAvailable ||
+		!result.GroupMessagesAvailable ||
+		result.UnsupportedMessageCount != 2 {
 		t.Fatal("preload source evidence lost")
 	}
-	if result.Messages[0].Direction != "incoming" || result.Messages[1].Direction != "outgoing" || result.Messages[1].SenderID != "owner" || result.Messages[1].QuoteMetadata == nil || result.Messages[1].QuoteMetadata.ClientMessageID != "9007199254740998" || result.Messages[2].Direction != "outgoing" || result.Messages[2].Ref().Type != "group" {
+	if result.Messages[0].Direction != "incoming" || result.Messages[1].Direction != "outgoing" ||
+		result.Messages[1].SenderID != "owner" ||
+		result.Messages[1].QuoteMetadata == nil ||
+		result.Messages[1].QuoteMetadata.ClientMessageID != "9007199254740998" ||
+		result.Messages[2].Direction != "outgoing" ||
+		result.Messages[2].Ref().Type != "group" {
 		t.Fatal("preload message ownership/direction lost")
 	}
 	for _, message := range result.Messages {
@@ -55,7 +81,9 @@ func TestConversationPreloadNormalizesTypedIdentitiesAndAvailableRecords(t *test
 func TestConversationPreloadRejectsAmbiguousMetadataAndForeignRecords(t *testing.T) {
 	for _, metadata := range []string{`null`, `[]`, `{}`, `{"idTo":"peer"}`, `{"idTo":"peer","isGroup":true}`, `{"idTo":"peer","isGroup":2}`, `{"idTo":1e20,"isGroup":0}`, `{"idTo":"owner","isGroup":0}`} {
 		// Arrange / Act
-		source := &fakePreloadReader{page: &api.ConversationPreloadPage{Metadata: []json.RawMessage{json.RawMessage(metadata)}}}
+		source := &fakePreloadReader{
+			page: &api.ConversationPreloadPage{Metadata: []json.RawMessage{json.RawMessage(metadata)}},
+		}
 		result, err := readConversationPreload(context.Background(), source, "owner")
 		// Assert
 		if !errors.Is(err, domain.ErrHistoryInvalidPage) || result.Entries != nil || result.Messages != nil {
@@ -69,7 +97,15 @@ func TestConversationPreloadRejectsAmbiguousMetadataAndForeignRecords(t *testing
 		`{"uidFrom":"peer","idTo":0,"msgId":"message","ts":"invalid"}`,
 	} {
 		// Arrange: a valid first record cannot escape an invalid whole-page result.
-		source := &fakePreloadReader{page: &api.ConversationPreloadPage{Metadata: []json.RawMessage{}, DirectMessages: []json.RawMessage{json.RawMessage(`{"uidFrom":"peer","idTo":0,"msgId":"valid","ts":"1791028800000"}`), json.RawMessage(record)}}}
+		source := &fakePreloadReader{
+			page: &api.ConversationPreloadPage{
+				Metadata: []json.RawMessage{},
+				DirectMessages: []json.RawMessage{
+					json.RawMessage(`{"uidFrom":"peer","idTo":0,"msgId":"valid","ts":"1791028800000"}`),
+					json.RawMessage(record),
+				},
+			},
+		}
 		// Act
 		result, err := readConversationPreload(context.Background(), source, "owner")
 		// Assert
@@ -111,7 +147,9 @@ func TestPreloadInvalidIdentifierReportsFieldWithoutValue(t *testing.T) {
 		{`{"idTo":"peer","isGroup":0,"lastMsgId":""}`, "", "invalid_preload_last_message_identifier"},
 		{`{"idTo":"peer","isGroup":0}`, `{"uidFrom":"peer","idTo":0,"msgId":"message","ts":"1791028800000","userId":" "}`, "invalid_preload_message_identifier_userId"},
 	} {
-		source := &fakePreloadReader{page: &api.ConversationPreloadPage{Metadata: []json.RawMessage{json.RawMessage(tc.metadata)}}}
+		source := &fakePreloadReader{
+			page: &api.ConversationPreloadPage{Metadata: []json.RawMessage{json.RawMessage(tc.metadata)}},
+		}
 		if tc.record != "" {
 			source.page.DirectMessages = []json.RawMessage{json.RawMessage(tc.record)}
 		}
@@ -127,8 +165,12 @@ func TestPreloadInvalidIdentifierReportsFieldWithoutValue(t *testing.T) {
 
 func TestPreloadAllowsEmptyOptionalFieldsButRequiresMessageIdentity(t *testing.T) {
 	// Arrange
-	raw := json.RawMessage(`{"uidFrom":"peer","idTo":0,"msgId":"message","ts":"1791028800000","actionId":"","cliMsgId":"","userId":"","realMsgId":""}`)
-	source := &fakePreloadReader{page: &api.ConversationPreloadPage{Metadata: []json.RawMessage{}, DirectMessages: []json.RawMessage{raw}}}
+	raw := json.RawMessage(
+		`{"uidFrom":"peer","idTo":0,"msgId":"message","ts":"1791028800000","actionId":"","cliMsgId":"","userId":"","realMsgId":""}`,
+	)
+	source := &fakePreloadReader{
+		page: &api.ConversationPreloadPage{Metadata: []json.RawMessage{}, DirectMessages: []json.RawMessage{raw}},
+	}
 	// Act
 	page, err := readConversationPreload(context.Background(), source, "owner")
 	// Assert

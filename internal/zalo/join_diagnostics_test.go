@@ -25,10 +25,24 @@ func TestJoinDiagnosticsOnlyRecordStructuralFields(t *testing.T) {
 		kind string
 		code bool
 	}{
-		{"api-value", fmt.Errorf("wrapped %s: %w", marker, errs.ZaloAPIError{Code: &code, Message: marker}), "api", true},
+		{
+			"api-value",
+			fmt.Errorf("wrapped %s: %w", marker, errs.ZaloAPIError{Code: &code, Message: marker}),
+			"api",
+			true,
+		},
 		{"api-pointer", &errs.ZaloAPIError{Code: &code, Message: marker}, "api", true},
 		{"api-without-code", errs.ZaloAPIError{Message: marker}, "api", false},
-		{"decode", fmt.Errorf("%s: %w", marker, &json.UnmarshalTypeError{Value: marker, Type: reflect.TypeOf(""), Field: marker, Struct: marker}), "decode", false},
+		{
+			"decode",
+			fmt.Errorf(
+				"%s: %w",
+				marker,
+				&json.UnmarshalTypeError{Value: marker, Type: reflect.TypeFor[string](), Field: marker, Struct: marker},
+			),
+			"decode",
+			false,
+		},
 		{"syntax", &json.SyntaxError{}, "decode", false},
 		{"transport", &url.Error{Op: marker, URL: marker, Err: errors.New(marker)}, "transport", false},
 		{"canceled", fmt.Errorf("%s: %w", marker, context.Canceled), "canceled", false},
@@ -48,7 +62,8 @@ func TestJoinDiagnosticsOnlyRecordStructuralFields(t *testing.T) {
 			if err := json.Unmarshal(output.Bytes(), &event); err != nil {
 				t.Fatal(err)
 			}
-			if strings.Contains(output.String(), marker) || event["failure_kind"] != tc.kind || event["msg"] != "join upstream failure" {
+			if strings.Contains(output.String(), marker) || event["failure_kind"] != tc.kind ||
+				event["msg"] != "join upstream failure" {
 				t.Fatalf("unsafe diagnostics: %s", output.String())
 			}
 			expectedFields := 4

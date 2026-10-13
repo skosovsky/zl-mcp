@@ -54,9 +54,11 @@ func (s *Store) CheckContextAccess(ref domain.ConversationRef, id string, before
 			return subscriptionPermission("Conversation is outside the collection policy.")
 		}
 	} else if !s.Allowed(ref.ID) {
+		//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 		return &domain.Error{
-			Code:       "PERMISSION_DENIED",
-			Message:    "Group is outside the configured collection allowlist.",
+			Code:    codePermissionDenied,
+			Message: "Group is outside the configured collection allowlist.",
+			//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 			NextAction: domain.NextAction{Instruction: "Update the local collection allowlist if access is intended."},
 			Details:    map[string]any{},
 		}

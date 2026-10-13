@@ -19,6 +19,7 @@ func (f sessionArchiveFunc) ConsumeMobileArchive(
 ) ([]byte, error) {
 	return f(c, r, h, k)
 }
+
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSessionDownloaderPreservesValidationAndBodyBounds(t *testing.T) {
 	for _, mode := range []string{"exact", "overflow", "encoding", "unauthorized", "host"} {

@@ -14,7 +14,6 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/logging"
 
@@ -57,6 +56,7 @@ func RunCLI() error {
 	case "error":
 		level = slog.LevelError
 	}
+	//nolint:exhaustruct_v5 // Keep default log level/filter behavior; the configured redaction/replacement policy is explicit.
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: level})))
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -80,19 +80,19 @@ func ReportCLIError(err error) {
 
 func runCLICommand(ctx context.Context, c config.Config, flags *flag.FlagSet) error {
 	switch flags.Arg(0) {
-	case "probe-recall",
-		"mobile-backup-prepare",
-		"mobile-backup-status",
-		"mobile-backup-cancel",
-		"mobile-backup-probe-offer",
-		"mobile-backup-probe-archive",
-		"account-archive-prepare",
-		"account-archive-capture",
-		"account-archive-status",
-		"account-archive-preserve",
-		"account-archive-restore",
-		"account-archive-inspect",
-		"account-archive-remove":
+	case commandProbeRecall,
+		commandMobileBackupPrepare,
+		commandMobileBackupStatus,
+		commandMobileBackupCancel,
+		commandMobileBackupProbeOffer,
+		commandMobileBackupProbeArchive,
+		commandAccountArchivePrepare,
+		commandAccountArchiveCapture,
+		commandAccountArchiveStatus,
+		commandAccountArchivePreserve,
+		commandAccountArchiveRestore,
+		commandAccountArchiveInspect,
+		commandAccountArchiveRemove:
 		return runMobileLedger(ctx, c.StateDir, flags.Args(), os.Stdin, os.Stdout)
 	case "service":
 		if flags.NArg() != 1 {
@@ -122,11 +122,10 @@ func runCLICommand(ctx context.Context, c config.Config, flags *flag.FlagSet) er
 }
 
 func runPreloadProbeCommand(ctx context.Context, c config.Config, flags *flag.FlagSet) error {
-
 	if flags.NArg() != 1 {
 		return errors.New("probe-preload takes no arguments")
 	}
-	probeCtx, cancel := context.WithTimeout(ctx, 35*time.Second)
+	probeCtx, cancel := context.WithTimeout(ctx, runPreloadProbeCommandProbeTimeout)
 	defer cancel()
 	result, err := control.New(c.StateDir).Call(probeCtx, "cli_probe_preload", map[string]any{})
 	if err != nil {
@@ -136,7 +135,6 @@ func runPreloadProbeCommand(ctx context.Context, c config.Config, flags *flag.Fl
 }
 
 func runApproveJoinCommand(ctx context.Context, c config.Config, flags *flag.FlagSet) error {
-
 	if flags.NArg() != 2 {
 		return errors.New("approve-join requires preview_id")
 	}
@@ -145,7 +143,7 @@ func runApproveJoinCommand(ctx context.Context, c config.Config, flags *flag.Fla
 		return errors.New("approval requires an interactive local terminal")
 	}
 	client := control.New(c.StateDir)
-	q, cancel := context.WithTimeout(ctx, 5*time.Second)
+	q, cancel := context.WithTimeout(ctx, runApproveJoinCommandQTimeout)
 	defer cancel()
 	preview, e := client.Call(q, "cli_preview", map[string]any{"preview_id": flags.Arg(1)})
 	if e != nil {
@@ -165,7 +163,7 @@ func runApproveJoinCommand(ctx context.Context, c config.Config, flags *flag.Fla
 	if strings.TrimSpace(line) != "JOIN" {
 		return errors.New("approval cancelled")
 	}
-	approveCtx, approveCancel := context.WithTimeout(ctx, 5*time.Second)
+	approveCtx, approveCancel := context.WithTimeout(ctx, runApproveJoinCommandApproveTimeout)
 	defer approveCancel()
 	result, e := client.Call(approveCtx, "cli_approve", map[string]any{"preview_id": flags.Arg(1)})
 	if e != nil {
@@ -176,7 +174,6 @@ func runApproveJoinCommand(ctx context.Context, c config.Config, flags *flag.Fla
 }
 
 func runLoginCommand(ctx context.Context, c config.Config, flags *flag.FlagSet) error {
-
 	if flags.NArg() != 1 {
 		return errors.New("login takes no arguments")
 	}
@@ -185,7 +182,7 @@ func runLoginCommand(ctx context.Context, c config.Config, flags *flag.FlagSet) 
 		return e
 	}
 	defer unlock()
-	loginCtx, cancel := context.WithTimeout(ctx, 3*time.Minute)
+	loginCtx, cancel := context.WithTimeout(ctx, runLoginCommandLoginTimeout)
 	defer cancel()
 	client, e := zalo.Login(loginCtx, c.StateDir, os.Stderr)
 	if e != nil {

@@ -61,7 +61,7 @@ func (s *Store) PutExpiringHistoryPage(
 	return counts, nil
 }
 func (s *Store) validateExpiringHistoryPage(ref domain.ConversationRef, records []ExpiringHistoryRecord) error {
-	if len(records) > 50 {
+	if len(records) > maximumHistoryPageRecords {
 		return domain.Invalid("History requires at most 50 records.")
 	}
 	messages := make([]domain.Message, len(records))
@@ -80,6 +80,7 @@ func (s *Store) putExpiringHistoryPageTx(
 	tx *sql.Tx,
 	records []ExpiringHistoryRecord,
 ) (HistoryPageCounts, error) {
+	//nolint:exhaustruct_v5 // HistoryPageCounts preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	counts := HistoryPageCounts{}
 	for _, r := range records {
 		single, e := s.putHistoryPageTx(ctx, tx, []domain.Message{r.Message})

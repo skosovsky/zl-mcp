@@ -36,8 +36,10 @@ func (p *PreparedArchivePage) Clear() {
 	if p != nil {
 		p.Candidates.Clear()
 		if p.Next != nil {
+			//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 			*p.Next = PreparedArchiveCursor{}
 		}
+		//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 		*p = PreparedArchivePage{}
 	}
 }
@@ -56,6 +58,7 @@ func ReadPreparedArchivePage(
 	stage := "INPUT_BINDING"
 	defer func() {
 		if err != nil {
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.WarnContext(ctx, "mobile_archive_page_failed", "stage", stage)
 		}
 	}()
@@ -128,8 +131,11 @@ func ReadPreparedArchivePage(
 	return result, nil
 }
 
-func bindPreparedCursor(after *PreparedArchiveCursor, normalized domain.MobileBackupRequest, account string) (int, *SQLiteCursor, error) {
-
+func bindPreparedCursor(
+	after *PreparedArchiveCursor,
+	normalized domain.MobileBackupRequest,
+	account string,
+) (int, *SQLiteCursor, error) {
 	if after.requestID != normalized.RequestID || after.fingerprint != normalized.Fingerprint() ||
 		after.account != account ||
 		after.examined <= 0 ||

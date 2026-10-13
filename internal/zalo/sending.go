@@ -13,16 +13,19 @@ import (
 )
 
 func (c *Client) SendDirect(ctx context.Context, peer, text string, q *domain.SendQuote) (string, error) {
+	//nolint:exhaustruct_v5 // MessageContent preserves optional upstream fields absent from this request/projection.
 	content := api.MessageContent{Msg: text}
 	if q != nil {
+		//nolint:exhaustruct_v5 // SendMessageQuote preserves optional upstream fields absent from this request/projection.
 		content.Quote = &api.SendMessageQuote{
 			MsgID:    q.MessageID,
 			CliMsgID: q.Metadata.ClientMessageID,
 			MsgType:  q.Metadata.MessageType,
 			UIDFrom:  q.SenderID,
-			Content:  model.Content{String: &q.Text},
-			TS:       q.Metadata.Timestamp,
-			TTL:      q.Metadata.TTL,
+			//nolint:exhaustruct_v5 // Content preserves optional upstream fields absent from this request/projection.
+			Content: model.Content{String: &q.Text},
+			TS:      q.Metadata.Timestamp,
+			TTL:     q.Metadata.TTL,
 		}
 	}
 	r, err := c.api.SendMessage(ctx, peer, model.ThreadTypeUser, content)

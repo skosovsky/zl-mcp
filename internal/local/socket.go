@@ -14,7 +14,10 @@ func SocketPath(dir string) (string, error) {
 		limit = 104
 	}
 	if len([]byte(path)) >= limit {
-		return "", fmt.Errorf("state_dir is too long for the Unix socket; use a shorter absolute path (socket path must be less than %d bytes)", limit)
+		return "", fmt.Errorf(
+			"state_dir is too long for the Unix socket; use a shorter absolute path (socket path must be less than %d bytes)",
+			limit,
+		)
 	}
 	return path, nil
 }

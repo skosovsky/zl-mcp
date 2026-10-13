@@ -18,12 +18,27 @@ func TestTrustedPreloadProbeReturnsOnlyCountsThroughControl(t *testing.T) {
 	source := &preloadListener{scriptedListener: &scriptedListener{fakeZalo: &fakeZalo{}}}
 	source.fetch = func(context.Context) (domain.PreloadSnapshot, error) {
 		name := "private-name-marker"
-		return domain.PreloadSnapshot{Entries: []domain.PreloadEntry{{Conversation: domain.ConversationRef{Type: "direct", ID: "private-peer-marker"}, Name: &name}}, Messages: []domain.Message{{Conversation: domain.ConversationRef{Type: "direct", ID: "private-peer-marker"}, Text: "private-body-marker"}}, DirectMessagesAvailable: true}, nil
+		return domain.PreloadSnapshot{
+			Entries: []domain.PreloadEntry{
+				{Conversation: domain.ConversationRef{Type: "direct", ID: "private-peer-marker"}, Name: &name},
+			},
+			Messages: []domain.Message{
+				{
+					Conversation: domain.ConversationRef{Type: "direct", ID: "private-peer-marker"},
+					Text:         "private-body-marker",
+				},
+			},
+			DirectMessagesAvailable: true,
+		}, nil
 	}
 	guard := newSessionGuard(context.Background(), source)
 	defer guard.cancel()
 	manager := NewJoin(context.Background(), nil, guard, false)
-	request := httptest.NewRequest("POST", "/rpc", strings.NewReader(`{"method":"cli_probe_preload","arguments":{}}`))
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/rpc",
+		strings.NewReader(`{"method":"cli_probe_preload","arguments":{}}`),
+	)
 	response := httptest.NewRecorder()
 	// Act
 	ControlHandler(manager).ServeHTTP(response, request)
@@ -38,7 +53,9 @@ func TestTrustedPreloadProbeReturnsOnlyCountsThroughControl(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &result); err != nil {
 		t.Fatal(err)
 	}
-	if result["source_status"] != "available" || result["metadata_count"] != float64(1) || result["direct_message_count"] != float64(1) || result["messages_persisted"] != false {
+	if result["source_status"] != "available" || result["metadata_count"] != float64(1) ||
+		result["direct_message_count"] != float64(1) ||
+		result["messages_persisted"] != false {
 		t.Fatal("probe count/policy mismatch")
 	}
 	output, err := contracts.Compile("cli_probe_preload", "output")
@@ -73,14 +90,22 @@ func TestTrustedPreloadProbeRejectsInjectionAndRedactsFailures(t *testing.T) {
 	// Act / Assert: request injection is rejected before source access.
 	for _, body := range []string{`{"method":"cli_probe_preload","arguments":{"url":"https://example.invalid"}}`, `{"method":"cli_probe_preload"}`, `{"method":"cli_probe_preload","arguments":{},"token":"private"}`} {
 		response := httptest.NewRecorder()
-		handler.ServeHTTP(response, httptest.NewRequest("POST", "/rpc", strings.NewReader(body)))
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/rpc", strings.NewReader(body)))
 		if response.Code != http.StatusBadRequest || calls != 0 {
 			t.Fatal("probe input bypassed contract")
 		}
 	}
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest("POST", "/rpc", strings.NewReader(`{"method":"cli_probe_preload","arguments":{}}`)))
-	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), `"source_code":114`) || strings.Contains(response.Body.String(), "private-url") {
+	handler.ServeHTTP(
+		response,
+		httptest.NewRequest(
+			http.MethodPost,
+			"/rpc",
+			strings.NewReader(`{"method":"cli_probe_preload","arguments":{}}`),
+		),
+	)
+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), `"source_code":114`) ||
+		strings.Contains(response.Body.String(), "private-url") {
 		t.Fatal("probe failure evidence unsafe or lost")
 	}
 }
@@ -99,7 +124,8 @@ func TestTrustedPreloadProbeNormalizationReasonsAreClosed(t *testing.T) {
 		result := probePreload(context.Background(), source)
 		encoded, err := json.Marshal(result)
 		// Assert
-		if err != nil || result["error_category"] != "invalid_source_page" || result["error_reason"] != tc.want || strings.Contains(string(encoded), "private-") {
+		if err != nil || result["error_category"] != "invalid_source_page" || result["error_reason"] != tc.want ||
+			strings.Contains(string(encoded), "private-") {
 			t.Fatal("normalization diagnostic leaked or lost evidence")
 		}
 		schema, err := contracts.Compile("cli_probe_preload", "output")

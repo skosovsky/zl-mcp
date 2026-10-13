@@ -33,6 +33,7 @@ func (s *scriptedListener) Listen(
 func sessionStore(t *testing.T) (config.Config, *storage.Store) {
 	t.Helper()
 	// Short socket path: macOS limits AF_UNIX addresses to 104 bytes.
+	//nolint:usetesting // A short temporary path keeps macOS Unix socket names within their bound; t.Cleanup owns removal.
 	dir, err := os.MkdirTemp("/tmp", "zl-session-")
 	if err != nil {
 		t.Fatal(err)

@@ -26,12 +26,22 @@ func TestPlainArchiveSplitsCompleteValidatedContainer(t *testing.T) {
 		t.Fatal("fixture too short")
 	}
 	half := len(plain) / 2
-	files := []File{{Name: "9007199254740993.db", Size: uint32(half)}, {Name: "group_9007199254740995.db", Size: uint32(len(plain) - half)}}
+	files := []File{
+		{Name: "9007199254740993.db", Size: uint32(half)},
+		{Name: "group_9007199254740995.db", Size: uint32(len(plain) - half)},
+	}
 	input := syntheticContainer(files, compressed)
 	// Act.
-	archive, err := ReadPlainArchive(context.Background(), bytes.NewReader(input), uint64(len(input)), uint64(len(plain)))
+	archive, err := ReadPlainArchive(
+		context.Background(),
+		bytes.NewReader(input),
+		uint64(len(input)),
+		uint64(len(plain)),
+	)
 	// Assert: exact boundaries/IDs, redaction and owned-buffer clearing.
-	if err != nil || len(archive.Files) != 2 || archive.Files[0].Name != files[0].Name || !bytes.Equal(archive.Files[0].Data, plain[:half]) || !bytes.Equal(archive.Files[1].Data, plain[half:]) {
+	if err != nil || len(archive.Files) != 2 || archive.Files[0].Name != files[0].Name ||
+		!bytes.Equal(archive.Files[0].Data, plain[:half]) ||
+		!bytes.Equal(archive.Files[1].Data, plain[half:]) {
 		t.Fatal("archive split failed", err)
 	}
 	serialized, _ := json.Marshal(archive)
@@ -66,7 +76,15 @@ func TestPlainArchiveRejectsIncompleteAndAlteredContainer(t *testing.T) {
 			t.Fatal("invalid archive accepted")
 		}
 	}
-	if _, err := ReadPlainArchive(context.Background(), bytes.NewReader(valid), uint64(len(valid)), uint64(len(plain)-1)); !errors.Is(err, ErrArchive) {
+	if _, err := ReadPlainArchive(
+		context.Background(),
+		bytes.NewReader(valid),
+		uint64(len(valid)),
+		uint64(len(plain)-1),
+	); !errors.Is(
+		err,
+		ErrArchive,
+	) {
 		t.Fatal("output budget bypass")
 	}
 }

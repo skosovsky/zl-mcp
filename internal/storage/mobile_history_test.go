@@ -130,6 +130,7 @@ func TestMobileHistoryAtomicRollbackAtSourceAndOperationCheckpoint(t *testing.T)
 		})
 	}
 }
+
 //nolint:cyclop,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileHistoryRestartExactKeysetCountsAndSilentDuplicates(t *testing.T) {
 	// Arrange.

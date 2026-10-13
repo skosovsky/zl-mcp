@@ -2,11 +2,11 @@ package history
 
 import (
 	"context"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
-	"time"
 )
 
-// Optional bounds preserve omission until the native executable contract and
+// StartRequest preserves optional bounds until the native executable contract and
 // owner apply their defaults; explicit zero remains invalid at the schema gate.
 type StartRequest struct {
 	Source           string `json:"source,omitempty"`
@@ -25,12 +25,12 @@ type CommandPort interface {
 }
 
 func (h *Handler) Start(ctx context.Context, request StartRequest) (domain.HistoryImportStatus, error) {
-	ctx, cancel := context.WithTimeout(ctx, 35*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, handlerStartTimeout)
 	defer cancel()
 	return h.Commands.StartImport(ctx, request)
 }
 func (h *Handler) Cancel(ctx context.Context, id string) (domain.HistoryImportStatus, error) {
-	ctx, cancel := context.WithTimeout(ctx, 35*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, handlerCancelTimeout)
 	defer cancel()
 	return h.Commands.CancelImport(ctx, id)
 }

@@ -22,6 +22,7 @@ import (
 
 type sdkIdentityCase struct{ input, want string }
 
+//nolint:gochecknoglobals // Immutable synthetic ID boundary cases are shared by HTTP and STDIO contracts.
 var sdkIdentityCases = []sdkIdentityCase{
 	{"9007199254740991", "9007199254740991"}, {"9007199254740992", "9007199254740992"},
 	{"9007199254740993", "9007199254740993"}, {"9007199254740994", "9007199254740994"},
@@ -117,6 +118,7 @@ func sdkIdentityService(t *testing.T) (*HTTPService, *storage.Store, string) {
 	}
 	return handler, owner, token
 }
+
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSDK01CodecIdentityRequestsAndResponses(t *testing.T) {
 	for _, tc := range sdkIdentityCases {
@@ -152,6 +154,7 @@ func TestSDK01CodecIdentityRequestsAndResponses(t *testing.T) {
 		}
 	}
 }
+
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSDK01HTTPWrappersPreserveEnvelopeIdentity(t *testing.T) {
 	// Arrange: native synthetic owner; real SDK discovery/resources/status and Events wrapper.

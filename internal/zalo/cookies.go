@@ -24,6 +24,7 @@ type persistentJar struct {
 
 func newPersistentJar() *persistentJar {
 	jar, _ := cookiejar.New(nil)
+	//nolint:exhaustruct_v5 // persistentJar initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	return &persistentJar{CookieJar: jar, saved: map[string]savedCookie{}}
 }
 func (j *persistentJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
@@ -36,32 +37,32 @@ func (j *persistentJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
 	}
 	for _, c := range cookies {
 		//nolint:gosec // G124: persist the upstream cookie attributes unchanged; this is not issuing a server cookie.
-		copy := *c
-		if copy.Path == "" || copy.Path[0] != '/' {
+		saved := *c
+		if saved.Path == "" || saved.Path[0] != '/' {
 			path := u.Path
 			cut := strings.LastIndex(path, "/")
-			copy.Path = "/"
+			saved.Path = "/"
 			if cut > 0 {
-				copy.Path = path[:cut]
+				saved.Path = path[:cut]
 			}
 		}
-		domain := strings.TrimPrefix(strings.ToLower(copy.Domain), ".")
+		domain := strings.TrimPrefix(strings.ToLower(saved.Domain), ".")
 		if domain == "" {
 			domain = host
 		}
 		if host != domain && !strings.HasSuffix(host, "."+domain) {
 			continue
 		}
-		key := domain + "\n" + copy.Path + "\n" + copy.Name
-		if copy.MaxAge < 0 || (!copy.Expires.IsZero() && copy.Expires.Before(time.Now())) {
+		key := domain + "\n" + saved.Path + "\n" + saved.Name
+		if saved.MaxAge < 0 || (!saved.Expires.IsZero() && saved.Expires.Before(time.Now())) {
 			delete(j.saved, key)
 			continue
 		}
-		if copy.MaxAge > 0 {
-			copy.Expires = time.Now().Add(time.Duration(copy.MaxAge) * time.Second)
+		if saved.MaxAge > 0 {
+			saved.Expires = time.Now().Add(time.Duration(saved.MaxAge) * time.Second)
 		}
-		copy.MaxAge = 0
-		j.saved[key] = savedCookie{Origin: (&url.URL{Scheme: u.Scheme, Host: u.Host}).String(), Cookie: copy}
+		saved.MaxAge = 0
+		j.saved[key] = savedCookie{Origin: (&url.URL{Scheme: u.Scheme, Host: u.Host}).String(), Cookie: saved}
 	}
 }
 func (j *persistentJar) snapshot() []savedCookie {

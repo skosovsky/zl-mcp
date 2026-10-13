@@ -11,7 +11,7 @@ import (
 // PutPreloadEntries validates a whole observed page before one atomic metadata
 // merge. It changes no messages, novelty facts, subscriptions or send permission.
 func (s *Store) PutPreloadEntries(ctx context.Context, entries []domain.PreloadEntry) (int, error) {
-	if len(entries) > 5000 {
+	if len(entries) > maximumPreloadDirectoryEntries {
 		return 0, domain.Invalid("Preload directory page exceeds bounds.")
 	}
 	seen := map[domain.ConversationRef]bool{}

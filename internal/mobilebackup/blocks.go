@@ -22,6 +22,7 @@ func DecryptFormat1(ctx context.Context, r io.Reader, keyText string, limit int6
 
 // allowPartialTail never decrypts a partial block; the caller must reject any
 // declared container crossing the returned complete-block prefix.
+//
 //nolint:gocognit // This bounded protocol parser validates complete framing/records before publishing and retains its buffer-clearing error paths.
 func decryptFormat1(
 	ctx context.Context,
@@ -55,6 +56,7 @@ func decryptFormat1(
 		return nil, 0, ErrBlocks
 	}
 	if len(data) < aes.BlockSize || int64(len(data)) > limit || len(data)%aes.BlockSize != 0 && !allowPartialTail {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(
 			ctx,
 			"mobile_archive_format_failed",
@@ -89,6 +91,7 @@ func decryptFormat1(
 		cipher.NewCBCDecrypter(block, iv[:]).CryptBlocks(part, part)
 	}
 	if string(data[:6]) != "ZDB4.0" {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(ctx, "mobile_archive_format_failed", "stage", "DECRYPTED_MAGIC")
 		clear(data)
 		return nil, 0, ErrBlocks

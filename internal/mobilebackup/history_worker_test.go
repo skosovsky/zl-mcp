@@ -66,7 +66,7 @@ func (s *historyWorkerSession) ReceiveOffer(ctx context.Context, id string) (dom
 		ctx,
 		s.store,
 		offerSourceFunc(
-			func(ctx context.Context, observer *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+			func(_ context.Context, observer *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
 				if err := observer.BeforeDispatch(s.public); err != nil {
 					return domain.MobileBackupOffer{}, err
 				}
@@ -631,7 +631,7 @@ func TestMobileWorkerWholeControlPreludeResumesWithoutRedispatch(t *testing.T) {
 	}
 	defer source.session.selected.Clear()
 	source.session.mapper = identitySourceFunc(
-		func(ctx context.Context, request domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+		func(_ context.Context, request domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
 			out := []domain.MobileIdentityPair{}
 			for _, plain := range request.Direct {
 				session := "12"

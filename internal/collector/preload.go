@@ -2,6 +2,7 @@ package collector
 
 import (
 	"context"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 

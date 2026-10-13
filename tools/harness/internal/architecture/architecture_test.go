@@ -172,7 +172,11 @@ func TestMissingAndStaleReportFailClosed(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(root, ".arch-go"), 0700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, ".arch-go/report.json"), []byte(`{"summary":{"pass":true}}`), 0600); err != nil {
+	if err := os.WriteFile(
+		filepath.Join(root, ".arch-go/report.json"),
+		[]byte(`{"summary":{"pass":true}}`),
+		0600,
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act.

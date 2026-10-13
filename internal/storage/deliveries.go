@@ -20,11 +20,11 @@ type DeliveryPolicy struct {
 
 func DefaultDeliveryPolicy() DeliveryPolicy {
 	return DeliveryPolicy{
-		MaxJobs:     100000,
-		MaxBytes:    256 << 20,
-		MaxAttempts: 256,
+		MaxJobs:     maximumDeliveryJobs,
+		MaxBytes:    maximumDeliveryBytes,
+		MaxAttempts: maximumDeliveryAttempts,
 		MaxAge:      7 * 24 * time.Hour,
-		Lease:       30 * time.Second,
+		Lease:       deliveryLease,
 	}
 }
 
@@ -171,20 +171,20 @@ func (s *Store) FanoutProfileEvents(
 			if payloadErr == nil {
 				payload, payloadErr = encode(target.profile, event.id, message)
 			}
-			state := "pending"
+			state := statePendingText
 			var reason, completed any
 			body := payload
 			switch {
 			case !s.AllowsConversation(message.Ref()):
-				state, reason = "cancelled", "access_revoked"
+				state, reason = stateCancelledText, "access_revoked"
 			case payloadErr != nil:
-				state, reason = "failed", "invalid_payload"
+				state, reason = stateFailedText, "invalid_payload"
 			case !at.Before(created.Add(p.MaxAge)):
-				state, reason = "failed", "deadline"
+				state, reason = stateFailedText, "deadline"
 			case jobs >= p.MaxJobs || payloadBytes+int64(len(payload)) > p.MaxBytes:
-				state, reason = "failed", "queue_capacity"
+				state, reason = stateFailedText, "queue_capacity"
 			}
-			if state != "pending" {
+			if state != statePendingText {
 				body = []byte{}
 				completed = at.UTC().Format(time.RFC3339Nano)
 			}
@@ -209,7 +209,7 @@ func (s *Store) FanoutProfileEvents(
 			if err != nil {
 				return 0, err
 			}
-			if state == "pending" && inserted > 0 {
+			if state == statePendingText && inserted > 0 {
 				jobs++
 				payloadBytes += int64(len(body))
 			}
@@ -245,6 +245,7 @@ type EventDelivery struct {
 
 // ClaimDelivery uses a durable lease; an unacknowledged request is retried after
 // lease expiry. One active lease per subscription serializes its callbacks.
+//
 //nolint:gocognit // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) ClaimDelivery(ctx context.Context, at time.Time, p DeliveryPolicy) (*EventDelivery, error) {
 	if err := p.validate(); err != nil {
@@ -345,7 +346,7 @@ type DeliveryOutcome struct {
 }
 
 func (s *Store) FinishDelivery(ctx context.Context, d EventDelivery, outcome DeliveryOutcome, at time.Time) error {
-	if outcome.State != "delivered" && outcome.State != "pending" && outcome.State != "failed" {
+	if outcome.State != stateDeliveredText && outcome.State != statePendingText && outcome.State != stateFailedText {
 		return errors.New("invalid delivery outcome")
 	}
 	tx, err := s.DB.BeginTx(ctx, nil)
@@ -355,7 +356,7 @@ func (s *Store) FinishDelivery(ctx context.Context, d EventDelivery, outcome Del
 	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	var completed any
-	if outcome.State != "pending" {
+	if outcome.State != statePendingText {
 		completed = at.UTC().Format(time.RFC3339Nano)
 	}
 	result, err := tx.ExecContext(

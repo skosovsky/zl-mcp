@@ -2,7 +2,6 @@ package conversations
 
 import (
 	"context"
-	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -105,7 +104,10 @@ type GroupExecution struct {
 
 func (e *GroupExecution) Shorten(ctx context.Context) error {
 	if len(e.Result.Groups) < 2 {
-		return domain.ResponseTooLarge("One group record exceeds the response budget.", "Select another group or report that this record cannot fit within the response limit.")
+		return domain.ResponseTooLarge(
+			"One group record exceeds the response budget.",
+			"Select another group or report that this record cannot fit within the response limit.",
+		)
 	}
 	e.request.Limit = len(e.Result.Groups) - 1
 	v, err := e.port.Groups(ctx, e.request)
@@ -125,7 +127,7 @@ func (h *Handler) Groups(ctx context.Context, request GroupRequest) (*GroupExecu
 	return &GroupExecution{Result: result, request: request, port: h.Catalog}, nil
 }
 func (h *Handler) Group(ctx context.Context, id string) (GroupDetail, error) {
-	refresh, cancel := context.WithTimeout(ctx, 5*time.Second)
+	refresh, cancel := context.WithTimeout(ctx, handlerGroupRefreshTimeout)
 	result, err := h.LiveGroups.Group(refresh, id)
 	cancel()
 	if err != nil {

@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"testing"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 func TestCollectionConfigPreservesLegacyAndRejectsConflicts(t *testing.T) {
@@ -35,7 +36,10 @@ func TestCollectionConfigPreservesLegacyAndRejectsConflicts(t *testing.T) {
 	if err := c.validateCollection(); err != nil {
 		t.Fatal(err)
 	}
-	c.Collection.Conversations = []domain.ConversationRef{{Type: domain.ConversationDirect, ID: "x"}, {Type: domain.ConversationDirect, ID: "x"}}
+	c.Collection.Conversations = []domain.ConversationRef{
+		{Type: domain.ConversationDirect, ID: "x"},
+		{Type: domain.ConversationDirect, ID: "x"},
+	}
 	if c.validateCollection() == nil {
 		t.Fatal("duplicate selected reference accepted")
 	}

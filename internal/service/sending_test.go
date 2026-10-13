@@ -61,7 +61,7 @@ func (s *sendingServiceSource) ListenConversations(
 
 func (s *sendingServiceSource) SendDirect(
 	ctx context.Context,
-	peer, text string,
+	_, text string,
 	quote *domain.SendQuote,
 ) (string, error) {
 	s.calls.Add(1)
@@ -79,6 +79,7 @@ func (s *sendingServiceSource) SendDirect(
 //nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestServiceSendAndReplyUseCollectorSessionAndPersistAcrossRestart(t *testing.T) {
 	// Arrange: the production service and MCP transport use one synthetic session.
+	//nolint:usetesting // A short temporary path keeps macOS Unix socket names within their bound; t.Cleanup owns removal.
 	dir, err := os.MkdirTemp("/tmp", "zl-send-service-")
 	if err != nil {
 		t.Fatal(err)

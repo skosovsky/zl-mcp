@@ -10,11 +10,22 @@ import (
 
 func TestQuoteScalarsExactSignedGolden(t *testing.T) {
 	// Arrange: literal big-endian fields; client ID > 2^53, global ID MaxInt64.
-	input, _ := hex.DecodeString("0000005000000004ffffffff0000005100000008002000000000000100000052000000087fffffffffffffff00000053000000040000000000000054000000080000018d4a5100000000005500000008fffffffffffffffe0000005600000003616263")
+	input, _ := hex.DecodeString(
+		"0000005000000004ffffffff0000005100000008002000000000000100000052000000087fffffffffffffff00000053000000040000000000000054000000080000018d4a5100000000005500000008fffffffffffffffe0000005600000003616263",
+	)
 	// Act.
 	got, err := ParseQuoteScalars(context.Background(), input)
 	// Assert: raw signed values, zero presence and exact integers; no serialization.
-	if err != nil || got.OwnerID == nil || *got.OwnerID != -1 || got.ClientMessageID == nil || *got.ClientMessageID != 9007199254740993 || got.GlobalMessageID == nil || *got.GlobalMessageID != 9223372036854775807 || got.MessageType == nil || *got.MessageType != 0 || got.Timestamp == nil || *got.Timestamp != 1706348838912 || got.TTL == nil || *got.TTL != -2 {
+	if err != nil || got.OwnerID == nil || *got.OwnerID != -1 || got.ClientMessageID == nil ||
+		*got.ClientMessageID != 9007199254740993 ||
+		got.GlobalMessageID == nil ||
+		*got.GlobalMessageID != 9223372036854775807 ||
+		got.MessageType == nil ||
+		*got.MessageType != 0 ||
+		got.Timestamp == nil ||
+		*got.Timestamp != 1706348838912 ||
+		got.TTL == nil ||
+		*got.TTL != -2 {
 		t.Fatal("quote scalar mismatch", err)
 	}
 	b, _ := json.Marshal(got)

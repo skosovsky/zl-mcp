@@ -46,7 +46,16 @@ func TestEventsPayloadBoundsAndFullTextReference(t *testing.T) {
 		{"wrong-reference", "prefix", true, "https://example.com", false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			payload := map[string]any{"group_id": "group", "message_id": "message", "sender_id": "author", "sender_name": nil, "sent_at": "2026-10-02T00:00:00Z", "text": tc.text, "text_truncated": tc.truncated, "text_resource_uri": tc.uri}
+			payload := map[string]any{
+				"group_id":          "group",
+				"message_id":        "message",
+				"sender_id":         "author",
+				"sender_name":       nil,
+				"sent_at":           "2026-10-02T00:00:00Z",
+				"text":              tc.text,
+				"text_truncated":    tc.truncated,
+				"text_resource_uri": tc.uri,
+			}
 			// Act.
 			err := schema.Validate(payload)
 			// Assert.
@@ -66,7 +75,13 @@ func TestEventsInputsRejectProtocolAndFilterAmbiguity(t *testing.T) {
 	for _, ttl := range []any{nil, float64(60000), float64(59999), "forever"} {
 		// Synthetic zero bytes, constructed at runtime; never a receiver credential.
 		secret := "whsec_" + base64.StdEncoding.EncodeToString(make([]byte, 32))
-		args := map[string]any{"name": "zalo.message.created", "arguments": map[string]any{"group_id": "group"}, "delivery": map[string]any{"mode": "webhook", "url": "https://callback.example/events", "secret": secret}, "ttlMs": ttl, "cursor": nil}
+		args := map[string]any{
+			"name":      "zalo.message.created",
+			"arguments": map[string]any{"group_id": "group"},
+			"delivery":  map[string]any{"mode": "webhook", "url": "https://callback.example/events", "secret": secret},
+			"ttlMs":     ttl,
+			"cursor":    nil,
+		}
 		// Act.
 		err := schema.Validate(args)
 		// Assert.

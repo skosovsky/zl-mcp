@@ -12,7 +12,21 @@ func TestCookieScopeSurvivesSaveAndRestore(t *testing.T) {
 	// Arrange: parent-domain auth and a separate host-only cookie.
 	origin, _ := url.Parse("https://id.zalo.me/account/login")
 	jar := newPersistentJar()
-	jar.SetCookies(origin, []*http.Cookie{{Name: "auth", Value: "synthetic", Domain: ".zalo.me", Path: "/", Secure: true, HttpOnly: true, MaxAge: 3600}, {Name: "host", Value: "only-id", Secure: true}})
+	jar.SetCookies(
+		origin,
+		[]*http.Cookie{
+			{
+				Name:     "auth",
+				Value:    "synthetic",
+				Domain:   ".zalo.me",
+				Path:     "/",
+				Secure:   true,
+				HttpOnly: true,
+				MaxAge:   3600,
+			},
+			{Name: "host", Value: "only-id", Secure: true},
+		},
+	)
 	// Act: serialize lossless records and restore using each original origin.
 	data, err := json.Marshal(jar.snapshot())
 	if err != nil {

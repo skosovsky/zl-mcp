@@ -54,6 +54,7 @@ type SubscriptionManager struct {
 }
 
 func NewSubscriptionManager(store Subscriptions, namespace string) (*SubscriptionManager, error) {
+	//nolint:exhaustruct_v5 // SubscriptionManager preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	m := &SubscriptionManager{
 		Store:     store,
 		Client:    NewCallbackClient(),
@@ -137,9 +138,9 @@ func (m *SubscriptionManager) Call(ctx context.Context, method, principal string
 	switch method {
 	case "events/list":
 		name = "events_list"
-	case "events/subscribe":
+	case methodEventsSubscribe:
 		name = "events_subscribe"
-	case "events/unsubscribe":
+	case methodEventsUnsubscribe:
 		name = "events_unsubscribe"
 	default:
 		return nil, eventRPCError(-32601, "Method not found.", "unknown_method")
@@ -155,10 +156,10 @@ func (m *SubscriptionManager) Call(ctx context.Context, method, principal string
 	_ = json.Unmarshal(raw, &selector)
 	if selector.Name == domain.ConversationMessageCreatedV2 {
 		prefix := "conversation_v2_events_"
-		if method == "events/subscribe" {
+		if method == methodEventsSubscribe {
 			schema = m.input[prefix+"subscribe"]
 		}
-		if method == "events/unsubscribe" {
+		if method == methodEventsUnsubscribe {
 			schema = m.input[prefix+"unsubscribe"]
 		}
 	}
@@ -221,14 +222,14 @@ func listEventContracts() (any, error) {
 	return map[string]any{
 		"events": []any{
 			map[string]any{
-				"name":          MessageCreated,
+				fieldName:       MessageCreated,
 				"description":   "Newly collected messages from one explicitly enabled group. Text is limited to 2048 Unicode characters; truncated text includes a resource URI for the full record. Subscriptions survive restart; prior corpus is not replayed.",
 				"delivery":      []string{"webhook"},
 				"inputSchema":   arguments,
 				"payloadSchema": payload,
 			},
 			map[string]any{
-				"name":          domain.ConversationMessageCreatedV2,
+				fieldName:       domain.ConversationMessageCreatedV2,
 				"description":   "New locally collected messages with explicit direction and first locally known incoming evidence. Supports incoming/outgoing filters and first_incoming_only for direct incoming chats. First known is not first ever in Zalo history.",
 				"delivery":      []string{"webhook"},
 				"inputSchema":   v2Arguments,
@@ -238,20 +239,24 @@ func listEventContracts() (any, error) {
 	}, nil
 }
 
-func (m *SubscriptionManager) changeSubscription(ctx context.Context, method, principal string, raw json.RawMessage) (any, error) {
+func (m *SubscriptionManager) changeSubscription(
+	ctx context.Context,
+	method, principal string,
+	raw json.RawMessage,
+) (any, error) {
 	var p subscriptionRequest
 	if json.Unmarshal(raw, &p) != nil {
 		return nil, eventRPCError(-32602, "Invalid event parameters.", "invalid_params")
 	}
 	permitted := m.subscriptionPermitted(p)
-	if !permitted && method == "events/subscribe" {
+	if !permitted && method == methodEventsSubscribe {
 		return nil, eventRPCError(-32000, "Group is not enabled.", "access_denied")
 	}
 	if _, err := ValidateCallbackURL(p.Delivery.URL); err != nil {
 		return nil, eventRPCError(-32602, "Invalid callback URL.", "invalid_callback")
 	}
 	id := m.subscriptionID(principal, p)
-	if method == "events/unsubscribe" {
+	if method == methodEventsUnsubscribe {
 		if err := m.Store.CancelSubscription(ctx, id, principal, time.Now().UTC()); err != nil {
 			return nil, eventRPCError(-32603, "Cannot cancel subscription.", "storage")
 		}
@@ -284,14 +289,14 @@ func (m *SubscriptionManager) verifySubscriptionCallback(ctx context.Context, p 
 	verifiedAt, verified := m.verified[cacheKey]
 	m.mu.Unlock()
 	if !verified || time.Since(verifiedAt) > time.Minute {
-		verifyCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		verifyCtx, cancel := context.WithTimeout(ctx, subscriptionManagerverifySubscriptionCallbackVerifyTimeout)
 		verifyCallbackErr := VerifyCallback(verifyCtx, m.Client, p.Delivery.URL, p.Delivery.Secret, id)
 		cancel()
 		if verifyCallbackErr != nil {
 			return eventRPCError(-32015, "Callback verification failed.", "challenge_failed")
 		}
 		m.mu.Lock()
-		if len(m.verified) >= 512 {
+		if len(m.verified) >= maximumVerifiedCallbacks {
 			clear(m.verified)
 		}
 		m.verified[cacheKey] = time.Now()
@@ -300,7 +305,11 @@ func (m *SubscriptionManager) verifySubscriptionCallback(ctx context.Context, p 
 	return nil
 }
 
-func (m *SubscriptionManager) activateRequestedSubscription(ctx context.Context, p subscriptionRequest, id, principal string) (any, error) {
+func (m *SubscriptionManager) activateRequestedSubscription(
+	ctx context.Context,
+	p subscriptionRequest,
+	id, principal string,
+) (any, error) {
 	if _, err := DecodeSigningKey(p.Delivery.Secret); err != nil {
 		return nil, eventRPCError(-32602, "Invalid signing key.", "invalid_secret")
 	}
@@ -312,6 +321,7 @@ func (m *SubscriptionManager) activateRequestedSubscription(ctx context.Context,
 		return nil, verifyErr
 	}
 	at := time.Now().UTC()
+	//nolint:exhaustruct_v5 // EventSubscription preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	sub := storage.EventSubscription{
 		ID:        id,
 		Principal: principal,

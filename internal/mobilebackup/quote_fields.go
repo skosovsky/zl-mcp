@@ -32,8 +32,10 @@ func (q *Quote) Clear() {
 	q.Scalars.Clear()
 	for _, f := range []*QuoteValue{&q.Message, &q.Attachment, &q.FromD, &q.Status} {
 		clear(f.Bytes)
+		//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 		*f = QuoteValue{}
 	}
+	//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 	*q = Quote{}
 }
 
@@ -57,18 +59,18 @@ func ParseQuote(ctx context.Context, data []byte) (result Quote, err error) {
 		if ctx.Err() != nil {
 			return result, ErrTLV
 		}
-		if f.Tag >= 80 && f.Tag <= 85 {
+		if f.Tag >= quoteOwnerIDTag && f.Tag <= quoteTTLTag {
 			continue
 		}
 		var target *QuoteValue
 		switch f.Tag {
-		case 86:
+		case quoteMessageTag:
 			target = &result.Message
-		case 87:
+		case quoteAttachmentTag:
 			target = &result.Attachment
-		case 88:
+		case quoteFromDTag:
 			target = &result.FromD
-		case 90:
+		case quoteStatusTag:
 			target = &result.Status
 		default:
 			result.UnsupportedFields++

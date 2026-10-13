@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/google/uuid"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 

@@ -15,9 +15,11 @@ import (
 type Manager struct{ Store *storage.Store }
 
 func managerError(code, message string) error {
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 	return &domain.Error{
 		Code:    code,
 		Message: message,
+		//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 		NextAction: domain.NextAction{
 			Instruction: "Inspect import status; reuse the original request UUID for retries. Check collector authentication and collection policy.",
 		},
@@ -27,7 +29,7 @@ func managerError(code, message string) error {
 
 func (m *Manager) Call(ctx context.Context, method string, arguments any) (map[string]any, error) {
 	name := "history_import_operation"
-	if method == "zalo_import_conversation_history" {
+	if method == toolImportConversationHistory {
 		name = "history_import_request"
 	} else if method != "zalo_get_history_import_status" && method != "zalo_cancel_history_import" {
 		return nil, domain.Invalid("Unknown history import method.")
@@ -48,7 +50,7 @@ func (m *Manager) Call(ctx context.Context, method string, arguments any) (map[s
 		return nil, domain.Invalid("History arguments do not match the executable contract.")
 	}
 	var op storage.HistoryOperation
-	if method == "zalo_import_conversation_history" {
+	if method == toolImportConversationHistory {
 		var r domain.HistoryImportRequest
 		if json.Unmarshal(b, &r) != nil {
 			return nil, domain.Invalid("Invalid history import request.")
@@ -74,7 +76,7 @@ func (m *Manager) Call(ctx context.Context, method string, arguments any) (map[s
 	if observer := shared.Telemetry(
 		ctx,
 	); observer != nil && observer.Recording() &&
-		method == "zalo_import_conversation_history" {
+		method == toolImportConversationHistory {
 		observer.Remember(ctx, domain.WorkHistory, op.Status.OperationID)
 	}
 	encoded, err := json.Marshal(op.Status)
@@ -99,7 +101,7 @@ func projectHistoryError(method string, err error) error {
 		return managerError("OPERATION_IN_PROGRESS", "This conversation already has active history work.")
 	case errors.Is(err, storage.ErrHistoryCapacity):
 		return managerError("CAPACITY_EXCEEDED", "History operation ledger is full.")
-	case errors.Is(err, sql.ErrNoRows) && method == "zalo_import_conversation_history":
+	case errors.Is(err, sql.ErrNoRows) && method == toolImportConversationHistory:
 		return managerError("NOT_AUTHENTICATED", "No authenticated account is bound to this state directory.")
 	case errors.Is(err, sql.ErrNoRows):
 		return managerError("NOT_FOUND", "No accessible history operation was found.")

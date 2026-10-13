@@ -74,7 +74,7 @@ func ReadContainer(ctx context.Context, r io.Reader, limit uint64) (Container, e
 }
 
 func readFileTable(body []byte) (Header, int, error) {
-	if len(body) < 4 {
+	if len(body) < fileTableScalarBytes {
 		return Header{}, 0, ErrHeader
 	}
 	original := len(body)
@@ -83,10 +83,11 @@ func readFileTable(body []byte) (Header, int, error) {
 		return Header{}, 0, ErrHeader
 	}
 	body = body[4:]
+	//nolint:exhaustruct_v5 // Header keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	result := Header{Files: make([]File, 0, int(count))}
 	seen := make(map[string]bool, int(count))
 	for range count {
-		if len(body) < 4 {
+		if len(body) < fileTableScalarBytes {
 			return Header{}, 0, ErrHeader
 		}
 		n := binary.BigEndian.Uint32(body[:4])

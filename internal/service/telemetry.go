@@ -16,7 +16,7 @@ func sampleNativeQueues(ctx context.Context, owner shared.NativeObservationPort)
 
 // observeNativeQueues belongs to the service lifecycle, never a command path.
 func observeNativeQueues(ctx context.Context, owner shared.NativeObservationPort) error {
-	ticker := time.NewTicker(500 * time.Millisecond)
+	ticker := time.NewTicker(telemetryQueueInterval)
 	defer ticker.Stop()
 	for {
 		sampleNativeQueues(ctx, owner)

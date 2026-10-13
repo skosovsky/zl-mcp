@@ -41,7 +41,7 @@ func reportStartupFailure(path string, cause error, fallback io.Writer) bool {
 		},
 	)
 	body = append(body, '\n')
-	sink, err := Open(path, 5, 3, fallback)
+	sink, err := Open(path, startupLogSizeMB, startupLogBackups, fallback)
 	if err != nil {
 		//nolint:errcheck,gosec // Last-resort diagnostic output cannot report its own failure recursively.
 		fallback.Write(body)
@@ -68,7 +68,7 @@ func reportStartupFailure(path string, cause error, fallback io.Writer) bool {
 			fallback.Write(body)
 			return false
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(startupLogDrainInterval)
 	}
 	//nolint:errcheck // Unlock is fallback cleanup; closing lock releases the OS lock.
 	defer unix.Flock(int(lock.Fd()), unix.LOCK_UN)

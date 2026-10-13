@@ -21,8 +21,8 @@ func ConversationMessageView(m domain.Message) map[string]any {
 	v := map[string]any{}
 	_ = json.Unmarshal(b, &v)
 	delete(v, "group_id")
-	v["conversation_type"] = m.Ref().Type
-	v["conversation_id"] = m.Ref().ID
+	v[fieldConversationType] = m.Ref().Type
+	v[fieldConversationID] = m.Ref().ID
 	return v
 }
 func coverageView(c domain.Coverage, ref domain.ConversationRef) map[string]any {
@@ -30,8 +30,8 @@ func coverageView(c domain.Coverage, ref domain.ConversationRef) map[string]any 
 	v := map[string]any{}
 	_ = json.Unmarshal(b, &v)
 	delete(v, "group_id")
-	v["conversation_type"] = ref.Type
-	v["conversation_id"] = ref.ID
+	v[fieldConversationType] = ref.Type
+	v[fieldConversationID] = ref.ID
 	return v
 }
 
@@ -89,12 +89,13 @@ func (s *Store) ConversationContext(
 	} else {
 		result["reply_to"] = nil
 	}
-	coverage, ok := result["coverage"].(domain.Coverage)
+	coverage, ok := result[fieldCoverage].(domain.Coverage)
 	if !ok {
 		return nil, errors.New("invalid context coverage projection")
 	}
-	result["coverage"] = coverageView(coverage, ref)
+	result[fieldCoverage] = coverageView(coverage, ref)
 	if result["next_action"] != nil {
+		//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 		result["next_action"] = domain.NextAction{
 			Instruction: "Read omitted message IDs with zalo_get_conversation_message_context.",
 		}
@@ -112,8 +113,8 @@ func (s *Store) ConversationSummary(ctx context.Context) (map[string]any, error)
 	}
 	return map[string]any{
 		"conversation_count":            len(refs),
-		"history_complete":              false,
-		"conversations_with_known_gaps": gaps["direct"] + gaps["group"],
+		fieldHistoryComplete:            false,
+		"conversations_with_known_gaps": gaps[domain.ConversationDirect] + gaps[domain.ConversationGroup],
 	}, nil
 }
 
@@ -126,7 +127,8 @@ func (s *Store) Conversations(
 	if limit == 0 {
 		limit = 20
 	}
-	if limit < 1 || limit > 50 || (kind != "" && kind != "group" && kind != "direct") {
+	if limit < 1 || limit > 50 ||
+		(kind != "" && kind != domain.ConversationGroup && kind != domain.ConversationDirect) {
 		return nil, domain.Invalid("Invalid conversation filter or page limit.")
 	}
 	h := sha256.Sum256([]byte(kind + "\x00" + query))
@@ -149,8 +151,8 @@ func (s *Store) Conversations(
 	if more {
 		values = values[:limit]
 		last := values[len(values)-1]
-		kind, kindOK := last["conversation_type"].(string)
-		id, idOK := last["conversation_id"].(string)
+		kind, kindOK := last[fieldConversationType].(string)
+		id, idOK := last[fieldConversationID].(string)
 		if !kindOK || !idOK {
 			return nil, errors.New("invalid conversation cursor projection")
 		}
@@ -173,12 +175,12 @@ func (s *Store) Conversations(
 	}
 	sort.Strings(ordered)
 	return map[string]any{
-		"conversations":    values,
-		"has_more":         more,
-		"next_cursor":      next,
-		"catalog_complete": false,
-		"catalog_sources":  ordered,
-		"empty_reason":     reason,
+		"conversations":      values,
+		fieldHasMore:         more,
+		fieldNextCursor:      next,
+		fieldCatalogComplete: false,
+		"catalog_sources":    ordered,
+		fieldEmptyReason:     reason,
 	}, nil
 }
 func (s *Store) Conversation(ctx context.Context, ref domain.ConversationRef) (map[string]any, error) {
@@ -206,22 +208,22 @@ func (s *Store) Conversation(ctx context.Context, ref domain.ConversationRef) (m
 		return nil, err
 	}
 	return map[string]any{
-		"conversation": map[string]any{
-			"conversation_type":   ref.Type,
-			"conversation_id":     ref.ID,
+		wireConversation: map[string]any{
+			fieldConversationType: ref.Type,
+			fieldConversationID:   ref.ID,
 			"name":                name,
 			"metadata_source":     source,
 			"availability":        availability,
 			"first_discovered_at": first,
-			"updated_at":          updated,
+			fieldUpdatedAt:        updated,
 			"collection_enabled":  true,
 			"aliases":             aliases,
 			"friendship":          friendship,
 			"has_stored_messages": hasMessages,
 			"metadata_sources":    sources,
 		},
-		"coverage":         coverage,
-		"catalog_complete": false,
+		fieldCoverage:        coverage,
+		fieldCatalogComplete: false,
 	}, nil
 }
 
@@ -230,7 +232,7 @@ func (s *Store) CollectionStatus(ctx context.Context) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	conversations := map[string]int{"direct": 0, "group": 0}
+	conversations := map[string]int{domain.ConversationDirect: 0, domain.ConversationGroup: 0}
 	messages, err := s.conversationMessageCounts(ctx)
 	if err != nil {
 		return nil, err
@@ -240,14 +242,14 @@ func (s *Store) CollectionStatus(ctx context.Context) (map[string]any, error) {
 	}
 	mode := "selected"
 	if s.policy.All {
-		mode = "all"
+		mode = directionAll
 	}
 	return map[string]any{
 		"mode":                mode,
 		"conversation_counts": conversations,
 		"message_counts":      messages,
-		"catalog_complete":    false,
-		"history_complete":    false,
+		fieldCatalogComplete:  false,
+		fieldHistoryComplete:  false,
 	}, nil
 }
 
@@ -263,7 +265,12 @@ type directoryPage struct {
 	discovered int
 }
 
-func (s *Store) scanDirectoryRows(rows *sql.Rows, kind, query string, c conversationCursor, limit int) (directoryPage, error) {
+func (s *Store) scanDirectoryRows(
+	rows *sql.Rows,
+	kind, query string,
+	c conversationCursor,
+	limit int,
+) (directoryPage, error) {
 	values := []map[string]any{}
 	sources := map[string]bool{}
 	discovered := 0
@@ -296,13 +303,13 @@ func (s *Store) scanDirectoryRows(rows *sql.Rows, kind, query string, c conversa
 			values = append(
 				values,
 				map[string]any{
-					"conversation_type":   ref.Type,
-					"conversation_id":     ref.ID,
+					fieldConversationType: ref.Type,
+					fieldConversationID:   ref.ID,
 					"name":                record.name,
 					"metadata_source":     record.source,
 					"availability":        record.availability,
 					"first_discovered_at": record.first,
-					"updated_at":          record.updated,
+					fieldUpdatedAt:        record.updated,
 					"collection_enabled":  true,
 					"aliases":             aliases,
 					"friendship":          record.friendship,
@@ -330,11 +337,23 @@ type directoryRecord struct {
 
 func scanDirectoryRecord(rows *sql.Rows) (directoryRecord, error) {
 	var record directoryRecord
-	err := rows.Scan(&record.ref.Type, &record.ref.ID, &record.name, &record.source, &record.availability, &record.first, &record.updated, &record.aliasesJSON, &record.friendship, &record.hasMessages)
+	err := rows.Scan(
+		&record.ref.Type,
+		&record.ref.ID,
+		&record.name,
+		&record.source,
+		&record.availability,
+		&record.first,
+		&record.updated,
+		&record.aliasesJSON,
+		&record.friendship,
+		&record.hasMessages,
+	)
 	return record, err
 }
 
 func (s *Store) directoryCursor(fingerprint, token string) (conversationCursor, error) {
+	//nolint:exhaustruct_v5 // conversationCursor preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	c := conversationCursor{Fingerprint: fingerprint}
 	if token != "" {
 		if err := s.DecodeCursor(token, &c); err != nil {

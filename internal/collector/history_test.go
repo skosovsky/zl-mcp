@@ -12,10 +12,16 @@ import (
 
 type historyListener struct {
 	*scriptedListener
+
 	fetch func(context.Context, domain.ConversationRef, string, int) (domain.HistoryPage, error)
 }
 
-func (h *historyListener) HistoryPage(ctx context.Context, ref domain.ConversationRef, cursor string, limit int) (domain.HistoryPage, error) {
+func (h *historyListener) HistoryPage(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	cursor string,
+	limit int,
+) (domain.HistoryPage, error) {
 	return h.fetch(ctx, ref, cursor, limit)
 }
 
@@ -24,7 +30,7 @@ func TestHistoryGuardSharesAuthenticationCancellation(t *testing.T) {
 	started := make(chan struct{})
 	var calls atomic.Int32
 	source := &historyListener{scriptedListener: &scriptedListener{fakeZalo: &fakeZalo{}}}
-	source.fetch = func(ctx context.Context, ref domain.ConversationRef, cursor string, limit int) (domain.HistoryPage, error) {
+	source.fetch = func(ctx context.Context, _ domain.ConversationRef, _ string, _ int) (domain.HistoryPage, error) {
 		calls.Add(1)
 		close(started)
 		<-ctx.Done()

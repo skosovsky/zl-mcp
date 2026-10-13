@@ -19,6 +19,7 @@ type sessionGuard struct {
 
 func newSessionGuard(parent context.Context, client ListenerUpstream) *sessionGuard {
 	ctx, cancel := context.WithCancel(parent)
+	//nolint:exhaustruct_v5 // sessionGuard initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	return &sessionGuard{upstream: client, ctx: ctx, cancel: cancel}
 }
 func (g *sessionGuard) AuthenticationRequired() bool { return g.authRequired.Load() }
@@ -86,7 +87,13 @@ func (g *sessionGuard) Join(parent context.Context, url string) error {
 	defer stop()
 	return g.observe(g.upstream.Join(ctx, url))
 }
-func (g *sessionGuard) Listen(parent context.Context, message func(domain.Message) error, deletion func(string, string) error, connected func() error) error {
+
+func (g *sessionGuard) Listen(
+	parent context.Context,
+	message func(domain.Message) error,
+	deletion func(string, string) error,
+	connected func() error,
+) error {
 	ctx, stop, err := g.request(parent)
 	if err != nil {
 		return err

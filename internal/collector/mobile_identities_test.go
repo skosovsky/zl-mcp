@@ -3,19 +3,24 @@ package collector
 import (
 	"context"
 	"errors"
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 type blockedIdentitySource struct {
 	*scriptedListener
+
 	started chan struct{}
 	calls   atomic.Int32
 }
 
-func (s *blockedIdentitySource) MapMobileBackupIdentities(ctx context.Context, _ domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+func (s *blockedIdentitySource) MapMobileBackupIdentities(
+	ctx context.Context,
+	_ domain.MobileIdentityRequest,
+) ([]domain.MobileIdentityPair, error) {
 	s.calls.Add(1)
 	close(s.started)
 	<-ctx.Done()
@@ -23,7 +28,10 @@ func (s *blockedIdentitySource) MapMobileBackupIdentities(ctx context.Context, _
 }
 func TestMobileIdentityGuardCancelsSharedSession(t *testing.T) {
 	// Arrange.
-	source := &blockedIdentitySource{scriptedListener: &scriptedListener{fakeZalo: &fakeZalo{}}, started: make(chan struct{})}
+	source := &blockedIdentitySource{
+		scriptedListener: &scriptedListener{fakeZalo: &fakeZalo{}},
+		started:          make(chan struct{}),
+	}
 	source.listen = func(context.Context, func(domain.Message) error, func(string, string) error, func() error) error {
 		return domain.ErrAuthenticationRequired
 	}
@@ -52,17 +60,25 @@ func TestMobileIdentityGuardCancelsSharedSession(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("mapping not cancelled")
 	}
-	if _, err := guard.MapMobileBackupIdentities(context.Background(), domain.MobileIdentityRequest{}); !errors.Is(err, domain.ErrAuthenticationRequired) || source.calls.Load() != 1 {
+	if _, err := guard.MapMobileBackupIdentities(
+		context.Background(),
+		domain.MobileIdentityRequest{},
+	); !errors.Is(err, domain.ErrAuthenticationRequired) ||
+		source.calls.Load() != 1 {
 		t.Fatal("revoked session reached source")
 	}
 }
 
 type completedIdentitySource struct {
 	*scriptedListener
+
 	revoke func()
 }
 
-func (s *completedIdentitySource) MapMobileBackupIdentities(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+func (s *completedIdentitySource) MapMobileBackupIdentities(
+	context.Context,
+	domain.MobileIdentityRequest,
+) ([]domain.MobileIdentityPair, error) {
 	s.revoke()
 	return []domain.MobileIdentityPair{{Plain: "1", Session: "2"}}, nil
 }
@@ -73,7 +89,10 @@ func TestMobileIdentityGuardDiscardsSuccessAfterRevocation(t *testing.T) {
 	defer guard.cancel()
 	source.revoke = func() { guard.observe(domain.ErrAuthenticationRequired) }
 	// Act.
-	result, err := guard.MapMobileBackupIdentities(context.Background(), domain.MobileIdentityRequest{Direct: []string{"1"}})
+	result, err := guard.MapMobileBackupIdentities(
+		context.Background(),
+		domain.MobileIdentityRequest{Direct: []string{"1"}},
+	)
 	// Assert: successful upstream data cannot escape a revoked session.
 	if !errors.Is(err, domain.ErrAuthenticationRequired) || result != nil {
 		t.Fatal("revoked successful mapping exposed")

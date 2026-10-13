@@ -38,10 +38,10 @@ func (s *historyServiceSource) Listen(
 }
 
 func (s *historyServiceSource) HistoryPage(
-	ctx context.Context,
+	_ context.Context,
 	ref domain.ConversationRef,
-	cursor string,
-	limit int,
+	_ string,
+	_ int,
 ) (domain.HistoryPage, error) {
 	s.pages.Add(1)
 	more := false
@@ -60,9 +60,9 @@ func (s *historyServiceSource) HistoryPage(
 }
 
 func (s *historyServiceSource) PreloadHistoryPage(
-	ctx context.Context,
+	_ context.Context,
 	ref domain.ConversationRef,
-	limit int,
+	_ int,
 ) (domain.HistoryPage, error) {
 	s.pages.Add(1)
 	return domain.HistoryPage{
@@ -87,6 +87,7 @@ func TestHTTPHistoryToolsUseExistingCollectorSession(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange: production service lifecycle/HTTP, one restore and one listener.
+			//nolint:usetesting // A short temporary path keeps macOS Unix socket names within their bound; t.Cleanup owns removal.
 			dir, err := os.MkdirTemp("/tmp", "zl-history-service-")
 			if err != nil {
 				t.Fatal(err)

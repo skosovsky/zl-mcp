@@ -33,14 +33,18 @@ func TestFormat1IndependentOpenSSLChunks(t *testing.T) {
 	}
 	copy(want, goldenHeader(t))
 	// Act
-	got, err := DecryptFormat1(context.Background(), bytes.NewReader(input), strings.Repeat("0123456789abcdef", 4), int64(len(input)))
+	got, err := DecryptFormat1(
+		context.Background(),
+		bytes.NewReader(input),
+		strings.Repeat("0123456789abcdef", 4),
+		int64(len(input)),
+	)
 	// Assert: exact bytes, including the first block after IV reset at 65536.
 	if err != nil || !bytes.Equal(got, want) {
 		t.Fatal("independent cipher vector mismatch", err)
 	}
 	// This independent block vector contains a table prefix and arbitrary bytes;
 	// it is deliberately not asserted to be a complete mobile archive.
-
 }
 
 func TestFormat1RejectsBadKeyAlignmentBudgetAndCancellation(t *testing.T) {

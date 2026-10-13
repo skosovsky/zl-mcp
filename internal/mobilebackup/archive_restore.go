@@ -44,7 +44,7 @@ func openArchiveBackup(dir string) (*RetainedArchiveStore, error) {
 		f.Close()
 		return nil, ErrRetainedArchive
 	}
-	key, err := io.ReadAll(io.LimitReader(f, 33))
+	key, err := io.ReadAll(io.LimitReader(f, archiveKeyReadLimit))
 	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	f.Close()
 	defer clear(key)
@@ -63,8 +63,10 @@ func openArchiveBackup(dir string) (*RetainedArchiveStore, error) {
 	if err != nil {
 		return nil, ErrRetainedArchive
 	}
+	//nolint:exhaustruct_v5 // RetainedArchiveStore keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	store := &RetainedArchiveStore{
 		backup: true,
+		//nolint:exhaustruct_v5 // SnapshotStore keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 		ledger: &SnapshotStore{root: root, aead: aead, claims: claims, now: time.Now, mu: make(chan struct{}, 1)},
 	}
 	store.ledger.mu <- struct{}{}

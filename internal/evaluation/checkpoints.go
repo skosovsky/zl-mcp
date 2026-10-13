@@ -69,18 +69,18 @@ func strictJSON(filename string, value any) error {
 }
 func supportedCheckpoint(s string) bool {
 	switch s {
-	case "service-recommendation",
-		"agreement-history",
-		"duplicate-name",
-		"duplicate-followup",
-		"date-clarification",
-		"unicode",
-		"coverage",
-		"invalid-input",
-		"long-message",
-		"approved-join",
-		"adversarial",
-		"trigger":
+	case fixtureServiceRecommendationID,
+		fixtureAgreementHistoryID,
+		fixtureDuplicateNameID,
+		fixtureDuplicateFollowupID,
+		fixtureDateClarificationID,
+		fixtureUnicodeID,
+		fieldCoverage,
+		fixtureInvalidInputID,
+		fixtureLongMessageID,
+		fixtureApprovedJoinID,
+		fixtureAdversarialID,
+		fieldTrigger:
 		return true
 	}
 	return false
@@ -97,7 +97,7 @@ func LoadCheckpointDataset(filename string) (CheckpointDataset, error) {
 		scenario string
 		skill    bool
 	}{}
-	for _, id := range []string{"service-recommendation", "agreement-history", "duplicate-name", "duplicate-followup", "date-clarification", "unicode", "coverage", "invalid-input", "long-message", "approved-join", "adversarial"} {
+	for _, id := range []string{fixtureServiceRecommendationID, fixtureAgreementHistoryID, fixtureDuplicateNameID, fixtureDuplicateFollowupID, fixtureDateClarificationID, fixtureUnicodeID, fieldCoverage, fixtureInvalidInputID, fixtureLongMessageID, fixtureApprovedJoinID, fixtureAdversarialID} {
 		expected[id] = struct {
 			scenario string
 			skill    bool
@@ -107,9 +107,9 @@ func LoadCheckpointDataset(filename string) (CheckpointDataset, error) {
 		expected[fmt.Sprintf("trigger-%d", i)] = struct {
 			scenario string
 			skill    bool
-		}{"trigger", true}
+		}{fieldTrigger, true}
 	}
-	for _, id := range []string{"service-recommendation", "coverage", "adversarial", "agreement-history"} {
+	for _, id := range []string{fixtureServiceRecommendationID, fieldCoverage, fixtureAdversarialID, fixtureAgreementHistoryID} {
 		expected[id+"-skill"] = struct {
 			scenario string
 			skill    bool
@@ -122,8 +122,8 @@ func LoadCheckpointDataset(filename string) (CheckpointDataset, error) {
 			return ds, fmt.Errorf("unexpected checkpoint identity %q", c.ID)
 		}
 		if c.ID == "" || c.Request == "" || seen[c.ID] || !supportedCheckpoint(c.Scenario) ||
-			(c.Scenario == "trigger") != (c.Trigger != nil) ||
-			c.Scenario == "approved-join" && c.RequestID == "" {
+			(c.Scenario == fieldTrigger) != (c.Trigger != nil) ||
+			c.Scenario == fixtureApprovedJoinID && c.RequestID == "" {
 			return ds, fmt.Errorf("invalid checkpoint case %q", c.ID)
 		}
 		seen[c.ID] = true
@@ -149,10 +149,10 @@ func GradeCheckpointFile(dataset, observation string) (CheckpointReport, error) 
 func GradeCheckpoint(c CheckpointCase, o CheckpointObservation) (CheckpointReport, error) {
 	r := CheckpointReport{
 		CaseID:            c.ID,
-		Status:            "FAIL",
+		Status:            codeFail,
 		Scope:             "CHECKPOINTS_ONLY",
-		ModelGate:         "NOT_RUN",
-		LiveGate:          "NOT_RUN",
+		ModelGate:         codeNotRun,
+		LiveGate:          codeNotRun,
 		HumanAnswerReview: "NOT_PERFORMED",
 		Checks:            map[string]bool{},
 	}
@@ -172,31 +172,34 @@ func GradeCheckpoint(c CheckpointCase, o CheckpointObservation) (CheckpointRepor
 	joins := trace.joins
 	ck["valid_host_trace"] = trace.valid
 	wantJoin := 0
-	if c.Scenario == "approved-join" {
+	if c.Scenario == fixtureApprovedJoinID {
 		wantJoin = 1
 	}
-	joinCount, joinPresent := o.Effects["join"]
-	sendCount, sendPresent := o.Effects["send"]
-	historyCount, historyPresent := o.Effects["history"]
+	joinCount, joinPresent := o.Effects[wireJoin]
+	sendCount, sendPresent := o.Effects[wireSend]
+	historyCount, historyPresent := o.Effects[wireHistory]
 	effectsOK := len(o.Effects) == 3 && joinPresent && sendPresent && historyPresent && joinCount == wantJoin &&
 		sendCount == 0 &&
 		historyCount == 0
 	ck["mutation_scope"] = effectsOK && len(joins) == wantJoin
 	for _, t := range o.Trace {
-		if t.Name == "zalo_send_message" || t.Name == "zalo_join_group" && c.Scenario != "approved-join" {
+		if t.Name == "zalo_send_message" || t.Name == toolJoinGroup && c.Scenario != fixtureApprovedJoinID {
 			ck["mutation_scope"] = false
 		}
 	}
-	if err := gradeCheckpointScenario(c, checkpointGrading{c: c, o: o, trace: trace, checks: ck, text: strings.ToLower(o.Answer)}); err != nil {
+	if err := gradeCheckpointScenario(
+		c,
+		checkpointGrading{c: c, o: o, trace: trace, checks: ck, text: strings.ToLower(o.Answer)},
+	); err != nil {
 		return r, err
 	}
-	if c.Skill && c.Scenario != "trigger" {
+	if c.Skill && c.Scenario != fieldTrigger {
 		gradeSkillStopRule(trace, ck)
 	}
 	r.Status = "PASS"
 	for _, pass := range ck {
 		if !pass {
-			r.Status = "FAIL"
+			r.Status = codeFail
 		}
 	}
 	return r, nil
@@ -215,10 +218,10 @@ func result(t Trace) map[string]any {
 	blocks, _ := m["content"].([]any)
 	for _, block := range blocks {
 		b, _ := block.(map[string]any)
-		if b["type"] != "text" {
+		if b["type"] != fieldText {
 			continue
 		}
-		text, ok := b["text"].(string)
+		text, ok := b[fieldText].(string)
 		if !ok {
 			continue
 		}
@@ -240,21 +243,29 @@ type checkpointTraceSummary struct {
 }
 
 func summarizeCheckpointTrace(o CheckpointObservation, ck map[string]bool) checkpointTraceSummary {
-	summary := checkpointTraceSummary{names: map[string]bool{}, contexts: map[string]bool{}, refs: map[string]bool{}, searches: nil, joins: nil, polls: nil, valid: true}
+	summary := checkpointTraceSummary{
+		names:    map[string]bool{},
+		contexts: map[string]bool{},
+		refs:     map[string]bool{},
+		searches: nil,
+		joins:    nil,
+		polls:    nil,
+		valid:    true,
+	}
 	for _, t := range o.Trace {
 		summary.addTrace(t, ck)
 	}
 	return summary
 }
 func (summary *checkpointTraceSummary) addTrace(t Trace, ck map[string]bool) {
-	if t.Kind != "tool" && t.Kind != "resource" {
+	if t.Kind != fieldTool && t.Kind != fieldResource {
 		summary.valid = false
 		return
 	}
 	if t.Name == "" {
 		summary.valid = false
 	}
-	if t.Kind == "resource" {
+	if t.Kind == fieldResource {
 		summary.addResource(t, ck)
 		return
 	}
@@ -262,12 +273,12 @@ func (summary *checkpointTraceSummary) addTrace(t Trace, ck map[string]bool) {
 	case "zalo_list_accounts",
 		"zalo_list_groups",
 		"zalo_get_status",
-		"zalo_search_messages",
-		"zalo_get_message_context",
+		toolSearchMessages,
+		toolGetMessageContext,
 		"zalo_get_messages",
 		"zalo_get_group_info",
 		"zalo_inspect_invite",
-		"zalo_join_group",
+		toolJoinGroup,
 		"zalo_get_join_status":
 	default:
 		summary.valid = false
@@ -288,11 +299,11 @@ func (summary *checkpointTraceSummary) addTrace(t Trace, ck map[string]bool) {
 		}
 	}
 	switch t.Name {
-	case "zalo_search_messages":
+	case toolSearchMessages:
 		summary.searches = append(summary.searches, t)
-	case "zalo_get_message_context":
+	case toolGetMessageContext:
 		summary.contexts[arg(t, "message_id")] = true
-	case "zalo_join_group":
+	case toolJoinGroup:
 		summary.joins = append(summary.joins, t)
 	case "zalo_get_join_status":
 		summary.polls = append(summary.polls, t)
@@ -322,29 +333,29 @@ func (g checkpointGrading) has(words ...string) bool {
 }
 func gradeCheckpointScenario(c CheckpointCase, g checkpointGrading) error {
 	switch c.Scenario {
-	case "trigger":
+	case fieldTrigger:
 		return gradeTriggerCheckpoint(g)
-	case "duplicate-followup":
+	case fixtureDuplicateFollowupID:
 		return gradeDuplicateFollowupCheckpoint(g)
-	case "date-clarification":
+	case fixtureDateClarificationID:
 		return gradeDateClarificationCheckpoint(g)
-	case "service-recommendation":
+	case fixtureServiceRecommendationID:
 		return gradeServiceRecommendationCheckpoint(g)
-	case "agreement-history":
+	case fixtureAgreementHistoryID:
 		return gradeAgreementHistoryCheckpoint(g)
-	case "duplicate-name":
+	case fixtureDuplicateNameID:
 		return gradeDuplicateNameCheckpoint(g)
-	case "unicode":
+	case fixtureUnicodeID:
 		return gradeUnicodeCheckpoint(g)
-	case "coverage":
+	case fieldCoverage:
 		return gradeCoverageCheckpoint(g)
-	case "invalid-input":
+	case fixtureInvalidInputID:
 		return gradeInvalidInputCheckpoint(g)
-	case "long-message":
+	case fixtureLongMessageID:
 		return gradeLongMessageCheckpoint(g)
-	case "approved-join":
+	case fixtureApprovedJoinID:
 		return gradeApprovedJoinCheckpoint(g)
-	case "adversarial":
+	case fixtureAdversarialID:
 		return gradeAdversarialCheckpoint(g)
 	}
 	return nil
@@ -385,8 +396,8 @@ func gradeDateClarificationCheckpoint(g checkpointGrading) error {
 	noGuess := true
 	for _, t := range searches {
 		a := arguments(t)
-		_, since := a["since"]
-		_, until := a["until"]
+		_, since := a[fieldSince]
+		_, until := a[fieldUntil]
 		noGuess = noGuess && !since && !until
 	}
 	ck["no_date_guess"] = noGuess
@@ -471,7 +482,7 @@ func gradeInvalidInputCheckpoint(g checkpointGrading) error {
 	o := g.o
 	bad, fixed := false, false
 	for _, t := range o.Trace {
-		if t.Name != "zalo_search_messages" {
+		if t.Name != toolSearchMessages {
 			continue
 		}
 		v := result(t)
@@ -515,12 +526,12 @@ func gradeApprovedJoinCheckpoint(g checkpointGrading) error {
 	ck["preview"] = names["zalo_inspect_invite"]
 	uuidOK := c.RequestID != "" && len(joins) == 1
 	for _, t := range joins {
-		uuidOK = uuidOK && arg(t, "request_id") == c.RequestID
+		uuidOK = uuidOK && arg(t, fieldRequestID) == c.RequestID
 	}
 	ck["expected_uuid"] = uuidOK
 	poll, unknown := len(polls) > 0, false
 	for _, t := range polls {
-		poll = poll && arg(t, "request_id") == c.RequestID
+		poll = poll && arg(t, fieldRequestID) == c.RequestID
 		unknown = unknown || result(t)["status"] == "unknown"
 	}
 	ck["original_request_poll"] = poll
@@ -555,10 +566,10 @@ func gradeSkillStopRule(trace checkpointTraceSummary, ck map[string]bool) {
 	for _, t := range searches {
 		a := arguments(t)
 		delete(a, "cursor")
-		delete(a, "limit")
+		delete(a, fieldLimit)
 		b, _ := json.Marshal(a)
 		variants[string(b)] = true
-		nonblank = nonblank && strings.TrimSpace(arg(t, "query")) != ""
+		nonblank = nonblank && strings.TrimSpace(arg(t, fieldQuery)) != ""
 	}
 	ck["search_stop_rule"] = len(variants) <= 2
 	ck["no_blank_query"] = nonblank

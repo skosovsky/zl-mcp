@@ -69,7 +69,7 @@ func loadDataset(path string) (Dataset, error) {
 			return ds, err
 		}
 		for kind, count := range cs.ExpectedEffects {
-			if count < 0 || (kind != "send" && kind != "join" && kind != "history") {
+			if count < 0 || (kind != wireSend && kind != wireJoin && kind != wireHistory) {
 				return ds, fmt.Errorf("invalid effects in %s", cs.ID)
 			}
 		}
@@ -92,7 +92,7 @@ func readEffects(path string) (map[string]int, error) {
 	}
 	// G104: Read-only input file cleanup cannot replace the parse error.
 	defer file.Close()
-	b, err := io.ReadAll(io.LimitReader(file, (64<<10)+1))
+	b, err := io.ReadAll(io.LimitReader(file, maximumSkillBytes+1))
 	if err != nil {
 		return nil, err
 	}
@@ -117,27 +117,28 @@ func readEffects(path string) (map[string]int, error) {
 func Run(ctx context.Context, opts Options) (Report, error) {
 	var report Report
 	var err error
+	//nolint:exhaustruct_v5 // Report fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	report = Report{
 		Status:     "INCOMPLETE",
 		ExitStatus: 2,
-		ModelGate:  "NOT_RUN",
-		LiveGate:   "NOT_RUN",
+		ModelGate:  codeNotRun,
+		LiveGate:   codeNotRun,
 		Manifest:   map[string]any{},
 	}
 	if opts.RunBudget <= 0 || opts.Repeats <= 0 {
 		return report, errors.New("explicit positive run budget/repeats required")
 	}
-	if opts.Profile != "offline" && opts.Profile != "model" {
+	if opts.Profile != "offline" && opts.Profile != wireModel {
 		return report, errors.New("unknown evaluation profile")
 	}
-	if opts.Profile == "model" && opts.ModelDriver == "" {
+	if opts.Profile == wireModel && opts.ModelDriver == "" {
 		report.Manifest = map[string]any{
-			"profile":             opts.Profile,
-			"case_budget_seconds": 180,
-			"max_tool_calls":      30,
-			"run_budget_seconds":  opts.RunBudget.Seconds(),
-			"model_gate":          "NOT_RUN",
-			"live_gate":           "NOT_RUN",
+			fieldProfile:           opts.Profile,
+			fieldCaseBudgetSeconds: modelCaseBudgetSeconds,
+			"max_tool_calls":       maximumModelToolCalls,
+			fieldRunBudgetSeconds:  opts.RunBudget.Seconds(),
+			fieldModelGate:         codeNotRun,
+			"live_gate":            codeNotRun,
 		}
 		report.Reason = "Model profile requires a separately authorized host agent driver; no model executed"
 		return report, nil
@@ -146,21 +147,21 @@ func Run(ctx context.Context, opts Options) (Report, error) {
 	if err != nil {
 		return report, err
 	}
-	if opts.Profile == "model" {
+	if opts.Profile == wireModel {
 		report.Manifest = map[string]any{
-			"profile":             "model",
-			"case_budget_seconds": 180,
-			"max_tool_calls":      30,
-			"run_budget_seconds":  opts.RunBudget.Seconds(),
-			"model_gate":          "NOT_RUN",
-			"full_model_gate":     "NOT_RUN",
-			"model_driver_sha256": hashFile(opts.ModelDriver),
-			"model_id":            nil,
-			"model_settings":      nil,
-			"prompt_revision":     nil,
-			"skill_revision":      nil,
-			"tokens":              nil,
-			"unavailable_reason":  "No separately authorized full scenario model driver run",
+			fieldProfile:           wireModel,
+			fieldCaseBudgetSeconds: modelCaseBudgetSeconds,
+			"max_tool_calls":       maximumModelToolCalls,
+			fieldRunBudgetSeconds:  opts.RunBudget.Seconds(),
+			fieldModelGate:         codeNotRun,
+			"full_model_gate":      codeNotRun,
+			"model_driver_sha256":  hashFile(opts.ModelDriver),
+			"model_id":             nil,
+			"model_settings":       nil,
+			"prompt_revision":      nil,
+			"skill_revision":       nil,
+			"tokens":               nil,
+			"unavailable_reason":   "No separately authorized full scenario model driver run",
 		}
 		for _, cs := range ds.Cases {
 			if !modelScenarioSupported(cs.ID) {
@@ -178,15 +179,17 @@ func Run(ctx context.Context, opts Options) (Report, error) {
 	started := time.Now()
 	report.ExpectedCases = len(ds.Cases) * opts.Repeats
 	for _, cs := range ds.Cases {
-		report.ExpectedAssertions += (len(cs.Checks) + 6) * opts.Repeats
+		report.ExpectedAssertions += (len(cs.Checks) + baseContractAssertions) * opts.Repeats
 	}
 	report.Manifest = offlineManifest(opts, ds)
 	attachBuildProvenance(&report, opts.Binary)
 
 	codec := evaly.JSONCodec[Case]{ID: "zl-mcp-case", Version: ds.Revision}
+	//nolint:exhaustruct_v5 // DatasetDraft fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	draft := evaly.DatasetDraft[Case, Case]{Selection: "all"}
 	for _, cs := range ds.Cases {
 		reference := cs
+		//nolint:exhaustruct_v5 // Case fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 		draft.Cases = append(draft.Cases, evaly.Case[Case, Case]{ID: cs.ID, Input: cs, Reference: &reference})
 	}
 	dataset, err := draft.Seal(codec, codec)
@@ -230,10 +233,10 @@ func validateCaseChecks(cs Case) error {
 			return fmt.Errorf("invalid check in %s", cs.ID)
 		}
 		switch check.Op {
-		case "same-as",
-			"different-from",
+		case fixtureSameAsID,
+			fixtureDifferentFromID,
 			"equal",
-			"length",
+			fieldLength,
 			"min-length",
 			"gte",
 			"contains",
@@ -275,9 +278,15 @@ func attachBuildProvenance(report *Report, binary string) {
 			}
 		}
 	}
-
 }
-func offlineRunConfig(opts Options, ds Dataset, dataset evaly.Dataset[Case, Case], fixtureHash string) evaly.RunConfig[Case, Output, Case, *environment] {
+
+func offlineRunConfig(
+	opts Options,
+	ds Dataset,
+	dataset evaly.Dataset[Case, Case],
+	fixtureHash string,
+) evaly.RunConfig[Case, Output, Case, *environment] {
+	//nolint:exhaustruct_v5 // RunConfig fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	return evaly.RunConfig[Case, Output, Case, *environment]{
 		ID:          "offline",
 		Dataset:     dataset,
@@ -316,16 +325,16 @@ func offlineRunConfig(opts Options, ds Dataset, dataset evaly.Dataset[Case, Case
 			Policy: evaly.FieldPolicy{
 				ID: "synthetic-metadata-v1",
 				Allowed: map[string][]string{
-					"operation": {"case", "complete"},
-					"effects":   {"case", "complete"},
-					"lifecycle": {"case", "complete"},
+					fieldOperation: {fieldCase, stateCompleteText},
+					fieldEffects:   {fieldCase, stateCompleteText},
+					wireLifecycle:  {fieldCase, stateCompleteText},
 				},
 				KeepReferences: true,
 			},
-			RequiredKinds: []string{"operation", "effects", "lifecycle"},
-			KnownKinds:    []string{"operation", "effects", "lifecycle"},
-			MaxEvents:     3,
-			MaxBytes:      8192,
+			RequiredKinds: []string{fieldOperation, fieldEffects, wireLifecycle},
+			KnownKinds:    []string{fieldOperation, fieldEffects, wireLifecycle},
+			MaxEvents:     maximumEvidenceEvents,
+			MaxBytes:      maximumEvidenceBytes,
 		},
 		CriticalEvidence:   true,
 		ProjectionRevision: "raw-synthetic-trace-v1",
@@ -333,29 +342,37 @@ func offlineRunConfig(opts Options, ds Dataset, dataset evaly.Dataset[Case, Case
 			return evaly.View[Case, Output, Case]{Case: cs, Output: out, Evidence: evidence}, nil
 		},
 		Graders: []evaly.Grader[Case, Output, Case]{grader(ds.GraderRevision)},
+		//nolint:exhaustruct_v5 // RunPlan fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 		Plan: evaly.RunPlan{
 			Repeats:         opts.Repeats,
 			Concurrency:     1,
 			MaxAttempts:     1,
-			Timeout:         60 * time.Second,
-			CleanupTimeout:  5 * time.Second,
+			Timeout:         offlineCaseTimeout,
+			CleanupTimeout:  evaluationCleanupTimeout,
 			Seed:            opts.Seed,
 			AssertionPolicy: "all",
 		},
+		//nolint:exhaustruct_v5 // Provenance fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 		Provenance: evaly.Provenance{
 			Target:  "real-mcp-offline-v1",
 			Tools:   "contracts-22",
 			Policy:  "case-tools-effects-v1",
-			Unknown: []string{"model", "prompt"},
+			Unknown: []string{wireModel, "prompt"},
 		},
 	}
 }
 
-func executeOfflineCase(ctx context.Context, opts Options, cs Case, trial evaly.TrialContext[*environment]) (evaly.TargetResult[Output], error) {
+func executeOfflineCase(
+	ctx context.Context,
+	opts Options,
+	cs Case,
+	trial evaly.TrialContext[*environment],
+) (evaly.TargetResult[Output], error) {
 	before := time.Now()
 	e := trial.Environment
 	args := []string{"--child-case", cs.ID, "--state-dir", e.dir, "--root", opts.Root}
-	raw, logs, processErr := Process(ctx, opts.Binary, args, 4<<20)
+	raw, logs, processErr := Process(ctx, opts.Binary, args, maximumEvaluationOutputBytes)
+	//nolint:exhaustruct_v5 // Output fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	output := Output{CaseID: cs.ID, Failure: "missing child output"}
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
@@ -382,23 +399,27 @@ func executeOfflineCase(ctx context.Context, opts Options, cs Case, trial evaly.
 	output.Bytes = len(raw)
 	for name, data := range map[string][]byte{"stdout.json": raw, "stderr.log": logs, "effects.json": marshaled(counts), "output.json": marshaled(output)} {
 		if writeErr := os.WriteFile(filepath.Join(e.traceDir, name), data, 0600); writeErr != nil {
+			//nolint:exhaustruct_v5 // TargetResult fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 			return evaly.TargetResult[Output]{Output: output}, writeErr
 		}
 	}
-	for i, kind := range []string{"operation", "effects", "lifecycle"} {
+	for i, kind := range []string{fieldOperation, fieldEffects, wireLifecycle} {
 		if recordErr := trial.Evidence.Record(
 			ctx,
+			//nolint:exhaustruct_v5 // Event fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 			evaly.Event{
 				Version:    1,
 				Sequence:   i + 1,
 				Kind:       kind,
-				Payload:    marshaled(map[string]any{"case": cs.ID, "complete": output.Complete}),
+				Payload:    marshaled(map[string]any{fieldCase: cs.ID, stateCompleteText: output.Complete}),
 				References: []string{filepath.Base(e.traceDir) + "/output.json"},
 			},
 		); recordErr != nil {
+			//nolint:exhaustruct_v5 // TargetResult fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 			return evaly.TargetResult[Output]{Output: output}, recordErr
 		}
 	}
+	//nolint:exhaustruct_v5 // Usage fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	return evaly.TargetResult[Output]{Output: output, Usage: evaly.Usage{Known: false}}, nil
 }
 
@@ -409,9 +430,9 @@ func gradeOfflineExperiment(report *Report, opts Options, ds Dataset, record eva
 		observed[trial.CaseID]++
 		quality, scored := evaly.AssertionOutcome(trial.Grades, "all")
 		healthy := trial.Status == evaly.Completed && trial.Cleanup.State == "completed" && trial.UsageError == "" &&
-			evaly.CompleteFor(trial.Evidence, "operation") &&
-			evaly.CompleteFor(trial.Evidence, "effects") &&
-			evaly.CompleteFor(trial.Evidence, "lifecycle") &&
+			evaly.CompleteFor(trial.Evidence, fieldOperation) &&
+			evaly.CompleteFor(trial.Evidence, fieldEffects) &&
+			evaly.CompleteFor(trial.Evidence, wireLifecycle) &&
 			len(trial.Grades) == 1 &&
 			len(trial.SkippedGraders) == 0
 		report.PassedAssertions += passedTrialAssertions(trial.Grades)
@@ -426,7 +447,7 @@ func gradeOfflineExperiment(report *Report, opts Options, ds Dataset, record eva
 			report.SkippedCases = append(report.SkippedCases, cs.ID)
 		}
 	}
-	report.Status = "FAIL"
+	report.Status = codeFail
 	report.ExitStatus = 1
 	if runErr != nil || len(report.SkippedCases) > 0 || len(record.Trials) != report.ExpectedCases {
 		report.Status = "INCOMPLETE"
@@ -470,7 +491,7 @@ func collectTraceMetrics(report *Report, reportDir string) {
 func offlineManifest(opts Options, ds Dataset) map[string]any {
 	info, _ := debug.ReadBuildInfo()
 	return map[string]any{
-		"profile":          opts.Profile,
+		fieldProfile:       opts.Profile,
 		"dataset_revision": ds.Revision,
 		"dataset_sha256":   hashFile(opts.DatasetPath),
 		"fixture_sha256":   hashFile(filepath.Join(opts.Root, "docs/evals/fixtures.json")),
@@ -485,15 +506,15 @@ func offlineManifest(opts Options, ds Dataset) map[string]any {
 		"seed":                      opts.Seed,
 		"repeats":                   opts.Repeats,
 		"concurrency":               1,
-		"run_budget_seconds":        opts.RunBudget.Seconds(),
-		"case_budget_seconds":       60,
-		"stdout_max_bytes":          4 << 20,
-		"stderr_max_bytes":          4 << 20,
+		fieldRunBudgetSeconds:       opts.RunBudget.Seconds(),
+		fieldCaseBudgetSeconds:      offlineCaseBudgetSeconds,
+		"stdout_max_bytes":          maximumEvaluationOutputBytes,
+		"stderr_max_bytes":          maximumEvaluationOutputBytes,
 		"tokens":                    nil,
 		"tokens_unavailable_reason": "offline scripted clients expose no model usage",
 		"grader_revision":           ds.GraderRevision,
-		"model_gate":                "NOT_RUN",
-		"live_gate":                 "NOT_RUN",
+		fieldModelGate:              codeNotRun,
+		"live_gate":                 codeNotRun,
 	}
 }
 

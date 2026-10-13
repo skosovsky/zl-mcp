@@ -19,6 +19,7 @@ func (Format1Archive) GoString() string { return "mobile backup encrypted archiv
 func (a *Format1Archive) Clear() {
 	if a != nil {
 		a.Archive.Clear()
+		//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 		*a = Format1Archive{}
 	}
 }
@@ -39,12 +40,14 @@ func ReadFormat1Archive(
 	defer clear(plain)
 	end := uint64(binary.BigEndian.Uint32(plain[6:10]))
 	if end < 18 || end > uint64(len(plain)) {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(ctx, "mobile_archive_format_failed", "stage", "CONTAINER_BOUNDARY")
 		return Format1Archive{}, ErrArchive
 	}
 	//nolint:gosec // G115: end was checked against len(plain), so it is representable as int.
 	archive, e := ReadPlainArchive(ctx, bytes.NewReader(plain[:int(end)]), end, outputLimit)
 	if e != nil {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(ctx, "mobile_archive_format_failed", "stage", "PLAIN_CONTAINER")
 		return Format1Archive{}, ErrArchive
 	}

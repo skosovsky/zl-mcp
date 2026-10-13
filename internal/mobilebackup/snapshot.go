@@ -50,26 +50,6 @@ type SnapshotStore struct {
 	terminalHints map[string]snapshotMetadata // authenticated hints; never removal authority
 }
 
-func (s *SnapshotStore) lock(ctx context.Context) bool {
-	if s == nil || s.mu == nil || ctx == nil || ctx.Err() != nil {
-		return false
-	}
-	select {
-	case <-ctx.Done():
-		return false
-	case <-s.mu:
-		if ctx.Err() != nil {
-			s.unlock()
-			return false
-		}
-		return true
-	}
-}
-func (s *SnapshotStore) unlock() { s.mu <- struct{}{} }
-
-func (SnapshotStore) String() string   { return "mobile archive snapshot store [redacted]" }
-func (SnapshotStore) GoString() string { return "mobile archive snapshot store [redacted]" }
-
 func NewSnapshotStore(dir string, budget int64) (*SnapshotStore, error) {
 	if !filepath.IsAbs(dir) || budget < 1 || uint64(budget) > MaxTotalBytes {
 		return nil, ErrSnapshot
@@ -110,6 +90,7 @@ func NewSnapshotStore(dir string, budget int64) (*SnapshotStore, error) {
 		root.Close()
 		return nil, err
 	}
+	//nolint:exhaustruct_v5 // SnapshotStore keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	store := &SnapshotStore{
 		mu:     make(chan struct{}, 1),
 		root:   root,
@@ -126,6 +107,26 @@ func NewSnapshotStore(dir string, budget int64) (*SnapshotStore, error) {
 	}
 	return store, nil
 }
+
+func (s *SnapshotStore) lock(ctx context.Context) bool {
+	if s == nil || s.mu == nil || ctx == nil || ctx.Err() != nil {
+		return false
+	}
+	select {
+	case <-ctx.Done():
+		return false
+	case <-s.mu:
+		if ctx.Err() != nil {
+			s.unlock()
+			return false
+		}
+		return true
+	}
+}
+func (s *SnapshotStore) unlock() { s.mu <- struct{}{} }
+
+func (SnapshotStore) String() string   { return "mobile archive snapshot store [redacted]" }
+func (SnapshotStore) GoString() string { return "mobile archive snapshot store [redacted]" }
 
 func readSnapshotClaims(root *os.Root) (map[string]bool, error) {
 	result := map[string]bool{}
@@ -178,7 +179,7 @@ func (s *SnapshotStore) claim(id string) error {
 	if err != nil && !errors.Is(err, os.ErrNotExist) || err == nil && !privateRegular(info) {
 		return ErrSnapshot
 	}
-	f, err := s.root.OpenFile(snapshotClaimsName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0600)
+	f, err := s.root.OpenFile(snapshotClaimsName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, privateArchiveFileMode)
 	if err != nil {
 		return ErrSnapshot
 	}
@@ -217,7 +218,7 @@ func snapshotKey(root *os.Root) ([]byte, error) {
 		f.Close()
 		return nil, ErrSnapshot
 	}
-	key, err := io.ReadAll(io.LimitReader(f, 33))
+	key, err := io.ReadAll(io.LimitReader(f, archiveKeyReadLimit))
 	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	f.Close()
 	if err != nil || len(key) != 32 {
@@ -337,7 +338,7 @@ func (s *SnapshotStore) Save(
 	}
 	// A random confined temporary filename never contains a source identity.
 	tmp := uuid.NewString() + ".tmp"
-	f, err := s.root.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	f, err := s.root.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, privateArchiveFileMode)
 	if err != nil {
 		return ErrSnapshot
 	}
@@ -432,9 +433,9 @@ func (s *SnapshotStore) read(
 func (s *SnapshotStore) decode(name, id string) (snapshotMetadata, []byte, error) {
 	var meta snapshotMetadata
 	info, err := s.root.Lstat(name)
-	maxBytes := int64(MaxFileBytes) + snapshotMetadataLimit + 64
+	maxBytes := int64(MaxFileBytes) + snapshotMetadataLimit + snapshotFramingSlackBytes
 	if err != nil || !privateRegular(info) ||
-		info.Size() < int64(len(snapshotMagic)+s.aead.NonceSize()+s.aead.Overhead()+4) ||
+		info.Size() < int64(len(snapshotMagic)+s.aead.NonceSize()+s.aead.Overhead()+snapshotMetadataSizeBytes) ||
 		info.Size() > maxBytes {
 		return meta, nil, ErrSnapshot
 	}
@@ -488,7 +489,7 @@ func (s *SnapshotStore) sweep(ctx context.Context) (int, int64, error) {
 	if err != nil {
 		return 0, 0, ErrSnapshot
 	}
-	entries, err := f.ReadDir(maxSnapshots + 4)
+	entries, err := f.ReadDir(maxSnapshots + snapshotDirectoryExtras)
 	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	f.Close()
 	if err != nil && !errors.Is(err, io.EOF) || len(entries) > maxSnapshots+3 {
@@ -572,18 +573,18 @@ func createSnapshotKey(root *os.Root) ([]byte, error) {
 	if e != nil {
 		return nil, ErrSnapshot
 	}
-	entries, e := dir.ReadDir(64)
+	entries, e := dir.ReadDir(snapshotKeyDirectoryScanLimit)
 	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	dir.Close()
 	if e != nil && !errors.Is(e, io.EOF) || len(entries) != 0 {
 		return nil, ErrSnapshot
 	}
-	key := make([]byte, 32)
+	key := make([]byte, archiveEncryptionKeyBytes)
 	if _, e = rand.Read(key); e != nil {
 		clear(key)
 		return nil, ErrSnapshot
 	}
-	f, e := root.OpenFile(snapshotKeyName, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	f, e := root.OpenFile(snapshotKeyName, os.O_WRONLY|os.O_CREATE|os.O_EXCL, privateArchiveFileMode)
 	if e != nil {
 		clear(key)
 		return nil, ErrSnapshot
@@ -604,7 +605,12 @@ func createSnapshotKey(root *os.Root) ([]byte, error) {
 	return key, nil
 }
 
-func (s *SnapshotStore) bindSnapshotSave(ctx context.Context, selected SelectedArchive, request domain.MobileBackupRequest, account string) (domain.MobileBackupRequest, error) {
+func (s *SnapshotStore) bindSnapshotSave(
+	ctx context.Context,
+	selected SelectedArchive,
+	request domain.MobileBackupRequest,
+	account string,
+) (domain.MobileBackupRequest, error) {
 	r, err := request.Normalize()
 	if err != nil || ctx == nil || ctx.Err() != nil || s.root == nil || !canonicalIdentity(account) ||
 		!canonicalIdentity(r.ConversationID) ||

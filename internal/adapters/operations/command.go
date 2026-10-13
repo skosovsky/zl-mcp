@@ -2,6 +2,7 @@ package operations
 
 import (
 	"context"
+
 	"github.com/skosovsky/zl-mcp/internal/app/history"
 	"github.com/skosovsky/zl-mcp/internal/app/membership"
 	"github.com/skosovsky/zl-mcp/internal/app/messaging"

@@ -39,18 +39,19 @@ type Measurement struct {
 //
 //nolint:funlen,nonamedreturns // Fixture ownership and the warmup/measured loop remain together so timing and allocation samples keep their original boundaries; request parsing is separate. Returned result/error and deferred cleanup keep the same owner.
 func Measure(ctx context.Context, root, state, kind string, count int) (result Measurement, err error) {
+	//nolint:exhaustruct_v5 // Measurement fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	result = Measurement{
 		Kind:         kind,
-		Warmup:       50,
+		Warmup:       measurementWarmupCalls,
 		Go:           runtime.Version(),
 		OS:           runtime.GOOS,
 		Arch:         runtime.GOARCH,
 		Concurrency:  1,
-		PacingMillis: 110,
+		PacingMillis: measurementPacingMillis,
 		Admission:    true,
 		Exporters:    false,
 	}
-	if count < 1000 {
+	if count < minimumMeasuredCalls {
 		return result, errors.New("at least1000 measurements required")
 	}
 	name, args, err := measurementRequest(kind)
@@ -63,6 +64,7 @@ func Measure(ctx context.Context, root, state, kind string, count int) (result M
 	}
 	f, err := evalfixture.New(
 		ctx,
+		//nolint:exhaustruct_v5 // Fixture flags and New fill the remaining defaults; preserve unset optional policy/effect options.
 		evalfixture.Options{
 			Offline:     true,
 			StateDir:    filepath.Join(state, "state"),
@@ -94,11 +96,12 @@ func Measure(ctx context.Context, root, state, kind string, count int) (result M
 		select {
 		case <-ctx.Done():
 			return result, ctx.Err()
-		case <-time.After(110 * time.Millisecond):
+		case <-time.After(measurementPacingInterval):
 		}
 		var before, after runtime.MemStats
 		runtime.ReadMemStats(&before)
 		began := time.Now()
+		//nolint:exhaustruct_v5 // Unused optional SDK metadata/progress fields remain absent for this invocation.
 		response, e := c.session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
 		wire := marshaled(response)
 		duration := time.Since(began).Seconds()
@@ -119,7 +122,7 @@ func Measure(ctx context.Context, root, state, kind string, count int) (result M
 		}
 	}
 	sort.Float64s(samples)
-	result.P95Seconds = samples[(95*count+99)/100-1]
+	result.P95Seconds = samples[(p95Percent*count+percentileRoundUp)/percentileScale-1]
 	result.AllocationsPerOp = float64(allocations) / float64(count)
 	result.AllocBytesPerOp = float64(allocatedBytes) / float64(count)
 	result.ElapsedSeconds = time.Since(start).Seconds()
@@ -133,11 +136,11 @@ func measurementRequest(kind string) (string, map[string]any, error) {
 	case "read":
 		name = "zalo_list_groups"
 	case "search":
-		name = "zalo_search_messages"
-		args["query"] = "ремонт"
+		name = toolSearchMessages
+		args[fieldQuery] = fixtureSearchText
 	case "context":
-		name = "zalo_get_message_context"
-		args["group_id"] = "g-1"
+		name = toolGetMessageContext
+		args["group_id"] = fixtureG1ID
 		args["message_id"] = "m-101"
 		args["before"] = 0
 		args["after"] = 0

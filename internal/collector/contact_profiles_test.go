@@ -57,7 +57,7 @@ func TestDirectoryWorkerProfileAuthenticationBoundary(t *testing.T) {
 	started := make(chan struct{})
 	var calls atomic.Int32
 	source := &profileListener{scriptedListener: &scriptedListener{fakeZalo: &fakeZalo{}}}
-	source.profiles = func(request context.Context, ids []string) ([]domain.Contact, error) {
+	source.profiles = func(request context.Context, _ []string) ([]domain.Contact, error) {
 		if calls.Add(1) == 1 {
 			close(started)
 		}
@@ -199,7 +199,7 @@ func TestProfileRefreshMissingForeignAndBatchLimits(t *testing.T) {
 				t.Fatal(err)
 			}
 			calls := 0
-			source := profileFunction(func(ctx context.Context, ids []string) ([]domain.Contact, error) {
+			source := profileFunction(func(_ context.Context, ids []string) ([]domain.Contact, error) {
 				calls++
 				if len(ids) > 100 {
 					t.Fatal("unbounded batch")

@@ -12,9 +12,27 @@ import (
 )
 
 const (
-	maxXZDictionary = 64 << 20
-	maxXZStreams    = 100
-	maxXZBlocks     = 1000
+	maxXZDictionary               = 64 << 20
+	maxXZStreams                  = 100
+	maxXZBlocks                   = 1000
+	xzInitialDictionaryCapacity   = 4096
+	xzMinimumStreamBytes          = 32
+	xzAlignmentBytes              = 4
+	xzAlignmentMask               = 3
+	xzStreamBoundaryBytes         = 12
+	xzMinimumIndexBytes           = 8
+	xzMinimumBlockHeaderBytes     = 8
+	xzStreamBoundariesBytes       = 24
+	xzMinimumRecordBytes          = 5
+	xzCRC32Bytes                  = 4
+	xzCRC64Bytes                  = 8
+	xzSHA256Bytes                 = 32
+	xzCheckCRC64                  = 4
+	xzCheckSHA256                 = 10
+	lzmaMaximumDictionaryProperty = 40
+	lzmaDictionaryBaseExponent    = 11
+	xzVLIBytePayloadBits          = 7
+	xzVLIBytePayloadMask          = (1 << xzVLIBytePayloadBits) - 1
 )
 
 var ErrXZ = errors.New("invalid mobile backup compressed stream")
@@ -35,7 +53,10 @@ func DecompressXZ(ctx context.Context, r io.Reader, compressedLimit, outputLimit
 	if err != nil {
 		return nil, ErrXZ
 	}
-	decoder, err := (xz.ReaderConfig{DictCap: 4096}).NewReader(cancelReader{ctx, bytes.NewReader(data)})
+	//nolint:exhaustruct_v5 // Keep decoder defaults for omitted options; the validated dictionary cap is explicit.
+	decoder, err := (xz.ReaderConfig{DictCap: xzInitialDictionaryCapacity}).NewReader(
+		cancelReader{ctx, bytes.NewReader(data)},
+	)
 	if err != nil {
 		return nil, ErrXZ
 	}
@@ -50,9 +71,10 @@ func DecompressXZ(ctx context.Context, r io.Reader, compressedLimit, outputLimit
 type xzRecord struct{ unpadded, output uint64 }
 
 // inspectXZ walks complete stream indexes before any dictionary can be allocated.
+//
 //nolint:cyclop,funlen,gocognit,gocyclo // This bounded protocol parser validates complete framing/records before publishing and retains its buffer-clearing error paths.
 func inspectXZ(ctx context.Context, data []byte, outputLimit uint64) (uint64, error) {
-	if len(data) < 32 || len(data)%4 != 0 {
+	if len(data) < xzMinimumStreamBytes || len(data)%xzAlignmentBytes != 0 {
 		return 0, ErrXZ
 	}
 	end, streams, blocks := len(data), 0, 0
@@ -66,11 +88,11 @@ func inspectXZ(ctx context.Context, data []byte, outputLimit uint64) (uint64, er
 			end--
 			padding++
 		}
-		if padding%4 != 0 || end < 32 || streams >= maxXZStreams {
+		if padding%xzAlignmentBytes != 0 || end < xzMinimumStreamBytes || streams >= maxXZStreams {
 			return 0, ErrXZ
 		}
 		streams++
-		footer := data[end-12 : end]
+		footer := data[end-xzStreamBoundaryBytes : end]
 		if string(footer[10:]) != "YZ" || crc32.ChecksumIEEE(footer[4:10]) != binary.LittleEndian.Uint32(footer[:4]) ||
 			footer[8] != 0 {
 			return 0, ErrXZ
@@ -79,21 +101,21 @@ func inspectXZ(ctx context.Context, data []byte, outputLimit uint64) (uint64, er
 		switch footer[9] {
 		case 0:
 		case 1:
-			checkBytes = 4
-		case 4:
-			checkBytes = 8
-		case 10:
-			checkBytes = 32
+			checkBytes = xzCRC32Bytes
+		case xzCheckCRC64:
+			checkBytes = xzCRC64Bytes
+		case xzCheckSHA256:
+			checkBytes = xzSHA256Bytes
 		default:
 			return 0, ErrXZ
 		}
-		indexLen := (uint64(binary.LittleEndian.Uint32(footer[4:8])) + 1) * 4
-		if indexLen < 8 || indexLen > uint64(end-24) {
+		indexLen := (uint64(binary.LittleEndian.Uint32(footer[4:8])) + 1) * xzAlignmentBytes
+		if indexLen < xzMinimumIndexBytes || indexLen > uint64(end-xzStreamBoundariesBytes) {
 			return 0, ErrXZ
 		}
-		//nolint:gosec // G115: indexLen <= end-24, with end >= 32 derived from len(data).
-		indexStart := end - 12 - int(indexLen)
-		index := data[indexStart : end-12]
+		//nolint:gosec // G115: indexLen <= end-xzStreamBoundariesBytes, with end >= 32 derived from len(data).
+		indexStart := end - xzStreamBoundaryBytes - int(indexLen)
+		index := data[indexStart : end-xzStreamBoundaryBytes]
 		if !xzCRC(index) || index[0] != 0 {
 			return 0, ErrXZ
 		}
@@ -109,8 +131,8 @@ func inspectXZ(ctx context.Context, data []byte, outputLimit uint64) (uint64, er
 		var blockBytes uint64
 		for range count {
 			u, ok := xzVLI(&body)
-			//nolint:gosec // G115: validated indexLen <= end-24 makes indexStart >= 12 before unsigned conversion.
-			if !ok || u < 5 || u > uint64(indexStart) {
+			//nolint:gosec // G115: validated indexLen <= end-xzStreamBoundariesBytes makes indexStart >= 12 before unsigned conversion.
+			if !ok || u < xzMinimumRecordBytes || u > uint64(indexStart) {
 				return 0, ErrXZ
 			}
 			n, ok := xzVLI(&body)
@@ -118,29 +140,29 @@ func inspectXZ(ctx context.Context, data []byte, outputLimit uint64) (uint64, er
 				return 0, ErrXZ
 			}
 			output += n
-			blockBytes += (u + 3) &^ uint64(3)
-			//nolint:gosec // G115: validated indexLen <= end-24 makes indexStart >= 12 before unsigned conversion.
+			blockBytes += (u + xzAlignmentMask) &^ uint64(xzAlignmentMask)
+			//nolint:gosec // G115: validated indexLen <= end-xzStreamBoundariesBytes makes indexStart >= 12 before unsigned conversion.
 			if blockBytes > uint64(indexStart) {
 				return 0, ErrXZ
 			}
 			records = append(records, xzRecord{u, n})
 		}
-		//nolint:gosec // G115: validated indexLen <= end-24 makes indexStart >= 12 before unsigned conversion.
-		if len(body) > 3 || !xzZeros(body) || blockBytes+12 > uint64(indexStart) {
+		//nolint:gosec // G115: validated indexLen <= end-xzStreamBoundariesBytes makes indexStart >= 12 before unsigned conversion.
+		if len(body) > xzAlignmentMask || !xzZeros(body) || blockBytes+xzStreamBoundaryBytes > uint64(indexStart) {
 			return 0, ErrXZ
 		}
-		start := indexStart - int(blockBytes) - 12
-		header := data[start : start+12]
+		start := indexStart - int(blockBytes) - xzStreamBoundaryBytes
+		header := data[start : start+xzStreamBoundaryBytes]
 		if !bytes.Equal(header[:6], []byte{0xfd, '7', 'z', 'X', 'Z', 0}) || !xzCRC(header[6:]) ||
 			!bytes.Equal(header[6:8], footer[8:10]) {
 			return 0, ErrXZ
 		}
-		pos := start + 12
+		pos := start + xzStreamBoundaryBytes
 		for _, record := range records {
 			if ctx.Err() != nil {
 				return 0, ErrXZ
 			}
-			padded := (record.unpadded + 3) &^ uint64(3)
+			padded := (record.unpadded + xzAlignmentMask) &^ uint64(xzAlignmentMask)
 			//nolint:gosec // G115: short-circuit pos <= indexStart proves the remaining length is non-negative.
 			if pos > indexStart || padded > uint64(indexStart-pos) {
 				return 0, ErrXZ
@@ -168,9 +190,10 @@ func inspectXZBlock(block []byte, record xzRecord, checkBytes int) bool {
 	if len(block) == 0 || block[0] == 0 {
 		return false
 	}
-	headerLen := (int(block[0]) + 1) * 4
+	headerLen := (int(block[0]) + 1) * xzAlignmentBytes
 	//nolint:gosec // G115: byte-derived headerLen <= 1024 and checkBytes is one of 0,4,8,32.
-	if headerLen < 8 || uint64(headerLen+checkBytes) >= record.unpadded || headerLen > len(block) {
+	if headerLen < xzMinimumBlockHeaderBytes || uint64(headerLen+checkBytes) >= record.unpadded ||
+		headerLen > len(block) {
 		return false
 	}
 	header := block[:headerLen]
@@ -201,14 +224,14 @@ func inspectXZBlock(block []byte, record xzRecord, checkBytes int) bool {
 		return false
 	}
 	property := body[0]
-	if property > 40 {
+	if property > lzmaMaximumDictionaryProperty {
 		return false
 	}
 	var dictionary uint64
-	if property == 40 {
+	if property == lzmaMaximumDictionaryProperty {
 		dictionary = 0xffffffff
 	} else {
-		dictionary = uint64(2|(property&1)) << (property/2 + 11)
+		dictionary = uint64(2|(property&1)) << (property/2 + lzmaDictionaryBaseExponent)
 	}
 	return dictionary <= maxXZDictionary && xzZeros(body[1:])
 }
@@ -218,7 +241,7 @@ func xzVLI(data *[]byte) (uint64, bool) {
 	var value uint64
 	for i := 0; i < 9 && i < len(*data); i++ {
 		b := (*data)[i]
-		value |= uint64(b&0x7f) << (7 * i)
+		value |= uint64(b&xzVLIBytePayloadMask) << (xzVLIBytePayloadBits * i)
 		if b&0x80 == 0 {
 			if i > 0 && b == 0 {
 				return 0, false

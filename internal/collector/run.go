@@ -111,7 +111,7 @@ func runSession(
 	if e = refresh(); e != nil {
 		_ = set(
 			"last_error",
-			map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": "Group catalog refresh failed."},
+			map[string]any{fieldCode: codeUpstreamUnavailable, fieldMessage: "Group catalog refresh failed."},
 		)
 	}
 	if source, ok := client.(domain.ConversationPreloadSource); ok {
@@ -129,7 +129,7 @@ func runSession(
 	defer func() {
 		cancel()
 		<-heartbeatDone
-		shutdown, stop := context.WithTimeout(context.Background(), 5*time.Second)
+		shutdown, stop := context.WithTimeout(context.Background(), runSessionShutdownTimeout)
 		defer stop()
 		_ = store.BeginGap(shutdown, "collector_stopped")
 		_ = state.stopped(shutdown)
@@ -154,7 +154,7 @@ func ControlHandler(j *JoinManager) http.Handler {
 			fail(compileErr)
 			return
 		}
-		b, e := io.ReadAll(http.MaxBytesReader(w, r.Body, 16<<10))
+		b, e := io.ReadAll(http.MaxBytesReader(w, r.Body, collectorRequestLimit))
 		if e != nil {
 			fail(domain.Invalid("Control request is too large."))
 			return
@@ -220,7 +220,7 @@ func (j *JoinManager) Call(parent context.Context, method string, arguments any)
 		return nil, domain.Invalid("Invalid membership arguments.")
 	}
 	args := decoded.Arguments
-	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+	ctx, cancel := context.WithTimeout(parent, joinManagerCallTimeout)
 	defer cancel()
 	var result map[string]any
 	var e error
@@ -279,7 +279,13 @@ func controlPreloadResult(ctx context.Context, j *JoinManager, body []byte) (map
 	}
 	return result, nil
 }
-func controlApprovalResult(ctx context.Context, j *JoinManager, request controlRequest, body []byte) (map[string]any, error) {
+
+func controlApprovalResult(
+	ctx context.Context,
+	j *JoinManager,
+	request controlRequest,
+	body []byte,
+) (map[string]any, error) {
 	schema, err := contracts.Compile(request.Method, "input")
 	var raw any
 	if err != nil || json.Unmarshal(body, &raw) != nil || schema.Validate(raw) != nil {
@@ -297,7 +303,11 @@ func controlApprovalResult(ctx context.Context, j *JoinManager, request controlR
 		if previewErr != nil {
 			return nil, previewErr
 		}
-		return map[string]any{"group_id": previewValue.GroupID, "name": previewValue.Name, "approval_required": previewValue.Approval}, nil
+		return map[string]any{
+			fieldGroupID:        previewValue.GroupID,
+			"name":              previewValue.Name,
+			"approval_required": previewValue.Approval,
+		}, nil
 	}
 	token, err := j.Approve(ctx, id)
 	if err != nil {
@@ -307,13 +317,12 @@ func controlApprovalResult(ctx context.Context, j *JoinManager, request controlR
 }
 
 func (state *collectorState) message(m domain.Message) error {
-
 	_ = state.set("last_event_at", time.Now().UTC().Format(time.RFC3339Nano))
 	err := state.store.Put(state.ctx, m)
 	if err != nil {
 		_ = state.set(
 			"last_error",
-			map[string]any{"code": "STORAGE_ERROR", "message": "A message could not be persisted."},
+			map[string]any{fieldCode: "STORAGE_ERROR", fieldMessage: "A message could not be persisted."},
 		)
 		_ = state.store.BeginGap(state.ctx, "storage_error")
 		return &storageError{cause: err}
@@ -322,35 +331,31 @@ func (state *collectorState) message(m domain.Message) error {
 		return state.set("last_persisted_at", time.Now().UTC().Format(time.RFC3339Nano))
 	}
 	return nil
-
 }
 
 func (state *collectorState) deleted(ref domain.ConversationRef, id string) error {
-
 	if !state.store.AllowsConversation(ref) {
 		return nil
 	}
 	if err := state.store.DeleteConversation(state.ctx, ref, id); err != nil {
 		_ = state.set(
 			"last_error",
-			map[string]any{"code": "STORAGE_ERROR", "message": "A deletion could not be persisted."},
+			map[string]any{fieldCode: "STORAGE_ERROR", fieldMessage: "A deletion could not be persisted."},
 		)
 		_ = state.store.BeginGap(state.ctx, "storage_error")
 		return &storageError{cause: err}
 	}
 	return nil
-
 }
 
 func (state *collectorState) connected() error {
-
 	// Connection readiness cannot establish replay/history completeness.
 	state.mu.Lock()
 	defer state.mu.Unlock()
 	state.values["last_connected_at"] = time.Now().UTC().Format(time.RFC3339Nano)
 	state.values["collector_state"] = "connected"
-	if last, ok := state.values["last_error"].(map[string]any); ok && last["code"] == "UPSTREAM_UNAVAILABLE" &&
-		last["message"] == listenerUnavailableMessage {
+	if last, ok := state.values["last_error"].(map[string]any); ok && last[fieldCode] == codeUpstreamUnavailable &&
+		last[fieldMessage] == listenerUnavailableMessage {
 		state.values["last_error"] = nil
 	}
 	return state.store.SetState(state.ctx, state.values)
@@ -377,7 +382,7 @@ func (state *collectorState) save(ctx context.Context) error {
 func (state *collectorState) stopped(ctx context.Context) error {
 	state.mu.Lock()
 	defer state.mu.Unlock()
-	if state.values["collector_state"] != "auth_required" {
+	if state.values["collector_state"] != reasonAuthRequired {
 		state.values["collector_state"] = "stopped"
 	}
 	return state.store.SetState(ctx, state.values)
@@ -386,21 +391,29 @@ func (state *collectorState) authenticationRequired() error {
 	state.mu.Lock()
 	defer state.mu.Unlock()
 	state.values["authenticated"] = false
-	state.values["collector_state"] = "auth_required"
-	state.values["last_error"] = map[string]any{"code": "NOT_AUTHENTICATED", "message": "Run local login."}
+	state.values["collector_state"] = reasonAuthRequired
+	state.values["last_error"] = map[string]any{fieldCode: "NOT_AUTHENTICATED", fieldMessage: "Run local login."}
 	return state.store.SetState(state.ctx, state.values)
 }
-func collectorHeartbeat(ctx, runCtx context.Context, store *storage.Store, state *collectorState, refresh func() error, heartbeatDone chan struct{}) {
+
+func collectorHeartbeat(
+	ctx, runCtx context.Context,
+	store *storage.Store,
+	state *collectorState,
+	refresh func() error,
+	heartbeatDone chan struct{},
+) {
 	defer close(heartbeatDone)
-	t := time.NewTicker(10 * time.Second)
+	t := time.NewTicker(collectorHeartbeatInterval)
 	defer t.Stop()
-	refreshTicker := time.NewTicker(5 * time.Minute)
+	refreshTicker := time.NewTicker(groupRefreshInterval)
 	defer refreshTicker.Stop()
 	for {
 		select {
 		case <-runCtx.Done():
 			return
 		case <-t.C:
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.InfoContext(ctx, "zalo_persistence_diagnostics", "counts", store.IngestionDiagnostics())
 			_ = state.save(runCtx)
 		case <-refreshTicker.C:
@@ -409,13 +422,19 @@ func collectorHeartbeat(ctx, runCtx context.Context, store *storage.Store, state
 		}
 	}
 }
-func listenCollector(runCtx context.Context, client ListenerUpstream, store *storage.Store, state *collectorState) error {
+
+func listenCollector(
+	runCtx context.Context,
+	client ListenerUpstream,
+	store *storage.Store,
+	state *collectorState,
+) error {
 	var e error
 	set := state.set
 	delay := time.Second
 	for {
 		_ = set("collector_state", "connecting")
-		e = listenConversations(client, runCtx, state.message, state.deleted, func() error {
+		e = listenConversations(runCtx, client, state.message, state.deleted, func() error {
 			delay = time.Second
 			return state.connected()
 		})
@@ -424,7 +443,7 @@ func listenCollector(runCtx context.Context, client ListenerUpstream, store *sto
 			return nil
 		}
 		if errors.Is(e, domain.ErrAuthenticationRequired) {
-			_ = store.BeginGap(runCtx, "auth_required")
+			_ = store.BeginGap(runCtx, reasonAuthRequired)
 			saveErr := state.authenticationRequired()
 			if saveErr != nil {
 				return saveErr
@@ -434,7 +453,10 @@ func listenCollector(runCtx context.Context, client ListenerUpstream, store *sto
 		_ = store.BeginGap(runCtx, "listener_disconnected")
 		_ = set("collector_state", "reconnecting")
 		if _, ok := errors.AsType[*storageError](e); !ok {
-			_ = set("last_error", map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": listenerUnavailableMessage})
+			_ = set(
+				"last_error",
+				map[string]any{fieldCode: codeUpstreamUnavailable, fieldMessage: listenerUnavailableMessage},
+			)
 		}
 		jitter, _ := rand.Int(rand.Reader, big.NewInt(int64(delay/2)+1))
 		wait := delay
@@ -448,14 +470,16 @@ func listenCollector(runCtx context.Context, client ListenerUpstream, store *sto
 			return nil
 		case <-timer.C:
 		}
-		delay = min(delay*2, 40*time.Second)
+		delay = min(delay*2, maximumListenerBackoff)
 	}
 }
 
 func writeControlFailure(w http.ResponseWriter, err error) {
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 	de := &domain.Error{
-		Code:       "UPSTREAM_UNAVAILABLE",
-		Message:    "Collector request failed.",
+		Code:    codeUpstreamUnavailable,
+		Message: "Collector request failed.",
+		//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 		NextAction: domain.NextAction{Instruction: "Check collector status and retry reads later."},
 		Details:    map[string]any{},
 	}
@@ -466,7 +490,6 @@ func writeControlFailure(w http.ResponseWriter, err error) {
 	if json.NewEncoder(w).Encode(de) != nil {
 		return // A partial HTTP response must not be retried.
 	}
-
 }
 
 func recoverCollectorHistory(ctx context.Context, store *storage.Store) (bool, error) {
@@ -486,8 +509,13 @@ func historyWorkerResult(err error) error {
 	return &storageError{cause: err}
 }
 
-func refreshCollectorGroups(runCtx context.Context, joins *JoinManager, store *storage.Store, client ListenerUpstream) error {
-	q, withTimeoutCancel := context.WithTimeout(runCtx, 30*time.Second)
+func refreshCollectorGroups(
+	runCtx context.Context,
+	joins *JoinManager,
+	store *storage.Store,
+	client ListenerUpstream,
+) error {
+	q, withTimeoutCancel := context.WithTimeout(runCtx, refreshCollectorGroupsQTimeout)
 	defer withTimeoutCancel()
 	if enterErr := joins.enter(q); enterErr != nil {
 		return enterErr
@@ -501,5 +529,4 @@ func refreshCollectorGroups(runCtx context.Context, joins *JoinManager, store *s
 		return err
 	}
 	return joins.Reconcile(q, groups)
-
 }

@@ -51,7 +51,14 @@ func TestInputsRejectAmbiguousAndUnknownArguments(t *testing.T) {
 
 func TestControlContractsCompile(t *testing.T) {
 	// Arrange
-	names := []struct{ name, suffix string }{{"control", "input"}, {"control", "output"}, {"cli_preview", "input"}, {"cli_preview", "output"}, {"cli_approve", "input"}, {"cli_approve", "output"}}
+	names := []struct{ name, suffix string }{
+		{"control", "input"},
+		{"control", "output"},
+		{"cli_preview", "input"},
+		{"cli_preview", "output"},
+		{"cli_approve", "input"},
+		{"cli_approve", "output"},
+	}
 	for _, v := range names {
 		t.Run(v.name+v.suffix, func(t *testing.T) {
 			// Act

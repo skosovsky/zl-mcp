@@ -16,29 +16,29 @@ func refreshPreloadCatalog(
 	store *storage.Store,
 	source domain.ConversationPreloadSource,
 ) error {
-	ctx, cancel := context.WithTimeout(parent, 30*time.Second)
+	ctx, cancel := context.WithTimeout(parent, refreshPreloadCatalogTimeout)
 	defer cancel()
 	previous, err := store.PreloadStatus(ctx)
 	if err != nil {
 		return err
 	}
 	status := map[string]any{
-		"status":            "running",
-		"last_attempt_at":   time.Now().UTC().Format(time.RFC3339Nano),
-		"last_success_at":   previous["last_success_at"],
+		fieldStatus:         stateRunningText,
+		fieldLastAttemptAt:  time.Now().UTC().Format(time.RFC3339Nano),
+		fieldLastSuccessAt:  previous[fieldLastSuccessAt],
 		"observed_count":    0,
 		"permitted_count":   0,
 		"catalog_complete":  false,
 		"messages_imported": false,
-		"stop_reason":       nil,
+		fieldStopReason:     nil,
 	}
 	if err = store.SetPreloadStatus(ctx, status); err != nil {
 		return err
 	}
 	finish := func(state, reason string, cause error) error {
-		status["status"], status["stop_reason"] = state, reason
+		status[fieldStatus], status[fieldStopReason] = state, reason
 		if state == "observed" {
-			status["last_success_at"] = time.Now().UTC().Format(time.RFC3339Nano)
+			status[fieldLastSuccessAt] = time.Now().UTC().Format(time.RFC3339Nano)
 		}
 		save, stop := context.WithTimeout(context.WithoutCancel(parent), time.Second)
 		defer stop()
@@ -49,29 +49,29 @@ func refreshPreloadCatalog(
 	}
 	page, err := source.ConversationPreload(ctx)
 	if err != nil {
-		state, reason := "partial", "upstream_unavailable"
+		state, reason := statePartialText, "upstream_unavailable"
 		switch {
 		case errors.Is(err, domain.ErrConversationPreloadUnsupported):
-			state, reason = "unsupported", "source_unsupported"
+			state, reason = stateUnsupportedText, reasonSourceUnsupported
 		case errors.Is(err, domain.ErrAuthenticationRequired):
-			reason = "auth_required"
+			reason = reasonAuthRequired
 		case errors.Is(err, domain.ErrHistoryInvalidPage):
-			reason = "invalid_source_page"
+			reason = reasonInvalidSourcePage
 		case errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded):
-			reason = "cancelled_or_deadline"
+			reason = reasonCancelledOrDeadline
 		}
 		return finish(state, reason, err)
 	}
 	count, err := store.PutPreloadEntries(ctx, page.Entries)
 	if err != nil {
-		return finish("partial", "storage_or_metadata_error", err)
+		return finish(statePartialText, "storage_or_metadata_error", err)
 	}
 	status["observed_count"], status["permitted_count"] = len(page.Entries), count
 	return finish("observed", "observed_snapshot", nil)
 }
 
 func preloadCatalogLoop(ctx context.Context, store *storage.Store, source domain.ConversationPreloadSource) {
-	ticker := time.NewTicker(5 * time.Minute)
+	ticker := time.NewTicker(preloadRefreshInterval)
 	defer ticker.Stop()
 	for {
 		_ = refreshPreloadCatalog(ctx, store, source)

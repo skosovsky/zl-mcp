@@ -11,6 +11,7 @@ import (
 
 type catalogProbe struct {
 	CatalogPort
+
 	groupCalls int
 	requests   []GroupRequest
 	group      GroupDetail
@@ -48,7 +49,8 @@ func TestGroupRefreshKeepsBoundedDeadlineAndNativeFallback(t *testing.T) {
 	// Act.
 	result, err := h.Group(context.Background(), "9007199254740993")
 	// Assert: one bounded live read then one original-context local fallback.
-	if err != nil || !result.Stale || result.Group.ID != "9007199254740993" || live.calls != 1 || local.groupCalls != 1 {
+	if err != nil || !result.Stale || result.Group.ID != "9007199254740993" || live.calls != 1 ||
+		local.groupCalls != 1 {
 		t.Fatalf("fallback changed: %+v %v", result, err)
 	}
 	if live.deadline.Before(started.Add(5*time.Second)) || live.deadline.After(time.Now().Add(5*time.Second)) {
@@ -63,7 +65,7 @@ func TestGroupRefreshKeepsBoundedDeadlineAndNativeFallback(t *testing.T) {
 	local.err = domain.Invalid("Synthetic local error.")
 	live.err = errors.New("refresh failed")
 	_, err = h.Group(context.Background(), "9007199254740993")
-	if err != local.err || local.groupCalls != 2 {
+	if !errors.Is(err, local.err) || local.groupCalls != 2 {
 		t.Fatalf("local cause changed: %v", err)
 	}
 }

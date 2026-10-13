@@ -94,6 +94,7 @@ func TestPreparedOfferDurableDispatchAndNoRetry(t *testing.T) {
 		t.Fatal("offer identity/retry lost")
 	}
 }
+
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestPreparedOfferFailuresCloseEvidenceAndDiscardOffer(t *testing.T) {
 	for _, mode := range []string{"premature", "cancel-before", "cancel-after", "unknown", "explicit"} {
@@ -107,7 +108,7 @@ func TestPreparedOfferFailuresCloseEvidenceAndDiscardOffer(t *testing.T) {
 				cancel()
 			}
 			source := offerSourceFunc(
-				func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+				func(_ context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
 					calls++
 					if mode == "premature" {
 						return domain.MobileBackupOffer{KeyText: "must-discard"}, nil
@@ -153,7 +154,7 @@ func TestPreparedOfferRetryCannotInterruptCurrentOwner(t *testing.T) {
 	s, a, public := runnerAttempt(t)
 	entered, release := make(chan struct{}), make(chan struct{})
 	original := offerSourceFunc(
-		func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+		func(_ context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
 			if e := o.BeforeDispatch(public); e != nil {
 				return domain.MobileBackupOffer{}, e
 			}
@@ -201,7 +202,7 @@ func TestPreparedOfferStaleObserverCannotCloseWinningDispatch(t *testing.T) {
 		chan struct{},
 	)
 	winner := offerSourceFunc(
-		func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+		func(_ context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
 			close(firstEntered)
 			<-secondEntered
 			if e := o.BeforeDispatch(public); e != nil {
@@ -218,7 +219,7 @@ func TestPreparedOfferStaleObserverCannotCloseWinningDispatch(t *testing.T) {
 			return domain.MobileBackupOffer{FileSize: 16}, nil
 		},
 	)
-	loser := offerSourceFunc(func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+	loser := offerSourceFunc(func(_ context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
 		close(secondEntered)
 		<-dispatched
 		e := o.BeforeDispatch(public)

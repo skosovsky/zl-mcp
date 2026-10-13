@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
@@ -17,10 +16,10 @@ func (p *membershipPort) probeMobileOffer(ctx context.Context, id string, revisi
 	if err != nil {
 		return nil, err
 	}
-	if attempt.Request.ArchiveScope != "" || attempt.State != "prepared" || attempt.Revision != revision {
+	if attempt.Request.ArchiveScope != "" || attempt.State != statePreparedText || attempt.Revision != revision {
 		return nil, storage.ErrMobileBackupState
 	}
-	request, stop := context.WithTimeout(ctx, 185*time.Second)
+	request, stop := context.WithTimeout(ctx, membershipPortprobeMobileOfferTimeout)
 	defer stop()
 	offer, err := p.runPreparedMobileOffer(request, id)
 	if err != nil {
@@ -47,8 +46,9 @@ func (p *membershipPort) probeMobileOffer(ctx context.Context, id string, revisi
 		"download_host": host,
 		"archive_bytes": strconv.FormatUint(offer.FileSize, 10),
 		// Positive MaxArchiveBytes is checked before the unsigned budget comparison.
-		"within_archive_budget": attempt.Request.MaxArchiveBytes > 0 && offer.FileSize <= uint64(attempt.Request.MaxArchiveBytes),
-		"download_performed":    false,
-		"import_performed":      false,
+		"within_archive_budget": attempt.Request.MaxArchiveBytes > 0 &&
+			offer.FileSize <= uint64(attempt.Request.MaxArchiveBytes),
+		fieldDownloadPerformed: false,
+		fieldImportPerformed:   false,
 	}, nil
 }

@@ -4,7 +4,7 @@ package domain
 // IDs are opaque strings. A direct ID always identifies the peer, not sender.
 type ConversationRef struct {
 	Type string `json:"conversation_type" toml:"type"`
-	ID   string `json:"conversation_id" toml:"id"`
+	ID   string `json:"conversation_id"   toml:"id"`
 }
 
 const (

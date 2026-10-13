@@ -11,15 +11,24 @@ import (
 
 func TestIdentityMappingExactTypedPositionalNumbers(t *testing.T) {
 	// Arrange: native JS numeric precision is deliberately exceeded.
-	request := IdentityRequest{Direct: []string{"9007199254740993", "18446744073709551615"}, Groups: []string{"9007199254740993"}}
+	request := IdentityRequest{
+		Direct: []string{"9007199254740993", "18446744073709551615"},
+		Groups: []string{"9007199254740993"},
+	}
 	// Act.
 	payload, err := IdentityPayload(request)
 	if err != nil {
 		t.Fatal(err)
 	}
-	pairs, err := DecodeIdentities(request, []byte(`{"fids":[9007199254740995,"18446744073709551614"],"gids":["g9007199254740997"]}`))
+	pairs, err := DecodeIdentities(
+		request,
+		[]byte(`{"fids":[9007199254740995,"18446744073709551614"],"gids":["g9007199254740997"]}`),
+	)
 	// Assert: no rounding, category conflation, source-ID fallback or public serialization.
-	if err != nil || len(pairs) != 3 || pairs[0].Session != "9007199254740995" || pairs[1].Plain != "18446744073709551615" || !pairs[2].Group || pairs[2].Session != "9007199254740997" {
+	if err != nil || len(pairs) != 3 || pairs[0].Session != "9007199254740995" ||
+		pairs[1].Plain != "18446744073709551615" ||
+		!pairs[2].Group ||
+		pairs[2].Session != "9007199254740997" {
 		t.Fatal("mapping lost identity", err)
 	}
 	if !bytes.Contains(payload, []byte(`9007199254740993`)) || bytes.Contains(payload, []byte(`"9007199254740993"`)) {

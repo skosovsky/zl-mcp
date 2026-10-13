@@ -2,8 +2,9 @@ package shared
 
 import (
 	"context"
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"time"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 type Invocation func(context.Context) (domain.Outcome, error)
@@ -36,7 +37,12 @@ func Telemetry(ctx context.Context) TelemetryPort {
 
 // Recording avoids observation-only reads/allocations when export is disabled.
 func Recording(ctx context.Context) bool { o := Telemetry(ctx); return o != nil && o.Recording() }
-func ObserveUpstream[T any](ctx context.Context, kind domain.WorkKind, next func(context.Context) (T, error)) (T, error) {
+
+func ObserveUpstream[T any](
+	ctx context.Context,
+	kind domain.WorkKind,
+	next func(context.Context) (T, error),
+) (T, error) {
 	o := Telemetry(ctx)
 	if o == nil || !o.Recording() {
 		return next(ctx)
@@ -63,7 +69,7 @@ func ObserveQueue(ctx context.Context, kind domain.WorkKind, owner NativeObserva
 	if o == nil || !o.Recording() {
 		return
 	}
-	read, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+	read, cancel := context.WithTimeout(ctx, observeQueueReadTimeout)
 	defer cancel()
 	if depth, err := owner.ObservationQueueDepth(read, kind); err == nil {
 		o.Queue(ctx, kind, depth)

@@ -20,7 +20,9 @@ func mobileRecallPage(t *testing.T) (*Store, HistoryOperation, string, domain.Mo
 	m := &page.Records[0].Message
 	m.SenderID = "synthetic-account"
 	m.Direction = "outgoing"
-	page.Recalls = []domain.MobileHistoryRecall{{Conversation: m.Ref(), MessageID: m.ID, SenderID: "synthetic-account", RecordAtMS: m.SentAt.UnixMilli()}}
+	page.Recalls = []domain.MobileHistoryRecall{
+		{Conversation: m.Ref(), MessageID: m.ID, SenderID: "synthetic-account", RecordAtMS: m.SentAt.UnixMilli()},
+	}
 	return s, op, path, page
 }
 
@@ -35,12 +37,15 @@ func TestMobileRecallAndCheckpointCommitAtomicallyWithoutEvents(t *testing.T) {
 		s.Close()
 		t.Fatal(err)
 	}
-	if next.Status.InsertedCount != 0 || next.Status.MobileCoverage.OwnRecalls != 1 || next.Status.MobileCoverage.SourceControls != 1 {
+	if next.Status.InsertedCount != 0 || next.Status.MobileCoverage.OwnRecalls != 1 ||
+		next.Status.MobileCoverage.SourceControls != 1 {
 		s.Close()
 		t.Fatal("recall progress mismatch")
 	}
 	var count int
-	if err = s.DB.QueryRow("SELECT count(*) FROM message_tombstones WHERE conversation_type='direct' AND conversation_id='12' AND message_id='13'").Scan(&count); err != nil || count != 1 {
+	if err = s.DB.QueryRow("SELECT count(*) FROM message_tombstones WHERE conversation_type='direct' AND conversation_id='12' AND message_id='13'").
+		Scan(&count); err != nil ||
+		count != 1 {
 		s.Close()
 		t.Fatal("tombstone missing")
 	}
@@ -60,12 +65,25 @@ func TestMobileRecallAndCheckpointCommitAtomicallyWithoutEvents(t *testing.T) {
 		t.Fatal("recall proof lost on restart", err)
 	}
 	// A later historical replay of the recalled record stays suppressed.
-	final := domain.MobileHistoryPage{Snapshot: page.Snapshot, Records: page.Records, Counts: domain.MobileHistoryCounts{Examined: 1}}
+	final := domain.MobileHistoryPage{
+		Snapshot: page.Snapshot,
+		Records:  page.Records,
+		Counts:   domain.MobileHistoryCounts{Examined: 1},
+	}
 	done, err := s.CommitMobileHistoryPage(ctx, next.Status.OperationID, next.Revision, final, time.Millisecond)
 	if err != nil || done.Status.InsertedCount != 0 || done.Status.MobileCoverage.OwnRecalls != 1 {
 		t.Fatal("later page restored recalled message", err)
 	}
-	if _, err = s.CommitMobileHistoryPage(ctx, op.Status.OperationID, op.Revision, page, time.Millisecond); !errors.Is(err, ErrHistoryState) {
+	if _, err = s.CommitMobileHistoryPage(
+		ctx,
+		op.Status.OperationID,
+		op.Revision,
+		page,
+		time.Millisecond,
+	); !errors.Is(
+		err,
+		ErrHistoryState,
+	) {
 		t.Fatal("stale page accepted")
 	}
 	assertHistoryStatusSchema(t, done)
@@ -85,7 +103,13 @@ func TestMobileRecallRollbackPreservesCorpusAndProgress(t *testing.T) {
 				t.Fatal(err)
 			}
 			// Act.
-			_, err := s.CommitMobileHistoryPage(context.Background(), op.Status.OperationID, op.Revision, page, time.Millisecond)
+			_, err := s.CommitMobileHistoryPage(
+				context.Background(),
+				op.Status.OperationID,
+				op.Revision,
+				page,
+				time.Millisecond,
+			)
 			// Assert: no tombstone or checkpoint prefix escapes.
 			if err == nil {
 				t.Fatal("checkpoint failure accepted")
@@ -126,7 +150,13 @@ func TestMobileRecallRejectsIncompleteControlProofAndForeignTargets(t *testing.T
 				page.Snapshot.WALMode = true
 			}
 			// Act.
-			_, err := s.CommitMobileHistoryPage(context.Background(), op.Status.OperationID, op.Revision, page, time.Millisecond)
+			_, err := s.CommitMobileHistoryPage(
+				context.Background(),
+				op.Status.OperationID,
+				op.Revision,
+				page,
+				time.Millisecond,
+			)
 			// Assert.
 			if err == nil {
 				t.Fatal("invalid recall accepted")
@@ -149,7 +179,9 @@ func TestMobileRecallRollbackRestoresExistingMessage(t *testing.T) {
 	if _, err := s.PutHistoryPage(ctx, original.Ref(), []domain.Message{original}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.DB.Exec(`CREATE TRIGGER fail_existing_recall BEFORE UPDATE ON history_operations BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`); err != nil {
+	if _, err := s.DB.Exec(
+		`CREATE TRIGGER fail_existing_recall BEFORE UPDATE ON history_operations BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`,
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act: fail after message removal, before checkpoint publication.

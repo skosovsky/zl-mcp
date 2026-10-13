@@ -44,20 +44,25 @@ func (p *membershipPort) archiveRead(ctx context.Context, method string, args an
 	for _, receipt := range sources {
 		values = append(values, archiveDescriptor(receipt))
 	}
-	return map[string]any{"sources": values, "history_complete": false}, nil
+	return map[string]any{"sources": values, fieldHistoryComplete: false}, nil
 }
 
 func archiveDescriptor(receipt mobilebackup.PreservationReceipt) map[string]any {
 	source := receipt.Source
 	return map[string]any{
-		"source_id": source.SourceID, "captured_at": source.CapturedAt,
+		fieldSourceID: source.SourceID, "captured_at": source.CapturedAt,
 		"capture_cache_expires_at": source.ExpiresAt, "preserved_at": receipt.PreservedAt,
 		"retention": receipt.Retention, "digest": source.Digest, "file_count": source.FileCount,
 		"direct_files": source.DirectFiles, "group_files": source.GroupFiles,
-		"history_complete": false, "read_scope": "collection_policy",
+		fieldHistoryComplete: false, "read_scope": "collection_policy",
 	}
 }
 
 func archiveReadUnavailable() error {
-	return &domain.Error{Code: "SOURCE_UNAVAILABLE", Message: "Authenticated local archive storage is unavailable.", Details: map[string]any{}}
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
+	return &domain.Error{
+		Code:    "SOURCE_UNAVAILABLE",
+		Message: "Authenticated local archive storage is unavailable.",
+		Details: map[string]any{},
+	}
 }

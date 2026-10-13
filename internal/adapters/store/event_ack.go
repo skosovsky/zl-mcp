@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+
 	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
 )
 

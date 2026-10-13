@@ -47,13 +47,16 @@ type preview struct {
 }
 
 func NewJoin(ctx context.Context, s *storage.Store, api Upstream, allow bool) *JoinManager {
+	//nolint:exhaustruct_v5 // JoinManager initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	return &JoinManager{Store: s, API: api, AllowJoin: allow, ctx: ctx, gate: make(chan struct{}, 1)}
 }
 func (j *JoinManager) Wait() { j.wg.Wait() }
 func safeError(code, message, instruction string) error {
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 	return &domain.Error{
-		Code:       code,
-		Message:    message,
+		Code:    code,
+		Message: message,
+		//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 		NextAction: domain.NextAction{Instruction: instruction},
 		Details:    map[string]any{},
 	}
@@ -97,7 +100,7 @@ func (j *JoinManager) Inspect(ctx context.Context, raw string) (map[string]any, 
 			)
 		}
 		return nil, safeError(
-			"UPSTREAM_UNAVAILABLE",
+			codeUpstreamUnavailable,
 			"Could not inspect this invitation.",
 			"Check the invitation or retry later.",
 		)
@@ -110,7 +113,7 @@ func (j *JoinManager) Inspect(ctx context.Context, raw string) (map[string]any, 
 			GroupID:  v.Group.ID,
 			Name:     v.Group.Name,
 			Approval: v.ApprovalRequired,
-			Expires:  time.Now().UTC().Add(10 * time.Minute),
+			Expires:  time.Now().UTC().Add(joinPlanLifetime),
 		}
 		b, marshalErr := json.Marshal(p)
 		if marshalErr != nil {
@@ -129,7 +132,7 @@ func (j *JoinManager) Inspect(ctx context.Context, raw string) (map[string]any, 
 		t := p.Expires.Format(time.RFC3339Nano)
 		expires = &t
 	}
-	member := "unknown"
+	member := stateUnknownText
 	groups, e := shared.ObserveUpstream(
 		ctx,
 		domain.WorkJoin,
@@ -144,7 +147,7 @@ func (j *JoinManager) Inspect(ctx context.Context, raw string) (map[string]any, 
 		}
 	}
 	return map[string]any{
-		"group_id":           v.Group.ID,
+		fieldGroupID:         v.Group.ID,
 		"name":               v.Group.Name,
 		"description":        v.Description,
 		"member_count":       v.Group.MemberCount,
@@ -156,6 +159,7 @@ func (j *JoinManager) Inspect(ctx context.Context, raw string) (map[string]any, 
 }
 func (j *JoinManager) preview(ctx context.Context, id string) (preview, error) {
 	var b string
+	//nolint:exhaustruct_v5 // preview initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	p := preview{}
 	e := j.Store.DB.QueryRowContext(ctx, "SELECT payload FROM join_previews WHERE id=?", id).Scan(&b)
 	if e != nil {
@@ -182,7 +186,7 @@ func (j *JoinManager) Approve(ctx context.Context, id string) (string, error) {
 	if e != nil {
 		return "", e
 	}
-	b := make([]byte, 32)
+	b := make([]byte, joinPlanTokenBytes)
 	if _, e = rand.Read(b); e != nil {
 		return "", e
 	}
@@ -250,12 +254,12 @@ func (j *JoinManager) Start(ctx context.Context, token, requestID string) (map[s
 	result := map[string]any{
 		"operation_id":       operationID,
 		"request_id":         requestID,
-		"status":             "running",
-		"group_id":           p.GroupID,
+		fieldStatus:          stateRunningText,
+		fieldGroupID:         p.GroupID,
 		"collection_enabled": j.Store.Allowed(p.GroupID),
 		"checked_at":         time.Now().UTC().Format(time.RFC3339Nano),
 		"retry_safe":         false,
-		"poll_after_ms":      1000,
+		"poll_after_ms":      joinPollMillis,
 		"error":              nil,
 	}
 	b, e := json.Marshal(result)
@@ -313,22 +317,23 @@ func (j *JoinManager) Start(ctx context.Context, token, requestID string) (map[s
 	return result, nil
 }
 func (j *JoinManager) execute(parent context.Context, p preview, result map[string]any, created time.Time) {
-	ctx, cancel := context.WithTimeout(parent, 45*time.Second)
+	ctx, cancel := context.WithTimeout(parent, joinManagerexecuteTimeout)
 	defer cancel()
-	status := "unknown"
+	status := stateUnknownText
 	defer func() {
-		result["status"] = status
+		result[fieldStatus] = status
 		result["checked_at"] = time.Now().UTC().Format(time.RFC3339Nano)
 		result["poll_after_ms"] = nil
 		result["retry_safe"] = false
 		b, err := json.Marshal(result)
 		if err != nil {
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.ErrorContext(parent, "join outcome encoding failed", "operation_id", result["operation_id"])
 			return
 		}
 		// Persist even when cancellation interrupted waiting for the API gate.
 		// A storage failure leaves the original running ledger for Recover on restart.
-		saveCtx, cancelSave := context.WithTimeout(context.Background(), 5*time.Second)
+		saveCtx, cancelSave := context.WithTimeout(context.Background(), joinManagerexecuteSaveTimeout)
 		defer cancelSave()
 		if _, err = j.Store.DB.ExecContext(
 			saveCtx,
@@ -336,15 +341,17 @@ func (j *JoinManager) execute(parent context.Context, p preview, result map[stri
 			string(b),
 			result["operation_id"],
 		); err != nil {
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.ErrorContext(parent, "join outcome persistence failed", "operation_id", result["operation_id"])
 		} else {
-			shared.ObserveTransition(ctx, domain.WorkJoin, "running", status, created)
+			shared.ObserveTransition(ctx, domain.WorkJoin, stateRunningText, status, created)
 		}
 	}()
 	if e := j.enter(ctx); e != nil {
 		result["error"] = map[string]any{
-			"code":    "OPERATION_INTERRUPTED",
-			"message": "Join operation was interrupted.",
+			fieldCode:    "OPERATION_INTERRUPTED",
+			fieldMessage: "Join operation was interrupted.",
+			//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 			"next_action": domain.NextAction{
 				Instruction: "Check collector status and membership; do not send another join automatically.",
 			},
@@ -366,7 +373,7 @@ func (j *JoinManager) execute(parent context.Context, p preview, result map[stri
 			domain.WorkJoin,
 			func(ctx context.Context) (struct{}, error) { return struct{}{}, j.API.Join(ctx, p.URL) },
 		)
-		checkCtx, stop := context.WithTimeout(j.ctx, 15*time.Second)
+		checkCtx, stop := context.WithTimeout(j.ctx, joinManagerexecuteCheckTimeout)
 		after, checkErr := shared.ObserveUpstream(
 			checkCtx,
 			domain.WorkJoin,
@@ -379,13 +386,14 @@ func (j *JoinManager) execute(parent context.Context, p preview, result map[stri
 		// Confirmed membership takes precedence over the join response, since an
 		// administrator may approve immediately. Only an explicit upstream signal
 		// establishes pending; an invite flag or opaque success string does not.
-		if status == "unknown" && errors.Is(err, domain.ErrJoinPendingApproval) {
+		if status == stateUnknownText && errors.Is(err, domain.ErrJoinPendingApproval) {
 			status = "pending_approval"
 		}
-		if err != nil && status == "unknown" {
+		if err != nil && status == stateUnknownText {
 			result["error"] = map[string]any{
-				"code":    "UPSTREAM_UNAVAILABLE",
-				"message": "Join outcome could not be confirmed.",
+				fieldCode:    codeUpstreamUnavailable,
+				fieldMessage: "Join outcome could not be confirmed.",
+				//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 				"next_action": domain.NextAction{
 					Instruction: "Check membership in Zalo; do not send another join automatically.",
 				},
@@ -412,8 +420,8 @@ func (j *JoinManager) Recover(ctx context.Context) error {
 			rows.Close()
 			return e
 		}
-		if v["status"] == "running" {
-			v["status"] = "unknown"
+		if v[fieldStatus] == stateRunningText {
+			v[fieldStatus] = stateUnknownText
 			v["poll_after_ms"] = nil
 			v["retry_safe"] = false
 			results = append(results, v)
@@ -481,11 +489,11 @@ func (j *JoinManager) Reconcile(ctx context.Context, groups []domain.Group) erro
 			rows.Close()
 			return err
 		}
-		groupID, ok := value["group_id"].(string)
+		groupID, ok := value[fieldGroupID].(string)
 		if !ok || !members[groupID] {
 			continue
 		}
-		value["status"] = "joined"
+		value[fieldStatus] = "joined"
 		value["checked_at"] = time.Now().UTC().Format(time.RFC3339Nano)
 		value["poll_after_ms"] = nil
 		value["error"] = nil
@@ -553,7 +561,11 @@ func (j *JoinManager) approvedPreview(ctx context.Context, hash string) (preview
 		return preview{}, e
 	}
 	if !time.Now().Before(at) {
-		return preview{}, safeError("APPROVAL_EXPIRED", "Approval expired.", "Inspect and approve the invitation again.")
+		return preview{}, safeError(
+			"APPROVAL_EXPIRED",
+			"Approval expired.",
+			"Inspect and approve the invitation again.",
+		)
 	}
 	p, e := j.preview(ctx, previewID)
 	if e != nil {
@@ -567,7 +579,7 @@ func (j *JoinManager) approvedPreview(ctx context.Context, hash string) (preview
 	)
 	if e != nil {
 		return preview{}, safeError(
-			"UPSTREAM_UNAVAILABLE",
+			codeUpstreamUnavailable,
 			"Cannot revalidate the invitation.",
 			"Retry with the same request_id and plan_token later.",
 		)
@@ -592,11 +604,12 @@ func (j *JoinManager) checkJoinRate(ctx context.Context) error {
 		}
 		if time.Since(last) < time.Minute {
 			return &domain.Error{
-				Code:       "RATE_LIMITED",
-				Message:    "Wait before starting another join.",
-				Retryable:  true,
+				Code:      "RATE_LIMITED",
+				Message:   "Wait before starting another join.",
+				Retryable: true,
+				//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 				NextAction: domain.NextAction{Instruction: "Retry the same request after one minute."},
-				Details:    map[string]any{"retry_after_ms": 60000},
+				Details:    map[string]any{"retry_after_ms": joinRateRetryMillis},
 			}
 		}
 	} else if !errors.Is(

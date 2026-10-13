@@ -20,7 +20,7 @@ func (p *membershipPort) captureAccountArchive(
 	id string,
 	revision int64,
 ) (mobilebackup.RetainedArchiveManifest, error) {
-	d, err := mobilebackup.NewDownloader([]string{"trans-bin.zaloapp.com"})
+	d, err := mobilebackup.NewDownloader([]string{archiveDownloadHost})
 	if err != nil {
 		return mobilebackup.RetainedArchiveManifest{}, err
 	}
@@ -37,7 +37,7 @@ func (p *membershipPort) captureAccountArchiveWithDownloader(
 	if parent == nil || p.store == nil || p.archives == nil || !d.Ready() {
 		return mobilebackup.RetainedArchiveManifest{}, mobilebackup.ErrRetainedArchive
 	}
-	ctx, cancel := context.WithTimeout(parent, 420*time.Second)
+	ctx, cancel := context.WithTimeout(parent, membershipPortcaptureAccountArchiveWithDownloaderTimeout)
 	defer cancel()
 	if p.lifecycle != nil {
 		stop := context.AfterFunc(p.lifecycle, cancel)
@@ -65,7 +65,7 @@ func (p *membershipPort) captureAccountArchiveWithDownloader(
 	if !errors.Is(err, mobilebackup.ErrRetainedAbsent) {
 		return mobilebackup.RetainedArchiveManifest{}, err
 	}
-	if attempt.State != "prepared" || attempt.Revision != revision {
+	if attempt.State != statePreparedText || attempt.Revision != revision {
 		return mobilebackup.RetainedArchiveManifest{}, storage.ErrMobileBackupState
 	}
 	p.mu.RLock()
@@ -168,7 +168,7 @@ func (p *membershipPort) inspectAccountArchiveFrom(
 	if p.store == nil || archives == nil {
 		return nil, mobilebackup.ErrRetainedArchive
 	}
-	ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, membershipPortinspectAccountArchiveFromTimeout)
 	defer cancel()
 	since, err := time.Parse(time.RFC3339Nano, sinceText)
 	if err != nil {
@@ -214,17 +214,17 @@ func (p *membershipPort) inspectAccountArchiveFrom(
 		more = false
 	}
 	return map[string]any{
-		"manifest":           manifest,
-		"source_storage":     sourceStorage,
-		"retention":          retention,
-		"since":              since.UTC().Format(time.RFC3339Nano),
-		"until":              until.UTC().Format(time.RFC3339Nano),
-		"offset":             offset,
-		"files":              files,
-		"has_more_files":     more,
-		"download_performed": false,
-		"import_performed":   false,
-		"history_complete":   false,
+		"manifest":             manifest,
+		"source_storage":       sourceStorage,
+		"retention":            retention,
+		"since":                since.UTC().Format(time.RFC3339Nano),
+		"until":                until.UTC().Format(time.RFC3339Nano),
+		"offset":               offset,
+		"files":                files,
+		"has_more_files":       more,
+		fieldDownloadPerformed: false,
+		fieldImportPerformed:   false,
+		fieldHistoryComplete:   false,
 	}, nil
 }
 
@@ -246,7 +246,7 @@ func (p *membershipPort) removeAccountArchiveFrom(
 	if err = archives.RemoveBound(ctx, id, key); err != nil {
 		return nil, err
 	}
-	return map[string]any{"source_id": id, "removed": true, "import_performed": false}, nil
+	return map[string]any{fieldSourceID: id, "removed": true, fieldImportPerformed: false}, nil
 }
 
 func (p *membershipPort) selectArchiveStore(selection string) (*mobilebackup.RetainedArchiveStore, string, error) {

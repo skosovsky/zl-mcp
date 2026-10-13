@@ -461,7 +461,9 @@ func TestHistoryOperationReservationReconcilesActualSourceWork(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if nestedRecoverInterruptedHistoryErr := s.RecoverInterruptedHistory(ctx); nestedRecoverInterruptedHistoryErr != nil {
+	if nestedRecoverInterruptedHistoryErr := s.RecoverInterruptedHistory(
+		ctx,
+	); nestedRecoverInterruptedHistoryErr != nil {
 		t.Fatal(nestedRecoverInterruptedHistoryErr)
 	}
 	op, err = s.HistoryOperation(ctx, op.Status.OperationID)

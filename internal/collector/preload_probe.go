@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net"
-	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
@@ -12,8 +11,8 @@ import (
 // probePreload is a trusted local read, not an MCP tool or ingestion operation.
 func probePreload(parent context.Context, source domain.ConversationPreloadSource) map[string]any {
 	result := map[string]any{
-		"source_status":             "unsupported",
-		"error_category":            "source_unsupported",
+		"source_status":             stateUnsupportedText,
+		"error_category":            reasonSourceUnsupported,
 		"source_code":               nil,
 		"error_reason":              nil,
 		"metadata_count":            0,
@@ -30,7 +29,7 @@ func probePreload(parent context.Context, source domain.ConversationPreloadSourc
 	if source == nil {
 		return result
 	}
-	ctx, cancel := context.WithTimeout(parent, 30*time.Second)
+	ctx, cancel := context.WithTimeout(parent, probePreloadTimeout)
 	defer cancel()
 	page, err := source.ConversationPreload(ctx)
 	if err != nil {
@@ -40,8 +39,8 @@ func probePreload(parent context.Context, source domain.ConversationPreloadSourc
 	direct, group := 0, 0
 	if len(page.Entries) > 5000 || page.UnsupportedMessageCount < 0 ||
 		len(page.Messages)+page.UnsupportedMessageCount > 1000 {
-		result["source_status"] = "failed"
-		result["error_category"] = "invalid_source_page"
+		result["source_status"] = stateFailedText
+		result["error_category"] = reasonInvalidSourcePage
 		return result
 	}
 	for _, message := range page.Messages {
@@ -51,8 +50,8 @@ func probePreload(parent context.Context, source domain.ConversationPreloadSourc
 		case domain.ConversationGroup:
 			group++
 		default:
-			result["source_status"] = "failed"
-			result["error_category"] = "invalid_source_page"
+			result["source_status"] = stateFailedText
+			result["error_category"] = reasonInvalidSourcePage
 			return result
 		}
 	}
@@ -68,19 +67,19 @@ func probePreload(parent context.Context, source domain.ConversationPreloadSourc
 }
 
 func projectPreloadFailure(result map[string]any, err error) {
-	result["source_status"] = "failed"
-	category := "unknown"
+	result["source_status"] = stateFailedText
+	category := stateUnknownText
 	var failure *domain.HistorySourceFailure
 	var network net.Error
 	switch {
 	case errors.Is(err, domain.ErrConversationPreloadUnsupported):
-		result["source_status"] = "unsupported"
-		category = "source_unsupported"
+		result["source_status"] = stateUnsupportedText
+		category = reasonSourceUnsupported
 	case errors.Is(err, domain.ErrAuthenticationRequired):
-		result["source_status"] = "auth_required"
-		category = "auth_required"
+		result["source_status"] = reasonAuthRequired
+		category = reasonAuthRequired
 	case errors.Is(err, domain.ErrHistoryInvalidPage):
-		category = "invalid_source_page"
+		category = reasonInvalidSourcePage
 		if pageFailure, ok := errors.AsType[*domain.HistoryPageFailure](err); ok {
 			result["error_reason"] = pageFailure.Reason()
 		}

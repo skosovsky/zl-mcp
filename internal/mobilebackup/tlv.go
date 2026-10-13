@@ -29,6 +29,7 @@ func (t *TLV) Clear() {
 	}
 	for i := range t.Fields {
 		clear(t.Fields[i].Value)
+		//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 		t.Fields[i] = TLVField{}
 	}
 	t.Fields = nil
@@ -42,6 +43,7 @@ func ParseTLV(ctx context.Context, data []byte) (result TLV, err error) {
 	defer func() {
 		if err != nil {
 			result.Clear()
+			//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 			result = TLV{}
 		}
 	}()

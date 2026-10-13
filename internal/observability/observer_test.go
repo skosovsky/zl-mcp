@@ -58,6 +58,7 @@ func metrics(t *testing.T, reader *sdkmetric.ManualReader) metricdata.ResourceMe
 	}
 	return result
 }
+
 //nolint:gocognit // This test helper checks the complete fixture/metric shape without dropping nested boundary assertions.
 func count(t *testing.T, data metricdata.ResourceMetrics, name string, attributes map[string]string) int64 {
 	t.Helper()

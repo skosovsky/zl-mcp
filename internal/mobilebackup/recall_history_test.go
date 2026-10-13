@@ -107,7 +107,7 @@ func TestRecallSnapshotConverterJournalResumeTogether(t *testing.T) {
 		t.Fatal(err)
 	}
 	mapper := identitySourceFunc(
-		func(ctx context.Context, req domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+		func(_ context.Context, req domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
 			out := []domain.MobileIdentityPair{}
 			for _, plain := range req.Direct {
 				session := "12"

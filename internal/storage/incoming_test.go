@@ -135,7 +135,7 @@ func TestIncomingFiltersPreserveFirstAcrossReplayDeletionRestart(t *testing.T) {
 		ctx,
 		at,
 		DefaultDeliveryPolicy(),
-		func(_, _ string, m domain.Message) ([]byte, error) { return []byte("synthetic"), nil },
+		func(_, _ string, _ domain.Message) ([]byte, error) { return []byte("synthetic"), nil },
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +160,7 @@ func TestIncomingFiltersPreserveFirstAcrossReplayDeletionRestart(t *testing.T) {
 		ctx,
 		at,
 		DefaultDeliveryPolicy(),
-		func(_, _ string, m domain.Message) ([]byte, error) { return []byte("synthetic"), nil },
+		func(_, _ string, _ domain.Message) ([]byte, error) { return []byte("synthetic"), nil },
 	); err != nil {
 		t.Fatal(err)
 	}

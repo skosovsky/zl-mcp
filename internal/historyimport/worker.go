@@ -28,10 +28,10 @@ func Run(ctx context.Context, store *storage.Store, source domain.HistorySource)
 // RunRecovered consumes legacy operations after the single owner has recovered
 // history once, before any legacy or mobile worker is started.
 func RunRecovered(ctx context.Context, store *storage.Store, source domain.HistorySource) error {
-	ticker := time.NewTicker(500 * time.Millisecond)
+	ticker := time.NewTicker(historyPollInterval)
 	defer ticker.Stop()
 	for {
-		pending, err := store.PendingHistoryOperations(ctx, 20)
+		pending, err := store.PendingHistoryOperations(ctx, historyPollBatch)
 		if err != nil {
 			if ctx.Err() != nil {
 				return nil
@@ -82,7 +82,7 @@ func runOperationObserved(
 	created, _ := time.Parse(time.RFC3339Nano, op.Status.CreatedAt)
 	shared.ObserveTransition(ctx, domain.WorkHistory, pending.Status.State, op.Status.State, created)
 	work := &historyWork{ctx: ctx, store: store, source: source, op: op, created: created}
-	for work.op.Status.State == "running" {
+	for work.op.Status.State == stateRunningText {
 		continueWork, stepErr := work.step()
 		if stepErr != nil || !continueWork {
 			return stepErr
@@ -100,9 +100,9 @@ func logSourceFailure(operationID string, err error) {
 	case errors.Is(err, domain.ErrAuthenticationRequired):
 		category = "auth_required"
 	case errors.Is(err, domain.ErrHistoryUnsupported):
-		category = "source_unsupported"
+		category = reasonSourceUnsupported
 	case errors.Is(err, domain.ErrHistoryInvalidPage):
-		category = "invalid_source_page"
+		category = reasonInvalidSourcePage
 		if malformed, ok := errors.AsType[*domain.HistoryPageFailure](err); ok {
 			attributes = append(attributes, "reason", malformed.Reason())
 		}
@@ -118,36 +118,50 @@ func logSourceFailure(operationID string, err error) {
 	}
 	attributes = append(attributes, "category", category)
 	// Never log err.Error(): SDK errors may contain URLs or private response text.
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.Warn("History source request failed", attributes...)
 }
 
-func requestHistoryPage(ctx context.Context, source domain.HistorySource, op storage.HistoryOperation, limit int) (domain.HistoryPage, error, bool) {
+func requestHistoryPage(
+	ctx context.Context,
+	source domain.HistorySource,
+	op storage.HistoryOperation,
+	limit int,
+) (domain.HistoryPage, bool, error) {
 	if op.Status.Source == "conversation_preload" {
 		snapshot, ok := source.(domain.PreloadHistorySource)
 		if !ok {
-			return domain.HistoryPage{}, domain.ErrHistoryUnsupported, false
+			return domain.HistoryPage{}, false, domain.ErrHistoryUnsupported
 		}
-		page, err := shared.ObserveUpstream(ctx, domain.WorkHistory, func(ctx context.Context) (domain.HistoryPage, error) {
-			return snapshot.PreloadHistoryPage(ctx, op.Status.Ref(), limit)
-		})
-		return page, err, false
+		page, err := shared.ObserveUpstream(
+			ctx,
+			domain.WorkHistory,
+			func(ctx context.Context) (domain.HistoryPage, error) {
+				return snapshot.PreloadHistoryPage(ctx, op.Status.Ref(), limit)
+			},
+		)
+		return page, false, err
 	}
 	if source == nil {
-		return domain.HistoryPage{}, domain.ErrHistoryUnsupported, false
+		return domain.HistoryPage{}, false, domain.ErrHistoryUnsupported
 	}
 	if phased, ok := source.(domain.PhasedHistorySource); ok {
 		if phased.HistoryPhaseRequired() && op.Status.PagesObserved > 0 && op.Status.IsOld == nil {
-			return domain.HistoryPage{}, nil, true
+			return domain.HistoryPage{}, true, nil
 		}
-		page, err := shared.ObserveUpstream(ctx, domain.WorkHistory, func(ctx context.Context) (domain.HistoryPage, error) {
-			return phased.HistoryPageWithPhase(ctx, op.Status.Ref(), op.Cursor, op.Status.IsOld, limit)
-		})
-		return page, err, false
+		page, err := shared.ObserveUpstream(
+			ctx,
+			domain.WorkHistory,
+			func(ctx context.Context) (domain.HistoryPage, error) {
+				return phased.HistoryPageWithPhase(ctx, op.Status.Ref(), op.Cursor, op.Status.IsOld, limit)
+			},
+		)
+		return page, false, err
 	}
 	page, err := shared.ObserveUpstream(ctx, domain.WorkHistory, func(ctx context.Context) (domain.HistoryPage, error) {
 		return source.HistoryPage(ctx, op.Status.Ref(), op.Cursor, limit)
 	})
-	return page, err, false
+	return page, false, err
 }
 
 type historyWork struct {
@@ -159,7 +173,6 @@ type historyWork struct {
 }
 
 func (work *historyWork) stop(state, reason string, elapsed time.Duration) error {
-
 	_, stopHistoryOperationErr := work.store.StopHistoryOperation(
 		work.ctx,
 		work.op.Status.OperationID,
@@ -176,7 +189,6 @@ func (work *historyWork) stop(state, reason string, elapsed time.Duration) error
 		return nil
 	}
 	return stopHistoryOperationErr
-
 }
 
 func (work *historyWork) step() (bool, error) {
@@ -194,7 +206,7 @@ func (work *historyWork) step() (bool, error) {
 	if limit <= 0 {
 		return false, errors.New("running history operation has exhausted its record budget")
 	}
-	requestBudget := min(remaining, 30*time.Second)
+	requestBudget := min(remaining, cloudReadPhaseBudget)
 	work.op, err = work.store.ReserveHistoryPage(ctx, work.op.Status.OperationID, work.op.Revision, requestBudget)
 	if errors.Is(err, storage.ErrHistoryState) || ctx.Err() != nil {
 		//nolint:nilerr // Claim races and cancellation stop this worker successfully; storage failures are returned separately.
@@ -203,12 +215,12 @@ func (work *historyWork) step() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if work.op.Status.State != "running" {
+	if work.op.Status.State != stateRunningText {
 		return false, nil
 	}
 	request, cancel := context.WithTimeout(ctx, requestBudget)
 	started := time.Now()
-	page, requestErr, missingContinuation := requestHistoryPage(request, work.source, work.op, limit)
+	page, missingContinuation, requestErr := requestHistoryPage(request, work.source, work.op, limit)
 	err = requestErr
 	if missingContinuation {
 		cancel()
@@ -261,16 +273,15 @@ func (work *historyWork) sourceFailure(err error, remaining, elapsed time.Durati
 		}
 		return domain.ErrAuthenticationRequired
 	case errors.Is(err, domain.ErrHistoryUnsupported):
-		state, reason = "unsupported", "source_unsupported"
-	case errors.Is(err, context.DeadlineExceeded) && remaining <= 30*time.Second:
+		state, reason = "unsupported", reasonSourceUnsupported
+	case errors.Is(err, context.DeadlineExceeded) && remaining <= cloudReadPhaseBudget:
 		state, reason = "partial", "time_limit"
-	case errors.As(err, &invalid) && invalid.Code == "INVALID_ARGUMENT":
-		reason = "invalid_source_page"
+	case errors.As(err, &invalid) && invalid.Code == codeInvalidArgument:
+		reason = reasonInvalidSourcePage
 	case errors.Is(err, domain.ErrHistoryInvalidPage):
-		reason = "invalid_source_page"
+		reason = reasonInvalidSourcePage
 	}
 	return work.stop(state, reason, elapsed)
-
 }
 
 func (work *historyWork) commitFailure(commitErr error, elapsed time.Duration, started time.Time) error {
@@ -279,9 +290,8 @@ func (work *historyWork) commitFailure(commitErr error, elapsed time.Duration, s
 	}
 	reason := "storage_error"
 	var invalid *domain.Error
-	if errors.As(commitErr, &invalid) && invalid.Code == "INVALID_ARGUMENT" {
-		reason = "invalid_source_page"
+	if errors.As(commitErr, &invalid) && invalid.Code == codeInvalidArgument {
+		reason = reasonInvalidSourcePage
 	}
 	return work.stop("failed", reason, elapsed)
-
 }

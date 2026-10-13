@@ -28,7 +28,7 @@ func (g *sessionGuard) ContactsPage(parent context.Context, page, limit int) ([]
 // refreshContacts bounds work and preserves records from partial runs. Counts
 // describe unique IDs observed in this run, not total inbox size.
 func refreshContacts(parent context.Context, store *storage.Store, source domain.ContactSource) error {
-	ctx, cancel := context.WithTimeout(parent, 30*time.Second)
+	ctx, cancel := context.WithTimeout(parent, refreshContactsTimeout)
 	defer cancel()
 	previous, err := store.ContactStatus(ctx)
 	if err != nil {
@@ -36,12 +36,12 @@ func refreshContacts(parent context.Context, store *storage.Store, source domain
 	}
 	var observedCount, permittedCount int
 	status := map[string]any{
-		"status":          "running",
-		"last_attempt_at": time.Now().UTC().Format(time.RFC3339Nano),
-		"last_success_at": previous["last_success_at"],
-		"observed_count":  0,
-		"permitted_count": 0,
-		"stop_reason":     nil,
+		fieldStatus:        stateRunningText,
+		fieldLastAttemptAt: time.Now().UTC().Format(time.RFC3339Nano),
+		fieldLastSuccessAt: previous[fieldLastSuccessAt],
+		"observed_count":   0,
+		"permitted_count":  0,
+		fieldStopReason:    nil,
 	}
 	if err = store.SetContactStatus(ctx, status); err != nil {
 		return err
@@ -51,13 +51,13 @@ func refreshContacts(parent context.Context, store *storage.Store, source domain
 		return finishContactRefresh(parent, store, status, state, reason, cause)
 	}
 	for page := 1; page <= 20; page++ {
-		records, e := source.ContactsPage(ctx, page, 200)
+		records, e := source.ContactsPage(ctx, page, contactPageSize)
 		if e != nil {
 			state, reason := contactSourceOutcome(ctx, e)
 			return finish(state, reason, e)
 		}
-		if len(records) > 200 {
-			return finish("partial", "oversized_page", domain.Invalid("Contact source exceeded page limit."))
+		if len(records) > contactPageSize {
+			return finish(statePartialText, "oversized_page", domain.Invalid("Contact source exceeded page limit."))
 		}
 		fresh := []domain.Contact{}
 		for _, record := range records {
@@ -67,25 +67,25 @@ func refreshContacts(parent context.Context, store *storage.Store, source domain
 		}
 		// Merge the entire page atomically, including validation of repeated IDs.
 		if _, e = store.PutContacts(ctx, records); e != nil {
-			return finish("partial", "storage_or_metadata_error", e)
+			return finish(statePartialText, "storage_or_metadata_error", e)
 		}
 		observed, permitted := observeFreshContacts(store, fresh, seen)
 		observedCount += observed
 		permittedCount += permitted
 		status["observed_count"] = observedCount
 		status["permitted_count"] = permittedCount
-		if len(records) < 200 {
+		if len(records) < contactPageSize {
 			return finish("exhausted", "short_page", nil)
 		}
 		if len(fresh) == 0 {
-			return finish("partial", "repeated_page", nil)
+			return finish(statePartialText, "repeated_page", nil)
 		}
 	}
-	return finish("partial", "page_limit", nil)
+	return finish(statePartialText, "page_limit", nil)
 }
 
 func contactsLoop(ctx context.Context, store *storage.Store, source domain.ContactSource) {
-	ticker := time.NewTicker(5 * time.Minute)
+	ticker := time.NewTicker(contactRefreshInterval)
 	defer ticker.Stop()
 	for {
 		_ = refreshContacts(ctx, store, source)
@@ -118,21 +118,27 @@ func observeFreshContacts(store *storage.Store, fresh []domain.Contact, seen map
 func contactSourceOutcome(ctx context.Context, err error) (string, string) {
 	switch {
 	case errors.Is(err, errContactsUnsupported):
-		return "unsupported", "source_unsupported"
+		return stateUnsupportedText, reasonSourceUnsupported
 	case errors.Is(err, domain.ErrAuthenticationRequired):
-		return "partial", "auth_required"
+		return statePartialText, reasonAuthRequired
 	case ctx.Err() != nil:
-		return "partial", "cancelled_or_deadline"
+		return statePartialText, reasonCancelledOrDeadline
 	default:
-		return "partial", "upstream_unavailable"
+		return statePartialText, "upstream_unavailable"
 	}
 }
 
-func finishContactRefresh(parent context.Context, store *storage.Store, status map[string]any, state, reason string, cause error) error {
-	status["status"] = state
-	status["stop_reason"] = reason
+func finishContactRefresh(
+	parent context.Context,
+	store *storage.Store,
+	status map[string]any,
+	state, reason string,
+	cause error,
+) error {
+	status[fieldStatus] = state
+	status[fieldStopReason] = reason
 	if state == "exhausted" {
-		status["last_success_at"] = time.Now().UTC().Format(time.RFC3339Nano)
+		status[fieldLastSuccessAt] = time.Now().UTC().Format(time.RFC3339Nano)
 	}
 	// Shutdown cancellation must not leave a misleading running source status.
 	saveCtx, stop := context.WithTimeout(context.WithoutCancel(parent), time.Second)
@@ -141,5 +147,4 @@ func finishContactRefresh(parent context.Context, store *storage.Store, status m
 		return e
 	}
 	return cause
-
 }

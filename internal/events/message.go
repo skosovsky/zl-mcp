@@ -80,6 +80,7 @@ func (e *MessageEncoder) Encode(eventID string, message domain.Message) ([]byte,
 		return nil, errors.New("legacy event requires group message")
 	}
 	message.GroupID = message.Ref().ID
+	//nolint:exhaustruct_v5 // MessageData preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	data := MessageData{
 		GroupID:    message.GroupID,
 		MessageID:  message.ID,
@@ -96,6 +97,7 @@ func (e *MessageEncoder) Encode(eventID string, message domain.Message) ([]byte,
 		data.TextResourceURI = &uri
 	}
 	wire, err := json.Marshal(
+		//nolint:exhaustruct_v5 // MessageEvent preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 		MessageEvent{EventID: eventID, Name: MessageCreated, Timestamp: message.SentAt.UTC(), Data: data},
 	)
 	if err != nil || len(wire) > 256<<10 {
@@ -147,7 +149,7 @@ func (e *MessageEncoder) EncodeProfile(profile, id string, m domain.Message) ([]
 	data["direction"] = m.Direction
 	data["first_incoming"] = m.FirstIncoming
 	body, err := json.Marshal(
-		map[string]any{"eventId": id, "name": profile, "timestamp": m.SentAt.UTC(), "data": data, "cursor": nil},
+		map[string]any{"eventId": id, fieldName: profile, "timestamp": m.SentAt.UTC(), "data": data, "cursor": nil},
 	)
 	if err != nil || len(body) > 256<<10 {
 		return nil, errors.New("event exceeds delivery body limit")

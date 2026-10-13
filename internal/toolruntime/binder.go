@@ -39,7 +39,14 @@ func intArg(args map[string]any, key string, fallback int) int {
 	return int(v)
 }
 func query(args map[string]any) search.Query {
-	return search.Query{Text: stringArg(args, "query"), SenderID: stringArg(args, "sender_id"), Since: stringArg(args, "since"), Until: stringArg(args, "until"), Cursor: stringArg(args, "cursor"), Limit: intArg(args, "limit", 20)}
+	return search.Query{
+		Text:     stringArg(args, "query"),
+		SenderID: stringArg(args, "sender_id"),
+		Since:    stringArg(args, "since"),
+		Until:    stringArg(args, "until"),
+		Cursor:   stringArg(args, "cursor"),
+		Limit:    intArg(args, "limit", defaultReadLimit),
+	}
 }
 func groupRequest(args map[string]any) search.GroupRequest {
 	return search.GroupRequest{Query: query(args), GroupID: stringArg(args, "group_id")}
@@ -55,5 +62,10 @@ func contextRequest(args map[string]any, group bool) conversations.ContextReques
 	if group {
 		identity = domain.ConversationRef{Type: domain.ConversationGroup, ID: stringArg(args, "group_id")}
 	}
-	return conversations.ContextRequest{Conversation: identity, MessageID: stringArg(args, "message_id"), Before: intArg(args, "before", 5), After: intArg(args, "after", 5)}
+	return conversations.ContextRequest{
+		Conversation: identity,
+		MessageID:    stringArg(args, "message_id"),
+		Before:       intArg(args, "before", defaultContextNeighbors),
+		After:        intArg(args, "after", defaultContextNeighbors),
+	}
 }

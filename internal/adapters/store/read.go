@@ -22,9 +22,11 @@ var _ conversations.ReadPort = (*Reader)(nil)
 
 func readError(err error) error {
 	if errors.Is(err, sql.ErrNoRows) {
+		//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 		return &domain.Error{
-			Code:       "NOT_FOUND",
-			Message:    "No accessible local record was found.",
+			Code:    "NOT_FOUND",
+			Message: "No accessible local record was found.",
+			//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 			NextAction: domain.NextAction{Instruction: "Use IDs returned by zalo_list_groups or zalo_search_messages."},
 			Details:    map[string]any{},
 		}
@@ -32,6 +34,7 @@ func readError(err error) error {
 	return err
 }
 func query(q search.Query) storage.Search {
+	//nolint:exhaustruct_v5 // Search preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	return storage.Search{
 		Query:    q.Text,
 		SenderID: q.SenderID,
@@ -147,6 +150,7 @@ func (r *Reader) GroupContext(
 	if !anchorOK || !beforeOK || !afterOK || !replyToOK || !coverageOK || !contextTruncatedOK {
 		return conversations.GroupContext{}, errors.New("invalid storage GroupContext projection")
 	}
+	//nolint:exhaustruct_v5 // GroupContext preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	out := conversations.GroupContext{
 		Anchor:           anchor,
 		Before:           before,

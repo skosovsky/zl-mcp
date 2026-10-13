@@ -35,15 +35,19 @@ func (p *PreparedRowPage) Clear() {
 	for i := range p.Rows {
 		clear(p.Rows[i].Row.BinNet)
 		p.Rows[i].Metadata.Clear()
+		//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 		p.Rows[i] = PreparedRow{}
 	}
 	clear(p.OwnRecalls)
+	//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 	*p = PreparedRowPage{}
 }
+
+//nolint:mnd // Closed native payload IDs map to audited kinds; keeping literal IDs avoids inventing names for variant encodings.
 func mobilePayloadKind(t int64) (string, bool) {
 	switch t {
 	case 0:
-		return "webchat", true
+		return nativeClientWebchat, true
 	case 2:
 		return "chat.doodle", true
 	case 3, 4, 31:
@@ -71,6 +75,8 @@ func mobilePayloadKind(t int64) (string, bool) {
 	}
 	return "", false
 }
+
+//nolint:mnd // Exact native control IDs remain deferred by the source taxonomy; no guessed normalized enum is introduced.
 func deferredMobileControl(t int64) bool {
 	switch t {
 	case 20, 21, 25, 26, 29, 32, 33, 34, 35, 36, 45, 51, 52:
@@ -175,7 +181,13 @@ func validateOwnedPageRows(ctx context.Context, rows []SQLiteRow, owned *[]SQLit
 	return nil
 }
 
-func classifyOwnedPageRows(ctx context.Context, owned []SQLiteRow, normalized domain.MobileBackupRequest, result *PreparedRowPage) (IdentityRequest, map[string]bool, map[string][]SQLiteRow, error) {
+func classifyOwnedPageRows(
+	ctx context.Context,
+	owned []SQLiteRow,
+	normalized domain.MobileBackupRequest,
+	result *PreparedRowPage,
+) (IdentityRequest, map[string]bool, map[string][]SQLiteRow, error) {
+	//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 	request := IdentityRequest{}
 	seen := map[string]bool{}
 	// Only the own/direct/status-3 transition has paired live archive evidence.
@@ -211,6 +223,7 @@ func classifyOwnedPageRows(ctx context.Context, owned []SQLiteRow, normalized do
 		expiresMS, expiryDeclared, _ := MessageExpiryMS(row.TimestampMS, row.TTL) // Whole page checked above.
 		result.Rows = append(
 			result.Rows,
+			//nolint:exhaustruct_v5 // PreparedRow keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 			PreparedRow{Row: row, Kind: kind, Metadata: metadata, ExpiresMS: expiresMS, ExpiryDeclared: expiryDeclared},
 		)
 		owned[i].BinNet = nil // Ownership transferred to the returned candidate.
@@ -222,7 +235,11 @@ func classifyOwnedPageRows(ctx context.Context, owned []SQLiteRow, normalized do
 	return request, seen, controls, nil
 }
 
-func validatePageIdentities(ctx context.Context, pairs []IdentityPair, seen map[string]bool) (map[string]string, error) {
+func validatePageIdentities(
+	ctx context.Context,
+	pairs []IdentityPair,
+	seen map[string]bool,
+) (map[string]string, error) {
 	mapped := map[string]string{}
 	targets := map[string]bool{}
 	for _, pair := range pairs {
@@ -238,7 +255,12 @@ func validatePageIdentities(ctx context.Context, pairs []IdentityPair, seen map[
 	return mapped, nil
 }
 
-func assignPageSenders(result *PreparedRowPage, mapped map[string]string, normalized domain.MobileBackupRequest, account string) error {
+func assignPageSenders(
+	result *PreparedRowPage,
+	mapped map[string]string,
+	normalized domain.MobileBackupRequest,
+	account string,
+) error {
 	for i := range result.Rows {
 		row := &result.Rows[i]
 		row.SenderID = mapped[row.Row.SenderID]
@@ -247,15 +269,22 @@ func assignPageSenders(result *PreparedRowPage, mapped map[string]string, normal
 				row.SenderID != normalized.ConversationID {
 			return ErrSQLite
 		}
-		row.Direction = "incoming"
+		row.Direction = directionIncoming
 		if row.SenderID == account {
-			row.Direction = "outgoing"
+			row.Direction = directionOutgoing
 		}
 	}
 	return nil
 }
 
-func appendOwnPageRecalls(result *PreparedRowPage, request IdentityRequest, controls map[string][]SQLiteRow, mapped map[string]string, normalized domain.MobileBackupRequest, account string) error {
+func appendOwnPageRecalls(
+	result *PreparedRowPage,
+	request IdentityRequest,
+	controls map[string][]SQLiteRow,
+	mapped map[string]string,
+	normalized domain.MobileBackupRequest,
+	account string,
+) error {
 	seenTargets := map[string]bool{}
 	// Preserve encounter order; maps are only used for ownership/membership tests.
 	for _, source := range request.Direct {
@@ -289,7 +318,13 @@ func appendOwnPageRecalls(result *PreparedRowPage, request IdentityRequest, cont
 	return nil
 }
 
-func bindPreparedRowRequest(ctx context.Context, rows []SQLiteRow, r domain.MobileBackupRequest, account string, mapper domain.MobileIdentitySource) (domain.MobileBackupRequest, int64, int64, error) {
+func bindPreparedRowRequest(
+	ctx context.Context,
+	rows []SQLiteRow,
+	r domain.MobileBackupRequest,
+	account string,
+	mapper domain.MobileIdentitySource,
+) (domain.MobileBackupRequest, int64, int64, error) {
 	if ctx == nil || ctx.Err() != nil || len(rows) > 50 || !canonicalIdentity(account) || mapper == nil {
 		return domain.MobileBackupRequest{}, 0, 0, ErrSQLite
 	}
@@ -306,7 +341,13 @@ func bindPreparedRowRequest(ctx context.Context, rows []SQLiteRow, r domain.Mobi
 	return normalized, from, to, nil
 }
 
-func appendPageControl(row SQLiteRow, normalized domain.MobileBackupRequest, request *IdentityRequest, seen map[string]bool, controls map[string][]SQLiteRow) {
+func appendPageControl(
+	row SQLiteRow,
+	normalized domain.MobileBackupRequest,
+	request *IdentityRequest,
+	seen map[string]bool,
+	controls map[string][]SQLiteRow,
+) {
 	if normalized.ConversationType == domain.ConversationDirect && row.Type == 36 && row.Status == 3 {
 		controls[row.SenderID] = append(controls[row.SenderID], row)
 		if !seen[row.SenderID] {

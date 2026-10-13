@@ -123,6 +123,7 @@ func TestUnifiedConversationServiceCollectionMCPEventsRestartAndCancel(t *testin
 func testConversationServiceProfile(t *testing.T, profile string, version int) {
 	// Arrange: real service/storage/HTTP/worker, a synthetic Zalo source and an
 	// independently verifying TLS receiver. No account or installed state is used.
+	//nolint:usetesting // A short temporary path keeps macOS Unix socket names within their bound; t.Cleanup owns removal.
 	dir, err := os.MkdirTemp("/tmp", "zl-conversation-service-")
 	if err != nil {
 		t.Fatal(err)

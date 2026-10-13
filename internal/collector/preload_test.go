@@ -12,6 +12,7 @@ import (
 
 type preloadListener struct {
 	*scriptedListener
+
 	fetch func(context.Context) (domain.PreloadSnapshot, error)
 }
 
@@ -50,7 +51,10 @@ func TestPreloadGuardStopsAtSharedAuthBoundary(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("preload remained active after auth loss")
 	}
-	if _, err := guard.ConversationPreload(context.Background()); !errors.Is(err, domain.ErrAuthenticationRequired) || calls.Load() != 1 {
+	if _, err := guard.ConversationPreload(
+		context.Background(),
+	); !errors.Is(err, domain.ErrAuthenticationRequired) ||
+		calls.Load() != 1 {
 		t.Fatal("new preload request crossed stopped session")
 	}
 }

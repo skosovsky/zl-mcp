@@ -33,7 +33,7 @@ type SQLiteRow struct {
 func (SQLiteRow) String() string   { return "mobile backup SQLite row [redacted]" }
 func (SQLiteRow) GoString() string { return "mobile backup SQLite row [redacted]" }
 
-// SQLiteBatch is private candidate data; counts do not establish complete history.
+// SQLiteCoverage counts private candidate rows without establishing complete history.
 type SQLiteCoverage struct {
 	SourceRows, PeriodRows, InvalidTimestamps int64
 	EarliestMS, LatestMS                      int64
@@ -79,6 +79,7 @@ func (b *SQLiteBatch) Clear() {
 	}
 	for i := range b.Rows {
 		clear(b.Rows[i].BinNet)
+		//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 		b.Rows[i] = SQLiteRow{}
 	}
 	b.Rows = nil
@@ -107,7 +108,7 @@ func standaloneSQLite(data []byte) bool {
 		((data[18] != 1 || data[19] != 1) && (data[18] != 2 || data[19] != 2)) ||
 		page-int(data[20]) < 480 ||
 		!bytes.Equal(data[21:24], []byte{64, 32, 32}) ||
-		!bytes.Equal(data[72:92], make([]byte, 20)) {
+		!bytes.Equal(data[72:92], make([]byte, sqliteReservedHeaderBytes)) {
 		return false
 	}
 	count := binary.BigEndian.Uint32(data[28:32])
@@ -181,6 +182,7 @@ func readSQLitePageMode(
 	defer func() {
 		if err != nil {
 			batch.Clear()
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.WarnContext(
 				parent,
 				"mobile_archive_sqlite_failed",
@@ -206,7 +208,7 @@ func readSQLitePageMode(
 	if !validSQLiteCursor(after, digest, file.Name, from, to, descending, snapshot) {
 		return batch, ErrSQLite
 	}
-	ctx, cancel := context.WithTimeout(parent, 30*time.Second)
+	ctx, cancel := context.WithTimeout(parent, readSQLitePageModeTimeout)
 	defer cancel()
 	stage = "SCRATCH_CREATE"
 	dir, e := os.MkdirTemp(scratch, "mobile-read-")
@@ -345,11 +347,11 @@ func sqliteRowMode(values [9]any, since, until int64, snapshot bool) (SQLiteRow,
 	}
 	row.Text, ok = values[3].(string)
 	if !ok || len(row.Text) > 1<<20 || !utf8.ValidString(row.Text) {
-		return row, "text"
+		return row, fieldText
 	}
 	row.TimestampMS, ok = values[4].(int64)
 	if !ok || row.TimestampMS < since || row.TimestampMS >= until {
-		return row, "timestamp"
+		return row, fieldTimestamp
 	}
 	row.TTL, ok = values[5].(int64)
 	if !ok || row.TTL < 0 {
@@ -367,16 +369,16 @@ func sqliteRowMode(values [9]any, since, until int64, snapshot bool) (SQLiteRow,
 	case nil:
 	case []byte:
 		if len(v) > 256<<10 {
-			return row, "metadata"
+			return row, fieldMetadata
 		}
 		row.BinNet = append([]byte(nil), v...)
 	case string:
 		if len(v) > 256<<10 {
-			return row, "metadata"
+			return row, fieldMetadata
 		}
 		row.BinNet = []byte(v)
 	default:
-		return row, "metadata"
+		return row, fieldMetadata
 	}
 	return row, ""
 }
@@ -387,15 +389,15 @@ func validateChatColumns(ctx context.Context, conn *sql.Conn) error {
 		return ErrSQLite
 	}
 	required := map[string]bool{
-		"senderid":   false,
-		"glbmsgid":   false,
-		"climsgid":   false,
-		"msgcontent": false,
-		"timestamp":  false,
-		"ttl":        false,
-		"msgtype":    false,
-		"msgstatus":  false,
-		"binnet":     false,
+		"senderid":     false,
+		"glbmsgid":     false,
+		"climsgid":     false,
+		"msgcontent":   false,
+		fieldTimestamp: false,
+		"ttl":          false,
+		"msgtype":      false,
+		"msgstatus":    false,
+		"binnet":       false,
 	}
 	for columns.Next() {
 		var name, affinity string
@@ -414,7 +416,7 @@ func validateChatColumns(ctx context.Context, conn *sql.Conn) error {
 		if _, ok := required[name]; ok {
 			required[name] = true
 		}
-		if name == "timestamp" && !strings.Contains(strings.ToUpper(affinity), "INT") {
+		if name == fieldTimestamp && !strings.Contains(strings.ToUpper(affinity), "INT") {
 			//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
 			columns.Close()
 			return ErrSQLite
@@ -566,7 +568,7 @@ func classifySQLiteSnapshotControls(ctx context.Context, conn *sql.Conn, batch *
 		nil {
 		return ErrSQLite
 	}
-	if batch.SourceControls > 5000 {
+	if batch.SourceControls > maximumArchiveControls {
 		return ErrSnapshotControls
 	}
 	information := batch.DeferredControls["20"]
@@ -597,14 +599,28 @@ func classifySQLiteSnapshotControls(ctx context.Context, conn *sql.Conn, batch *
 	return nil
 }
 
-func validSQLitePageInput(parent context.Context, file ArchiveFile, scratch string, since, until time.Time, maxRows int, validWindow bool) bool {
+func validSQLitePageInput(
+	parent context.Context,
+	file ArchiveFile,
+	scratch string,
+	since, until time.Time,
+	maxRows int,
+	validWindow bool,
+) bool {
 	return validWindow && parent != nil && parent.Err() == nil && validName(file.Name) && filepath.IsAbs(scratch) &&
 		maxRows >= 1 && maxRows <= 5000 && !since.IsZero() && until.After(since)
 }
 
-func validSQLiteCursor(after *SQLiteCursor, digest [32]byte, name string, from, to int64, descending, snapshot bool) bool {
-	return after == nil || (after.Digest == digest && after.Name == name && after.SinceMS == from && after.UntilMS == to &&
-		after.TimestampMS >= from && after.TimestampMS < to && after.Descending == descending && after.Snapshot == snapshot)
+func validSQLiteCursor(
+	after *SQLiteCursor,
+	digest [32]byte,
+	name string,
+	from, to int64,
+	descending, snapshot bool,
+) bool {
+	return after == nil ||
+		(after.Digest == digest && after.Name == name && after.SinceMS == from && after.UntilMS == to &&
+			after.TimestampMS >= from && after.TimestampMS < to && after.Descending == descending && after.Snapshot == snapshot)
 }
 
 func recordSQLiteRejection(batch *SQLiteBatch, values [9]any, reason string) {
@@ -620,10 +636,11 @@ func recordSQLiteRejection(batch *SQLiteBatch, values [9]any, reason string) {
 
 func logInvalidSQLiteHeader(parent context.Context, data []byte) {
 	modeRead, modeWrite := 0, 0
-	if len(data) >= 20 {
+	if len(data) >= sqliteJournalHeaderProbeBytes {
 		modeRead = int(data[19])
 		modeWrite = int(data[18])
 	}
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.WarnContext(
 		parent,
 		"mobile_archive_sqlite_header",

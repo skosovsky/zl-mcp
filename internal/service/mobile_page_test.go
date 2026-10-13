@@ -51,8 +51,8 @@ func (s *mobilePageSource) ReceiveMobileBackupOffer(
 
 func (s *mobilePageSource) ConsumeMobileArchive(
 	ctx context.Context,
-	req *http.Request,
-	client *http.Client,
+	_ *http.Request,
+	_ *http.Client,
 	consume func(context.Context, *http.Response) ([]byte, error),
 ) ([]byte, error) {
 	s.downloads.Add(1)
@@ -100,6 +100,7 @@ func (r *cancelArchiveReader) Read(p []byte) (int, error) {
 	}
 	return n, e
 }
+
 //nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestServiceMobilePageUsesCollectorSessionAndExpiresHistoricalRows(t *testing.T) {
 	for _, name := range []string{"complete", "cancel-during-body", "walk"} {

@@ -19,7 +19,10 @@ func TestContactsMetadataDoesNotCreateMessagesOrNovelty(t *testing.T) {
 	defer s.Close()
 	peer := domain.ConversationRef{Type: "direct", ID: "peer"}
 	// Act
-	count, err := s.PutContacts(ctx, []domain.Contact{{ID: peer.ID, Name: "Hoài An", Aliases: []string{"Đặng Seoul"}, Friendship: "unknown"}})
+	count, err := s.PutContacts(
+		ctx,
+		[]domain.Contact{{ID: peer.ID, Name: "Hoài An", Aliases: []string{"Đặng Seoul"}, Friendship: "unknown"}},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +32,9 @@ func TestContactsMetadataDoesNotCreateMessagesOrNovelty(t *testing.T) {
 	}
 	// Assert
 	records := list["conversations"].([]map[string]any)
-	if count != 1 || len(records) != 1 || records[0]["has_stored_messages"] != false || records[0]["availability"] != "unknown" || list["catalog_complete"] != false {
+	if count != 1 || len(records) != 1 || records[0]["has_stored_messages"] != false ||
+		records[0]["availability"] != "unknown" ||
+		list["catalog_complete"] != false {
 		t.Fatalf("wrong metadata-only catalogue: %#v", list)
 	}
 	for _, table := range []string{"messages", "message_events", "peer_first_incoming"} {
@@ -42,7 +47,17 @@ func TestContactsMetadataDoesNotCreateMessagesOrNovelty(t *testing.T) {
 		}
 	}
 	// Act: observing a real message upgrades availability without erasing aliases.
-	if err = s.Put(ctx, domain.Message{Conversation: peer, ID: "message", SenderID: peer.ID, SentAt: time.Now().UTC(), Text: "synthetic", Source: "live"}); err != nil {
+	if err = s.Put(
+		ctx,
+		domain.Message{
+			Conversation: peer,
+			ID:           "message",
+			SenderID:     peer.ID,
+			SentAt:       time.Now().UTC(),
+			Text:         "synthetic",
+			Source:       "live",
+		},
+	); err != nil {
 		t.Fatal(err)
 	}
 	got, err := s.Conversation(ctx, peer)
@@ -51,7 +66,8 @@ func TestContactsMetadataDoesNotCreateMessagesOrNovelty(t *testing.T) {
 	}
 	// Assert
 	record := got["conversation"].(map[string]any)
-	if record["availability"] != "observed" || record["has_stored_messages"] != true || len(record["aliases"].([]string)) != 2 {
+	if record["availability"] != "observed" || record["has_stored_messages"] != true ||
+		len(record["aliases"].([]string)) != 2 {
 		t.Fatalf("lost merged metadata: %#v", record)
 	}
 }
@@ -68,13 +84,22 @@ func TestContactsPolicyAtomicPageAndReopen(t *testing.T) {
 	}
 	defer func() { s.Close() }()
 	// Act
-	count, err := s.PutContacts(ctx, []domain.Contact{{ID: "excluded", Name: "Private", Friendship: "friend"}, {ID: ref.ID, Name: "Allowed", Friendship: "friend"}})
+	count, err := s.PutContacts(
+		ctx,
+		[]domain.Contact{
+			{ID: "excluded", Name: "Private", Friendship: "friend"},
+			{ID: ref.ID, Name: "Allowed", Friendship: "friend"},
+		},
+	)
 	// Assert
 	if err != nil || count != 1 {
 		t.Fatalf("policy: %d %v", count, err)
 	}
 	// Act: the second invalid record rolls back the entire page.
-	count, err = s.PutContacts(ctx, []domain.Contact{{ID: ref.ID, Name: "Changed", Friendship: "friend"}, {ID: "", Friendship: "unknown"}})
+	count, err = s.PutContacts(
+		ctx,
+		[]domain.Contact{{ID: ref.ID, Name: "Changed", Friendship: "friend"}, {ID: "", Friendship: "unknown"}},
+	)
 	if err == nil || count != 0 {
 		t.Fatal("invalid page accepted")
 	}
@@ -88,7 +113,8 @@ func TestContactsPolicyAtomicPageAndReopen(t *testing.T) {
 	// Assert
 	var name string
 	var n int
-	if err = s.DB.QueryRowContext(ctx, "SELECT name FROM directory_contacts WHERE peer_id=?", ref.ID).Scan(&name); err != nil {
+	if err = s.DB.QueryRowContext(ctx, "SELECT name FROM directory_contacts WHERE peer_id=?", ref.ID).
+		Scan(&name); err != nil {
 		t.Fatal(err)
 	}
 	if err = s.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM directory_contacts").Scan(&n); err != nil {

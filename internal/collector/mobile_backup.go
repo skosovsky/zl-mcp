@@ -6,7 +6,10 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
-func (g *sessionGuard) ReceiveMobileBackupOffer(parent context.Context, progress *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+func (g *sessionGuard) ReceiveMobileBackupOffer(
+	parent context.Context,
+	progress *domain.MobileBackupObserver,
+) (domain.MobileBackupOffer, error) {
 	source, ok := g.upstream.(domain.MobileBackupSource)
 	if !ok {
 		return domain.MobileBackupOffer{}, domain.ErrHistoryUnsupported

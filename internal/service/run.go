@@ -105,9 +105,11 @@ func (p *membershipPort) Call(ctx context.Context, method string, args any) (map
 	if method == "zalo_get_join_status" {
 		return collector.NewJoin(ctx, p.store, nil, false).Call(ctx, method, args)
 	}
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 	return nil, &domain.Error{
 		Code:    "NOT_AUTHENTICATED",
 		Message: "Zalo session is unavailable.",
+		//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 		NextAction: domain.NextAction{
 			Instruction: "Check status; when auth_required, stop service and run local login.",
 		},
@@ -116,16 +118,16 @@ func (p *membershipPort) Call(ctx context.Context, method string, args any) (map
 }
 func (p *membershipPort) cliHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		b, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 16<<10))
+		b, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maximumOwnerRequestBytes))
 		var request struct {
 			Method string `json:"method"`
 		}
 		if err != nil || json.Unmarshal(b, &request) != nil ||
-			(request.Method != "cli_preview" && request.Method != "cli_approve" && request.Method != "cli_probe_preload" && !mobileLedgerMethod(request.Method) && request.Method != "cli_probe_recall") {
+			(request.Method != "cli_preview" && request.Method != "cli_approve" && request.Method != "cli_probe_preload" && !mobileLedgerMethod(request.Method) && request.Method != operationProbeRecall) {
 			http.Error(w, "Only trusted CLI routes are available.", http.StatusBadRequest)
 			return
 		}
-		if request.Method == "cli_probe_recall" {
+		if request.Method == operationProbeRecall {
 			p.recallControl(w, r, b)
 			return
 		}
@@ -186,6 +188,7 @@ func runConfigured(
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 	if c.Collection.Mode == "" {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(
 			parent,
 			"legacy_collection_config",
@@ -220,6 +223,7 @@ func runConfigured(
 	}
 	defer func() {
 		if shutdownErr := telemetryOwner.Shutdown(ctx); shutdownErr != nil {
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.WarnContext(parent, "telemetry_shutdown_failed")
 		}
 	}()
@@ -243,13 +247,20 @@ func runConfigured(
 	for _, id := range c.Permissions.SendRecipientIDs {
 		recipients[id] = true
 	}
-	snapshots, err := mobilebackup.NewSnapshotStore(filepath.Join(c.StateDir, "mobile-snapshots"), 512<<20)
+	snapshots, err := mobilebackup.NewSnapshotStore(
+		filepath.Join(c.StateDir, "mobile-snapshots"),
+		mobileSnapshotBudgetBytes,
+	)
 	if err != nil {
 		return errors.New("private mobile snapshot store unavailable")
 	}
 	defer snapshots.Close()
-	archives, err := mobilebackup.NewRetainedArchiveStore(filepath.Join(c.StateDir, "account-archives"), 1<<30)
+	archives, err := mobilebackup.NewRetainedArchiveStore(
+		filepath.Join(c.StateDir, "account-archives"),
+		accountArchiveCacheBudgetBytes,
+	)
 	if err != nil {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(parent, "account_archive_store_unavailable")
 	}
 	if archives != nil {
@@ -257,14 +268,16 @@ func runConfigured(
 	}
 	library, libraryErr := mobilebackup.NewArchiveLibraryStore(
 		filepath.Join(c.StateDir, "account-archive-library", "sources"),
-		1<<30,
+		accountArchiveLibraryBudgetBytes,
 	)
 	if libraryErr != nil {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(parent, "account_archive_library_unavailable")
 	}
 	if library != nil {
 		defer library.Close()
 	}
+	//nolint:exhaustruct_v5 // membershipPort initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	port := &membershipPort{
 		stateDir:   c.StateDir,
 		store:      store,
@@ -288,6 +301,7 @@ func runConfigured(
 	if configure != nil {
 		configure(handler, worker)
 	}
+	//nolint:exhaustruct_v5 // Keep default socket control and keepalive policy; only the configured listener options are supplied.
 	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", c.MCP.Listen)
 	if err != nil {
 		return err
@@ -307,18 +321,18 @@ func runConfigured(
 	httpServer := &http.Server{
 		Handler:           handler,
 		BaseContext:       func(net.Listener) context.Context { return ctx },
-		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      45 * time.Second,
-		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: serverHeaderTimeout,
+		ReadTimeout:       mcpReadTimeout,
+		WriteTimeout:      mcpWriteTimeout,
+		IdleTimeout:       mcpIdleTimeout,
 	}
-	// The owner-only mobile probe may wait 185s and finish its ledger independently.
-	// Keep the Unix response deadline above the 190s CLI request budget.
+	// The owner response deadline exceeds the longest mobile capture CLI budget
+	// while its ledger finalization retains the independent cleanup lifetime.
 	cliServer := &http.Server{
 		Handler:           port.cliHandler(),
-		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      450 * time.Second,
+		ReadHeaderTimeout: serverHeaderTimeout,
+		ReadTimeout:       ownerReadTimeout,
+		WriteTimeout:      ownerWriteTimeout,
 	}
 	loop := serviceLoop{
 		parent: parent, ctx: ctx, cancel: cancel, config: c, store: store, port: port,
@@ -337,7 +351,7 @@ func collect(
 	restore restoreFunc,
 	save func(collector.ListenerUpstream) error,
 ) error {
-	return collectWithHeartbeat(ctx, c, store, port, restore, save, 10*time.Second)
+	return collectWithHeartbeat(ctx, c, store, port, restore, save, collectorHeartbeatInterval)
 }
 
 func collectWithHeartbeat(
@@ -356,12 +370,12 @@ func collectWithHeartbeat(
 	if err := store.SetState(
 		parent,
 		map[string]any{
-			"authenticated":     false,
-			"collector_state":   "reconnecting",
-			"last_connected_at": nil,
-			"last_event_at":     nil,
-			"last_persisted_at": nil,
-			"last_error":        nil,
+			stateAuthenticatedText: false,
+			fieldCollectorState:    "reconnecting",
+			fieldLastConnectedAt:   nil,
+			fieldLastEventAt:       nil,
+			fieldLastPersistedAt:   nil,
+			fieldLastError:         nil,
 		},
 	); err != nil {
 		return err
@@ -406,7 +420,7 @@ func collectSession(
 ) error {
 	delay := time.Second
 	for {
-		restoreCtx, stop := context.WithTimeout(ctx, 30*time.Second)
+		restoreCtx, stop := context.WithTimeout(ctx, collectSessionRestoreTimeout)
 		client, err := restore(restoreCtx, c.StateDir)
 		stop()
 		if ctx.Err() != nil {
@@ -424,18 +438,24 @@ func collectSession(
 			return awaitLocalLogin(ctx, store)
 		}
 		var typed *domain.Error
-		if errors.As(err, &typed) && typed.Code == "STORAGE_ERROR" {
+		if errors.As(err, &typed) && typed.Code == codeStorageError {
 			return persistSessionStorageFailure(ctx, store, err)
 		}
 		retry, retryErr := awaitSessionRetry(ctx, store, delay)
 		if retryErr != nil || !retry {
 			return retryErr
 		}
-		delay = min(delay*2, 40*time.Second)
+		delay = min(delay*2, maximumCollectorBackoff)
 	}
 }
 
-func runActiveCollector(ctx context.Context, c config.Config, store *storage.Store, port *membershipPort, client collector.ListenerUpstream) error {
+func runActiveCollector(
+	ctx context.Context,
+	c config.Config,
+	store *storage.Store,
+	port *membershipPort,
+	client collector.ListenerUpstream,
+) error {
 	sessionCtx, stopSession := context.WithCancel(ctx)
 	var mobileDone chan error
 	err := collector.RunInternal(sessionCtx, c, store, client, func(j *collector.JoinManager) error {
@@ -461,7 +481,8 @@ func runActiveCollector(ctx context.Context, c config.Config, store *storage.Sto
 			if errors.Is(mobileErr, domain.ErrAuthenticationRequired) {
 				err = mobileErr
 			} else {
-				err = &domain.Error{Code: "STORAGE_ERROR", Message: "Mobile history worker storage failed."}
+				//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
+				err = &domain.Error{Code: codeStorageError, Message: "Mobile history worker storage failed."}
 			}
 		}
 	}
@@ -486,7 +507,7 @@ type serviceLoop struct {
 }
 
 func (loop serviceLoop) run() error {
-	errorsCh := make(chan error, 8)
+	errorsCh := make(chan error, serviceErrorBuffer)
 	var wg sync.WaitGroup
 	launch := func(fn func() error) {
 		wg.Go(func() {
@@ -518,6 +539,7 @@ func (loop serviceLoop) run() error {
 			}
 		})
 	}
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.InfoContext(loop.parent, "service started", "mcp_listen", loop.listener.Addr().String())
 	launch(func() error { return loop.httpServer.Serve(loop.listener) })
 	launch(func() error { return loop.cliServer.Serve(loop.ipc) })
@@ -532,7 +554,7 @@ func (loop serviceLoop) run() error {
 		loop.ready(loop.listener.Addr())
 	}
 	<-loop.ctx.Done()
-	shutdown, stop := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdown, stop := context.WithTimeout(context.Background(), serviceLooprunShutdownTimeout)
 	defer stop()
 	// Stop accepting requests before waiting for ports or closing shared SQLite.
 	_ = loop.httpServer.Shutdown(shutdown)
@@ -541,10 +563,11 @@ func (loop serviceLoop) run() error {
 	_ = loop.cliServer.Close()
 	wg.Wait()
 	if shared.Recording(loop.ctx) {
-		sample, cancelSample := context.WithTimeout(context.WithoutCancel(loop.ctx), 500*time.Millisecond)
+		sample, cancelSample := context.WithTimeout(context.WithoutCancel(loop.ctx), serviceLooprunSampleTimeout)
 		sampleNativeQueues(sample, loop.store)
 		cancelSample()
 	}
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.InfoContext(loop.parent, "service stopped")
 	if loop.logFile != nil && loop.logFile.Err() != nil {
 		return loop.logFile.Err()
@@ -559,7 +582,7 @@ func (loop serviceLoop) run() error {
 }
 
 func (loop serviceLoop) retain() error {
-	ticker := time.NewTicker(5 * time.Minute)
+	ticker := time.NewTicker(serviceRetentionInterval)
 	defer ticker.Stop()
 	for {
 		select {
@@ -591,6 +614,7 @@ func openConfiguredLog(c config.Config) (*logging.File, func() error, error) {
 	case "error":
 		level = slog.LevelError
 	}
+	//nolint:exhaustruct_v5 // Keep default log level/filter behavior; the configured redaction/replacement policy is explicit.
 	slog.SetDefault(slog.New(slog.NewJSONHandler(logFile, &slog.HandlerOptions{Level: level})))
 	restore := func() error {
 		slog.SetDefault(previous)
@@ -599,7 +623,14 @@ func openConfiguredLog(c config.Config) (*logging.File, func() error, error) {
 	return logFile, restore, nil
 }
 
-func runVerifiedCollector(ctx context.Context, c config.Config, store *storage.Store, port *membershipPort, client collector.ListenerUpstream, save func(collector.ListenerUpstream) error) error {
+func runVerifiedCollector(
+	ctx context.Context,
+	c config.Config,
+	store *storage.Store,
+	port *membershipPort,
+	client collector.ListenerUpstream,
+	save func(collector.ListenerUpstream) error,
+) error {
 	var err error
 	if err = store.BindAccount(ctx, client.AccountID()); err != nil {
 		return err
@@ -618,37 +649,37 @@ func awaitLocalLogin(ctx context.Context, store *storage.Store) error {
 	if err = store.SetState(
 		ctx,
 		map[string]any{
-			"authenticated":     false,
-			"collector_state":   "auth_required",
-			"last_connected_at": nil,
-			"last_event_at":     nil,
-			"last_persisted_at": nil,
-			"last_error": map[string]any{
-				"code":    "NOT_AUTHENTICATED",
-				"message": "Stop service and run local login.",
+			stateAuthenticatedText: false,
+			fieldCollectorState:    "auth_required",
+			fieldLastConnectedAt:   nil,
+			fieldLastEventAt:       nil,
+			fieldLastPersistedAt:   nil,
+			fieldLastError: map[string]any{
+				fieldCode:    "NOT_AUTHENTICATED",
+				fieldMessage: "Stop service and run local login.",
 			},
 		},
 	); err != nil {
 		return err
 	}
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.WarnContext(ctx, "Zalo authentication required; waiting for local login")
 	<-ctx.Done()
 	return nil
-
 }
 
 func persistSessionStorageFailure(ctx context.Context, store *storage.Store, err error) error {
 	if saveErr := store.SetState(
 		ctx,
 		map[string]any{
-			"authenticated":     false,
-			"collector_state":   "stopped",
-			"last_connected_at": nil,
-			"last_event_at":     nil,
-			"last_persisted_at": nil,
-			"last_error": map[string]any{
-				"code":    "STORAGE_ERROR",
-				"message": "Cannot read private saved session.",
+			stateAuthenticatedText: false,
+			fieldCollectorState:    "stopped",
+			fieldLastConnectedAt:   nil,
+			fieldLastEventAt:       nil,
+			fieldLastPersistedAt:   nil,
+			fieldLastError: map[string]any{
+				fieldCode:    codeStorageError,
+				fieldMessage: "Cannot read private saved session.",
 			},
 		},
 	); saveErr != nil {
@@ -657,7 +688,12 @@ func persistSessionStorageFailure(ctx context.Context, store *storage.Store, err
 	return err
 }
 
-func configuredEndpoints(c config.Config, store *storage.Store, port *membershipPort, token string) (*mcpserver.HTTPService, *events.Worker, *logging.File, error) {
+func configuredEndpoints(
+	c config.Config,
+	store *storage.Store,
+	port *membershipPort,
+	token string,
+) (*mcpserver.HTTPService, *events.Worker, *logging.File, error) {
 	protocol, err := events.NewSubscriptionManager(store, c.StateDir)
 	if err != nil {
 		return nil, nil, nil, err
@@ -689,6 +725,7 @@ func openConfiguredIPC(ctx context.Context, stateDir string) (net.Listener, stri
 	if err = os.Remove(socket); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, "", err
 	}
+	//nolint:exhaustruct_v5 // Keep default socket control and keepalive policy; only the configured listener options are supplied.
 	ipc, err := (&net.ListenConfig{}).Listen(ctx, "unix", socket)
 	if err != nil {
 		return nil, "", err
@@ -703,19 +740,20 @@ func awaitSessionRetry(ctx context.Context, store *storage.Store, delay time.Dur
 	if err := store.SetState(
 		ctx,
 		map[string]any{
-			"authenticated":     false,
-			"collector_state":   "reconnecting",
-			"last_connected_at": nil,
-			"last_event_at":     nil,
-			"last_persisted_at": nil,
-			"last_error": map[string]any{
-				"code":    "UPSTREAM_UNAVAILABLE",
-				"message": "Saved session verification failed; retrying.",
+			stateAuthenticatedText: false,
+			fieldCollectorState:    "reconnecting",
+			fieldLastConnectedAt:   nil,
+			fieldLastEventAt:       nil,
+			fieldLastPersistedAt:   nil,
+			fieldLastError: map[string]any{
+				fieldCode:    "UPSTREAM_UNAVAILABLE",
+				fieldMessage: "Saved session verification failed; retrying.",
 			},
 		},
 	); err != nil {
 		return false, err
 	}
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.WarnContext(ctx, "Zalo session verification unavailable; retrying", "retry_seconds", delay.Seconds())
 	timer := time.NewTimer(delay)
 	select {

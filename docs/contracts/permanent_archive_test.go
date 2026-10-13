@@ -8,7 +8,13 @@ func TestPermanentArchiveRequestRequiresExplicitOwnerRetention(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	valid := map[string]any{"method": "cli_preserve_account_archive", "arguments": map[string]any{"source_id": "00000000-0000-4000-8000-000000000001", "retention": "until_owner_deletion"}}
+	valid := map[string]any{
+		"method": "cli_preserve_account_archive",
+		"arguments": map[string]any{
+			"source_id": "00000000-0000-4000-8000-000000000001",
+			"retention": "until_owner_deletion",
+		},
+	}
 	// Act / Assert: explicit preservation is valid, implicit retention is not.
 	if err := schema.Validate(valid); err != nil {
 		t.Fatal(err)

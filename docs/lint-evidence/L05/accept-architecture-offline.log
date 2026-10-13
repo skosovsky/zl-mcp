@@ -1,0 +1,8 @@
+mkdir -p "/workspace/zl-mcp/.tools"
+GOWORK=off GOBIN="/workspace/zl-mcp/.tools" go install github.com/arch-go/arch-go/v2@v2.1.2
+mkdir -p "/workspace/zl-mcp/.tools"
+cd tools/harness && GOWORK=off go build -trimpath -o "/workspace/zl-mcp/.tools/zl-mcp-harness" ./cmd/harness
+GOWORK=off "/workspace/zl-mcp/.tools/zl-mcp-harness" architecture --root "/workspace/zl-mcp" --binary "/workspace/zl-mcp/.tools/arch-go"
+architecture PASS: host and all-build compliance/coverage 100%, closed exceptions, production graph, 14 isolated and 6 source controls
+GOWORK=off go run ./cmd/zl-mcp-eval --root "/workspace/zl-mcp" --profile offline --output "/tmp/zl-mcp-offline-$(date +%s)-$$" --run-budget 30m --repeats 2
+PASS cases50/50 assertions480/480; model=NOT_RUN live=NOT_RUN

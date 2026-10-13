@@ -40,6 +40,7 @@ func (s *bridgeSendSource) SendDirect(_ context.Context, peer, text string, quot
 //nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 	// Arrange: two real STDIO bridge processes and one unified HTTP service; only Zalo delivery is synthetic.
+	//nolint:usetesting // A short temporary path keeps macOS Unix socket names within their bound; t.Cleanup owns removal.
 	dir, err := os.MkdirTemp("/tmp", "zl-two-bridges-")
 	if err != nil {
 		t.Fatal(err)

@@ -22,12 +22,14 @@ func connect(ctx context.Context, f *evalfixture.Fixture) (*client, error) {
 	if err != nil {
 		return nil, err
 	}
+	//nolint:exhaustruct_v5 // Optional implementation metadata is absent; preserve the advertised name/version contract.
 	cs, err := mcp.NewClient(&mcp.Implementation{Name: "offline-eval", Version: "1"}, nil).Connect(ctx, ct, nil)
 	if err != nil {
 		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		ss.Close()
 		return nil, err
 	}
+	//nolint:exhaustruct_v5 // client fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	return &client{session: cs, server: ss}, nil
 }
 
@@ -37,10 +39,12 @@ func (c *client) tool(ctx context.Context, name string, args any) (map[string]an
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
-	case <-time.After(110 * time.Millisecond):
+	case <-time.After(measurementPacingInterval):
 	}
+	//nolint:exhaustruct_v5 // Unused optional SDK metadata/progress fields remain absent for this invocation.
 	r, err := c.session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
-	t := Trace{Kind: "tool", Name: name, Input: marshaled(args)}
+	//nolint:exhaustruct_v5 // Trace fills only this synthetic run/result phase; remaining fields keep their empty/default values.
+	t := Trace{Kind: fieldTool, Name: name, Input: marshaled(args)}
 	if err != nil {
 		t.Error = err.Error()
 		c.trace = append(c.trace, t)
@@ -59,8 +63,10 @@ func (c *client) tool(ctx context.Context, name string, args any) (map[string]an
 	return result, nil
 }
 func (c *client) resource(ctx context.Context, uri string) {
+	//nolint:exhaustruct_v5 // Unused optional SDK metadata remains absent for this resource read.
 	r, err := c.session.ReadResource(ctx, &mcp.ReadResourceParams{URI: uri})
-	t := Trace{Kind: "resource", Name: uri}
+	//nolint:exhaustruct_v5 // Trace fills only this synthetic run/result phase; remaining fields keep their empty/default values.
+	t := Trace{Kind: fieldResource, Name: uri}
 	if err != nil {
 		t.Error = err.Error()
 	} else {

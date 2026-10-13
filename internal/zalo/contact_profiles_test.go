@@ -2,8 +2,9 @@ package zalo
 
 import (
 	"context"
-	"github.com/amrakk/zcago"
 	"testing"
+
+	"github.com/amrakk/zcago"
 
 	"github.com/amrakk/zcago/api"
 	"github.com/amrakk/zcago/model"
@@ -11,14 +12,28 @@ import (
 
 func TestKnownProfileMetadataAndUnchangedOmissions(t *testing.T) {
 	// Arrange
-	response := &api.GetUserInfoResponse{ChangedProfiles: map[string]model.User{"peer_0": {DisplayName: "Synthetic", ZaloName: "Alias", IsFr: 1, PhoneNumber: "private", Avatar: "private", Dob: 1}}, UnchangedProfiles: map[string]any{"missing": "version"}}
+	response := &api.GetUserInfoResponse{
+		ChangedProfiles: map[string]model.User{
+			"peer_0": {
+				DisplayName: "Synthetic",
+				ZaloName:    "Alias",
+				IsFr:        1,
+				PhoneNumber: "private",
+				Avatar:      "private",
+				Dob:         1,
+			},
+		},
+		UnchangedProfiles: map[string]any{"missing": "version"},
+	}
 	// Act
 	contacts, err := profileContacts([]string{"peer", "missing"}, response)
 	// Assert
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(contacts) != 1 || contacts[0].ID != "peer" || contacts[0].Name != "Synthetic" || contacts[0].Friendship != "friend" || len(contacts[0].Aliases) != 2 {
+	if len(contacts) != 1 || contacts[0].ID != "peer" || contacts[0].Name != "Synthetic" ||
+		contacts[0].Friendship != "friend" ||
+		len(contacts[0].Aliases) != 2 {
 		t.Fatal("known profile identity or metadata lost")
 	}
 }
@@ -47,11 +62,12 @@ func TestKnownProfilesRejectForeignConflictingAndDuplicateIDs(t *testing.T) {
 // Embedding the SDK interface avoids implementing unrelated endpoint types.
 type profileAPIStub struct {
 	zcago.API
+
 	response *api.GetUserInfoResponse
 	calls    int
 }
 
-func (s *profileAPIStub) GetUserInfo(ctx context.Context, ids ...string) (*api.GetUserInfoResponse, error) {
+func (s *profileAPIStub) GetUserInfo(_ context.Context, ids ...string) (*api.GetUserInfoResponse, error) {
 	s.calls++
 	for i := range ids {
 		ids[i] += "_0"
@@ -61,7 +77,11 @@ func (s *profileAPIStub) GetUserInfo(ctx context.Context, ids ...string) (*api.G
 
 func TestProfileReadProtectsCallerIDsFromSDKMutation(t *testing.T) {
 	// Arrange
-	source := &profileAPIStub{response: &api.GetUserInfoResponse{ChangedProfiles: map[string]model.User{"peer_0": {UserId: "peer", DisplayName: "Synthetic"}}}}
+	source := &profileAPIStub{
+		response: &api.GetUserInfoResponse{
+			ChangedProfiles: map[string]model.User{"peer_0": {UserId: "peer", DisplayName: "Synthetic"}},
+		},
+	}
 	c := &Client{api: source}
 	ids := []string{"peer"}
 	// Act

@@ -3,7 +3,6 @@ package membership
 
 import (
 	"context"
-	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
@@ -49,13 +48,13 @@ type Handler struct {
 }
 
 func (h *Handler) Inspect(ctx context.Context, inviteURL string) (Invite, error) {
-	ctx, cancel := context.WithTimeout(ctx, 6*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, handlerInspectTimeout)
 	defer cancel()
 	return h.Reads.InspectInvite(ctx, inviteURL)
 }
 
 func (h *Handler) Status(ctx context.Context, operationID string) (JoinStatus, error) {
-	ctx, cancel := context.WithTimeout(ctx, 6*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, handlerStatusTimeout)
 	defer cancel()
 	return h.Reads.JoinStatus(ctx, operationID)
 }

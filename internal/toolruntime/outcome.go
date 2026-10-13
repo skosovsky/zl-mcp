@@ -37,12 +37,20 @@ func stateOutcome(state domain.OperationState) domain.Outcome {
 		return domain.OutcomePartial
 	case domain.StateCancelled:
 		return domain.OutcomeCancelled
+	case domain.StateUnknown,
+		domain.StatePending,
+		domain.StateSending,
+		domain.StateQueued,
+		domain.StateRunning,
+		domain.StatePendingApproval:
+		return domain.OutcomeUnknown
 	default:
 		return domain.OutcomeUnknown
 	}
 }
 func (r *Result) remember(ctx context.Context, name string, observer shared.TelemetryPort) {
-	if r == nil || (name != "zalo_send_direct_message" && name != "zalo_join_group" && name != "zalo_import_conversation_history") {
+	if r == nil ||
+		(name != toolSendDirectMessage && name != toolJoinGroup && name != toolImportConversationHistory) {
 		return
 	}
 	switch {

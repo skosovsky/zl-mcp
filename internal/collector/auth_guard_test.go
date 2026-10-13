@@ -8,11 +8,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 type blockingGroupListener struct {
 	*fakeZalo
+
 	started  chan struct{}
 	groups   atomic.Int32
 	listener atomic.Int32
@@ -24,7 +26,13 @@ func (b *blockingGroupListener) Group(ctx context.Context, _ string) (domain.Gro
 	<-ctx.Done()
 	return domain.Group{}, nil, ctx.Err()
 }
-func (b *blockingGroupListener) Listen(context.Context, func(domain.Message) error, func(string, string) error, func() error) error {
+
+func (b *blockingGroupListener) Listen(
+	context.Context,
+	func(domain.Message) error,
+	func(string, string) error,
+	func() error,
+) error {
 	b.listener.Add(1)
 	return domain.ErrAuthenticationRequired
 }
@@ -72,7 +80,10 @@ func TestAuthGuardCancelsInFlightAndRejectsNewMembershipCalls(t *testing.T) {
 	if scanErr := manager.Store.DB.QueryRow("SELECT count(*) FROM join_requests").Scan(&requests); scanErr != nil {
 		t.Fatal(scanErr)
 	}
-	if !errors.Is(listenerErr, domain.ErrAuthenticationRequired) || !errors.Is(err, domain.ErrAuthenticationRequired) || upstream.groups.Load() != 1 || upstream.listener.Load() != 1 || requests != 0 {
+	if !errors.Is(listenerErr, domain.ErrAuthenticationRequired) || !errors.Is(err, domain.ErrAuthenticationRequired) ||
+		upstream.groups.Load() != 1 ||
+		upstream.listener.Load() != 1 ||
+		requests != 0 {
 		t.Fatal("auth guard permitted another call or mutation")
 	}
 	// A saved-result read is still dispatched locally, despite missing upstream.

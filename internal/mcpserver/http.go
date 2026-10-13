@@ -31,7 +31,7 @@ type HTTPService struct {
 }
 
 func NewHTTP(token string, reads Ports, protocol EventsProtocolPort) (*HTTPService, error) {
-	if len(token) < 32 {
+	if len(token) < minimumBearerTokenBytes {
 		return nil, errors.New("MCP bearer token must contain at least 32 bytes")
 	}
 	server, err := New(reads)
@@ -39,6 +39,7 @@ func NewHTTP(token string, reads Ports, protocol EventsProtocolPort) (*HTTPServi
 		return nil, err
 	}
 	if protocol == nil {
+		//nolint:staticcheck // Keep the established externally observable error spelling unchanged.
 		return nil, errors.New("Events protocol port is required")
 	}
 	return &HTTPService{
@@ -47,6 +48,7 @@ func NewHTTP(token string, reads Ports, protocol EventsProtocolPort) (*HTTPServi
 		principal: "local:" + strconv.Itoa(os.Getuid()),
 		sdk: mcp.NewStreamableHTTPHandler(
 			func(*http.Request) *mcp.Server { return server },
+			//nolint:exhaustruct_v5 // Keep pinned SDK defaults for omitted transport options; explicit security/session options are unchanged.
 			&mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true, PropagateRequestCancellation: true},
 		),
 	}, nil
@@ -69,14 +71,14 @@ func writeRPC(w http.ResponseWriter, id json.RawMessage, result any, err error) 
 	} else {
 		response["result"] = result
 	}
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", contentTypeJSON)
 	if json.NewEncoder(w).Encode(response) != nil {
 		return // The response may be partial; never retry it.
 	}
 }
 
 func writeRPCStatus(w http.ResponseWriter, status int, id json.RawMessage, err error) {
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", contentTypeJSON)
 	w.WriteHeader(status)
 	writeRPC(w, id, nil, err)
 }
@@ -88,7 +90,7 @@ func acceptsMCP(values []string) bool {
 		for raw := range strings.SplitSeq(value, ",") {
 			base, _, _ := strings.Cut(raw, ";")
 			switch strings.ToLower(strings.TrimSpace(base)) {
-			case "application/json", "application/*":
+			case contentTypeJSON, "application/*":
 				jsonOK = true
 			case "text/event-stream", "text/*":
 				streamOK = true
@@ -125,17 +127,19 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.sdk.ServeHTTP(w, r)
 		return
 	}
-	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 256<<10))
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maximumDiscoveryRequestBytes))
 	if err != nil {
 		http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
 		return
 	}
 	var request rpcRequest
 	if json.Unmarshal(body, &request) != nil {
+		//nolint:exhaustruct_v5 // Protocol error details remain absent for this error code; preserve the existing JSON-RPC response.
 		writeRPC(w, nil, nil, &protocolError{Code: -32700, Message: "Parse error."})
 		return
 	}
 	if request.JSONRPC != "2.0" || request.Method == "" {
+		//nolint:exhaustruct_v5 // Protocol error details remain absent for this error code; preserve the existing JSON-RPC response.
 		writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Invalid request."})
 		return
 	}
@@ -152,12 +156,14 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if request.Method == "resources/read" {
 			transport = domain.TransportResource
 		}
+		//nolint:exhaustruct_v5 // telemetryResponse preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 		counted := &telemetryResponse{ResponseWriter: w}
 		w = counted
 		defer func() { observer.ResponseBytes(r.Context(), params.Name, transport, counted.bytes) }()
 	}
 	if discoveryMethod(request.Method) {
-		observed := &discoveryResponse{ResponseWriter: w, capture: request.Method == "tools/list"}
+		//nolint:exhaustruct_v5 // discoveryResponse preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
+		observed := &discoveryResponse{ResponseWriter: w, capture: request.Method == methodToolsList}
 		w = observed
 		defer logDiscovery(request.Method, r.Header.Get("Mcp-Protocol-Version"), observed, time.Now())
 	}
@@ -241,7 +247,7 @@ func (w *telemetryResponse) Flush()                      { _ = http.NewResponseC
 
 func (s *HTTPService) serveEvents(w http.ResponseWriter, r *http.Request, request rpcRequest) {
 	media, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
-	if err != nil || media != "application/json" {
+	if err != nil || media != contentTypeJSON {
 		http.Error(w, "Content-Type must be 'application/json'", http.StatusUnsupportedMediaType)
 		return
 	}
@@ -257,6 +263,7 @@ func (s *HTTPService) serveEvents(w http.ResponseWriter, r *http.Request, reques
 	// Invalid numeric IDs cannot be echoed by any subsequent admission error.
 	// Other malformed/missing IDs retain the established metadata-error order.
 	if _, numeric := id.(json.Number); numeric && idError != nil {
+		//nolint:exhaustruct_v5 // Protocol error details remain absent for this error code; preserve the existing JSON-RPC response.
 		writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Invalid request ID."})
 		return
 	}
@@ -265,6 +272,7 @@ func (s *HTTPService) serveEvents(w http.ResponseWriter, r *http.Request, reques
 			w,
 			http.StatusBadRequest,
 			request.ID,
+			//nolint:exhaustruct_v5 // Protocol error details remain absent for this error code; preserve the existing JSON-RPC response.
 			&protocolError{Code: mcp.CodeHeaderMismatch, Message: "Missing or mismatched Mcp-Method header."},
 		)
 		return
@@ -273,6 +281,7 @@ func (s *HTTPService) serveEvents(w http.ResponseWriter, r *http.Request, reques
 		Meta map[string]any `json:"_meta"`
 	}
 	if len(request.Params) != 0 && json.Unmarshal(request.Params, &params) != nil {
+		//nolint:exhaustruct_v5 // Protocol error details remain absent for this error code; preserve the existing JSON-RPC response.
 		writeRPC(w, request.ID, nil, &protocolError{Code: -32602, Message: "Invalid parameters."})
 		return
 	}
@@ -281,6 +290,7 @@ func (s *HTTPService) serveEvents(w http.ResponseWriter, r *http.Request, reques
 			w,
 			request.ID,
 			nil,
+			//nolint:exhaustruct_v5 // Protocol error details remain absent for this error code; preserve the existing JSON-RPC response.
 			&protocolError{Code: -32602, Message: "Missing or invalid client capabilities."},
 		)
 		return
@@ -292,6 +302,7 @@ func (s *HTTPService) serveEvents(w http.ResponseWriter, r *http.Request, reques
 			w,
 			http.StatusBadRequest,
 			request.ID,
+			//nolint:exhaustruct_v5 // Protocol error details remain absent for this error code; preserve the existing JSON-RPC response.
 			&protocolError{
 				Code:    mcp.CodeHeaderMismatch,
 				Message: "Missing or mismatched MCP-Protocol-Version header.",
@@ -304,11 +315,12 @@ func (s *HTTPService) serveEvents(w http.ResponseWriter, r *http.Request, reques
 			w,
 			http.StatusBadRequest,
 			request.ID,
+			//nolint:exhaustruct_v5 // Protocol error details remain absent for this error code; preserve the existing JSON-RPC response.
 			&protocolError{Code: -32602, Message: "Missing or invalid protocol version metadata."},
 		)
 		return
 	}
-	if version != "2026-07-28" {
+	if version != protocolVersion {
 		writeRPCStatus(
 			w,
 			http.StatusBadRequest,
@@ -316,16 +328,18 @@ func (s *HTTPService) serveEvents(w http.ResponseWriter, r *http.Request, reques
 			&protocolError{
 				Code:    mcp.CodeUnsupportedProtocolVersion,
 				Message: "Unsupported protocol version.",
-				Data:    map[string]any{"supported": []string{"2026-07-28"}, "requested": version},
+				Data:    map[string]any{"supported": []string{protocolVersion}, "requested": version},
 			},
 		)
 		return
 	}
 	if len(request.ID) == 0 || idDecodeErr != nil || id == nil {
+		//nolint:exhaustruct_v5 // Protocol error details remain absent for this error code; preserve the existing JSON-RPC response.
 		writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Events require a request ID."})
 		return
 	}
 	if idError != nil || !validated.IsValid() {
+		//nolint:exhaustruct_v5 // Protocol error details remain absent for this error code; preserve the existing JSON-RPC response.
 		writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Invalid request ID."})
 		return
 	}
@@ -338,6 +352,7 @@ func (s *HTTPService) serveEvents(w http.ResponseWriter, r *http.Request, reques
 }
 
 func (s *HTTPService) serveDiscovery(w http.ResponseWriter, r *http.Request) {
+	//nolint:exhaustruct_v5 // jsonResponseCapture preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	capture := &jsonResponseCapture{header: http.Header{}}
 	s.sdk.ServeHTTP(capture, r)
 	if capture.status == http.StatusOK {

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-// Journal DTOs represent the two retained event profiles explicitly. Optional
+// Subscription represents either retained event profile explicitly. Optional
 // profile fields preserve legacy omission; timestamps retain their wire spelling.
 type Subscription struct {
 	SubscriptionID    string  `json:"subscription_id"`
@@ -30,6 +30,7 @@ type Message struct {
 }
 type EventData struct {
 	Message
+
 	GroupID          *string `json:"group_id,omitempty"`
 	ConversationID   *string `json:"conversation_id,omitempty"`
 	ConversationType *string `json:"conversation_type,omitempty"`
@@ -39,11 +40,12 @@ type EventData struct {
 	FirstIncoming    *bool   `json:"first_incoming,omitempty"`
 }
 
-// The v2 contract requires nullable fields that legacy does not contain.
+// MarshalJSON preserves v2 nullable fields that the legacy profile does not contain.
 func (d EventData) MarshalJSON() ([]byte, error) {
 	if d.SchemaVersion != nil {
 		return json.Marshal(struct {
 			Message
+
 			ConversationID   *string `json:"conversation_id"`
 			ConversationType *string `json:"conversation_type"`
 			ConversationName *string `json:"conversation_name"`
@@ -54,6 +56,7 @@ func (d EventData) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(struct {
 		Message
+
 		GroupID *string `json:"group_id"`
 	}{d.Message, d.GroupID})
 }

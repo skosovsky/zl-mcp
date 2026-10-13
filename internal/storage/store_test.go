@@ -2,11 +2,12 @@ package storage
 
 import (
 	"context"
-	"fmt"
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 func openTest(t *testing.T) *Store {
@@ -20,7 +21,10 @@ func openTest(t *testing.T) *Store {
 }
 func putTest(t *testing.T, s *Store, id, group, text string, at time.Time) {
 	t.Helper()
-	if err := s.Put(context.Background(), domain.Message{GroupID: group, ID: id, SenderID: "sender", SentAt: at, Text: text, Source: "live"}); err != nil {
+	if err := s.Put(
+		context.Background(),
+		domain.Message{GroupID: group, ID: id, SenderID: "sender", SentAt: at, Text: text, Source: "live"},
+	); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -51,8 +55,8 @@ func TestPaginationSnapshotAndTampering(t *testing.T) {
 	s := openTest(t)
 	ctx := context.Background()
 	at := time.Now().UTC()
-	for i := 0; i < 5; i++ {
-		putTest(t, s, fmt.Sprint(i), "g1", "ремонт", at.Add(time.Duration(i)*time.Minute))
+	for i := range 5 {
+		putTest(t, s, strconv.Itoa(i), "g1", "ремонт", at.Add(time.Duration(i)*time.Minute))
 	}
 	// Act
 	first, c, _, err := s.Search(ctx, Search{Query: "ремонт", Limit: 2})
@@ -108,7 +112,14 @@ func TestDateBoundariesAndPunctuation(t *testing.T) {
 	putTest(t, s, "first", "g1", "repair service", at)
 	putTest(t, s, "second", "g1", "repair service", at.Add(time.Hour))
 	// Act
-	h, _, _, err := s.Search(ctx, Search{Query: "repair; service!", Since: at.Format(time.RFC3339), Until: at.Add(time.Hour).Format(time.RFC3339)})
+	h, _, _, err := s.Search(
+		ctx,
+		Search{
+			Query: "repair; service!",
+			Since: at.Format(time.RFC3339),
+			Until: at.Add(time.Hour).Format(time.RFC3339),
+		},
+	)
 	// Assert
 	if err != nil || len(h) != 1 || h[0].ID != "first" {
 		t.Fatalf("interval: %+v %v", h, err)

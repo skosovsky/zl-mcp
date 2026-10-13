@@ -29,11 +29,11 @@ type localReceiverTransport struct {
 }
 
 func (tr localReceiverTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	copy := r.Clone(r.Context())
+	requestCopy := r.Clone(r.Context())
 	u := *r.URL
 	u.Scheme, u.Host = tr.target.Scheme, tr.target.Host
-	copy.URL = &u
-	return tr.base.RoundTrip(copy)
+	requestCopy.URL = &u
+	return tr.base.RoundTrip(requestCopy)
 }
 
 func httpRPC(t *testing.T, endpoint, token, method string, params map[string]any) map[string]any {
@@ -176,7 +176,12 @@ func TestHTTPEventsLifecycleWithSignedTLSReceiverAndFullText(t *testing.T) {
 			t.Fatal(nestedPutErr)
 		}
 	}
-	if _, fanoutEventsErr := store.FanoutEvents(ctx, time.Now(), worker.Policy, worker.Encoder.Encode); fanoutEventsErr != nil {
+	if _, fanoutEventsErr := store.FanoutEvents(
+		ctx,
+		time.Now(),
+		worker.Policy,
+		worker.Encoder.Encode,
+	); fanoutEventsErr != nil {
 		t.Fatal(fanoutEventsErr)
 	}
 	if _, deliverOneErr := worker.DeliverOne(ctx, time.Now()); deliverOneErr != nil {
@@ -226,7 +231,12 @@ func TestHTTPEventsLifecycleWithSignedTLSReceiverAndFullText(t *testing.T) {
 	); storedMessageErr != nil {
 		t.Fatal(storedMessageErr)
 	}
-	if _, nestedFanoutEventsErr := store.FanoutEvents(ctx, time.Now(), worker.Policy, worker.Encoder.Encode); nestedFanoutEventsErr != nil {
+	if _, nestedFanoutEventsErr := store.FanoutEvents(
+		ctx,
+		time.Now(),
+		worker.Policy,
+		worker.Encoder.Encode,
+	); nestedFanoutEventsErr != nil {
 		t.Fatal(nestedFanoutEventsErr)
 	}
 	handled, err := worker.DeliverOne(ctx, time.Now())

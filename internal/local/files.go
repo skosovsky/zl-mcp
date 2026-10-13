@@ -34,7 +34,7 @@ func WritePrivate(path string, b []byte) error {
 	tmp := f.Name()
 	// G104: Scratch cleanup preserves the write/rename result.
 	defer os.Remove(tmp)
-	if e = f.Chmod(0600); e == nil {
+	if e = f.Chmod(privateFileMode); e == nil {
 		_, e = f.Write(b)
 	}
 	if e == nil {

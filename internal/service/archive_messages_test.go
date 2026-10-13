@@ -104,7 +104,11 @@ func testOfflineArchiveMessages(t *testing.T, offline, restricted *membershipPor
 					(record["text_truncated"] != true && fullText != record["text"]) {
 					t.Fatal("resource changed the excerpt or lost full text")
 				}
-				if _, sealArchiveReadErr = restricted.Call(ctx, "read_archive_resource", map[string]any{"token": sealed}); sealArchiveReadErr == nil {
+				if _, sealArchiveReadErr = restricted.Call(
+					ctx,
+					"read_archive_resource",
+					map[string]any{"token": sealed},
+				); sealArchiveReadErr == nil {
 					t.Fatal("resource bypassed current collection policy")
 				}
 				testArchiveSDKResource(t, offline, sealed, id)

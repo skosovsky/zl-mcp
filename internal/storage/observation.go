@@ -20,6 +20,8 @@ func (s *Store) ObservationQueueDepth(ctx context.Context, kind domain.WorkKind)
 		query = "SELECT count(*) FROM history_operations WHERE state IN ('queued','running','paused')"
 	case domain.WorkEvents:
 		query = "SELECT count(*) FROM event_deliveries WHERE state IN ('pending','sending')"
+	case domain.WorkCollector, domain.WorkOther:
+		return 0, errors.New("unsupported observation queue")
 	default:
 		return 0, errors.New("unsupported observation queue")
 	}

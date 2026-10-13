@@ -19,7 +19,8 @@ func ArchiveIdentityRequest(ctx context.Context, a PlainArchive) (IdentityReques
 	seen := make(map[string]bool, len(a.Files))
 	var total uint64
 	for _, f := range a.Files {
-		if ctx.Err() != nil || !validName(f.Name) || seen[f.Name] || len(f.Data) == 0 || uint64(len(f.Data)) > MaxFileBytes {
+		if ctx.Err() != nil || !validName(f.Name) || seen[f.Name] || len(f.Data) == 0 ||
+			uint64(len(f.Data)) > MaxFileBytes {
 			return IdentityRequest{}, ErrSelection
 		}
 		total += uint64(len(f.Data))
@@ -46,7 +47,13 @@ func ArchiveIdentityRequest(ctx context.Context, a PlainArchive) (IdentityReques
 	}
 	return result, nil
 }
-func SelectArchiveIndex(ctx context.Context, a PlainArchive, pairs []IdentityPair, ref domain.ConversationRef) (int, error) {
+
+func SelectArchiveIndex(
+	ctx context.Context,
+	a PlainArchive,
+	pairs []IdentityPair,
+	ref domain.ConversationRef,
+) (int, error) {
 	if !ref.Valid() || !canonicalIdentity(ref.ID) {
 		return -1, ErrSelection
 	}

@@ -74,7 +74,7 @@ func sdkStartRawBridge(t *testing.T, endpoint, token string) *sdkRawChild {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	child := exec.CommandContext(ctx, bin, "-config", config, "serve")
 	// Config computes defaults from the actual home; explicit config/token/state paths remain synthetic.
-	child.Env = []string{"PATH=" + os.Getenv("PATH"), "HOME=" + os.Getenv("HOME"), "TMPDIR=" + os.TempDir(), "TZ=UTC"}
+	child.Env = []string{"PATH=" + os.Getenv("PATH"), "HOME=" + os.Getenv("HOME"), "TMPDIR=" + t.TempDir(), "TZ=UTC"}
 	stderr := &sdkBoundedStderr{}
 	child.Stderr = stderr
 	input, err := child.StdinPipe()

@@ -3,7 +3,6 @@ package messaging
 
 import (
 	"context"
-	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
@@ -19,7 +18,7 @@ type Handler struct {
 }
 
 func (h *Handler) Status(ctx context.Context, requestID string) (domain.SendOperation, error) {
-	ctx, cancel := context.WithTimeout(ctx, 35*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, handlerStatusTimeout)
 	defer cancel()
 	return h.Reads.SendStatus(ctx, requestID)
 }

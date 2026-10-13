@@ -115,6 +115,7 @@ func readGroupHistoryPage(
 	if err != nil {
 		return domain.HistoryPage{}, invalidHistoryPage("invalid history join timestamp")
 	}
+	//nolint:exhaustruct_v5 // HistoryPage preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	page := domain.HistoryPage{
 		Messages:             []domain.Message{},
 		HasMore:              raw.HasMore,
@@ -176,7 +177,7 @@ func decodeHistoryRecord(raw []byte, own string, ref domain.ConversationRef) (do
 		return domain.Message{}, invalidHistoryPage("invalid history message shape")
 	}
 	// Convert only identifier/time fields whose pinned model is string based.
-	for _, key := range []string{"actionId", "msgId", "cliMsgId", "uidFrom", "idTo", "ts", "userId", "realMsgId"} {
+	for _, key := range []string{nativeActionIDField, "msgId", nativeClientMessageIDField, "uidFrom", "idTo", "ts", nativeUserIDField, nativeRealMessageIDField} {
 		value := bytes.TrimSpace(fields[key])
 		if len(value) == 0 || bytes.Equal(value, []byte("null")) || value[0] == '"' {
 			continue
@@ -205,7 +206,7 @@ func decodeHistoryRecord(raw []byte, own string, ref domain.ConversationRef) (do
 		return domain.Message{}, invalidHistoryPage("history text exceeds supported size")
 	}
 	if msg.SenderID == own {
-		msg.Direction = "outgoing"
+		msg.Direction = directionOutgoing
 	}
 	return msg, nil
 }

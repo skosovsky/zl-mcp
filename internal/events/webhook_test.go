@@ -121,7 +121,7 @@ func TestCallbackDNSPinnedAndRechecked(t *testing.T) {
 			return []netip.Addr{netip.MustParseAddr("8.8.8.8")}, nil
 		}
 		return []netip.Addr{netip.MustParseAddr("127.0.0.1")}, nil
-	}, func(ctx context.Context, network, address string) (net.Conn, error) {
+	}, func(_ context.Context, _, address string) (net.Conn, error) {
 		dials++
 		if address != "8.8.8.8:443" {
 			t.Fatalf("hostname resolved again instead of pinning: %q", address)

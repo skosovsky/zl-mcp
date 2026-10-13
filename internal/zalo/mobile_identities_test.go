@@ -8,6 +8,7 @@ import (
 
 	"github.com/amrakk/zcago"
 	"github.com/amrakk/zcago/errs"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -18,7 +19,7 @@ type identityMappingFake struct {
 	cancel context.CancelFunc
 }
 
-func (f *identityMappingFake) GetMobileIdentityMapping(ctx context.Context, direct, groups []string) ([]byte, error) {
+func (f *identityMappingFake) GetMobileIdentityMapping(_ context.Context, _, _ []string) ([]byte, error) {
 	f.calls++
 	if f.cancel != nil {
 		f.cancel()
@@ -41,7 +42,10 @@ func TestMobileIdentityAdapterValidatesWholeReplyAndClearsPlaintext(t *testing.T
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange.
 			f := &identityMappingFake{body: []byte(tc.body), err: tc.err}
-			request := domain.MobileIdentityRequest{Direct: []string{"9007199254740993"}, Groups: []string{"18446744073709551615"}}
+			request := domain.MobileIdentityRequest{
+				Direct: []string{"9007199254740993"},
+				Groups: []string{"18446744073709551615"},
+			}
 			// Act.
 			pairs, err := mapMobileIdentities(context.Background(), request, f)
 			// Assert: no partial mappings and no raw SDK error exposure; owned reply buffer cleared.
@@ -65,10 +69,24 @@ func TestMobileIdentityAdapterCancellationAndInputBounds(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	// Act / Assert: reject before calling the SDK.
-	if _, err := mapMobileIdentities(ctx, domain.MobileIdentityRequest{Direct: []string{"1"}}, f); !errors.Is(err, context.Canceled) {
+	if _, err := mapMobileIdentities(
+		ctx,
+		domain.MobileIdentityRequest{Direct: []string{"1"}},
+		f,
+	); !errors.Is(
+		err,
+		context.Canceled,
+	) {
 		t.Fatal("cancel bypass")
 	}
-	if _, err := mapMobileIdentities(context.Background(), domain.MobileIdentityRequest{Direct: []string{"01"}}, f); !errors.Is(err, domain.ErrMobileBackupInvalid) {
+	if _, err := mapMobileIdentities(
+		context.Background(),
+		domain.MobileIdentityRequest{Direct: []string{"01"}},
+		f,
+	); !errors.Is(
+		err,
+		domain.ErrMobileBackupInvalid,
+	) {
 		t.Fatal("invalid identity input")
 	}
 	if f.calls != 0 {
@@ -78,13 +96,19 @@ func TestMobileIdentityAdapterCancellationAndInputBounds(t *testing.T) {
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 	f.cancel = cancel
-	if pairs, err := mapMobileIdentities(ctx, domain.MobileIdentityRequest{Direct: []string{"1"}}, f); !errors.Is(err, context.Canceled) || pairs != nil || f.calls != 1 {
+	if pairs, err := mapMobileIdentities(
+		ctx,
+		domain.MobileIdentityRequest{Direct: []string{"1"}},
+		f,
+	); !errors.Is(err, context.Canceled) || pairs != nil ||
+		f.calls != 1 {
 		t.Fatal("cancelled mapping exposed")
 	}
 }
 
 type changingIdentityAPI struct {
 	zcago.API
+
 	owner  string
 	change bool
 	calls  int
@@ -103,14 +127,21 @@ func TestMobileIdentityClientRejectsAccountChange(t *testing.T) {
 	backend := &changingIdentityAPI{owner: "synthetic-account", change: true}
 	client := &Client{api: backend}
 	// Act.
-	result, err := client.MapMobileBackupIdentities(context.Background(), domain.MobileIdentityRequest{Direct: []string{"1"}})
+	result, err := client.MapMobileBackupIdentities(
+		context.Background(),
+		domain.MobileIdentityRequest{Direct: []string{"1"}},
+	)
 	// Assert.
 	if !errors.Is(err, domain.ErrMobileBackupInvalid) || result != nil || backend.calls != 1 {
 		t.Fatal("changed-account mapping exposed")
 	}
 	backend.owner = ""
 	backend.calls = 0
-	if _, err = client.MapMobileBackupIdentities(context.Background(), domain.MobileIdentityRequest{Direct: []string{"1"}}); !errors.Is(err, domain.ErrAuthenticationRequired) || backend.calls != 0 {
+	if _, err = client.MapMobileBackupIdentities(
+		context.Background(),
+		domain.MobileIdentityRequest{Direct: []string{"1"}},
+	); !errors.Is(err, domain.ErrAuthenticationRequired) ||
+		backend.calls != 0 {
 		t.Fatal("unowned session dispatched")
 	}
 }

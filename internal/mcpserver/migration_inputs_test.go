@@ -118,7 +118,10 @@ func normalizeSearchSnapshot(result *mcp.CallToolResult) error {
 	if unmarshalErr := json.Unmarshal(b, &payload); unmarshalErr != nil {
 		return unmarshalErr
 	}
-	if nestedUnmarshalErr := json.Unmarshal([]byte(result.Content[0].(*mcp.TextContent).Text), &textPayload); nestedUnmarshalErr != nil {
+	if nestedUnmarshalErr := json.Unmarshal(
+		[]byte(result.Content[0].(*mcp.TextContent).Text),
+		&textPayload,
+	); nestedUnmarshalErr != nil {
 		return nestedUnmarshalErr
 	}
 	if !reflect.DeepEqual(payload, textPayload) {

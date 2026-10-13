@@ -41,12 +41,12 @@ INSERT INTO schema_migrations VALUES(6);`)
 func markIncoming(ctx context.Context, tx *sql.Tx, seq int64, m *domain.Message) error {
 	m.FirstIncoming = nil
 	if m.Direction == "" {
-		m.Direction = "unknown"
+		m.Direction = stateUnknownText
 	}
-	if m.Direction != "incoming" && m.Direction != "outgoing" && m.Direction != "unknown" {
+	if m.Direction != directionIncoming && m.Direction != directionOutgoing && m.Direction != stateUnknownText {
 		return domain.Invalid("Invalid message direction.")
 	}
-	if m.Ref().Type == domain.ConversationDirect && m.Direction == "unknown" {
+	if m.Ref().Type == domain.ConversationDirect && m.Direction == stateUnknownText {
 		_, err := tx.ExecContext(
 			ctx,
 			"INSERT OR IGNORE INTO peer_first_incoming(peer_id,first_seq,certainty) VALUES(?,NULL,'unknown')",
@@ -54,7 +54,7 @@ func markIncoming(ctx context.Context, tx *sql.Tx, seq int64, m *domain.Message)
 		)
 		return err
 	}
-	if m.Ref().Type != domain.ConversationDirect || m.Direction != "incoming" {
+	if m.Ref().Type != domain.ConversationDirect || m.Direction != directionIncoming {
 		return nil
 	}
 	var first sql.NullInt64

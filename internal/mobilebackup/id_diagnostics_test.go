@@ -16,7 +16,21 @@ func TestRejectedMessageIDShapesDoNotRepairOrExposePrivateValues(t *testing.T) {
 		value any
 		want  string
 	}{
-		{strings.Repeat("PRIVATE-ID", 1000), "oversized"}, {nil, "missing"}, {"", "empty"}, {int64(0), "zero"}, {"0", "zero"}, {int64(-1), "negative_integer"}, {"-12", "negative_text"}, {"001", "leading_zero"}, {"PRIVATE-ID", "nondigit"}, {"18446744073709551616", "overflow"}, {"999999999999999999999999999999", "overflow"}, {[]byte("PRIVATE-ID"), "wrong_storage_type"},
+		{
+			strings.Repeat("PRIVATE-ID", 1000),
+			"oversized",
+		},
+		{nil, "missing"},
+		{"", "empty"},
+		{int64(0), "zero"},
+		{"0", "zero"},
+		{int64(-1), "negative_integer"},
+		{"-12", "negative_text"},
+		{"001", "leading_zero"},
+		{"PRIVATE-ID", "nondigit"},
+		{"18446744073709551616", "overflow"},
+		{"999999999999999999999999999999", "overflow"},
+		{[]byte("PRIVATE-ID"), "wrong_storage_type"},
 	}
 	for _, test := range cases {
 		// Act.
@@ -55,7 +69,21 @@ func TestRejectedMessageIDContextPartitionsPagedRowsWithoutContent(t *testing.T)
 	defer second.Clear()
 	encoded, _ := json.Marshal(first.RejectedMessageIDContext)
 	// Assert: each independent group partitions the same rows, without invented metadata/IDs or loss of progress.
-	if err != nil || first.RejectedReasons["message_id"] != 2 || first.RejectedMessageIDShapes["missing"] != 1 || first.RejectedMessageIDShapes["zero"] != 1 || first.RejectedMessageIDContext["positive_status"] != 1 || first.RejectedMessageIDContext["nonpositive_status"] != 1 || first.RejectedMessageIDContext["known_payload_kind"] != 1 || first.RejectedMessageIDContext["source_control_kind"] != 1 || first.RejectedMessageIDContext["source_text_present"] != 1 || first.RejectedMessageIDContext["source_text_absent"] != 1 || first.RejectedMessageIDContext["client_id_valid"] != 1 || first.RejectedMessageIDContext["client_id_invalid"] != 1 || second.RejectedMessageIDShapes["nondigit"] != 1 || second.RejectedMessageIDContext["unknown_kind"] != 1 || len(second.Rows) != 1 || second.HasMore || bytes.Contains(encoded, []byte("PRIVATE")) {
+	if err != nil || first.RejectedReasons["message_id"] != 2 || first.RejectedMessageIDShapes["missing"] != 1 ||
+		first.RejectedMessageIDShapes["zero"] != 1 ||
+		first.RejectedMessageIDContext["positive_status"] != 1 ||
+		first.RejectedMessageIDContext["nonpositive_status"] != 1 ||
+		first.RejectedMessageIDContext["known_payload_kind"] != 1 ||
+		first.RejectedMessageIDContext["source_control_kind"] != 1 ||
+		first.RejectedMessageIDContext["source_text_present"] != 1 ||
+		first.RejectedMessageIDContext["source_text_absent"] != 1 ||
+		first.RejectedMessageIDContext["client_id_valid"] != 1 ||
+		first.RejectedMessageIDContext["client_id_invalid"] != 1 ||
+		second.RejectedMessageIDShapes["nondigit"] != 1 ||
+		second.RejectedMessageIDContext["unknown_kind"] != 1 ||
+		len(second.Rows) != 1 ||
+		second.HasMore ||
+		bytes.Contains(encoded, []byte("PRIVATE")) {
 		t.Fatal("diagnostic partition or pagination failed", err)
 	}
 	first.Clear()

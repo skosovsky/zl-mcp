@@ -80,10 +80,11 @@ func (p *membershipPort) consumePreparedMobileArchive(
 	}
 	defer stop()
 	attempt, e := p.store.MobileBackupAttempt(operation, id)
-	if e != nil || attempt.Request.ArchiveScope != "" || attempt.State != "prepared" {
+	if e != nil || attempt.Request.ArchiveScope != "" || attempt.State != statePreparedText {
 		return mobilebackup.ErrArchive
 	}
 	identityCheck, e := mobilebackup.IdentityPayload(
+		//nolint:exhaustruct_v5 // MobileIdentityRequest preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 		domain.MobileIdentityRequest{Direct: []string{attempt.Request.ConversationID}},
 	)
 	if e != nil {
@@ -100,6 +101,7 @@ func (p *membershipPort) consumePreparedMobileArchive(
 	}
 	selected, e := mobilebackup.FetchSelectedArchive(operation, boundDownloader, offer, attempt.Request, mapper)
 	if e != nil || operation.Err() != nil || p.current.API.AccountID() != account {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(
 			parent,
 			"mobile_archive_scope_failed",
@@ -201,6 +203,7 @@ func (p *membershipPort) walkPreparedMobilePages(
 		},
 	)
 	if err != nil {
+		//nolint:exhaustruct_v5 // ArchiveWalkSummary starts with only available authenticated data; optional metadata and accumulated counters remain empty.
 		result = mobilebackup.ArchiveWalkSummary{}
 	}
 	return result, err

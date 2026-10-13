@@ -8,7 +8,11 @@ func TestFilteredSubscriptionContractRejectsContradictions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	delivery := map[string]any{"mode": "webhook", "url": "https://receiver.example/events", "secret": "whsec_" + "synthetic"}
+	delivery := map[string]any{
+		"mode":   "webhook",
+		"url":    "https://receiver.example/events",
+		"secret": "whsec_" + "synthetic",
+	}
 	for _, tc := range []struct {
 		args  map[string]any
 		valid bool
@@ -20,7 +24,9 @@ func TestFilteredSubscriptionContractRejectsContradictions(t *testing.T) {
 		{map[string]any{"scope": "direct", "first_incoming_only": true}, false},
 	} {
 		// Act.
-		err = s.Validate(map[string]any{"name": "zalo.conversation.message.created.v2", "arguments": tc.args, "delivery": delivery})
+		err = s.Validate(
+			map[string]any{"name": "zalo.conversation.message.created.v2", "arguments": tc.args, "delivery": delivery},
+		)
 		// Assert.
 		if (err == nil) != tc.valid {
 			t.Fatalf("valid=%v error=%v", tc.valid, err)

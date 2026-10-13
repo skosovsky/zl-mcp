@@ -30,6 +30,7 @@ func (b *BinNet) Clear() {
 		b.Mentions[i].Clear()
 	}
 	clear(b.UnsupportedTags)
+	//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 	*b = BinNet{}
 }
 
@@ -49,7 +50,7 @@ func ParseBinNet(ctx context.Context, data []byte) (result BinNet, err error) {
 		if ctx.Err() != nil {
 			return result, ErrTLV
 		}
-		if f.Tag == 6 {
+		if f.Tag == binNetAttachmentTag {
 			attachment, e := ParseAttachment(ctx, f.Value)
 			if e != nil {
 				return result, e
@@ -58,7 +59,7 @@ func ParseBinNet(ctx context.Context, data []byte) (result BinNet, err error) {
 			result.UnsupportedFields += attachment.UnsupportedFields
 			continue
 		}
-		if f.Tag == 8 {
+		if f.Tag == binNetMentionTag {
 			mention, e := ParseMention(ctx, f.Value)
 			if e != nil {
 				return result, e
@@ -67,7 +68,7 @@ func ParseBinNet(ctx context.Context, data []byte) (result BinNet, err error) {
 			result.UnsupportedFields += mention.UnsupportedFields
 			continue
 		}
-		if f.Tag != 7 {
+		if f.Tag != binNetQuoteTag {
 			result.UnsupportedTags = append(result.UnsupportedTags, f.Tag)
 			result.UnsupportedFields++
 			continue

@@ -31,6 +31,7 @@ func (a *PlainArchive) Clear() {
 	}
 	for i := range a.Files {
 		clear(a.Files[i].Data)
+		//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 		a.Files[i] = ArchiveFile{}
 	}
 	a.Files = nil
@@ -44,6 +45,7 @@ func ReadPlainArchive(ctx context.Context, r io.Reader, containerLimit, outputLi
 	}
 	container, err := ReadContainer(ctx, r, containerLimit)
 	if err != nil {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(ctx, "mobile_archive_format_failed", "stage", "HEADER_CHECKSUM_TABLE")
 		return PlainArchive{}, ErrArchive
 	}
@@ -60,6 +62,7 @@ func ReadPlainArchive(ctx context.Context, r io.Reader, containerLimit, outputLi
 		int64(outputLimit),
 	)
 	if err != nil || uint64(len(out)) != container.Header.TotalBytes || ctx.Err() != nil {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(
 			ctx,
 			"mobile_archive_format_failed",

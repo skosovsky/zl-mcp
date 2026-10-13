@@ -33,14 +33,28 @@ var (
 func decode[T any](value map[string]any, err error) (T, error) {
 	var result T
 	if errors.Is(err, sql.ErrNoRows) {
-		return result, &domain.Error{Code: "NOT_FOUND", Message: "No accessible local record was found.", NextAction: domain.NextAction{Instruction: "Use IDs returned by zalo_list_groups or zalo_search_messages."}, Details: map[string]any{}}
+		//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
+		return result, &domain.Error{
+			Code:    "NOT_FOUND",
+			Message: "No accessible local record was found.",
+			//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
+			NextAction: domain.NextAction{Instruction: "Use IDs returned by zalo_list_groups or zalo_search_messages."},
+			Details:    map[string]any{},
+		}
 	}
 	if err != nil {
 		return result, err
 	}
 	body, err := json.Marshal(value)
 	if errors.Is(err, sql.ErrNoRows) {
-		return result, &domain.Error{Code: "NOT_FOUND", Message: "No accessible local record was found.", NextAction: domain.NextAction{Instruction: "Use IDs returned by zalo_list_groups or zalo_search_messages."}, Details: map[string]any{}}
+		//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
+		return result, &domain.Error{
+			Code:    "NOT_FOUND",
+			Message: "No accessible local record was found.",
+			//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
+			NextAction: domain.NextAction{Instruction: "Use IDs returned by zalo_list_groups or zalo_search_messages."},
+			Details:    map[string]any{},
+		}
 	}
 	if err != nil {
 		return result, err
@@ -50,11 +64,15 @@ func decode[T any](value map[string]any, err error) (T, error) {
 }
 
 func (r *Reader) SendStatus(ctx context.Context, requestID string) (domain.SendOperation, error) {
-	return decode[domain.SendOperation](r.owner.Call(ctx, "zalo_get_send_status", map[string]any{"request_id": requestID}))
+	return decode[domain.SendOperation](
+		r.owner.Call(ctx, "zalo_get_send_status", map[string]any{"request_id": requestID}),
+	)
 }
 
 func (r *Reader) ImportStatus(ctx context.Context, operationID string) (domain.HistoryImportStatus, error) {
-	return decode[domain.HistoryImportStatus](r.owner.Call(ctx, "zalo_get_history_import_status", map[string]any{"operation_id": operationID}))
+	return decode[domain.HistoryImportStatus](
+		r.owner.Call(ctx, "zalo_get_history_import_status", map[string]any{"operation_id": operationID}),
+	)
 }
 
 func (r *Reader) InspectInvite(ctx context.Context, inviteURL string) (membership.Invite, error) {
@@ -62,7 +80,9 @@ func (r *Reader) InspectInvite(ctx context.Context, inviteURL string) (membershi
 }
 
 func (r *Reader) JoinStatus(ctx context.Context, operationID string) (membership.JoinStatus, error) {
-	return decode[membership.JoinStatus](r.owner.Call(ctx, "zalo_get_join_status", map[string]any{"operation_id": operationID}))
+	return decode[membership.JoinStatus](
+		r.owner.Call(ctx, "zalo_get_join_status", map[string]any{"operation_id": operationID}),
+	)
 }
 
 func (r *Reader) Group(ctx context.Context, groupID string) (conversations.GroupDetail, error) {

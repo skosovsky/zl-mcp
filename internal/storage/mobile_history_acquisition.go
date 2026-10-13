@@ -45,13 +45,14 @@ func (s *Store) PrepareMobileHistoryAcquisition(
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
-	if op.Revision != revision || op.Status.State != "running" ||
+	if op.Revision != revision || op.Status.State != stateRunningText ||
 		op.Status.Source != domain.HistorySourceMobileArchive {
 		return MobileBackupAttempt{}, ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {
 		return MobileBackupAttempt{}, subscriptionPermission("Conversation is outside collection policy.")
 	}
+	//nolint:exhaustruct_v5 // MobileBackupRequest preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	r, err := (domain.MobileBackupRequest{RequestID: op.Status.RequestID, ConversationType: op.Status.ConversationType, ConversationID: op.Status.ConversationID, Since: op.Status.Since, Until: op.Status.Until, MaxMessages: op.Status.MaxMessages, MaxArchiveBytes: maxArchiveBytes}).Normalize()
 	if err != nil {
 		return MobileBackupAttempt{}, err
@@ -110,7 +111,7 @@ func (s *Store) checkMobileHistoryDispatch(ctx context.Context, tx *sql.Tx, atte
 	if err != nil {
 		return err
 	}
-	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State != "running" ||
+	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State != stateRunningText ||
 		op.Revision != revision ||
 		op.ReservedDuration <= 0 ||
 		op.ReservedDuration > 180*time.Second {
@@ -161,7 +162,7 @@ func (s *Store) CompleteMobileHistoryWork(
 	if err != nil {
 		return HistoryOperation{}, err
 	}
-	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State != "running" ||
+	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State != stateRunningText ||
 		op.Revision != revision ||
 		op.ReservedDuration <= 0 ||
 		op.WorkDuration < 0 ||
@@ -169,7 +170,7 @@ func (s *Store) CompleteMobileHistoryWork(
 		return HistoryOperation{}, ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {
-		historyStopped(&op, "cancelled", "access_revoked")
+		historyStopped(&op, stateCancelledText, "access_revoked")
 	} else {
 		remaining := MobileHistoryWorkBudget - op.WorkDuration
 		used := elapsed + time.Since(started)
@@ -201,8 +202,8 @@ func (s *Store) CloseMobileHistoryAcquisition(ctx context.Context, id string) er
 	if err != nil {
 		return err
 	}
-	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State == "queued" ||
-		op.Status.State == "running" {
+	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State == stateQueuedText ||
+		op.Status.State == stateRunningText {
 		return ErrHistoryState
 	}
 	if err = closeMobileHistoryAcquisitionTx(ctx, tx, op); err != nil {
@@ -213,13 +214,13 @@ func (s *Store) CloseMobileHistoryAcquisition(ctx context.Context, id string) er
 
 // Terminal publication and transfer release share the caller's transaction.
 func closeMobileHistoryAcquisitionTx(ctx context.Context, tx *sql.Tx, op HistoryOperation) error {
-	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State == "queued" ||
-		op.Status.State == "running" {
+	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State == stateQueuedText ||
+		op.Status.State == stateRunningText {
 		return nil
 	}
-	state := "interrupted"
-	if op.Status.State == "cancelled" {
-		state = "cancelled"
+	state := stateInterruptedText
+	if op.Status.State == stateCancelledText {
+		state = stateCancelledText
 	}
 	_, err := tx.ExecContext(ctx, `UPDATE mobile_backup_attempts SET state=?,revision=revision+1,updated_at=?
  WHERE account_key=? AND operation_id=(SELECT attempt_id FROM history_mobile_attempts WHERE operation_id=?)

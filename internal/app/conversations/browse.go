@@ -69,7 +69,10 @@ type DirectoryExecution struct {
 
 func (e *DirectoryExecution) Shorten(ctx context.Context) error {
 	if len(e.Result.Conversations) < 2 {
-		return domain.ResponseTooLarge("One conversation record exceeds the response budget.", "Use a more specific filter or report the metadata size limitation.")
+		return domain.ResponseTooLarge(
+			"One conversation record exceeds the response budget.",
+			"Use a more specific filter or report the metadata size limitation.",
+		)
 	}
 	e.request.Limit = len(e.Result.Conversations) - 1
 	value, err := e.port.Conversations(ctx, e.request)

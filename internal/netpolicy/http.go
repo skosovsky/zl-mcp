@@ -11,6 +11,8 @@ import (
 )
 
 var ErrNetwork = errors.New("public network request failed")
+
+//nolint:gochecknoglobals // Immutable public-address deny ranges are parsed once and only read by request guards.
 var blockedPrefixes = []netip.Prefix{
 	netip.MustParsePrefix("0.0.0.0/8"), netip.MustParsePrefix("100.64.0.0/10"),
 	netip.MustParsePrefix("192.0.0.0/24"), netip.MustParsePrefix("192.0.2.0/24"),
@@ -67,13 +69,18 @@ func ValidatedDial(lookup Lookup, dial Dial) Dial {
 }
 
 func NewClient(timeout time.Duration) *http.Client {
-	dialer := &net.Dialer{Timeout: 5 * time.Second}
+	//nolint:exhaustruct_v5 // Keep stdlib defaults for omitted dialing options; the explicit timeout controls this request.
+	dialer := &net.Dialer{Timeout: dialTimeout}
 	transport := &http.Transport{
 		DialContext: ValidatedDial(func(ctx context.Context, host string) ([]netip.Addr, error) {
 			return net.DefaultResolver.LookupNetIP(ctx, "ip", host)
 		}, dialer.DialContext),
-		TLSHandshakeTimeout: 5 * time.Second, ResponseHeaderTimeout: 5 * time.Second,
+		TLSHandshakeTimeout: tlsHandshakeTimeout, ResponseHeaderTimeout: responseHeaderTimeout,
 		DisableKeepAlives: true,
 	}
-	return &http.Client{Transport: transport, Timeout: timeout, CheckRedirect: func(*http.Request, []*http.Request) error { return ErrNetwork }}
+	return &http.Client{
+		Transport:     transport,
+		Timeout:       timeout,
+		CheckRedirect: func(*http.Request, []*http.Request) error { return ErrNetwork },
+	}
 }

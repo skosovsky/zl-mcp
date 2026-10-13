@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -36,12 +37,28 @@ func preparedArchiveFixture(t *testing.T, r domain.MobileBackupRequest) Selected
 				kind = 33
 			}
 			metadata := []byte{0, 0, 0, 9, 0, 0, 0, 1, 'x'}
-			if _, e := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", sender, fmt.Sprint(i), fmt.Sprint(i), "synthetic", ts, ttl, kind, 1, metadata); e != nil {
+			if _, e := db.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				sender,
+				strconv.Itoa(i),
+				strconv.Itoa(i),
+				"synthetic",
+				ts,
+				ttl,
+				kind,
+				1,
+				metadata,
+			); e != nil {
 				t.Fatal(e)
 			}
 		}
 	})
-	return SelectedArchive{File: ArchiveFile{Name: "902.db", Data: data}, ref: r.Ref(), requestID: r.RequestID, requestFingerprint: r.Fingerprint()}
+	return SelectedArchive{
+		File:               ArchiveFile{Name: "902.db", Data: data},
+		ref:                r.Ref(),
+		requestID:          r.RequestID,
+		requestFingerprint: r.Fingerprint(),
+	}
 }
 func TestPreparedArchivePagesAdvanceAcrossRejectedExpiredAndControlRows(t *testing.T) {
 	// Arrange: first page retains nothing; all rows share one timestamp.
@@ -51,17 +68,19 @@ func TestPreparedArchivePagesAdvanceAcrossRejectedExpiredAndControlRows(t *testi
 	defer archive.Clear()
 	original := append([]byte(nil), archive.File.Data...)
 	calls := 0
-	mapper := identitySourceFunc(func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-		calls++
-		return []domain.MobileIdentityPair{{Plain: "901", Session: "12"}}, nil
-	})
+	mapper := identitySourceFunc(
+		func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+			calls++
+			return []domain.MobileIdentityPair{{Plain: "901", Session: "12"}}, nil
+		},
+	)
 	scratch := t.TempDir()
 	now := time.Date(2026, 9, 16, 0, 0, 0, 0, time.UTC).UnixMilli()
 	var cursor *PreparedArchiveCursor
 	examined, rejected, expired, controls := 0, 0, 0, 0
 	var ids []string
 	// Act: three pages, independent of retained rows.
-	for pageNo := 0; pageNo < 3; pageNo++ {
+	for pageNo := range 3 {
 		page, e := ReadPreparedArchivePage(context.Background(), archive, r, "10", scratch, now, 2, cursor, mapper)
 		if e != nil {
 			t.Fatal(e)
@@ -89,7 +108,8 @@ func TestPreparedArchivePagesAdvanceAcrossRejectedExpiredAndControlRows(t *testi
 		page.Clear()
 	}
 	// Assert: source bytes unchanged; source gaps and expired rows still count.
-	if examined != 5 || rejected != 1 || expired != 1 || controls != 1 || fmt.Sprint(ids) != "[4 5]" || calls != 3 || !bytes.Equal(original, archive.File.Data) {
+	if examined != 5 || rejected != 1 || expired != 1 || controls != 1 || fmt.Sprint(ids) != "[4 5]" || calls != 3 ||
+		!bytes.Equal(original, archive.File.Data) {
 		t.Fatal("page traversal mismatch")
 	}
 	files, e := os.ReadDir(scratch)
@@ -104,16 +124,19 @@ func TestPreparedArchivePageBudgetAndBinding(t *testing.T) {
 	archive := preparedArchiveFixture(t, r)
 	defer archive.Clear()
 	calls := 0
-	mapper := identitySourceFunc(func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-		calls++
-		return []domain.MobileIdentityPair{{Plain: "901", Session: "12"}}, nil
-	})
+	mapper := identitySourceFunc(
+		func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+			calls++
+			return []domain.MobileIdentityPair{{Plain: "901", Session: "12"}}, nil
+		},
+	)
 	scratch := t.TempDir()
 	now := time.Date(2026, 9, 16, 0, 0, 0, 0, time.UTC).UnixMilli()
 	// Act: page size exceeds remaining budget but not per-page limit.
 	page, e := ReadPreparedArchivePage(context.Background(), archive, r, "10", scratch, now, 50, nil, mapper)
 	// Assert: budget includes expired/rejected rows, source remains incomplete.
-	if e != nil || page.Examined != 2 || !page.SourceHasMore || !page.BudgetExhausted || page.Next != nil || len(page.Candidates.Rows) != 0 {
+	if e != nil || page.Examined != 2 || !page.SourceHasMore || !page.BudgetExhausted || page.Next != nil ||
+		len(page.Candidates.Rows) != 0 {
 		t.Fatal("budget bypass", e)
 	}
 	page.Clear()
@@ -121,7 +144,18 @@ func TestPreparedArchivePageBudgetAndBinding(t *testing.T) {
 	changed.ConversationID = "13"
 	// Act / Assert: selection mismatch cannot reach source mapping.
 	before := calls
-	if _, e = ReadPreparedArchivePage(context.Background(), archive, changed, "10", scratch, now, 1, nil, mapper); !errors.Is(e, ErrSQLite) || calls != before {
+	if _, e = ReadPreparedArchivePage(
+		context.Background(),
+		archive,
+		changed,
+		"10",
+		scratch,
+		now,
+		1,
+		nil,
+		mapper,
+	); !errors.Is(e, ErrSQLite) ||
+		calls != before {
 		t.Fatal("changed request accepted")
 	}
 }
@@ -132,10 +166,12 @@ func TestPreparedArchiveCursorRejectsAccountRequestAndChangedBytes(t *testing.T)
 	archive := preparedArchiveFixture(t, r)
 	defer archive.Clear()
 	calls := 0
-	mapper := identitySourceFunc(func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-		calls++
-		return []domain.MobileIdentityPair{{Plain: "901", Session: "12"}}, nil
-	})
+	mapper := identitySourceFunc(
+		func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+			calls++
+			return []domain.MobileIdentityPair{{Plain: "901", Session: "12"}}, nil
+		},
+	)
 	scratch := t.TempDir()
 	now := time.Date(2026, 9, 16, 0, 0, 0, 0, time.UTC).UnixMilli()
 	page, e := ReadPreparedArchivePage(context.Background(), archive, r, "10", scratch, now, 1, nil, mapper)
@@ -163,15 +199,18 @@ func TestPreparedArchiveCursorRejectsAccountRequestAndChangedBytes(t *testing.T)
 			case "cancel":
 				cancel()
 			case "mapper-error":
-				source = identitySourceFunc(func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-					return nil, errors.New("private marker")
-				})
+				source = identitySourceFunc(
+					func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+						return nil, errors.New("private marker")
+					},
+				)
 			}
 			before := calls
 			// Act: use page size two so valid rows reach mapper in mapper-error case.
 			got, e := ReadPreparedArchivePage(ctx, selected, request, account, scratch, now, 3, &next, source)
 			// Assert: failed pages have no continuation/candidates or successful prefix.
-			if !errors.Is(e, ErrSQLite) || got.Next != nil || got.Candidates.Rows != nil || got.Examined != 0 || calls != before {
+			if !errors.Is(e, ErrSQLite) || got.Next != nil || got.Candidates.Rows != nil || got.Examined != 0 ||
+				calls != before {
 				t.Fatal("invalid continuation accepted or prefix retained")
 			}
 		})

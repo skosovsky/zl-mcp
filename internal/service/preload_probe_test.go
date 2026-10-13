@@ -42,6 +42,7 @@ func (s *probeServiceSource) ConversationPreload(context.Context) (domain.Preloa
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestPrivatePreloadProbeUsesServiceSessionWithoutPersistingCorpus(t *testing.T) {
 	// Arrange: one production service session and its owner-only Unix route.
+	//nolint:usetesting // A short temporary path keeps macOS Unix socket names within their bound; t.Cleanup owns removal.
 	dir, err := os.MkdirTemp("/tmp", "zl-preload-probe-")
 	if err != nil {
 		t.Fatal(err)

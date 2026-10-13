@@ -9,7 +9,6 @@ import (
 	"net/netip"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/mobilebackup/archiveport"
 	"github.com/skosovsky/zl-mcp/internal/netpolicy"
@@ -22,8 +21,6 @@ type Downloader struct {
 	hosts   map[string]bool
 	client  *http.Client
 }
-
-func (d *Downloader) Ready() bool { return d != nil && d.client != nil && len(d.hosts) > 0 }
 
 // NewDownloader requires hosts independently authorized by trusted configuration.
 // An offer's URL is never used to populate this allowlist.
@@ -38,8 +35,11 @@ func NewDownloader(hosts []string) (*Downloader, error) {
 		}
 		allowed[host] = true
 	}
-	return &Downloader{hosts: allowed, client: netpolicy.NewClient(120 * time.Second)}, nil
+	//nolint:exhaustruct_v5 // Downloader keeps absent decoded metadata and zero counters unchanged until this phase populates them.
+	return &Downloader{hosts: allowed, client: netpolicy.NewClient(archiveDownloadTimeout)}, nil
 }
+
+func (d *Downloader) Ready() bool { return d != nil && d.client != nil && len(d.hosts) > 0 }
 
 func downloadHost(host string) bool {
 	if len(host) == 0 || len(host) > 253 || host != strings.ToLower(host) || strings.HasSuffix(host, ".") ||
@@ -104,10 +104,12 @@ func (d *Downloader) Fetch(ctx context.Context, rawURL string, expected, limit u
 
 func readDownload(ctx context.Context, response *http.Response, expected uint64) ([]byte, error) {
 	if ctx == nil || response == nil || response.Body == nil || ctx.Err() != nil {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(ctx, "mobile_archive_download_failed", "stage", "RESPONSE_CONTEXT")
 		return nil, ErrDownload
 	}
 	if response.StatusCode != http.StatusOK {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(
 			ctx,
 			"mobile_archive_download_failed",
@@ -119,10 +121,12 @@ func readDownload(ctx context.Context, response *http.Response, expected uint64)
 		return nil, ErrDownload
 	}
 	if response.Header.Get("Content-Encoding") != "" && response.Header.Get("Content-Encoding") != "identity" {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(ctx, "mobile_archive_download_failed", "stage", "CONTENT_ENCODING")
 		return nil, ErrDownload
 	}
 	if response.ContentLength >= 0 && uint64(response.ContentLength) != expected {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(
 			ctx,
 			"mobile_archive_download_failed",
@@ -138,6 +142,7 @@ func readDownload(ctx context.Context, response *http.Response, expected uint64)
 	//nolint:gosec // G115: Fetch bounds expected by MaxTotalBytes (512 MiB) before calling readDownload.
 	data, err := io.ReadAll(io.LimitReader(cancelReader{ctx, response.Body}, int64(expected)+1))
 	if err != nil || ctx.Err() != nil || uint64(len(data)) != expected {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(
 			ctx,
 			"mobile_archive_download_failed",

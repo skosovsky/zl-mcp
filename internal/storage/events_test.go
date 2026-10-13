@@ -85,7 +85,8 @@ func TestSubscriptionBoundarySurvivesRefreshRestartAndCancellation(t *testing.T)
 	}
 	// Assert: sent_at does not move the insertion boundary; refresh retains it.
 	var lateSeq int64
-	if scanErr := s.DB.QueryRowContext(ctx, "SELECT seq FROM messages WHERE message_id='late'").Scan(&lateSeq); scanErr != nil {
+	if scanErr := s.DB.QueryRowContext(ctx, "SELECT seq FROM messages WHERE message_id='late'").
+		Scan(&lateSeq); scanErr != nil {
 		t.Fatal(scanErr)
 	}
 	if active.StartSeq >= lateSeq || refreshed.StartSeq != active.StartSeq ||
@@ -108,7 +109,12 @@ func TestSubscriptionBoundarySurvivesRefreshRestartAndCancellation(t *testing.T)
 	}
 
 	// Act: cancellation invalidates a verification begun with the old revision.
-	if cancelSubscriptionErr := s.CancelSubscription(ctx, sub.ID, sub.Principal, time.Now()); cancelSubscriptionErr != nil {
+	if cancelSubscriptionErr := s.CancelSubscription(
+		ctx,
+		sub.ID,
+		sub.Principal,
+		time.Now(),
+	); cancelSubscriptionErr != nil {
 		t.Fatal(cancelSubscriptionErr)
 	}
 	_, err = s.ActivateSubscription(ctx, sub, rev, time.Now())

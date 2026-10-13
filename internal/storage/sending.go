@@ -134,21 +134,21 @@ func (s *Store) CompleteSend(ctx context.Context, id, state string, messageID *s
 	if err != nil {
 		return err
 	}
-	if state != "sent" && state != "failed" && state != "unknown" {
+	if state != stateSentText && state != stateFailedText && state != stateUnknownText {
 		return domain.Invalid("Invalid send completion state.")
 	}
-	if state == "sent" && (messageID == nil || *messageID == "") {
+	if state == stateSentText && (messageID == nil || *messageID == "") {
 		return domain.Invalid("A sent result requires upstream message ID.")
 	}
-	if state != "sent" && messageID != nil {
+	if state != stateSentText && messageID != nil {
 		return domain.Invalid("Unconfirmed send must not supply a message ID.")
 	}
-	if state == "sent" && reason != nil {
+	if state == stateSentText && reason != nil {
 		return domain.Invalid("Sent operation must not contain a failure reason.")
 	}
 	if reason != nil {
 		switch *reason {
-		case "interrupted",
+		case stateInterruptedText,
 			"upstream_rejected",
 			"upstream_ambiguous",
 			"quote_unavailable",

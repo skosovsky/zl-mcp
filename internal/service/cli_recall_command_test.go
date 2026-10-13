@@ -15,6 +15,7 @@ import (
 
 func TestRecallCommandRoutesThroughExistingOwnerSocket(t *testing.T) {
 	// Arrange: an isolated owner socket; no Zalo client, credentials or corpus.
+	//nolint:usetesting // A short temporary path keeps macOS Unix socket names within their bound; t.Cleanup owns removal.
 	dir, err := os.MkdirTemp("/tmp", "zl-cli-")
 	if err != nil {
 		t.Fatal(err)
@@ -31,8 +32,8 @@ func TestRecallCommandRoutesThroughExistingOwnerSocket(t *testing.T) {
 	requests := make(chan map[string]any, 1)
 	server := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var request map[string]any
-		if r.Method != "POST" || r.URL.Path != "/rpc" || json.NewDecoder(r.Body).Decode(&request) != nil {
-			http.Error(w, "bad request", 400)
+		if r.Method != http.MethodPost || r.URL.Path != "/rpc" || json.NewDecoder(r.Body).Decode(&request) != nil {
+			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
 		requests <- request
@@ -47,14 +48,18 @@ func TestRecallCommandRoutesThroughExistingOwnerSocket(t *testing.T) {
 	}
 	previousArgs, previousOutput, previousLogger := os.Args, os.Stdout, slog.Default()
 	t.Cleanup(func() {
+		//nolint:reassign // This nonparallel CLI test restores the original process arguments in t.Cleanup.
 		os.Args = previousArgs
+		//nolint:reassign // This nonparallel CLI test restores the original process output in t.Cleanup.
 		os.Stdout = previousOutput
 		slog.SetDefault(previousLogger)
 		read.Close()
 		write.Close()
 	})
 	id := "00000000-0000-4000-8000-000000000031"
+	//nolint:reassign // Exercise the real CLI dispatcher; t.Cleanup restores process arguments before the next test.
 	os.Args = []string{"zl-mcp", "-config", configPath, "probe-recall", id}
+	//nolint:reassign // Capture CLI output only for this nonparallel test; t.Cleanup restores stdout.
 	os.Stdout = write
 	// Act: exercise the actual command dispatcher, rather than just its argument parser.
 	err = RunCLI()
@@ -67,7 +72,8 @@ func TestRecallCommandRoutesThroughExistingOwnerSocket(t *testing.T) {
 	select {
 	case request := <-requests:
 		schema, compileErr := contracts.Compile("cli_probe_recall", "input")
-		if compileErr != nil || schema.Validate(request) != nil || request["method"] != "cli_probe_recall" || request["arguments"].(map[string]any)["send_request_id"] != id {
+		if compileErr != nil || schema.Validate(request) != nil || request["method"] != "cli_probe_recall" ||
+			request["arguments"].(map[string]any)["send_request_id"] != id {
 			t.Fatal("wrong owner request")
 		}
 	default:

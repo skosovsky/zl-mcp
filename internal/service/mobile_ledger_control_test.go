@@ -209,6 +209,7 @@ func TestMobileLedgerControlAccountOwnershipAndDispatchedCancellation(t *testing
 
 func TestMobileLedgerUsesProductionControlSocketWithoutSessionRestore(t *testing.T) {
 	// Arrange: known account ledger and the production service in auth_required.
+	//nolint:usetesting // A short temporary path keeps macOS Unix socket names within their bound; t.Cleanup owns removal.
 	dir, e := os.MkdirTemp("/tmp", "zl-mobile-ledger-")
 	if e != nil {
 		t.Fatal(e)

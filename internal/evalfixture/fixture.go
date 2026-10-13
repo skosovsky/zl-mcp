@@ -89,7 +89,8 @@ func (u *Upstream) Groups(context.Context) ([]domain.Group, error) {
 	defer u.mu.Unlock()
 	result := append([]domain.Group(nil), u.groups...)
 	if u.joined {
-		result = append(result, domain.Group{ID: "g-join", Name: "Synthetic join target"})
+		//nolint:exhaustruct_v5 // Group preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
+		result = append(result, domain.Group{ID: fixtureGJoinID, Name: "Synthetic join target"})
 	}
 	return result, nil
 }
@@ -106,7 +107,8 @@ func (*Upstream) Inspect(_ context.Context, link string) (domain.Invite, error) 
 	if link != InviteURL {
 		return domain.Invite{}, domain.Invalid("Only the fixed synthetic invitation is supported.")
 	}
-	return domain.Invite{Group: domain.Group{ID: "g-join", Name: "Synthetic join target"}}, nil
+	//nolint:exhaustruct_v5 // Invite preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection. Group preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
+	return domain.Invite{Group: domain.Group{ID: fixtureGJoinID, Name: "Synthetic join target"}}, nil
 }
 func (u *Upstream) Join(_ context.Context, link string) error {
 	if link != InviteURL {
@@ -149,6 +151,7 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 		return nil, err
 	}
 	runCtx, cancel := context.WithCancel(ctx)
+	//nolint:exhaustruct_v5 // Fixture fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	f := &Fixture{Dir: dir, cancel: cancel, done: make(chan error, 1), keepState: opts.KeepState}
 	defer func() {
 		if err != nil {
@@ -168,6 +171,7 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	if seedErr != nil {
 		return nil, seedErr
 	}
+	//nolint:exhaustruct_v5 // Upstream fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	f.Upstream = &Upstream{groups: corpus.Groups, timeout: opts.JoinTimeout, accountID: account}
 	f.joins = collector.NewJoin(runCtx, f.Store, f.Upstream, true)
 	if err = f.prepareApproval(runCtx, opts); err != nil {
@@ -204,7 +208,7 @@ func (f *Fixture) Close() error {
 		<-f.heartbeatDone
 	}
 	if f.http != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), fixtureCloseTimeout)
 		err := f.http.Shutdown(ctx)
 		cancel()
 		if err != nil {
@@ -273,9 +277,12 @@ func (f *Fixture) addSkillResources(skillDir string) error {
 			uri := "eval://skills/researching-zalo-groups/" + name
 			body := string(contents)
 			f.Server.AddResource(
+				//nolint:exhaustruct_v5 // Resource keeps unused optional SDK metadata/representations absent; preserve existing wire defaults.
 				&mcp.Resource{URI: uri, Name: name, MIMEType: "text/markdown"},
 				func(_ context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+					//nolint:exhaustruct_v5 // ReadResourceResult keeps unused optional SDK metadata/representations absent; preserve existing wire defaults.
 					return &mcp.ReadResourceResult{
+						//nolint:exhaustruct_v5 // Only the selected text/blob resource representation is populated; the other remains absent.
 						Contents: []*mcp.ResourceContents{{URI: uri, MIMEType: "text/markdown", Text: body}},
 					}, nil
 				},
@@ -287,7 +294,7 @@ func (f *Fixture) addSkillResources(skillDir string) error {
 
 func (f *Fixture) keepConnected(ctx context.Context, state map[string]any) {
 	defer close(f.heartbeatDone)
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(fixtureHeartbeatInterval)
 	defer ticker.Stop()
 	for {
 		select {
@@ -361,23 +368,30 @@ type fixtureCorpus struct {
 func openFixtureStore(ctx context.Context, dir string, opts Options, groups []domain.Group) (*storage.Store, error) {
 	var store *storage.Store
 	var err error
-	allowed := []string{"g-join"}
+	allowed := []string{fixtureGJoinID}
 	for _, group := range groups {
 		allowed = append(allowed, group.ID)
 	}
 	if opts.Offline {
+		//nolint:exhaustruct_v5 // CollectionPolicy preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 		policy := domain.CollectionPolicy{All: true}
 		if opts.Policy != nil {
 			policy = *opts.Policy
 		}
-		store, err = storage.OpenWithPolicy(ctx, filepath.Join(dir, "messages.sqlite"), policy, 90)
+		store, err = storage.OpenWithPolicy(ctx, filepath.Join(dir, "messages.sqlite"), policy, fixtureRetentionDays)
 	} else {
-		store, err = storage.Open(ctx, filepath.Join(dir, "messages.sqlite"), allowed, 90)
+		store, err = storage.Open(ctx, filepath.Join(dir, "messages.sqlite"), allowed, fixtureRetentionDays)
 	}
 	return store, err
 }
 
-func seedFixtureStore(ctx context.Context, store *storage.Store, account string, corpus fixtureCorpus, opts Options) (map[string]any, error) {
+func seedFixtureStore(
+	ctx context.Context,
+	store *storage.Store,
+	account string,
+	corpus fixtureCorpus,
+	opts Options,
+) (map[string]any, error) {
 	var err error
 	if err = store.BindAccount(ctx, account); err != nil {
 		return nil, err
@@ -387,7 +401,7 @@ func seedFixtureStore(ctx context.Context, store *storage.Store, account string,
 	}
 	if !opts.Empty {
 		for _, message := range corpus.Messages {
-			message.Source = "live"
+			message.Source = wireLive
 			if err = store.Put(ctx, message); err != nil {
 				return nil, err
 			}
@@ -418,6 +432,7 @@ func (f *Fixture) startControl(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	//nolint:exhaustruct_v5 // Keep default socket control and keepalive policy; only the configured listener options are supplied.
 	listener, err := (&net.ListenConfig{}).Listen(ctx, "unix", sock)
 	if err != nil {
 		return err
@@ -427,7 +442,7 @@ func (f *Fixture) startControl(ctx context.Context) error {
 		listener.Close()
 		return err
 	}
-	f.http = &http.Server{Handler: collector.ControlHandler(f.joins), ReadHeaderTimeout: 5 * time.Second}
+	f.http = &http.Server{Handler: collector.ControlHandler(f.joins), ReadHeaderTimeout: fixtureHeaderTimeout}
 	go func() { f.done <- f.http.Serve(listener) }()
 	return nil
 }

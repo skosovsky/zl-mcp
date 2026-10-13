@@ -3,14 +3,15 @@ package mcpserver
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	storeadapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
 	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
@@ -21,6 +22,7 @@ import (
 
 type observedReads struct {
 	*storeadapter.Reader
+
 	pages    atomic.Int32
 	trims    atomic.Int32
 	messages atomic.Int32
@@ -80,8 +82,18 @@ func TestReadBoundaryShortensNativePageOnceAndRechecksResourceAccess(t *testing.
 		t.Fatal(err)
 	}
 	instant := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
-	for i := int64(0); i < 3; i++ {
-		if err = owner.Put(ctx, domain.Message{GroupID: "g", ID: fmt.Sprint(int64(9007199254740993) + i), SenderID: "peer", SentAt: instant.Add(time.Duration(i) * time.Minute), Text: "search Cà phê 🍀", Source: "live"}); err != nil {
+	for i := range int64(3) {
+		if err = owner.Put(
+			ctx,
+			domain.Message{
+				GroupID:  "g",
+				ID:       strconv.FormatInt(int64(9007199254740993)+i, 10),
+				SenderID: "peer",
+				SentAt:   instant.Add(time.Duration(i) * time.Minute),
+				Text:     "search Cà phê 🍀",
+				Source:   "live",
+			},
+		); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -107,7 +119,10 @@ func TestReadBoundaryShortensNativePageOnceAndRechecksResourceAccess(t *testing.
 	}
 	defer cs.Close()
 	// Act: the real wire budget invokes continuation shortening, not another FTS.
-	result, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_search_messages", Arguments: map[string]any{"query": "search", "limit": 3}})
+	result, err := cs.CallTool(
+		ctx,
+		&mcp.CallToolParams{Name: "zalo_search_messages", Arguments: map[string]any{"query": "search", "limit": 3}},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,22 +133,43 @@ func TestReadBoundaryShortensNativePageOnceAndRechecksResourceAccess(t *testing.
 	}
 	// Assert: preserve precise IDs and expose the shortened native cursor.
 	items := first["messages"].([]any)
-	if reads.pages.Load() != 1 || reads.trims.Load() != 1 || len(items) != 2 || len(wire) > 64<<10 || first["has_more"] != true || items[0].(map[string]any)["message_id"] != "9007199254740995" || items[1].(map[string]any)["message_id"] != "9007199254740994" {
+	if reads.pages.Load() != 1 || reads.trims.Load() != 1 || len(items) != 2 || len(wire) > 64<<10 ||
+		first["has_more"] != true ||
+		items[0].(map[string]any)["message_id"] != "9007199254740995" ||
+		items[1].(map[string]any)["message_id"] != "9007199254740994" {
 		t.Fatal(reads.pages.Load(), reads.trims.Load(), len(items), len(wire), first["has_more"])
 	}
 	// Arrange: a backdated row added after the first request must not enter its snapshot.
-	if err = owner.Put(ctx, domain.Message{GroupID: "g", ID: "late", SenderID: "peer", SentAt: instant.Add(-time.Minute), Text: "search late", Source: "live"}); err != nil {
+	if err = owner.Put(
+		ctx,
+		domain.Message{
+			GroupID:  "g",
+			ID:       "late",
+			SenderID: "peer",
+			SentAt:   instant.Add(-time.Minute),
+			Text:     "search late",
+			Source:   "live",
+		},
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act
-	result, err = cs.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_search_messages", Arguments: map[string]any{"query": "search", "limit": 3, "cursor": first["next_cursor"]}})
+	result, err = cs.CallTool(
+		ctx,
+		&mcp.CallToolParams{
+			Name:      "zalo_search_messages",
+			Arguments: map[string]any{"query": "search", "limit": 3, "cursor": first["next_cursor"]},
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	second := decodeReadResult(t, result)
 	// Assert: the one omitted original ID remains, and the native high-water mark holds.
 	remaining := second["messages"].([]any)
-	if len(remaining) != 1 || remaining[0].(map[string]any)["message_id"] != "9007199254740993" || first["snapshot_at"] != second["snapshot_at"] || reads.pages.Load() != 2 {
+	if len(remaining) != 1 || remaining[0].(map[string]any)["message_id"] != "9007199254740993" ||
+		first["snapshot_at"] != second["snapshot_at"] ||
+		reads.pages.Load() != 2 {
 		t.Fatal(second, reads.pages.Load())
 	}
 	// Arrange: resources use the same read port and current policy independently.

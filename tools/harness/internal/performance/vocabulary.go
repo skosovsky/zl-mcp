@@ -1,0 +1,30 @@
+package performance
+
+// Shared wire vocabulary retains the existing serialized spellings.
+const (
+	wireCmdZlMcpEval       = "./cmd/zl-mcp-eval"
+	codeFail               = "FAIL"
+	codeNotRun             = "NOT_RUN"
+	codePass               = "PASS"
+	wireAdmissionEnabled   = "admission_enabled"
+	wireAllocBytesPerOp    = "alloc_bytes_per_op"
+	wireAllocationsPerOp   = "allocations_per_op"
+	wireCandidate          = "candidate"
+	wireConcurrencyPerKind = "concurrency_per_kind"
+	wireErrors             = "errors"
+	wireExportersEnabled   = "exporters_enabled"
+	wireFixtureSHA256      = "fixture_sha256"
+	wireLive               = "live"
+	wireMachine            = "machine"
+	wireModel              = "model"
+	wireP95Seconds         = "p95_seconds"
+	wirePacingMillis       = "pacing_millis"
+	wireParallelKinds      = "parallel_kinds"
+	wirePath               = "path"
+	wireRelease            = "release"
+	wireRuns               = "runs"
+	wireSHA256             = "sha256"
+	fieldStatus            = "status"
+	wireSystem             = "system"
+	wireWarmupCalls        = "warmup_calls"
+)

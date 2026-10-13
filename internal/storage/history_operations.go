@@ -150,7 +150,7 @@ func (s *Store) PrepareMobileHistoryOperation(
 	return s.prepareHistoryOperation(ctx, request, true)
 }
 
-//nolint:gocognit // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
+//nolint:gocognit,funlen // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) prepareHistoryOperation(
 	ctx context.Context,
 	request domain.HistoryImportRequest,
@@ -210,21 +210,23 @@ func (s *Store) prepareHistoryOperation(
 		return HistoryOperation{}, ErrHistoryBusy
 	}
 	stamp := now()
+	//nolint:exhaustruct_v5 // HistoryImportStatus preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	status := domain.HistoryImportStatus{
 		HistoryImportRequest: r,
 		OperationID:          uuid.NewString(),
 		NotificationPolicy:   "none",
 		SourceKind:           "group_cloud",
-		State:                "queued",
+		State:                stateQueuedText,
 		CreatedAt:            stamp,
 		UpdatedAt:            stamp,
 	}
-	if mobile {
+	switch {
+	case mobile:
 		status.SourceKind = domain.HistorySourceMobileArchive
-	} else if r.Source == "conversation_preload" {
-		status.SourceKind = "conversation_preload"
-	} else if r.ConversationType == domain.ConversationDirect {
-		status.State, status.SourceKind = "unsupported", "unsupported"
+	case r.Source == wireConversationPreload:
+		status.SourceKind = wireConversationPreload
+	case r.ConversationType == domain.ConversationDirect:
+		status.State, status.SourceKind = stateUnsupportedText, stateUnsupportedText
 		reason := "source_unsupported"
 		status.StopReason = &reason
 	}
@@ -252,6 +254,7 @@ func (s *Store) prepareHistoryOperation(
 	if err = tx.Commit(); err != nil {
 		return HistoryOperation{}, err
 	}
+	//nolint:exhaustruct_v5 // HistoryOperation preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	return HistoryOperation{Status: status, Cursor: "0", accountKey: account}, nil
 }
 
@@ -279,13 +282,13 @@ func (s *Store) ClaimHistoryOperation(ctx context.Context, id string, revision i
 	if err != nil {
 		return op, err
 	}
-	if op.Revision != revision || (op.Status.State != "queued" && op.Status.State != "paused") {
+	if op.Revision != revision || (op.Status.State != stateQueuedText && op.Status.State != statePausedText) {
 		return op, ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {
-		historyStopped(&op, "cancelled", "access_revoked")
+		historyStopped(&op, stateCancelledText, "access_revoked")
 	} else {
-		op.Status.State, op.Status.StopReason = "running", nil
+		op.Status.State, op.Status.StopReason = stateRunningText, nil
 	}
 	if err = saveHistoryOperation(ctx, tx, &op); err != nil {
 		return op, err
@@ -304,8 +307,8 @@ func (s *Store) CancelHistoryOperation(ctx context.Context, id string) (HistoryO
 	if err != nil {
 		return op, err
 	}
-	if op.Status.State == "queued" || op.Status.State == "running" || op.Status.State == "paused" {
-		historyStopped(&op, "cancelled", "cancelled")
+	if op.Status.State == stateQueuedText || op.Status.State == stateRunningText || op.Status.State == statePausedText {
+		historyStopped(&op, stateCancelledText, stateCancelledText)
 		if err = saveHistoryOperation(ctx, tx, &op); err != nil {
 			return op, err
 		}
@@ -351,7 +354,7 @@ func (s *Store) CommitExpiringHistoryOperationPage(
 	if len(page.Messages) != 0 {
 		return HistoryOperation{}, domain.Invalid("Provide records without a second message list.")
 	}
-	if len(records) > 50 {
+	if len(records) > maximumHistoryPageRecords {
 		return HistoryOperation{}, domain.Invalid("History requires at most 50 records.")
 	}
 	page.Messages = make([]domain.Message, len(records))
@@ -384,14 +387,14 @@ func (s *Store) commitHistoryOperationPage(
 	if err != nil {
 		return op, err
 	}
-	if op.Revision != revision || op.Status.State != "running" ||
+	if op.Revision != revision || op.Status.State != stateRunningText ||
 		op.Status.Source == domain.HistorySourceMobileArchive {
 		return op, ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {
-		historyStopped(&op, "cancelled", "access_revoked")
+		historyStopped(&op, stateCancelledText, "access_revoked")
 	} else {
-		if (op.Status.Source == "conversation_preload") != page.LimitedSnapshot {
+		if (op.Status.Source == wireConversationPreload) != page.LimitedSnapshot {
 			return op, domain.Invalid("History source evidence does not match selected source.")
 		}
 		if err = s.validateHistoryPage(op.Status.Ref(), page.Messages); err != nil {
@@ -419,7 +422,7 @@ func (s *Store) commitHistoryOperationPage(
 			return HistoryOperation{}, err
 		}
 		op.WorkDuration += time.Since(started)
-		if op.WorkDuration >= HistoryWorkBudget && op.Status.State == "running" {
+		if op.WorkDuration >= HistoryWorkBudget && op.Status.State == stateRunningText {
 			historyStopped(&op, "partial", "time_limit")
 		}
 	}
@@ -591,9 +594,10 @@ func (s *Store) RecoverInterruptedHistory(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if !s.AllowsConversation(op.Status.Ref()) {
-			historyStopped(&op, "cancelled", "access_revoked")
-		} else if op.Status.State == "running" {
+		switch {
+		case !s.AllowsConversation(op.Status.Ref()):
+			historyStopped(&op, stateCancelledText, "access_revoked")
+		case op.Status.State == stateRunningText:
 			// A crash cannot provide an elapsed duration. Charge the durable
 			// reservation conservatively so repeated crashes cannot reset limits.
 			op.WorkDuration += op.ReservedDuration
@@ -601,11 +605,12 @@ func (s *Store) RecoverInterruptedHistory(ctx context.Context) error {
 			if op.WorkDuration >= historyWorkBudget(op) {
 				historyStopped(&op, "partial", "time_limit")
 			} else {
-				op.Status.State, op.Status.StopReason = "queued", nil
+				op.Status.State, op.Status.StopReason = stateQueuedText, nil
 			}
-		} else {
+		default:
 			continue
 		}
+
 		if err = saveHistoryOperation(ctx, tx, &op); err != nil {
 			return err
 		}
@@ -647,6 +652,7 @@ func (s *Store) pendingHistoryOperations(ctx context.Context, limit int, mobile 
 	defer rows.Close()
 	result := []HistoryOperation{}
 	for rows.Next() {
+		//nolint:exhaustruct_v5 // HistoryOperation preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 		op := HistoryOperation{accountKey: account}
 		var body string
 		if err = rows.Scan(&body, &op.Cursor, &op.Revision, &op.WorkDuration); err != nil {
@@ -667,9 +673,9 @@ func (s *Store) StopHistoryOperation(
 	state, reason string,
 	elapsed time.Duration,
 ) (HistoryOperation, error) {
-	valid := (state == "paused" && reason == "auth_required") ||
-		(state == "unsupported" && reason == "source_unsupported") ||
-		(state == "failed" && (reason == "upstream_unavailable" || reason == "invalid_source_page" || reason == "storage_error")) ||
+	valid := (state == statePausedText && reason == "auth_required") ||
+		(state == stateUnsupportedText && reason == "source_unsupported") ||
+		(state == stateFailedText && (reason == "upstream_unavailable" || reason == "invalid_source_page" || reason == "storage_error")) ||
 		(state == "partial" && reason == "time_limit")
 	mobileStop := state == "partial" && (reason == "source_unavailable" || reason == "source_gaps")
 	if (!valid && !mobileStop) || elapsed < 0 || elapsed > MobileHistoryWorkBudget {
@@ -685,15 +691,15 @@ func (s *Store) StopHistoryOperation(
 	if err != nil {
 		return op, err
 	}
-	if op.Revision != revision || op.Status.State != "running" {
+	if op.Revision != revision || op.Status.State != stateRunningText {
 		return op, ErrHistoryState
 	}
 	if elapsed > historyWorkBudget(op) || mobileStop && op.Status.Source != domain.HistorySourceMobileArchive {
 		return op, domain.Invalid("Invalid history stop transition.")
 	}
 	historyStopped(&op, state, reason)
-	if state == "unsupported" {
-		op.Status.SourceKind = "unsupported"
+	if state == stateUnsupportedText {
+		op.Status.SourceKind = stateUnsupportedText
 	}
 	op.WorkDuration += elapsed
 	op.ReservedDuration = 0
@@ -731,9 +737,9 @@ func (s *Store) reserveHistoryWork(
 	budget time.Duration,
 	mobile bool,
 ) (HistoryOperation, error) {
-	limit := 30 * time.Second
+	limit := cloudHistoryClaimBudget
 	if mobile {
-		limit = 180 * time.Second
+		limit = mobileHistoryClaimBudget
 	}
 	if budget <= 0 || budget > limit {
 		return HistoryOperation{}, domain.Invalid("Invalid history source work reservation.")
@@ -748,12 +754,12 @@ func (s *Store) reserveHistoryWork(
 	if err != nil {
 		return HistoryOperation{}, err
 	}
-	if op.Revision != revision || op.Status.State != "running" || op.ReservedDuration != 0 ||
+	if op.Revision != revision || op.Status.State != stateRunningText || op.ReservedDuration != 0 ||
 		(op.Status.Source == domain.HistorySourceMobileArchive) != mobile {
 		return HistoryOperation{}, ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {
-		historyStopped(&op, "cancelled", "access_revoked")
+		historyStopped(&op, stateCancelledText, "access_revoked")
 	} else {
 		if budget > historyWorkBudget(op)-op.WorkDuration {
 			return HistoryOperation{}, domain.Invalid("History source reservation exceeds work budget.")

@@ -67,6 +67,7 @@ type Record struct {
 }
 type Hit struct {
 	Record
+
 	TextTruncated bool    `json:"text_truncated"`
 	ResourceURI   *string `json:"resource_uri"`
 }
@@ -146,7 +147,10 @@ func (h *Handler) Browse(ctx context.Context, q BrowseRequest) (*BrowseExecution
 }
 func (e *DirectoryExecution) Shorten(ctx context.Context) error {
 	if len(e.Result.Conversations) < 2 {
-		return domain.ResponseTooLarge("One conversation record exceeds the response budget.", "Use a more specific filter or report the metadata size limitation.")
+		return domain.ResponseTooLarge(
+			"One conversation record exceeds the response budget.",
+			"Use a more specific filter or report the metadata size limitation.",
+		)
 	}
 	e.request.Limit = len(e.Result.Conversations) - 1
 	result, err := e.port.Conversations(ctx, e.request)
@@ -157,7 +161,10 @@ func (e *DirectoryExecution) Shorten(ctx context.Context) error {
 }
 func (e *BrowseExecution) Shorten(ctx context.Context) error {
 	if e.request.Limit < 2 {
-		return domain.ResponseTooLarge("One message page exceeds the response budget.", "Use a smaller page or report the coverage size limitation.")
+		return domain.ResponseTooLarge(
+			"One message page exceeds the response budget.",
+			"Use a smaller page or report the coverage size limitation.",
+		)
 	}
 	e.request.Limit /= 2
 	result, err := e.port.Browse(ctx, e.request)

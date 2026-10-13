@@ -15,7 +15,11 @@ func TestSendFingerprintPreservesSerializedKeysAndNull(t *testing.T) {
 		wire  string
 	}{
 		{"missing reply", nil, `{"Recipient":"9007199254740993","Text":"cà phê \u003c\u0026\u003e","Reply":null}`},
-		{"explicit empty reply", &empty, `{"Recipient":"9007199254740993","Text":"cà phê \u003c\u0026\u003e","Reply":""}`},
+		{
+			"explicit empty reply",
+			&empty,
+			`{"Recipient":"9007199254740993","Text":"cà phê \u003c\u0026\u003e","Reply":""}`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -39,14 +39,14 @@ func RunMobile(ctx context.Context, store *storage.Store, source MobileHistorySo
 	if ctx == nil || store == nil {
 		return errors.New("mobile history worker requires context and store")
 	}
-	ticker := time.NewTicker(500 * time.Millisecond)
+	ticker := time.NewTicker(historyPollInterval)
 	defer ticker.Stop()
 	for {
 		continueWorker, cleanupErr := cleanupMobileSource(ctx, source)
 		if cleanupErr != nil || !continueWorker {
 			return cleanupErr
 		}
-		pending, err := store.PendingMobileHistoryOperations(ctx, 20)
+		pending, err := store.PendingMobileHistoryOperations(ctx, historyPollBatch)
 		if ctx.Err() != nil {
 			return nil
 		}
@@ -92,7 +92,7 @@ func runMobileOperationObserved(
 		//nolint:nilerr // Claim races and cancellation stop this worker successfully; storage failures are returned separately.
 		return nil
 	}
-	if err != nil || op.Status.State != "running" {
+	if err != nil || op.Status.State != stateRunningText {
 		return err
 	}
 	created, _ := time.Parse(time.RFC3339Nano, op.Status.CreatedAt)
@@ -100,7 +100,7 @@ func runMobileOperationObserved(
 	work := &mobileHistoryWork{ctx: ctx, store: store, op: op, created: created, storageFailed: false}
 
 	if source == nil {
-		return work.stop("unsupported", "source_unsupported", 0)
+		return work.stop("unsupported", reasonSourceUnsupported, 0)
 	}
 
 	err = source.WithHistorySession(ctx, work.runSession)
@@ -108,7 +108,7 @@ func runMobileOperationObserved(
 		//nolint:nilerr // Claim races and cancellation stop this worker successfully; storage failures are returned separately.
 		return nil
 	}
-	if errors.Is(err, storage.ErrHistoryState) || work.op.Status.State != "running" {
+	if errors.Is(err, storage.ErrHistoryState) || work.op.Status.State != stateRunningText {
 		if e := work.store.CloseMobileHistoryAcquisition(
 			ctx,
 			work.op.Status.OperationID,
@@ -132,9 +132,9 @@ func runMobileOperationObserved(
 		}
 		return domain.ErrAuthenticationRequired
 	case errors.Is(err, domain.ErrHistoryUnsupported):
-		state, reason = "unsupported", "source_unsupported"
+		state, reason = "unsupported", reasonSourceUnsupported
 	case errors.Is(err, domain.ErrHistoryInvalidPage):
-		state, reason = "failed", "invalid_source_page"
+		state, reason = "failed", reasonInvalidSourcePage
 	}
 	return work.stop(state, reason, work.op.ReservedDuration)
 }
@@ -183,7 +183,7 @@ func (work *mobileHistoryWork) reserve(stage context.Context, maximum time.Durat
 		return 0, e
 	}
 	work.op = next
-	if work.op.Status.State != "running" {
+	if work.op.Status.State != stateRunningText {
 		return 0, nil
 	}
 	return budget, nil
@@ -210,7 +210,7 @@ func (work *mobileHistoryWork) runSession(sessionCtx context.Context, session Mo
 	if err != nil || !ready {
 		return err
 	}
-	for work.op.Status.State == "running" {
+	for work.op.Status.State == stateRunningText {
 		continueWork, pageErr := work.readPage(sessionCtx, session, attempt)
 		if pageErr != nil || !continueWork {
 			return pageErr
@@ -219,7 +219,10 @@ func (work *mobileHistoryWork) runSession(sessionCtx context.Context, session Mo
 	return nil
 }
 
-func (work *mobileHistoryWork) prepareAcquisition(sessionCtx context.Context, session MobileHistorySession) (storage.MobileBackupAttempt, bool, error) {
+func (work *mobileHistoryWork) prepareAcquisition(
+	sessionCtx context.Context,
+	session MobileHistorySession,
+) (storage.MobileBackupAttempt, bool, error) {
 	attempt, e := work.store.MobileHistoryAcquisition(sessionCtx, work.op.Status.OperationID)
 	if !errors.Is(e, sql.ErrNoRows) {
 		if e != nil {
@@ -228,11 +231,16 @@ func (work *mobileHistoryWork) prepareAcquisition(sessionCtx context.Context, se
 		}
 		return attempt, true, nil
 	}
-	budget, reserveErr := work.reserve(sessionCtx, 180*time.Second)
+	budget, reserveErr := work.reserve(sessionCtx, mobilePhonePhaseBudget)
 	if reserveErr != nil || budget == 0 {
 		return attempt, false, reserveErr
 	}
-	attempt, reserveErr = work.store.PrepareMobileHistoryAcquisition(sessionCtx, work.op.Status.OperationID, work.op.Revision, 0)
+	attempt, reserveErr = work.store.PrepareMobileHistoryAcquisition(
+		sessionCtx,
+		work.op.Status.OperationID,
+		work.op.Revision,
+		0,
+	)
 	if reserveErr != nil {
 		work.storageFailed = !errors.Is(reserveErr, storage.ErrHistoryState)
 		return attempt, false, reserveErr
@@ -247,6 +255,7 @@ func (work *mobileHistoryWork) prepareAcquisition(sessionCtx context.Context, se
 		},
 	)
 	cancel()
+	//nolint:exhaustruct_v5 // MobileBackupOffer preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	defer func() { offer = domain.MobileBackupOffer{} }()
 	if sessionCtx.Err() != nil {
 		return attempt, false, sessionCtx.Err()
@@ -255,10 +264,10 @@ func (work *mobileHistoryWork) prepareAcquisition(sessionCtx context.Context, se
 		work.storageFailed = !errors.Is(reserveErr, storage.ErrHistoryState)
 		return attempt, false, reserveErr
 	}
-	if receiveErr != nil || work.op.Status.State != "running" {
+	if receiveErr != nil || work.op.Status.State != stateRunningText {
 		return attempt, false, receiveErr
 	}
-	budget, reserveErr = work.reserve(sessionCtx, 120*time.Second)
+	budget, reserveErr = work.reserve(sessionCtx, mobileDownloadPhaseBudget)
 	if reserveErr != nil || budget == 0 {
 		return attempt, false, reserveErr
 	}
@@ -275,6 +284,7 @@ func (work *mobileHistoryWork) prepareAcquisition(sessionCtx context.Context, se
 		return observeUpstreamErr
 	}()
 	cancel()
+	//nolint:exhaustruct_v5 // MobileBackupOffer preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	offer = domain.MobileBackupOffer{}
 	if sessionCtx.Err() != nil {
 		return attempt, false, sessionCtx.Err()
@@ -283,21 +293,28 @@ func (work *mobileHistoryWork) prepareAcquisition(sessionCtx context.Context, se
 		work.storageFailed = !errors.Is(reserveErr, storage.ErrHistoryState)
 		return attempt, false, reserveErr
 	}
-	if saveErr != nil || work.op.Status.State != "running" {
+	if saveErr != nil || work.op.Status.State != stateRunningText {
 		return attempt, false, saveErr
 	}
 	return attempt, true, nil
 }
 
-func (work *mobileHistoryWork) readPage(sessionCtx context.Context, session MobileHistorySession, attempt storage.MobileBackupAttempt) (bool, error) {
-	budget, e := work.reserve(sessionCtx, 30*time.Second)
+func (work *mobileHistoryWork) readPage(
+	sessionCtx context.Context,
+	session MobileHistorySession,
+	attempt storage.MobileBackupAttempt,
+) (bool, error) {
+	budget, e := work.reserve(sessionCtx, mobileReadPhaseBudget)
 	if e != nil || budget == 0 {
 		return false, e
 	}
 	var previous *domain.MobileHistorySnapshot
 	var after *domain.MobileHistoryPosition
 	if work.op.Status.PagesObserved > 0 || work.op.Status.MobileCoverage != nil {
-		checkpoint, mobileHistoryCheckpointErr := work.store.MobileHistoryCheckpoint(sessionCtx, work.op.Status.OperationID)
+		checkpoint, mobileHistoryCheckpointErr := work.store.MobileHistoryCheckpoint(
+			sessionCtx,
+			work.op.Status.OperationID,
+		)
 		if mobileHistoryCheckpointErr != nil {
 			work.storageFailed = !errors.Is(mobileHistoryCheckpointErr, storage.ErrHistoryState)
 			return false, mobileHistoryCheckpointErr
@@ -332,7 +349,12 @@ func (work *mobileHistoryWork) readPage(sessionCtx context.Context, session Mobi
 	return true, nil
 }
 
-func (work *mobileHistoryWork) commitPage(sessionCtx context.Context, page *domain.MobileHistoryPage, elapsed time.Duration, started time.Time) error {
+func (work *mobileHistoryWork) commitPage(
+	sessionCtx context.Context,
+	page *domain.MobileHistoryPage,
+	elapsed time.Duration,
+	started time.Time,
+) error {
 	next, e := work.store.CommitMobileHistoryPage(
 		sessionCtx,
 		work.op.Status.OperationID,
@@ -362,7 +384,12 @@ func (work *mobileHistoryWork) finishReadFailure(sessionCtx context.Context, sta
 	return readErr
 }
 
-func runMobilePending(ctx context.Context, store *storage.Store, source MobileHistorySource, op storage.HistoryOperation) (bool, error) {
+func runMobilePending(
+	ctx context.Context,
+	store *storage.Store,
+	source MobileHistorySource,
+	op storage.HistoryOperation,
+) (bool, error) {
 	if err := runMobileOperation(ctx, store, source, op); err != nil {
 		// Owner shutdown can race a final operation-journal write after
 		// that operation's last context check. As with pending reads and
@@ -401,7 +428,7 @@ func cleanupMobileSource(ctx context.Context, source MobileHistorySource) (bool,
 
 func (work *mobileHistoryWork) commitPageFailure(sessionCtx context.Context, started time.Time, e error) error {
 	var invalid *domain.Error
-	if errors.As(e, &invalid) && invalid.Code == "INVALID_ARGUMENT" ||
+	if errors.As(e, &invalid) && invalid.Code == codeInvalidArgument ||
 		errors.Is(e, storage.ErrMobileHistorySource) {
 		sourceErr := domain.ErrHistoryInvalidPage
 		if errors.Is(e, storage.ErrMobileHistorySource) {

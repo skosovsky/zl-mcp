@@ -28,7 +28,7 @@ func (s *SnapshotStore) CleanupTerminal(
 	if err != nil {
 		return ErrSnapshot
 	}
-	entries, err := dir.ReadDir(maxSnapshots + 4)
+	entries, err := dir.ReadDir(maxSnapshots + snapshotDirectoryExtras)
 	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	dir.Close()
 	if err != nil && !errors.Is(err, io.EOF) || len(entries) > maxSnapshots+3 {
@@ -60,7 +60,12 @@ func (s *SnapshotStore) CleanupTerminal(
 	return nil
 }
 
-func (s *SnapshotStore) cleanupTerminalEntry(ctx context.Context, entry os.DirEntry, seen map[string]bool, eligible func(context.Context, string, string, string) (bool, error)) (bool, error) {
+func (s *SnapshotStore) cleanupTerminalEntry(
+	ctx context.Context,
+	entry os.DirEntry,
+	seen map[string]bool,
+	eligible func(context.Context, string, string, string) (bool, error),
+) (bool, error) {
 	changed := false
 	name := entry.Name()
 	if name == snapshotKeyName || name == snapshotClaimsName {
@@ -80,7 +85,8 @@ func (s *SnapshotStore) cleanupTerminalEntry(ctx context.Context, entry os.DirEn
 		return false, ErrSnapshot
 	}
 	seen[id] = true
-	if len(seen) > maxSnapshots || info.Size() < int64(len(snapshotMagic)+s.aead.NonceSize()+s.aead.Overhead()+4) ||
+	if len(seen) > maxSnapshots ||
+		info.Size() < int64(len(snapshotMagic)+s.aead.NonceSize()+s.aead.Overhead()+snapshotMetadataSizeBytes) ||
 		info.Size() > int64(MaxFileBytes)+snapshotMetadataLimit+64 {
 		return false, ErrSnapshotCapacity
 	}
@@ -120,7 +126,11 @@ func (s *SnapshotStore) cleanupTerminalEntry(ctx context.Context, entry os.DirEn
 	return changed, nil
 }
 
-func (s *SnapshotStore) skipTerminalHint(ctx context.Context, id string, eligible func(context.Context, string, string, string) (bool, error)) (bool, error) {
+func (s *SnapshotStore) skipTerminalHint(
+	ctx context.Context,
+	id string,
+	eligible func(context.Context, string, string, string) (bool, error),
+) (bool, error) {
 	hint, cached := s.terminalHints[id]
 	if !cached || s.now().UnixMilli() >= hint.ExpiresMS {
 		return false, nil

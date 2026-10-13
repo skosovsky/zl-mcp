@@ -66,6 +66,7 @@ func NewOwned(ctx context.Context, options Options) (*Owner, *Observer, error) {
 			otlptracehttp.WithEndpointURL(options.Endpoint),
 			otlptracehttp.WithHeaders(options.Headers),
 			otlptracehttp.WithTimeout(options.ExportTimeout),
+			//nolint:exhaustruct_v5 // Retries are disabled; all retry schedule fields remain unused SDK defaults.
 			otlptracehttp.WithRetry(otlptracehttp.RetryConfig{Enabled: false}),
 		)
 		if err != nil {
@@ -76,6 +77,7 @@ func NewOwned(ctx context.Context, options Options) (*Owner, *Observer, error) {
 			otlpmetrichttp.WithEndpointURL(options.Endpoint),
 			otlpmetrichttp.WithHeaders(options.Headers),
 			otlpmetrichttp.WithTimeout(options.ExportTimeout),
+			//nolint:exhaustruct_v5 // Retries are disabled; all retry schedule fields remain unused SDK defaults.
 			otlpmetrichttp.WithRetry(otlpmetrichttp.RetryConfig{Enabled: false}),
 		)
 		if err != nil {
@@ -110,6 +112,7 @@ func newOwned(
 	if err != nil {
 		return nil, nil, errors.New("telemetry provider initialization failed")
 	}
+	//nolint:exhaustruct_v5 // Owner initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	owner := &Owner{provider: p, shutdownTimeout: options.ShutdownTimeout, done: make(chan struct{})}
 	observer, err := New(p)
 	if err != nil {

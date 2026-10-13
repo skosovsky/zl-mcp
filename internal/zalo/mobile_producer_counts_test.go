@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/amrakk/zcago/model"
+
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 )
 
@@ -20,7 +21,11 @@ func TestMobileProducerCountDiagnosticsAreBoundedAndUnverified(t *testing.T) {
 		t.Fatal(err)
 	}
 	cases := []struct{ info, state, total string }{
-		{`{"backup_db":{"msg_total":9007199254740993,"msg_thread":18446744073709551615},"secret":"private-canary"}`, "available", "9007199254740993"},
+		{
+			`{"backup_db":{"msg_total":9007199254740993,"msg_thread":18446744073709551615},"secret":"private-canary"}`,
+			"available",
+			"9007199254740993",
+		},
 		{`{"backup_db":{"msg_total":0,"msg_thread":0}}`, "available", "0"},
 		{`{"db_format":1}`, "absent", ""},
 		{`{"backup_db":null}`, "absent", ""},
@@ -49,7 +54,8 @@ func TestMobileProducerCountDiagnosticsAreBoundedAndUnverified(t *testing.T) {
 			t.Fatal(err)
 		}
 		// Assert: schema, exact values, no partial claims or raw metadata.
-		if got.State != c.state || got.Verification != "unverified" || schema.Validate(value) != nil || bytes.Contains(encoded, []byte("private-canary")) {
+		if got.State != c.state || got.Verification != "unverified" || schema.Validate(value) != nil ||
+			bytes.Contains(encoded, []byte("private-canary")) {
 			t.Fatal("invalid or sensitive diagnostic output")
 		}
 		if c.total != "" && !bytes.Contains(encoded, []byte(`"msg_total":`+c.total)) {
@@ -74,10 +80,22 @@ func TestVerifiedMobileOfferLogsOnlyProducerCounts(t *testing.T) {
 		f.events <- e
 	}
 	// Act: validate the envelope, decrypt and map the owner through the real path.
-	offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+	offer, err := receiveMobileBackupOffer(
+		context.Background(),
+		"9007199254740993",
+		f,
+		f,
+		nil,
+		func() (*rsa.PrivateKey, error) { return key, nil },
+	)
 	// Assert: one observation only, never credentials or admission proof.
 	logs := output.String()
-	if err != nil || offer.FileSize != 16 || strings.Count(logs, `"msg":"mobile_backup_producer_counts"`) != 1 || !strings.Contains(logs, `"msg_total":129`) || !strings.Contains(logs, `"verification":"unverified"`) || strings.Contains(logs, "private-canary") || strings.Contains(logs, offer.KeyText) || strings.Contains(logs, offer.URL) {
+	if err != nil || offer.FileSize != 16 || strings.Count(logs, `"msg":"mobile_backup_producer_counts"`) != 1 ||
+		!strings.Contains(logs, `"msg_total":129`) ||
+		!strings.Contains(logs, `"verification":"unverified"`) ||
+		strings.Contains(logs, "private-canary") ||
+		strings.Contains(logs, offer.KeyText) ||
+		strings.Contains(logs, offer.URL) {
 		t.Fatal("producer count observation missing or private data logged")
 	}
 }
@@ -94,7 +112,14 @@ func TestInvalidOptionalProducerCountsDoNotRejectOffer(t *testing.T) {
 		f.events <- e
 	}
 	// Act: optional diagnostics must not alter envelope acceptance or dispatch.
-	offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+	offer, err := receiveMobileBackupOffer(
+		context.Background(),
+		"9007199254740993",
+		f,
+		f,
+		nil,
+		func() (*rsa.PrivateKey, error) { return key, nil },
+	)
 	// Assert: same valid source receipt, one dispatch and released subscription.
 	if err != nil || offer.FileSize != 16 || f.requests != 1 || f.releases != 1 {
 		t.Fatal("optional count changed offer acceptance")

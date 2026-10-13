@@ -14,7 +14,7 @@ import (
 )
 
 // Process owns one process group. Even successful workers cannot leave descendants.
-// Explicit pipes keep inherited descendant descriptors out of exec.Cmd.Wait.
+// Explicit pipes keep inherited descendant descriptors out of [exec.Cmd.Wait].
 //
 //nolint:gocognit,funlen // The watchdog owns process-group cancellation, bounded output, Kill, Wait and drain in one ordered lifetime.
 func process(ctx context.Context, dir string, env []string, args []string, limit int) ([]byte, []byte, int, error) {
@@ -40,6 +40,7 @@ func process(ctx context.Context, dir string, env []string, args []string, limit
 	cmd.Stdout = outW
 	cmd.Stderr = errW
 	cmd.Stdin = nil
+	//nolint:exhaustruct_v5 // Only process-group ownership is overridden; retain default credentials, descriptors and platform attributes.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err = cmd.Start(); err != nil {
 		//nolint:gosec // G104: process/temporary-workspace cleanup cannot replace the original failure or watchdog outcome.
@@ -59,7 +60,7 @@ func process(ctx context.Context, dir string, env []string, args []string, limit
 	var drains sync.WaitGroup
 	drain := func(r io.Reader, b *bytes.Buffer) {
 		defer drains.Done()
-		buf := make([]byte, 8192)
+		buf := make([]byte, processDrainBufferBytes)
 		for {
 			n, e := r.Read(buf)
 			if n > 0 {

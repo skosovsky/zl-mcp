@@ -17,7 +17,7 @@ func TestOwnRecallClassificationPreservesExactTargetAndSourceGates(t *testing.T)
 	row.Status = 3
 	row.BinNet = nil
 	mapper := identitySourceFunc(
-		func(ctx context.Context, req domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+		func(_ context.Context, req domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
 			if len(req.Direct) != 1 || req.Direct[0] != "901" || len(req.Groups) != 0 {
 				t.Fatal("wrong mapping scope")
 			}

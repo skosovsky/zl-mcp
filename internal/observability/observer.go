@@ -19,6 +19,8 @@ import (
 
 // Names are a fixed allowlist: neither caller input nor native identities can
 // introduce a telemetry dimension. Unknown capabilities collapse to other.
+//
+//nolint:gochecknoglobals // Private immutable capability allowlist bounds telemetry dimensions.
 var toolNames = []string{
 	"zalo_search_messages", "zalo_search_conversation_messages",
 	"zalo_get_message_context", "zalo_get_conversation_message_context",
@@ -66,6 +68,7 @@ func New(provider *metry.Provider) (*Observer, error) {
 		return nil, nil
 	}
 	sdk := provider.SDK()
+	//nolint:exhaustruct_v5 // Observer initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	o := &Observer{
 		tracer:     sdk.TracerProvider.Tracer("zl-mcp/host"),
 		executors:  make(map[string]func(context.Context, shared.Invocation) (domain.Outcome, error)),
@@ -299,6 +302,7 @@ func (o *Observer) Worker(
 	ref, ok := o.references[traceKey{kind, id}]
 	o.mu.Unlock()
 	if ok {
+		//nolint:exhaustruct_v5 // Only the span context is linked; optional link attributes remain absent.
 		options = append(options, trace.WithLinks(trace.Link{SpanContext: ref.span}))
 	}
 	//nolint:spancheck // The deferred recovery closure sets outcome and calls End before rethrowing panic.

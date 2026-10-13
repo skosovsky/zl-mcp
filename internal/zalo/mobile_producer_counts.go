@@ -15,6 +15,7 @@ type mobileProducerCounts struct {
 }
 
 func inspectMobileProducerCounts(info string) mobileProducerCounts {
+	//nolint:exhaustruct_v5 // mobileProducerCounts initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	r := mobileProducerCounts{State: "invalid", Verification: "unverified"}
 	var envelope struct {
 		Backup json.RawMessage `json:"backup_db"`

@@ -54,7 +54,7 @@ func (s *Store) EventSubscriptions(ctx context.Context, principal string) (map[s
 		if err = rows.Scan(&id, &profile, &scope, &kind, &peer, &dir, &first); err != nil {
 			return nil, err
 		}
-		if scope == "conversation" && !s.AllowsConversation(domain.ConversationRef{Type: kind, ID: peer}) {
+		if scope == wireConversation && !s.AllowsConversation(domain.ConversationRef{Type: kind, ID: peer}) {
 			continue
 		}
 		var k, p any
@@ -70,8 +70,8 @@ func (s *Store) EventSubscriptions(ctx context.Context, principal string) (map[s
 				"subscription_id":     id,
 				"event_name":          profile,
 				"scope":               scope,
-				"conversation_type":   k,
-				"conversation_id":     p,
+				fieldConversationType: k,
+				fieldConversationID:   p,
 				"direction":           dir,
 				"first_incoming_only": first,
 			},
@@ -123,7 +123,7 @@ func (s *Store) journalSubscription(ctx context.Context, tx *sql.Tx, id, princip
 		return "", err
 	}
 	if !active || profile == "zalo.conversation.message.created" ||
-		(scope == "conversation" && !s.AllowsConversation(domain.ConversationRef{Type: kind, ID: peer})) {
+		(scope == wireConversation && !s.AllowsConversation(domain.ConversationRef{Type: kind, ID: peer})) {
 		return "", subscriptionPermission("Subscription is inactive or access was revoked.")
 	}
 	_, err = tx.ExecContext(
@@ -135,7 +135,7 @@ func (s *Store) journalSubscription(ctx context.Context, tx *sql.Tx, id, princip
 	return gen, err
 }
 
-// Reads never advance processing. Each receipt confirms an ordered prefix of
+// ReadSubscriptionEvents never advances processing. Each receipt confirms an ordered prefix of
 // exactly this page; optimistic acknowledgement rejects stale parallel pages.
 func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string, limit int) (map[string]any, error) {
 	if limit < 1 || limit > 20 {
@@ -191,7 +191,7 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 	return map[string]any{
 		"subscription_id":     id,
 		"events":              entries,
-		"has_more":            more,
+		fieldHasMore:          more,
 		"blocked_on_delivery": blocked,
 	}, nil
 }
@@ -276,22 +276,29 @@ func (s *Store) pruneEventJournal(ctx context.Context, at time.Time) error {
 func (s *Store) projectRecoveryEvent(payload []byte, state string, kind, peer sql.NullString) (any, any) {
 	var event any
 	var reason any
-	if !kind.Valid || !s.AllowsConversation(domain.ConversationRef{Type: kind.String, ID: peer.String}) {
+	switch {
+	case !kind.Valid || !s.AllowsConversation(domain.ConversationRef{Type: kind.String, ID: peer.String}):
 		reason = "message_unavailable_or_access_revoked"
-	} else if len(payload) == 0 {
+	case len(payload) == 0:
 		reason = "payload_unavailable"
-	} else if json.Unmarshal(payload, &event) != nil {
+	case json.Unmarshal(payload, &event) != nil:
 		reason = "invalid_payload"
 		event = nil
 	}
-	if state != "delivered" {
+	if state != stateDeliveredText {
 		event = nil
 		reason = "delivery_" + state
 	}
 	return event, reason
 }
 
-func (s *Store) readRecoveryEntries(rows *sql.Rows, id, gen string, from int64, limit int, entries []map[string]any) ([]map[string]any, bool, bool, error) {
+func (s *Store) readRecoveryEntries(
+	rows *sql.Rows,
+	id, gen string,
+	from int64,
+	limit int,
+	entries []map[string]any,
+) ([]map[string]any, bool, bool, error) {
 	more, blocked := false, false
 	used := 0
 	for rows.Next() {
@@ -304,7 +311,7 @@ func (s *Store) readRecoveryEntries(rows *sql.Rows, id, gen string, from int64, 
 			rows.Close()
 			return nil, false, false, err
 		}
-		if state == "pending" || state == "sending" {
+		if state == statePendingText || state == "sending" {
 			blocked = true
 			break
 		}

@@ -1,6 +1,10 @@
 package storage
 
-import "sync/atomic"
+import (
+	"sync/atomic"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
+)
 
 // Counters are per open store, not a permanent ledger. They contain no upstream
 // identities or content and count persistence only after transaction commit.
@@ -17,9 +21,18 @@ type IngestionCount struct {
 }
 
 func (c *ingestionCounters) snapshot() IngestionCount {
-	return IngestionCount{Received: c.received.Load(), Excluded: c.excluded.Load(), Inserted: c.inserted.Load(), Duplicates: c.duplicates.Load(), Errors: c.errors.Load()}
+	return IngestionCount{
+		Received:   c.received.Load(),
+		Excluded:   c.excluded.Load(),
+		Inserted:   c.inserted.Load(),
+		Duplicates: c.duplicates.Load(),
+		Errors:     c.errors.Load(),
+	}
 }
 
 func (s *Store) IngestionDiagnostics() map[string]IngestionCount {
-	return map[string]IngestionCount{"direct": s.directIngestion.snapshot(), "group": s.groupIngestion.snapshot()}
+	return map[string]IngestionCount{
+		domain.ConversationDirect: s.directIngestion.snapshot(),
+		domain.ConversationGroup:  s.groupIngestion.snapshot(),
+	}
 }

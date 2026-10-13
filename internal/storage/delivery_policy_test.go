@@ -25,7 +25,12 @@ func TestDeliveryStopsAtExpiryDeadlineAttemptsAndAccessRevocation(t *testing.T) 
 				expiry := at.Add(time.Minute)
 				sub.ExpiresAt = &expiry
 				rev, _ := s.SubscriptionRevision(ctx, sub.ID)
-				if _, activateSubscriptionErr := s.ActivateSubscription(ctx, sub, rev, at); activateSubscriptionErr != nil {
+				if _, activateSubscriptionErr := s.ActivateSubscription(
+					ctx,
+					sub,
+					rev,
+					at,
+				); activateSubscriptionErr != nil {
 					t.Fatal(activateSubscriptionErr)
 				}
 			}
@@ -43,7 +48,10 @@ func TestDeliveryStopsAtExpiryDeadlineAttemptsAndAccessRevocation(t *testing.T) 
 				claimAt = at.Add(policy.MaxAge + time.Second)
 				wantState, wantReason = "failed", "deadline"
 			case "attempts":
-				if _, execErr := s.DB.Exec("UPDATE event_deliveries SET attempts=?", policy.MaxAttempts); execErr != nil {
+				if _, execErr := s.DB.Exec(
+					"UPDATE event_deliveries SET attempts=?",
+					policy.MaxAttempts,
+				); execErr != nil {
 					t.Fatal(execErr)
 				}
 				wantState, wantReason = "failed", "attempts"

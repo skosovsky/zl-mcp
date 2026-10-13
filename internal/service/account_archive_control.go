@@ -13,12 +13,12 @@ import (
 )
 
 func accountArchiveMethod(method string) bool {
-	return method == "cli_restore_account_archive" || method == "cli_preserve_account_archive" ||
-		method == "cli_prepare_account_archive" ||
-		method == "cli_capture_account_archive" ||
-		method == "cli_account_archive_status" ||
-		method == "cli_inspect_account_archive" ||
-		method == "cli_remove_account_archive"
+	return method == operationRestoreAccountArchive || method == operationPreserveAccountArchive ||
+		method == operationPrepareAccountArchive ||
+		method == operationCaptureAccountArchive ||
+		method == operationAccountArchiveStatus ||
+		method == operationInspectAccountArchive ||
+		method == operationRemoveAccountArchive
 }
 
 func (p *membershipPort) accountArchiveControl(w http.ResponseWriter, r *http.Request, body []byte, method string) {
@@ -26,7 +26,7 @@ func (p *membershipPort) accountArchiveControl(w http.ResponseWriter, r *http.Re
 	fail := func(err error) {
 		writeAccountArchiveFailure(w, err)
 	}
-	if r.Method != http.MethodPost || r.URL.Path != "/rpc" || !uniqueLedgerJSON(body) {
+	if r.Method != http.MethodPost || r.URL.Path != controlRPCPath || !uniqueLedgerJSON(body) {
 		fail(domain.Invalid("Use a unique JSON object with POST /rpc."))
 		return
 	}
@@ -85,9 +85,11 @@ func writeAccountArchiveFailure(w http.ResponseWriter, err error) {
 	case errors.Is(err, mobilebackup.ErrRetainedAbsent):
 		code = "SOURCE_NOT_CAPTURED"
 	}
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 	d := &domain.Error{
 		Code:    code,
 		Message: "Local account archive operation failed.",
+		//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 		NextAction: domain.NextAction{
 			Instruction: "Read the attempt or retained source status. Do not request synchronization automatically.",
 		},
@@ -100,11 +102,15 @@ func writeAccountArchiveFailure(w http.ResponseWriter, err error) {
 	_ = json.NewEncoder(w).Encode(d)
 }
 
-func (p *membershipPort) runAccountArchiveMethod(ctx context.Context, method string, arguments json.RawMessage) (any, error) {
+func (p *membershipPort) runAccountArchiveMethod(
+	ctx context.Context,
+	method string,
+	arguments json.RawMessage,
+) (any, error) {
 	var err error
 	var response any
 	switch method {
-	case "cli_restore_account_archive":
+	case operationRestoreAccountArchive:
 		var args struct {
 			ID     string `json:"source_id"`
 			Backup string `json:"backup_name"`
@@ -114,7 +120,7 @@ func (p *membershipPort) runAccountArchiveMethod(ctx context.Context, method str
 			return nil, domain.Invalid("Invalid backup reference.")
 		}
 		response, err = p.restoreAccountArchive(ctx, args.ID, args.Backup, args.Digest)
-	case "cli_preserve_account_archive":
+	case operationPreserveAccountArchive:
 		var args struct {
 			ID string `json:"source_id"`
 		}
@@ -122,7 +128,7 @@ func (p *membershipPort) runAccountArchiveMethod(ctx context.Context, method str
 			return nil, domain.Invalid("Invalid source reference.")
 		}
 		response, err = p.preserveAccountArchive(ctx, args.ID)
-	case "cli_prepare_account_archive":
+	case operationPrepareAccountArchive:
 		if p.archives == nil {
 			return nil, mobilebackup.ErrRetainedArchive
 		}
@@ -133,7 +139,7 @@ func (p *membershipPort) runAccountArchiveMethod(ctx context.Context, method str
 		// Preparation is not phone dispatch. The explicit scope is part of the
 		// durable fingerprint and cannot be introduced by a message payload.
 		response, err = p.store.PrepareMobileBackup(ctx, request)
-	case "cli_capture_account_archive":
+	case operationCaptureAccountArchive:
 		var args struct {
 			ID       string `json:"operation_id"`
 			Revision int64  `json:"revision"`
@@ -142,7 +148,7 @@ func (p *membershipPort) runAccountArchiveMethod(ctx context.Context, method str
 			return nil, domain.Invalid("Invalid account capture reference.")
 		}
 		response, err = p.captureAccountArchive(ctx, args.ID, args.Revision)
-	case "cli_inspect_account_archive":
+	case operationInspectAccountArchive:
 		var args struct {
 			ID               string `json:"source_id"`
 			Since            string `json:"since"`
@@ -168,7 +174,7 @@ func (p *membershipPort) runAccountArchiveMethod(ctx context.Context, method str
 			domain.ConversationRef{Type: args.ConversationType, ID: args.ConversationID},
 			args.IncludeMetadata,
 		)
-	case "cli_remove_account_archive":
+	case operationRemoveAccountArchive:
 		var args struct {
 			ID      string `json:"source_id"`
 			Storage string `json:"source_storage"`
@@ -177,7 +183,7 @@ func (p *membershipPort) runAccountArchiveMethod(ctx context.Context, method str
 			return nil, domain.Invalid("Invalid source reference.")
 		}
 		response, err = p.removeAccountArchiveFrom(ctx, args.ID, args.Storage)
-	case "cli_account_archive_status":
+	case operationAccountArchiveStatus:
 		var args struct {
 			ID string `json:"source_id"`
 		}

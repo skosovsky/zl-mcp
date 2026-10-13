@@ -22,7 +22,7 @@ func (p *membershipPort) WithHistorySession(
 	parent context.Context,
 	visit func(context.Context, historyimport.MobileHistorySession) error,
 ) error {
-	downloader, err := mobilebackup.NewDownloader([]string{"trans-bin.zaloapp.com"})
+	downloader, err := mobilebackup.NewDownloader([]string{archiveDownloadHost})
 	if err != nil {
 		return historyimport.ErrMobileHistorySourceUnavailable
 	}
@@ -76,6 +76,7 @@ func (p *membershipPort) withHistorySession(
 	}
 	defer stop()
 	account := api.AccountID()
+	//nolint:exhaustruct_v5 // MobileIdentityRequest preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	check, err := mobilebackup.IdentityPayload(domain.MobileIdentityRequest{Direct: []string{account}})
 	clear(check)
 	if err != nil {

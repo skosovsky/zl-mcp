@@ -17,7 +17,8 @@ func TestTelemetryConfigDefaultsAndOptInPrivacy(t *testing.T) {
 	// Act.
 	old, err := Load(path)
 	// Assert: disabled and no network endpoint/header configuration.
-	if err != nil || old.Telemetry.Enabled || old.Telemetry.Exporter != "none" || old.Telemetry.Endpoint != "" || len(old.Telemetry.Headers) != 0 {
+	if err != nil || old.Telemetry.Enabled || old.Telemetry.Exporter != "none" || old.Telemetry.Endpoint != "" ||
+		len(old.Telemetry.Headers) != 0 {
 		t.Fatal(old.Telemetry, err)
 	}
 	// Arrange: explicit valid private exporter settings.
@@ -28,7 +29,8 @@ func TestTelemetryConfigDefaultsAndOptInPrivacy(t *testing.T) {
 	// Act.
 	opted, err := Load(path)
 	// Assert: secrets remain configuration; error messages never include them.
-	if err != nil || !opted.Telemetry.Enabled || opted.Telemetry.Headers["Authorization"] != "SENTINEL_TELEMETRY_SECRET" {
+	if err != nil || !opted.Telemetry.Enabled ||
+		opted.Telemetry.Headers["Authorization"] != "SENTINEL_TELEMETRY_SECRET" {
 		t.Fatal("valid telemetry opt-in rejected")
 	}
 	for _, bad := range []string{

@@ -19,7 +19,14 @@ func journalFixture(t *testing.T) (*Store, string, string, time.Time) {
 		t.Fatal(err)
 	}
 	at := time.Now().UTC()
-	sub := EventSubscription{ID: "sub", Principal: "owner", Profile: domain.ConversationMessageCreatedV2, Scope: "all", Callback: "https://receiver.example", Secret: "synthetic"}
+	sub := EventSubscription{
+		ID:        "sub",
+		Principal: "owner",
+		Profile:   domain.ConversationMessageCreatedV2,
+		Scope:     "all",
+		Callback:  "https://receiver.example",
+		Secret:    "synthetic",
+	}
 	r, err := s.SubscriptionRevision(ctx, sub.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -29,13 +36,29 @@ func journalFixture(t *testing.T) (*Store, string, string, time.Time) {
 		t.Fatal(err)
 	}
 	for _, id := range []string{"one", "two", "three"} {
-		if err = s.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: "direct", ID: "peer"}, ID: id, SenderID: "peer", Direction: "incoming", Text: id, SentAt: at, Source: "live"}); err != nil {
+		if err = s.Put(
+			ctx,
+			domain.Message{
+				Conversation: domain.ConversationRef{Type: "direct", ID: "peer"},
+				ID:           id,
+				SenderID:     "peer",
+				Direction:    "incoming",
+				Text:         id,
+				SentAt:       at,
+				Source:       "live",
+			},
+		); err != nil {
 			t.Fatal(err)
 		}
 	}
-	_, err = s.FanoutProfileEvents(ctx, at, DefaultDeliveryPolicy(), func(_, id string, m domain.Message) ([]byte, error) {
-		return json.Marshal(map[string]string{"eventId": id, "text": m.Text})
-	})
+	_, err = s.FanoutProfileEvents(
+		ctx,
+		at,
+		DefaultDeliveryPolicy(),
+		func(_, id string, m domain.Message) ([]byte, error) {
+			return json.Marshal(map[string]string{"eventId": id, "text": m.Text})
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +67,7 @@ func journalFixture(t *testing.T) (*Store, string, string, time.Time) {
 func finishJournal(t *testing.T, s *Store, at time.Time) {
 	t.Helper()
 	ctx := context.Background()
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		d, err := s.ClaimDelivery(ctx, at, DefaultDeliveryPolicy())
 		if err != nil || d == nil {
 			t.Fatal(d, err)
@@ -158,7 +181,9 @@ func TestRemovedV1MigrationCancelsOnlyV1AndRejectsOldReceipts(t *testing.T) {
 	s, path, gen, at := journalFixture(t)
 	finishJournal(t, s, at)
 	receipt := journalRecords(t, s, 1)[0]["receipt"].(string)
-	if _, err := s.DB.Exec(`INSERT INTO event_subscriptions(id,principal,group_id,callback,secret,active,generation,start_seq,created_at,profile,scope,conversation_type,direction,first_incoming_only) SELECT 'old',principal,group_id,callback,secret,active,'old-generation',start_seq,created_at,'zalo.conversation.message.created',scope,conversation_type,direction,first_incoming_only FROM event_subscriptions WHERE id='sub'; INSERT INTO event_deliveries(event_id,subscription_id,generation,payload,state,next_attempt_at,deadline) VALUES('old-event','old','old-generation',X'0102','pending','2030-01-01','2030-01-02')`); err != nil {
+	if _, err := s.DB.Exec(
+		`INSERT INTO event_subscriptions(id,principal,group_id,callback,secret,active,generation,start_seq,created_at,profile,scope,conversation_type,direction,first_incoming_only) SELECT 'old',principal,group_id,callback,secret,active,'old-generation',start_seq,created_at,'zalo.conversation.message.created',scope,conversation_type,direction,first_incoming_only FROM event_subscriptions WHERE id='sub'; INSERT INTO event_deliveries(event_id,subscription_id,generation,payload,state,next_attempt_at,deadline) VALUES('old-event','old','old-generation',X'0102','pending','2030-01-01','2030-01-02')`,
+	); err != nil {
 		t.Fatal(err)
 	}
 	s.Close()
@@ -172,17 +197,33 @@ func TestRemovedV1MigrationCancelsOnlyV1AndRejectsOldReceipts(t *testing.T) {
 	var active bool
 	var g, state string
 	var size int
-	if err = s.DB.QueryRow(`SELECT active,generation FROM event_subscriptions WHERE id='sub'`).Scan(&active, &g); err != nil || !active || g != gen {
+	if err = s.DB.QueryRow(`SELECT active,generation FROM event_subscriptions WHERE id='sub'`).
+		Scan(&active, &g); err != nil || !active ||
+		g != gen {
 		t.Fatal("v2 changed", err)
 	}
-	if err = s.DB.QueryRow(`SELECT state,length(payload) FROM event_deliveries WHERE subscription_id='old'`).Scan(&state, &size); err != nil || state != "cancelled" || size != 0 {
+	if err = s.DB.QueryRow(`SELECT state,length(payload) FROM event_deliveries WHERE subscription_id='old'`).
+		Scan(&state, &size); err != nil || state != "cancelled" ||
+		size != 0 {
 		t.Fatal(state, size, err)
 	}
 	if err = s.CancelSubscription(ctx, "sub", "owner", at); err != nil {
 		t.Fatal(err)
 	}
 	r, _ := s.SubscriptionRevision(ctx, "sub")
-	_, err = s.ActivateSubscription(ctx, EventSubscription{ID: "sub", Principal: "owner", Profile: domain.ConversationMessageCreatedV2, Scope: "all", Callback: "https://receiver.example", Secret: "synthetic"}, r, at)
+	_, err = s.ActivateSubscription(
+		ctx,
+		EventSubscription{
+			ID:        "sub",
+			Principal: "owner",
+			Profile:   domain.ConversationMessageCreatedV2,
+			Scope:     "all",
+			Callback:  "https://receiver.example",
+			Secret:    "synthetic",
+		},
+		r,
+		at,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,7 +238,10 @@ func TestJournalRetentionNeverSkipsEarlierRetainedRecord(t *testing.T) {
 	s, _, _, at := journalFixture(t)
 	defer s.Close()
 	finishJournal(t, s, at)
-	if _, err := s.DB.Exec(`UPDATE event_deliveries SET completed_at=? WHERE id=(SELECT max(id) FROM event_deliveries)`, at.Add(-8*24*time.Hour).Format(time.RFC3339Nano)); err != nil {
+	if _, err := s.DB.Exec(
+		`UPDATE event_deliveries SET completed_at=? WHERE id=(SELECT max(id) FROM event_deliveries)`,
+		at.Add(-8*24*time.Hour).Format(time.RFC3339Nano),
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act.
@@ -206,7 +250,8 @@ func TestJournalRetentionNeverSkipsEarlierRetainedRecord(t *testing.T) {
 	}
 	// Assert: no watermark may mask a retained unprocessed prefix.
 	records := journalRecords(t, s, 20)
-	if len(records) != 3 || records[0]["delivery_state"] != "delivered" || records[0]["event"].(map[string]any)["text"] != "one" {
+	if len(records) != 3 || records[0]["delivery_state"] != "delivered" ||
+		records[0]["event"].(map[string]any)["text"] != "one" {
 		t.Fatal(records)
 	}
 }

@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/skosovsky/zl-mcp/internal/netpolicy"
 	"io"
 	"net/http"
 	"net/netip"
@@ -19,6 +18,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/skosovsky/zl-mcp/internal/netpolicy"
 )
 
 var errCallback = errors.New("callback request failed")
@@ -47,7 +48,7 @@ func publicIP(ip netip.Addr) bool { return netpolicy.PublicIP(ip) }
 func validatedDial(lookup callbackLookup, dial callbackDial) callbackDial {
 	return netpolicy.ValidatedDial(lookup, dial)
 }
-func newCallbackClient() *http.Client { return netpolicy.NewClient(10 * time.Second) }
+func newCallbackClient() *http.Client { return netpolicy.NewClient(callbackRequestTimeout) }
 
 func callbackKey(secret string) ([]byte, error) {
 	if !strings.HasPrefix(secret, "whsec_") {
@@ -60,8 +61,13 @@ func callbackKey(secret string) ([]byte, error) {
 	return key, nil
 }
 
-func postCallback(ctx context.Context, client *http.Client, rawURL, secret, subscription, id string, body []byte) (*http.Response, error) {
-	if len(body) > 262144 {
+func postCallback(
+	ctx context.Context,
+	client *http.Client,
+	rawURL, secret, subscription, id string,
+	body []byte,
+) (*http.Response, error) {
+	if len(body) > maximumCallbackBodyBytes {
 		return nil, errors.New("callback payload exceeds 256 KiB")
 	}
 	u, err := callbackURL(rawURL)
@@ -81,10 +87,10 @@ func postCallback(ctx context.Context, client *http.Client, rawURL, secret, subs
 		return nil, errCallback
 	}
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("webhook-id", id)
-	request.Header.Set("webhook-timestamp", timestamp)
-	request.Header.Set("webhook-signature", "v1,"+base64.StdEncoding.EncodeToString(mac.Sum(nil)))
-	request.Header.Set("X-MCP-Subscription-Id", subscription)
+	request.Header.Set("Webhook-Id", id)
+	request.Header.Set("Webhook-Timestamp", timestamp)
+	request.Header.Set("Webhook-Signature", "v1,"+base64.StdEncoding.EncodeToString(mac.Sum(nil)))
+	request.Header.Set("X-Mcp-Subscription-Id", subscription)
 	response, err := client.Do(request)
 	if err != nil {
 		return nil, errCallback
@@ -93,7 +99,7 @@ func postCallback(ctx context.Context, client *http.Client, rawURL, secret, subs
 }
 
 func verifyCallback(ctx context.Context, client *http.Client, rawURL, secret, subscription string) error {
-	challengeBytes := make([]byte, 32)
+	challengeBytes := make([]byte, callbackChallengeBytes)
 	if _, err := rand.Read(challengeBytes); err != nil {
 		return errors.New("callback challenge generation failed")
 	}
@@ -107,14 +113,15 @@ func verifyCallback(ctx context.Context, client *http.Client, rawURL, secret, su
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		return errors.New("callback verification rejected")
 	}
-	data, err := io.ReadAll(io.LimitReader(response.Body, 65537))
+	data, err := io.ReadAll(io.LimitReader(response.Body, callbackResponseReadLimit))
 	if err != nil || len(data) > 65536 {
 		return errors.New("callback verification response invalid")
 	}
 	var result struct {
 		Challenge string `json:"challenge"`
 	}
-	if json.Unmarshal(data, &result) != nil || subtle.ConstantTimeCompare([]byte(result.Challenge), []byte(challenge)) != 1 {
+	if json.Unmarshal(data, &result) != nil ||
+		subtle.ConstantTimeCompare([]byte(result.Challenge), []byte(challenge)) != 1 {
 		return errors.New("callback verification challenge mismatch")
 	}
 	return nil

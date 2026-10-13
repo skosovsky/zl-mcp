@@ -3,11 +3,11 @@ package zalo
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 
 	"github.com/amrakk/zcago/api"
 	"github.com/amrakk/zcago/errs"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -51,7 +51,7 @@ func profileContacts(ids []string, response *api.GetUserInfoResponse) ([]domain.
 		return nil, err
 	}
 	if response == nil {
-		return nil, fmt.Errorf("profile response unavailable")
+		return nil, errors.New("profile response unavailable")
 	}
 	allowed := map[string]string{}
 	for _, id := range ids {
@@ -62,10 +62,10 @@ func profileContacts(ids []string, response *api.GetUserInfoResponse) ([]domain.
 	for key, user := range response.ChangedProfiles {
 		id, ok := allowed[key]
 		if !ok || (user.UserId != "" && user.UserId != id) {
-			return nil, fmt.Errorf("profile response identity does not match request")
+			return nil, errors.New("profile response identity does not match request")
 		}
 		if _, duplicate := contacts[id]; duplicate {
-			return nil, fmt.Errorf("duplicate profile response identity")
+			return nil, errors.New("duplicate profile response identity")
 		}
 		user.UserId = id
 		contacts[id] = contactMetadata(user)

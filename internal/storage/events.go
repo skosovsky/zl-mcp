@@ -160,6 +160,7 @@ func (s *Store) SubscriptionRevision(ctx context.Context, id string) (int64, err
 
 // ActivateSubscription is called only after identity, callback and key checks.
 // Its transaction orders the activation boundary with the collector's Put.
+//
 //nolint:cyclop,gocognit,gocyclo,nestif // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) ActivateSubscription(
 	ctx context.Context,
@@ -172,7 +173,7 @@ func (s *Store) ActivateSubscription(
 	if normalizeErr != nil {
 		return sub, normalizeErr
 	}
-	if sub.Scope == "conversation" &&
+	if sub.Scope == wireConversation &&
 		!s.AllowsConversation(domain.ConversationRef{Type: sub.ConversationType, ID: sub.GroupID}) {
 		return sub, subscriptionPermission("Conversation is not enabled for collection.")
 	}
@@ -223,7 +224,7 @@ func (s *Store) ActivateSubscription(
 			Scan(&count); err != nil {
 			return sub, err
 		}
-		if count >= 100 {
+		if count >= maximumSubscriptions {
 			return sub, errors.New("active subscription capacity exceeded")
 		}
 		if err = tx.QueryRowContext(ctx, "SELECT COALESCE((SELECT seq FROM sqlite_sequence WHERE name='messages'),0)").
@@ -301,9 +302,11 @@ func (s *Store) CancelSubscription(ctx context.Context, id, principal string, at
 }
 
 func subscriptionPermission(message string) error {
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 	return &domain.Error{
-		Code:       "PERMISSION_DENIED",
-		Message:    message,
+		Code:    codePermissionDenied,
+		Message: message,
+		//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 		NextAction: domain.NextAction{Instruction: "Use an authorized subscription and an enabled group."},
 		Details:    map[string]any{},
 	}

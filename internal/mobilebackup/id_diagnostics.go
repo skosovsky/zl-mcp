@@ -21,7 +21,7 @@ func rejectedMessageIDShape(value any) string {
 		}
 		return "other_invalid"
 	case string:
-		if len(v) > 64 {
+		if len(v) > maximumRejectedIDDiagnosticBytes {
 			return "oversized"
 		}
 		if v == "" {
@@ -39,7 +39,7 @@ func rejectedMessageIDShape(value any) string {
 		if v[0] == '0' {
 			return "leading_zero"
 		}
-		if len(v) > 20 {
+		if len(v) > maximumNativeIdentityDigits {
 			return "overflow"
 		}
 		if _, err := strconv.ParseUint(v, 10, 64); err != nil {

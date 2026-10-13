@@ -10,5 +10,10 @@ import (
 // supplies its validated transport and bounded body consumer; no credential
 // getter or session values are returned.
 type Transport interface {
-	ConsumeMobileArchive(context.Context, *http.Request, *http.Client, func(context.Context, *http.Response) ([]byte, error)) ([]byte, error)
+	ConsumeMobileArchive(
+		context.Context,
+		*http.Request,
+		*http.Client,
+		func(context.Context, *http.Response) ([]byte, error),
+	) ([]byte, error)
 }

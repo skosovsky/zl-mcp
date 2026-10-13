@@ -84,7 +84,15 @@ func TestSnapshotSQLiteZeroIDsPagingAndImportIsolation(t *testing.T) {
 		strict.Rows[0].SourceRowID != 0 {
 		t.Fatal("strict import reader changed")
 	}
-	if page, readSQLitePageErr := ReadSQLitePage(ctx, file, scratch, from, until, 2, first.Next); readSQLitePageErr == nil {
+	if page, readSQLitePageErr := ReadSQLitePage(
+		ctx,
+		file,
+		scratch,
+		from,
+		until,
+		2,
+		first.Next,
+	); readSQLitePageErr == nil {
 		page.Clear()
 		t.Fatal("snapshot cursor admitted to strict reader")
 	}
@@ -104,7 +112,16 @@ func TestSnapshotSQLiteZeroIDsPagingAndImportIsolation(t *testing.T) {
 		case "window":
 			start = from.Add(time.Millisecond)
 		}
-		if page, readSnapshotSQLitePageErr := ReadSnapshotSQLitePage(ctx, selected, scratch, start, until, 2, first.Next, order); readSnapshotSQLitePageErr == nil {
+		if page, readSnapshotSQLitePageErr := ReadSnapshotSQLitePage(
+			ctx,
+			selected,
+			scratch,
+			start,
+			until,
+			2,
+			first.Next,
+			order,
+		); readSnapshotSQLitePageErr == nil {
 			page.Clear()
 			t.Fatal("changed cursor binding accepted")
 		}

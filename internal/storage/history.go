@@ -52,7 +52,8 @@ func (s *Store) validateHistoryPage(ref domain.ConversationRef, messages []domai
 			m.Source != "" {
 			return domain.Invalid("Invalid normalized history record.")
 		}
-		if m.Direction != "" && m.Direction != "incoming" && m.Direction != "outgoing" && m.Direction != "unknown" {
+		if m.Direction != "" && m.Direction != directionIncoming && m.Direction != directionOutgoing &&
+			m.Direction != stateUnknownText {
 			return domain.Invalid("Invalid historical message direction.")
 		}
 	}
@@ -66,6 +67,7 @@ func (s *Store) putHistoryPageTx(
 	tx *sql.Tx,
 	messages []domain.Message,
 ) (HistoryPageCounts, error) {
+	//nolint:exhaustruct_v5 // HistoryPageCounts preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	counts := HistoryPageCounts{}
 	for _, m := range messages {
 		m.Source = "history"

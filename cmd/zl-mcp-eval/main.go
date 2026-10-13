@@ -115,6 +115,7 @@ func run() int {
 	if err != nil || closeErr != nil {
 		return 1
 	}
+	//nolint:forbidigo // This executable writes the documented CLI result to stdout.
 	fmt.Printf(
 		"%s cases%d/%d assertions%d/%d; model=%s live=%s\n",
 		report.Status,
@@ -135,9 +136,9 @@ func runChildMode(absoluteRoot string, state string, child string, profile strin
 		fmt.Fprintln(os.Stderr, "parent-owned absolute state required")
 		return 2
 	}
-	caseBudget := 60 * time.Second
+	caseBudget := defaultCaseBudget
 	if profile == "model" {
-		caseBudget = 180 * time.Second
+		caseBudget = modelCaseBudget
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), caseBudget)
 	defer cancel()
@@ -168,7 +169,6 @@ func runChildMode(absoluteRoot string, state string, child string, profile strin
 		return 1
 	}
 	return 0
-
 }
 
 func runMeasurementMode(absoluteRoot string, state string, measure string, calls int) int {
@@ -178,7 +178,7 @@ func runMeasurementMode(absoluteRoot string, state string, measure string, calls
 		fmt.Fprintln(os.Stderr, "parent-owned absolute state required")
 		return 2
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), runMeasurementModeTimeout)
 	defer cancel()
 	result, e := evaluation.Measure(ctx, absoluteRoot, state, measure, calls)
 	if e != nil {
@@ -191,11 +191,17 @@ func runMeasurementMode(absoluteRoot string, state string, measure string, calls
 		return 1
 	}
 	return 0
-
 }
 
-func runCheckpointMode(absoluteRoot string, checkpointDataset string, checkpoint string, profile string, driver string, child string, measure string) int {
-
+func runCheckpointMode(
+	absoluteRoot string,
+	checkpointDataset string,
+	checkpoint string,
+	profile string,
+	driver string,
+	child string,
+	measure string,
+) int {
 	if profile != "offline" || driver != "" || child != "" || measure != "" {
 		fmt.Fprintln(os.Stderr, "checkpoint grading is offline only")
 		return 2
@@ -215,5 +221,4 @@ func runCheckpointMode(absoluteRoot string, checkpointDataset string, checkpoint
 		return 1
 	}
 	return 0
-
 }

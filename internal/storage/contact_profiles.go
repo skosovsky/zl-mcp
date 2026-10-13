@@ -77,13 +77,13 @@ func (s *Store) ProfileStatus(ctx context.Context) (map[string]any, error) {
 	}
 	if len(status) == 0 {
 		status = map[string]any{
-			"status":          "not_attempted",
-			"last_attempt_at": nil,
-			"last_success_at": nil,
-			"requested_count": 0,
-			"returned_count":  0,
-			"missing_count":   0,
-			"stop_reason":     nil,
+			fieldStatus:        stateNotAttemptedText,
+			fieldLastAttemptAt: nil,
+			fieldLastSuccessAt: nil,
+			"requested_count":  0,
+			"returned_count":   0,
+			"missing_count":    0,
+			fieldStopReason:    nil,
 		}
 	}
 	return status, nil

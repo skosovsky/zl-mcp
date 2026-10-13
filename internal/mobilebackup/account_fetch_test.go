@@ -11,13 +11,21 @@ import (
 func TestAccountArchiveRetainsEveryMappedFileAndOwnsBuffers(t *testing.T) {
 	// Arrange: typed IDs collide across a direct chat and a group.
 	decoded := Format1Archive{Archive: selectionArchive(), CiphertextBytes: 123, ContainerBytes: 100, TrailingBytes: 23}
-	pairs := []IdentityPair{{Plain: "9007199254740993", Session: "12"}, {Plain: "9007199254740993", Session: "12", Group: true}, {Plain: "18446744073709551615", Session: "13"}}
+	pairs := []IdentityPair{
+		{Plain: "9007199254740993", Session: "12"},
+		{Plain: "9007199254740993", Session: "12", Group: true},
+		{Plain: "18446744073709551615", Session: "13"},
+	}
 	buffer := decoded.Archive.Files[2].Data
 	// Act.
 	got, err := ownAccountArchive(context.Background(), &decoded, pairs)
 	clear(pairs)
 	// Assert: no selection discarded a file; mapping is independently owned.
-	if err != nil || len(got.archive.Files) != 3 || got.directFiles() != 2 || got.groupFiles() != 1 || decoded.Archive.Files != nil || got.pairs[2].Session != "13" || got.trailingBytes != 23 || string(got.archive.Files[2].Data) != "synthetic-c" {
+	if err != nil || len(got.archive.Files) != 3 || got.directFiles() != 2 || got.groupFiles() != 1 ||
+		decoded.Archive.Files != nil ||
+		got.pairs[2].Session != "13" ||
+		got.trailingBytes != 23 ||
+		string(got.archive.Files[2].Data) != "synthetic-c" {
 		t.Fatal("account archive lost files or mapping", err)
 	}
 	b, _ := json.Marshal(got)
@@ -36,7 +44,11 @@ func TestAccountArchiveRejectsIncompleteMappingWithoutOwnershipTransfer(t *testi
 			// Arrange: a valid first file must not hide an invalid later mapping.
 			decoded := Format1Archive{Archive: selectionArchive()}
 			defer decoded.Clear()
-			pairs := []IdentityPair{{Plain: "9007199254740993", Session: "12"}, {Plain: "9007199254740993", Session: "12", Group: true}, {Plain: "18446744073709551615", Session: "13"}}
+			pairs := []IdentityPair{
+				{Plain: "9007199254740993", Session: "12"},
+				{Plain: "9007199254740993", Session: "12", Group: true},
+				{Plain: "18446744073709551615", Session: "13"},
+			}
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			if mode == "missing" {

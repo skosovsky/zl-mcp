@@ -1,0 +1,20 @@
+{
+  "temporary_copy": "/tmp/zl-lint-L05-autofix-pjqjqtu2",
+  "checks": [
+    {
+      "rule": "errorlint",
+      "exit_code": 0,
+      "changed_go_files": []
+    },
+    {
+      "rule": "fatcontext",
+      "exit_code": 0,
+      "changed_go_files": []
+    },
+    {
+      "rule": "modernize",
+      "exit_code": 0,
+      "changed_go_files": []
+    }
+  ]
+}

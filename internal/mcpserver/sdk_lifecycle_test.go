@@ -273,6 +273,7 @@ func (w *sdkLostResponse) Write(body []byte) (int, error) {
 	return 0, io.ErrClosedPipe
 }
 func (w *sdkLostResponse) Unwrap() http.ResponseWriter { return w.ResponseRecorder }
+
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSDK01LostReplyRetainsDurableUUIDAndNeverResends(t *testing.T) {
 	for _, ambiguous := range []bool{false, true} {

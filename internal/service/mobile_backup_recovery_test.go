@@ -20,6 +20,7 @@ import (
 
 func TestServiceRecoversMobileAttemptsBeforeExposingEndpoint(t *testing.T) {
 	// Arrange: a previous process dispatched a request, preserving its public key.
+	//nolint:usetesting // A short temporary path keeps macOS Unix socket names within their bound; t.Cleanup owns removal.
 	dir, e := os.MkdirTemp("/tmp", "zl-mobile-recovery-")
 	if e != nil {
 		t.Fatal(e)
@@ -37,7 +38,13 @@ func TestServiceRecoversMobileAttemptsBeforeExposingEndpoint(t *testing.T) {
 		s.Close()
 		t.Fatal(e)
 	}
-	request := domain.MobileBackupRequest{RequestID: "00000000-0000-4000-8000-000000000001", ConversationType: "direct", ConversationID: "synthetic-peer", Since: "2026-09-01T00:00:00Z", Until: "2026-10-01T00:00:00Z"}
+	request := domain.MobileBackupRequest{
+		RequestID:        "00000000-0000-4000-8000-000000000001",
+		ConversationType: "direct",
+		ConversationID:   "synthetic-peer",
+		Since:            "2026-09-01T00:00:00Z",
+		Until:            "2026-10-01T00:00:00Z",
+	}
 	a, e := s.PrepareMobileBackup(ctx, request)
 	if e != nil {
 		s.Close()
@@ -69,7 +76,8 @@ func TestServiceRecoversMobileAttemptsBeforeExposingEndpoint(t *testing.T) {
 			return
 		}
 		var state string
-		err = observed.QueryRowContext(ctx, "SELECT state FROM mobile_backup_attempts WHERE operation_id=?", a.OperationID).Scan(&state)
+		err = observed.QueryRowContext(ctx, "SELECT state FROM mobile_backup_attempts WHERE operation_id=?", a.OperationID).
+			Scan(&state)
 		observed.Close()
 		if err != nil || state != "interrupted" {
 			t.Error("endpoint exposed before recovery")
@@ -87,7 +95,8 @@ func TestServiceRecoversMobileAttemptsBeforeExposingEndpoint(t *testing.T) {
 	defer s.Close()
 	saved, e := s.MobileBackupAttempt(ctx, a.OperationID)
 	// Assert: exact operation/request/key retained, no dispatchable retry or corpus/event writes.
-	if e != nil || saved.State != "interrupted" || saved.Revision != a.Revision+1 || saved.PublicKey != public || saved.Request.RequestID != request.RequestID {
+	if e != nil || saved.State != "interrupted" || saved.Revision != a.Revision+1 || saved.PublicKey != public ||
+		saved.Request.RequestID != request.RequestID {
 		t.Fatal("mobile attempt not recovered", e)
 	}
 	for _, table := range []string{"messages", "message_events", "send_operations", "event_subscriptions"} {

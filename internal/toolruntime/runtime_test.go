@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/skosovsky/toolsy"
+
 	adapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
 	"github.com/skosovsky/zl-mcp/internal/app/search"
@@ -22,6 +24,7 @@ import (
 
 type observedReader struct {
 	*adapter.Reader
+
 	calls        atomic.Int64
 	checks       atomic.Int64
 	revision     atomic.Int64
@@ -32,7 +35,7 @@ type observedReader struct {
 
 func (r *observedReader) ReadIdentity(ctx context.Context) (shared.ReadIdentity, error) {
 	v, err := r.Reader.ReadIdentity(ctx)
-	v.PolicyRevision += fmt.Sprint(r.revision.Load())
+	v.PolicyRevision += strconv.FormatInt(r.revision.Load(), 10)
 	return v, err
 }
 func (r *observedReader) GroupPage(ctx context.Context, in search.GroupRequest) (*search.Page, error) {
@@ -46,11 +49,19 @@ func (r *observedReader) ConversationPage(ctx context.Context, in search.Convers
 	r.calls.Add(1)
 	return r.Reader.ConversationPage(ctx, in)
 }
-func (r *observedReader) GroupContext(ctx context.Context, in conversations.ContextRequest) (conversations.GroupContext, error) {
+
+func (r *observedReader) GroupContext(
+	ctx context.Context,
+	in conversations.ContextRequest,
+) (conversations.GroupContext, error) {
 	r.calls.Add(1)
 	return r.Reader.GroupContext(ctx, in)
 }
-func (r *observedReader) ConversationContext(ctx context.Context, in conversations.ContextRequest) (conversations.ConversationContext, error) {
+
+func (r *observedReader) ConversationContext(
+	ctx context.Context,
+	in conversations.ContextRequest,
+) (conversations.ConversationContext, error) {
 	r.calls.Add(1)
 	return r.Reader.ConversationContext(ctx, in)
 }
@@ -78,7 +89,17 @@ func readRuntime(t *testing.T) (*Runtime, *observedReader) {
 	}
 	at := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
 	for n := range 2 {
-		if err = owner.Put(ctx, domain.Message{GroupID: "g", ID: fmt.Sprint(int64(9007199254740993) + int64(n)), SenderID: fmt.Sprint(n), Text: fmt.Sprintf("synthetic Cà phê 🍀 term%d", n), SentAt: at.Add(time.Duration(n) * time.Minute), Source: "live"}); err != nil {
+		if err = owner.Put(
+			ctx,
+			domain.Message{
+				GroupID:  "g",
+				ID:       strconv.FormatInt(int64(9007199254740993)+int64(n), 10),
+				SenderID: strconv.Itoa(n),
+				Text:     fmt.Sprintf("synthetic Cà phê 🍀 term%d", n),
+				SentAt:   at.Add(time.Duration(n) * time.Minute),
+				Source:   "live",
+			},
+		); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -98,8 +119,7 @@ func bound(t *testing.T, r *Runtime) Binding {
 	return b
 }
 func domainCode(err error) string {
-	var e *domain.Error
-	if errors.As(err, &e) {
+	if e, ok := errors.AsType[*domain.Error](err); ok {
 		return e.Code
 	}
 	return ""
@@ -113,15 +133,33 @@ func TestReadRuntimeRejectsUntrustedAndForeignCalls(t *testing.T) {
 	// Act.
 	_, zeroErr := r.Execute(context.Background(), Binding{}, "zalo_search_messages", raw)
 	_, foreignErr := r.Execute(context.Background(), bound(t, foreign), "zalo_search_messages", raw)
-	viewErr := r.view.Execute(context.Background(), toolsy.ToolCall{ToolName: "zalo_search_messages", Input: toolsy.ToolInput{ArgsJSON: raw}, Env: toolsy.NewRunEnv(nil)}, func(toolsy.Chunk) error { return nil })
+	viewErr := r.view.Execute(
+		context.Background(),
+		toolsy.ToolCall{
+			ToolName: "zalo_search_messages",
+			Input:    toolsy.ToolInput{ArgsJSON: raw},
+			Env:      toolsy.NewRunEnv(nil),
+		},
+		func(toolsy.Chunk) error { return nil },
+	)
 	// Assert: nothing reaches application/read ports, including direct view access.
-	if domainCode(zeroErr) != "PERMISSION_DENIED" || domainCode(foreignErr) != "PERMISSION_DENIED" || viewErr == nil || reader.calls.Load() != 0 || reader.checks.Load() != 0 {
+	if domainCode(zeroErr) != "PERMISSION_DENIED" || domainCode(foreignErr) != "PERMISSION_DENIED" || viewErr == nil ||
+		reader.calls.Load() != 0 ||
+		reader.checks.Load() != 0 {
 		t.Fatal(zeroErr, foreignErr, viewErr, reader.calls.Load())
 	}
 }
 
 func TestReadRuntimeInvalidArgumentsNeverDispatch(t *testing.T) {
-	cases := []string{`[]`, `{"query":"synthetic","limit":null}`, `{"query":"synthetic","since":"not-date"}`, `{"query":"synthetic","limit":"51"}`, `{"query":"synthetic","limit":0}`, `{"query":"synthetic","subject":{"principal":"owner"}}`, `{"query":"synthetic","group_id":9007199254740993}`}
+	cases := []string{
+		`[]`,
+		`{"query":"synthetic","limit":null}`,
+		`{"query":"synthetic","since":"not-date"}`,
+		`{"query":"synthetic","limit":"51"}`,
+		`{"query":"synthetic","limit":0}`,
+		`{"query":"synthetic","subject":{"principal":"owner"}}`,
+		`{"query":"synthetic","group_id":9007199254740993}`,
+	}
 	for _, raw := range cases {
 		t.Run(raw, func(t *testing.T) {
 			// Arrange.
@@ -150,10 +188,21 @@ func TestReadRuntimeRevocationAndPolicyFailurePrecedeHandler(t *testing.T) {
 	}
 	// Arrange/Act: the same real policy denies direct/group collision and disabled group.
 	binding = bound(t, r)
-	_, groupErr := r.Execute(context.Background(), binding, "zalo_search_messages", []byte(`{"query":"synthetic","group_id":"forbidden"}`))
-	_, directErr := r.Execute(context.Background(), binding, "zalo_search_conversation_messages", []byte(`{"query":"synthetic","conversation_type":"direct","conversation_id":"g"}`))
+	_, groupErr := r.Execute(
+		context.Background(),
+		binding,
+		"zalo_search_messages",
+		[]byte(`{"query":"synthetic","group_id":"forbidden"}`),
+	)
+	_, directErr := r.Execute(
+		context.Background(),
+		binding,
+		"zalo_search_conversation_messages",
+		[]byte(`{"query":"synthetic","conversation_type":"direct","conversation_id":"g"}`),
+	)
 	// Assert: native domain envelopes, no selected-message handler.
-	if domainCode(groupErr) != "INVALID_ARGUMENT" || domainCode(directErr) != "PERMISSION_DENIED" || reader.calls.Load() != 0 {
+	if domainCode(groupErr) != "INVALID_ARGUMENT" || domainCode(directErr) != "PERMISSION_DENIED" ||
+		reader.calls.Load() != 0 {
 		t.Fatal(groupErr, directErr)
 	}
 	// Arrange/Act: technical policy error remains private storage error, not denial.
@@ -168,9 +217,15 @@ func TestReadRuntimeRevocationAndPolicyFailurePrecedeHandler(t *testing.T) {
 func TestReadRuntimeEachHandlerExactlyOnceAndNormalization(t *testing.T) {
 	calls := []struct{ name, raw string }{
 		{"zalo_search_messages", `{"query":"Cà phê 🍀","group_id":"g","limit":"1"}`},
-		{"zalo_search_conversation_messages", `{"query":"synthetic","conversation_type":"group","conversation_id":"g"}`},
+		{
+			"zalo_search_conversation_messages",
+			`{"query":"synthetic","conversation_type":"group","conversation_id":"g"}`,
+		},
 		{"zalo_get_message_context", `{"group_id":"g","message_id":"9007199254740993","before":"0","after":0}`},
-		{"zalo_get_conversation_message_context", `{"conversation_type":"group","conversation_id":"g","message_id":"9007199254740993","before":0,"after":0}`},
+		{
+			"zalo_get_conversation_message_context",
+			`{"conversation_type":"group","conversation_id":"g","message_id":"9007199254740993","before":0,"after":0}`,
+		},
 	}
 	// Arrange.
 	r, reader := readRuntime(t)
@@ -181,10 +236,12 @@ func TestReadRuntimeEachHandlerExactlyOnceAndNormalization(t *testing.T) {
 		if err != nil || result == nil || reader.calls.Load() != int64(i+1) {
 			t.Fatal(call.name, err, reader.calls.Load())
 		}
-		if result.GroupSearch != nil && (len(result.GroupSearch.Result.Messages) != 1 || result.GroupSearch.Result.Messages[0].ID != "9007199254740994") {
+		if result.GroupSearch != nil &&
+			(len(result.GroupSearch.Result.Messages) != 1 || result.GroupSearch.Result.Messages[0].ID != "9007199254740994") {
 			t.Fatal(result.GroupSearch.Result)
 		}
-		if result.GroupContext != nil && (result.GroupContext.Anchor.ID != "9007199254740993" || len(result.GroupContext.Before) != 0 || len(result.GroupContext.After) != 0) {
+		if result.GroupContext != nil &&
+			(result.GroupContext.Anchor.ID != "9007199254740993" || len(result.GroupContext.Before) != 0 || len(result.GroupContext.After) != 0) {
 			t.Fatal(result.GroupContext)
 		}
 	}
@@ -209,7 +266,7 @@ func TestReadRuntimeConcurrentInvocationIsolation(t *testing.T) {
 				return
 			}
 			hits := result.GroupSearch.Result.Messages
-			if len(hits) != 1 || hits[0].SenderID != fmt.Sprint(n%2) {
+			if len(hits) != 1 || hits[0].SenderID != strconv.Itoa(n%2) {
 				t.Errorf("call%d crossed arguments: %+v", n, hits)
 			}
 		})

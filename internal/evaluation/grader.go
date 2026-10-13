@@ -23,11 +23,11 @@ func Grade(cs Case, out Output) []evaly.Assertion {
 	}
 	assertions = append(assertions, gradeWireAssertions(cs, out)...)
 	effectsOK := true
-	for _, kind := range []string{"send", "join", "history"} {
+	for _, kind := range []string{wireSend, wireJoin, wireHistory} {
 		effectsOK = effectsOK && out.Effects[kind] == cs.ExpectedEffects[kind]
 	}
 	for kind := range out.Effects {
-		if kind != "send" && kind != "join" && kind != "history" {
+		if kind != wireSend && kind != wireJoin && kind != wireHistory {
 			effectsOK = false
 		}
 	}
@@ -42,14 +42,17 @@ func Grade(cs Case, out Output) []evaly.Assertion {
 }
 func grader(revision string) evaly.Grader[Case, Output, Case] {
 	return evaly.GraderFunc[Case, Output, Case]{
+		//nolint:exhaustruct_v5 // GraderRevision fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 		Identity: evaly.GraderRevision{
 			ID:             "contract-safety",
 			Implementation: revision,
 			Rubric:         "all-required-assertions-v1",
 		},
 		Evaluate: func(_ context.Context, v evaly.View[Case, Output, Case]) (evaly.Grade, error) {
+			//nolint:exhaustruct_v5 // Grade fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 			return evaly.Grade{
-				Status:     evaly.Scored,
+				Status: evaly.Scored,
+				//nolint:exhaustruct_v5 // Usage fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 				Usage:      evaly.Usage{Known: true},
 				Assertions: Grade(v.Case.Input, v.Output),
 			}, nil
@@ -77,7 +80,7 @@ func gradeWireAssertions(cs Case, out Output) []evaly.Assertion {
 	}
 	toolsOK, schemasOK, projectionsOK := true, true, true
 	for _, t := range out.Trace {
-		if t.Kind != "tool" {
+		if t.Kind != fieldTool {
 			continue
 		}
 		toolsOK = toolsOK && allowed[t.Name]
@@ -95,25 +98,27 @@ func gradeWireAssertions(cs Case, out Output) []evaly.Assertion {
 func gradeExpectation(check Check, out Output) evaly.Assertion {
 	var value any
 	exists := false
+	//nolint:exhaustruct_v5 // Trace fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	trace := Trace{}
-	if check.Step == -2 && len(out.Trace) > 0 {
+	switch {
+	case check.Step == -2 && len(out.Trace) > 0:
 		trace = out.Trace[len(out.Trace)-1]
 		root, _ := decode(trace.Result)
 		value, exists = path(root, check.Path)
-	} else if check.Step < 0 {
+	case check.Step < 0:
 		value, exists = path(out.Facts, check.Path)
-	} else if check.Step < len(out.Trace) {
+	case check.Step < len(out.Trace):
 		trace = out.Trace[check.Step]
 		root, _ := decode(trace.Result)
 		value, exists = path(root, check.Path)
 	}
 	pass := false
 	switch check.Op {
-	case "same-as", "different-from":
+	case fixtureSameAsID, fixtureDifferentFromID:
 		pass = compareRelatedExpectation(check, out, value, exists)
 	case "equal":
 		pass = exists && reflect.DeepEqual(marshaled(value), marshaled(check.Value))
-	case "length", "min-length":
+	case fieldLength, "min-length":
 		pass = compareLengthExpectation(check, value, exists)
 	case "one-of":
 		values, _ := check.Value.([]any)
@@ -130,7 +135,7 @@ func gradeExpectation(check Check, out Output) evaly.Assertion {
 		pass = check.Step >= 0 && check.Step < len(out.Trace) && trace.Error == "" && len(trace.Result) > 0 &&
 			flag != true
 	case "resource-error":
-		pass = trace.Kind == "resource" && trace.Error != ""
+		pass = trace.Kind == fieldResource && trace.Error != ""
 	case "code":
 		root, _ := decode(trace.Result)
 		text, _ := path(root, "content.0.text")
@@ -139,7 +144,11 @@ func gradeExpectation(check Check, out Output) evaly.Assertion {
 		flag, _ := path(root, "isError")
 		pass = flag == true && code == check.Value
 	}
-	return assertion(check.Name, pass, fmt.Sprintf("step%d %s %s expected %v", check.Step, check.Path, check.Op, check.Value))
+	return assertion(
+		check.Name,
+		pass,
+		fmt.Sprintf("step%d %s %s expected %v", check.Step, check.Path, check.Op, check.Value),
+	)
 }
 
 type wireChecks struct{ schema, projection bool }
@@ -215,7 +224,7 @@ func compareRelatedExpectation(check Check, out Output, value any, exists bool) 
 		return false
 	}
 	same := reflect.DeepEqual(marshaled(value), marshaled(other))
-	return same && check.Op == "same-as" || !same && check.Op == "different-from"
+	return same && check.Op == fixtureSameAsID || !same && check.Op == fixtureDifferentFromID
 }
 func compareLengthExpectation(check Check, value any, exists bool) bool {
 	if !exists {
@@ -231,7 +240,7 @@ func compareLengthExpectation(check Check, value any, exists bool) bool {
 		return false
 	}
 	want := number(check.Value)
-	if check.Op == "length" {
+	if check.Op == fieldLength {
 		return length == want
 	}
 	return length >= want

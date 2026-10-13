@@ -70,7 +70,13 @@ func (a AccountArchive) InspectCoverageWithMetadata(
 	return result, end < len(a.archive.Files), nil
 }
 
-func (a AccountArchive) inspectFileCoverage(ctx context.Context, scratch string, since, until time.Time, index int, includeMetadata bool) (AccountFileCoverage, error) {
+func (a AccountArchive) inspectFileCoverage(
+	ctx context.Context,
+	scratch string,
+	since, until time.Time,
+	index int,
+	includeMetadata bool,
+) (AccountFileCoverage, error) {
 	file := a.archive.Files[index]
 	refType := "direct"
 	for _, pair := range a.pairs {
@@ -78,13 +84,14 @@ func (a AccountArchive) inspectFileCoverage(ctx context.Context, scratch string,
 			refType = "group"
 		}
 	}
+	//nolint:exhaustruct_v5 // AccountFileCoverage keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	item := AccountFileCoverage{
 		FileIndex:        index,
 		ConversationType: refType,
 		Status:           "available",
 		Types:            map[string]int{},
 	}
-	batch, err := ReadSQLiteRows(ctx, file, scratch, since, until, 50)
+	batch, err := ReadSQLiteRows(ctx, file, scratch, since, until, maximumArchivePageRecords)
 	if ctx.Err() != nil {
 		batch.Clear()
 		return AccountFileCoverage{}, ErrArchive

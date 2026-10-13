@@ -27,6 +27,7 @@ func (p *PreparedRowPage) ApplyExpiry(nowMS int64) (int, int, error) {
 		if declared && expiry <= nowMS {
 			clear(row.Row.BinNet)
 			row.Metadata.Clear()
+			//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 			*row = PreparedRow{}
 			expiredMessages++
 			continue
@@ -39,12 +40,14 @@ func (p *PreparedRowPage) ApplyExpiry(nowMS int64) (int, int, error) {
 			row.QuoteExpired = true
 			for _, value := range []*QuoteValue{&q.Message, &q.Attachment, &q.FromD} {
 				clear(value.Bytes)
+				//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 				*value = QuoteValue{}
 			}
 			expiredQuotes++
 		}
 		if retained != i {
 			p.Rows[retained] = *row
+			//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 			*row = PreparedRow{}
 		}
 		retained++

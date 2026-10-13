@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"math"
 	"os"
@@ -16,12 +16,24 @@ import (
 
 type Object = map[string]any
 
-var Kinds = []string{"read", "search", "context"}
+func measurementKinds() []string { return []string{"read", "search", "context"} }
 
 const MeasurementRevision = "2026-10-12-objects-and-bytes-v2"
 const AcceptanceRevision = "2026-10-12-candidate-latency-plus10-v3"
 
-var P95Limits = map[string]float64{"read": .0078683, "search": .0070726337, "context": .0069967799}
+const (
+	readP95LimitSeconds    = .0078683
+	searchP95LimitSeconds  = .0070726337
+	contextP95LimitSeconds = .0069967799
+)
+
+func p95Limits() map[string]float64 {
+	return map[string]float64{
+		"read":    readP95LimitSeconds,
+		"search":  searchP95LimitSeconds,
+		"context": contextP95LimitSeconds,
+	}
+}
 
 func digest(b []byte) string              { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
 func fileDigest(p string) (string, error) { b, e := os.ReadFile(p); return digest(b), e }
@@ -33,11 +45,11 @@ func Decode(b []byte) (Object, error) {
 		return nil, e
 	}
 	if m == nil {
-		return nil, fmt.Errorf("expected JSON object")
+		return nil, errors.New("expected JSON object")
 	}
 	var extra any
 	if e := d.Decode(&extra); e != io.EOF {
-		return nil, fmt.Errorf("trailing JSON data")
+		return nil, errors.New("trailing JSON data")
 	}
 	return m, nil
 }
@@ -93,11 +105,11 @@ func integer(v any) (int64, bool) {
 func value(v any) float64 { f, _ := number(v); return f }
 func validDigest(v any) bool {
 	s := str(v)
-	if len(s) != 64 {
+	if len(s) != sha256.Size*2 {
 		return false
 	}
 	for _, c := range s {
-		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'f') {
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
 			return false
 		}
 	}

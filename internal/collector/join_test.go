@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
@@ -124,7 +125,17 @@ func TestMissingApprovalAndChangedPreviewNeverJoin(t *testing.T) {
 }
 func TestInviteRejectsForeignAndAmbiguousURLs(t *testing.T) {
 	// Arrange
-	invalid := []string{"http://zalo.me/g/abc", "https://evil.test/g/abc", "https://zalo.me.evil.test/g/abc", "https://zalo.me/g/abc?x=y", "https://zalo.me:443/g/abc", "https://u@zalo.me/g/abc", "https://zalo.me/g/a/b", "https://zalo.me/g/%2f", "https://zalo.me/g/"}
+	invalid := []string{
+		"http://zalo.me/g/abc",
+		"https://evil.test/g/abc",
+		"https://zalo.me.evil.test/g/abc",
+		"https://zalo.me/g/abc?x=y",
+		"https://zalo.me:443/g/abc",
+		"https://u@zalo.me/g/abc",
+		"https://zalo.me/g/a/b",
+		"https://zalo.me/g/%2f",
+		"https://zalo.me/g/",
+	}
 	for _, link := range invalid {
 		t.Run(link, func(t *testing.T) {
 			// Act
@@ -161,8 +172,20 @@ func TestExpiredApprovalAndCrashRecovery(t *testing.T) {
 	// Arrange: persisted operation that lost its process before confirmation.
 	requestID := uuid.NewString()
 	operationID := uuid.NewString()
-	payload := fmt.Sprintf(`{"request_id":%q,"operation_id":%q,"status":"running","group_id":"g","collection_enabled":true,"checked_at":"2026-10-01T00:00:00Z","retry_safe":false,"poll_after_ms":1000,"error":null}`, requestID, operationID)
-	if _, err = j.Store.DB.ExecContext(ctx, "INSERT INTO join_requests VALUES(?,?,?,?,?)", requestID, operationID, "test-hash", payload, "2026-10-01T00:00:00Z"); err != nil {
+	payload := fmt.Sprintf(
+		`{"request_id":%q,"operation_id":%q,"status":"running","group_id":"g","collection_enabled":true,"checked_at":"2026-10-01T00:00:00Z","retry_safe":false,"poll_after_ms":1000,"error":null}`,
+		requestID,
+		operationID,
+	)
+	if _, err = j.Store.DB.ExecContext(
+		ctx,
+		"INSERT INTO join_requests VALUES(?,?,?,?,?)",
+		requestID,
+		operationID,
+		"test-hash",
+		payload,
+		"2026-10-01T00:00:00Z",
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act
@@ -180,8 +203,20 @@ func TestRecoveredOperationReconcilesWithoutRepeatingJoin(t *testing.T) {
 	ctx := context.Background()
 	requestID := uuid.NewString()
 	operationID := uuid.NewString()
-	payload := fmt.Sprintf(`{"request_id":%q,"operation_id":%q,"status":"running","group_id":"g","collection_enabled":true,"checked_at":"2026-10-01T00:00:00Z","retry_safe":false,"poll_after_ms":1000,"error":null}`, requestID, operationID)
-	if _, err := j.Store.DB.ExecContext(ctx, "INSERT INTO join_requests VALUES(?,?,?,?,?)", requestID, operationID, "test-hash", payload, "2026-10-01T00:00:00Z"); err != nil {
+	payload := fmt.Sprintf(
+		`{"request_id":%q,"operation_id":%q,"status":"running","group_id":"g","collection_enabled":true,"checked_at":"2026-10-01T00:00:00Z","retry_safe":false,"poll_after_ms":1000,"error":null}`,
+		requestID,
+		operationID,
+	)
+	if _, err := j.Store.DB.ExecContext(
+		ctx,
+		"INSERT INTO join_requests VALUES(?,?,?,?,?)",
+		requestID,
+		operationID,
+		"test-hash",
+		payload,
+		"2026-10-01T00:00:00Z",
+	); err != nil {
 		t.Fatal(err)
 	}
 	if err := j.Recover(ctx); err != nil {
@@ -223,17 +258,39 @@ func TestCanceledExecutionPersistsTerminalOutcome(t *testing.T) {
 	}
 	defer j.leave()
 	requestID, operationID := uuid.NewString(), uuid.NewString()
-	result := map[string]any{"request_id": requestID, "operation_id": operationID, "status": "running", "group_id": "g", "collection_enabled": true, "checked_at": "2026-10-01T00:00:00Z", "retry_safe": false, "poll_after_ms": 1000, "error": nil}
+	result := map[string]any{
+		"request_id":         requestID,
+		"operation_id":       operationID,
+		"status":             "running",
+		"group_id":           "g",
+		"collection_enabled": true,
+		"checked_at":         "2026-10-01T00:00:00Z",
+		"retry_safe":         false,
+		"poll_after_ms":      1000,
+		"error":              nil,
+	}
 	payload, err := json.Marshal(result)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = j.Store.DB.Exec("INSERT INTO join_requests VALUES(?,?,?,?,?)", requestID, operationID, "test-hash", string(payload), "2026-10-01T00:00:00Z"); err != nil {
+	if _, err = j.Store.DB.Exec(
+		"INSERT INTO join_requests VALUES(?,?,?,?,?)",
+		requestID,
+		operationID,
+		"test-hash",
+		string(payload),
+		"2026-10-01T00:00:00Z",
+	); err != nil {
 		t.Fatal(err)
 	}
 	cancel()
 	// Act
-	j.execute(ctx, preview{GroupID: "g", URL: "https://zalo.me/g/abc"}, result, time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC))
+	j.execute(
+		ctx,
+		preview{GroupID: "g", URL: "https://zalo.me/g/abc"},
+		result,
+		time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
+	)
 	saved, err := j.Operation(context.Background(), operationID)
 	// Assert: no restart required to clear running, and no network mutation.
 	if err != nil || saved["status"] != "unknown" || saved["poll_after_ms"] != nil || api.calls != 0 {
@@ -274,7 +331,9 @@ func TestJoinRateLimitSurvivesManagerRestart(t *testing.T) {
 	repeated, retryErr := restarted.Start(ctx, token, requestID)
 	// Assert: a replay remains readable while a new operation is rate limited.
 	var typed *domain.Error
-	if !errors.As(newErr, &typed) || typed.Code != "RATE_LIMITED" || retryErr != nil || repeated["operation_id"] != original["operation_id"] || api.calls != 1 {
+	if !errors.As(newErr, &typed) || typed.Code != "RATE_LIMITED" || retryErr != nil ||
+		repeated["operation_id"] != original["operation_id"] ||
+		api.calls != 1 {
 		t.Fatalf("rate=%v retry=%v operation=%+v mutations=%d", newErr, retryErr, repeated, api.calls)
 	}
 }
@@ -314,7 +373,8 @@ func TestAlreadyMemberConsumesApprovalWithoutMutation(t *testing.T) {
 	_, reuseErr := j.Start(ctx, token, uuid.NewString())
 
 	// Assert: membership confirmation never sends Join or grants a reusable approval.
-	if result["status"] != "already_member" || retry["status"] != "already_member" || retry["operation_id"] != result["operation_id"] {
+	if result["status"] != "already_member" || retry["status"] != "already_member" ||
+		retry["operation_id"] != result["operation_id"] {
 		t.Fatalf("incorrect member operation: result=%+v retry=%+v", result, retry)
 	}
 	if api.calls != 0 || reuseErr == nil {
@@ -367,7 +427,10 @@ func TestModeratedInviteDoesNotInventPendingApprovalOrRepeatJoin(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Assert: joinAppr and a successful response do not prove a recorded approval request.
-	if result["status"] != "unknown" || result["retry_safe"] != false || result["poll_after_ms"] != nil || repeated["status"] != "unknown" || repeated["operation_id"] != result["operation_id"] || api.calls != 1 {
+	if result["status"] != "unknown" || result["retry_safe"] != false || result["poll_after_ms"] != nil ||
+		repeated["status"] != "unknown" ||
+		repeated["operation_id"] != result["operation_id"] ||
+		api.calls != 1 {
 		t.Fatalf("unsafe moderated outcome: result=%+v retry=%+v calls=%d", result, repeated, api.calls)
 	}
 }
@@ -413,7 +476,10 @@ func TestExplicitPendingApprovalPersistsReconcilesAndNeverRepeatsJoin(t *testing
 		t.Fatal(err)
 	}
 	// Assert: pending survives restart and absence, without another Join.
-	if repeated["status"] != "pending_approval" || repeated["error"] != nil || repeated["retry_safe"] != false || repeated["poll_after_ms"] != nil || repeated["operation_id"] != started["operation_id"] || api.calls != 1 {
+	if repeated["status"] != "pending_approval" || repeated["error"] != nil || repeated["retry_safe"] != false ||
+		repeated["poll_after_ms"] != nil ||
+		repeated["operation_id"] != started["operation_id"] ||
+		api.calls != 1 {
 		t.Fatalf("bad pending state: %+v calls=%d", repeated, api.calls)
 	}
 	// Act: eventual membership reconciles the same operation.
@@ -425,7 +491,8 @@ func TestExplicitPendingApprovalPersistsReconcilesAndNeverRepeatsJoin(t *testing
 		t.Fatal(err)
 	}
 	// Assert
-	if result["status"] != "joined" || result["error"] != nil || result["operation_id"] != started["operation_id"] || api.calls != 1 {
+	if result["status"] != "joined" || result["error"] != nil || result["operation_id"] != started["operation_id"] ||
+		api.calls != 1 {
 		t.Fatalf("bad reconciliation: %+v calls=%d", result, api.calls)
 	}
 }

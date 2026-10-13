@@ -25,11 +25,24 @@ func (*queueObservation) ResponseBytes(context.Context, string, domain.Transport
 func (*queueObservation) Upstream(ctx context.Context, _ domain.WorkKind, next func(context.Context) error) error {
 	return next(ctx)
 }
-func (*queueObservation) Transition(context.Context, domain.WorkKind, domain.OperationState, domain.OperationState, *time.Duration) {
+
+func (*queueObservation) Transition(
+	context.Context,
+	domain.WorkKind,
+	domain.OperationState,
+	domain.OperationState,
+	*time.Duration,
+) {
 }
 func (o *queueObservation) Queue(_ context.Context, kind domain.WorkKind, _ int64) { o.values <- kind }
 func (*queueObservation) Remember(context.Context, domain.WorkKind, string)        {}
-func (*queueObservation) Worker(ctx context.Context, _ domain.WorkKind, _ string, next func(context.Context) error) error {
+
+func (*queueObservation) Worker(
+	ctx context.Context,
+	_ domain.WorkKind,
+	_ string,
+	next func(context.Context) error,
+) error {
 	return next(ctx)
 }
 

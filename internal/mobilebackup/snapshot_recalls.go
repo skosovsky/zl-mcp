@@ -75,7 +75,7 @@ func classifySnapshotRecalls(
 		) != nil {
 			return targets, ErrSnapshotControls
 		}
-		row, reason := sqliteRowMode(values, 0, 253402300800000, false)
+		row, reason := sqliteRowMode(values, 0, archiveTimestampUpperMS, false)
 		clear(values[:])
 		count++
 		key := [2]string{row.SenderID, row.ClientID}

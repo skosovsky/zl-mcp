@@ -69,12 +69,14 @@ func (s *offlineSender) SendDirect(_ context.Context, _ string, _ string, _ *dom
 	return "9007199254740993", nil
 }
 func newOffline(ctx context.Context, f *Fixture, opts Options) (*offlineControl, error) {
+	//nolint:exhaustruct_v5 // offlineControl fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	c := &offlineControl{
 		fixture: f,
 		effects: opts.EffectsFile,
-		sender:  &offlineSender{path: opts.EffectsFile, timeout: opts.SendTimeout},
+		//nolint:exhaustruct_v5 // offlineSender fills only this synthetic run/result phase; remaining fields keep their empty/default values.
+		sender: &offlineSender{path: opts.EffectsFile, timeout: opts.SendTimeout},
 	}
-	library, err := mobilebackup.NewArchiveLibraryStore(filepath.Join(f.Dir, "library"), 8<<20)
+	library, err := mobilebackup.NewArchiveLibraryStore(filepath.Join(f.Dir, "library"), fixtureArchiveBudgetBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -89,16 +91,17 @@ func newOffline(ctx context.Context, f *Fixture, opts Options) (*offlineControl,
 		}
 	}
 	if !opts.Empty {
-		for _, kind := range []string{"direct", "group"} {
+		for _, kind := range []string{domain.ConversationDirect, "group"} {
 			if err := f.Store.Put(
 				ctx,
+				//nolint:exhaustruct_v5 // Message preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 				domain.Message{
 					Conversation: domain.ConversationRef{Type: kind, ID: "9007199254740993"},
 					ID:           "9007199254740995",
-					SenderID:     "peer",
+					SenderID:     fixturePeerID,
 					Text:         "precision unicode Cà phê 🍀 " + kind,
 					SentAt:       time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC),
-					Source:       "live",
+					Source:       wireLive,
 				},
 			); err != nil {
 				//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
@@ -108,13 +111,15 @@ func newOffline(ctx context.Context, f *Fixture, opts Options) (*offlineControl,
 		}
 		if err := f.Store.Put(
 			ctx,
+			//nolint:exhaustruct_v5 // Message preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 			domain.Message{
-				Conversation:  domain.ConversationRef{Type: "direct", ID: "other-peer"},
-				ID:            "foreign-quote",
-				SenderID:      "other-peer",
-				Text:          "foreign quote",
-				SentAt:        time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC),
-				Source:        "live",
+				Conversation: domain.ConversationRef{Type: domain.ConversationDirect, ID: "other-peer"},
+				ID:           "foreign-quote",
+				SenderID:     "other-peer",
+				Text:         "foreign quote",
+				SentAt:       time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC),
+				Source:       wireLive,
+				//nolint:exhaustruct_v5 // QuoteMetadata preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 				QuoteMetadata: &domain.QuoteMetadata{},
 			},
 		); err != nil {
@@ -139,7 +144,7 @@ func newOffline(ctx context.Context, f *Fixture, opts Options) (*offlineControl,
 func (c *offlineControl) Call(ctx context.Context, method string, args any) (map[string]any, error) {
 	switch method {
 	case "zalo_send_direct_message", "zalo_get_send_status":
-		return (&messaging.Manager{Store: c.fixture.Store, Sender: c.sender, Enabled: c.fixtureSendEnabled, Recipients: map[string]bool{"peer": true}}).Call(
+		return (&messaging.Manager{Store: c.fixture.Store, Sender: c.sender, Enabled: c.fixtureSendEnabled, Recipients: map[string]bool{fixturePeerID: true}}).Call(
 			ctx,
 			method,
 			args,
@@ -209,6 +214,7 @@ func (*archiveSource) MapMobileBackupIdentities(
 		if id == "903" {
 			target = "13"
 		}
+		//nolint:exhaustruct_v5 // MobileIdentityPair preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 		pairs = append(pairs, domain.MobileIdentityPair{Plain: id, Session: target})
 	}
 	for _, id := range r.Groups {
@@ -254,19 +260,23 @@ func (c *offlineControl) prepareArchive(ctx context.Context, path string) error 
 	a, err := mobilebackup.FetchAccountArchive(
 		ctx,
 		d,
+		//nolint:exhaustruct_v5 // MobileBackupOffer preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 		domain.MobileBackupOffer{
 			URL:      "https://archive.example.com/synthetic",
-			KeyText:  strings.Repeat("0123456789abcdef", 4),
+			KeyText:  strings.Repeat("0123456789abcdef", fixtureKeyPatternRepeats),
 			FileSize: uint64(len(data)),
 		},
-		8<<20,
+		fixtureArchiveBudgetBytes,
 		source,
 	)
 	if err != nil {
 		return err
 	}
 	defer a.Clear()
-	capture, err := mobilebackup.NewRetainedArchiveStore(filepath.Join(c.fixture.Dir, "capture"), 8<<20)
+	capture, err := mobilebackup.NewRetainedArchiveStore(
+		filepath.Join(c.fixture.Dir, "capture"),
+		fixtureArchiveBudgetBytes,
+	)
 	if err != nil {
 		return err
 	}

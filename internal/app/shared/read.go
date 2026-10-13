@@ -2,8 +2,9 @@
 package shared
 
 import (
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"time"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 type ConversationMessage struct {
@@ -45,8 +46,27 @@ type ConversationCoverage struct {
 }
 
 func Coverage(ref domain.ConversationRef, c domain.Coverage) ConversationCoverage {
-	return ConversationCoverage{ConversationType: ref.Type, ConversationID: ref.ID, CollectionStartedAt: c.CollectionStartedAt, EarliestStoredAt: c.EarliestStoredAt, LatestStoredAt: c.LatestStoredAt, KnownGaps: c.KnownGaps, HistoryComplete: c.HistoryComplete, RetentionDays: c.RetentionDays}
+	return ConversationCoverage{
+		ConversationType:    ref.Type,
+		ConversationID:      ref.ID,
+		CollectionStartedAt: c.CollectionStartedAt,
+		EarliestStoredAt:    c.EarliestStoredAt,
+		LatestStoredAt:      c.LatestStoredAt,
+		KnownGaps:           c.KnownGaps,
+		HistoryComplete:     c.HistoryComplete,
+		RetentionDays:       c.RetentionDays,
+	}
 }
 func Hit(h domain.SearchHit) ConversationHit {
-	return ConversationHit{ConversationType: h.Conversation.Type, ConversationID: h.Conversation.ID, ConversationName: h.GroupName, ID: h.ID, SenderID: h.SenderID, SenderName: h.SenderName, SentAt: h.SentAt, Excerpt: h.Excerpt, TextTruncated: h.TextTruncated}
+	return ConversationHit{
+		ConversationType: h.Conversation.Type,
+		ConversationID:   h.Conversation.ID,
+		ConversationName: h.GroupName,
+		ID:               h.ID,
+		SenderID:         h.SenderID,
+		SenderName:       h.SenderName,
+		SentAt:           h.SentAt,
+		Excerpt:          h.Excerpt,
+		TextTruncated:    h.TextTruncated,
+	}
 }

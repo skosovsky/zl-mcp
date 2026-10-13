@@ -22,6 +22,7 @@ func (OwnDirectRecallSet) GoString() string { return "mobile backup control set 
 func (p *OwnDirectRecallSet) Clear() {
 	if p != nil {
 		clear(p.Recalls)
+		//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 		*p = OwnDirectRecallSet{}
 	}
 }
@@ -51,14 +52,14 @@ func ReadOwnDirectRecallSet(
 		return result, ErrSQLite
 	}
 	digest := sha256.Sum256(archive.File.Data)
-	ctx, cancel := context.WithTimeout(parent, 30*time.Second)
+	ctx, cancel := context.WithTimeout(parent, readOwnDirectRecallSetTimeout)
 	defer cancel()
 	defer func() {
 		if err != nil {
 			result.Clear()
 		}
 	}()
-	since, until := time.UnixMilli(0), time.UnixMilli(253402300800000)
+	since, until := time.UnixMilli(0), time.UnixMilli(archiveTimestampUpperMS)
 	var after *SQLiteCursor
 	count, examined := -1, 0
 	seen := map[string]bool{}
@@ -71,7 +72,7 @@ func ReadOwnDirectRecallSet(
 			scratch,
 			since,
 			until,
-			min(50, maxControls-examined),
+			min(maximumArchivePageRecords, maxControls-examined),
 			after,
 			true,
 		)
@@ -89,6 +90,7 @@ func ReadOwnDirectRecallSet(
 			if count != batch.SourceControls || batch.Examined != len(batch.Rows) || examined+batch.Examined > count {
 				return ErrSQLite
 			}
+			//nolint:exhaustruct_v5 // MobileIdentityRequest preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 			request := domain.MobileIdentityRequest{}
 			requested := map[string]bool{}
 			for _, row := range batch.Rows {

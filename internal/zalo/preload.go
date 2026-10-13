@@ -104,7 +104,7 @@ func normalizePreloadMessage(raw json.RawMessage) ([]byte, error) {
 	if json.Unmarshal(raw, &fields) != nil || fields == nil {
 		return nil, invalidHistoryPage("invalid preload message shape")
 	}
-	for _, key := range []string{"actionId", "msgId", "cliMsgId", "uidFrom", "idTo", "ts", "userId", "realMsgId"} {
+	for _, key := range []string{nativeActionIDField, "msgId", nativeClientMessageIDField, "uidFrom", "idTo", "ts", nativeUserIDField, nativeRealMessageIDField} {
 		value := bytes.TrimSpace(fields[key])
 		if len(value) == 0 || bytes.Equal(value, []byte("null")) {
 			continue
@@ -112,7 +112,7 @@ func normalizePreloadMessage(raw json.RawMessage) ([]byte, error) {
 		// Optional SDK fields may be absent or an empty string. They are not
 		// message/peer identity and must not reject an otherwise valid record.
 		if bytes.Equal(value, []byte(`""`)) &&
-			(key == "actionId" || key == "cliMsgId" || key == "userId" || key == "realMsgId") {
+			(key == nativeActionIDField || key == nativeClientMessageIDField || key == nativeUserIDField || key == nativeRealMessageIDField) {
 			continue
 		}
 		id, err := preloadID(value)
@@ -145,7 +145,11 @@ func validatePreloadBounds(raw *api.ConversationPreloadPage) error {
 	return nil
 }
 
-func parsePreloadEntry(item json.RawMessage, own string, seen map[domain.ConversationRef]bool) (domain.PreloadEntry, error) {
+func parsePreloadEntry(
+	item json.RawMessage,
+	own string,
+	seen map[domain.ConversationRef]bool,
+) (domain.PreloadEntry, error) {
 	var wire struct {
 		ID    json.RawMessage `json:"idTo"`
 		Group json.RawMessage `json:"isGroup"`
@@ -205,9 +209,9 @@ func parsePreloadMessage(item json.RawMessage, kind, own string) (domain.Message
 	if e != nil || len(msg.Text) > 1<<20 {
 		return domain.Message{}, invalidHistoryPage("invalid preload message metadata")
 	}
-	msg.Direction = "incoming"
+	msg.Direction = directionIncoming
 	if outgoing {
-		msg.Direction = "outgoing"
+		msg.Direction = directionOutgoing
 	}
 	if kind == domain.ConversationDirect && wire.Content.String != nil && wire.MsgType == "webchat" &&
 		wire.CliMsgID != "" {

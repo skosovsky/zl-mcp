@@ -24,7 +24,10 @@ func classifySnapshotInformation(ctx context.Context, conn *sql.Conn, expected i
 	if expected < 1 || expected > 5000 {
 		return 0, ErrSnapshotControls
 	}
-	rows, err := conn.QueryContext(ctx, "SELECT CASE WHEN typeof(BinNet)='blob' AND length(BinNet)<=262144 THEN BinNet ELSE NULL END FROM ChatContent WHERE MsgType=20 LIMIT 5001")
+	rows, err := conn.QueryContext(
+		ctx,
+		"SELECT CASE WHEN typeof(BinNet)='blob' AND length(BinNet)<=262144 THEN BinNet ELSE NULL END FROM ChatContent WHERE MsgType=20 LIMIT 5001",
+	)
 	if err != nil {
 		return 0, ErrSnapshotControls
 	}

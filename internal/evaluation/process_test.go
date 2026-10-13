@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func TestProcessHelper(t *testing.T) {
+func TestProcessHelper(_ *testing.T) {
 	// Arrange: modes run only in the isolated test subprocess.
 	mode := ""
 	for _, arg := range os.Args {
@@ -105,6 +105,7 @@ func TestWatchdogTerminatesDescendantsAfterNormalExitAndTimeout(t *testing.T) {
 		})
 	}
 }
+
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestExternalWatchdogAndOutputBounds(t *testing.T) {
 	for _, mode := range []string{"hang", "flood", "normal"} {

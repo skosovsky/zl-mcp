@@ -34,7 +34,7 @@ func (*authListener) Inspect(context.Context, string) (domain.Invite, error) {
 func (*authListener) Join(context.Context, string) error { panic("unexpected upstream call") }
 
 func (a *authListener) Listen(
-	ctx context.Context,
+	_ context.Context,
 	_ func(domain.Message) error,
 	_ func(string, string) error,
 	connected func() error,
@@ -51,6 +51,7 @@ func TestServicePreservesMCPWhenAuthenticationIsRequired(t *testing.T) {
 	for _, stage := range []string{"restore", "listener"} {
 		t.Run(stage, func(t *testing.T) {
 			// Arrange: real HTTP, SQLite and service lifecycle; only Zalo is synthetic.
+			//nolint:usetesting // A short temporary path keeps macOS Unix socket names within their bound; t.Cleanup owns removal.
 			dir, err := os.MkdirTemp("/tmp", "zl-service-")
 			if err != nil {
 				t.Fatal(err)
@@ -200,7 +201,10 @@ func TestServicePreservesMCPWhenAuthenticationIsRequired(t *testing.T) {
 			// and rejected network operations cannot trigger another Zalo restore/listener.
 			var rejected domain.Error
 			contents := inspect["content"].([]any)
-			if unmarshalErr := json.Unmarshal([]byte(contents[0].(map[string]any)["text"].(string)), &rejected); unmarshalErr != nil {
+			if unmarshalErr := json.Unmarshal(
+				[]byte(contents[0].(map[string]any)["text"].(string)),
+				&rejected,
+			); unmarshalErr != nil {
 				t.Fatal(unmarshalErr)
 			}
 			hits := search["structuredContent"].(map[string]any)["messages"].([]any)

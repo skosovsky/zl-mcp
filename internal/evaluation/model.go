@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -35,10 +34,11 @@ func (c *modelCapture) middleware(next mcp.MethodHandler) mcp.MethodHandler {
 			if !ok {
 				return nil, errors.New("invalid model call params")
 			}
-			t = Trace{Kind: "tool", Name: params.Name, Input: params.Arguments}
+			//nolint:exhaustruct_v5 // Trace fills only this synthetic run/result phase; remaining fields keep their empty/default values.
+			t = Trace{Kind: fieldTool, Name: params.Name, Input: params.Arguments}
 			c.mu.Lock()
 			c.calls++
-			denied := c.calls > 30 || !c.allowed[params.Name]
+			denied := c.calls > maximumModelToolCalls || !c.allowed[params.Name]
 			c.violated = c.violated || denied
 			c.mu.Unlock()
 			if denied {
@@ -49,7 +49,8 @@ func (c *modelCapture) middleware(next mcp.MethodHandler) mcp.MethodHandler {
 			if !ok {
 				return nil, errors.New("invalid model resource params")
 			}
-			t = Trace{Kind: "resource", Name: params.URI}
+			//nolint:exhaustruct_v5 // Trace fills only this synthetic run/result phase; remaining fields keep their empty/default values.
+			t = Trace{Kind: fieldResource, Name: params.URI}
 		default:
 			return next(ctx, method, req)
 		}
@@ -71,6 +72,7 @@ func (c *modelCapture) middleware(next mcp.MethodHandler) mcp.MethodHandler {
 //
 //nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
 func RunModelCase(ctx context.Context, opts ChildOptions, cs Case, driver string) (out Output, err error) {
+	//nolint:exhaustruct_v5 // Output fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	out = Output{CaseID: cs.ID, Facts: map[string]any{}}
 	if !modelScenarioSupported(cs.ID) {
 		return out, fmt.Errorf("unsupported model scenario %s: full model gate NOT_RUN", cs.ID)
@@ -80,6 +82,7 @@ func RunModelCase(ctx context.Context, opts ChildOptions, cs Case, driver string
 	}
 	f, err := evalfixture.New(
 		ctx,
+		//nolint:exhaustruct_v5 // Fixture flags and New fill the remaining defaults; preserve unset optional policy/effect options.
 		evalfixture.Options{
 			Offline:     true,
 			StateDir:    opts.StateDir,
@@ -91,11 +94,13 @@ func RunModelCase(ctx context.Context, opts ChildOptions, cs Case, driver string
 	if err != nil {
 		return out, err
 	}
+	//nolint:exhaustruct_v5 // modelCapture fills only this synthetic run/result phase; remaining fields keep their empty/default values.
 	capture := &modelCapture{allowed: map[string]bool{}}
 	for _, name := range cs.AllowedTools {
 		capture.allowed[name] = true
 	}
 	f.Server.AddReceivingMiddleware(capture.middleware)
+	//nolint:exhaustruct_v5 // Keep default socket control and keepalive policy; only the configured listener options are supplied.
 	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "127.0.0.1:0")
 	if err != nil {
 		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
@@ -104,7 +109,7 @@ func RunModelCase(ctx context.Context, opts ChildOptions, cs Case, driver string
 	}
 	server := &http.Server{
 		Handler:           mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return f.Server }, nil),
-		ReadHeaderTimeout: 5 * time.Second,
+		ReadHeaderTimeout: modelDriverHeaderTimeout,
 		BaseContext:       func(net.Listener) context.Context { return ctx },
 	}
 	done := make(chan error, 1)
@@ -136,7 +141,7 @@ func RunModelCase(ctx context.Context, opts ChildOptions, cs Case, driver string
 		ctx,
 		driver,
 		[]string{"--mcp-url", "http://" + listener.Addr().String(), "--case-file", caseFile},
-		4<<20,
+		maximumEvaluationOutputBytes,
 		false,
 	)
 	for name, data := range map[string][]byte{"model-driver.stdout.json": raw, "model-driver.stderr.log": logs} {

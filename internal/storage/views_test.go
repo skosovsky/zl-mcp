@@ -13,12 +13,23 @@ func TestCrashGapStartsAtLastHeartbeatAndPreservesOpenGap(t *testing.T) {
 	// Arrange: last successful heartbeat predates an unclean process stop.
 	s := openTest(t)
 	ctx := context.Background()
-	state := map[string]any{"authenticated": true, "collector_state": "connected", "last_connected_at": nil, "last_event_at": nil, "last_persisted_at": nil, "last_error": nil}
+	state := map[string]any{
+		"authenticated":     true,
+		"collector_state":   "connected",
+		"last_connected_at": nil,
+		"last_event_at":     nil,
+		"last_persisted_at": nil,
+		"last_error":        nil,
+	}
 	if err := s.SetState(ctx, state); err != nil {
 		t.Fatal(err)
 	}
 	previous := time.Now().UTC().Add(-time.Minute).Truncate(time.Second)
-	if _, err := s.DB.ExecContext(ctx, "UPDATE collector_state SET heartbeat=?", previous.Format(time.RFC3339Nano)); err != nil {
+	if _, err := s.DB.ExecContext(
+		ctx,
+		"UPDATE collector_state SET heartbeat=?",
+		previous.Format(time.RFC3339Nano),
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act
@@ -34,7 +45,9 @@ func TestCrashGapStartsAtLastHeartbeatAndPreservesOpenGap(t *testing.T) {
 	}
 	coverage, err := s.Coverage(ctx, "g1")
 	// Assert: repeated failures retain the earliest open gap, covering the crash interval.
-	if err != nil || observed["collector_state"] != "stopped" || len(coverage.KnownGaps) != 1 || !coverage.KnownGaps[0].From.Equal(previous) || coverage.KnownGaps[0].To != nil {
+	if err != nil || observed["collector_state"] != "stopped" || len(coverage.KnownGaps) != 1 ||
+		!coverage.KnownGaps[0].From.Equal(previous) ||
+		coverage.KnownGaps[0].To != nil {
 		t.Fatalf("state=%+v coverage=%+v error=%v", observed, coverage, err)
 	}
 	// Act/Assert: a connection closes gaps in every enabled group; absent corpus remains explicit.
@@ -43,7 +56,9 @@ func TestCrashGapStartsAtLastHeartbeatAndPreservesOpenGap(t *testing.T) {
 	}
 	for _, id := range []string{"g1", "g2"} {
 		v, err := s.Coverage(ctx, id)
-		if err != nil || len(v.KnownGaps) != 1 || v.KnownGaps[0].To == nil || v.CollectionStartedAt != nil || v.EarliestStoredAt != nil || v.HistoryComplete {
+		if err != nil || len(v.KnownGaps) != 1 || v.KnownGaps[0].To == nil || v.CollectionStartedAt != nil ||
+			v.EarliestStoredAt != nil ||
+			v.HistoryComplete {
 			t.Fatalf("%s coverage=%+v error=%v", id, v, err)
 		}
 	}
@@ -78,7 +93,10 @@ func TestContextTimestampTiesReplyAndSenderFilter(t *testing.T) {
 	before := result["before"].([]domain.Message)
 	after := result["after"].([]domain.Message)
 	reply := result["reply_to"].(*domain.Message)
-	if len(before) != 1 || before[0].ID != "a" || len(after) != 1 || after[0].ID != "c" || reply == nil || reply.ID != "d" || len(hits) != 1 || hits[0].ID != "c" {
+	if len(before) != 1 || before[0].ID != "a" || len(after) != 1 || after[0].ID != "c" || reply == nil ||
+		reply.ID != "d" ||
+		len(hits) != 1 ||
+		hits[0].ID != "c" {
 		t.Fatalf("context=%+v hits=%+v", result, hits)
 	}
 	// Act: quoted message deleted by upstream; absence must be represented as null.
@@ -106,7 +124,14 @@ func TestCatalogUnicodeAndRemovedMembership(t *testing.T) {
 	// Arrange: decomposed Vietnamese name and duplicate display names with distinct IDs.
 	s := openTest(t)
 	ctx := context.Background()
-	if err := s.ReplaceCatalog(ctx, []domain.Group{{ID: "g1", Name: "Ca\u0300 phe\u0302"}, {ID: "g2", Name: "Команда"}, {ID: "g3", Name: "Команда"}}); err != nil {
+	if err := s.ReplaceCatalog(
+		ctx,
+		[]domain.Group{
+			{ID: "g1", Name: "Ca\u0300 phe\u0302"},
+			{ID: "g2", Name: "Команда"},
+			{ID: "g3", Name: "Команда"},
+		},
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act
@@ -134,10 +159,21 @@ func TestExpiredHeartbeatPreservesAuthenticationRequired(t *testing.T) {
 	// Arrange: the collector has stopped after a verified authentication rejection.
 	s := openTest(t)
 	ctx := context.Background()
-	if err := s.SetState(ctx, map[string]any{"authenticated": false, "collector_state": "auth_required", "last_error": map[string]any{"code": "NOT_AUTHENTICATED", "message": "Run local login."}}); err != nil {
+	if err := s.SetState(
+		ctx,
+		map[string]any{
+			"authenticated":   false,
+			"collector_state": "auth_required",
+			"last_error":      map[string]any{"code": "NOT_AUTHENTICATED", "message": "Run local login."},
+		},
+	); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.DB.ExecContext(ctx, "UPDATE collector_state SET heartbeat=?", time.Now().UTC().Add(-time.Hour).Format(time.RFC3339Nano)); err != nil {
+	if _, err := s.DB.ExecContext(
+		ctx,
+		"UPDATE collector_state SET heartbeat=?",
+		time.Now().UTC().Add(-time.Hour).Format(time.RFC3339Nano),
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act

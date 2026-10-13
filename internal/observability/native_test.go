@@ -45,6 +45,7 @@ func nativeStore(t *testing.T) *storage.Store {
 	}
 	return s
 }
+
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestNativeSendRecordsOneAmbiguousEffectWithoutRetry(t *testing.T) {
 	// Arrange: real durable owner and in-memory telemetry, with a hostile upstream cause.
@@ -143,6 +144,7 @@ func (s *nativeHistorySource) HistoryPage(
 	more := false
 	return domain.HistoryPage{HasMore: &more}, nil
 }
+
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestNativeHistoryWorkerKeepsLedgerAndRequestLink(t *testing.T) {
 	// Arrange: the command prepares the real native ledger under an executor span.

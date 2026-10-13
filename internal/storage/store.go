@@ -16,7 +16,7 @@ import (
 	"time"
 	"unicode"
 
-	_ "modernc.org/sqlite"
+	_ "modernc.org/sqlite" // Register the SQLite driver used by database/sql.
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
@@ -31,6 +31,7 @@ type Store struct {
 }
 
 func Open(ctx context.Context, path string, groupIDs []string, retention int) (*Store, error) {
+	//nolint:exhaustruct_v5 // CollectionPolicy preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	policy := domain.CollectionPolicy{Selected: map[domain.ConversationRef]bool{}}
 	for _, id := range groupIDs {
 		policy.Selected[domain.ConversationRef{Type: domain.ConversationGroup, ID: id}] = true
@@ -66,6 +67,7 @@ func OpenWithPolicy(ctx context.Context, path string, policy domain.CollectionPo
 		selected[ref] = enabled
 	}
 	policy.Selected = selected
+	//nolint:exhaustruct_v5 // Store preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	s := &Store{DB: db, allowed: map[string]bool{}, policy: policy, retention: retention}
 	for ref, enabled := range selected {
 		if ref.Type == domain.ConversationGroup && enabled {
@@ -80,7 +82,7 @@ func OpenWithPolicy(ctx context.Context, path string, policy domain.CollectionPo
 	var key string
 	err = db.QueryRowContext(ctx, "SELECT value FROM metadata WHERE key='cursor_key'").Scan(&key)
 	if errors.Is(err, sql.ErrNoRows) {
-		b := make([]byte, 32)
+		b := make([]byte, cursorKeyBytes)
 		if _, err = rand.Read(b); err != nil {
 			//nolint:gosec // G104: Read-only archive connection cleanup preserves the query result.
 			db.Close()
@@ -309,17 +311,17 @@ func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, 
 		return false, err
 	}
 	if inserted != 0 {
-		seq, lastInsertIdErr := result.LastInsertId()
-		if lastInsertIdErr != nil {
-			return false, lastInsertIdErr
+		seq, lastInsertIDErr := result.LastInsertId()
+		if lastInsertIDErr != nil {
+			return false, lastInsertIDErr
 		}
 		if historical {
-			lastInsertIdErr = appendHistoryIdentity(ctx, tx, seq, m)
+			lastInsertIDErr = appendHistoryIdentity(ctx, tx, seq, m)
 		} else {
-			lastInsertIdErr = appendMessageEvent(ctx, tx, seq, m)
+			lastInsertIDErr = appendMessageEvent(ctx, tx, seq, m)
 		}
-		if lastInsertIdErr != nil {
-			return false, lastInsertIdErr
+		if lastInsertIDErr != nil {
+			return false, lastInsertIDErr
 		}
 	}
 	// A matching replay may restore missing protocol quote identifiers without
@@ -444,9 +446,11 @@ func scanMessage(row interface{ Scan(...any) error }) (domain.Message, error) {
 }
 func (s *Store) Message(ctx context.Context, g, id string) (domain.Message, error) {
 	if !s.Allowed(g) {
+		//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 		return domain.Message{}, &domain.Error{
-			Code:       "PERMISSION_DENIED",
-			Message:    "Group is outside the configured collection allowlist.",
+			Code:    codePermissionDenied,
+			Message: "Group is outside the configured collection allowlist.",
+			//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 			NextAction: domain.NextAction{Instruction: "Update the local collection allowlist if access is intended."},
 			Details:    map[string]any{},
 		}
@@ -565,7 +569,7 @@ func (s *Store) prepareSearch(ctx context.Context, q Search) (preparedSearch, er
 		return preparedSearch{}, cursorErr
 	}
 	if q.General &&
-		((q.ConversationType != "" && q.ConversationType != "group" && q.ConversationType != "direct") || (q.ConversationID != "" && q.ConversationType == "")) {
+		((q.ConversationType != "" && q.ConversationType != domain.ConversationGroup && q.ConversationType != domain.ConversationDirect) || (q.ConversationID != "" && q.ConversationType == "")) {
 		return preparedSearch{}, domain.Invalid("A concrete conversation requires its type.")
 	}
 	if q.General && q.ConversationID != "" &&
@@ -766,9 +770,9 @@ func scanSearchHits(rows *sql.Rows) ([]domain.SearchHit, []string, error) {
 			return nil, nil, err
 		}
 		r := []rune(txt)
-		h.TextTruncated = len(r) > 150
+		h.TextTruncated = len(r) > historyPreviewRunes
 		if h.TextTruncated {
-			r = r[:150]
+			r = r[:historyPreviewRunes]
 		}
 		h.Excerpt = string(r)
 		hits = append(hits, h)
@@ -802,6 +806,7 @@ func (s *Store) searchPolicyPredicates(clauses []string, args []any) ([]string, 
 
 func (s *Store) searchCursor(ctx context.Context, q Search) (cursor, error) {
 	var err error
+	//nolint:exhaustruct_v5 // cursor preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	c := cursor{Fingerprint: fingerprint(q), SnapshotAt: now()}
 	if q.Cursor != "" {
 		if err = s.DecodeCursor(q.Cursor, &c); err != nil {

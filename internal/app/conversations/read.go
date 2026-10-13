@@ -3,6 +3,7 @@ package conversations
 
 import (
 	"context"
+
 	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )

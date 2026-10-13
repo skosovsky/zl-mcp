@@ -18,6 +18,7 @@ type HistorySourceFailure struct {
 }
 
 func NewHistorySourceFailure(code *int, cause error) *HistorySourceFailure {
+	//nolint:exhaustruct_v5 // HistorySourceFailure preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	f := &HistorySourceFailure{cause: cause}
 	if code != nil {
 		value := *code
@@ -62,7 +63,7 @@ type HistoryPageFailure struct{ reason string }
 
 //nolint:cyclop,funlen,gocyclo // This is a closed protocol-error translation table; each literal maps to one bounded public reason.
 func NewHistoryPageFailure(message string) *HistoryPageFailure {
-	reason := "unknown"
+	reason := stateUnknownText
 	switch message {
 	case "invalid group history shape":
 		reason = "invalid_group_history_shape"

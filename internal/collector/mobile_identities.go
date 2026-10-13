@@ -2,10 +2,14 @@ package collector
 
 import (
 	"context"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
-func (g *sessionGuard) MapMobileBackupIdentities(parent context.Context, request domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+func (g *sessionGuard) MapMobileBackupIdentities(
+	parent context.Context,
+	request domain.MobileIdentityRequest,
+) ([]domain.MobileIdentityPair, error) {
 	source, ok := g.upstream.(domain.MobileIdentitySource)
 	if !ok {
 		return nil, domain.ErrHistoryUnsupported

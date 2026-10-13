@@ -2,6 +2,7 @@ package mcpserver
 
 import (
 	"encoding/json"
+
 	"github.com/skosovsky/zl-mcp/internal/app/archives"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
 	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
@@ -29,11 +30,33 @@ func (p Ports) capabilities() toolruntime.Capabilities {
 }
 
 func groupSearchResult(v search.GroupResult) map[string]any {
-	summary := map[string]any{"group_count": v.CoverageSummary.GroupCount, "history_complete": v.CoverageSummary.HistoryComplete, "groups_with_known_gaps": v.CoverageSummary.GroupsWithKnownGaps}
-	return map[string]any{"messages": v.Messages, "has_more": v.HasMore, "next_cursor": v.NextCursor, "empty_reason": v.EmptyReason, "coverage": v.Coverage, "coverage_summary": summary, "snapshot_at": v.SnapshotAt}
+	summary := map[string]any{
+		"group_count":            v.CoverageSummary.GroupCount,
+		"history_complete":       v.CoverageSummary.HistoryComplete,
+		"groups_with_known_gaps": v.CoverageSummary.GroupsWithKnownGaps,
+	}
+	return map[string]any{
+		wireMessages:       v.Messages,
+		"has_more":         v.HasMore,
+		"next_cursor":      v.NextCursor,
+		"empty_reason":     v.EmptyReason,
+		"coverage":         v.Coverage,
+		"coverage_summary": summary,
+		"snapshot_at":      v.SnapshotAt,
+	}
 }
 func groupContextResult(v conversations.GroupContext) map[string]any {
-	return map[string]any{"anchor": v.Anchor, "before": v.Before, "after": v.After, "reply_to": v.ReplyTo, "coverage": v.Coverage, "context_truncated": v.ContextTruncated, "omitted_before_id": v.OmittedBeforeID, "omitted_after_id": v.OmittedAfterID, "next_action": v.NextAction}
+	return map[string]any{
+		"anchor":            v.Anchor,
+		"before":            v.Before,
+		"after":             v.After,
+		"reply_to":          v.ReplyTo,
+		"coverage":          v.Coverage,
+		"context_truncated": v.ContextTruncated,
+		"omitted_before_id": v.OmittedBeforeID,
+		"omitted_after_id":  v.OmittedAfterID,
+		"next_action":       v.NextAction,
+	}
 }
 
 // Existing wire maps remain confined to transport projection.

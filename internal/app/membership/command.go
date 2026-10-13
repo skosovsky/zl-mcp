@@ -2,7 +2,6 @@ package membership
 
 import (
 	"context"
-	"time"
 )
 
 type JoinRequest struct {
@@ -16,7 +15,7 @@ type CommandPort interface {
 }
 
 func (h *Handler) Join(ctx context.Context, request JoinRequest) (JoinStatus, error) {
-	ctx, cancel := context.WithTimeout(ctx, 6*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, handlerJoinTimeout)
 	defer cancel()
 	return h.Commands.Join(ctx, request)
 }

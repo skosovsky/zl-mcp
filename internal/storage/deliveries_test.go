@@ -41,7 +41,12 @@ func TestBroadConversationFanoutCapacityPreservesCollectedCorpus(t *testing.T) {
 		if scope == "direct" {
 			sub.ConversationType = "direct"
 		}
-		if _, activateSubscriptionErr := s.ActivateSubscription(ctx, sub, revision, at); activateSubscriptionErr != nil {
+		if _, activateSubscriptionErr := s.ActivateSubscription(
+			ctx,
+			sub,
+			revision,
+			at,
+		); activateSubscriptionErr != nil {
 			t.Fatal(activateSubscriptionErr)
 		}
 	}
@@ -111,7 +116,12 @@ func TestConversationDeliveryRevocationAfterRestart(t *testing.T) {
 		if nestedSubscriptionRevisionErr != nil {
 			t.Fatal(nestedSubscriptionRevisionErr)
 		}
-		if _, nestedActivateSubscriptionErr := s.ActivateSubscription(ctx, sub, revision, at); nestedActivateSubscriptionErr != nil {
+		if _, nestedActivateSubscriptionErr := s.ActivateSubscription(
+			ctx,
+			sub,
+			revision,
+			at,
+		); nestedActivateSubscriptionErr != nil {
 			t.Fatal(nestedActivateSubscriptionErr)
 		}
 	}
@@ -156,7 +166,12 @@ func TestConversationDeliveryRevocationAfterRestart(t *testing.T) {
 	if err != nil || job == nil || job.SubscriptionID != "all" {
 		t.Fatalf("permitted job=%v error=%v", job, err)
 	}
-	if finishDeliveryErr := s.FinishDelivery(ctx, *job, DeliveryOutcome{State: "delivered"}, at); finishDeliveryErr != nil {
+	if finishDeliveryErr := s.FinishDelivery(
+		ctx,
+		*job,
+		DeliveryOutcome{State: "delivered"},
+		at,
+	); finishDeliveryErr != nil {
 		t.Fatal(finishDeliveryErr)
 	}
 	next, err := s.ClaimDelivery(ctx, at, p)

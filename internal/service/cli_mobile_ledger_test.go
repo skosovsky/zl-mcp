@@ -13,7 +13,8 @@ func TestMobileLedgerArgumentsPreserveRawJSONForServerValidation(t *testing.T) {
 	method, args, e := mobileLedgerArguments([]string{"mobile-backup-prepare"}, strings.NewReader(input))
 	b, encode := json.Marshal(args)
 	// Assert.
-	if e != nil || encode != nil || method != "cli_prepare_mobile_backup" || strings.Count(string(b), `"request_id"`) != 2 {
+	if e != nil || encode != nil || method != "cli_prepare_mobile_backup" ||
+		strings.Count(string(b), `"request_id"`) != 2 {
 		t.Fatal("CLI lost duplicate-key evidence")
 	}
 }
@@ -43,7 +44,10 @@ func TestMobileOfferProbeArgumentsRequireExactRevision(t *testing.T) {
 		t.Fatal(method, args, err)
 	}
 	for _, revision := range []string{"-1", "01", "+1", "9223372036854775808"} {
-		if _, _, err = mobileLedgerArguments([]string{"mobile-backup-probe-offer", "id", revision}, strings.NewReader("")); err == nil {
+		if _, _, err = mobileLedgerArguments(
+			[]string{"mobile-backup-probe-offer", "id", revision},
+			strings.NewReader(""),
+		); err == nil {
 			t.Fatal("invalid revision accepted")
 		}
 	}
@@ -51,9 +55,13 @@ func TestMobileOfferProbeArgumentsRequireExactRevision(t *testing.T) {
 
 func TestMobileArchiveDiagnosticArguments(t *testing.T) {
 	// Arrange/Act: canonical owner attempt reference.
-	method, args, err := mobileLedgerArguments([]string{"mobile-backup-probe-archive", "id", "0"}, strings.NewReader(""))
+	method, args, err := mobileLedgerArguments(
+		[]string{"mobile-backup-probe-archive", "id", "0"},
+		strings.NewReader(""),
+	)
 	// Assert: only the private diagnostic route, with revision preserved.
-	if err != nil || method != "cli_probe_mobile_backup_archive" || args.(map[string]any)["revision"] != int64(0) || !mobileLedgerCommand("mobile-backup-probe-archive") {
+	if err != nil || method != "cli_probe_mobile_backup_archive" || args.(map[string]any)["revision"] != int64(0) ||
+		!mobileLedgerCommand("mobile-backup-probe-archive") {
 		t.Fatal(method, args, err)
 	}
 }
@@ -61,10 +69,17 @@ func TestMobileArchiveDiagnosticArguments(t *testing.T) {
 func TestArchiveComparisonAndRecallArguments(t *testing.T) {
 	// Arrange / Act: carry the saved send UUID through owner-only routes.
 	id := "00000000-0000-4000-8000-000000000031"
-	method, args, err := mobileLedgerArguments([]string{"mobile-backup-probe-archive", "operation", "0", id}, strings.NewReader(""))
+	method, args, err := mobileLedgerArguments(
+		[]string{"mobile-backup-probe-archive", "operation", "0", id},
+		strings.NewReader(""),
+	)
 	recallMethod, recallArgs, recallErr := mobileLedgerArguments([]string{"probe-recall", id}, strings.NewReader(""))
 	// Assert: exact saved reference, no arbitrary recipient or message arguments.
-	if err != nil || method != "cli_probe_mobile_backup_archive" || args.(map[string]any)["comparison_send_request_id"] != id || recallErr != nil || recallMethod != "cli_probe_recall" || recallArgs.(map[string]any)["send_request_id"] != id {
+	if err != nil || method != "cli_probe_mobile_backup_archive" ||
+		args.(map[string]any)["comparison_send_request_id"] != id ||
+		recallErr != nil ||
+		recallMethod != "cli_probe_recall" ||
+		recallArgs.(map[string]any)["send_request_id"] != id {
 		t.Fatal("owner reference lost")
 	}
 	for _, invalid := range [][]string{{"probe-recall"}, {"probe-recall", id, "message"}, {"mobile-backup-probe-offer", "operation", "0", id}, {"mobile-backup-cancel", "operation", "0", id}} {

@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 )
 
-// ArchiveToken seals opaque read capabilities under a distinct purpose/AAD.
+// SealArchiveToken seals opaque read capabilities under a distinct purpose/AAD.
 // Tokens grant no source ownership or policy permission; readers recheck both.
 func (s *RetainedArchiveStore) SealArchiveToken(ctx context.Context, purpose string, body []byte) (string, error) {
 	if !s.lock(ctx) {
@@ -39,7 +39,8 @@ func (s *RetainedArchiveStore) OpenArchiveToken(ctx context.Context, purpose, to
 	sealed, err := base64.RawURLEncoding.DecodeString(token)
 	defer clear(sealed)
 	n := s.ledger.aead.NonceSize()
-	if err != nil || len(sealed) < n+s.ledger.aead.Overhead()+1 || base64.RawURLEncoding.EncodeToString(sealed) != token {
+	if err != nil || len(sealed) < n+s.ledger.aead.Overhead()+1 ||
+		base64.RawURLEncoding.EncodeToString(sealed) != token {
 		return nil, ErrRetainedArchive
 	}
 	body, err := s.ledger.aead.Open(nil, sealed[:n], sealed[n:], []byte("zl-mcp/archive-read/v1/"+purpose))

@@ -36,11 +36,12 @@ func (p *membershipPort) recallControl(w http.ResponseWriter, r *http.Request, b
 	fail := func() {
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).
+			//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract. Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 			Encode(&domain.Error{Code: "RECALL_DIAGNOSTIC_UNAVAILABLE", Message: "Local recall diagnostic is unavailable.", NextAction: domain.NextAction{Instruction: "Read the diagnostic receipt or collector status; never redispatch an ambiguous recall."}, Details: map[string]any{}})
 	}
-	schema, err := contracts.Compile("cli_probe_recall", "input")
+	schema, err := contracts.Compile(operationProbeRecall, "input")
 	var raw any
-	if err != nil || r.Method != http.MethodPost || r.URL.Path != "/rpc" || !uniqueLedgerJSON(body) ||
+	if err != nil || r.Method != http.MethodPost || r.URL.Path != controlRPCPath || !uniqueLedgerJSON(body) ||
 		json.Unmarshal(body, &raw) != nil ||
 		schema.Validate(raw) != nil {
 		fail()
@@ -55,7 +56,7 @@ func (p *membershipPort) recallControl(w http.ResponseWriter, r *http.Request, b
 		fail()
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), membershipPortrecallControlTimeout)
 	defer cancel()
 	if p.lifecycle != nil {
 		stop := context.AfterFunc(p.lifecycle, cancel)
@@ -77,6 +78,7 @@ func (p *membershipPort) recallControl(w http.ResponseWriter, r *http.Request, b
 //nolint:cyclop,funlen,gocognit,gocyclo // This one-effect owner keeps the exclusive receipt open from fsynced reservation through dispatch and outcome sync; receipt reading, quote validation and writing are separate helpers.
 func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallReceipt, error) {
 	bad := errors.New("recall diagnostic unavailable")
+	//nolint:exhaustruct_v5 // recallReceipt initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	empty := recallReceipt{}
 	normalized, e := uuid.Parse(id)
 	recaller, ok := p.sender.(diagnosticRecaller)
@@ -98,7 +100,7 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 	}
 	// G104: Cleanup preserves the original setup/operation error.
 	defer parent.Close()
-	if e = parent.Mkdir("diagnostic-recalls", 0700); e != nil && !errors.Is(e, os.ErrExist) {
+	if e = parent.Mkdir("diagnostic-recalls", privateDiagnosticDirectoryMode); e != nil && !errors.Is(e, os.ErrExist) {
 		return empty, bad
 	}
 	info, e := parent.Lstat("diagnostic-recalls")
@@ -125,19 +127,20 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 	if e != nil {
 		return empty, bad
 	}
-	entries, e := dir.ReadDir(21)
+	entries, e := dir.ReadDir(recallReceiptDirectoryReadLimit)
 	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	dir.Close()
 	if e != nil && !errors.Is(e, io.EOF) || len(entries) >= 20 {
 		return empty, bad
 	}
-	f, e := root.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
+	f, e := root.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, privateDiagnosticFileMode)
 	if e != nil {
 		return empty, bad
 	}
 	// G104: Cleanup preserves the original setup/operation error.
 	defer f.Close()
 	write := func(out recallReceipt) error { return writeRecallReceipt(f, out) }
+	//nolint:exhaustruct_v5 // recallReceipt initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	out := recallReceipt{State: "reserved"}
 	if write(out) != nil {
 		return empty, bad
@@ -156,7 +159,7 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 		return out, nil
 	}
 	status, e := recaller.UndoDiagnosticDirect(ctx, op.RecipientID, *op.MessageID, quote.Metadata.ClientMessageID)
-	out.State = "unknown"
+	out.State = stateUnknownText
 	if e == nil {
 		out.State = "upstream_response"
 		out.Status = &status
@@ -182,7 +185,12 @@ func readRecallReceipt(root *os.Root, name string, bad error) (recallReceipt, bo
 	return recallReceipt{}, false, nil
 }
 
-func (p *membershipPort) recallQuote(ctx context.Context, op domain.SendOperation, own string, bad error) (*domain.SendQuote, error) {
+func (p *membershipPort) recallQuote(
+	ctx context.Context,
+	op domain.SendOperation,
+	own string,
+	bad error,
+) (*domain.SendQuote, error) {
 	if time.Since(op.UpdatedAt) > 30*time.Minute || time.Until(op.UpdatedAt) > time.Minute ||
 		!canonicalDiagnosticID(op.RecipientID) ||
 		!canonicalDiagnosticID(*op.MessageID) {
@@ -208,7 +216,6 @@ func writeRecallReceipt(f *os.File, out recallReceipt) error {
 		return marshalErr
 	}
 	return f.Sync()
-
 }
 
 func decodeRecallReceipt(root *os.Root, name string, info os.FileInfo, bad error) (recallReceipt, error) {
@@ -221,12 +228,12 @@ func decodeRecallReceipt(root *os.Root, name string, info os.FileInfo, bad error
 	}
 	// G104: Cleanup preserves the original setup/operation error.
 	defer f.Close()
-	data, openErr := io.ReadAll(io.LimitReader(f, 513))
+	data, openErr := io.ReadAll(io.LimitReader(f, recallReceiptReadLimit))
 	if openErr != nil {
 		return recallReceipt{}, bad
 	}
 	var out recallReceipt
-	schema, openErr := contracts.Compile("cli_probe_recall", "output")
+	schema, openErr := contracts.Compile(operationProbeRecall, "output")
 	var raw any
 	if openErr != nil || json.Unmarshal(data, &raw) != nil || schema.Validate(raw) != nil ||
 		json.Unmarshal(data, &out) != nil {

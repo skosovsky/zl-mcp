@@ -26,7 +26,9 @@ func TestStartupDiagnosticIsPrivateAndContainsNoRawError(t *testing.T) {
 	}
 	// Assert: diagnosis survives startup failure without exposing configuration.
 	info, _ := os.Stat(path)
-	if !handled || fallback.Len() != 0 || record["category"] != "invalid_config" || strings.Contains(string(body), "PRIVATE_") || info.Mode().Perm() != 0600 {
+	if !handled || fallback.Len() != 0 || record["category"] != "invalid_config" ||
+		strings.Contains(string(body), "PRIVATE_") ||
+		info.Mode().Perm() != 0600 {
 		t.Fatalf("unsafe startup diagnostic: %s", body)
 	}
 }

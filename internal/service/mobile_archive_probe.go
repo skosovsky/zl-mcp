@@ -18,7 +18,7 @@ func (p *membershipPort) probeMobileArchiveComparison(
 	revision int64,
 	sendID string,
 ) (map[string]any, error) {
-	d, err := mobilebackup.NewDownloader([]string{"trans-bin.zaloapp.com"})
+	d, err := mobilebackup.NewDownloader([]string{archiveDownloadHost})
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (p *membershipPort) probeMobileArchiveComparisonWithDownloader(
 	if err != nil {
 		return nil, err
 	}
-	if attempt.Request.ArchiveScope != "" || attempt.State != "prepared" || attempt.Revision != revision {
+	if attempt.Request.ArchiveScope != "" || attempt.State != statePreparedText || attempt.Revision != revision {
 		return nil, storage.ErrMobileBackupState
 	}
 	target := ""
@@ -60,7 +60,7 @@ func (p *membershipPort) probeMobileArchiveComparisonWithDownloader(
 		target = *op.MessageID
 	}
 	var comparison map[string]any
-	request, cancel := context.WithTimeout(ctx, 420*time.Second)
+	request, cancel := context.WithTimeout(ctx, membershipPortprobeMobileArchiveComparisonWithDownloaderTimeout)
 	defer cancel()
 	scratch, err := os.MkdirTemp("", "zl-mobile-archive-")
 	if err != nil {
@@ -68,7 +68,12 @@ func (p *membershipPort) probeMobileArchiveComparisonWithDownloader(
 	}
 	defer os.RemoveAll(scratch)
 	now := time.Now().UnixMilli()
-	stats := archiveProbeStats{unsupportedReasons: map[string]int{}, unsupportedKinds: map[string]int{}, blockReasons: []string{}}
+	//nolint:exhaustruct_v5 // archiveProbeStats initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
+	stats := archiveProbeStats{
+		unsupportedReasons: map[string]int{},
+		unsupportedKinds:   map[string]int{},
+		blockReasons:       []string{},
+	}
 	var summary mobilebackup.ArchiveWalkSummary
 	err = p.consumePreparedMobileArchive(
 		request,
@@ -85,7 +90,7 @@ func (p *membershipPort) probeMobileArchiveComparisonWithDownloader(
 					scratch,
 					since,
 					until,
-					min(selection.MaxMessages, 500),
+					min(selection.MaxMessages, maximumProbeComparisonRecords),
 				)
 				if readErr != nil {
 					return readErr
@@ -100,8 +105,8 @@ func (p *membershipPort) probeMobileArchiveComparisonWithDownloader(
 				account,
 				scratch,
 				now,
-				50,
-				100,
+				probeArchivePageSize,
+				maximumProbeArchivePages,
 				mapper,
 				func(ctx context.Context, page mobilebackup.PreparedArchivePage) error {
 					return stats.inspectPage(ctx, page, attempt.Request, account, now, id)
@@ -111,6 +116,7 @@ func (p *membershipPort) probeMobileArchiveComparisonWithDownloader(
 		},
 	)
 	if err != nil {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(ctx, "mobile_archive_probe_failed", "operation_id", id)
 		return nil, err
 	}
@@ -118,12 +124,13 @@ func (p *membershipPort) probeMobileArchiveComparisonWithDownloader(
 	if err != nil {
 		return nil, err
 	}
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.InfoContext(
 		ctx,
 		"mobile_archive_probe_complete",
 		"operation_id",
 		id,
-		"examined",
+		fieldExamined,
 		summary.Examined,
 		"conversion_blocked",
 		stats.blocked,
@@ -135,11 +142,11 @@ func (p *membershipPort) probeMobileArchiveComparisonWithDownloader(
 	}
 	response := map[string]any{
 		"attempt":                     attempt,
-		"download_performed":          true,
-		"import_performed":            false,
+		fieldDownloadPerformed:        true,
+		fieldImportPerformed:          false,
 		"pages":                       summary.Pages,
-		"examined":                    summary.Examined,
-		"rejected":                    summary.Rejected,
+		fieldExamined:                 summary.Examined,
+		stateRejectedText:             summary.Rejected,
 		"candidates":                  summary.Candidates,
 		"source_controls":             stats.controls,
 		"convertible_messages":        stats.convertible,
@@ -190,9 +197,9 @@ func archiveTargetComparison(batch mobilebackup.SQLiteBatch, target string) map[
 		}
 	}
 	return map[string]any{
-		"examined":             batch.Examined,
-		"rejected":             batch.Rejected,
-		"has_more":             batch.HasMore,
+		fieldExamined:          batch.Examined,
+		stateRejectedText:      batch.Rejected,
+		fieldHasMore:           batch.HasMore,
 		"matching_records":     matches,
 		"matching_controls":    controls,
 		"matching_type_counts": types,
@@ -209,14 +216,28 @@ type archiveProbeStats struct {
 	coverage                                                                  mobilebackup.SQLiteCoverage
 }
 
-func (stats *archiveProbeStats) inspectPage(ctx context.Context, page mobilebackup.PreparedArchivePage, request domain.MobileBackupRequest, account string, now int64, id string) error {
+func (stats *archiveProbeStats) inspectPage(
+	ctx context.Context,
+	page mobilebackup.PreparedArchivePage,
+	request domain.MobileBackupRequest,
+	account string,
+	now int64,
+	id string,
+) error {
 	stats.walMode = stats.walMode || page.SourceWAL
 	stats.coverage = page.Coverage
 	if page.SourceControls > stats.controls {
 		stats.controls = page.SourceControls
 	}
-	inspection, inspectPreparedArchivePageErr := mobilebackup.InspectPreparedArchivePage(ctx, page, request, account, now)
+	inspection, inspectPreparedArchivePageErr := mobilebackup.InspectPreparedArchivePage(
+		ctx,
+		page,
+		request,
+		account,
+		now,
+	)
 	if inspectPreparedArchivePageErr != nil {
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(
 			ctx,
 			"mobile_archive_probe_failed",

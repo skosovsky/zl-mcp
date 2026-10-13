@@ -15,13 +15,23 @@ import (
 
 type pageSource func(context.Context, domain.ConversationRef, string, int) (domain.HistoryPage, error)
 
-func (f pageSource) HistoryPage(ctx context.Context, ref domain.ConversationRef, cursor string, limit int) (domain.HistoryPage, error) {
+func (f pageSource) HistoryPage(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	cursor string,
+	limit int,
+) (domain.HistoryPage, error) {
 	return f(ctx, ref, cursor, limit)
 }
 
 func prepare(t *testing.T) (*storage.Store, storage.HistoryOperation) {
 	t.Helper()
-	s, err := storage.OpenWithPolicy(context.Background(), filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	s, err := storage.OpenWithPolicy(
+		context.Background(),
+		filepath.Join(t.TempDir(), "messages.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +39,15 @@ func prepare(t *testing.T) (*storage.Store, storage.HistoryOperation) {
 	if err = s.BindAccount(context.Background(), "synthetic-account"); err != nil {
 		t.Fatal(err)
 	}
-	r := domain.HistoryImportRequest{ConversationType: "group", ConversationID: "synthetic-group", RequestID: "00000000-0000-4000-8000-000000000001", Since: "2026-09-01T00:00:00Z", Until: "2026-11-01T00:00:00Z", PageSize: 2, MaxMessages: 3}
+	r := domain.HistoryImportRequest{
+		ConversationType: "group",
+		ConversationID:   "synthetic-group",
+		RequestID:        "00000000-0000-4000-8000-000000000001",
+		Since:            "2026-09-01T00:00:00Z",
+		Until:            "2026-11-01T00:00:00Z",
+		PageSize:         2,
+		MaxMessages:      3,
+	}
 	op, err := s.PrepareHistoryOperation(context.Background(), r)
 	if err != nil {
 		t.Fatal(err)
@@ -38,7 +56,13 @@ func prepare(t *testing.T) (*storage.Store, storage.HistoryOperation) {
 }
 
 func message(ref domain.ConversationRef, id string) domain.Message {
-	return domain.Message{Conversation: ref, ID: id, SenderID: "synthetic-author", SentAt: time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC), Text: "Synthetic history"}
+	return domain.Message{
+		Conversation: ref,
+		ID:           id,
+		SenderID:     "synthetic-author",
+		SentAt:       time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC),
+		Text:         "Synthetic history",
+	}
 }
 
 func awaitState(t *testing.T, s *storage.Store, id, state string) storage.HistoryOperation {
@@ -98,30 +122,36 @@ func TestWorkerUsesExactCheckpointAndRemainingRecordBudget(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	var calls atomic.Int32
-	source := pageSource(func(ctx context.Context, ref domain.ConversationRef, cursor string, limit int) (domain.HistoryPage, error) {
-		m := message(ref, "first")
-		more := calls.Add(1) == 1
-		if more {
-			if cursor != "0" || limit != 2 {
-				return domain.HistoryPage{}, domain.Invalid("Wrong initial source request.")
+	source := pageSource(
+		func(_ context.Context, ref domain.ConversationRef, cursor string, limit int) (domain.HistoryPage, error) {
+			m := message(ref, "first")
+			more := calls.Add(1) == 1
+			if more {
+				if cursor != "0" || limit != 2 {
+					return domain.HistoryPage{}, domain.Invalid("Wrong initial source request.")
+				}
+				outside := message(ref, "outside")
+				outside.SentAt = time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC)
+				next := "9007199254740993123"
+				return domain.HistoryPage{Messages: []domain.Message{m, outside}, HasMore: &more, Cursor: &next}, nil
 			}
-			outside := message(ref, "outside")
-			outside.SentAt = time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC)
-			next := "9007199254740993123"
-			return domain.HistoryPage{Messages: []domain.Message{m, outside}, HasMore: &more, Cursor: &next}, nil
-		}
-		if cursor != "9007199254740993123" || limit != 1 {
-			return domain.HistoryPage{}, domain.Invalid("Cursor precision or remaining bound lost.")
-		}
-		return domain.HistoryPage{Messages: []domain.Message{m}, HasMore: &more}, nil
-	})
+			if cursor != "9007199254740993123" || limit != 1 {
+				return domain.HistoryPage{}, domain.Invalid("Cursor precision or remaining bound lost.")
+			}
+			return domain.HistoryPage{Messages: []domain.Message{m}, HasMore: &more}, nil
+		},
+	)
 	done := make(chan error, 1)
 	go func() { done <- historyimport.Run(ctx, s, source) }()
 	// Act
 	finished := awaitState(t, s, op.Status.OperationID, "completed")
 	cancel()
 	// Assert
-	if err := <-done; err != nil || calls.Load() != 2 || finished.Status.InsertedCount != 1 || finished.Status.DuplicateCount != 1 || finished.Status.OutOfIntervalCount != 1 || finished.Status.RecordsObserved != 3 || finished.Status.HistoryComplete {
+	if err := <-done; err != nil || calls.Load() != 2 || finished.Status.InsertedCount != 1 ||
+		finished.Status.DuplicateCount != 1 ||
+		finished.Status.OutOfIntervalCount != 1 ||
+		finished.Status.RecordsObserved != 3 ||
+		finished.Status.HistoryComplete {
 		t.Fatalf("worker result: %+v calls=%d error=%v", finished.Status, calls.Load(), err)
 	}
 	for _, table := range []string{"message_events", "event_deliveries"} {
@@ -152,14 +182,15 @@ func TestWorkerAuthPauseResumesOnlyInNextSession(t *testing.T) {
 	defer cancel()
 	done := make(chan error, 1)
 	go func() {
-		done <- historyimport.Run(ctx, s, pageSource(func(ctx context.Context, ref domain.ConversationRef, cursor string, limit int) (domain.HistoryPage, error) {
+		done <- historyimport.Run(ctx, s, pageSource(func(_ context.Context, ref domain.ConversationRef, _ string, _ int) (domain.HistoryPage, error) {
 			more := false
 			return domain.HistoryPage{Messages: []domain.Message{message(ref, "after-auth")}, HasMore: &more}, nil
 		}))
 	}()
 	finished := awaitState(t, s, op.Status.OperationID, "completed")
 	cancel()
-	if err = <-done; err != nil || finished.Status.OperationID != paused.Status.OperationID || finished.WorkDuration < paused.WorkDuration {
+	if err = <-done; err != nil || finished.Status.OperationID != paused.Status.OperationID ||
+		finished.WorkDuration < paused.WorkDuration {
 		t.Fatal("new session lost operation/checkpoint", err)
 	}
 }
@@ -172,7 +203,7 @@ func TestWorkerCannotPersistPageAfterCancellation(t *testing.T) {
 	started, release := make(chan struct{}), make(chan struct{})
 	done := make(chan error, 1)
 	go func() {
-		done <- historyimport.Run(ctx, s, pageSource(func(ctx context.Context, ref domain.ConversationRef, cursor string, limit int) (domain.HistoryPage, error) {
+		done <- historyimport.Run(ctx, s, pageSource(func(ctx context.Context, ref domain.ConversationRef, _ string, _ int) (domain.HistoryPage, error) {
 			if ref.ID != op.Status.ConversationID {
 				more := false
 				return domain.HistoryPage{HasMore: &more}, nil
@@ -233,9 +264,11 @@ func TestWorkerDistinguishesInvalidSourcePageFromUnavailableSource(t *testing.T)
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			done := make(chan error, 1)
-			source := pageSource(func(context.Context, domain.ConversationRef, string, int) (domain.HistoryPage, error) {
-				return domain.HistoryPage{}, tc.failure
-			})
+			source := pageSource(
+				func(context.Context, domain.ConversationRef, string, int) (domain.HistoryPage, error) {
+					return domain.HistoryPage{}, tc.failure
+				},
+			)
 			// Act
 			go func() { done <- historyimport.Run(ctx, s, source) }()
 			result := awaitState(t, s, op.Status.OperationID, "failed")
@@ -244,7 +277,9 @@ func TestWorkerDistinguishesInvalidSourcePageFromUnavailableSource(t *testing.T)
 				t.Fatal(err)
 			}
 			// Assert
-			if result.Status.StopReason == nil || *result.Status.StopReason != tc.reason || result.Status.InsertedCount != 0 || result.Status.PagesObserved != 0 {
+			if result.Status.StopReason == nil || *result.Status.StopReason != tc.reason ||
+				result.Status.InsertedCount != 0 ||
+				result.Status.PagesObserved != 0 {
 				t.Fatalf("source failure classification lost: %#v", result.Status)
 			}
 		})
@@ -256,7 +291,12 @@ type snapshotSource struct{ calls atomic.Int32 }
 func (s *snapshotSource) HistoryPage(context.Context, domain.ConversationRef, string, int) (domain.HistoryPage, error) {
 	return domain.HistoryPage{}, errors.New("wrong group fallback")
 }
-func (s *snapshotSource) PreloadHistoryPage(_ context.Context, ref domain.ConversationRef, limit int) (domain.HistoryPage, error) {
+
+func (s *snapshotSource) PreloadHistoryPage(
+	_ context.Context,
+	ref domain.ConversationRef,
+	limit int,
+) (domain.HistoryPage, error) {
 	s.calls.Add(1)
 	if limit != 2 {
 		return domain.HistoryPage{}, domain.Invalid("record limit lost")
@@ -267,7 +307,15 @@ func (s *snapshotSource) PreloadHistoryPage(_ context.Context, ref domain.Conver
 func TestWorkerExplicitPreloadSourceUsesDurableSilentImportAndNoFallback(t *testing.T) {
 	// Arrange
 	store, _ := prepare(t)
-	request := domain.HistoryImportRequest{Source: "conversation_preload", ConversationType: "direct", ConversationID: "synthetic-peer", RequestID: "00000000-0000-4000-8000-000000000042", Since: "2026-09-01T00:00:00Z", Until: "2026-11-01T00:00:00Z", PageSize: 2}
+	request := domain.HistoryImportRequest{
+		Source:           "conversation_preload",
+		ConversationType: "direct",
+		ConversationID:   "synthetic-peer",
+		RequestID:        "00000000-0000-4000-8000-000000000042",
+		Since:            "2026-09-01T00:00:00Z",
+		Until:            "2026-11-01T00:00:00Z",
+		PageSize:         2,
+	}
 	op, err := store.PrepareHistoryOperation(context.Background(), request)
 	if err != nil {
 		t.Fatal(err)
@@ -295,7 +343,14 @@ func TestWorkerExplicitPreloadSourceUsesDurableSilentImportAndNoFallback(t *test
 	cancel()
 	workerErr := <-done
 	// Assert
-	if err != nil || workerErr != nil || retry.Status.OperationID != op.Status.OperationID || source.calls.Load() != 1 || finished.Status.InsertedCount != 1 || finished.Status.SourceKind != "conversation_preload" || finished.Status.StopReason == nil || *finished.Status.StopReason != "source_window_limited" || finished.Status.HistoryComplete || finished.Status.SourceHasMore != nil {
+	if err != nil || workerErr != nil || retry.Status.OperationID != op.Status.OperationID ||
+		source.calls.Load() != 1 ||
+		finished.Status.InsertedCount != 1 ||
+		finished.Status.SourceKind != "conversation_preload" ||
+		finished.Status.StopReason == nil ||
+		*finished.Status.StopReason != "source_window_limited" ||
+		finished.Status.HistoryComplete ||
+		finished.Status.SourceHasMore != nil {
 		t.Fatal("snapshot journal, source selection or coverage failed")
 	}
 	for _, table := range []string{"message_events", "event_deliveries"} {
@@ -305,17 +360,31 @@ func TestWorkerExplicitPreloadSourceUsesDurableSilentImportAndNoFallback(t *test
 		}
 	}
 	var provenance string
-	if err = store.DB.QueryRow("SELECT source FROM messages WHERE message_id='snapshot-message'").Scan(&provenance); err != nil || provenance != "history" {
+	if err = store.DB.QueryRow("SELECT source FROM messages WHERE message_id='snapshot-message'").
+		Scan(&provenance); err != nil ||
+		provenance != "history" {
 		t.Fatal("historical provenance lost", err)
 	}
 }
 
 type phasedPageSource func(context.Context, domain.ConversationRef, string, *bool, int) (domain.HistoryPage, error)
 
-func (f phasedPageSource) HistoryPage(context.Context, domain.ConversationRef, string, int) (domain.HistoryPage, error) {
+func (f phasedPageSource) HistoryPage(
+	context.Context,
+	domain.ConversationRef,
+	string,
+	int,
+) (domain.HistoryPage, error) {
 	return domain.HistoryPage{}, errors.New("legacy route must not run")
 }
-func (f phasedPageSource) HistoryPageWithPhase(ctx context.Context, ref domain.ConversationRef, cursor string, old *bool, limit int) (domain.HistoryPage, error) {
+
+func (f phasedPageSource) HistoryPageWithPhase(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	cursor string,
+	old *bool,
+	limit int,
+) (domain.HistoryPage, error) {
 	return f(ctx, ref, cursor, old, limit)
 }
 func (f phasedPageSource) HistoryPhaseRequired() bool { return true }
@@ -326,24 +395,33 @@ func TestWorkerPropagatesDurableSourcePhase(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	var calls atomic.Int32
-	source := phasedPageSource(func(ctx context.Context, ref domain.ConversationRef, cursor string, old *bool, limit int) (domain.HistoryPage, error) {
-		n := calls.Add(1)
-		if n == 1 && (cursor != "0" || old != nil) {
-			return domain.HistoryPage{}, domain.Invalid("initial phase incorrect")
-		}
-		if n == 2 && (cursor != "0" || old == nil || !*old) {
-			return domain.HistoryPage{}, domain.Invalid("saved phase lost")
-		}
-		more, nextOld, next := n == 1, true, "0"
-		return domain.HistoryPage{PhaseRequired: true, Messages: []domain.Message{message(ref, "phase")}, HasMore: &more, Cursor: &next, IsOld: &nextOld}, nil
-	})
+	source := phasedPageSource(
+		func(_ context.Context, ref domain.ConversationRef, cursor string, old *bool, _ int) (domain.HistoryPage, error) {
+			n := calls.Add(1)
+			if n == 1 && (cursor != "0" || old != nil) {
+				return domain.HistoryPage{}, domain.Invalid("initial phase incorrect")
+			}
+			if n == 2 && (cursor != "0" || old == nil || !*old) {
+				return domain.HistoryPage{}, domain.Invalid("saved phase lost")
+			}
+			more, nextOld, next := n == 1, true, "0"
+			return domain.HistoryPage{
+				PhaseRequired: true,
+				Messages:      []domain.Message{message(ref, "phase")},
+				HasMore:       &more,
+				Cursor:        &next,
+				IsOld:         &nextOld,
+			}, nil
+		},
+	)
 	done := make(chan error, 1)
 	// Act
 	go func() { done <- historyimport.Run(ctx, s, source) }()
 	finished := awaitState(t, s, op.Status.OperationID, "completed")
 	cancel()
 	// Assert
-	if err := <-done; err != nil || calls.Load() != 2 || finished.Status.InsertedCount != 1 || finished.Status.DuplicateCount != 1 {
+	if err := <-done; err != nil || calls.Load() != 2 || finished.Status.InsertedCount != 1 ||
+		finished.Status.DuplicateCount != 1 {
 		t.Fatal("phase worker failed", err)
 	}
 }

@@ -48,7 +48,7 @@ func TestContactsRefreshBoundsAndPartialRecords(t *testing.T) {
 			}
 			defer s.Close()
 			pages := 0
-			source := contactPages(func(ctx context.Context, page, limit int) ([]domain.Contact, error) {
+			source := contactPages(func(_ context.Context, page, limit int) ([]domain.Contact, error) {
 				pages++
 				if limit != 200 {
 					t.Fatal("unbounded page")
@@ -119,7 +119,7 @@ func TestContactsRefreshCancellation(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	source := contactPages(func(ctx context.Context, page, limit int) ([]domain.Contact, error) {
+	source := contactPages(func(ctx context.Context, _, _ int) ([]domain.Contact, error) {
 		cancel()
 		<-ctx.Done()
 		return nil, ctx.Err()

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -17,6 +18,7 @@ func attachmentField(tag uint32, value []byte) []byte {
 	copy(data[8:], value)
 	return data
 }
+
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestAttachmentNativeFieldsPresenceOwnershipAndRedaction(t *testing.T) {
 	// Arrange: all native byte fields, signed/zero scalar values and two unknown occurrences.
@@ -74,7 +76,7 @@ func TestAttachmentNativeFieldsPresenceOwnershipAndRedaction(t *testing.T) {
 	}
 	for _, v := range []any{got, &got, got.Title, &got.Title} {
 		encoded, e := json.Marshal(v)
-		if e != nil || string(encoded) != "{}" || bytes.Contains([]byte(fmt.Sprintf("%#v", v)), []byte("value-")) {
+		if e != nil || string(encoded) != "{}" || strings.Contains(fmt.Sprintf("%#v", v), "value-") {
 			t.Fatal("private metadata exposed")
 		}
 	}

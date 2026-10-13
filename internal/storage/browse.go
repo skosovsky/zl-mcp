@@ -32,9 +32,9 @@ func (s *Store) Browse(
 		limit = 20
 	}
 	if order == "" {
-		order = "desc"
+		order = wireDesc
 	}
-	if limit < 1 || limit > 50 || (order != "asc" && order != "desc") {
+	if limit < 1 || limit > 50 || (order != "asc" && order != wireDesc) {
 		return nil, domain.Invalid("Use limit 1–50 and order asc or desc.")
 	}
 	bounds, boundsErr := browseBounds(since, until)
@@ -92,10 +92,10 @@ func (s *Store) Browse(
 	}
 	return map[string]any{
 		"messages":             values,
-		"has_more":             more,
-		"next_cursor":          next,
-		"empty_reason":         reason,
-		"coverage":             coverage,
+		fieldHasMore:           more,
+		fieldNextCursor:        next,
+		fieldEmptyReason:       reason,
+		fieldCoverage:          coverage,
 		"snapshot_at":          c.SnapshotAt,
 		"coverage_observed_at": now(),
 		"requested_since":      requestedSince,
@@ -121,7 +121,13 @@ func browseBounds(since, until string) ([2]time.Time, error) {
 	return bounds, nil
 }
 
-func browsePredicates(ref domain.ConversationRef, bounds [2]time.Time, c cursor, order string, limit int) ([]string, []any) {
+func browsePredicates(
+	ref domain.ConversationRef,
+	bounds [2]time.Time,
+	c cursor,
+	order string,
+	limit int,
+) ([]string, []any) {
 	clauses := []string{"m.conversation_type=?", "m.group_id=?", "m.seq<=?"}
 	args := []any{ref.Type, ref.ID, c.Snapshot}
 	for i, bound := range bounds {
@@ -137,7 +143,7 @@ func browsePredicates(ref domain.ConversationRef, bounds [2]time.Time, c cursor,
 	}
 	if c.ID != "" {
 		op := ">"
-		if order == "desc" {
+		if order == wireDesc {
 			op = "<"
 		}
 		clauses = append(clauses, "(m.sent_at"+op+"? OR (m.sent_at=? AND m.message_id"+op+"?))")
@@ -165,7 +171,7 @@ func scanBrowseRows(rows *sql.Rows, ref domain.ConversationRef) (browseRecords, 
 			return browseRecords{}, err
 		}
 		runes := []rune(body)
-		truncated := len(runes) > 150
+		truncated := len(runes) > historyPreviewRunes
 		var uri any
 		if truncated {
 			runes = runes[:150]
@@ -174,17 +180,17 @@ func scanBrowseRows(rows *sql.Rows, ref domain.ConversationRef) (browseRecords, 
 		values = append(
 			values,
 			map[string]any{
-				"conversation_type": ref.Type,
-				"conversation_id":   ref.ID,
-				"conversation_name": name,
-				"message_id":        id,
-				"sender_id":         sender,
-				"sender_name":       senderName,
-				"sent_at":           stamp,
-				"excerpt":           string(runes),
-				"text_truncated":    truncated,
-				"text_resource_uri": uri,
-				"direction":         "unknown",
+				fieldConversationType: ref.Type,
+				fieldConversationID:   ref.ID,
+				"conversation_name":   name,
+				"message_id":          id,
+				"sender_id":           sender,
+				"sender_name":         senderName,
+				"sent_at":             stamp,
+				"excerpt":             string(runes),
+				"text_truncated":      truncated,
+				"text_resource_uri":   uri,
+				"direction":           stateUnknownText,
 			},
 		)
 		times = append(times, stamp)
@@ -199,7 +205,11 @@ func scanBrowseRows(rows *sql.Rows, ref domain.ConversationRef) (browseRecords, 
 	return browseRecords{values: values, times: times, senders: senders}, nil
 }
 
-func (s *Store) browseEmptyReason(ctx context.Context, ref domain.ConversationRef, coverage map[string]any) (any, error) {
+func (s *Store) browseEmptyReason(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	coverage map[string]any,
+) (any, error) {
 	var reason any
 	var exists int
 	if err := s.DB.QueryRowContext(ctx, "SELECT count(*) FROM conversations WHERE conversation_type=? AND conversation_id=?", ref.Type, ref.ID).
@@ -217,6 +227,7 @@ func (s *Store) browseEmptyReason(ctx context.Context, ref domain.ConversationRe
 }
 
 func (s *Store) browseCursor(ctx context.Context, fingerprint, token string) (cursor, error) {
+	//nolint:exhaustruct_v5 // cursor preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	c := cursor{Fingerprint: fingerprint, SnapshotAt: now()}
 	if token != "" {
 		if err := s.DecodeCursor(token, &c); err != nil {
@@ -231,7 +242,12 @@ func (s *Store) browseCursor(ctx context.Context, fingerprint, token string) (cu
 	return c, nil
 }
 
-func (s *Store) setBrowseDirections(ctx context.Context, ref domain.ConversationRef, values []map[string]any, senders []string) error {
+func (s *Store) setBrowseDirections(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	values []map[string]any,
+	senders []string,
+) error {
 	var ownHash string
 	err := s.DB.QueryRowContext(ctx, "SELECT value FROM metadata WHERE key='account'").Scan(&ownHash)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -240,15 +256,20 @@ func (s *Store) setBrowseDirections(ctx context.Context, ref domain.Conversation
 	for i, v := range values {
 		hash := sha256.Sum256([]byte(senders[i]))
 		if ownHash != "" && hex.EncodeToString(hash[:]) == ownHash {
-			v["direction"] = "outgoing"
+			v["direction"] = directionOutgoing
 		} else if (ref.Type == domain.ConversationDirect && senders[i] == ref.ID) || (ref.Type == domain.ConversationGroup && ownHash != "") {
-			v["direction"] = "incoming"
+			v["direction"] = directionIncoming
 		}
 	}
 	return nil
 }
 
-func (s *Store) pageBrowseValues(values []map[string]any, times []string, c cursor, limit int) ([]map[string]any, any, bool, error) {
+func (s *Store) pageBrowseValues(
+	values []map[string]any,
+	times []string,
+	c cursor,
+	limit int,
+) ([]map[string]any, any, bool, error) {
 	var next any
 	more := len(values) > limit
 	if more {

@@ -1,0 +1,451 @@
+{
+  "initial_third_party_changes": 0,
+  "restored_files": [
+    {
+      "path": "third_party/zcago/api/add_group_blocked_member.go",
+      "head_sha256": "d0e2847449421b246a83d6b84b4cad36cce6de358fcddf1520e5cb0795055206",
+      "formatted_sha256": "fcc6ffacc8944927f95830f30ecd779e86ddd3ca002008b62669c84f604e3818"
+    },
+    {
+      "path": "third_party/zcago/api/add_reaction.go",
+      "head_sha256": "81789f1d17ad9b567201800e9ba1e9d0dec37893987a34a453d752e6e6f4a154",
+      "formatted_sha256": "cf45ae9da14dcecbf038e8755d9c5272dd926049222fb4051a2ef085ef3ea215"
+    },
+    {
+      "path": "third_party/zcago/api/add_unread_mark.go",
+      "head_sha256": "640a3687dd0ba44937fe78f6fd704668682b967ad329805489de6452b604a837",
+      "formatted_sha256": "30a9ae0996922d8a17f8846d29bb86925530e53838d3948b5c905bd2d384e4e0"
+    },
+    {
+      "path": "third_party/zcago/api/change_group_owner.go",
+      "head_sha256": "98126625da8bb459b69020f2e18870d733d01ef12b106bbb405ceb35e35951c6",
+      "formatted_sha256": "1ce5de58502dad16b0d9d1d2ca82ea4951371121f2cc6092366a183bfc1af2db"
+    },
+    {
+      "path": "third_party/zcago/api/create_auto_reply.go",
+      "head_sha256": "1ddc1747f7fa79f1901978c7d86ae5fbdf596336b7174e13ea5f0d4d61ca7cfc",
+      "formatted_sha256": "8cf05b92bbcc9cb3d3451c77f3036ca5bfbf1f770e8496f0afc73445c6b5c3f9"
+    },
+    {
+      "path": "third_party/zcago/api/create_reminder.go",
+      "head_sha256": "843ed10e62a027b180c1bd345cd3073015fe4fa13784c4625a1f8ea006acd995",
+      "formatted_sha256": "6bbbe5f4799be2863d9e9bedfa708826700d089d699bc4fe8e4830739dfa3855"
+    },
+    {
+      "path": "third_party/zcago/api/delete_chat.go",
+      "head_sha256": "cdd3ef21f16edaf05bd10002e07297ecbb27cea1629096e4610b1c1c942204bc",
+      "formatted_sha256": "d724d9c395a4ceeb0036775fc11b2ef9645f8950970cb081ad81d94c9ab18af1"
+    },
+    {
+      "path": "third_party/zcago/api/delete_message.go",
+      "head_sha256": "036717d4e77e68a4127546710e0e460f738d1a83ad1eaa72076513ff8df0651d",
+      "formatted_sha256": "7e0593e63df0f69ecc3e017df3a3ffd74e41b4273b934016d47d590d604bf63c"
+    },
+    {
+      "path": "third_party/zcago/api/find_user.go",
+      "head_sha256": "f87489c065461767b65d7b270803af3c765e60349300ff09d26ebd8b3f76aee8",
+      "formatted_sha256": "617d0be5313da3570c4b38ae7809ff2bd74bbf9062f9e097866617d4f155e99a"
+    },
+    {
+      "path": "third_party/zcago/api/forward_message.go",
+      "head_sha256": "5e2ae6b75816d0046b5ce263eadcd8f7f67394baf0998a5ad0eae42b3773e7c4",
+      "formatted_sha256": "db2962ea3b8020ece3bd98b05345d53f84ac493aa63caae04c9da43e751554ef"
+    },
+    {
+      "path": "third_party/zcago/api/get_all_friends.go",
+      "head_sha256": "dc6efbd35d9df49127bcf068b6ca46c28a15568382347d1e87918e0a798faff9",
+      "formatted_sha256": "bf1344d3019d975375741b2a9a2d5d972bee3f746a7470e83088daf9c6ee2cde"
+    },
+    {
+      "path": "third_party/zcago/api/get_avatar_list.go",
+      "head_sha256": "48c53ab5663650ecdb21b1510ce57d069a03e4e98d0e47dcd5d8ae9c4a542b97",
+      "formatted_sha256": "2664b2ad6a2be547d4dd55c3d594e966a2a0fcf4a64713ffdd91b964ed8a7ec0"
+    },
+    {
+      "path": "third_party/zcago/api/get_conversation_preload.go",
+      "head_sha256": "ca8f130fb8b52289f90834d59fdc92739cd8ea93e655c56a868b56d9e55786bb",
+      "formatted_sha256": "7e4a5462366b9c441e0405ec67dcd0d44c3a5303e5380c6932640d0ff20996ff"
+    },
+    {
+      "path": "third_party/zcago/api/get_conversation_preload_test.go",
+      "head_sha256": "1a8a1d84291de935bbaea8e5eb891f41f4b3cdec34be72ff2054e10bbcaf88db",
+      "formatted_sha256": "317978db6060ba18bd781d9c13a8d192604d9edb3858aa66a516b9e5e8ef5c5a"
+    },
+    {
+      "path": "third_party/zcago/api/get_group_blocked_member.go",
+      "head_sha256": "ab949293944ceea07870a323bc40051991939a9448389b67fb14a52ffdb77d60",
+      "formatted_sha256": "5e7a003e8d801a5dfa46a4bcef677bc91f0527320b30f1be02fff0a518b0b855"
+    },
+    {
+      "path": "third_party/zcago/api/get_group_board_list.go",
+      "head_sha256": "2575fcccabfd837c46cce3ebe81cfb5ef00224fcfc6dd7f497c3aaa35e247bf1",
+      "formatted_sha256": "9935f46983630cc20df9c1789fb39a94c51f5407826bcd1e280c13eb9a9f226b"
+    },
+    {
+      "path": "third_party/zcago/api/get_group_history_page.go",
+      "head_sha256": "6970c9cf303dc726cc90464d413db53f90c82273d7d631a304cfa87ef117cd9a",
+      "formatted_sha256": "36a37ce95b4961c0cbf5418b096634a4fedb92cce574a76b1b03d02d39007de1"
+    },
+    {
+      "path": "third_party/zcago/api/get_group_history_page_test.go",
+      "head_sha256": "3ea4471bef772b69c44036ac9d9fd5cc389ee162f24cbf6cd5f08f7a17d14d6a",
+      "formatted_sha256": "8c4d67c07188954cc658a519e90ecfbbf99c1db1e1c9a723dd9dfad603583a11"
+    },
+    {
+      "path": "third_party/zcago/api/get_group_invite_box_info.go",
+      "head_sha256": "608f06fcc65df9ee99221c71597352c6d323fc5a214360ecc269177e432c37eb",
+      "formatted_sha256": "971f9747a957d6746614b3beb4120ee2a10b2d7505c6723bf97fe4a0a7d46a47"
+    },
+    {
+      "path": "third_party/zcago/api/get_group_invite_box_list.go",
+      "head_sha256": "62c92602fd5f79a94f2d40f7660cb4cc6de54e8c7fdeb3ab69f53165547db378",
+      "formatted_sha256": "b33bb6c2b714ceddab0518e169ff8d01c5237e8fbf161851395b063f35104d4f"
+    },
+    {
+      "path": "third_party/zcago/api/get_group_pending_join_requests.go",
+      "head_sha256": "5a2fc45040431ed58d3fd8d806a641eaf3b7d864c3343eab5eeaa73eca9b246a",
+      "formatted_sha256": "6f50105ec774de5cbc9881f422b50f87d98edb7255fd1d1094ef488cddca7ba5"
+    },
+    {
+      "path": "third_party/zcago/api/get_reminder_list.go",
+      "head_sha256": "deb9c43f1128a332a97bd4c2ae6339e265c7034e020c15ce07e8a324cbf3ed5b",
+      "formatted_sha256": "c4593dda5a0a8d10379ae9cd5158e17b2e55fad4b919d64def5575edb52ec81f"
+    },
+    {
+      "path": "third_party/zcago/api/get_user_info.go",
+      "head_sha256": "e2aeea77f2da4f90954144c16c9b279ee232cb83841ddc619541f9a3af1f5110",
+      "formatted_sha256": "0954d6d13b29507c6d6ea57c1938f734675be82b8da4abfe5a80f9c2a172ae6a"
+    },
+    {
+      "path": "third_party/zcago/api/invite_user_to_groups.go",
+      "head_sha256": "0711a960cea4099a1d967fa974dd35d5f3ed5d7b3f3ecf2cfec0bc8f8738b03b",
+      "formatted_sha256": "a5a425fed7cbee340b9cc2edb66f04f03654aabb3366626a82b23003198ec068"
+    },
+    {
+      "path": "third_party/zcago/api/mobile_archive.go",
+      "head_sha256": "2cc18a3550bc220fe2d6ef70014373df92193bccbc93119222d8547830ed67cc",
+      "formatted_sha256": "ef1ffbf4f06cf8d1ad138f14447132ea13c2072d53e6aee9ad24085c797cd221"
+    },
+    {
+      "path": "third_party/zcago/api/mobile_archive_test.go",
+      "head_sha256": "27a47882c84d35732b70b12b49a18eac6513ed652a320523c4d3166af5bc9823",
+      "formatted_sha256": "5a0893991365a7408f0d30a45ffd22257a4d979ece4b1466504c8d62ab4ba45a"
+    },
+    {
+      "path": "third_party/zcago/api/mobile_backup.go",
+      "head_sha256": "9f4dc21554a4dbc2512f925e1df40b3a6e1c53de5fe2fc0c55ed60ebbe50551f",
+      "formatted_sha256": "4fca3997b255b17e4465fa35c45b5ac2cd96af12e5ccb8ab2c8dbaa4d63e8439"
+    },
+    {
+      "path": "third_party/zcago/api/mobile_backup_test.go",
+      "head_sha256": "b6650d6ba2c3102c9f141df736b09557be49e494511a37a543bb8df71c57708b",
+      "formatted_sha256": "cf66c9e0ade1d391ca1eb6cf3450a76d30973b41a0b4d4bb97a290dda312e5a7"
+    },
+    {
+      "path": "third_party/zcago/api/mobile_identities.go",
+      "head_sha256": "66f36e1e863de72e366e68c99177426ae456ad9140add1a0c8fbe1b2a42ba5a0",
+      "formatted_sha256": "d832274e268f31cf8700ed79b0ecd14f0b7bf326a870016e0dae2ef98b4b78b5"
+    },
+    {
+      "path": "third_party/zcago/api/mobile_identities_test.go",
+      "head_sha256": "341d46d1e19b8b4444a0ab652bd0468a94c6e7692e2eacbf4f5814e1fc7a2f5c",
+      "formatted_sha256": "ede5a5f819f50ab3878f26214b0909d32e4b872e6500ac44f7a8ffaf4314d352"
+    },
+    {
+      "path": "third_party/zcago/api/remove_group_blocked_member.go",
+      "head_sha256": "91959472aee02fbd95dec2fca892a5f4a5669ce45ca6723bd2acf5a87ee2964b",
+      "formatted_sha256": "1b3842643401d82413e78a355ec0fdb1ce2c0c9f5fd9b41f7b5da0283d9e2851"
+    },
+    {
+      "path": "third_party/zcago/api/remove_group_deputy.go",
+      "head_sha256": "5ea95689f791108a69f7eb634268d927fbbac094ce3c16102458e0110315a730",
+      "formatted_sha256": "11a0d5880e3e68aac8e543e9d3091e4cf7e645ce1179b8422caee6f47c6309b5"
+    },
+    {
+      "path": "third_party/zcago/api/remove_group_invite_box.go",
+      "head_sha256": "22338445983f95f609e19aeb82112b05b92e7ff191102e04fe34759078b14566",
+      "formatted_sha256": "9b83c5100dfec7fa570b94e74adb454caddd2fc2f3450d56f2e6903a0c4e899c"
+    },
+    {
+      "path": "third_party/zcago/api/remove_reminder.go",
+      "head_sha256": "45c6bfbbe49cce3cf305642fc26414773c712c31cbf16118b1d47c352a616835",
+      "formatted_sha256": "b3a2ab5ef56d339d099b11ba50974177f6870fb767df60a5757c219154c69024"
+    },
+    {
+      "path": "third_party/zcago/api/remove_unread_mark.go",
+      "head_sha256": "c9b47ca294958f47b9e54dd790041bf8120ebc975680b06d3b29f3f6ca6f2082",
+      "formatted_sha256": "18b78707368cae35aa8ebcd3ced0586f5809232885137034cd274ddd05b1adda"
+    },
+    {
+      "path": "third_party/zcago/api/remove_user_from_group.go",
+      "head_sha256": "214a2727e9d1a9e358c65db3f3ea27e02c9ddd518a420f727744d14be48fd05d",
+      "formatted_sha256": "c6989d39f5153c9cd5967e2a5f53e08aa1fcd6dfd553f391bb256887f824f846"
+    },
+    {
+      "path": "third_party/zcago/api/review_pending_member_request.go",
+      "head_sha256": "f07f7bdfceddc531e0df50b6a3efc26e3083991dac72a756e3ead4d347c37e56",
+      "formatted_sha256": "37ae494a1ad466337828c63055168d0fe8ddf88278b5fff2e396433a043e7486"
+    },
+    {
+      "path": "third_party/zcago/api/send_bank_card.go",
+      "head_sha256": "db0aa14a8623c66aa4bcea9ef970dbd839ce6dc0b0f75598e21d1c0d0e20658e",
+      "formatted_sha256": "e5c2b0cde55ffbbda2238292ab2146d7c9233e2648dcd5f5eea191a1fea746e6"
+    },
+    {
+      "path": "third_party/zcago/api/send_card.go",
+      "head_sha256": "127263c92d339af3a3c7316c96b023fcec8e461d4a0fb77fecf8f9b3da513cdd",
+      "formatted_sha256": "58bf02763becabb8b3ca3476713abd6aad68731e3ab496df3ebc12b142caf3e0"
+    },
+    {
+      "path": "third_party/zcago/api/send_delivered_event.go",
+      "head_sha256": "e805794b34292f48e7b0d529e2270d2c9d5b0428695a4586f39b2a8034360c46",
+      "formatted_sha256": "9b43244f228dc696fdca2d4c826a8f0173cd2903281115182a45ace4e7a06e2d"
+    },
+    {
+      "path": "third_party/zcago/api/send_gif.go",
+      "head_sha256": "a7280631b1fe744f391428004de6b1027c458f7ea83cac69aee9a6cf0d358e0b",
+      "formatted_sha256": "1bb5b158c6250a4ec065e7a2cc232bf888fce272806221fb10df461cce1e8e88"
+    },
+    {
+      "path": "third_party/zcago/api/send_link.go",
+      "head_sha256": "d823c947006b1781f8fe6be7e25e0351ef6496180ca0408d772dda71e6521e11",
+      "formatted_sha256": "17f077a108e6cb7fc62d89b8342bf7950aa53592832fb572d3c4d53d3301e351"
+    },
+    {
+      "path": "third_party/zcago/api/send_message.go",
+      "head_sha256": "ef34e13614de885e0891ee812d47350da5e052e52a6eb776154204ada244804f",
+      "formatted_sha256": "ba804c93b87977a9c4daee4ded85593c6faaf404d614273da12d47b715dbd1fc"
+    },
+    {
+      "path": "third_party/zcago/api/send_message_contract_test.go",
+      "head_sha256": "28f92ee91456d8d8f7e56a2eeca3bc23780efb6572cb89aeef957cdc1f8fb2e1",
+      "formatted_sha256": "7a4e4e372cb53cbc9e17af27136a9b80c405cc615478953ae76407f746810cb8"
+    },
+    {
+      "path": "third_party/zcago/api/send_report.go",
+      "head_sha256": "cc0696cf48365c6600b49c602f283dba51bfb580c1b3e2f62c1bc944eb8b2ea7",
+      "formatted_sha256": "62d2aeedd95d09774c2a957cc137b8959c7cac79f59b20634d5cf4f3dc7bad31"
+    },
+    {
+      "path": "third_party/zcago/api/send_seen_event.go",
+      "head_sha256": "63be4c5402ecab3b680cd6b2a961b414959e963dd2ba4321c471e08bf792fd31",
+      "formatted_sha256": "febe438e0adeb7294636e0684dbd687854bef2dc94c4d8972214855d6f858b3e"
+    },
+    {
+      "path": "third_party/zcago/api/send_sticker.go",
+      "head_sha256": "ffae5907ebb96a6e28ee32da0af048e0ca2ec0ff53e12a343c60007b1a41dcec",
+      "formatted_sha256": "e3329dbea60fa5aec58fc772a1bdb4998c8a12774090e010c6684b40eea04e6f"
+    },
+    {
+      "path": "third_party/zcago/api/send_typing_event.go",
+      "head_sha256": "201cca77569d55cf97eb0dee4dd71740750aec032dee9cbc6c3e221c516d6fa2",
+      "formatted_sha256": "39717f6da8db34019d182bd68a0c1df11780850a7e2b2dbe65ac3ef2c63fc0c9"
+    },
+    {
+      "path": "third_party/zcago/api/send_video.go",
+      "head_sha256": "a84cab401c058efca4df363727151480685b8eed830dd50f188b4c3924c71a01",
+      "formatted_sha256": "fb7eff222089e3676793f29a5603aefe7d6ee7994ea0fa8a0a92bf9836c79f33"
+    },
+    {
+      "path": "third_party/zcago/api/send_voice.go",
+      "head_sha256": "b74ffadf0af59799951bf2c0dffd2413b1d488be4573b5720fc817aed8fdc956",
+      "formatted_sha256": "2f544c949ca913deef5e7d2a29b0c94ff6e82884975d49bb42b462762a12bfce"
+    },
+    {
+      "path": "third_party/zcago/api/set_hidden_chat.go",
+      "head_sha256": "b2ad857a4e8e99f068b79bcf58cc03c922a8a242b5e591f966b111bcdd10d281",
+      "formatted_sha256": "0d0ab1ad4cc58a2b94ef8aaea808fdfa109a280cb666fe28f3fe523f90a034ee"
+    },
+    {
+      "path": "third_party/zcago/api/set_mute.go",
+      "head_sha256": "a175bf277e2812be199cd3d75ff78e3884fc59601bb5559598a913a16509bf1c",
+      "formatted_sha256": "021ee1cfb7ca120104b5cf077fea1695fefa9297554a2c5e9055f5c0c1657739"
+    },
+    {
+      "path": "third_party/zcago/api/set_pin_chat.go",
+      "head_sha256": "a02203a01150377a7b5ae21d6e90aff91075edbe76c8a6906d6a657aa4318d61",
+      "formatted_sha256": "9628897ec7e187f7b93970fbefe2225cd317bd0d1df21301e0fb5500299776c7"
+    },
+    {
+      "path": "third_party/zcago/api/undo_message.go",
+      "head_sha256": "671350f05434edbaaba7e3b70646037d7f51ed9b26a67869471d4fb41ccb270a",
+      "formatted_sha256": "ff77cf674bea123b3194572a05a2cd92bd69d38fc9a22e8fe5d57cd78bfc38bc"
+    },
+    {
+      "path": "third_party/zcago/api/update_account_avatar.go",
+      "head_sha256": "ffad7de668e8768f9b6f59d57a47a1db42c0ac467b3dacd6590a21fe7472da93",
+      "formatted_sha256": "c558848fb2e1d99b1ced1659d9547897706256ffac7e967e94530d6ebdc26301"
+    },
+    {
+      "path": "third_party/zcago/api/update_auto_delete_chat.go",
+      "head_sha256": "729cad939b647dc092110f65720d609e33fe38e28f9d34317a6eb3372e4b0c92",
+      "formatted_sha256": "d12855228f38d9fdf974e960564deaca2bb1edc132d26a4ce89a285795bd741c"
+    },
+    {
+      "path": "third_party/zcago/api/update_group_avatar.go",
+      "head_sha256": "fa7febdad158a184f7367825e09777748cfa6a0003f825f67207c1e801ba258c",
+      "formatted_sha256": "dda85a2efbce935dd931333b967e80f4fb77bbf164b6a77fed751ddc187d47f6"
+    },
+    {
+      "path": "third_party/zcago/api/update_group_setting.go",
+      "head_sha256": "dcf8149b987403a95f444f538a415eb15ef2183f6fe80778cfd5e38f602c5ba5",
+      "formatted_sha256": "975516015e11f93f74dea69049e49f7ce80482bd2014bdcd279b1b4cba1ef65d"
+    },
+    {
+      "path": "third_party/zcago/api/update_quick_message.go",
+      "head_sha256": "89361a1a1e85f2e5ba7223f06381079e363409a12370d2d53240096c97cea9c8",
+      "formatted_sha256": "38e6725197d8f6575f87d898e2c76483a1c2d3b96a830fcefa40143fe80656b5"
+    },
+    {
+      "path": "third_party/zcago/api/update_reminder.go",
+      "head_sha256": "82a7113b6e4cd0e9397363b3c43176920f2c3b3704b6c2f192f81a5d165fa492",
+      "formatted_sha256": "d05fef3fafcc796c990aee9f044dc9807ab6e9e9a1909dc93e5233f2dc72adf4"
+    },
+    {
+      "path": "third_party/zcago/api/upload_attachment.go",
+      "head_sha256": "4dde9ef7071f39464a79e9bf756dbf56454d87111e5bfb119116ca91ae625c56",
+      "formatted_sha256": "193c6a18b21d8542c564ad0c2198be8df2a2233634d23ae465b3eadf6b4d789b"
+    },
+    {
+      "path": "third_party/zcago/apis.go",
+      "head_sha256": "950178fbc09d5fdde94e4a5f02b2ade99f3a135c35bd6444d0e8c19e6d9b3720",
+      "formatted_sha256": "70ee6386317e78e4dbe8470d25d90d358aca8fb81f692bc5e488152123c82fd9"
+    },
+    {
+      "path": "third_party/zcago/errs/zca_error.go",
+      "head_sha256": "a9c4c479ef8417b007988dbd6623ed7b27f3748eb6a56f7a155e99bf3f6a7efd",
+      "formatted_sha256": "2eb25ea4298983614987a4d8d2ca63a2ff18b591284b70135511b754fadb42f3"
+    },
+    {
+      "path": "third_party/zcago/internal/httpx/client.go",
+      "head_sha256": "717457f318a2e1ede094ecf52ef152c29fdd5a989b04bf2f68bb7a7be386c6ea",
+      "formatted_sha256": "abfd3e23e7553e607aa95e58f9c8683b7d5b422bab0fa0bf0966a7b225e1deca"
+    },
+    {
+      "path": "third_party/zcago/internal/httpx/request.go",
+      "head_sha256": "e78a412848fe7f6497bfebca8c3671175ff64575f5e529486a4a9e3c15ddcddd",
+      "formatted_sha256": "edd2c4af715318601660d5e995a70b3d32277c476aafe3440059eb7ce1d45dd9"
+    },
+    {
+      "path": "third_party/zcago/internal/websocketx/client.go",
+      "head_sha256": "8fc8c724834443fa209ea515f2fc4529233685f58d3e7803adac590e0b688aca",
+      "formatted_sha256": "65921dabcbd2e3ff6308f4af94d637ee43f83bf7474a010f86bffacb64949641"
+    },
+    {
+      "path": "third_party/zcago/listener/diagnostics.go",
+      "head_sha256": "444018a3d8e2cf22f55889925fa6f4b662d4705fee67ca8f74c38997b63469f7",
+      "formatted_sha256": "ebc4f5f5cbf817b94d9f09500d73608e15e45777bae03813b1b9973f0cacbbc2"
+    },
+    {
+      "path": "third_party/zcago/listener/diagnostics_test.go",
+      "head_sha256": "57475d4d148eb2fa0437bfc615194206f146643e1c8595e937177747e5861465",
+      "formatted_sha256": "c72ad2c6d6176ec29c642b51480cb7daf3a5fc5a533b6f27ec394b47776c94c0"
+    },
+    {
+      "path": "third_party/zcago/listener/events/controls.go",
+      "head_sha256": "14fca84dcc87b0e2976fe081baf49c6354b5cf191d5df9db61e94bd062be4a39",
+      "formatted_sha256": "4944a9d920eff68c87c008c50deeaf99847ec8231abf84bff2b5d57bedd3b070"
+    },
+    {
+      "path": "third_party/zcago/listener/events/group_message.go",
+      "head_sha256": "77db34868aef9b28c5e0c9a7dab366e1d946bf785768a63d5e9eade2d0ef5c2c",
+      "formatted_sha256": "f9c60dece2130c165d9aebcdea1864433e41190cdc5374ea5f6aa30b3b9b60f1"
+    },
+    {
+      "path": "third_party/zcago/listener/events/message.go",
+      "head_sha256": "a40e2965669cd7f07884289f37ae38271e8f4e5a9e053e3adba784875a993867",
+      "formatted_sha256": "98d7dcf2198b047c8587b1adf68d0594c6cdc09c8ac055ce372ba505835ab261"
+    },
+    {
+      "path": "third_party/zcago/listener/events/mobile_diagnostics_test.go",
+      "head_sha256": "28fb087c4e69ccd33960d5ccd27055709cb9d13764ae342a003e0d5aaf3af902",
+      "formatted_sha256": "1e6519201f0d5108e83784124b2b604086b4b8f19a0942e6b6ec18cbcaf332fd"
+    },
+    {
+      "path": "third_party/zcago/listener/events/mobile_sync.go",
+      "head_sha256": "177a9069369fe64d161954b2b752ae1ad7e49df7e37d390b421536eb5df6daaa",
+      "formatted_sha256": "80f463148231f2829ea02107f8b23f3924eee672475e021f6b015e8b0a3c38a9"
+    },
+    {
+      "path": "third_party/zcago/listener/events/mobile_sync_test.go",
+      "head_sha256": "fb3ea6faeffcdef66d999d5b32e32d3af3b4f4dc041095ccea632cb04912b116",
+      "formatted_sha256": "fa865dc077affd5aeb037c6e19266bf8659d8ef8147cb5c76716d76761d5fa99"
+    },
+    {
+      "path": "third_party/zcago/listener/events/old_message.go",
+      "head_sha256": "12fd6b4a2e534d2a47e12b06138611506ca9f34219d7cb9a3a739719b6098f57",
+      "formatted_sha256": "3187d97ddfd8628c398b4043051d78f3584ca9291072bf7cfe75becde04775f5"
+    },
+    {
+      "path": "third_party/zcago/listener/events/replay_metadata_test.go",
+      "head_sha256": "23f2b924f714fec89c56bce6c7b1153816d12f19f31f9bc0208680af6e98e8b5",
+      "formatted_sha256": "e77d5a5575313ce4c92a70b3fbe51b8dc407572d0103cbb594c85308434645b2"
+    },
+    {
+      "path": "third_party/zcago/listener/messaging.go",
+      "head_sha256": "2cc91a9f5c5e5145c650b8fc34f8106c9646e2004d26af99756eb2bbcf852a5a",
+      "formatted_sha256": "9d60b87402c6ea1fa407e9a725a8174942b013c0946d778072af364a3c31c63f"
+    },
+    {
+      "path": "third_party/zcago/listener/mobile_sync.go",
+      "head_sha256": "1057b74086d5f265c10171c5789648bb2a05b9e573a47c13a399ed62653cc77e",
+      "formatted_sha256": "e3c389ad24827e04f36c98cd7bf850731e20044b4d5f24684ce8b03391a9c5eb"
+    },
+    {
+      "path": "third_party/zcago/listener/mobile_sync_test.go",
+      "head_sha256": "e6dc0240ed88555a8de65055fcb19b730feb14c7295e0714d8c9592306c2fa18",
+      "formatted_sha256": "289778a50117a45d2bbf6620127e04fdf1b96f150f787a347e43b324dc886505"
+    },
+    {
+      "path": "third_party/zcago/listener/replay_request_test.go",
+      "head_sha256": "3dd702007eca004a42a67eb209516ce629931f773cab252c8c8caec9e0c772ce",
+      "formatted_sha256": "f1aaf4305fdc4270eac290c587e7964af13cb8ada0679b1e4e2a87504a6171a2"
+    },
+    {
+      "path": "third_party/zcago/listener/replay_test.go",
+      "head_sha256": "c72f5d8f399b10b91f71d8fc05896b54aef9916fc2e22475b958485d1d8aa3ad",
+      "formatted_sha256": "daad91d1bc037b5bd7029001176d508093d16ff76bd92193d00499052d172740"
+    },
+    {
+      "path": "third_party/zcago/listener/router.go",
+      "head_sha256": "1a65a543d6d3cccc2188c8577e00f36efa8e782675314683809245328f668e3c",
+      "formatted_sha256": "4ba7752b6d7964ffd0e3751ac27581c4549b6898b707ff3d6e6a3afc168405eb"
+    },
+    {
+      "path": "third_party/zcago/model/reminder.go",
+      "head_sha256": "9af4ad6e7e1171950afba7f50570dfbed7013a2207f5ec9582044afe241589d5",
+      "formatted_sha256": "a9b97ed1aa9048d67f8b2249ebc00dd861615113e639cfaf6eb581f4f8d18d48"
+    },
+    {
+      "path": "third_party/zcago/options.go",
+      "head_sha256": "3b29acf07b42c901c9043a648ef4737b96509bdc1f16c751f7e7ea1d3655f67b",
+      "formatted_sha256": "a6d8bb54bff31792e33f9c71bc2f31f78e28d75ae61057e8d343d7d9b2da132a"
+    },
+    {
+      "path": "third_party/zcago/session/auth/login.go",
+      "head_sha256": "3c0d2c4e275e599078d32b4ef21633b15926ca6c82254bc3aa15149e2bcd6238",
+      "formatted_sha256": "9756501cf04cde10bd3bcc1148186a5f3b4d8db2398b7efda0923002480a1838"
+    },
+    {
+      "path": "third_party/zcago/session/auth/login_errors_test.go",
+      "head_sha256": "799201b577371e6f80e0c9635466be5295312fd5e80494183b96008099b38149",
+      "formatted_sha256": "bc512bb6821bc1b23c01754f18be236aa75210427fdb8ebbe94166b80c2438a9"
+    },
+    {
+      "path": "third_party/zcago/session/auth/login_qr.go",
+      "head_sha256": "faa00c8db855aaf0e3ab6ca984e64fc732f3a8309b6e2c37b501923ab4a3dee7",
+      "formatted_sha256": "489574dc9e3be24a542070584b74f9f6ed7e3a805e1ccaf3b862066816e5bb17"
+    },
+    {
+      "path": "third_party/zcago/session/context_impl.go",
+      "head_sha256": "d56aabba65e2d84a7a876964e25fcf47eb98a28683aa311f7938817e4ef9904b",
+      "formatted_sha256": "989aaaba77a3ee36643200427b2c3aeac63071f3985c741c7c4adc4076962847"
+    },
+    {
+      "path": "third_party/zcago/version/version.go",
+      "head_sha256": "c927005b6cc9fed6bbf0b253763d37416969292cadf019969e7b79b5521224d3",
+      "formatted_sha256": "49e8a38cd833742542bae3e253ea2eec0942daa9d61b2cea5ee2507671fa4bcb"
+    }
+  ],
+  "ast_equivalent_ignoring_import_order": true
+}

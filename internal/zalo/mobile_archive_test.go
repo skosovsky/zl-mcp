@@ -8,11 +8,13 @@ import (
 	"testing"
 
 	"github.com/amrakk/zcago"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 type archiveSDKFake struct {
 	zcago.API
+
 	owner  string
 	change bool
 	data   []byte
@@ -20,7 +22,13 @@ type archiveSDKFake struct {
 }
 
 func (f *archiveSDKFake) GetOwnID() string { return f.owner }
-func (f *archiveSDKFake) ConsumeMobileArchive(context.Context, *http.Request, *http.Client, func(context.Context, *http.Response) ([]byte, error)) ([]byte, error) {
+
+func (f *archiveSDKFake) ConsumeMobileArchive(
+	context.Context,
+	*http.Request,
+	*http.Client,
+	func(context.Context, *http.Response) ([]byte, error),
+) ([]byte, error) {
 	if f.change {
 		f.owner = "other"
 	}
@@ -37,7 +45,8 @@ func TestMobileArchiveAdapterRejectsChangedAccountAndPrivateFailure(t *testing.T
 		// Act.
 		data, e := client.ConsumeMobileArchive(context.Background(), nil, nil, nil)
 		// Assert.
-		if !errors.Is(e, domain.ErrMobileBackupInvalid) || data != nil || !bytes.Equal(source.data, make([]byte, len(source.data))) {
+		if !errors.Is(e, domain.ErrMobileBackupInvalid) || data != nil ||
+			!bytes.Equal(source.data, make([]byte, len(source.data))) {
 			t.Fatal("account mismatch or private result escaped")
 		}
 	}

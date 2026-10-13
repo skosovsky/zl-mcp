@@ -24,29 +24,29 @@ func (g *sessionGuard) ContactProfiles(parent context.Context, ids []string) ([]
 }
 
 func refreshContactProfiles(parent context.Context, store *storage.Store, source domain.ContactProfileSource) error {
-	ctx, cancel := context.WithTimeout(parent, 30*time.Second)
+	ctx, cancel := context.WithTimeout(parent, refreshContactProfilesTimeout)
 	defer cancel()
 	previous, err := store.ProfileStatus(ctx)
 	if err != nil {
 		return err
 	}
 	status := map[string]any{
-		"status":          "running",
-		"last_attempt_at": time.Now().UTC().Format(time.RFC3339Nano),
-		"last_success_at": previous["last_success_at"],
-		"requested_count": 0,
-		"returned_count":  0,
-		"missing_count":   0,
-		"stop_reason":     nil,
+		fieldStatus:        stateRunningText,
+		fieldLastAttemptAt: time.Now().UTC().Format(time.RFC3339Nano),
+		fieldLastSuccessAt: previous[fieldLastSuccessAt],
+		"requested_count":  0,
+		"returned_count":   0,
+		"missing_count":    0,
+		fieldStopReason:    nil,
 	}
 	if err = store.SetProfileStatus(ctx, status); err != nil {
 		return err
 	}
 	finish := func(state, reason string, cause error) error {
-		status["status"] = state
-		status["stop_reason"] = reason
+		status[fieldStatus] = state
+		status[fieldStopReason] = reason
 		if state == "completed" {
-			status["last_success_at"] = time.Now().UTC().Format(time.RFC3339Nano)
+			status[fieldLastSuccessAt] = time.Now().UTC().Format(time.RFC3339Nano)
 		}
 		save, stop := context.WithTimeout(context.WithoutCancel(parent), time.Second)
 		defer stop()
@@ -58,9 +58,9 @@ func refreshContactProfiles(parent context.Context, store *storage.Store, source
 	storageError := func(cause error) error {
 		reason := "storage_or_metadata_error"
 		if errors.Is(cause, context.Canceled) || errors.Is(cause, context.DeadlineExceeded) || ctx.Err() != nil {
-			reason = "cancelled_or_deadline"
+			reason = reasonCancelledOrDeadline
 		}
-		return finish("partial", reason, cause)
+		return finish(statePartialText, reason, cause)
 	}
 	return refreshProfilePages(ctx, store, source, status, finish, storageError)
 }
@@ -80,11 +80,18 @@ func validateProfileIdentities(ids []string, records []domain.Contact) error {
 	return nil
 }
 
-func refreshProfilePages(ctx context.Context, store *storage.Store, source domain.ContactProfileSource, status map[string]any, finish func(string, string, error) error, storageError func(error) error) error {
+func refreshProfilePages(
+	ctx context.Context,
+	store *storage.Store,
+	source domain.ContactProfileSource,
+	status map[string]any,
+	finish func(string, string, error) error,
+	storageError func(error) error,
+) error {
 	var requestedCount, returnedCount, missingCount int
 	after := ""
 	for range 20 {
-		ids, cursor, more, e := store.UnenrichedDirectIDs(ctx, after, 100)
+		ids, cursor, more, e := store.UnenrichedDirectIDs(ctx, after, contactProfilePageSize)
 		if e != nil {
 			return storageError(e)
 		}
@@ -98,7 +105,7 @@ func refreshProfilePages(ctx context.Context, store *storage.Store, source domai
 				return finish(state, reason, e)
 			}
 			if validationErr := validateProfileIdentities(ids, records); validationErr != nil {
-				return finish("partial", "storage_or_metadata_error", validationErr)
+				return finish(statePartialText, "storage_or_metadata_error", validationErr)
 			}
 			if _, e = store.PutContacts(ctx, records); e != nil {
 				return storageError(e)
@@ -110,10 +117,10 @@ func refreshProfilePages(ctx context.Context, store *storage.Store, source domai
 		}
 		if !more {
 			if missingCount > 0 {
-				return finish("partial", "missing_profiles", nil)
+				return finish(statePartialText, "missing_profiles", nil)
 			}
 			return finish("completed", "known_ids_processed", nil)
 		}
 	}
-	return finish("partial", "page_limit", nil)
+	return finish(statePartialText, "page_limit", nil)
 }

@@ -2,6 +2,7 @@ package mcpserver
 
 import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
+
 	operationsadapter "github.com/skosovsky/zl-mcp/internal/adapters/operations"
 	storeadapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
 	"github.com/skosovsky/zl-mcp/internal/app/archives"
@@ -18,7 +19,13 @@ import (
 
 func migrationReadPorts(owner *storage.Store, backend ...operationsadapter.Backend) Ports {
 	reader := storeadapter.New(owner)
-	ports := Ports{Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader}}
+	ports := Ports{
+		Search:        &search.Handler{Reads: reader},
+		Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader},
+		Authority:     reader,
+		Admission:     reader,
+		Events:        &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader},
+	}
 	selected := operationsadapter.Backend(control.New(""))
 	if len(backend) == 1 && backend[0] != nil {
 		selected = backend[0]
@@ -27,7 +34,11 @@ func migrationReadPorts(owner *storage.Store, backend ...operationsadapter.Backe
 		operations := operationsadapter.NewReader(selected)
 		ports.Archives = &archives.Handler{Reads: operationsadapter.NewArchiveReader(selected)}
 		ports.Conversations.LiveGroups = operations
-		ports.Operations = toolruntime.Capabilities{Messaging: &messaging.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}}
+		ports.Operations = toolruntime.Capabilities{
+			Messaging:  &messaging.Handler{Reads: operations, Commands: operations},
+			History:    &history.Handler{Reads: operations, Commands: operations},
+			Membership: &membership.Handler{Reads: operations, Commands: operations},
+		}
 	}
 	return ports
 }

@@ -58,7 +58,7 @@ func (c *Client) listenConversations(
 		return listenerFailure(e, "listener connection failed")
 	}
 	defer ln.Stop()
-	diagnostics := time.NewTicker(15 * time.Second)
+	diagnostics := time.NewTicker(listenerDiagnosticsInterval)
 	defer diagnostics.Stop()
 	pager := newReplayPager(includeDirect)
 	for {
@@ -73,9 +73,11 @@ func (c *Client) listenConversations(
 			}
 
 		case info := <-ln.Disconnected():
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.WarnContext(ctx, "zalo_listener_disconnected", "close_code", info.Code)
 			return listenerCloseFailure(info.Code, "listener disconnected")
 		case info := <-ln.Closed():
+			//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 			slog.WarnContext(ctx, "zalo_listener_closed", "close_code", info.Code)
 			return listenerCloseFailure(info.Code, "listener closed")
 		case err := <-ln.Error():
@@ -155,6 +157,7 @@ func logListenerError(err error) {
 		case *json.UnmarshalTypeError:
 			fields = append(fields, "json_field", e.Field, "expected_type", e.Type.String())
 		}
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.Warn("zalo_listener_error", fields...)
 		err = errors.Unwrap(err)
 	}
@@ -176,6 +179,7 @@ func logIngestionDiagnostics(ln listener.Listener) {
 		return
 	}
 	d := source.Diagnostics()
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.Info(
 		"zalo_ingestion_pressure",
 		"direct_frames",
@@ -195,6 +199,7 @@ func logIngestionDiagnostics(ln listener.Listener) {
 		"cancelled_emissions",
 		d.CancelledEmissions,
 	)
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.Info(
 		"zalo_ingestion_diagnostics",
 		"frames",

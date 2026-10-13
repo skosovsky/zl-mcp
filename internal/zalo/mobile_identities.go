@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/amrakk/zcago/errs"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/mobilebackup"
 )
@@ -14,7 +15,10 @@ type mobileIdentityRequester interface {
 	GetMobileIdentityMapping(context.Context, []string, []string) ([]byte, error)
 }
 
-func (c *Client) MapMobileBackupIdentities(ctx context.Context, request domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+func (c *Client) MapMobileBackupIdentities(
+	ctx context.Context,
+	request domain.MobileIdentityRequest,
+) ([]domain.MobileIdentityPair, error) {
 	mapper, ok := c.api.(mobileIdentityRequester)
 	if !ok {
 		return nil, domain.ErrHistoryUnsupported
@@ -30,7 +34,11 @@ func (c *Client) MapMobileBackupIdentities(ctx context.Context, request domain.M
 	return result, err
 }
 
-func mapMobileIdentities(ctx context.Context, request domain.MobileIdentityRequest, mapper mobileIdentityRequester) ([]domain.MobileIdentityPair, error) {
+func mapMobileIdentities(
+	ctx context.Context,
+	request domain.MobileIdentityRequest,
+	mapper mobileIdentityRequester,
+) ([]domain.MobileIdentityPair, error) {
 	if ctx == nil || mapper == nil {
 		return nil, domain.ErrMobileBackupInvalid
 	}
@@ -51,12 +59,14 @@ func mapMobileIdentities(ctx context.Context, request domain.MobileIdentityReque
 		return nil, ctx.Err()
 	}
 	if err != nil {
-		slog.Warn("mobile_identity_failed", "stage", "SDK_REQUEST")
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
+		slog.WarnContext(ctx, "mobile_identity_failed", "stage", "SDK_REQUEST")
 		return nil, domain.ErrMobileBackupInvalid
 	}
 	result, err := mobilebackup.DecodeIdentities(request, body)
 	if err != nil {
-		slog.Warn("mobile_identity_failed", "stage", "MAPPING_SHAPE")
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
+		slog.WarnContext(ctx, "mobile_identity_failed", "stage", "MAPPING_SHAPE")
 		return nil, domain.ErrMobileBackupInvalid
 	}
 	return result, nil

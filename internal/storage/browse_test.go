@@ -26,7 +26,17 @@ func TestBrowseBoundariesSnapshotRestartAndNamespace(t *testing.T) {
 	stamp := time.Date(2026, 10, 3, 10, 0, 0, 0, time.UTC)
 	put := func(kind, id, sender string, at time.Time) {
 		t.Helper()
-		if e := s.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: kind, ID: ref.ID}, ID: id, SenderID: sender, SentAt: at, Text: strings.Repeat("界", 151), Source: "replay"}); e != nil {
+		if e := s.Put(
+			ctx,
+			domain.Message{
+				Conversation: domain.ConversationRef{Type: kind, ID: ref.ID},
+				ID:           id,
+				SenderID:     sender,
+				SentAt:       at,
+				Text:         strings.Repeat("界", 151),
+				Source:       "replay",
+			},
+		); e != nil {
 			t.Fatal(e)
 		}
 	}
@@ -56,10 +66,14 @@ func TestBrowseBoundariesSnapshotRestartAndNamespace(t *testing.T) {
 	// Assert
 	a := first["messages"].([]map[string]any)[0]
 	b := second["messages"].([]map[string]any)
-	if a["message_id"] != "a" || a["direction"] != "incoming" || len(b) != 1 || b[0]["message_id"] != "b" || b[0]["direction"] != "outgoing" || second["has_more"] != false {
+	if a["message_id"] != "a" || a["direction"] != "incoming" || len(b) != 1 || b[0]["message_id"] != "b" ||
+		b[0]["direction"] != "outgoing" ||
+		second["has_more"] != false {
 		t.Fatalf("wrong boundaries, namespace, order or snapshot: %#v %#v", first, second)
 	}
-	if first["snapshot_at"] != second["snapshot_at"] || a["text_truncated"] != true || len([]rune(a["excerpt"].(string))) != 150 || a["text_resource_uri"] != ConversationMessageURI(ref, "a") {
+	if first["snapshot_at"] != second["snapshot_at"] || a["text_truncated"] != true ||
+		len([]rune(a["excerpt"].(string))) != 150 ||
+		a["text_resource_uri"] != ConversationMessageURI(ref, "a") {
 		t.Fatal("snapshot or Unicode resource contract lost")
 	}
 	if second["coverage"].(map[string]any)["history_complete"] != false {
@@ -78,7 +92,15 @@ func TestBrowseBoundariesSnapshotRestartAndNamespace(t *testing.T) {
 		ref   domain.ConversationRef
 		order string
 	}{{ref, "desc"}, {domain.ConversationRef{Type: "group", ID: ref.ID}, "asc"}} {
-		if _, err = s.Browse(ctx, changed.ref, since, until, changed.order, 1, first["next_cursor"].(string)); err == nil {
+		if _, err = s.Browse(
+			ctx,
+			changed.ref,
+			since,
+			until,
+			changed.order,
+			1,
+			first["next_cursor"].(string),
+		); err == nil {
 			t.Fatal("cursor crossed filter namespace/order")
 		}
 	}
@@ -99,7 +121,10 @@ func TestBrowseEmptyReasonsPolicyAndInvalidDates(t *testing.T) {
 	if err != nil || unknown["empty_reason"] != "unknown_conversation" {
 		t.Fatal(err, unknown)
 	}
-	if err = s.Put(ctx, domain.Message{Conversation: ref, ID: "a", SenderID: "peer", SentAt: stamp, Source: "live"}); err != nil {
+	if err = s.Put(
+		ctx,
+		domain.Message{Conversation: ref, ID: "a", SenderID: "peer", SentAt: stamp, Source: "live"},
+	); err != nil {
 		t.Fatal(err)
 	}
 	period, err := s.Browse(ctx, ref, stamp.Add(time.Hour).Format(time.RFC3339), "", "", 20, "")

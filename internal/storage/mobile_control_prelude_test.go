@@ -9,7 +9,9 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
-func controlPreludeFixture(t *testing.T) (*Store, HistoryOperation, domain.MobileHistoryPage, domain.MobileHistoryPage) {
+func controlPreludeFixture(
+	t *testing.T,
+) (*Store, HistoryOperation, domain.MobileHistoryPage, domain.MobileHistoryPage) {
 	t.Helper()
 	s, op, _, ordinary := mobileOperation(t)
 	source := ordinary.Snapshot
@@ -18,7 +20,19 @@ func controlPreludeFixture(t *testing.T) (*Store, HistoryOperation, domain.Mobil
 	source.ControlPreludeComplete = true
 	source.EarliestMS = ordinary.Records[0].Message.SentAt.Add(-24 * time.Hour).UnixMilli()
 	ordinary.Snapshot = source
-	prelude := domain.MobileHistoryPage{Snapshot: source, ControlPrelude: true, HasMore: true, Recalls: []domain.MobileHistoryRecall{{Conversation: op.Status.Ref(), MessageID: ordinary.Records[0].Message.ID, SenderID: "synthetic-account", RecordAtMS: source.EarliestMS}}}
+	prelude := domain.MobileHistoryPage{
+		Snapshot:       source,
+		ControlPrelude: true,
+		HasMore:        true,
+		Recalls: []domain.MobileHistoryRecall{
+			{
+				Conversation: op.Status.Ref(),
+				MessageID:    ordinary.Records[0].Message.ID,
+				SenderID:     "synthetic-account",
+				RecordAtMS:   source.EarliestMS,
+			},
+		},
+	}
 	return s, op, prelude, ordinary
 }
 
@@ -30,7 +44,9 @@ func TestMobileControlPreludeCommitsOutsidePeriodBeforeOrdinaryPages(t *testing.
 	// Act.
 	next, err := s.CommitMobileHistoryPage(ctx, op.Status.OperationID, op.Revision, prelude, 0)
 	// Assert: tombstone/proof precede messages and consume no ordinary counts.
-	if err != nil || next.Status.PagesObserved != 0 || next.Status.RecordsObserved != 0 || next.Status.MobileCoverage.SourceRecalls != 1 || !next.Status.MobileCoverage.ControlPreludeComplete {
+	if err != nil || next.Status.PagesObserved != 0 || next.Status.RecordsObserved != 0 ||
+		next.Status.MobileCoverage.SourceRecalls != 1 ||
+		!next.Status.MobileCoverage.ControlPreludeComplete {
 		t.Fatal("prelude not atomically committed", err)
 	}
 	checkpoint, err := s.MobileHistoryCheckpoint(ctx, op.Status.OperationID)
@@ -41,7 +57,8 @@ func TestMobileControlPreludeCommitsOutsidePeriodBeforeOrdinaryPages(t *testing.
 		t.Fatal("prelude repeated")
 	}
 	final, err := s.CommitMobileHistoryPage(ctx, next.Status.OperationID, next.Revision, ordinary, 0)
-	if err != nil || final.Status.InsertedCount != 0 || final.Status.MobileCoverage.SourceRecalls != 1 || final.Status.MobileCoverage.OwnRecalls != 0 {
+	if err != nil || final.Status.InsertedCount != 0 || final.Status.MobileCoverage.SourceRecalls != 1 ||
+		final.Status.MobileCoverage.OwnRecalls != 0 {
 		t.Fatal("ordinary page restored recalled target", err)
 	}
 	for _, table := range []string{"messages", "message_events", "event_deliveries"} {

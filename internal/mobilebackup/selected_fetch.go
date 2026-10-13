@@ -23,6 +23,7 @@ func (SelectedArchive) GoString() string { return "mobile backup selected archiv
 func (a *SelectedArchive) Clear() {
 	if a != nil {
 		clear(a.File.Data)
+		//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 		*a = SelectedArchive{}
 	}
 }
@@ -47,6 +48,7 @@ func FetchSelectedArchive(
 	}
 	defer account.Clear()
 	archive, pairs := account.archive, account.pairs
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.InfoContext(ctx, "mobile_archive_stage", "request_id", normalized.RequestID, "stage", "selection")
 	index, e := SelectArchiveIndex(ctx, archive, pairs, normalized.Ref())
 	if e != nil {
@@ -57,6 +59,7 @@ func FetchSelectedArchive(
 		if ctx.Err() != nil {
 			reason = "CANCELLED"
 		}
+		//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 		slog.WarnContext(
 			ctx,
 			"mobile_archive_selection_failed",
@@ -74,6 +77,7 @@ func FetchSelectedArchive(
 	if ctx.Err() != nil {
 		return SelectedArchive{}, ErrArchive
 	}
+	//nolint:exhaustruct_v5 // SelectedArchive keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	selected := SelectedArchive{
 		ref:                normalized.Ref(),
 		requestID:          normalized.RequestID,
@@ -83,6 +87,7 @@ func FetchSelectedArchive(
 		ContainerBytes:     account.containerBytes,
 		TrailingBytes:      account.trailingBytes,
 	}
+	//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 	account.archive.Files[index] = ArchiveFile{}
 	return selected, nil
 }

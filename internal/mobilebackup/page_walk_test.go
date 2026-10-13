@@ -61,6 +61,7 @@ func TestArchiveWalkCountsGapsAndProtectsCursorFromVisitor(t *testing.T) {
 		}
 	}
 }
+
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestArchiveWalkLimitsAndFailure(t *testing.T) {
 	for _, mode := range []string{"page", "message", "visitor", "cancel"} {

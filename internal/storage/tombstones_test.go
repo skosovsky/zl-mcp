@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 func TestDeletedMessageCannotBeRestoredByHistoryOrReplay(t *testing.T) {
@@ -86,7 +87,9 @@ func TestDeletionBeforeMessageAndTypedNamespace(t *testing.T) {
 		}
 	}
 	var certainty string
-	if e = s.DB.QueryRow("SELECT certainty FROM peer_first_incoming WHERE peer_id='same'").Scan(&certainty); e != nil || certainty != "unknown" {
+	if e = s.DB.QueryRow("SELECT certainty FROM peer_first_incoming WHERE peer_id='same'").
+		Scan(&certainty); e != nil ||
+		certainty != "unknown" {
 		t.Fatal("deletion fabricated novelty", e)
 	}
 	if e = s.Retain(ctx); e != nil {
@@ -111,7 +114,9 @@ func TestDeletionRollbackKeepsOriginalPayloadAndEvent(t *testing.T) {
 	if e = s.Put(ctx, m); e != nil {
 		t.Fatal(e)
 	}
-	if _, e = s.DB.Exec(`CREATE TRIGGER fail_removal BEFORE DELETE ON messages BEGIN SELECT RAISE(ABORT,'synthetic failure');END`); e != nil {
+	if _, e = s.DB.Exec(
+		`CREATE TRIGGER fail_removal BEFORE DELETE ON messages BEGIN SELECT RAISE(ABORT,'synthetic failure');END`,
+	); e != nil {
 		t.Fatal(e)
 	}
 	// Act.

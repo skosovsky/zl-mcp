@@ -22,7 +22,10 @@ func TestIntegerTimeWindowPreservesExactInterval(t *testing.T) {
 			t.Fatal("integer interval changed")
 		}
 	}
-	if _, _, ok := millisecondWindow(time.UnixMilli(math.MaxInt64).Add(time.Nanosecond), time.UnixMilli(math.MaxInt64).Add(time.Millisecond)); ok {
+	if _, _, ok := millisecondWindow(
+		time.UnixMilli(math.MaxInt64).Add(time.Nanosecond),
+		time.UnixMilli(math.MaxInt64).Add(time.Millisecond),
+	); ok {
 		t.Fatal("overflow accepted")
 	}
 	if _, ok := ceilMilliseconds(time.Unix(1<<62, 0)); ok {

@@ -85,8 +85,10 @@ func (p *MobileHistoryPage) Clear() {
 		clear(p.Records)
 		clear(p.Recalls)
 		if p.Next != nil {
+			//nolint:exhaustruct_v5 // MobileHistoryPosition preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 			*p.Next = MobileHistoryPosition{}
 		}
+		//nolint:exhaustruct_v5 // MobileHistoryPage preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 		*p = MobileHistoryPage{}
 	}
 }

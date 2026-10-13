@@ -47,6 +47,15 @@ type RetainedArchiveStore struct {
 	backup    bool // read-only recovery source; never opened through the cache constructor
 }
 
+func NewRetainedArchiveStore(dir string, budget int64) (*RetainedArchiveStore, error) {
+	return newRetainedArchiveStore(dir, budget, false)
+}
+
+// NewArchiveLibraryStore opens durable sources; only explicit preservation can publish.
+func NewArchiveLibraryStore(dir string, budget int64) (*RetainedArchiveStore, error) {
+	return newRetainedArchiveStore(dir, budget, true)
+}
+
 func (RetainedArchiveStore) String() string   { return "retained account archive store [redacted]" }
 func (RetainedArchiveStore) GoString() string { return "retained account archive store [redacted]" }
 
@@ -90,15 +99,6 @@ func (retainedFile) GoString() string     { return "retained archive file metada
 func (retainedMetadata) String() string   { return "retained archive metadata [redacted]" }
 func (retainedMetadata) GoString() string { return "retained archive metadata [redacted]" }
 
-func NewRetainedArchiveStore(dir string, budget int64) (*RetainedArchiveStore, error) {
-	return newRetainedArchiveStore(dir, budget, false)
-}
-
-// NewArchiveLibraryStore opens durable sources; only explicit preservation can publish.
-func NewArchiveLibraryStore(dir string, budget int64) (*RetainedArchiveStore, error) {
-	return newRetainedArchiveStore(dir, budget, true)
-}
-
 func newRetainedArchiveStore(dir string, budget int64, permanent bool) (*RetainedArchiveStore, error) {
 	if !filepath.IsAbs(dir) || budget < 1 || budget > 2<<30 {
 		return nil, ErrRetainedArchive
@@ -139,8 +139,10 @@ func newRetainedArchiveStore(dir string, budget int64, permanent bool) (*Retaine
 		root.Close()
 		return nil, ErrRetainedArchive
 	}
+	//nolint:exhaustruct_v5 // RetainedArchiveStore keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	s := &RetainedArchiveStore{
 		permanent: permanent,
+		//nolint:exhaustruct_v5 // SnapshotStore keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 		ledger: &SnapshotStore{
 			root:   root,
 			aead:   aead,
@@ -261,6 +263,7 @@ func (s *RetainedArchiveStore) Save(
 		return retainedManifest(meta, stored), nil
 	}
 	now := s.ledger.now()
+	//nolint:exhaustruct_v5 // retainedMetadata keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	meta := retainedMetadata{
 		SourceID:        id,
 		Account:         account,
@@ -296,7 +299,7 @@ func (s *RetainedArchiveStore) publish(
 		return RetainedArchiveManifest{}, ErrRetainedArchive
 	}
 	defer clear(header)
-	total := int64(4 + len(header))
+	total := int64(retainedMetadataSizeBytes + len(header))
 	for _, f := range files {
 		total += f.Size
 	}
@@ -309,7 +312,7 @@ func (s *RetainedArchiveStore) publish(
 	//nolint:gosec // G115: header length is checked against retainedMetadataLimit (1 MiB) before encoding.
 	binary.BigEndian.PutUint32(plain, uint32(len(header)))
 	copy(plain[4:], header)
-	offset := 4 + len(header)
+	offset := retainedMetadataSizeBytes + len(header)
 	for _, f := range a.archive.Files {
 		copy(plain[offset:], f.Data)
 		offset += len(f.Data)
@@ -328,7 +331,7 @@ func (s *RetainedArchiveStore) publish(
 		return RetainedArchiveManifest{}, ErrRetainedArchive
 	}
 	tmp := uuid.NewString() + ".tmp"
-	f, err := s.ledger.root.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	f, err := s.ledger.root.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, privateArchiveFileMode)
 	if err != nil {
 		return RetainedArchiveManifest{}, ErrRetainedArchive
 	}
@@ -358,6 +361,7 @@ func retainedManifest(m retainedMetadata, stored int64) RetainedArchiveManifest 
 			groups++
 		}
 	}
+	//nolint:exhaustruct_v5 // RetainedArchiveManifest keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	return RetainedArchiveManifest{
 		SourceID:    m.SourceID,
 		Scope:       "account",
@@ -461,7 +465,9 @@ func (s *RetainedArchiveStore) decode(id string) (retainedMetadata, AccountArchi
 		return retainedMetadata{}, AccountArchive{}, 0, ErrRetainedArchive
 	}
 	info, err := s.ledger.root.Lstat(name)
-	minimum := int64(len(retainedMagic) + s.ledger.aead.NonceSize() + s.ledger.aead.Overhead() + 4)
+	minimum := int64(
+		len(retainedMagic) + s.ledger.aead.NonceSize() + s.ledger.aead.Overhead() + retainedMetadataSizeBytes,
+	)
 	if err != nil || !privateRegular(info) || info.Size() < minimum || info.Size() > retainedMaxFileBytes {
 		return retainedMetadata{}, AccountArchive{}, 0, ErrRetainedArchive
 	}
@@ -501,12 +507,13 @@ func (s *RetainedArchiveStore) decode(id string) (retainedMetadata, AccountArchi
 	if d.Decode(&meta) != nil || d.Decode(new(any)) != io.EOF || !s.validRetainedMetadata(meta, id) {
 		return fail()
 	}
+	//nolint:exhaustruct_v5 // AccountArchive keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	archive := AccountArchive{
 		ciphertextBytes: meta.CiphertextBytes,
 		containerBytes:  meta.ContainerBytes,
 		trailingBytes:   meta.TrailingBytes,
 	}
-	offset = 4 + headerSize
+	offset = retainedMetadataSizeBytes + headerSize
 	for _, file := range meta.Files {
 		if file.Size < 1 || uint64(file.Size) > MaxFileBytes || file.Size > int64(len(plain)-offset) {
 			return fail()
@@ -544,7 +551,7 @@ func (s *RetainedArchiveStore) inventory() (int, int64, error) {
 	if err != nil {
 		return 0, 0, ErrRetainedArchive
 	}
-	entries, err := f.ReadDir(32)
+	entries, err := f.ReadDir(retainedInventoryBatch)
 	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	f.Close()
 	if err != nil && !errors.Is(err, io.EOF) || len(entries) > retainedMaxSources+3 {
@@ -610,15 +617,14 @@ func (s *RetainedArchiveStore) RemoveBound(ctx context.Context, id, accountKey s
 }
 
 func (s *RetainedArchiveStore) validRetainedMetadata(meta retainedMetadata, id string) bool {
-	return !(meta.SourceID != id ||
-		!canonicalIdentity(meta.Account) ||
-		meta.CreatedMS <= 0 ||
-		meta.ExpiresMS-meta.CreatedMS < time.Hour.Milliseconds() ||
-		meta.ExpiresMS-meta.CreatedMS > retainedMaxLifetime.Milliseconds() ||
-		len(meta.Files) < 1 ||
-		len(meta.Files) > MaxFiles ||
-		(s.permanent && (meta.PreservedMS <= 0 || meta.SourceStoredBytes <= 0)) ||
-		(!s.permanent && (meta.PreservedMS != 0 || meta.SourceStoredBytes != 0)))
+	return meta.SourceID == id &&
+		canonicalIdentity(meta.Account) &&
+		meta.CreatedMS > 0 &&
+		meta.ExpiresMS-meta.CreatedMS >= time.Hour.Milliseconds() &&
+		meta.ExpiresMS-meta.CreatedMS <= retainedMaxLifetime.Milliseconds() &&
+		len(meta.Files) >= 1 && len(meta.Files) <= MaxFiles &&
+		(!s.permanent || (meta.PreservedMS > 0 && meta.SourceStoredBytes > 0)) &&
+		(s.permanent || (meta.PreservedMS == 0 && meta.SourceStoredBytes == 0))
 }
 
 func (s *RetainedArchiveStore) inventoryEntry(entry os.DirEntry) (int, int64, error) {

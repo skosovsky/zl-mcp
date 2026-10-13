@@ -74,11 +74,11 @@ type receiverRoute struct {
 }
 
 func (r receiverRoute) RoundTrip(request *http.Request) (*http.Response, error) {
-	copy := request.Clone(request.Context())
+	requestCopy := request.Clone(request.Context())
 	u := *request.URL
 	u.Scheme, u.Host = r.target.Scheme, r.target.Host
-	copy.URL = &u
-	return r.transport.RoundTrip(copy)
+	requestCopy.URL = &u
+	return r.transport.RoundTrip(requestCopy)
 }
 func serviceRPC(t *testing.T, endpoint, token, method string, params map[string]any) map[string]any {
 	t.Helper()
@@ -124,6 +124,7 @@ func serviceRPC(t *testing.T, endpoint, token, method string, params map[string]
 func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) {
 	// Arrange: real service lifecycle, SQLite, MCP HTTP and signed TLS callbacks.
 	// Only the Zalo source and callback authority routing are synthetic.
+	//nolint:usetesting // A short temporary path keeps macOS Unix socket names within their bound; t.Cleanup owns removal.
 	dir, err := os.MkdirTemp("/tmp", "zl-events-service-")
 	if err != nil {
 		t.Fatal(err)
@@ -158,7 +159,9 @@ func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) 
 		mac := hmac.New(sha256.New, key)
 		mac.Write([]byte(r.Header.Get("Webhook-Id") + "." + r.Header.Get("Webhook-Timestamp") + "."))
 		mac.Write(body)
-		signature, readAllErr := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"))
+		signature, readAllErr := base64.StdEncoding.DecodeString(
+			strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"),
+		)
 		if readAllErr != nil || !hmac.Equal(signature, mac.Sum(nil)) {
 			t.Error("invalid independent HMAC verification")
 			http.Error(w, "signature", http.StatusBadRequest)

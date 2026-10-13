@@ -11,9 +11,24 @@ func TestConversationContractsRejectAmbiguousScope(t *testing.T) {
 		name, suffix string
 		good, bad    map[string]any
 	}{
-		{"conversation_ref", "input", map[string]any{"conversation_type": "direct", "conversation_id": "same"}, map[string]any{"conversation_id": "same"}},
-		{"collection_policy", "input", map[string]any{"mode": "all"}, map[string]any{"mode": "all", "conversations": []any{}}},
-		{"collection_policy", "input", map[string]any{"mode": "selected", "conversations": []any{map[string]any{"type": "direct", "id": "peer"}}}, map[string]any{"mode": "selected"}},
+		{
+			"conversation_ref",
+			"input",
+			map[string]any{"conversation_type": "direct", "conversation_id": "same"},
+			map[string]any{"conversation_id": "same"},
+		},
+		{
+			"collection_policy",
+			"input",
+			map[string]any{"mode": "all"},
+			map[string]any{"mode": "all", "conversations": []any{}},
+		},
+		{
+			"collection_policy",
+			"input",
+			map[string]any{"mode": "selected", "conversations": []any{map[string]any{"type": "direct", "id": "peer"}}},
+			map[string]any{"mode": "selected"},
+		},
 	}
 	for _, tc := range cases {
 		s, err := Compile(tc.name, tc.suffix)
@@ -34,7 +49,11 @@ func TestConversationContractsRejectAmbiguousScope(t *testing.T) {
 	}
 	// Synthetic zero bytes, constructed at runtime; never a receiver credential.
 	secret := "whsec_" + base64.StdEncoding.EncodeToString(make([]byte, 32))
-	base := map[string]any{"name": "zalo.conversation.message.created.v2", "arguments": map[string]any{"scope": "all"}, "delivery": map[string]any{"mode": "webhook", "url": "https://receiver.example/callback", "secret": secret}}
+	base := map[string]any{
+		"name":      "zalo.conversation.message.created.v2",
+		"arguments": map[string]any{"scope": "all"},
+		"delivery":  map[string]any{"mode": "webhook", "url": "https://receiver.example/callback", "secret": secret},
+	}
 	// Act / Assert
 	if err = s.Validate(base); err != nil {
 		t.Fatal(err)
@@ -55,7 +74,21 @@ func TestConversationEventPayloadHasTypedIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	payload := map[string]any{"schema_version": 2, "conversation_type": "direct", "conversation_id": "peer", "conversation_name": nil, "message_id": "m", "sender_id": "peer", "sender_name": nil, "sent_at": "2026-10-03T08:13:00Z", "text": "synthetic", "text_truncated": false, "text_resource_uri": nil, "direction": "incoming", "first_incoming": nil}
+	payload := map[string]any{
+		"schema_version":    2,
+		"conversation_type": "direct",
+		"conversation_id":   "peer",
+		"conversation_name": nil,
+		"message_id":        "m",
+		"sender_id":         "peer",
+		"sender_name":       nil,
+		"sent_at":           "2026-10-03T08:13:00Z",
+		"text":              "synthetic",
+		"text_truncated":    false,
+		"text_resource_uri": nil,
+		"direction":         "incoming",
+		"first_incoming":    nil,
+	}
 	// Act / Assert
 	if err = s.Validate(payload); err != nil {
 		t.Fatal(err)

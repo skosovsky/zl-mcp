@@ -14,7 +14,7 @@ const discoveryCaptureLimit = 1 << 20
 
 func discoveryMethod(method string) bool {
 	switch method {
-	case "initialize", "server/discover", "tools/list", "resources/list", "resources/templates/list", "events/list":
+	case "initialize", "server/discover", methodToolsList, "resources/list", "resources/templates/list", "events/list":
 		return true
 	}
 	return false
@@ -24,6 +24,7 @@ func discoveryMethod(method string) bool {
 // Other discovery methods retain no response body.
 type discoveryResponse struct {
 	http.ResponseWriter
+
 	status   int
 	written  int
 	capture  bool
@@ -57,7 +58,7 @@ func (w *discoveryResponse) Write(body []byte) (int, error) {
 
 func logDiscovery(method, protocol string, w *discoveryResponse, started time.Time) {
 	switch protocol {
-	case "2026-07-28", "2025-11-25", "2025-06-18", "2024-11-05":
+	case protocolVersion, "2025-11-25", "2025-06-18", "2024-11-05":
 	case "":
 		protocol = "absent"
 	default:
@@ -67,8 +68,19 @@ func logDiscovery(method, protocol string, w *discoveryResponse, started time.Ti
 	if status == 0 {
 		status = http.StatusOK
 	}
-	fields := []any{"method", method, "protocol", protocol, "http_status", status, "duration_ms", time.Since(started).Milliseconds(), "response_bytes", w.written}
-	if method == "tools/list" && status == http.StatusOK && !w.overflow {
+	fields := []any{
+		"method",
+		method,
+		"protocol",
+		protocol,
+		"http_status",
+		status,
+		"duration_ms",
+		time.Since(started).Milliseconds(),
+		"response_bytes",
+		w.written,
+	}
+	if method == methodToolsList && status == http.StatusOK && !w.overflow {
 		var response struct {
 			Result *struct {
 				Tools      json.RawMessage `json:"tools"`
@@ -86,10 +98,21 @@ func logDiscovery(method, protocol string, w *discoveryResponse, started time.Ti
 					archive = archive || tool.Name == "zalo_list_archive_sources"
 				}
 				hash := sha256.Sum256(response.Result.Tools)
-				fields = append(fields, "tool_count", len(tools), "archive_inventory_present", archive, "has_more", response.Result.NextCursor != "", "catalogue_sha256", hex.EncodeToString(hash[:]))
+				fields = append(
+					fields,
+					"tool_count",
+					len(tools),
+					"archive_inventory_present",
+					archive,
+					"has_more",
+					response.Result.NextCursor != "",
+					"catalogue_sha256",
+					hex.EncodeToString(hash[:]),
+				)
 			}
 		}
 	}
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.Info("mcp_discovery", fields...)
 	clear(w.body.Bytes())
 }

@@ -72,8 +72,8 @@ func controlScanFixture(t *testing.T, count int, modify func(*sql.DB)) (Selected
 
 func controlOwnerMapper(counter *int) domain.MobileIdentitySource {
 	return identitySourceFunc(
-		func(ctx context.Context, r domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-			*counter = *counter + 1
+		func(_ context.Context, r domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+			*counter++
 			if len(r.Direct) != 1 || r.Direct[0] != "901" || len(r.Groups) != 0 {
 				return nil, errors.New("unexpected synthetic identity request")
 			}

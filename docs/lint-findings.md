@@ -2,7 +2,7 @@
 
 Актуализировано после упрощения context-тестов: 2026-10-13. golangci-lint 2.14.0, root toolchain Go 1.27.2, конфиг `.golangci.yml`.
 
-Всего **1573** актуальных замечаний после L04: root — **1408**, `tools/harness` — **165**. Root lint успешно загрузил пакеты; compiler/loader blocker отсутствует. Lint остаётся FAIL из-за перечисленных diagnostics. Несколько правил на одной строке учитываются отдельно.
+Всего **0** актуальных замечаний после L05 candidate: root — **0**, `tools/harness` — **0**. Root lint успешно загрузил пакеты; compiler/loader blocker отсутствует. Lint PASS в обоих модулях; L05 принят: completeness 100%, correctness PASS; L06 остаётся OPEN. Несколько правил на одной строке учитываются отдельно.
 
 По сравнению со снимком до восстановления компиляции не воспроизвелись **18** записей (включая агрегированный compile blocker), новых записей — **2**. ID совпавших замечаний сохранены. Исчезнувшие записи вынесены в конец документа и не входят в актуальную сводку.
 
@@ -18,7 +18,8 @@
 | L02 | Compilation PASS; race PASS для 11 затронутых пакетов; audit/telemetry targeted race PASS. errcheck/ineffassign/wastedassign/sqlclosecheck/nolintlint: 0 diagnostics. | `/tmp/zl-lint-L02-race.log`, `/tmp/zl-lint-L02-final-root.json` |
 | L03 | Compilation PASS; root contract/privacy/parsing race PASS; tools race PASS; frozen hash/null/Unicode and negative persisted-budget golden checks PASS. | `/tmp/zl-lint-L03-race.log`, `/tmp/zl-lint-L03-goldens.log`, `/tmp/zl-lint-L03-tools-race.log` |
 | L04 | Accepted: independent completeness 100% (8/8), correctness PASS; complexity/shadow/unused groups 0. Root/tools race/vet, architecture and offline PASS. | `docs/lint-evidence/L04/acceptance.md` |
-| L05–L06 | OPEN | — |
+| L05 | ACCEPTED: completeness 100%, correctness PASS | candidate b6a5d31f… |
+| L06 | OPEN | — |
 
 L01 закрывает архитектурный blocker. Статусы lint IDs обновляются по полному успешному loader run; текущий registry сохраняет закрытые и новые IDs. Shared performance worker уже имеет cleanup в TestMain; сохраняем его и проверяем build-failure путь, не создаём второй lifetime.
 
@@ -183,176 +184,271 @@ GOWORK=off golangci-lint run --config ../../.golangci.yml --timeout 10m --max-is
 
 ## Diagnostics, добавленные при реализации
 
-Состояние после L04. OPEN — актуальный diagnostic; FIXED — устранён кодом или заменён новым diagnostic; SUPPRESSED — минимальный объяснённый nolint. Исходные группы ниже сохранены как evidence. Текущие позиции и статусы всех ID: `docs/lint-evidence/registry.json`.
+Состояние после L05. OPEN — актуальный diagnostic; FIXED — устранён кодом или заменён новым diagnostic; SUPPRESSED — минимальный объяснённый nolint. Исходные группы ниже сохранены как evidence. Текущие позиции и статусы всех ID: `docs/lint-evidence/registry.json`.
 
-| ID | Правило | Файл:строка | Замечание |
-|---|---|---|---|
-| L2598 | exhaustruct_v5 | `internal/evalfixture/fixture.go:421` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
-| L2599 | exhaustruct_v5 | `internal/evaluation/model.go:99` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
-| L2784 | exhaustruct_v5 | `internal/service/mobile_archive_probe.go:71` | service.archiveProbeStats is missing fields convertible, unsupported, controls, textCandidates, unresolvedQuotes, unresolvedMentions, ownRecallCandidates, blocked, walMode, coverage |
-| L2600 | exhaustruct_v5 | `internal/service/run.go:291` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
-| L2601 | exhaustruct_v5 | `internal/service/run.go:692` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
-| L2767 | exhaustruct_v5 | `internal/storage/conversation_views.go:338` | storage.conversationCursor is missing fields Kind, ID |
-| L2734 | goconst | `internal/collector/contact_profiles.go:61` | string &#96;cancelled_or_deadline&#96; has 3 occurrences, make it a constant |
-| L2735 | goconst | `internal/collector/contacts.go:121` | string &#96;unsupported&#96; has 4 occurrences, make it a constant |
-| L2736 | goconst | `internal/collector/contacts.go:121` | string &#96;source_unsupported&#96; has 4 occurrences, make it a constant |
-| L2737 | goconst | `internal/collector/contacts.go:123` | string &#96;partial&#96; has 4 occurrences, make it a constant |
-| L2738 | goconst | `internal/collector/contacts.go:123` | string &#96;auth_required&#96; has 6 occurrences, make it a constant |
-| L2739 | goconst | `internal/collector/contacts.go:125` | string &#96;cancelled_or_deadline&#96; has 3 occurrences, make it a constant |
-| L2740 | goconst | `internal/collector/preload_catalog.go:52` | string &#96;partial&#96; has 4 occurrences, make it a constant |
-| L2741 | goconst | `internal/collector/preload_catalog.go:55` | string &#96;unsupported&#96; has 4 occurrences, make it a constant |
-| L2742 | goconst | `internal/collector/preload_catalog.go:55` | string &#96;source_unsupported&#96; has 4 occurrences, make it a constant |
-| L2743 | goconst | `internal/collector/preload_catalog.go:57` | string &#96;auth_required&#96; has 6 occurrences, make it a constant |
-| L2744 | goconst | `internal/collector/preload_catalog.go:61` | string &#96;cancelled_or_deadline&#96; has 3 occurrences, make it a constant |
-| L2745 | goconst | `internal/collector/preload_probe.go:15` | string &#96;unsupported&#96; has 4 occurrences, make it a constant |
-| L2746 | goconst | `internal/collector/preload_probe.go:16` | string &#96;source_unsupported&#96; has 4 occurrences, make it a constant |
-| L2747 | goconst | `internal/collector/preload_probe.go:80` | string &#96;auth_required&#96; has 6 occurrences, make it a constant |
-| L2748 | goconst | `internal/collector/run.go:380` | string &#96;auth_required&#96; has 6 occurrences, make it a constant |
-| L2624 | goconst | `internal/evaluation/grader.go:116` | string &#96;length&#96; has 3 occurrences, make it a constant |
-| L2625 | goconst | `internal/evaluation/runner.go:236` | string &#96;length&#96; has 3 occurrences, make it a constant |
-| L2626 | gofmt | `internal/evaluation/checkpoints_test.go:104` | File is not properly formatted |
-| L2627 | gofmt | `internal/evaluation/process_test.go:107` | File is not properly formatted |
-| L2628 | gofmt | `internal/mcpserver/sdk_identity_test.go:119` | File is not properly formatted |
-| L2629 | gofmt | `internal/mcpserver/sdk_lifecycle_test.go:275` | File is not properly formatted |
-| L2631 | gofmt | `internal/mobilebackup/attachment_test.go:19` | File is not properly formatted |
-| L2632 | gofmt | `internal/mobilebackup/blocks.go:24` | File is not properly formatted |
-| L2633 | gofmt | `internal/mobilebackup/identities.go:75` | File is not properly formatted |
-| L2634 | gofmt | `internal/mobilebackup/offer_runner_test.go:96` | File is not properly formatted |
-| L2635 | gofmt | `internal/mobilebackup/page_walk_test.go:63` | File is not properly formatted |
-| L2636 | gofmt | `internal/mobilebackup/session_download_test.go:21` | File is not properly formatted |
-| L2637 | gofmt | `internal/mobilebackup/xz.go:52` | File is not properly formatted |
-| L2638 | gofmt | `internal/observability/native_test.go:47` | File is not properly formatted |
-| L2639 | gofmt | `internal/observability/observer_test.go:60` | File is not properly formatted |
-| L2640 | gofmt | `internal/service/mobile_page_test.go:102` | File is not properly formatted |
-| L2641 | gofmt | `internal/storage/contacts.go:45` | File is not properly formatted |
-| L2642 | gofmt | `internal/storage/deliveries.go:247` | File is not properly formatted |
-| L2643 | gofmt | `internal/storage/events.go:162` | File is not properly formatted |
-| L2644 | gofmt | `internal/storage/mobile_history.go:158` | File is not properly formatted |
-| L2645 | gofmt | `internal/storage/mobile_history_test.go:132` | File is not properly formatted |
-| L2647 | goimports | `internal/evaluation/checkpoints_test.go:104` | File is not properly formatted |
-| L2648 | goimports | `internal/evaluation/process_test.go:107` | File is not properly formatted |
-| L2649 | goimports | `internal/mcpserver/sdk_identity_test.go:119` | File is not properly formatted |
-| L2650 | goimports | `internal/mcpserver/sdk_lifecycle_test.go:275` | File is not properly formatted |
-| L2652 | goimports | `internal/mobilebackup/attachment_test.go:19` | File is not properly formatted |
-| L2653 | goimports | `internal/mobilebackup/blocks.go:24` | File is not properly formatted |
-| L2654 | goimports | `internal/mobilebackup/identities.go:75` | File is not properly formatted |
-| L2655 | goimports | `internal/mobilebackup/offer_runner_test.go:96` | File is not properly formatted |
-| L2656 | goimports | `internal/mobilebackup/page_walk_test.go:63` | File is not properly formatted |
-| L2657 | goimports | `internal/mobilebackup/session_download_test.go:21` | File is not properly formatted |
-| L2658 | goimports | `internal/mobilebackup/xz.go:52` | File is not properly formatted |
-| L2659 | goimports | `internal/observability/native_test.go:47` | File is not properly formatted |
-| L2660 | goimports | `internal/observability/observer_test.go:60` | File is not properly formatted |
-| L2661 | goimports | `internal/service/mobile_page_test.go:102` | File is not properly formatted |
-| L2662 | goimports | `internal/storage/contacts.go:45` | File is not properly formatted |
-| L2663 | goimports | `internal/storage/deliveries.go:247` | File is not properly formatted |
-| L2664 | goimports | `internal/storage/events.go:162` | File is not properly formatted |
-| L2665 | goimports | `internal/storage/mobile_history.go:158` | File is not properly formatted |
-| L2666 | goimports | `internal/storage/mobile_history_test.go:132` | File is not properly formatted |
-| L2668 | golines | `cmd/zl-mcp-eval/main.go:197` | File is not properly formatted |
-| L2785 | golines | `internal/app/search/read.go:236` | File is not properly formatted |
-| L2751 | golines | `internal/collector/contact_profiles.go:83` | File is not properly formatted |
-| L2752 | golines | `internal/collector/contacts.go:131` | File is not properly formatted |
-| L2786 | golines | `internal/collector/join.go:556` | File is not properly formatted |
-| L2587 | golines | `internal/collector/run.go:282` | File is not properly formatted |
-| L2609 | golines | `internal/domain/sending_fingerprint_test.go:18` | File is not properly formatted |
-| L2753 | golines | `internal/evalfixture/fixture.go:380` | File is not properly formatted |
-| L2669 | golines | `internal/evaluation/checkpoints.go:190` | File is not properly formatted |
-| L2670 | golines | `internal/evaluation/checkpoints_test.go:104` | File is not properly formatted |
-| L2671 | golines | `internal/evaluation/grader.go:142` | File is not properly formatted |
-| L2672 | golines | `internal/evaluation/process_test.go:107` | File is not properly formatted |
-| L2754 | golines | `internal/evaluation/runner.go:280` | File is not properly formatted |
-| L2673 | golines | `internal/events/conversation_test.go:135` | File is not properly formatted |
-| L2755 | golines | `internal/events/subscriptions.go:241` | File is not properly formatted |
-| L2674 | golines | `internal/events/worker.go:202` | File is not properly formatted |
-| L2675 | golines | `internal/historyimport/mobile_worker.go:222` | File is not properly formatted |
-| L2756 | golines | `internal/historyimport/worker.go:124` | File is not properly formatted |
-| L2676 | golines | `internal/mcpserver/conversations.go:59` | File is not properly formatted |
-| L2677 | golines | `internal/mcpserver/http_test.go:179` | File is not properly formatted |
-| L2678 | golines | `internal/mcpserver/migration_inputs_test.go:121` | File is not properly formatted |
-| L2679 | golines | `internal/mcpserver/sdk_identity_test.go:119` | File is not properly formatted |
-| L2680 | golines | `internal/mcpserver/sdk_lifecycle_test.go:275` | File is not properly formatted |
-| L2681 | golines | `internal/mcpserver/server.go:379` | File is not properly formatted |
-| L2787 | golines | `internal/messaging/manager.go:142` | File is not properly formatted |
-| L2788 | golines | `internal/mobilebackup/account_inspection.go:73` | File is not properly formatted |
-| L2789 | golines | `internal/mobilebackup/account_metadata.go:119` | File is not properly formatted |
-| L2683 | golines | `internal/mobilebackup/attachment_test.go:19` | File is not properly formatted |
-| L2684 | golines | `internal/mobilebackup/blocks.go:24` | File is not properly formatted |
-| L2790 | golines | `internal/mobilebackup/history_page.go:141` | File is not properly formatted |
-| L2685 | golines | `internal/mobilebackup/identities.go:75` | File is not properly formatted |
-| L2773 | golines | `internal/mobilebackup/message_conversion.go:215` | File is not properly formatted |
-| L2791 | golines | `internal/mobilebackup/offer_runner.go:105` | File is not properly formatted |
-| L2686 | golines | `internal/mobilebackup/offer_runner_test.go:96` | File is not properly formatted |
-| L2687 | golines | `internal/mobilebackup/page_walk_test.go:63` | File is not properly formatted |
-| L2792 | golines | `internal/mobilebackup/prepared_page.go:131` | File is not properly formatted |
-| L2688 | golines | `internal/mobilebackup/retained_archive_test.go:270` | File is not properly formatted |
-| L2774 | golines | `internal/mobilebackup/row_page.go:178` | File is not properly formatted |
-| L2689 | golines | `internal/mobilebackup/session_download_test.go:21` | File is not properly formatted |
-| L2793 | golines | `internal/mobilebackup/snapshot.go:607` | File is not properly formatted |
-| L2794 | golines | `internal/mobilebackup/snapshot_page.go:131` | File is not properly formatted |
-| L2690 | golines | `internal/mobilebackup/snapshot_sqlite_test.go:87` | File is not properly formatted |
-| L2795 | golines | `internal/mobilebackup/snapshot_terminal.go:63` | File is not properly formatted |
-| L2775 | golines | `internal/mobilebackup/sqlite.go:600` | File is not properly formatted |
-| L2691 | golines | `internal/mobilebackup/xz.go:52` | File is not properly formatted |
-| L2692 | golines | `internal/observability/native_test.go:47` | File is not properly formatted |
-| L2693 | golines | `internal/observability/observer_test.go:60` | File is not properly formatted |
-| L2796 | golines | `internal/service/account_archive_control.go:103` | File is not properly formatted |
-| L2797 | golines | `internal/service/archive_catalog.go:188` | File is not properly formatted |
-| L2798 | golines | `internal/service/archive_messages.go:350` | File is not properly formatted |
-| L2694 | golines | `internal/service/archive_messages_test.go:107` | File is not properly formatted |
-| L2695 | golines | `internal/service/events_restart_test.go:161` | File is not properly formatted |
-| L2696 | golines | `internal/service/mobile_archive_probe.go:71` | File is not properly formatted |
-| L2799 | golines | `internal/service/mobile_ledger_control.go:153` | File is not properly formatted |
-| L2610 | golines | `internal/service/mobile_offer_probe.go:50` | File is not properly formatted |
-| L2611 | golines | `internal/service/mobile_offer_probe_test.go:149` | File is not properly formatted |
-| L2697 | golines | `internal/service/mobile_page_test.go:102` | File is not properly formatted |
-| L2800 | golines | `internal/service/recall_diagnostic.go:185` | File is not properly formatted |
-| L2698 | golines | `internal/service/run.go:438` | File is not properly formatted |
-| L2699 | golines | `internal/service/run_test.go:203` | File is not properly formatted |
-| L2776 | golines | `internal/storage/browse.go:124` | File is not properly formatted |
-| L2700 | golines | `internal/storage/contacts.go:45` | File is not properly formatted |
-| L2777 | golines | `internal/storage/conversation_views.go:266` | File is not properly formatted |
-| L2701 | golines | `internal/storage/deliveries.go:247` | File is not properly formatted |
-| L2702 | golines | `internal/storage/deliveries_test.go:44` | File is not properly formatted |
-| L2703 | golines | `internal/storage/delivery_policy_test.go:28` | File is not properly formatted |
-| L2801 | golines | `internal/storage/event_journal.go:294` | File is not properly formatted |
-| L2704 | golines | `internal/storage/events.go:162` | File is not properly formatted |
-| L2705 | golines | `internal/storage/events_test.go:88` | File is not properly formatted |
-| L2706 | golines | `internal/storage/history_operations_test.go:464` | File is not properly formatted |
-| L2707 | golines | `internal/storage/mobile_history.go:158` | File is not properly formatted |
-| L2708 | golines | `internal/storage/mobile_history_test.go:132` | File is not properly formatted |
-| L2778 | golines | `internal/storage/views.go:426` | File is not properly formatted |
-| L2802 | golines | `internal/zalo/mobile_backup.go:115` | File is not properly formatted |
-| L2803 | golines | `internal/zalo/preload.go:148` | File is not properly formatted |
-| L2757 | mnd | `internal/evaluation/runner.go:489` | Magic number: 60, in <assign> detected |
-| L2761 | revive | `internal/historyimport/worker.go:124` | error-return: error should be the last type when returning multiple items |
-| L2713 | revive | `internal/storage/store.go:312` | var-naming: var lastInsertIdErr should be lastInsertIDErr |
-| L2804 | staticcheck | `internal/mobilebackup/retained_archive.go:613` | QF1001: could apply De Morgan's law |
-| L2714 | staticcheck | `internal/storage/store.go:312` | ST1003: var lastInsertIdErr should be lastInsertIDErr |
-| L2715 | whitespace | `cmd/zl-mcp-eval/main.go:172` | unnecessary trailing newline |
-| L2716 | whitespace | `cmd/zl-mcp-eval/main.go:195` | unnecessary trailing newline |
-| L2717 | whitespace | `cmd/zl-mcp-eval/main.go:197` | unnecessary leading newline |
-| L2718 | whitespace | `cmd/zl-mcp-eval/main.go:219` | unnecessary trailing newline |
-| L2762 | whitespace | `internal/collector/contacts.go:145` | unnecessary trailing newline |
-| L2719 | whitespace | `internal/collector/run.go:309` | unnecessary leading newline |
-| L2720 | whitespace | `internal/collector/run.go:326` | unnecessary trailing newline |
-| L2721 | whitespace | `internal/collector/run.go:328` | unnecessary leading newline |
-| L2722 | whitespace | `internal/collector/run.go:343` | unnecessary trailing newline |
-| L2723 | whitespace | `internal/collector/run.go:345` | unnecessary leading newline |
-| L2765 | whitespace | `internal/collector/run.go:470` | unnecessary trailing newline |
-| L2805 | whitespace | `internal/collector/run.go:505` | unnecessary trailing newline |
-| L2806 | whitespace | `internal/evaluation/runner.go:279` | unnecessary trailing newline |
-| L2779 | whitespace | `internal/historyimport/worker.go:161` | unnecessary leading newline |
-| L2780 | whitespace | `internal/historyimport/worker.go:180` | unnecessary trailing newline |
-| L2781 | whitespace | `internal/historyimport/worker.go:274` | unnecessary trailing newline |
-| L2782 | whitespace | `internal/historyimport/worker.go:287` | unnecessary trailing newline |
-| L2807 | whitespace | `internal/mobilebackup/prepared_page.go:131` | unnecessary leading newline |
-| L2724 | whitespace | `internal/service/cli.go:124` | unnecessary leading newline |
-| L2725 | whitespace | `internal/service/cli.go:138` | unnecessary leading newline |
-| L2726 | whitespace | `internal/service/cli.go:178` | unnecessary leading newline |
-| L2808 | whitespace | `internal/service/recall_diagnostic.go:212` | unnecessary trailing newline |
-| L2766 | whitespace | `internal/service/run.go:638` | unnecessary trailing newline |
-| L2783 | whitespace | `internal/storage/views.go:459` | unnecessary trailing newline |
-| L2763 | whitespace | `tools/harness/internal/performance/compare.go:183` | unnecessary trailing newline |
+| ID | Правило | Файл:строка | Замечание | Статус |
+|---|---|---|---|---|
+| L2548 | cyclop | `internal/evalfixture/fixture.go:133` | calculated cyclomatic complexity for function New is 49, max is 30 | FIXED |
+| L2549 | cyclop | `internal/evaluation/grader.go:19` | calculated cyclomatic complexity for function Grade is 72, max is 30 | FIXED |
+| L2550 | cyclop | `internal/evaluation/process_test.go:1` | the average complexity for the package evaluation is 11.241935, max is 10.000000 | FIXED |
+| L2551 | cyclop | `internal/evaluation/runner.go:117` | calculated cyclomatic complexity for function Run is 62, max is 30 | FIXED |
+| L2552 | cyclop | `internal/evaluation/scenarios.go:23` | calculated cyclomatic complexity for function RunCase is 74, max is 30 | FIXED |
+| L2553 | cyclop | `internal/events/subscriptions.go:132` | calculated cyclomatic complexity for function Call is 41, max is 30 | FIXED |
+| L2554 | cyclop | `internal/mcpserver/http.go:112` | calculated cyclomatic complexity for function ServeHTTP is 42, max is 30 | FIXED |
+| L2555 | cyclop | `internal/storage/browse.go:18` | calculated cyclomatic complexity for function Browse is 48, max is 30 | FIXED |
+| L2556 | cyclop | `internal/storage/conversation_views.go:119` | calculated cyclomatic complexity for function Conversations is 32, max is 30 | FIXED |
+| L2557 | funlen | `internal/collector/contact_profiles.go:26` | Function 'refreshContactProfiles' has too many statements (64 > 50) | FIXED |
+| L2558 | funlen | `internal/collector/contacts.go:30` | Function 'refreshContacts' has too many statements (56 > 50) | FIXED |
+| L2559 | funlen | `internal/evalfixture/fixture.go:133` | Function 'New' has too many statements (118 > 50) | FIXED |
+| L2560 | funlen | `internal/evaluation/grader.go:19` | Function 'Grade' has too many statements (115 > 50) | FIXED |
+| L2561 | funlen | `internal/evaluation/runner.go:136` | Function 'Run' has too many statements (104 > 50) | FIXED |
+| L2562 | funlen | `internal/evaluation/scenarios.go:23` | Function 'RunCase' has too many statements (227 > 50) | FIXED |
+| L2563 | funlen | `internal/events/subscriptions.go:132` | Function 'Call' is too long (169 > 100) | FIXED |
+| L2564 | funlen | `internal/mcpserver/http.go:112` | Function 'ServeHTTP' has too many statements (110 > 50) | FIXED |
+| L2565 | funlen | `internal/storage/browse.go:18` | Function 'Browse' has too many statements (109 > 50) | FIXED |
+| L2566 | funlen | `internal/storage/conversation_views.go:119` | Function 'Conversations' has too many statements (72 > 50) | FIXED |
+| L2567 | funlen | `internal/storage/views.go:287` | Function 'context' has too many statements (69 > 50) | FIXED |
+| L2568 | gocognit | `internal/collector/run.go:270` | cognitive complexity 63 of func &#96;ControlHandler&#96; is high (> 20) | FIXED |
+| L2569 | gocognit | `internal/evalfixture/fixture.go:133` | cognitive complexity 81 of func &#96;New&#96; is high (> 20) | FIXED |
+| L2570 | gocognit | `internal/evaluation/grader.go:19` | cognitive complexity 81 of func &#96;Grade&#96; is high (> 20) | FIXED |
+| L2571 | gocognit | `internal/evaluation/runner.go:117` | cognitive complexity 100 of func &#96;Run&#96; is high (> 20) | FIXED |
+| L2572 | gocognit | `internal/evaluation/scenarios.go:23` | cognitive complexity 105 of func &#96;RunCase&#96; is high (> 20) | FIXED |
+| L2573 | gocognit | `internal/events/subscriptions.go:132` | cognitive complexity 51 of func &#96;(*SubscriptionManager).Call&#96; is high (> 20) | FIXED |
+| L2574 | gocognit | `internal/mcpserver/http.go:112` | cognitive complexity 58 of func &#96;(*HTTPService).ServeHTTP&#96; is high (> 20) | FIXED |
+| L2575 | gocognit | `internal/mobilebackup/retained_archive_test.go:172` | cognitive complexity 31 of func &#96;TestRetainedArchiveExpiryRemovalAndSpentIDs&#96; is high (> 20) | FIXED |
+| L2576 | gocognit | `internal/storage/browse.go:18` | cognitive complexity 59 of func &#96;(*Store).Browse&#96; is high (> 20) | FIXED |
+| L2577 | gocognit | `internal/storage/conversation_views.go:119` | cognitive complexity 42 of func &#96;(*Store).Conversations&#96; is high (> 20) | FIXED |
+| L2578 | gocognit | `internal/storage/views.go:287` | cognitive complexity 48 of func &#96;(*Store).context&#96; is high (> 20) | FIXED |
+| L2579 | gocyclo | `internal/evalfixture/fixture.go:133` | cyclomatic complexity 49 of func &#96;New&#96; is high (> 30) | FIXED |
+| L2580 | gocyclo | `internal/evaluation/grader.go:19` | cyclomatic complexity 72 of func &#96;Grade&#96; is high (> 30) | FIXED |
+| L2581 | gocyclo | `internal/evaluation/runner.go:117` | cyclomatic complexity 62 of func &#96;Run&#96; is high (> 30) | FIXED |
+| L2582 | gocyclo | `internal/evaluation/scenarios.go:23` | cyclomatic complexity 73 of func &#96;RunCase&#96; is high (> 30) | FIXED |
+| L2583 | gocyclo | `internal/events/subscriptions.go:132` | cyclomatic complexity 40 of func &#96;(*SubscriptionManager).Call&#96; is high (> 30) | FIXED |
+| L2584 | gocyclo | `internal/mcpserver/http.go:112` | cyclomatic complexity 42 of func &#96;(*HTTPService).ServeHTTP&#96; is high (> 30) | FIXED |
+| L2585 | gocyclo | `internal/storage/browse.go:18` | cyclomatic complexity 48 of func &#96;(*Store).Browse&#96; is high (> 30) | FIXED |
+| L2586 | gocyclo | `internal/storage/conversation_views.go:119` | cyclomatic complexity 32 of func &#96;(*Store).Conversations&#96; is high (> 30) | FIXED |
+| L2587 | golines | `internal/collector/run.go:282` | File is not properly formatted | FIXED |
+| L2588 | govet | `internal/storage/conversation_views.go:73` | shadow: declaration of "ok" shadows declaration at line 66 | FIXED |
+| L2589 | nestif | `internal/collector/run.go:330` | &#96;if v.Method == "cli_preview" \|\| v.Method == "cli_approve"&#96; has complex nested blocks (complexity: 10) | FIXED |
+| L2590 | nestif | `internal/evalfixture/fixture.go:218` | &#96;if opts.ApprovalFile != "" \|\| opts.ApprovalTokenFile != ""&#96; has complex nested blocks (complexity: 19) | FIXED |
+| L2591 | nestif | `internal/events/subscriptions.go:169` | &#96;if method == "events/list"&#96; has complex nested blocks (complexity: 39) | FIXED |
+| L2592 | nestif | `internal/mcpserver/http.go:271` | &#96;if request.Method == "server/discover"&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2593 | perfsprint | `internal/service/bridge.go:48` | error-format: fmt.Errorf can be replaced with errors.New | FIXED |
+| L2594 | revive | `internal/collector/contacts.go:98` | increment-decrement: should replace observedCount += 1 with observedCount++ | FIXED |
+| L2595 | revive | `internal/collector/contacts.go:101` | increment-decrement: should replace permittedCount += 1 with permittedCount++ | FIXED |
+| L2596 | cyclop | `internal/evaluation/process_test.go:1` | the average complexity for the package evaluation is 11.258065, max is 10.000000 | FIXED |
+| L2597 | cyclop | `internal/mobilebackup/xz.go:53` | calculated cyclomatic complexity for function inspectXZ is 44, max is 30 | FIXED |
+| L2598 | exhaustruct_v5 | `internal/evalfixture/fixture.go:421` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig | FIXED |
+| L2599 | exhaustruct_v5 | `internal/evaluation/model.go:99` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig | FIXED |
+| L2600 | exhaustruct_v5 | `internal/service/run.go:291` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig | FIXED |
+| L2601 | exhaustruct_v5 | `internal/service/run.go:692` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig | FIXED |
+| L2602 | funlen | `internal/evaluation/benchmark.go:41` | Function 'Measure' has too many statements (66 > 50) | FIXED |
+| L2603 | funlen | `internal/evaluation/runner.go:117` | Function 'Run' has too many statements (106 > 50) | FIXED |
+| L2604 | funlen | `internal/mcpserver/server.go:241` | Function 'call' has too many statements (98 > 50) | FIXED |
+| L2605 | funlen | `internal/mobilebackup/history_page.go:17` | Function 'ReadHistoryPage' has too many statements (61 > 50) | FIXED |
+| L2606 | funlen | `internal/mobilebackup/xz.go:53` | Function 'inspectXZ' has too many statements (77 > 50) | FIXED |
+| L2607 | gocognit | `internal/mobilebackup/xz.go:53` | cognitive complexity 59 of func &#96;inspectXZ&#96; is high (> 20) | FIXED |
+| L2608 | gocyclo | `internal/mobilebackup/xz.go:53` | cyclomatic complexity 43 of func &#96;inspectXZ&#96; is high (> 30) | FIXED |
+| L2609 | golines | `internal/domain/sending_fingerprint_test.go:18` | File is not properly formatted | FIXED |
+| L2610 | golines | `internal/service/mobile_offer_probe.go:50` | File is not properly formatted | FIXED |
+| L2611 | golines | `internal/service/mobile_offer_probe_test.go:149` | File is not properly formatted | FIXED |
+| L2612 | gofmt | `tools/harness/internal/architecture/architecture.go:451` | File is not properly formatted | FIXED |
+| L2613 | goimports | `tools/harness/internal/architecture/architecture.go:451` | File is not properly formatted | FIXED |
+| L2614 | funlen | `cmd/zl-mcp-eval/main.go:16` | Function 'run' has too many statements (58 > 50) | FIXED |
+| L2615 | funlen | `internal/collector/run.go:55` | Function 'runSession' has too many statements (74 > 50) | FIXED |
+| L2616 | funlen | `internal/mcpserver/server.go:241` | Function 'call' has too many statements (57 > 50) | FIXED |
+| L2617 | funlen | `internal/service/run.go:418` | Function 'collectSession' is too long (106 > 100) | FIXED |
+| L2618 | gocognit | `internal/collector/run.go:55` | cognitive complexity 34 of func &#96;runSession&#96; is high (> 20) | FIXED |
+| L2619 | gocognit | `internal/collector/run.go:162` | cognitive complexity 21 of func &#96;ControlHandler&#96; is high (> 20) | FIXED |
+| L2620 | gocognit | `internal/evaluation/checkpoints.go:246` | cognitive complexity 26 of func &#96;(*checkpointTraceSummary).addTrace&#96; is high (> 20) | FIXED |
+| L2621 | gocognit | `internal/mcpserver/server.go:241` | cognitive complexity 36 of func &#96;(*Service).call&#96; is high (> 20) | FIXED |
+| L2622 | gocognit | `internal/messaging/manager.go:38` | cognitive complexity 31 of func &#96;(*Manager).Call&#96; is high (> 20) | FIXED |
+| L2623 | gocognit | `internal/service/run.go:418` | cognitive complexity 40 of func &#96;collectSession&#96; is high (> 20) | FIXED |
+| L2624 | goconst | `internal/evaluation/grader.go:116` | string &#96;length&#96; has 3 occurrences, make it a constant | FIXED |
+| L2625 | goconst | `internal/evaluation/runner.go:236` | string &#96;length&#96; has 3 occurrences, make it a constant | FIXED |
+| L2626 | gofmt | `internal/evaluation/checkpoints_test.go:104` | File is not properly formatted | FIXED |
+| L2627 | gofmt | `internal/evaluation/process_test.go:107` | File is not properly formatted | FIXED |
+| L2628 | gofmt | `internal/mcpserver/sdk_identity_test.go:119` | File is not properly formatted | FIXED |
+| L2629 | gofmt | `internal/mcpserver/sdk_lifecycle_test.go:275` | File is not properly formatted | FIXED |
+| L2630 | gofmt | `internal/messaging/subprocess_restart_test.go:29` | File is not properly formatted | FIXED |
+| L2631 | gofmt | `internal/mobilebackup/attachment_test.go:19` | File is not properly formatted | FIXED |
+| L2632 | gofmt | `internal/mobilebackup/blocks.go:24` | File is not properly formatted | FIXED |
+| L2633 | gofmt | `internal/mobilebackup/identities.go:75` | File is not properly formatted | FIXED |
+| L2634 | gofmt | `internal/mobilebackup/offer_runner_test.go:96` | File is not properly formatted | FIXED |
+| L2635 | gofmt | `internal/mobilebackup/page_walk_test.go:63` | File is not properly formatted | FIXED |
+| L2636 | gofmt | `internal/mobilebackup/session_download_test.go:21` | File is not properly formatted | FIXED |
+| L2637 | gofmt | `internal/mobilebackup/xz.go:52` | File is not properly formatted | FIXED |
+| L2638 | gofmt | `internal/observability/native_test.go:47` | File is not properly formatted | FIXED |
+| L2639 | gofmt | `internal/observability/observer_test.go:60` | File is not properly formatted | FIXED |
+| L2640 | gofmt | `internal/service/mobile_page_test.go:102` | File is not properly formatted | FIXED |
+| L2641 | gofmt | `internal/storage/contacts.go:45` | File is not properly formatted | FIXED |
+| L2642 | gofmt | `internal/storage/deliveries.go:247` | File is not properly formatted | FIXED |
+| L2643 | gofmt | `internal/storage/events.go:162` | File is not properly formatted | FIXED |
+| L2644 | gofmt | `internal/storage/mobile_history.go:158` | File is not properly formatted | FIXED |
+| L2645 | gofmt | `internal/storage/mobile_history_test.go:132` | File is not properly formatted | FIXED |
+| L2646 | gofmt | `internal/storage/store.go:264` | File is not properly formatted | FIXED |
+| L2647 | goimports | `internal/evaluation/checkpoints_test.go:104` | File is not properly formatted | FIXED |
+| L2648 | goimports | `internal/evaluation/process_test.go:107` | File is not properly formatted | FIXED |
+| L2649 | goimports | `internal/mcpserver/sdk_identity_test.go:119` | File is not properly formatted | FIXED |
+| L2650 | goimports | `internal/mcpserver/sdk_lifecycle_test.go:275` | File is not properly formatted | FIXED |
+| L2651 | goimports | `internal/messaging/subprocess_restart_test.go:29` | File is not properly formatted | FIXED |
+| L2652 | goimports | `internal/mobilebackup/attachment_test.go:19` | File is not properly formatted | FIXED |
+| L2653 | goimports | `internal/mobilebackup/blocks.go:24` | File is not properly formatted | FIXED |
+| L2654 | goimports | `internal/mobilebackup/identities.go:75` | File is not properly formatted | FIXED |
+| L2655 | goimports | `internal/mobilebackup/offer_runner_test.go:96` | File is not properly formatted | FIXED |
+| L2656 | goimports | `internal/mobilebackup/page_walk_test.go:63` | File is not properly formatted | FIXED |
+| L2657 | goimports | `internal/mobilebackup/session_download_test.go:21` | File is not properly formatted | FIXED |
+| L2658 | goimports | `internal/mobilebackup/xz.go:52` | File is not properly formatted | FIXED |
+| L2659 | goimports | `internal/observability/native_test.go:47` | File is not properly formatted | FIXED |
+| L2660 | goimports | `internal/observability/observer_test.go:60` | File is not properly formatted | FIXED |
+| L2661 | goimports | `internal/service/mobile_page_test.go:102` | File is not properly formatted | FIXED |
+| L2662 | goimports | `internal/storage/contacts.go:45` | File is not properly formatted | FIXED |
+| L2663 | goimports | `internal/storage/deliveries.go:247` | File is not properly formatted | FIXED |
+| L2664 | goimports | `internal/storage/events.go:162` | File is not properly formatted | FIXED |
+| L2665 | goimports | `internal/storage/mobile_history.go:158` | File is not properly formatted | FIXED |
+| L2666 | goimports | `internal/storage/mobile_history_test.go:132` | File is not properly formatted | FIXED |
+| L2667 | goimports | `internal/storage/store.go:264` | File is not properly formatted | FIXED |
+| L2668 | golines | `cmd/zl-mcp-eval/main.go:197` | File is not properly formatted | FIXED |
+| L2669 | golines | `internal/evaluation/checkpoints.go:190` | File is not properly formatted | FIXED |
+| L2670 | golines | `internal/evaluation/checkpoints_test.go:104` | File is not properly formatted | FIXED |
+| L2671 | golines | `internal/evaluation/grader.go:142` | File is not properly formatted | FIXED |
+| L2672 | golines | `internal/evaluation/process_test.go:107` | File is not properly formatted | FIXED |
+| L2673 | golines | `internal/events/conversation_test.go:135` | File is not properly formatted | FIXED |
+| L2674 | golines | `internal/events/worker.go:202` | File is not properly formatted | FIXED |
+| L2675 | golines | `internal/historyimport/mobile_worker.go:222` | File is not properly formatted | FIXED |
+| L2676 | golines | `internal/mcpserver/conversations.go:59` | File is not properly formatted | FIXED |
+| L2677 | golines | `internal/mcpserver/http_test.go:179` | File is not properly formatted | FIXED |
+| L2678 | golines | `internal/mcpserver/migration_inputs_test.go:121` | File is not properly formatted | FIXED |
+| L2679 | golines | `internal/mcpserver/sdk_identity_test.go:119` | File is not properly formatted | FIXED |
+| L2680 | golines | `internal/mcpserver/sdk_lifecycle_test.go:275` | File is not properly formatted | FIXED |
+| L2681 | golines | `internal/mcpserver/server.go:379` | File is not properly formatted | FIXED |
+| L2682 | golines | `internal/messaging/subprocess_restart_test.go:29` | File is not properly formatted | FIXED |
+| L2683 | golines | `internal/mobilebackup/attachment_test.go:19` | File is not properly formatted | FIXED |
+| L2684 | golines | `internal/mobilebackup/blocks.go:24` | File is not properly formatted | FIXED |
+| L2685 | golines | `internal/mobilebackup/identities.go:75` | File is not properly formatted | FIXED |
+| L2686 | golines | `internal/mobilebackup/offer_runner_test.go:96` | File is not properly formatted | FIXED |
+| L2687 | golines | `internal/mobilebackup/page_walk_test.go:63` | File is not properly formatted | FIXED |
+| L2688 | golines | `internal/mobilebackup/retained_archive_test.go:270` | File is not properly formatted | FIXED |
+| L2689 | golines | `internal/mobilebackup/session_download_test.go:21` | File is not properly formatted | FIXED |
+| L2690 | golines | `internal/mobilebackup/snapshot_sqlite_test.go:87` | File is not properly formatted | FIXED |
+| L2691 | golines | `internal/mobilebackup/xz.go:52` | File is not properly formatted | FIXED |
+| L2692 | golines | `internal/observability/native_test.go:47` | File is not properly formatted | FIXED |
+| L2693 | golines | `internal/observability/observer_test.go:60` | File is not properly formatted | FIXED |
+| L2694 | golines | `internal/service/archive_messages_test.go:107` | File is not properly formatted | FIXED |
+| L2695 | golines | `internal/service/events_restart_test.go:161` | File is not properly formatted | FIXED |
+| L2696 | golines | `internal/service/mobile_archive_probe.go:71` | File is not properly formatted | FIXED |
+| L2697 | golines | `internal/service/mobile_page_test.go:102` | File is not properly formatted | FIXED |
+| L2698 | golines | `internal/service/run.go:438` | File is not properly formatted | FIXED |
+| L2699 | golines | `internal/service/run_test.go:203` | File is not properly formatted | FIXED |
+| L2700 | golines | `internal/storage/contacts.go:45` | File is not properly formatted | FIXED |
+| L2701 | golines | `internal/storage/deliveries.go:247` | File is not properly formatted | FIXED |
+| L2702 | golines | `internal/storage/deliveries_test.go:44` | File is not properly formatted | FIXED |
+| L2703 | golines | `internal/storage/delivery_policy_test.go:28` | File is not properly formatted | FIXED |
+| L2704 | golines | `internal/storage/events.go:162` | File is not properly formatted | FIXED |
+| L2705 | golines | `internal/storage/events_test.go:88` | File is not properly formatted | FIXED |
+| L2706 | golines | `internal/storage/history_operations_test.go:464` | File is not properly formatted | FIXED |
+| L2707 | golines | `internal/storage/mobile_history.go:158` | File is not properly formatted | FIXED |
+| L2708 | golines | `internal/storage/mobile_history_test.go:132` | File is not properly formatted | FIXED |
+| L2709 | golines | `internal/storage/preload_directory_test.go:63` | File is not properly formatted | FIXED |
+| L2710 | golines | `internal/storage/store.go:264` | File is not properly formatted | FIXED |
+| L2711 | nestif | `internal/service/recall_diagnostic.go:115` | &#96;if lstatErr == nil&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2712 | nestif | `internal/service/run.go:435` | &#96;if err == nil&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2713 | revive | `internal/storage/store.go:312` | var-naming: var lastInsertIdErr should be lastInsertIDErr | FIXED |
+| L2714 | staticcheck | `internal/storage/store.go:312` | ST1003: var lastInsertIdErr should be lastInsertIDErr | FIXED |
+| L2715 | whitespace | `cmd/zl-mcp-eval/main.go:172` | unnecessary trailing newline | FIXED |
+| L2716 | whitespace | `cmd/zl-mcp-eval/main.go:195` | unnecessary trailing newline | FIXED |
+| L2717 | whitespace | `cmd/zl-mcp-eval/main.go:197` | unnecessary leading newline | FIXED |
+| L2718 | whitespace | `cmd/zl-mcp-eval/main.go:219` | unnecessary trailing newline | FIXED |
+| L2719 | whitespace | `internal/collector/run.go:309` | unnecessary leading newline | FIXED |
+| L2720 | whitespace | `internal/collector/run.go:326` | unnecessary trailing newline | FIXED |
+| L2721 | whitespace | `internal/collector/run.go:328` | unnecessary leading newline | FIXED |
+| L2722 | whitespace | `internal/collector/run.go:343` | unnecessary trailing newline | FIXED |
+| L2723 | whitespace | `internal/collector/run.go:345` | unnecessary leading newline | FIXED |
+| L2724 | whitespace | `internal/service/cli.go:124` | unnecessary leading newline | FIXED |
+| L2725 | whitespace | `internal/service/cli.go:138` | unnecessary leading newline | FIXED |
+| L2726 | whitespace | `internal/service/cli.go:178` | unnecessary leading newline | FIXED |
+| L2727 | cyclop | `internal/historyimport/worker.go:68` | calculated cyclomatic complexity for function runOperationObserved is 34, max is 30 | FIXED |
+| L2728 | cyclop | `internal/service/run.go:160` | calculated cyclomatic complexity for function runConfigured is 35, max is 30 | FIXED |
+| L2729 | funlen | `internal/evaluation/benchmark.go:41` | Function 'Measure' has too many statements (53 > 50) | FIXED |
+| L2730 | funlen | `internal/historyimport/worker.go:68` | Function 'runOperationObserved' has too many statements (80 > 50) | FIXED |
+| L2731 | funlen | `internal/service/run.go:160` | Function 'runConfigured' has too many statements (97 > 50) | FIXED |
+| L2732 | gocognit | `internal/historyimport/worker.go:68` | cognitive complexity 53 of func &#96;runOperationObserved&#96; is high (> 20) | FIXED |
+| L2733 | gocognit | `internal/service/run.go:160` | cognitive complexity 38 of func &#96;runConfigured&#96; is high (> 20) | FIXED |
+| L2734 | goconst | `internal/collector/contact_profiles.go:61` | string &#96;cancelled_or_deadline&#96; has 3 occurrences, make it a constant | FIXED |
+| L2735 | goconst | `internal/collector/contacts.go:121` | string &#96;unsupported&#96; has 4 occurrences, make it a constant | FIXED |
+| L2736 | goconst | `internal/collector/contacts.go:121` | string &#96;source_unsupported&#96; has 4 occurrences, make it a constant | FIXED |
+| L2737 | goconst | `internal/collector/contacts.go:123` | string &#96;partial&#96; has 4 occurrences, make it a constant | FIXED |
+| L2738 | goconst | `internal/collector/contacts.go:123` | string &#96;auth_required&#96; has 6 occurrences, make it a constant | FIXED |
+| L2739 | goconst | `internal/collector/contacts.go:125` | string &#96;cancelled_or_deadline&#96; has 3 occurrences, make it a constant | FIXED |
+| L2740 | goconst | `internal/collector/preload_catalog.go:52` | string &#96;partial&#96; has 4 occurrences, make it a constant | FIXED |
+| L2741 | goconst | `internal/collector/preload_catalog.go:55` | string &#96;unsupported&#96; has 4 occurrences, make it a constant | FIXED |
+| L2742 | goconst | `internal/collector/preload_catalog.go:55` | string &#96;source_unsupported&#96; has 4 occurrences, make it a constant | FIXED |
+| L2743 | goconst | `internal/collector/preload_catalog.go:57` | string &#96;auth_required&#96; has 6 occurrences, make it a constant | FIXED |
+| L2744 | goconst | `internal/collector/preload_catalog.go:61` | string &#96;cancelled_or_deadline&#96; has 3 occurrences, make it a constant | FIXED |
+| L2745 | goconst | `internal/collector/preload_probe.go:15` | string &#96;unsupported&#96; has 4 occurrences, make it a constant | FIXED |
+| L2746 | goconst | `internal/collector/preload_probe.go:16` | string &#96;source_unsupported&#96; has 4 occurrences, make it a constant | FIXED |
+| L2747 | goconst | `internal/collector/preload_probe.go:80` | string &#96;auth_required&#96; has 6 occurrences, make it a constant | FIXED |
+| L2748 | goconst | `internal/collector/run.go:380` | string &#96;auth_required&#96; has 6 occurrences, make it a constant | FIXED |
+| L2749 | gocyclo | `internal/historyimport/worker.go:68` | cyclomatic complexity 34 of func &#96;runOperationObserved&#96; is high (> 30) | FIXED |
+| L2750 | gocyclo | `internal/service/run.go:160` | cyclomatic complexity 35 of func &#96;runConfigured&#96; is high (> 30) | FIXED |
+| L2751 | golines | `internal/collector/contact_profiles.go:83` | File is not properly formatted | FIXED |
+| L2752 | golines | `internal/collector/contacts.go:131` | File is not properly formatted | FIXED |
+| L2753 | golines | `internal/evalfixture/fixture.go:380` | File is not properly formatted | FIXED |
+| L2754 | golines | `internal/evaluation/runner.go:280` | File is not properly formatted | FIXED |
+| L2755 | golines | `internal/events/subscriptions.go:241` | File is not properly formatted | FIXED |
+| L2756 | golines | `internal/historyimport/worker.go:124` | File is not properly formatted | FIXED |
+| L2757 | mnd | `internal/evaluation/runner.go:489` | Magic number: 60, in <assign> detected | FIXED |
+| L2758 | nestif | `internal/evalfixture/fixture.go:238` | &#96;if opts.ApprovalFile != "" \|\| opts.ApprovalTokenFile != ""&#96; has complex nested blocks (complexity: 7) | FIXED |
+| L2759 | nestif | `internal/events/subscriptions.go:254` | &#96;if method == "events/unsubscribe"&#96; has complex nested blocks (complexity: 12) | FIXED |
+| L2760 | revive | `internal/events/subscriptions.go:259` | indent-error-flow: if block ends with a return statement, so drop this else and outdent its block | FIXED |
+| L2761 | revive | `internal/historyimport/worker.go:124` | error-return: error should be the last type when returning multiple items | FIXED |
+| L2762 | whitespace | `internal/collector/contacts.go:145` | unnecessary trailing newline | FIXED |
+| L2763 | whitespace | `tools/harness/internal/performance/compare.go:183` | unnecessary trailing newline | FIXED |
+| L2764 | gocognit | `internal/service/run.go:418` | cognitive complexity 25 of func &#96;collectSession&#96; is high (> 20) | FIXED |
+| L2765 | whitespace | `internal/collector/run.go:470` | unnecessary trailing newline | FIXED |
+| L2766 | whitespace | `internal/service/run.go:638` | unnecessary trailing newline | FIXED |
+| L2767 | exhaustruct_v5 | `internal/storage/conversation_views.go:338` | storage.conversationCursor is missing fields Kind, ID | FIXED |
+| L2768 | funlen | `internal/mobilebackup/sqlite.go:171` | Function 'readSQLitePageMode' has too many statements (74 > 50) | FIXED |
+| L2769 | funlen | `internal/storage/event_journal.go:140` | Function 'ReadSubscriptionEvents' has too many statements (55 > 50) | FIXED |
+| L2770 | gocognit | `internal/mobilebackup/message_conversion.go:99` | cognitive complexity 21 of func &#96;convertArchiveCandidates&#96; is high (> 20) | FIXED |
+| L2771 | gocognit | `internal/storage/event_journal.go:140` | cognitive complexity 22 of func &#96;(*Store).ReadSubscriptionEvents&#96; is high (> 20) | FIXED |
+| L2772 | gocognit | `internal/storage/subscription_scope.go:5` | cognitive complexity 21 of func &#96;normalizeSubscription&#96; is high (> 20) | FIXED |
+| L2773 | golines | `internal/mobilebackup/message_conversion.go:215` | File is not properly formatted | FIXED |
+| L2774 | golines | `internal/mobilebackup/row_page.go:178` | File is not properly formatted | FIXED |
+| L2775 | golines | `internal/mobilebackup/sqlite.go:600` | File is not properly formatted | FIXED |
+| L2776 | golines | `internal/storage/browse.go:124` | File is not properly formatted | FIXED |
+| L2777 | golines | `internal/storage/conversation_views.go:266` | File is not properly formatted | FIXED |
+| L2778 | golines | `internal/storage/views.go:426` | File is not properly formatted | FIXED |
+| L2779 | whitespace | `internal/historyimport/worker.go:161` | unnecessary leading newline | FIXED |
+| L2780 | whitespace | `internal/historyimport/worker.go:180` | unnecessary trailing newline | FIXED |
+| L2781 | whitespace | `internal/historyimport/worker.go:274` | unnecessary trailing newline | FIXED |
+| L2782 | whitespace | `internal/historyimport/worker.go:287` | unnecessary trailing newline | FIXED |
+| L2783 | whitespace | `internal/storage/views.go:459` | unnecessary trailing newline | FIXED |
+| L2784 | exhaustruct_v5 | `internal/service/mobile_archive_probe.go:71` | service.archiveProbeStats is missing fields convertible, unsupported, controls, textCandidates, unresolvedQuotes, unresolvedMentions, ownRecallCandidates, blocked, walMode, coverage | FIXED |
+| L2785 | golines | `internal/app/search/read.go:236` | File is not properly formatted | FIXED |
+| L2786 | golines | `internal/collector/join.go:556` | File is not properly formatted | FIXED |
+| L2787 | golines | `internal/messaging/manager.go:142` | File is not properly formatted | FIXED |
+| L2788 | golines | `internal/mobilebackup/account_inspection.go:73` | File is not properly formatted | FIXED |
+| L2789 | golines | `internal/mobilebackup/account_metadata.go:119` | File is not properly formatted | FIXED |
+| L2790 | golines | `internal/mobilebackup/history_page.go:141` | File is not properly formatted | FIXED |
+| L2791 | golines | `internal/mobilebackup/offer_runner.go:105` | File is not properly formatted | FIXED |
+| L2792 | golines | `internal/mobilebackup/prepared_page.go:131` | File is not properly formatted | FIXED |
+| L2793 | golines | `internal/mobilebackup/snapshot.go:607` | File is not properly formatted | FIXED |
+| L2794 | golines | `internal/mobilebackup/snapshot_page.go:131` | File is not properly formatted | FIXED |
+| L2795 | golines | `internal/mobilebackup/snapshot_terminal.go:63` | File is not properly formatted | FIXED |
+| L2796 | golines | `internal/service/account_archive_control.go:103` | File is not properly formatted | FIXED |
+| L2797 | golines | `internal/service/archive_catalog.go:188` | File is not properly formatted | FIXED |
+| L2798 | golines | `internal/service/archive_messages.go:350` | File is not properly formatted | FIXED |
+| L2799 | golines | `internal/service/mobile_ledger_control.go:153` | File is not properly formatted | FIXED |
+| L2800 | golines | `internal/service/recall_diagnostic.go:185` | File is not properly formatted | FIXED |
+| L2801 | golines | `internal/storage/event_journal.go:294` | File is not properly formatted | FIXED |
+| L2802 | golines | `internal/zalo/mobile_backup.go:115` | File is not properly formatted | FIXED |
+| L2803 | golines | `internal/zalo/preload.go:148` | File is not properly formatted | FIXED |
+| L2804 | staticcheck | `internal/mobilebackup/retained_archive.go:613` | QF1001: could apply De Morgan's law | FIXED |
+| L2805 | whitespace | `internal/collector/run.go:505` | unnecessary trailing newline | FIXED |
+| L2806 | whitespace | `internal/evaluation/runner.go:279` | unnecessary trailing newline | FIXED |
+| L2807 | whitespace | `internal/mobilebackup/prepared_page.go:131` | unnecessary leading newline | FIXED |
+| L2808 | whitespace | `internal/service/recall_diagnostic.go:212` | unnecessary trailing newline | FIXED |
 
 ## Полный актуальный список
 
@@ -453,7 +549,7 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L0077 | `tools/harness/internal/architecture/architecture.go:71:2` | there must be an empty line separating embedded fields from regular fields | OPEN |
+| L0077 | `tools/harness/internal/architecture/architecture.go:71:2` | there must be an empty line separating embedded fields from regular fields | FIXED |
 
 ### errcheck (115)
 
@@ -608,12 +704,12 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L0199 | `internal/domain/observation.go:16:2` | missing cases in switch of type domain.Outcome: domain.OutcomeUnknown | OPEN |
-| L0200 | `internal/domain/observation.go:44:2` | missing cases in switch of type domain.WorkKind: domain.WorkOther | OPEN |
-| L0201 | `internal/domain/observation.go:82:2` | missing cases in switch of type domain.OperationState: domain.StateUnknown | OPEN |
-| L0202 | `internal/storage/observation.go:14:2` | missing cases in switch of type domain.WorkKind: domain.WorkCollector, domain.WorkOther | OPEN |
-| L0203 | `internal/toolruntime/outcome.go:31:2` | missing cases in switch of type domain.OperationState: domain.StateUnknown, domain.StatePending, domain.StateSending, domain.StateQueued, domain.StateRunning, domain.StatePendingApproval | OPEN |
-| L0204 | `internal/zalo/replay.go:21:7` | missing keys in map of key type model.ThreadType: model.ThreadTypeUser | OPEN |
+| L0199 | `internal/domain/observation.go:16:2` | missing cases in switch of type domain.Outcome: domain.OutcomeUnknown | FIXED |
+| L0200 | `internal/domain/observation.go:44:2` | missing cases in switch of type domain.WorkKind: domain.WorkOther | FIXED |
+| L0201 | `internal/domain/observation.go:82:2` | missing cases in switch of type domain.OperationState: domain.StateUnknown | FIXED |
+| L0202 | `internal/storage/observation.go:14:2` | missing cases in switch of type domain.WorkKind: domain.WorkCollector, domain.WorkOther | FIXED |
+| L0203 | `internal/toolruntime/outcome.go:31:2` | missing cases in switch of type domain.OperationState: domain.StateUnknown, domain.StatePending, domain.StateSending, domain.StateQueued, domain.StateRunning, domain.StatePendingApproval | FIXED |
+| L0204 | `internal/zalo/replay.go:21:7` | missing keys in map of key type model.ThreadType: model.ThreadTypeUser | SUPPRESSED |
 
 ### exhaustruct_v5 (307)
 
@@ -625,313 +721,313 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L0205 | `cmd/zl-mcp-eval-fixture/main.go:27:10` | evalfixture.Options is missing fields Policy, Offline, StateDir, EffectsFile, SendTimeout, DenySend, KeepState, ArchiveVector, Fixtures, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile | OPEN |
-| L0206 | `cmd/zl-mcp-eval-fixture/main.go:73:34` | mcp.StdioTransport is missing field MaxLineLength | OPEN |
-| L0207 | `internal/adapters/operations/read.go:36:19` | domain.Error is missing field Retryable | OPEN |
-| L0208 | `internal/adapters/operations/read.go:39:16` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0209 | `internal/adapters/operations/read.go:48:19` | domain.Error is missing field Retryable | OPEN |
-| L0210 | `internal/adapters/operations/read.go:51:16` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0211 | `internal/adapters/store/read.go:25:11` | domain.Error is missing field Retryable | OPEN |
-| L0212 | `internal/adapters/store/read.go:28:16` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0213 | `internal/adapters/store/read.go:35:9` | storage.Search is missing fields General, ConversationType, ConversationID, GroupID | OPEN |
-| L0214 | `internal/adapters/store/read.go:123:9` | conversations.GroupContext is missing field NextAction | OPEN |
-| L0215 | `internal/app/search/read.go:152:9` | search.GroupResult is missing fields EmptyReason, CoverageSummary | OPEN |
-| L0216 | `internal/app/search/read.go:200:9` | search.ConversationResult is missing fields EmptyReason, CoverageSummary | OPEN |
-| L0217 | `internal/collector/auth_guard.go:22:10` | collector.sessionGuard is missing field authRequired | OPEN |
-| L0218 | `internal/collector/join.go:50:10` | collector.JoinManager is missing field wg | OPEN |
-| L0219 | `internal/collector/join.go:54:10` | domain.Error is missing field Retryable | OPEN |
-| L0220 | `internal/collector/join.go:57:15` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0221 | `internal/collector/join.go:159:7` | collector.preview is missing fields ID, URL, GroupID, Name, Approval, Expires | OPEN |
-| L0222 | `internal/collector/join.go:306:17` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0223 | `internal/collector/join.go:414:19` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0224 | `internal/collector/join.go:468:20` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0225 | `internal/collector/run.go:275:11` | domain.Error is missing field Retryable | OPEN |
-| L0226 | `internal/collector/run.go:278:17` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0227 | `internal/control/client.go:22:14` | net.Dialer is missing fields Timeout, Deadline, LocalAddr, DualStack, FallbackDelay, KeepAlive, KeepAliveConfig, Resolver, Cancel, Control, ControlContext | OPEN |
-| L0228 | `internal/control/client.go:43:16` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0229 | `internal/domain/history.go:19:8` | domain.HistorySourceFailure is missing field APICode | OPEN |
-| L0230 | `internal/domain/mobile_backup_request.go:52:13` | domain.HistoryImportRequest is missing fields Source, PageSize, MaxPages | OPEN |
-| L0231 | `internal/domain/mobile_history.go:86:14` | domain.MobileHistoryPosition is missing fields TimestampMS, RowID | OPEN |
-| L0232 | `internal/domain/mobile_history.go:88:8` | domain.MobileHistoryPage is missing fields ControlPrelude, Snapshot, Records, Recalls, Counts, HasMore, Next | OPEN |
-| L0233 | `internal/domain/model.go:57:10` | domain.Error is missing field Retryable | OPEN |
-| L0234 | `internal/domain/model.go:60:15` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0235 | `internal/domain/model.go:90:10` | domain.Error is missing field Retryable | OPEN |
-| L0236 | `internal/domain/model.go:93:15` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0237 | `internal/evalfixture/evidence.go:28:9` | storage.EventSubscription is missing fields Direction, FirstIncomingOnly, ConversationType, GroupID, Generation, StartSeq, ExpiresAt | OPEN |
-| L0238 | `internal/evalfixture/evidence.go:46:4` | domain.Message is missing fields FirstIncoming, QuoteMetadata, ConversationName, GroupID, SenderName, ReplyTo, AttachmentTypes, TextTruncated, TextResourceURI | OPEN |
-| L0239 | `internal/evalfixture/evidence.go:82:4` | storage.DeliveryOutcome is missing fields RetryAt, Gone | OPEN |
-| L0240 | `internal/evalfixture/evidence.go:113:9` | domain.HistoryPage is missing fields PhaseRequired, LimitedSnapshot, Cursor, IsFiltered, IsFilteredByPhase, IsFilteredByTimeJoin, IsOld, JoinTimestampMillis | OPEN |
-| L0241 | `internal/evalfixture/evidence.go:115:4` | domain.Message is missing fields Direction, FirstIncoming, QuoteMetadata, ConversationName, GroupID, SenderName, ReplyTo, AttachmentTypes, Source, TextTruncated, TextResourceURI | OPEN |
-| L0242 | `internal/evalfixture/fixture.go:92:27` | domain.Group is missing fields MemberCount, CollectionEnabled | OPEN |
-| L0243 | `internal/evalfixture/fixture.go:109:9` | domain.Invite is missing fields Description, ApprovalRequired | OPEN |
-| L0244 | `internal/evalfixture/fixture.go:109:30` | domain.Group is missing fields MemberCount, CollectionEnabled | OPEN |
-| L0245 | `internal/evalfixture/fixture.go:155:8` | evalfixture.Fixture is missing fields Store, Server, Upstream, joins, http, heartbeatDone, offline | OPEN |
-| L0246 | `internal/evalfixture/fixture.go:166:13` | domain.CollectionPolicy is missing field Selected | OPEN |
-| L0247 | `internal/evalfixture/fixture.go:212:16` | evalfixture.Upstream is missing fields mu, joined, calls, effectPath | OPEN |
-| L0248 | `internal/evalfixture/fixture.go:312:6` | mcp.Resource is missing fields Meta, Annotations, Description, Size, Title, Icons | OPEN |
-| L0249 | `internal/evalfixture/fixture.go:314:14` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | OPEN |
-| L0250 | `internal/evalfixture/fixture.go:315:41` | mcp.ResourceContents is missing fields Blob, Meta | OPEN |
-| L0251 | `internal/evalfixture/offline.go:71:8` | evalfixture.offlineControl is missing fields library, archive, fixtureSendEnabled, historyCancel, historyDone | OPEN |
-| L0252 | `internal/evalfixture/offline.go:74:13` | evalfixture.offlineSender is missing field mu | OPEN |
-| L0253 | `internal/evalfixture/offline.go:93:5` | domain.Message is missing fields Direction, FirstIncoming, QuoteMetadata, ConversationName, GroupID, SenderName, ReplyTo, AttachmentTypes, TextTruncated, TextResourceURI | OPEN |
-| L0254 | `internal/evalfixture/offline.go:108:4` | domain.Message is missing fields Direction, FirstIncoming, ConversationName, GroupID, SenderName, ReplyTo, AttachmentTypes, TextTruncated, TextResourceURI | OPEN |
-| L0255 | `internal/evalfixture/offline.go:115:21` | domain.QuoteMetadata is missing fields ClientMessageID, MessageType, Timestamp, TTL | OPEN |
-| L0256 | `internal/evalfixture/offline.go:202:25` | domain.MobileIdentityPair is missing field Group | OPEN |
-| L0257 | `internal/evalfixture/offline.go:245:3` | domain.MobileBackupOffer is missing fields PlainAccountID, SessionAccountID, FromSequence | OPEN |
-| L0258 | `internal/evalfixture/read_ports.go:33:15` | toolruntime.Capabilities is missing fields Events, Archives | OPEN |
-| L0259 | `internal/evaluation/benchmark.go:40:11` | evaluation.Measurement is missing fields Calls, Errors, Bytes, P95Seconds, AllocationsPerOp, AllocBytesPerOp, ElapsedSeconds, Cleanup | OPEN |
-| L0260 | `internal/evaluation/benchmark.go:77:3` | evalfixture.Options is missing fields Policy, SendTimeout, DenySend, KeepState, ArchiveVector, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile | OPEN |
-| L0261 | `internal/evaluation/benchmark.go:112:43` | mcp.CallToolParams is missing fields Meta, InputResponses, RequestState | OPEN |
-| L0262 | `internal/evaluation/client.go:25:28` | mcp.Implementation is missing fields Title, Description, WebsiteURL, Icons | OPEN |
-| L0263 | `internal/evaluation/client.go:30:10` | evaluation.client is missing field trace | OPEN |
-| L0264 | `internal/evaluation/client.go:39:37` | mcp.CallToolParams is missing fields Meta, InputResponses, RequestState | OPEN |
-| L0265 | `internal/evaluation/client.go:40:7` | evaluation.Trace is missing fields Result, Error | OPEN |
-| L0266 | `internal/evaluation/client.go:59:41` | mcp.ReadResourceParams is missing fields Meta, InputResponses, RequestState | OPEN |
-| L0267 | `internal/evaluation/client.go:60:7` | evaluation.Trace is missing fields Input, Result, Error | OPEN |
-| L0268 | `internal/evaluation/grader.go:107:12` | evaluation.Trace is missing fields Kind, Name, Input, Result, Error | OPEN |
-| L0269 | `internal/evaluation/grader.go:188:13` | evaly.GraderRevision is missing fields Model, Prompt, Configuration | OPEN |
-| L0270 | `internal/evaluation/grader.go:194:11` | evaly.Grade is missing fields Dispatched, Revision, Metrics, Reasons, EvidenceRefs | OPEN |
-| L0271 | `internal/evaluation/grader.go:196:17` | evaly.Usage is missing field Units | OPEN |
+| L0205 | `cmd/zl-mcp-eval-fixture/main.go:27:10` | evalfixture.Options is missing fields Policy, Offline, StateDir, EffectsFile, SendTimeout, DenySend, KeepState, ArchiveVector, Fixtures, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile | SUPPRESSED |
+| L0206 | `cmd/zl-mcp-eval-fixture/main.go:73:34` | mcp.StdioTransport is missing field MaxLineLength | SUPPRESSED |
+| L0207 | `internal/adapters/operations/read.go:36:19` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0208 | `internal/adapters/operations/read.go:39:16` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0209 | `internal/adapters/operations/read.go:48:19` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0210 | `internal/adapters/operations/read.go:51:16` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0211 | `internal/adapters/store/read.go:25:11` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0212 | `internal/adapters/store/read.go:28:16` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0213 | `internal/adapters/store/read.go:35:9` | storage.Search is missing fields General, ConversationType, ConversationID, GroupID | SUPPRESSED |
+| L0214 | `internal/adapters/store/read.go:123:9` | conversations.GroupContext is missing field NextAction | SUPPRESSED |
+| L0215 | `internal/app/search/read.go:152:9` | search.GroupResult is missing fields EmptyReason, CoverageSummary | SUPPRESSED |
+| L0216 | `internal/app/search/read.go:200:9` | search.ConversationResult is missing fields EmptyReason, CoverageSummary | SUPPRESSED |
+| L0217 | `internal/collector/auth_guard.go:22:10` | collector.sessionGuard is missing field authRequired | SUPPRESSED |
+| L0218 | `internal/collector/join.go:50:10` | collector.JoinManager is missing field wg | SUPPRESSED |
+| L0219 | `internal/collector/join.go:54:10` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0220 | `internal/collector/join.go:57:15` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0221 | `internal/collector/join.go:159:7` | collector.preview is missing fields ID, URL, GroupID, Name, Approval, Expires | SUPPRESSED |
+| L0222 | `internal/collector/join.go:306:17` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0223 | `internal/collector/join.go:414:19` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0224 | `internal/collector/join.go:468:20` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0225 | `internal/collector/run.go:275:11` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0226 | `internal/collector/run.go:278:17` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0227 | `internal/control/client.go:22:14` | net.Dialer is missing fields Timeout, Deadline, LocalAddr, DualStack, FallbackDelay, KeepAlive, KeepAliveConfig, Resolver, Cancel, Control, ControlContext | SUPPRESSED |
+| L0228 | `internal/control/client.go:43:16` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0229 | `internal/domain/history.go:19:8` | domain.HistorySourceFailure is missing field APICode | SUPPRESSED |
+| L0230 | `internal/domain/mobile_backup_request.go:52:13` | domain.HistoryImportRequest is missing fields Source, PageSize, MaxPages | SUPPRESSED |
+| L0231 | `internal/domain/mobile_history.go:86:14` | domain.MobileHistoryPosition is missing fields TimestampMS, RowID | SUPPRESSED |
+| L0232 | `internal/domain/mobile_history.go:88:8` | domain.MobileHistoryPage is missing fields ControlPrelude, Snapshot, Records, Recalls, Counts, HasMore, Next | SUPPRESSED |
+| L0233 | `internal/domain/model.go:57:10` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0234 | `internal/domain/model.go:60:15` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0235 | `internal/domain/model.go:90:10` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0236 | `internal/domain/model.go:93:15` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0237 | `internal/evalfixture/evidence.go:28:9` | storage.EventSubscription is missing fields Direction, FirstIncomingOnly, ConversationType, GroupID, Generation, StartSeq, ExpiresAt | SUPPRESSED |
+| L0238 | `internal/evalfixture/evidence.go:46:4` | domain.Message is missing fields FirstIncoming, QuoteMetadata, ConversationName, GroupID, SenderName, ReplyTo, AttachmentTypes, TextTruncated, TextResourceURI | SUPPRESSED |
+| L0239 | `internal/evalfixture/evidence.go:82:4` | storage.DeliveryOutcome is missing fields RetryAt, Gone | SUPPRESSED |
+| L0240 | `internal/evalfixture/evidence.go:113:9` | domain.HistoryPage is missing fields PhaseRequired, LimitedSnapshot, Cursor, IsFiltered, IsFilteredByPhase, IsFilteredByTimeJoin, IsOld, JoinTimestampMillis | SUPPRESSED |
+| L0241 | `internal/evalfixture/evidence.go:115:4` | domain.Message is missing fields Direction, FirstIncoming, QuoteMetadata, ConversationName, GroupID, SenderName, ReplyTo, AttachmentTypes, Source, TextTruncated, TextResourceURI | SUPPRESSED |
+| L0242 | `internal/evalfixture/fixture.go:92:27` | domain.Group is missing fields MemberCount, CollectionEnabled | FIXED |
+| L0243 | `internal/evalfixture/fixture.go:109:9` | domain.Invite is missing fields Description, ApprovalRequired | FIXED |
+| L0244 | `internal/evalfixture/fixture.go:109:30` | domain.Group is missing fields MemberCount, CollectionEnabled | FIXED |
+| L0245 | `internal/evalfixture/fixture.go:155:8` | evalfixture.Fixture is missing fields Store, Server, Upstream, joins, http, heartbeatDone, offline | SUPPRESSED |
+| L0246 | `internal/evalfixture/fixture.go:166:13` | domain.CollectionPolicy is missing field Selected | SUPPRESSED |
+| L0247 | `internal/evalfixture/fixture.go:212:16` | evalfixture.Upstream is missing fields mu, joined, calls, effectPath | SUPPRESSED |
+| L0248 | `internal/evalfixture/fixture.go:312:6` | mcp.Resource is missing fields Meta, Annotations, Description, Size, Title, Icons | SUPPRESSED |
+| L0249 | `internal/evalfixture/fixture.go:314:14` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | SUPPRESSED |
+| L0250 | `internal/evalfixture/fixture.go:315:41` | mcp.ResourceContents is missing fields Blob, Meta | SUPPRESSED |
+| L0251 | `internal/evalfixture/offline.go:71:8` | evalfixture.offlineControl is missing fields library, archive, fixtureSendEnabled, historyCancel, historyDone | SUPPRESSED |
+| L0252 | `internal/evalfixture/offline.go:74:13` | evalfixture.offlineSender is missing field mu | FIXED |
+| L0253 | `internal/evalfixture/offline.go:93:5` | domain.Message is missing fields Direction, FirstIncoming, QuoteMetadata, ConversationName, GroupID, SenderName, ReplyTo, AttachmentTypes, TextTruncated, TextResourceURI | SUPPRESSED |
+| L0254 | `internal/evalfixture/offline.go:108:4` | domain.Message is missing fields Direction, FirstIncoming, ConversationName, GroupID, SenderName, ReplyTo, AttachmentTypes, TextTruncated, TextResourceURI | SUPPRESSED |
+| L0255 | `internal/evalfixture/offline.go:115:21` | domain.QuoteMetadata is missing fields ClientMessageID, MessageType, Timestamp, TTL | SUPPRESSED |
+| L0256 | `internal/evalfixture/offline.go:202:25` | domain.MobileIdentityPair is missing field Group | SUPPRESSED |
+| L0257 | `internal/evalfixture/offline.go:245:3` | domain.MobileBackupOffer is missing fields PlainAccountID, SessionAccountID, FromSequence | SUPPRESSED |
+| L0258 | `internal/evalfixture/read_ports.go:33:15` | toolruntime.Capabilities is missing fields Events, Archives | SUPPRESSED |
+| L0259 | `internal/evaluation/benchmark.go:40:11` | evaluation.Measurement is missing fields Calls, Errors, Bytes, P95Seconds, AllocationsPerOp, AllocBytesPerOp, ElapsedSeconds, Cleanup | SUPPRESSED |
+| L0260 | `internal/evaluation/benchmark.go:77:3` | evalfixture.Options is missing fields Policy, SendTimeout, DenySend, KeepState, ArchiveVector, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile | SUPPRESSED |
+| L0261 | `internal/evaluation/benchmark.go:112:43` | mcp.CallToolParams is missing fields Meta, InputResponses, RequestState | SUPPRESSED |
+| L0262 | `internal/evaluation/client.go:25:28` | mcp.Implementation is missing fields Title, Description, WebsiteURL, Icons | SUPPRESSED |
+| L0263 | `internal/evaluation/client.go:30:10` | evaluation.client is missing field trace | SUPPRESSED |
+| L0264 | `internal/evaluation/client.go:39:37` | mcp.CallToolParams is missing fields Meta, InputResponses, RequestState | SUPPRESSED |
+| L0265 | `internal/evaluation/client.go:40:7` | evaluation.Trace is missing fields Result, Error | FIXED |
+| L0266 | `internal/evaluation/client.go:59:41` | mcp.ReadResourceParams is missing fields Meta, InputResponses, RequestState | SUPPRESSED |
+| L0267 | `internal/evaluation/client.go:60:7` | evaluation.Trace is missing fields Input, Result, Error | FIXED |
+| L0268 | `internal/evaluation/grader.go:107:12` | evaluation.Trace is missing fields Kind, Name, Input, Result, Error | SUPPRESSED |
+| L0269 | `internal/evaluation/grader.go:188:13` | evaly.GraderRevision is missing fields Model, Prompt, Configuration | SUPPRESSED |
+| L0270 | `internal/evaluation/grader.go:194:11` | evaly.Grade is missing fields Dispatched, Revision, Metrics, Reasons, EvidenceRefs | SUPPRESSED |
+| L0271 | `internal/evaluation/grader.go:196:17` | evaly.Usage is missing field Units | SUPPRESSED |
 | L0272 | `internal/evaluation/model.go:31:8` | evaluation.Trace is missing fields Kind, Name, Input, Result, Error | FIXED |
-| L0273 | `internal/evaluation/model.go:38:8` | evaluation.Trace is missing fields Result, Error | OPEN |
-| L0274 | `internal/evaluation/model.go:52:8` | evaluation.Trace is missing fields Input, Result, Error | OPEN |
-| L0275 | `internal/evaluation/model.go:72:8` | evaluation.Output is missing fields Trace, Cleanup, Effects, Complete, Failure, ElapsedSeconds, Bytes | OPEN |
-| L0276 | `internal/evaluation/model.go:81:3` | evalfixture.Options is missing fields Policy, SendTimeout, DenySend, ArchiveVector, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile | OPEN |
-| L0277 | `internal/evaluation/model.go:92:14` | evaluation.modelCapture is missing fields mu, calls, violated, trace | OPEN |
-| L0278 | `internal/evaluation/process.go:48:13` | evaluation.boundedBuffer is missing fields mu, buffer, exceeded | OPEN |
-| L0279 | `internal/evaluation/process.go:49:13` | evaluation.boundedBuffer is missing fields mu, buffer, exceeded | OPEN |
-| L0280 | `internal/evaluation/process.go:55:21` | syscall.SysProcAttr is missing fields Chroot, Credential, Ptrace, Setsid, Setctty, Noctty, Ctty, Foreground, Pgid | OPEN |
-| L0281 | `internal/evaluation/runner.go:136:11` | evaluation.Report is missing fields Reason, Experiment, ExpectedCases, PassedCases, ExpectedAssertions, PassedAssertions, FailedCases, SkippedCases | OPEN |
-| L0282 | `internal/evaluation/runner.go:250:11` | evaly.DatasetDraft is missing fields Cases, ParentRevision | OPEN |
-| L0283 | `internal/evaluation/runner.go:253:37` | evaly.Case is missing fields Revision, Metadata, RequiredEvidence, Generation | OPEN |
-| L0284 | `internal/evaluation/runner.go:262:10` | evaly.RunConfig is missing field Budget | OPEN |
-| L0285 | `internal/evaluation/runner.go:296:16` | evaluation.Output is missing fields Trace, Facts, Cleanup, Effects, Complete, ElapsedSeconds, Bytes | OPEN |
-| L0286 | `internal/evaluation/runner.go:322:15` | evaly.TargetResult is missing field Usage | OPEN |
-| L0287 | `internal/evaluation/runner.go:328:8` | evaly.Event is missing field CorrelationID | OPEN |
-| L0288 | `internal/evaluation/runner.go:336:15` | evaly.TargetResult is missing field Usage | OPEN |
-| L0289 | `internal/evaluation/runner.go:339:63` | evaly.Usage is missing field Units | OPEN |
-| L0290 | `internal/evaluation/runner.go:363:10` | evaly.RunPlan is missing fields StopOnInfrastructure, DispatchUnits, GraderUnits | OPEN |
-| L0291 | `internal/evaluation/runner.go:372:16` | evaly.Provenance is missing fields Model, Prompt, Provider | OPEN |
-| L0292 | `internal/evaluation/scenarios.go:25:13` | evalfixture.Options is missing fields Policy, SendTimeout, DenySend, ArchiveVector, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile | OPEN |
-| L0293 | `internal/evaluation/scenarios.go:199:15` | domain.Message is missing fields Direction, FirstIncoming, QuoteMetadata, ConversationName, GroupID, SenderName, ReplyTo, AttachmentTypes, Source, TextTruncated, TextResourceURI | OPEN |
-| L0294 | `internal/evaluation/scenarios.go:236:12` | domain.CollectionPolicy is missing field All | OPEN |
-| L0295 | `internal/events/message.go:73:10` | events.MessageData is missing fields TextTruncated, TextResourceURI | OPEN |
-| L0296 | `internal/events/message.go:89:3` | events.MessageEvent is missing field Cursor | OPEN |
-| L0297 | `internal/events/subscriptions.go:57:8` | events.SubscriptionManager is missing field mu | OPEN |
-| L0298 | `internal/events/subscriptions.go:256:11` | storage.EventSubscription is missing fields Direction, FirstIncomingOnly, Profile, Scope, ConversationType, Generation, StartSeq, ExpiresAt | OPEN |
-| L0299 | `internal/events/worker.go:44:10` | events.Worker is missing fields Logger, TraceLogger | OPEN |
-| L0300 | `internal/events/worker.go:120:13` | storage.DeliveryOutcome is missing field Gone | OPEN |
-| L0301 | `internal/historyimport/manager.go:18:10` | domain.Error is missing field Retryable | OPEN |
-| L0302 | `internal/historyimport/manager.go:21:15` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0303 | `internal/historyimport/mobile_worker.go:196:27` | domain.MobileBackupOffer is missing fields PlainAccountID, SessionAccountID, URL, KeyText, FileSize, FromSequence | OPEN |
-| L0304 | `internal/historyimport/mobile_worker.go:224:12` | domain.MobileBackupOffer is missing fields PlainAccountID, SessionAccountID, URL, KeyText, FileSize, FromSequence | OPEN |
-| L0305 | `internal/logging/file.go:58:10` | logging.File is missing fields mu, err | OPEN |
-| L0306 | `internal/logging/file.go:59:14` | lumberjack.Logger is missing fields MaxAge, LocalTime, Compress | OPEN |
-| L0307 | `internal/mcpserver/catalog_diagnostics.go:19:4` | mcp.Resource is missing fields Meta, Annotations, Description, Size, Title, Icons | OPEN |
-| L0308 | `internal/mcpserver/catalog_diagnostics.go:54:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | OPEN |
-| L0309 | `internal/mcpserver/catalog_diagnostics.go:56:6` | mcp.ResourceContents is missing fields Blob, Meta | OPEN |
-| L0310 | `internal/mcpserver/conversations.go:23:4` | mcp.ResourceTemplate is missing fields Meta, Annotations, Description, Title, Icons | OPEN |
-| L0311 | `internal/mcpserver/conversations.go:57:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | OPEN |
-| L0312 | `internal/mcpserver/conversations.go:59:6` | mcp.ResourceContents is missing fields Blob, Meta | OPEN |
-| L0313 | `internal/mcpserver/conversations.go:69:4` | mcp.Resource is missing fields Meta, Annotations, Description, Size, Title, Icons | OPEN |
-| L0314 | `internal/mcpserver/conversations.go:93:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | OPEN |
-| L0315 | `internal/mcpserver/conversations.go:95:6` | mcp.ResourceContents is missing fields Blob, Meta | OPEN |
-| L0316 | `internal/mcpserver/conversations.go:101:4` | mcp.ResourceTemplate is missing fields Meta, Annotations, Description, Title, Icons | OPEN |
-| L0317 | `internal/mcpserver/conversations.go:133:5` | conversations.MessageRequest is missing field LegacyGroup | OPEN |
-| L0318 | `internal/mcpserver/conversations.go:144:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | OPEN |
-| L0319 | `internal/mcpserver/conversations.go:145:39` | mcp.ResourceContents is missing fields Blob, Meta | OPEN |
-| L0320 | `internal/mcpserver/diagnostics.go:20:4` | mcp.Resource is missing fields Meta, Annotations, Description, Size, Title, Icons | OPEN |
-| L0321 | `internal/mcpserver/diagnostics.go:45:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | OPEN |
-| L0322 | `internal/mcpserver/diagnostics.go:47:6` | mcp.ResourceContents is missing fields Blob, Meta | OPEN |
-| L0323 | `internal/mcpserver/events_protocol.go:34:10` | mcpserver.protocolError is missing field Data | OPEN |
-| L0324 | `internal/mcpserver/http.go:50:5` | mcp.StreamableHTTPOptions is missing fields Logger, EventStore, SessionTimeout, DisableLocalhostProtection, CrossOriginProtection, MaxRequestBodyBytes, OnRequestSummary, StreamKeepAlive | OPEN |
-| L0325 | `internal/mcpserver/http.go:142:26` | mcpserver.protocolError is missing field Data | OPEN |
-| L0326 | `internal/mcpserver/http.go:146:26` | mcpserver.protocolError is missing field Data | OPEN |
-| L0327 | `internal/mcpserver/http.go:162:15` | mcpserver.telemetryResponse is missing field bytes | OPEN |
-| L0328 | `internal/mcpserver/http.go:167:16` | mcpserver.discoveryResponse is missing fields status, written, overflow, body | OPEN |
-| L0329 | `internal/mcpserver/http.go:189:27` | mcpserver.protocolError is missing field Data | OPEN |
-| L0330 | `internal/mcpserver/http.go:197:6` | mcpserver.protocolError is missing field Data | OPEN |
-| L0331 | `internal/mcpserver/http.go:205:34` | mcpserver.protocolError is missing field Data | OPEN |
-| L0332 | `internal/mcpserver/http.go:213:6` | mcpserver.protocolError is missing field Data | OPEN |
-| L0333 | `internal/mcpserver/http.go:224:6` | mcpserver.protocolError is missing field Data | OPEN |
-| L0334 | `internal/mcpserver/http.go:236:6` | mcpserver.protocolError is missing field Data | OPEN |
-| L0335 | `internal/mcpserver/http.go:254:27` | mcpserver.protocolError is missing field Data | OPEN |
-| L0336 | `internal/mcpserver/http.go:258:27` | mcpserver.protocolError is missing field Data | OPEN |
-| L0337 | `internal/mcpserver/http.go:270:15` | mcpserver.jsonResponseCapture is missing fields status, body | OPEN |
-| L0338 | `internal/mcpserver/server.go:82:8` | mcpserver.Service is missing field runtime | OPEN |
-| L0339 | `internal/mcpserver/server.go:95:27` | mcp.Implementation is missing fields Title, Description, WebsiteURL, Icons | OPEN |
-| L0340 | `internal/mcpserver/server.go:128:5` | mcp.Tool is missing fields Meta, Title, Icons | OPEN |
-| L0341 | `internal/mcpserver/server.go:133:19` | mcp.ToolAnnotations is missing field Title | OPEN |
-| L0342 | `internal/mcpserver/server.go:155:4` | mcp.Resource is missing fields Meta, Annotations, Description, Size, Title, Icons | OPEN |
-| L0343 | `internal/mcpserver/server.go:164:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | OPEN |
-| L0344 | `internal/mcpserver/server.go:166:6` | mcp.ResourceContents is missing fields Blob, Meta | OPEN |
-| L0345 | `internal/mcpserver/server.go:176:4` | mcp.ResourceTemplate is missing fields Meta, Annotations, Description, Title, Icons | OPEN |
-| L0346 | `internal/mcpserver/server.go:219:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | OPEN |
-| L0347 | `internal/mcpserver/server.go:220:39` | mcp.ResourceContents is missing fields Blob, Meta | OPEN |
-| L0348 | `internal/mcpserver/server.go:227:9` | domain.Error is missing field Retryable | OPEN |
-| L0349 | `internal/mcpserver/server.go:230:15` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0350 | `internal/mcpserver/server.go:237:10` | mcp.CallToolResult is missing fields Meta, StructuredContent, InputRequests, RequestState | OPEN |
-| L0351 | `internal/mcpserver/server.go:237:68` | mcp.TextContent is missing fields Meta, Annotations | OPEN |
+| L0273 | `internal/evaluation/model.go:38:8` | evaluation.Trace is missing fields Result, Error | FIXED |
+| L0274 | `internal/evaluation/model.go:52:8` | evaluation.Trace is missing fields Input, Result, Error | FIXED |
+| L0275 | `internal/evaluation/model.go:72:8` | evaluation.Output is missing fields Trace, Cleanup, Effects, Complete, Failure, ElapsedSeconds, Bytes | SUPPRESSED |
+| L0276 | `internal/evaluation/model.go:81:3` | evalfixture.Options is missing fields Policy, SendTimeout, DenySend, ArchiveVector, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile | SUPPRESSED |
+| L0277 | `internal/evaluation/model.go:92:14` | evaluation.modelCapture is missing fields mu, calls, violated, trace | SUPPRESSED |
+| L0278 | `internal/evaluation/process.go:48:13` | evaluation.boundedBuffer is missing fields mu, buffer, exceeded | SUPPRESSED |
+| L0279 | `internal/evaluation/process.go:49:13` | evaluation.boundedBuffer is missing fields mu, buffer, exceeded | SUPPRESSED |
+| L0280 | `internal/evaluation/process.go:55:21` | syscall.SysProcAttr is missing fields Chroot, Credential, Ptrace, Setsid, Setctty, Noctty, Ctty, Foreground, Pgid | SUPPRESSED |
+| L0281 | `internal/evaluation/runner.go:136:11` | evaluation.Report is missing fields Reason, Experiment, ExpectedCases, PassedCases, ExpectedAssertions, PassedAssertions, FailedCases, SkippedCases | SUPPRESSED |
+| L0282 | `internal/evaluation/runner.go:250:11` | evaly.DatasetDraft is missing fields Cases, ParentRevision | SUPPRESSED |
+| L0283 | `internal/evaluation/runner.go:253:37` | evaly.Case is missing fields Revision, Metadata, RequiredEvidence, Generation | SUPPRESSED |
+| L0284 | `internal/evaluation/runner.go:262:10` | evaly.RunConfig is missing field Budget | SUPPRESSED |
+| L0285 | `internal/evaluation/runner.go:296:16` | evaluation.Output is missing fields Trace, Facts, Cleanup, Effects, Complete, ElapsedSeconds, Bytes | SUPPRESSED |
+| L0286 | `internal/evaluation/runner.go:322:15` | evaly.TargetResult is missing field Usage | SUPPRESSED |
+| L0287 | `internal/evaluation/runner.go:328:8` | evaly.Event is missing field CorrelationID | SUPPRESSED |
+| L0288 | `internal/evaluation/runner.go:336:15` | evaly.TargetResult is missing field Usage | SUPPRESSED |
+| L0289 | `internal/evaluation/runner.go:339:63` | evaly.Usage is missing field Units | SUPPRESSED |
+| L0290 | `internal/evaluation/runner.go:363:10` | evaly.RunPlan is missing fields StopOnInfrastructure, DispatchUnits, GraderUnits | SUPPRESSED |
+| L0291 | `internal/evaluation/runner.go:372:16` | evaly.Provenance is missing fields Model, Prompt, Provider | SUPPRESSED |
+| L0292 | `internal/evaluation/scenarios.go:25:13` | evalfixture.Options is missing fields Policy, SendTimeout, DenySend, ArchiveVector, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile | SUPPRESSED |
+| L0293 | `internal/evaluation/scenarios.go:199:15` | domain.Message is missing fields Direction, FirstIncoming, QuoteMetadata, ConversationName, GroupID, SenderName, ReplyTo, AttachmentTypes, Source, TextTruncated, TextResourceURI | SUPPRESSED |
+| L0294 | `internal/evaluation/scenarios.go:236:12` | domain.CollectionPolicy is missing field All | FIXED |
+| L0295 | `internal/events/message.go:73:10` | events.MessageData is missing fields TextTruncated, TextResourceURI | SUPPRESSED |
+| L0296 | `internal/events/message.go:89:3` | events.MessageEvent is missing field Cursor | SUPPRESSED |
+| L0297 | `internal/events/subscriptions.go:57:8` | events.SubscriptionManager is missing field mu | SUPPRESSED |
+| L0298 | `internal/events/subscriptions.go:256:11` | storage.EventSubscription is missing fields Direction, FirstIncomingOnly, Profile, Scope, ConversationType, Generation, StartSeq, ExpiresAt | SUPPRESSED |
+| L0299 | `internal/events/worker.go:44:10` | events.Worker is missing fields Logger, TraceLogger | SUPPRESSED |
+| L0300 | `internal/events/worker.go:120:13` | storage.DeliveryOutcome is missing field Gone | SUPPRESSED |
+| L0301 | `internal/historyimport/manager.go:18:10` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0302 | `internal/historyimport/manager.go:21:15` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0303 | `internal/historyimport/mobile_worker.go:196:27` | domain.MobileBackupOffer is missing fields PlainAccountID, SessionAccountID, URL, KeyText, FileSize, FromSequence | SUPPRESSED |
+| L0304 | `internal/historyimport/mobile_worker.go:224:12` | domain.MobileBackupOffer is missing fields PlainAccountID, SessionAccountID, URL, KeyText, FileSize, FromSequence | SUPPRESSED |
+| L0305 | `internal/logging/file.go:58:10` | logging.File is missing fields mu, err | SUPPRESSED |
+| L0306 | `internal/logging/file.go:59:14` | lumberjack.Logger is missing fields MaxAge, LocalTime, Compress | SUPPRESSED |
+| L0307 | `internal/mcpserver/catalog_diagnostics.go:19:4` | mcp.Resource is missing fields Meta, Annotations, Description, Size, Title, Icons | SUPPRESSED |
+| L0308 | `internal/mcpserver/catalog_diagnostics.go:54:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | SUPPRESSED |
+| L0309 | `internal/mcpserver/catalog_diagnostics.go:56:6` | mcp.ResourceContents is missing fields Blob, Meta | FIXED |
+| L0310 | `internal/mcpserver/conversations.go:23:4` | mcp.ResourceTemplate is missing fields Meta, Annotations, Description, Title, Icons | SUPPRESSED |
+| L0311 | `internal/mcpserver/conversations.go:57:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | SUPPRESSED |
+| L0312 | `internal/mcpserver/conversations.go:59:6` | mcp.ResourceContents is missing fields Blob, Meta | FIXED |
+| L0313 | `internal/mcpserver/conversations.go:69:4` | mcp.Resource is missing fields Meta, Annotations, Description, Size, Title, Icons | FIXED |
+| L0314 | `internal/mcpserver/conversations.go:93:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | SUPPRESSED |
+| L0315 | `internal/mcpserver/conversations.go:95:6` | mcp.ResourceContents is missing fields Blob, Meta | FIXED |
+| L0316 | `internal/mcpserver/conversations.go:101:4` | mcp.ResourceTemplate is missing fields Meta, Annotations, Description, Title, Icons | SUPPRESSED |
+| L0317 | `internal/mcpserver/conversations.go:133:5` | conversations.MessageRequest is missing field LegacyGroup | SUPPRESSED |
+| L0318 | `internal/mcpserver/conversations.go:144:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | SUPPRESSED |
+| L0319 | `internal/mcpserver/conversations.go:145:39` | mcp.ResourceContents is missing fields Blob, Meta | FIXED |
+| L0320 | `internal/mcpserver/diagnostics.go:20:4` | mcp.Resource is missing fields Meta, Annotations, Description, Size, Title, Icons | SUPPRESSED |
+| L0321 | `internal/mcpserver/diagnostics.go:45:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | SUPPRESSED |
+| L0322 | `internal/mcpserver/diagnostics.go:47:6` | mcp.ResourceContents is missing fields Blob, Meta | FIXED |
+| L0323 | `internal/mcpserver/events_protocol.go:34:10` | mcpserver.protocolError is missing field Data | SUPPRESSED |
+| L0324 | `internal/mcpserver/http.go:50:5` | mcp.StreamableHTTPOptions is missing fields Logger, EventStore, SessionTimeout, DisableLocalhostProtection, CrossOriginProtection, MaxRequestBodyBytes, OnRequestSummary, StreamKeepAlive | SUPPRESSED |
+| L0325 | `internal/mcpserver/http.go:142:26` | mcpserver.protocolError is missing field Data | SUPPRESSED |
+| L0326 | `internal/mcpserver/http.go:146:26` | mcpserver.protocolError is missing field Data | SUPPRESSED |
+| L0327 | `internal/mcpserver/http.go:162:15` | mcpserver.telemetryResponse is missing field bytes | SUPPRESSED |
+| L0328 | `internal/mcpserver/http.go:167:16` | mcpserver.discoveryResponse is missing fields status, written, overflow, body | FIXED |
+| L0329 | `internal/mcpserver/http.go:189:27` | mcpserver.protocolError is missing field Data | SUPPRESSED |
+| L0330 | `internal/mcpserver/http.go:197:6` | mcpserver.protocolError is missing field Data | SUPPRESSED |
+| L0331 | `internal/mcpserver/http.go:205:34` | mcpserver.protocolError is missing field Data | SUPPRESSED |
+| L0332 | `internal/mcpserver/http.go:213:6` | mcpserver.protocolError is missing field Data | SUPPRESSED |
+| L0333 | `internal/mcpserver/http.go:224:6` | mcpserver.protocolError is missing field Data | SUPPRESSED |
+| L0334 | `internal/mcpserver/http.go:236:6` | mcpserver.protocolError is missing field Data | SUPPRESSED |
+| L0335 | `internal/mcpserver/http.go:254:27` | mcpserver.protocolError is missing field Data | SUPPRESSED |
+| L0336 | `internal/mcpserver/http.go:258:27` | mcpserver.protocolError is missing field Data | SUPPRESSED |
+| L0337 | `internal/mcpserver/http.go:270:15` | mcpserver.jsonResponseCapture is missing fields status, body | SUPPRESSED |
+| L0338 | `internal/mcpserver/server.go:82:8` | mcpserver.Service is missing field runtime | SUPPRESSED |
+| L0339 | `internal/mcpserver/server.go:95:27` | mcp.Implementation is missing fields Title, Description, WebsiteURL, Icons | SUPPRESSED |
+| L0340 | `internal/mcpserver/server.go:128:5` | mcp.Tool is missing fields Meta, Title, Icons | SUPPRESSED |
+| L0341 | `internal/mcpserver/server.go:133:19` | mcp.ToolAnnotations is missing field Title | SUPPRESSED |
+| L0342 | `internal/mcpserver/server.go:155:4` | mcp.Resource is missing fields Meta, Annotations, Description, Size, Title, Icons | FIXED |
+| L0343 | `internal/mcpserver/server.go:164:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | SUPPRESSED |
+| L0344 | `internal/mcpserver/server.go:166:6` | mcp.ResourceContents is missing fields Blob, Meta | FIXED |
+| L0345 | `internal/mcpserver/server.go:176:4` | mcp.ResourceTemplate is missing fields Meta, Annotations, Description, Title, Icons | SUPPRESSED |
+| L0346 | `internal/mcpserver/server.go:219:12` | mcp.ReadResourceResult is missing fields Meta, Cacheable, InputRequests, RequestState | SUPPRESSED |
+| L0347 | `internal/mcpserver/server.go:220:39` | mcp.ResourceContents is missing fields Blob, Meta | FIXED |
+| L0348 | `internal/mcpserver/server.go:227:9` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0349 | `internal/mcpserver/server.go:230:15` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0350 | `internal/mcpserver/server.go:237:10` | mcp.CallToolResult is missing fields Meta, StructuredContent, InputRequests, RequestState | SUPPRESSED |
+| L0351 | `internal/mcpserver/server.go:237:68` | mcp.TextContent is missing fields Meta, Annotations | SUPPRESSED |
 | L0352 | `internal/mcpserver/server.go:277:10` | domain.Error is missing fields Code, Message, Retryable, NextAction, Details | FIXED |
-| L0353 | `internal/mcpserver/server.go:301:17` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0354 | `internal/mcpserver/server.go:434:29` | mcp.TextContent is missing fields Meta, Annotations | OPEN |
-| L0355 | `internal/mcpserver/server.go:440:6` | mcp.ResourceLink is missing fields Title, Description, Size, Meta, Annotations, Icons | OPEN |
-| L0356 | `internal/mcpserver/server.go:444:10` | mcp.CallToolResult is missing fields Meta, IsError, InputRequests, RequestState | OPEN |
-| L0357 | `internal/messaging/manager.go:30:10` | domain.Error is missing field Retryable | OPEN |
-| L0358 | `internal/messaging/manager.go:33:15` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0359 | `internal/mobilebackup/account_fetch.go:34:7` | mobilebackup.AccountArchive is missing fields ownerAccount, retainedSourceID, archive, pairs, ciphertextBytes, containerBytes, trailingBytes | OPEN |
-| L0360 | `internal/mobilebackup/account_fetch.go:107:12` | mobilebackup.AccountArchive is missing fields ownerAccount, retainedSourceID | OPEN |
-| L0361 | `internal/mobilebackup/account_fetch.go:114:20` | mobilebackup.PlainArchive is missing field Files | OPEN |
-| L0362 | `internal/mobilebackup/account_inspection.go:71:11` | mobilebackup.AccountFileCoverage is missing fields SourceRows, PeriodRows, InvalidTimestamps, EarliestAt, LatestAt, WALMode, Examined, RejectedMessageIDShapes, RejectedMessageIDContext, RejectedReasons, Rejected, SourceControls, DeferredControls, SampleHasMore, Metadata, DeferredMetadata | OPEN |
-| L0363 | `internal/mobilebackup/account_metadata.go:69:13` | mobilebackup.AccountMetadataDiagnostics is missing fields RowsWithMetadata, MissingMetadata, InvalidMetadata, AttachmentCount, UnsupportedFields, SourceTextPresent, TitlePresent, TitleEqualsText, ShapesTruncated | OPEN |
-| L0364 | `internal/mobilebackup/account_metadata.go:100:44` | mobilebackup.PreparedRow is missing fields SenderID, Direction, ExpiresMS, ExpiryDeclared, QuoteExpired | OPEN |
-| L0365 | `internal/mobilebackup/archive.go:32:16` | mobilebackup.ArchiveFile is missing fields Name, Data | OPEN |
-| L0366 | `internal/mobilebackup/archive_library.go:67:9` | mobilebackup.PreservationReceipt is missing fields DownloadPerformed, ImportPerformed, PublicAccessEnabled | OPEN |
-| L0367 | `internal/mobilebackup/archive_library.go:145:9` | mobilebackup.PreservationReceipt is missing fields DownloadPerformed, ImportPerformed, PublicAccessEnabled | OPEN |
-| L0368 | `internal/mobilebackup/archive_restore.go:63:12` | mobilebackup.RetainedArchiveStore is missing field permanent | OPEN |
-| L0369 | `internal/mobilebackup/archive_restore.go:65:12` | mobilebackup.SnapshotStore is missing fields budget, terminalHints | OPEN |
-| L0370 | `internal/mobilebackup/attachment.go:34:8` | mobilebackup.AttachmentValue is missing fields Present, Bytes | OPEN |
-| L0371 | `internal/mobilebackup/attachment.go:41:7` | mobilebackup.Attachment is missing fields Type, ExtInfo, Action, Params, Title, Href, Thumb, Description, Remains, ZInstantData, ZInstantMessage, CategoryID, ID, ChildNumber, UnsupportedFields | OPEN |
-| L0372 | `internal/mobilebackup/binnet.go:31:7` | mobilebackup.BinNet is missing fields Mentions, Quote, Attachments, UnsupportedTags, UnsupportedFields | OPEN |
-| L0373 | `internal/mobilebackup/control_scan.go:23:8` | mobilebackup.OwnDirectRecallSet is missing fields requestID, fingerprint, account, filename, digest, Recalls | OPEN |
-| L0374 | `internal/mobilebackup/control_scan.go:88:15` | domain.MobileIdentityRequest is missing fields Direct, Groups | OPEN |
-| L0375 | `internal/mobilebackup/download.go:41:10` | mobilebackup.Downloader is missing field session | OPEN |
-| L0376 | `internal/mobilebackup/encrypted_archive.go:21:8` | mobilebackup.Format1Archive is missing fields Archive, CiphertextBytes, ContainerBytes, TrailingBytes | OPEN |
-| L0377 | `internal/mobilebackup/header.go:85:12` | mobilebackup.Header is missing field TotalBytes | OPEN |
-| L0378 | `internal/mobilebackup/history_page.go:59:12` | mobilebackup.SQLiteCursor is missing fields Descending, Snapshot | OPEN |
-| L0379 | `internal/mobilebackup/history_page.go:74:12` | domain.MobileHistorySnapshot is missing field ControlPreludeComplete | OPEN |
-| L0380 | `internal/mobilebackup/mentions.go:24:7` | mobilebackup.Mention is missing fields Type, UID, Position, Length, UnsupportedFields | OPEN |
-| L0381 | `internal/mobilebackup/message_conversion.go:26:19` | domain.ExpiringHistoryRecord is missing fields Message, ExpiresAtMS | OPEN |
-| L0382 | `internal/mobilebackup/message_conversion.go:31:8` | mobilebackup.ConvertedArchivePage is missing fields Records, Recalls, Expired, UnsupportedContent, UnresolvedQuotes, UnresolvedMentions, UnsupportedContentReasons, UnsupportedContentKinds | OPEN |
-| L0383 | `internal/mobilebackup/message_conversion.go:71:12` | mobilebackup.ArchivePageInspection is missing fields OwnRecallCandidates, UnsupportedContentReasons, UnsupportedContentKinds | OPEN |
-| L0384 | `internal/mobilebackup/message_conversion.go:195:14` | domain.Message is missing fields FirstIncoming, ConversationName, GroupID, SenderName, ReplyTo, Source, TextTruncated, TextResourceURI | OPEN |
-| L0385 | `internal/mobilebackup/page_expiry.go:27:11` | mobilebackup.PreparedRow is missing fields Row, SenderID, Direction, Kind, Metadata, ExpiresMS, ExpiryDeclared, QuoteExpired | OPEN |
-| L0386 | `internal/mobilebackup/page_expiry.go:39:14` | mobilebackup.QuoteValue is missing fields Present, Bytes | OPEN |
-| L0387 | `internal/mobilebackup/page_expiry.go:45:11` | mobilebackup.PreparedRow is missing fields Row, SenderID, Direction, Kind, Metadata, ExpiresMS, ExpiryDeclared, QuoteExpired | OPEN |
-| L0388 | `internal/mobilebackup/page_walk.go:44:14` | mobilebackup.ArchiveWalkSummary is missing fields Pages, Examined, Rejected, Candidates, ExpiredMessages, ExpiredQuotes, DeferredControls, UnsupportedTypes, MissingMetadata, InvalidMetadata, UnsupportedMetadataFields, SourceHasMore, StopReason | OPEN |
-| L0389 | `internal/mobilebackup/page_walk.go:58:13` | mobilebackup.ArchiveWalkSummary is missing field StopReason | OPEN |
-| L0390 | `internal/mobilebackup/prepared_page.go:38:14` | mobilebackup.PreparedArchiveCursor is missing fields requestID, fingerprint, account, examined, sqlite | OPEN |
-| L0391 | `internal/mobilebackup/prepared_page.go:40:8` | mobilebackup.PreparedArchivePage is missing fields Coverage, SourceWAL, SourceControls, controlsVerified, requestID, fingerprint, account, Candidates, Examined, Rejected, ExpiredMessages, ExpiredQuotes, SourceHasMore, BudgetExhausted, Next | OPEN |
-| L0392 | `internal/mobilebackup/quote.go:35:7` | mobilebackup.QuoteScalars is missing fields OwnerID, ClientMessageID, GlobalMessageID, MessageType, Timestamp, TTL | OPEN |
-| L0393 | `internal/mobilebackup/quote_fields.go:33:8` | mobilebackup.QuoteValue is missing fields Present, Bytes | OPEN |
-| L0394 | `internal/mobilebackup/quote_fields.go:35:7` | mobilebackup.Quote is missing fields Scalars, Message, Attachment, FromD, Status, UnsupportedFields | OPEN |
-| L0395 | `internal/mobilebackup/retained_archive.go:136:8` | mobilebackup.RetainedArchiveStore is missing field backup | OPEN |
-| L0396 | `internal/mobilebackup/retained_archive.go:138:12` | mobilebackup.SnapshotStore is missing field terminalHints | OPEN |
-| L0397 | `internal/mobilebackup/retained_archive.go:257:10` | mobilebackup.retainedMetadata is missing fields PreservedMS, SourceStoredBytes | OPEN |
-| L0398 | `internal/mobilebackup/retained_archive.go:352:9` | mobilebackup.RetainedArchiveManifest is missing fields HistoryComplete, ImportPerformed | OPEN |
-| L0399 | `internal/mobilebackup/retained_archive.go:500:13` | mobilebackup.AccountArchive is missing fields ownerAccount, retainedSourceID, archive, pairs | OPEN |
-| L0400 | `internal/mobilebackup/row_page.go:37:15` | mobilebackup.PreparedRow is missing fields Row, SenderID, Direction, Kind, Metadata, ExpiresMS, ExpiryDeclared, QuoteExpired | OPEN |
-| L0401 | `internal/mobilebackup/row_page.go:40:7` | mobilebackup.PreparedRowPage is missing fields Rows, OwnRecalls, Examined, DeferredControls, UnsupportedTypes, MissingMetadata, InvalidMetadata, UnsupportedMetadataFields | OPEN |
-| L0402 | `internal/mobilebackup/row_page.go:147:13` | mobilebackup.IdentityRequest is missing fields Direct, Groups | OPEN |
-| L0403 | `internal/mobilebackup/row_page.go:188:4` | mobilebackup.PreparedRow is missing fields SenderID, Direction, QuoteExpired | OPEN |
-| L0404 | `internal/mobilebackup/selected_fetch.go:25:8` | mobilebackup.SelectedArchive is missing fields requestID, ref, requestFingerprint, snapshotCreatedMS, snapshotExpiresMS, File, CiphertextBytes, ContainerBytes, TrailingBytes | OPEN |
-| L0405 | `internal/mobilebackup/selected_fetch.go:76:14` | mobilebackup.SelectedArchive is missing fields snapshotCreatedMS, snapshotExpiresMS | OPEN |
-| L0406 | `internal/mobilebackup/selected_fetch.go:85:33` | mobilebackup.ArchiveFile is missing fields Name, Data | OPEN |
-| L0407 | `internal/mobilebackup/snapshot.go:107:12` | mobilebackup.SnapshotStore is missing field terminalHints | OPEN |
-| L0408 | `internal/mobilebackup/snapshot_page.go:70:8` | mobilebackup.SnapshotPage is missing fields Records, Coverage, WALMode, UnsupportedMetadataFields, UnresolvedQuotes, UnresolvedMentions, Examined, Rejected, Expired, UnresolvedSenders, SourceInformation, SourceNativeExcluded, SourceRecallRows, SuppressedSource, Unsupported, HasMore, Next | OPEN |
-| L0409 | `internal/mobilebackup/snapshot_page.go:189:47` | mobilebackup.PreparedRow is missing fields SenderID, Direction, ExpiresMS, ExpiryDeclared, QuoteExpired | OPEN |
-| L0410 | `internal/mobilebackup/sqlite.go:81:15` | mobilebackup.SQLiteRow is missing fields SenderID, MessageID, ClientID, Text, TimestampMS, TTL, Type, Status, SourceRowID, BinNet | OPEN |
-| L0411 | `internal/mobilebackup/tlv.go:30:17` | mobilebackup.TLVField is missing fields Tag, Value | OPEN |
-| L0412 | `internal/mobilebackup/tlv.go:42:13` | mobilebackup.TLV is missing field Fields | OPEN |
-| L0413 | `internal/mobilebackup/xz.go:38:19` | xz.ReaderConfig is missing field SingleStream | OPEN |
-| L0414 | `internal/netpolicy/http.go:70:13` | net.Dialer is missing fields Deadline, LocalAddr, DualStack, FallbackDelay, KeepAlive, KeepAliveConfig, Resolver, Cancel, Control, ControlContext | OPEN |
-| L0415 | `internal/observability/observer.go:68:8` | observability.Observer is missing fields calls, response, upstream, transitions, queue, age, mu | OPEN |
-| L0416 | `internal/observability/observer.go:294:45` | trace.Link is missing field Attributes | OPEN |
-| L0417 | `internal/observability/provider.go:80:28` | otlptracehttp.RetryConfig is missing fields InitialInterval, MaxInterval, MaxElapsedTime | OPEN |
-| L0418 | `internal/observability/provider.go:90:29` | otlpmetrichttp.RetryConfig is missing fields InitialInterval, MaxInterval, MaxElapsedTime | OPEN |
-| L0419 | `internal/observability/provider.go:124:12` | observability.Owner is missing fields once, shutdownErr | OPEN |
-| L0420 | `internal/service/account_archive_control.go:44:9` | domain.Error is missing field Retryable | OPEN |
-| L0421 | `internal/service/account_archive_control.go:47:16` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0422 | `internal/service/archive_catalog.go:68:12` | service.archiveCatalogueCursor is missing field Next | OPEN |
-| L0423 | `internal/service/archive_messages.go:109:11` | domain.Error is missing fields Retryable, NextAction | OPEN |
-| L0424 | `internal/service/archive_messages.go:115:10` | domain.Error is missing fields Retryable, NextAction | OPEN |
-| L0425 | `internal/service/archive_messages.go:166:16` | domain.Error is missing fields Retryable, NextAction | OPEN |
-| L0426 | `internal/service/archive_messages.go:186:11` | service.archiveReadToken is missing fields Position, Target, Limit | OPEN |
-| L0427 | `internal/service/archive_port.go:19:32` | service.membershipPort is missing fields mu, current, sender, allowSend, recipients, lifecycle, snapshots, archives | OPEN |
-| L0428 | `internal/service/archive_read.go:62:10` | domain.Error is missing fields Retryable, NextAction | OPEN |
-| L0429 | `internal/service/bridge.go:54:27` | mcp.Implementation is missing fields Title, Description, WebsiteURL, Icons | OPEN |
-| L0430 | `internal/service/bridge.go:57:4` | mcp.StreamableClientTransport is missing fields OAuthHandler, MaxEventSize | OPEN |
-| L0431 | `internal/service/bridge.go:69:27` | mcp.Implementation is missing fields Title, Description, WebsiteURL, Icons | OPEN |
-| L0432 | `internal/service/bridge.go:76:34` | mcp.CallToolParams is missing fields Meta, InputResponses, RequestState | OPEN |
-| L0433 | `internal/service/bridge.go:80:37` | mcp.ReadResourceParams is missing fields Meta, InputResponses, RequestState | OPEN |
-| L0434 | `internal/service/bridge.go:94:29` | mcp.StdioTransport is missing field MaxLineLength | OPEN |
-| L0435 | `internal/service/bridge.go:146:14` | service.stdioCountingWriter is missing fields bytes, batch | OPEN |
-| L0436 | `internal/service/bridge.go:147:23` | mcp.IOTransport is missing field MaxLineLength | OPEN |
-| L0437 | `internal/service/bridge.go:151:10` | service.observedStdioConnection is missing fields writeMu, mu, closed | OPEN |
-| L0438 | `internal/service/cli.go:60:59` | slog.HandlerOptions is missing fields AddSource, ReplaceAttr | OPEN |
-| L0439 | `internal/service/mcp_reads.go:34:15` | toolruntime.Capabilities is missing fields Events, Archives | OPEN |
-| L0440 | `internal/service/mobile_backup.go:97:3` | domain.MobileIdentityRequest is missing field Groups | OPEN |
-| L0441 | `internal/service/mobile_backup.go:213:12` | mobilebackup.ArchiveWalkSummary is missing fields Pages, Examined, Rejected, Candidates, ExpiredMessages, ExpiredQuotes, DeferredControls, UnsupportedTypes, MissingMetadata, InvalidMetadata, UnsupportedMetadataFields, SourceHasMore, StopReason | OPEN |
-| L0442 | `internal/service/mobile_history.go:78:45` | domain.MobileIdentityRequest is missing field Groups | OPEN |
-| L0443 | `internal/service/mobile_ledger_control.go:92:10` | domain.Error is missing field Retryable | OPEN |
-| L0444 | `internal/service/mobile_ledger_control.go:95:16` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0445 | `internal/service/recall_diagnostic.go:39:12` | domain.Error is missing field Retryable | OPEN |
-| L0446 | `internal/service/recall_diagnostic.go:39:128` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0447 | `internal/service/recall_diagnostic.go:79:11` | service.recallReceipt is missing fields State, Status | OPEN |
-| L0448 | `internal/service/recall_diagnostic.go:174:9` | service.recallReceipt is missing field Status | OPEN |
-| L0449 | `internal/service/run.go:102:15` | domain.Error is missing field Retryable | OPEN |
-| L0450 | `internal/service/run.go:105:15` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0451 | `internal/service/run.go:183:58` | slog.HandlerOptions is missing fields AddSource, ReplaceAttr | OPEN |
-| L0452 | `internal/service/run.go:273:11` | service.membershipPort is missing fields mu, current, sender | OPEN |
-| L0453 | `internal/service/run.go:549:14` | domain.Error is missing fields Retryable, NextAction, Details | OPEN |
-| L0454 | `internal/storage/browse.go:57:7` | storage.cursor is missing fields Kind, Snapshot, At, Group, ID | OPEN |
-| L0455 | `internal/storage/conversation_views.go:80:27` | domain.NextAction is missing fields Tool, Arguments | OPEN |
+| L0353 | `internal/mcpserver/server.go:301:17` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0354 | `internal/mcpserver/server.go:434:29` | mcp.TextContent is missing fields Meta, Annotations | SUPPRESSED |
+| L0355 | `internal/mcpserver/server.go:440:6` | mcp.ResourceLink is missing fields Title, Description, Size, Meta, Annotations, Icons | FIXED |
+| L0356 | `internal/mcpserver/server.go:444:10` | mcp.CallToolResult is missing fields Meta, IsError, InputRequests, RequestState | SUPPRESSED |
+| L0357 | `internal/messaging/manager.go:30:10` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0358 | `internal/messaging/manager.go:33:15` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0359 | `internal/mobilebackup/account_fetch.go:34:7` | mobilebackup.AccountArchive is missing fields ownerAccount, retainedSourceID, archive, pairs, ciphertextBytes, containerBytes, trailingBytes | SUPPRESSED |
+| L0360 | `internal/mobilebackup/account_fetch.go:107:12` | mobilebackup.AccountArchive is missing fields ownerAccount, retainedSourceID | SUPPRESSED |
+| L0361 | `internal/mobilebackup/account_fetch.go:114:20` | mobilebackup.PlainArchive is missing field Files | SUPPRESSED |
+| L0362 | `internal/mobilebackup/account_inspection.go:71:11` | mobilebackup.AccountFileCoverage is missing fields SourceRows, PeriodRows, InvalidTimestamps, EarliestAt, LatestAt, WALMode, Examined, RejectedMessageIDShapes, RejectedMessageIDContext, RejectedReasons, Rejected, SourceControls, DeferredControls, SampleHasMore, Metadata, DeferredMetadata | SUPPRESSED |
+| L0363 | `internal/mobilebackup/account_metadata.go:69:13` | mobilebackup.AccountMetadataDiagnostics is missing fields RowsWithMetadata, MissingMetadata, InvalidMetadata, AttachmentCount, UnsupportedFields, SourceTextPresent, TitlePresent, TitleEqualsText, ShapesTruncated | SUPPRESSED |
+| L0364 | `internal/mobilebackup/account_metadata.go:100:44` | mobilebackup.PreparedRow is missing fields SenderID, Direction, ExpiresMS, ExpiryDeclared, QuoteExpired | SUPPRESSED |
+| L0365 | `internal/mobilebackup/archive.go:32:16` | mobilebackup.ArchiveFile is missing fields Name, Data | SUPPRESSED |
+| L0366 | `internal/mobilebackup/archive_library.go:67:9` | mobilebackup.PreservationReceipt is missing fields DownloadPerformed, ImportPerformed, PublicAccessEnabled | SUPPRESSED |
+| L0367 | `internal/mobilebackup/archive_library.go:145:9` | mobilebackup.PreservationReceipt is missing fields DownloadPerformed, ImportPerformed, PublicAccessEnabled | SUPPRESSED |
+| L0368 | `internal/mobilebackup/archive_restore.go:63:12` | mobilebackup.RetainedArchiveStore is missing field permanent | SUPPRESSED |
+| L0369 | `internal/mobilebackup/archive_restore.go:65:12` | mobilebackup.SnapshotStore is missing fields budget, terminalHints | SUPPRESSED |
+| L0370 | `internal/mobilebackup/attachment.go:34:8` | mobilebackup.AttachmentValue is missing fields Present, Bytes | SUPPRESSED |
+| L0371 | `internal/mobilebackup/attachment.go:41:7` | mobilebackup.Attachment is missing fields Type, ExtInfo, Action, Params, Title, Href, Thumb, Description, Remains, ZInstantData, ZInstantMessage, CategoryID, ID, ChildNumber, UnsupportedFields | SUPPRESSED |
+| L0372 | `internal/mobilebackup/binnet.go:31:7` | mobilebackup.BinNet is missing fields Mentions, Quote, Attachments, UnsupportedTags, UnsupportedFields | SUPPRESSED |
+| L0373 | `internal/mobilebackup/control_scan.go:23:8` | mobilebackup.OwnDirectRecallSet is missing fields requestID, fingerprint, account, filename, digest, Recalls | SUPPRESSED |
+| L0374 | `internal/mobilebackup/control_scan.go:88:15` | domain.MobileIdentityRequest is missing fields Direct, Groups | SUPPRESSED |
+| L0375 | `internal/mobilebackup/download.go:41:10` | mobilebackup.Downloader is missing field session | FIXED |
+| L0376 | `internal/mobilebackup/encrypted_archive.go:21:8` | mobilebackup.Format1Archive is missing fields Archive, CiphertextBytes, ContainerBytes, TrailingBytes | SUPPRESSED |
+| L0377 | `internal/mobilebackup/header.go:85:12` | mobilebackup.Header is missing field TotalBytes | SUPPRESSED |
+| L0378 | `internal/mobilebackup/history_page.go:59:12` | mobilebackup.SQLiteCursor is missing fields Descending, Snapshot | SUPPRESSED |
+| L0379 | `internal/mobilebackup/history_page.go:74:12` | domain.MobileHistorySnapshot is missing field ControlPreludeComplete | SUPPRESSED |
+| L0380 | `internal/mobilebackup/mentions.go:24:7` | mobilebackup.Mention is missing fields Type, UID, Position, Length, UnsupportedFields | SUPPRESSED |
+| L0381 | `internal/mobilebackup/message_conversion.go:26:19` | domain.ExpiringHistoryRecord is missing fields Message, ExpiresAtMS | SUPPRESSED |
+| L0382 | `internal/mobilebackup/message_conversion.go:31:8` | mobilebackup.ConvertedArchivePage is missing fields Records, Recalls, Expired, UnsupportedContent, UnresolvedQuotes, UnresolvedMentions, UnsupportedContentReasons, UnsupportedContentKinds | SUPPRESSED |
+| L0383 | `internal/mobilebackup/message_conversion.go:71:12` | mobilebackup.ArchivePageInspection is missing fields OwnRecallCandidates, UnsupportedContentReasons, UnsupportedContentKinds | SUPPRESSED |
+| L0384 | `internal/mobilebackup/message_conversion.go:195:14` | domain.Message is missing fields FirstIncoming, ConversationName, GroupID, SenderName, ReplyTo, Source, TextTruncated, TextResourceURI | SUPPRESSED |
+| L0385 | `internal/mobilebackup/page_expiry.go:27:11` | mobilebackup.PreparedRow is missing fields Row, SenderID, Direction, Kind, Metadata, ExpiresMS, ExpiryDeclared, QuoteExpired | SUPPRESSED |
+| L0386 | `internal/mobilebackup/page_expiry.go:39:14` | mobilebackup.QuoteValue is missing fields Present, Bytes | SUPPRESSED |
+| L0387 | `internal/mobilebackup/page_expiry.go:45:11` | mobilebackup.PreparedRow is missing fields Row, SenderID, Direction, Kind, Metadata, ExpiresMS, ExpiryDeclared, QuoteExpired | SUPPRESSED |
+| L0388 | `internal/mobilebackup/page_walk.go:44:14` | mobilebackup.ArchiveWalkSummary is missing fields Pages, Examined, Rejected, Candidates, ExpiredMessages, ExpiredQuotes, DeferredControls, UnsupportedTypes, MissingMetadata, InvalidMetadata, UnsupportedMetadataFields, SourceHasMore, StopReason | SUPPRESSED |
+| L0389 | `internal/mobilebackup/page_walk.go:58:13` | mobilebackup.ArchiveWalkSummary is missing field StopReason | SUPPRESSED |
+| L0390 | `internal/mobilebackup/prepared_page.go:38:14` | mobilebackup.PreparedArchiveCursor is missing fields requestID, fingerprint, account, examined, sqlite | SUPPRESSED |
+| L0391 | `internal/mobilebackup/prepared_page.go:40:8` | mobilebackup.PreparedArchivePage is missing fields Coverage, SourceWAL, SourceControls, controlsVerified, requestID, fingerprint, account, Candidates, Examined, Rejected, ExpiredMessages, ExpiredQuotes, SourceHasMore, BudgetExhausted, Next | SUPPRESSED |
+| L0392 | `internal/mobilebackup/quote.go:35:7` | mobilebackup.QuoteScalars is missing fields OwnerID, ClientMessageID, GlobalMessageID, MessageType, Timestamp, TTL | SUPPRESSED |
+| L0393 | `internal/mobilebackup/quote_fields.go:33:8` | mobilebackup.QuoteValue is missing fields Present, Bytes | SUPPRESSED |
+| L0394 | `internal/mobilebackup/quote_fields.go:35:7` | mobilebackup.Quote is missing fields Scalars, Message, Attachment, FromD, Status, UnsupportedFields | SUPPRESSED |
+| L0395 | `internal/mobilebackup/retained_archive.go:136:8` | mobilebackup.RetainedArchiveStore is missing field backup | SUPPRESSED |
+| L0396 | `internal/mobilebackup/retained_archive.go:138:12` | mobilebackup.SnapshotStore is missing field terminalHints | SUPPRESSED |
+| L0397 | `internal/mobilebackup/retained_archive.go:257:10` | mobilebackup.retainedMetadata is missing fields PreservedMS, SourceStoredBytes | SUPPRESSED |
+| L0398 | `internal/mobilebackup/retained_archive.go:352:9` | mobilebackup.RetainedArchiveManifest is missing fields HistoryComplete, ImportPerformed | SUPPRESSED |
+| L0399 | `internal/mobilebackup/retained_archive.go:500:13` | mobilebackup.AccountArchive is missing fields ownerAccount, retainedSourceID, archive, pairs | SUPPRESSED |
+| L0400 | `internal/mobilebackup/row_page.go:37:15` | mobilebackup.PreparedRow is missing fields Row, SenderID, Direction, Kind, Metadata, ExpiresMS, ExpiryDeclared, QuoteExpired | SUPPRESSED |
+| L0401 | `internal/mobilebackup/row_page.go:40:7` | mobilebackup.PreparedRowPage is missing fields Rows, OwnRecalls, Examined, DeferredControls, UnsupportedTypes, MissingMetadata, InvalidMetadata, UnsupportedMetadataFields | SUPPRESSED |
+| L0402 | `internal/mobilebackup/row_page.go:147:13` | mobilebackup.IdentityRequest is missing fields Direct, Groups | SUPPRESSED |
+| L0403 | `internal/mobilebackup/row_page.go:188:4` | mobilebackup.PreparedRow is missing fields SenderID, Direction, QuoteExpired | SUPPRESSED |
+| L0404 | `internal/mobilebackup/selected_fetch.go:25:8` | mobilebackup.SelectedArchive is missing fields requestID, ref, requestFingerprint, snapshotCreatedMS, snapshotExpiresMS, File, CiphertextBytes, ContainerBytes, TrailingBytes | SUPPRESSED |
+| L0405 | `internal/mobilebackup/selected_fetch.go:76:14` | mobilebackup.SelectedArchive is missing fields snapshotCreatedMS, snapshotExpiresMS | SUPPRESSED |
+| L0406 | `internal/mobilebackup/selected_fetch.go:85:33` | mobilebackup.ArchiveFile is missing fields Name, Data | SUPPRESSED |
+| L0407 | `internal/mobilebackup/snapshot.go:107:12` | mobilebackup.SnapshotStore is missing field terminalHints | SUPPRESSED |
+| L0408 | `internal/mobilebackup/snapshot_page.go:70:8` | mobilebackup.SnapshotPage is missing fields Records, Coverage, WALMode, UnsupportedMetadataFields, UnresolvedQuotes, UnresolvedMentions, Examined, Rejected, Expired, UnresolvedSenders, SourceInformation, SourceNativeExcluded, SourceRecallRows, SuppressedSource, Unsupported, HasMore, Next | SUPPRESSED |
+| L0409 | `internal/mobilebackup/snapshot_page.go:189:47` | mobilebackup.PreparedRow is missing fields SenderID, Direction, ExpiresMS, ExpiryDeclared, QuoteExpired | SUPPRESSED |
+| L0410 | `internal/mobilebackup/sqlite.go:81:15` | mobilebackup.SQLiteRow is missing fields SenderID, MessageID, ClientID, Text, TimestampMS, TTL, Type, Status, SourceRowID, BinNet | SUPPRESSED |
+| L0411 | `internal/mobilebackup/tlv.go:30:17` | mobilebackup.TLVField is missing fields Tag, Value | SUPPRESSED |
+| L0412 | `internal/mobilebackup/tlv.go:42:13` | mobilebackup.TLV is missing field Fields | SUPPRESSED |
+| L0413 | `internal/mobilebackup/xz.go:38:19` | xz.ReaderConfig is missing field SingleStream | FIXED |
+| L0414 | `internal/netpolicy/http.go:70:13` | net.Dialer is missing fields Deadline, LocalAddr, DualStack, FallbackDelay, KeepAlive, KeepAliveConfig, Resolver, Cancel, Control, ControlContext | FIXED |
+| L0415 | `internal/observability/observer.go:68:8` | observability.Observer is missing fields calls, response, upstream, transitions, queue, age, mu | SUPPRESSED |
+| L0416 | `internal/observability/observer.go:294:45` | trace.Link is missing field Attributes | SUPPRESSED |
+| L0417 | `internal/observability/provider.go:80:28` | otlptracehttp.RetryConfig is missing fields InitialInterval, MaxInterval, MaxElapsedTime | SUPPRESSED |
+| L0418 | `internal/observability/provider.go:90:29` | otlpmetrichttp.RetryConfig is missing fields InitialInterval, MaxInterval, MaxElapsedTime | SUPPRESSED |
+| L0419 | `internal/observability/provider.go:124:12` | observability.Owner is missing fields once, shutdownErr | SUPPRESSED |
+| L0420 | `internal/service/account_archive_control.go:44:9` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0421 | `internal/service/account_archive_control.go:47:16` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0422 | `internal/service/archive_catalog.go:68:12` | service.archiveCatalogueCursor is missing field Next | SUPPRESSED |
+| L0423 | `internal/service/archive_messages.go:109:11` | domain.Error is missing fields Retryable, NextAction | SUPPRESSED |
+| L0424 | `internal/service/archive_messages.go:115:10` | domain.Error is missing fields Retryable, NextAction | SUPPRESSED |
+| L0425 | `internal/service/archive_messages.go:166:16` | domain.Error is missing fields Retryable, NextAction | SUPPRESSED |
+| L0426 | `internal/service/archive_messages.go:186:11` | service.archiveReadToken is missing fields Position, Target, Limit | SUPPRESSED |
+| L0427 | `internal/service/archive_port.go:19:32` | service.membershipPort is missing fields mu, current, sender, allowSend, recipients, lifecycle, snapshots, archives | SUPPRESSED |
+| L0428 | `internal/service/archive_read.go:62:10` | domain.Error is missing fields Retryable, NextAction | SUPPRESSED |
+| L0429 | `internal/service/bridge.go:54:27` | mcp.Implementation is missing fields Title, Description, WebsiteURL, Icons | SUPPRESSED |
+| L0430 | `internal/service/bridge.go:57:4` | mcp.StreamableClientTransport is missing fields OAuthHandler, MaxEventSize | SUPPRESSED |
+| L0431 | `internal/service/bridge.go:69:27` | mcp.Implementation is missing fields Title, Description, WebsiteURL, Icons | SUPPRESSED |
+| L0432 | `internal/service/bridge.go:76:34` | mcp.CallToolParams is missing fields Meta, InputResponses, RequestState | SUPPRESSED |
+| L0433 | `internal/service/bridge.go:80:37` | mcp.ReadResourceParams is missing fields Meta, InputResponses, RequestState | SUPPRESSED |
+| L0434 | `internal/service/bridge.go:94:29` | mcp.StdioTransport is missing field MaxLineLength | SUPPRESSED |
+| L0435 | `internal/service/bridge.go:146:14` | service.stdioCountingWriter is missing fields bytes, batch | SUPPRESSED |
+| L0436 | `internal/service/bridge.go:147:23` | mcp.IOTransport is missing field MaxLineLength | SUPPRESSED |
+| L0437 | `internal/service/bridge.go:151:10` | service.observedStdioConnection is missing fields writeMu, mu, closed | SUPPRESSED |
+| L0438 | `internal/service/cli.go:60:59` | slog.HandlerOptions is missing fields AddSource, ReplaceAttr | SUPPRESSED |
+| L0439 | `internal/service/mcp_reads.go:34:15` | toolruntime.Capabilities is missing fields Events, Archives | SUPPRESSED |
+| L0440 | `internal/service/mobile_backup.go:97:3` | domain.MobileIdentityRequest is missing field Groups | SUPPRESSED |
+| L0441 | `internal/service/mobile_backup.go:213:12` | mobilebackup.ArchiveWalkSummary is missing fields Pages, Examined, Rejected, Candidates, ExpiredMessages, ExpiredQuotes, DeferredControls, UnsupportedTypes, MissingMetadata, InvalidMetadata, UnsupportedMetadataFields, SourceHasMore, StopReason | SUPPRESSED |
+| L0442 | `internal/service/mobile_history.go:78:45` | domain.MobileIdentityRequest is missing field Groups | SUPPRESSED |
+| L0443 | `internal/service/mobile_ledger_control.go:92:10` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0444 | `internal/service/mobile_ledger_control.go:95:16` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0445 | `internal/service/recall_diagnostic.go:39:12` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0446 | `internal/service/recall_diagnostic.go:39:128` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0447 | `internal/service/recall_diagnostic.go:79:11` | service.recallReceipt is missing fields State, Status | SUPPRESSED |
+| L0448 | `internal/service/recall_diagnostic.go:174:9` | service.recallReceipt is missing field Status | SUPPRESSED |
+| L0449 | `internal/service/run.go:102:15` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0450 | `internal/service/run.go:105:15` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0451 | `internal/service/run.go:183:58` | slog.HandlerOptions is missing fields AddSource, ReplaceAttr | SUPPRESSED |
+| L0452 | `internal/service/run.go:273:11` | service.membershipPort is missing fields mu, current, sender | SUPPRESSED |
+| L0453 | `internal/service/run.go:549:14` | domain.Error is missing fields Retryable, NextAction, Details | FIXED |
+| L0454 | `internal/storage/browse.go:57:7` | storage.cursor is missing fields Kind, Snapshot, At, Group, ID | SUPPRESSED |
+| L0455 | `internal/storage/conversation_views.go:80:27` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
 | L0456 | `internal/storage/conversation_views.go:116:7` | storage.<anonymous> is missing fields Kind, ID | FIXED |
-| L0457 | `internal/storage/diagnostics.go:21:7` | storage.DeliveryDiagnostics is missing fields ActiveSubscriptions, JournalPending, PendingPayloadBytes | OPEN |
-| L0458 | `internal/storage/diagnostics.go:33:32` | sql.TxOptions is missing field Isolation | OPEN |
-| L0459 | `internal/storage/events.go:297:10` | domain.Error is missing field Retryable | OPEN |
-| L0460 | `internal/storage/events.go:300:15` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0461 | `internal/storage/history.go:68:12` | storage.HistoryPageCounts is missing fields Inserted, Duplicates | OPEN |
-| L0462 | `internal/storage/history_expiry.go:80:12` | storage.HistoryPageCounts is missing fields Inserted, Duplicates | OPEN |
-| L0463 | `internal/storage/history_operations.go:210:12` | domain.HistoryImportStatus is missing fields MobileCoverage, PagesObserved, RecordsObserved, InsertedCount, DuplicateCount, OutOfIntervalCount, EarliestImportedAt, LatestImportedAt, SourceHasMore, IsFiltered, IsFilteredByPhase, IsFilteredByTimeJoin, IsOld, JoinTimestampMillis, HistoryComplete, StopReason | OPEN |
-| L0464 | `internal/storage/history_operations.go:252:9` | storage.HistoryOperation is missing fields Revision, WorkDuration, ReservedDuration | OPEN |
-| L0465 | `internal/storage/history_operations.go:638:9` | storage.HistoryOperation is missing fields Status, Cursor, Revision, WorkDuration, ReservedDuration | OPEN |
-| L0466 | `internal/storage/mobile_backup.go:152:7` | storage.MobileBackupAttempt is missing fields Revision, PublicKey | OPEN |
-| L0467 | `internal/storage/mobile_control_prelude.go:87:19` | domain.MobileHistoryCounts is missing fields Examined, Rejected, Expired, UnsupportedTypes, UnsupportedContent, MissingMetadata, InvalidMetadata, DeferredControls, OwnRecalls, UnknownMetadataFields, ExpiredQuotes, UnresolvedQuotes, UnresolvedMentions | OPEN |
-| L0468 | `internal/storage/mobile_control_prelude.go:116:30` | domain.MobileHistoryCoverage is missing field MobileHistoryCounts | OPEN |
-| L0469 | `internal/storage/mobile_history.go:307:14` | domain.MobileHistoryCoverage is missing fields MobileHistoryCounts, SourceRecalls, ControlPreludeComplete | OPEN |
-| L0470 | `internal/storage/mobile_history_acquisition.go:53:13` | domain.MobileBackupRequest is missing fields ArchiveScope, RetentionHours | OPEN |
-| L0471 | `internal/storage/read_authority.go:57:11` | domain.Error is missing field Retryable | OPEN |
-| L0472 | `internal/storage/read_authority.go:60:16` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0473 | `internal/storage/store.go:34:12` | domain.CollectionPolicy is missing field All | OPEN |
-| L0474 | `internal/storage/store.go:67:8` | storage.Store is missing fields key, directIngestion, groupIngestion | OPEN |
-| L0475 | `internal/storage/store.go:434:29` | domain.Error is missing field Retryable | OPEN |
-| L0476 | `internal/storage/store.go:437:16` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0477 | `internal/storage/store.go:563:7` | storage.cursor is missing fields Kind, Snapshot, At, Group, ID | OPEN |
-| L0478 | `internal/storage/views.go:64:16` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0479 | `internal/storage/views.go:72:7` | storage.<anonymous> is missing field Last | OPEN |
-| L0480 | `internal/storage/views.go:189:7` | domain.Coverage is missing fields CollectionStartedAt, EarliestStoredAt, LatestStoredAt, HistoryComplete, RetentionDays | OPEN |
-| L0481 | `internal/storage/views.go:396:27` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0482 | `internal/toolruntime/runtime.go:154:8` | toolruntime.Runtime is missing fields operations, view | OPEN |
-| L0483 | `internal/toolruntime/runtime.go:261:6` | toolsy.Chunk is missing fields CallID, ToolName, IsError, EmptyResult, Noop, Effects, Controls, Control, Progress, Envelope | OPEN |
-| L0484 | `internal/toolruntime/runtime.go:280:3` | toolsy.RegistryViewSpec is missing fields Policy, PolicyID | OPEN |
-| L0485 | `internal/toolruntime/runtime.go:308:10` | domain.Error is missing field Retryable | OPEN |
-| L0486 | `internal/toolruntime/runtime.go:311:15` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0487 | `internal/toolruntime/runtime.go:361:13` | toolsy.ToolInput is missing fields CallID, Attachments | OPEN |
-| L0488 | `internal/toolruntime/runtime.go:465:10` | toolruntime.Result is missing fields Acknowledgement, Subscriptions, Events, Directory, ConversationDetail, Browse, ArchiveSources, ArchiveDirectory, ArchiveBrowse, GroupSearch, ConversationSearch, GroupContext, ConversationContext, CollectorStatus, GroupDetail, GroupList, SendStatus, ImportStatus, JoinStatus, Invite | OPEN |
-| L0489 | `internal/zalo/adapter.go:54:38` | zcago.LoginQROption is missing fields UserAgent, Language, QRPath | OPEN |
-| L0490 | `internal/zalo/adapter.go:98:16` | domain.Error is missing field Retryable | OPEN |
-| L0491 | `internal/zalo/adapter.go:101:16` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0492 | `internal/zalo/adapter.go:130:16` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0493 | `internal/zalo/adapter.go:163:10` | zcago.Credentials is missing field Cookie | OPEN |
-| L0494 | `internal/zalo/adapter.go:191:29` | domain.Group is missing field CollectionEnabled | OPEN |
-| L0495 | `internal/zalo/adapter.go:208:9` | domain.Group is missing field CollectionEnabled | OPEN |
-| L0496 | `internal/zalo/adapter.go:221:21` | domain.Group is missing field CollectionEnabled | OPEN |
-| L0497 | `internal/zalo/adapter.go:320:9` | domain.Message is missing fields Direction, FirstIncoming, QuoteMetadata, ConversationName, GroupID, SenderName, Text, ReplyTo, TextTruncated, TextResourceURI | OPEN |
-| L0498 | `internal/zalo/cookies.go:27:10` | zalo.persistentJar is missing field mu | OPEN |
-| L0499 | `internal/zalo/history.go:118:10` | domain.HistoryPage is missing fields PhaseRequired, LimitedSnapshot, JoinTimestampMillis | OPEN |
-| L0500 | `internal/zalo/mobile_backup.go:203:6` | domain.MobileIdentityRequest is missing field Groups | OPEN |
-| L0501 | `internal/zalo/mobile_producer_counts.go:18:7` | zalo.mobileProducerCounts is missing fields Total, Threads | OPEN |
-| L0502 | `internal/zalo/preload_history.go:38:10` | domain.HistoryPage is missing fields PhaseRequired, HasMore, Cursor, IsFiltered, IsFilteredByPhase, IsFilteredByTimeJoin, IsOld, JoinTimestampMillis | OPEN |
-| L0503 | `internal/zalo/replay.go:21:42` | zalo.replayQueue is missing fields pages, messages, stopped | OPEN |
-| L0504 | `internal/zalo/replay.go:23:30` | zalo.replayQueue is missing fields pages, messages, stopped | OPEN |
-| L0505 | `internal/zalo/sending.go:16:13` | api.MessageContent is missing fields Style, Urgency, Quote, Mentions, Attachments, TTL | OPEN |
-| L0506 | `internal/zalo/sending.go:18:20` | api.SendMessageQuote is missing field PropertyExt | OPEN |
-| L0507 | `internal/zalo/sending.go:23:14` | model.Content is missing fields Attachment, DeletedContent, Other | OPEN |
-| L0508 | `tools/harness/internal/architecture/architecture.go:93:21` | syscall.SysProcAttr is missing fields Chroot, Credential, Ptrace, Setsid, Setctty, Noctty, Ctty, Foreground, Pgid | OPEN |
-| L0509 | `tools/harness/internal/architecture/architecture.go:140:7` | architecture.Result is missing field Report | OPEN |
-| L0510 | `tools/harness/internal/architecture/architecture.go:417:22` | architecture.Control is missing field Result | OPEN |
-| L0511 | `tools/harness/internal/performance/process.go:39:21` | syscall.SysProcAttr is missing fields Chroot, Credential, Ptrace, Setsid, Setctty, Noctty, Ctty, Foreground, Pgid | OPEN |
+| L0457 | `internal/storage/diagnostics.go:21:7` | storage.DeliveryDiagnostics is missing fields ActiveSubscriptions, JournalPending, PendingPayloadBytes | SUPPRESSED |
+| L0458 | `internal/storage/diagnostics.go:33:32` | sql.TxOptions is missing field Isolation | SUPPRESSED |
+| L0459 | `internal/storage/events.go:297:10` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0460 | `internal/storage/events.go:300:15` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0461 | `internal/storage/history.go:68:12` | storage.HistoryPageCounts is missing fields Inserted, Duplicates | SUPPRESSED |
+| L0462 | `internal/storage/history_expiry.go:80:12` | storage.HistoryPageCounts is missing fields Inserted, Duplicates | SUPPRESSED |
+| L0463 | `internal/storage/history_operations.go:210:12` | domain.HistoryImportStatus is missing fields MobileCoverage, PagesObserved, RecordsObserved, InsertedCount, DuplicateCount, OutOfIntervalCount, EarliestImportedAt, LatestImportedAt, SourceHasMore, IsFiltered, IsFilteredByPhase, IsFilteredByTimeJoin, IsOld, JoinTimestampMillis, HistoryComplete, StopReason | SUPPRESSED |
+| L0464 | `internal/storage/history_operations.go:252:9` | storage.HistoryOperation is missing fields Revision, WorkDuration, ReservedDuration | SUPPRESSED |
+| L0465 | `internal/storage/history_operations.go:638:9` | storage.HistoryOperation is missing fields Status, Cursor, Revision, WorkDuration, ReservedDuration | SUPPRESSED |
+| L0466 | `internal/storage/mobile_backup.go:152:7` | storage.MobileBackupAttempt is missing fields Revision, PublicKey | SUPPRESSED |
+| L0467 | `internal/storage/mobile_control_prelude.go:87:19` | domain.MobileHistoryCounts is missing fields Examined, Rejected, Expired, UnsupportedTypes, UnsupportedContent, MissingMetadata, InvalidMetadata, DeferredControls, OwnRecalls, UnknownMetadataFields, ExpiredQuotes, UnresolvedQuotes, UnresolvedMentions | SUPPRESSED |
+| L0468 | `internal/storage/mobile_control_prelude.go:116:30` | domain.MobileHistoryCoverage is missing field MobileHistoryCounts | SUPPRESSED |
+| L0469 | `internal/storage/mobile_history.go:307:14` | domain.MobileHistoryCoverage is missing fields MobileHistoryCounts, SourceRecalls, ControlPreludeComplete | SUPPRESSED |
+| L0470 | `internal/storage/mobile_history_acquisition.go:53:13` | domain.MobileBackupRequest is missing fields ArchiveScope, RetentionHours | SUPPRESSED |
+| L0471 | `internal/storage/read_authority.go:57:11` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0472 | `internal/storage/read_authority.go:60:16` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0473 | `internal/storage/store.go:34:12` | domain.CollectionPolicy is missing field All | SUPPRESSED |
+| L0474 | `internal/storage/store.go:67:8` | storage.Store is missing fields key, directIngestion, groupIngestion | SUPPRESSED |
+| L0475 | `internal/storage/store.go:434:29` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0476 | `internal/storage/store.go:437:16` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0477 | `internal/storage/store.go:563:7` | storage.cursor is missing fields Kind, Snapshot, At, Group, ID | SUPPRESSED |
+| L0478 | `internal/storage/views.go:64:16` | domain.NextAction is missing fields Tool, Arguments | FIXED |
+| L0479 | `internal/storage/views.go:72:7` | storage.<anonymous> is missing field Last | SUPPRESSED |
+| L0480 | `internal/storage/views.go:189:7` | domain.Coverage is missing fields CollectionStartedAt, EarliestStoredAt, LatestStoredAt, HistoryComplete, RetentionDays | SUPPRESSED |
+| L0481 | `internal/storage/views.go:396:27` | domain.NextAction is missing fields Tool, Arguments | FIXED |
+| L0482 | `internal/toolruntime/runtime.go:154:8` | toolruntime.Runtime is missing fields operations, view | SUPPRESSED |
+| L0483 | `internal/toolruntime/runtime.go:261:6` | toolsy.Chunk is missing fields CallID, ToolName, IsError, EmptyResult, Noop, Effects, Controls, Control, Progress, Envelope | SUPPRESSED |
+| L0484 | `internal/toolruntime/runtime.go:280:3` | toolsy.RegistryViewSpec is missing fields Policy, PolicyID | SUPPRESSED |
+| L0485 | `internal/toolruntime/runtime.go:308:10` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0486 | `internal/toolruntime/runtime.go:311:15` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0487 | `internal/toolruntime/runtime.go:361:13` | toolsy.ToolInput is missing fields CallID, Attachments | FIXED |
+| L0488 | `internal/toolruntime/runtime.go:465:10` | toolruntime.Result is missing fields Acknowledgement, Subscriptions, Events, Directory, ConversationDetail, Browse, ArchiveSources, ArchiveDirectory, ArchiveBrowse, GroupSearch, ConversationSearch, GroupContext, ConversationContext, CollectorStatus, GroupDetail, GroupList, SendStatus, ImportStatus, JoinStatus, Invite | SUPPRESSED |
+| L0489 | `internal/zalo/adapter.go:54:38` | zcago.LoginQROption is missing fields UserAgent, Language, QRPath | SUPPRESSED |
+| L0490 | `internal/zalo/adapter.go:98:16` | domain.Error is missing field Retryable | SUPPRESSED |
+| L0491 | `internal/zalo/adapter.go:101:16` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0492 | `internal/zalo/adapter.go:130:16` | domain.NextAction is missing fields Tool, Arguments | SUPPRESSED |
+| L0493 | `internal/zalo/adapter.go:163:10` | zcago.Credentials is missing field Cookie | SUPPRESSED |
+| L0494 | `internal/zalo/adapter.go:191:29` | domain.Group is missing field CollectionEnabled | SUPPRESSED |
+| L0495 | `internal/zalo/adapter.go:208:9` | domain.Group is missing field CollectionEnabled | SUPPRESSED |
+| L0496 | `internal/zalo/adapter.go:221:21` | domain.Group is missing field CollectionEnabled | SUPPRESSED |
+| L0497 | `internal/zalo/adapter.go:320:9` | domain.Message is missing fields Direction, FirstIncoming, QuoteMetadata, ConversationName, GroupID, SenderName, Text, ReplyTo, TextTruncated, TextResourceURI | SUPPRESSED |
+| L0498 | `internal/zalo/cookies.go:27:10` | zalo.persistentJar is missing field mu | SUPPRESSED |
+| L0499 | `internal/zalo/history.go:118:10` | domain.HistoryPage is missing fields PhaseRequired, LimitedSnapshot, JoinTimestampMillis | SUPPRESSED |
+| L0500 | `internal/zalo/mobile_backup.go:203:6` | domain.MobileIdentityRequest is missing field Groups | SUPPRESSED |
+| L0501 | `internal/zalo/mobile_producer_counts.go:18:7` | zalo.mobileProducerCounts is missing fields Total, Threads | SUPPRESSED |
+| L0502 | `internal/zalo/preload_history.go:38:10` | domain.HistoryPage is missing fields PhaseRequired, HasMore, Cursor, IsFiltered, IsFilteredByPhase, IsFilteredByTimeJoin, IsOld, JoinTimestampMillis | SUPPRESSED |
+| L0503 | `internal/zalo/replay.go:21:42` | zalo.replayQueue is missing fields pages, messages, stopped | SUPPRESSED |
+| L0504 | `internal/zalo/replay.go:23:30` | zalo.replayQueue is missing fields pages, messages, stopped | SUPPRESSED |
+| L0505 | `internal/zalo/sending.go:16:13` | api.MessageContent is missing fields Style, Urgency, Quote, Mentions, Attachments, TTL | SUPPRESSED |
+| L0506 | `internal/zalo/sending.go:18:20` | api.SendMessageQuote is missing field PropertyExt | SUPPRESSED |
+| L0507 | `internal/zalo/sending.go:23:14` | model.Content is missing fields Attachment, DeletedContent, Other | FIXED |
+| L0508 | `tools/harness/internal/architecture/architecture.go:93:21` | syscall.SysProcAttr is missing fields Chroot, Credential, Ptrace, Setsid, Setctty, Noctty, Ctty, Foreground, Pgid | SUPPRESSED |
+| L0509 | `tools/harness/internal/architecture/architecture.go:140:7` | architecture.Result is missing field Report | SUPPRESSED |
+| L0510 | `tools/harness/internal/architecture/architecture.go:417:22` | architecture.Control is missing field Result | FIXED |
+| L0511 | `tools/harness/internal/performance/process.go:39:21` | syscall.SysProcAttr is missing fields Chroot, Credential, Ptrace, Setsid, Setctty, Noctty, Ctty, Foreground, Pgid | SUPPRESSED |
 
 ### forbidigo (4)
 
@@ -943,10 +1039,10 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L0515 | `cmd/zl-mcp-eval/main.go:186:2` | use of &#96;fmt.Printf&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | OPEN |
-| L0516 | `tools/harness/cmd/harness/main.go:52:2` | use of &#96;fmt.Println&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | OPEN |
-| L0517 | `tools/harness/cmd/harness/main.go:101:2` | use of &#96;fmt.Println&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | OPEN |
-| L0518 | `tools/harness/internal/performance/bench.go:170:4` | use of &#96;fmt.Printf&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | OPEN |
+| L0515 | `cmd/zl-mcp-eval/main.go:186:2` | use of &#96;fmt.Printf&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | SUPPRESSED |
+| L0516 | `tools/harness/cmd/harness/main.go:52:2` | use of &#96;fmt.Println&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | SUPPRESSED |
+| L0517 | `tools/harness/cmd/harness/main.go:101:2` | use of &#96;fmt.Println&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | SUPPRESSED |
+| L0518 | `tools/harness/internal/performance/bench.go:170:4` | use of &#96;fmt.Printf&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | FIXED |
 
 ### funcorder (4)
 
@@ -958,10 +1054,10 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L0519 | `internal/mobilebackup/download.go:30:1` | constructor "NewDownloader" for struct "Downloader" should be placed before struct method "Ready" | OPEN |
-| L0520 | `internal/mobilebackup/retained_archive.go:91:1` | constructor "NewRetainedArchiveStore" for struct "RetainedArchiveStore" should be placed before struct method "String" | OPEN |
-| L0521 | `internal/mobilebackup/retained_archive.go:96:1` | constructor "NewArchiveLibraryStore" for struct "RetainedArchiveStore" should be placed before struct method "String" | OPEN |
-| L0522 | `internal/mobilebackup/snapshot.go:71:1` | constructor "NewSnapshotStore" for struct "SnapshotStore" should be placed before struct method "lock" | OPEN |
+| L0519 | `internal/mobilebackup/download.go:30:1` | constructor "NewDownloader" for struct "Downloader" should be placed before struct method "Ready" | FIXED |
+| L0520 | `internal/mobilebackup/retained_archive.go:91:1` | constructor "NewRetainedArchiveStore" for struct "RetainedArchiveStore" should be placed before struct method "String" | FIXED |
+| L0521 | `internal/mobilebackup/retained_archive.go:96:1` | constructor "NewArchiveLibraryStore" for struct "RetainedArchiveStore" should be placed before struct method "String" | FIXED |
+| L0522 | `internal/mobilebackup/snapshot.go:71:1` | constructor "NewSnapshotStore" for struct "SnapshotStore" should be placed before struct method "lock" | FIXED |
 
 ### funlen (67)
 
@@ -1051,17 +1147,17 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L0590 | `docs/contracts/contracts.go:19:5` | toolAliases is a global variable | OPEN |
-| L0591 | `internal/mcpserver/sdk_identity_test.go:25:5` | sdkIdentityCases is a global variable | OPEN |
-| L0592 | `internal/mcpserver/server.go:26:5` | descriptions is a global variable | OPEN |
-| L0593 | `internal/netpolicy/http.go:14:5` | blockedPrefixes is a global variable | OPEN |
-| L0594 | `internal/observability/observer.go:22:5` | toolNames is a global variable | OPEN |
-| L0595 | `internal/toolruntime/runtime.go:24:5` | readNames is a global variable | OPEN |
-| L0596 | `tools/harness/internal/architecture/architecture.go:285:5` | cases is a global variable | OPEN |
-| L0597 | `tools/harness/internal/performance/json.go:19:5` | Kinds is a global variable | OPEN |
-| L0598 | `tools/harness/internal/performance/json.go:24:5` | P95Limits is a global variable | OPEN |
-| L0599 | `tools/harness/internal/performance/performance_test.go:199:5` | workerOnce is a global variable | OPEN |
-| L0600 | `tools/harness/internal/performance/performance_test.go:200:5` | workerPath is a global variable | OPEN |
+| L0590 | `docs/contracts/contracts.go:19:5` | toolAliases is a global variable | SUPPRESSED |
+| L0591 | `internal/mcpserver/sdk_identity_test.go:25:5` | sdkIdentityCases is a global variable | SUPPRESSED |
+| L0592 | `internal/mcpserver/server.go:26:5` | descriptions is a global variable | SUPPRESSED |
+| L0593 | `internal/netpolicy/http.go:14:5` | blockedPrefixes is a global variable | SUPPRESSED |
+| L0594 | `internal/observability/observer.go:22:5` | toolNames is a global variable | SUPPRESSED |
+| L0595 | `internal/toolruntime/runtime.go:24:5` | readNames is a global variable | SUPPRESSED |
+| L0596 | `tools/harness/internal/architecture/architecture.go:285:5` | cases is a global variable | SUPPRESSED |
+| L0597 | `tools/harness/internal/performance/json.go:19:5` | Kinds is a global variable | FIXED |
+| L0598 | `tools/harness/internal/performance/json.go:24:5` | P95Limits is a global variable | FIXED |
+| L0599 | `tools/harness/internal/performance/performance_test.go:199:5` | workerOnce is a global variable | SUPPRESSED |
+| L0600 | `tools/harness/internal/performance/performance_test.go:200:5` | workerPath is a global variable | SUPPRESSED |
 | L0601 | `tools/harness/internal/performance/performance_test.go:201:5` | workerErr is a global variable | FIXED |
 
 ### gocognit (205)
@@ -1290,485 +1386,485 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L0807 | `docs/contracts/contracts.go:20:65` | string &#96;history_import_operation&#96; has 5 occurrences, make it a constant | OPEN |
-| L0808 | `internal/app/search/read.go:185:13` | string &#96;no_collected_data&#96; has 3 occurrences, make it a constant | OPEN |
-| L0809 | `internal/collector/contact_profiles.go:34:3` | string &#96;status&#96; has 4 occurrences, make it a constant | OPEN |
-| L0810 | `internal/collector/contact_profiles.go:34:22` | string &#96;running&#96; has 5 occurrences, make it a constant | OPEN |
-| L0811 | `internal/collector/contact_profiles.go:35:3` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L0812 | `internal/collector/contact_profiles.go:36:3` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L0813 | `internal/collector/contact_profiles.go:40:3` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | OPEN |
+| L0807 | `docs/contracts/contracts.go:20:65` | string &#96;history_import_operation&#96; has 5 occurrences, make it a constant | FIXED |
+| L0808 | `internal/app/search/read.go:185:13` | string &#96;no_collected_data&#96; has 3 occurrences, make it a constant | FIXED |
+| L0809 | `internal/collector/contact_profiles.go:34:3` | string &#96;status&#96; has 4 occurrences, make it a constant | FIXED |
+| L0810 | `internal/collector/contact_profiles.go:34:22` | string &#96;running&#96; has 5 occurrences, make it a constant | FIXED |
+| L0811 | `internal/collector/contact_profiles.go:35:3` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L0812 | `internal/collector/contact_profiles.go:36:3` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L0813 | `internal/collector/contact_profiles.go:40:3` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | FIXED |
 | L0814 | `internal/collector/contact_profiles.go:61:13` | string &#96;cancelled_or_deadline&#96; has 4 occurrences, make it a constant | FIXED |
 | L0815 | `internal/collector/contact_profiles.go:76:22` | string &#96;partial&#96; has 3 occurrences, make it a constant | FIXED |
 | L0816 | `internal/collector/contact_profiles.go:76:33` | string &#96;upstream_unavailable&#96; has 3 occurrences, make it a constant | FIXED |
 | L0817 | `internal/collector/contact_profiles.go:79:14` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | FIXED |
 | L0818 | `internal/collector/contact_profiles.go:80:15` | string &#96;source_unsupported&#96; has 5 occurrences, make it a constant | FIXED |
 | L0819 | `internal/collector/contact_profiles.go:82:15` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | FIXED |
-| L0820 | `internal/collector/contacts.go:38:3` | string &#96;status&#96; has 4 occurrences, make it a constant | OPEN |
-| L0821 | `internal/collector/contacts.go:38:22` | string &#96;running&#96; has 5 occurrences, make it a constant | OPEN |
-| L0822 | `internal/collector/contacts.go:39:3` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L0823 | `internal/collector/contacts.go:40:3` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L0824 | `internal/collector/contacts.go:43:3` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | OPEN |
+| L0820 | `internal/collector/contacts.go:38:3` | string &#96;status&#96; has 4 occurrences, make it a constant | FIXED |
+| L0821 | `internal/collector/contacts.go:38:22` | string &#96;running&#96; has 5 occurrences, make it a constant | FIXED |
+| L0822 | `internal/collector/contacts.go:39:3` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L0823 | `internal/collector/contacts.go:40:3` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L0824 | `internal/collector/contacts.go:43:3` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | FIXED |
 | L0825 | `internal/collector/contacts.go:66:14` | string &#96;upstream_unavailable&#96; has 3 occurrences, make it a constant | FIXED |
 | L0826 | `internal/collector/contacts.go:67:13` | string &#96;partial&#96; has 3 occurrences, make it a constant | FIXED |
 | L0827 | `internal/collector/contacts.go:70:13` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | FIXED |
 | L0828 | `internal/collector/contacts.go:71:14` | string &#96;source_unsupported&#96; has 5 occurrences, make it a constant | FIXED |
 | L0829 | `internal/collector/contacts.go:73:14` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | FIXED |
 | L0830 | `internal/collector/contacts.go:75:14` | string &#96;cancelled_or_deadline&#96; has 4 occurrences, make it a constant | FIXED |
-| L0831 | `internal/collector/join.go:132:12` | string &#96;unknown&#96; has 6 occurrences, make it a constant | OPEN |
-| L0832 | `internal/collector/join.go:147:3` | string &#96;group_id&#96; has 3 occurrences, make it a constant | OPEN |
-| L0833 | `internal/collector/join.go:320:3` | string &#96;status&#96; has 4 occurrences, make it a constant | OPEN |
-| L0834 | `internal/collector/join.go:320:25` | string &#96;running&#96; has 5 occurrences, make it a constant | OPEN |
-| L0835 | `internal/collector/join.go:412:4` | string &#96;code&#96; has 7 occurrences, make it a constant | OPEN |
-| L0836 | `internal/collector/join.go:413:4` | string &#96;message&#96; has 7 occurrences, make it a constant | OPEN |
-| L0837 | `internal/collector/join.go:466:16` | string &#96;UPSTREAM_UNAVAILABLE&#96; has 5 occurrences, make it a constant | OPEN |
-| L0838 | `internal/collector/preload_catalog.go:26:3` | string &#96;status&#96; has 4 occurrences, make it a constant | OPEN |
-| L0839 | `internal/collector/preload_catalog.go:26:24` | string &#96;running&#96; has 5 occurrences, make it a constant | OPEN |
-| L0840 | `internal/collector/preload_catalog.go:27:3` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L0841 | `internal/collector/preload_catalog.go:28:3` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L0842 | `internal/collector/preload_catalog.go:33:3` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | OPEN |
+| L0831 | `internal/collector/join.go:132:12` | string &#96;unknown&#96; has 6 occurrences, make it a constant | FIXED |
+| L0832 | `internal/collector/join.go:147:3` | string &#96;group_id&#96; has 3 occurrences, make it a constant | FIXED |
+| L0833 | `internal/collector/join.go:320:3` | string &#96;status&#96; has 4 occurrences, make it a constant | FIXED |
+| L0834 | `internal/collector/join.go:320:25` | string &#96;running&#96; has 5 occurrences, make it a constant | FIXED |
+| L0835 | `internal/collector/join.go:412:4` | string &#96;code&#96; has 7 occurrences, make it a constant | FIXED |
+| L0836 | `internal/collector/join.go:413:4` | string &#96;message&#96; has 7 occurrences, make it a constant | FIXED |
+| L0837 | `internal/collector/join.go:466:16` | string &#96;UPSTREAM_UNAVAILABLE&#96; has 5 occurrences, make it a constant | FIXED |
+| L0838 | `internal/collector/preload_catalog.go:26:3` | string &#96;status&#96; has 4 occurrences, make it a constant | FIXED |
+| L0839 | `internal/collector/preload_catalog.go:26:24` | string &#96;running&#96; has 5 occurrences, make it a constant | FIXED |
+| L0840 | `internal/collector/preload_catalog.go:27:3` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L0841 | `internal/collector/preload_catalog.go:28:3` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L0842 | `internal/collector/preload_catalog.go:33:3` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | FIXED |
 | L0843 | `internal/collector/preload_catalog.go:52:20` | string &#96;partial&#96; has 3 occurrences, make it a constant | FIXED |
 | L0844 | `internal/collector/preload_catalog.go:52:31` | string &#96;upstream_unavailable&#96; has 3 occurrences, make it a constant | FIXED |
 | L0845 | `internal/collector/preload_catalog.go:55:20` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | FIXED |
 | L0846 | `internal/collector/preload_catalog.go:55:35` | string &#96;source_unsupported&#96; has 5 occurrences, make it a constant | FIXED |
 | L0847 | `internal/collector/preload_catalog.go:57:13` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | FIXED |
-| L0848 | `internal/collector/preload_catalog.go:59:13` | string &#96;invalid_source_page&#96; has 4 occurrences, make it a constant | OPEN |
+| L0848 | `internal/collector/preload_catalog.go:59:13` | string &#96;invalid_source_page&#96; has 4 occurrences, make it a constant | FIXED |
 | L0849 | `internal/collector/preload_catalog.go:61:13` | string &#96;cancelled_or_deadline&#96; has 4 occurrences, make it a constant | FIXED |
 | L0850 | `internal/collector/preload_probe.go:15:32` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | FIXED |
 | L0851 | `internal/collector/preload_probe.go:16:32` | string &#96;source_unsupported&#96; has 5 occurrences, make it a constant | FIXED |
-| L0852 | `internal/collector/preload_probe.go:37:29` | string &#96;failed&#96; has 3 occurrences, make it a constant | OPEN |
-| L0853 | `internal/collector/preload_probe.go:38:15` | string &#96;unknown&#96; has 6 occurrences, make it a constant | OPEN |
+| L0852 | `internal/collector/preload_probe.go:37:29` | string &#96;failed&#96; has 3 occurrences, make it a constant | FIXED |
+| L0853 | `internal/collector/preload_probe.go:38:15` | string &#96;unknown&#96; has 6 occurrences, make it a constant | FIXED |
 | L0854 | `internal/collector/preload_probe.go:46:30` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | FIXED |
-| L0855 | `internal/collector/preload_probe.go:49:15` | string &#96;invalid_source_page&#96; has 4 occurrences, make it a constant | OPEN |
-| L0856 | `internal/collector/run.go:139:19` | string &#96;code&#96; has 7 occurrences, make it a constant | OPEN |
-| L0857 | `internal/collector/run.go:139:27` | string &#96;UPSTREAM_UNAVAILABLE&#96; has 5 occurrences, make it a constant | OPEN |
-| L0858 | `internal/collector/run.go:139:51` | string &#96;message&#96; has 7 occurrences, make it a constant | OPEN |
+| L0855 | `internal/collector/preload_probe.go:49:15` | string &#96;invalid_source_page&#96; has 4 occurrences, make it a constant | FIXED |
+| L0856 | `internal/collector/run.go:139:19` | string &#96;code&#96; has 7 occurrences, make it a constant | FIXED |
+| L0857 | `internal/collector/run.go:139:27` | string &#96;UPSTREAM_UNAVAILABLE&#96; has 5 occurrences, make it a constant | FIXED |
+| L0858 | `internal/collector/run.go:139:51` | string &#96;message&#96; has 7 occurrences, make it a constant | FIXED |
 | L0859 | `internal/collector/run.go:181:34` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | FIXED |
-| L0860 | `internal/collector/run.go:349:28` | string &#96;group_id&#96; has 3 occurrences, make it a constant | OPEN |
-| L0861 | `internal/domain/history.go:60:12` | string &#96;unknown&#96; has 3 occurrences, make it a constant | OPEN |
-| L0862 | `internal/domain/observation.go:28:10` | string &#96;unknown&#96; has 3 occurrences, make it a constant | OPEN |
-| L0863 | `internal/evalfixture/evidence.go:47:48` | string &#96;direct&#96; has 3 occurrences, make it a constant | OPEN |
-| L0864 | `internal/evalfixture/evidence.go:47:62` | string &#96;peer&#96; has 5 occurrences, make it a constant | OPEN |
-| L0865 | `internal/evalfixture/evidence.go:53:19` | string &#96;live&#96; has 4 occurrences, make it a constant | OPEN |
-| L0866 | `internal/evalfixture/fixture.go:92:44` | string &#96;g-join&#96; has 3 occurrences, make it a constant | OPEN |
-| L0867 | `internal/evalfixture/fixture.go:189:21` | string &#96;live&#96; has 4 occurrences, make it a constant | OPEN |
-| L0868 | `internal/evalfixture/offline.go:90:33` | string &#96;direct&#96; has 3 occurrences, make it a constant | OPEN |
-| L0869 | `internal/evalfixture/offline.go:96:20` | string &#96;peer&#96; has 5 occurrences, make it a constant | OPEN |
-| L0870 | `internal/evalfixture/offline.go:99:20` | string &#96;live&#96; has 4 occurrences, make it a constant | OPEN |
-| L0871 | `internal/evaluation/benchmark.go:60:10` | string &#96;zalo_search_messages&#96; has 4 occurrences, make it a constant | OPEN |
-| L0872 | `internal/evaluation/benchmark.go:61:19` | string &#96;ремонт&#96; has 6 occurrences, make it a constant | OPEN |
-| L0873 | `internal/evaluation/benchmark.go:63:10` | string &#96;zalo_get_message_context&#96; has 3 occurrences, make it a constant | OPEN |
-| L0874 | `internal/evaluation/benchmark.go:64:22` | string &#96;g-1&#96; has 5 occurrences, make it a constant | OPEN |
-| L0875 | `internal/evaluation/checkpoints.go:72:7` | string &#96;service-recommendation&#96; has 4 occurrences, make it a constant | OPEN |
-| L0876 | `internal/evaluation/checkpoints.go:73:3` | string &#96;agreement-history&#96; has 4 occurrences, make it a constant | OPEN |
-| L0877 | `internal/evaluation/checkpoints.go:74:3` | string &#96;duplicate-name&#96; has 3 occurrences, make it a constant | OPEN |
-| L0878 | `internal/evaluation/checkpoints.go:75:3` | string &#96;duplicate-followup&#96; has 3 occurrences, make it a constant | OPEN |
-| L0879 | `internal/evaluation/checkpoints.go:76:3` | string &#96;date-clarification&#96; has 3 occurrences, make it a constant | OPEN |
-| L0880 | `internal/evaluation/checkpoints.go:77:3` | string &#96;unicode&#96; has 3 occurrences, make it a constant | OPEN |
-| L0881 | `internal/evaluation/checkpoints.go:78:3` | string &#96;coverage&#96; has 4 occurrences, make it a constant | OPEN |
-| L0882 | `internal/evaluation/checkpoints.go:79:3` | string &#96;invalid-input&#96; has 3 occurrences, make it a constant | OPEN |
-| L0883 | `internal/evaluation/checkpoints.go:80:3` | string &#96;long-message&#96; has 3 occurrences, make it a constant | OPEN |
-| L0884 | `internal/evaluation/checkpoints.go:81:3` | string &#96;approved-join&#96; has 6 occurrences, make it a constant | OPEN |
-| L0885 | `internal/evaluation/checkpoints.go:82:3` | string &#96;adversarial&#96; has 4 occurrences, make it a constant | OPEN |
-| L0886 | `internal/evaluation/checkpoints.go:83:3` | string &#96;trigger&#96; has 5 occurrences, make it a constant | OPEN |
-| L0887 | `internal/evaluation/checkpoints.go:152:22` | string &#96;FAIL&#96; has 3 occurrences, make it a constant | OPEN |
-| L0888 | `internal/evaluation/checkpoints.go:154:22` | string &#96;NOT_RUN&#96; has 10 occurrences, make it a constant | OPEN |
-| L0889 | `internal/evaluation/checkpoints.go:177:16` | string &#96;tool&#96; has 4 occurrences, make it a constant | OPEN |
-| L0890 | `internal/evaluation/checkpoints.go:177:36` | string &#96;resource&#96; has 5 occurrences, make it a constant | OPEN |
-| L0891 | `internal/evaluation/checkpoints.go:203:4` | string &#96;zalo_search_messages&#96; has 4 occurrences, make it a constant | OPEN |
-| L0892 | `internal/evaluation/checkpoints.go:204:4` | string &#96;zalo_get_message_context&#96; has 3 occurrences, make it a constant | OPEN |
-| L0893 | `internal/evaluation/checkpoints.go:208:4` | string &#96;zalo_join_group&#96; has 3 occurrences, make it a constant | OPEN |
-| L0894 | `internal/evaluation/checkpoints.go:427:20` | string &#96;text&#96; has 3 occurrences, make it a constant | OPEN |
-| L0895 | `internal/evaluation/client.go:40:19` | string &#96;tool&#96; has 4 occurrences, make it a constant | OPEN |
-| L0896 | `internal/evaluation/client.go:60:19` | string &#96;resource&#96; has 5 occurrences, make it a constant | OPEN |
-| L0897 | `internal/evaluation/grader.go:30:16` | string &#96;tool&#96; has 4 occurrences, make it a constant | OPEN |
-| L0898 | `internal/evaluation/grader.go:92:32` | string &#96;send&#96; has 3 occurrences, make it a constant | OPEN |
-| L0899 | `internal/evaluation/grader.go:92:40` | string &#96;join&#96; has 3 occurrences, make it a constant | OPEN |
-| L0900 | `internal/evaluation/grader.go:92:48` | string &#96;history&#96; has 3 occurrences, make it a constant | OPEN |
-| L0901 | `internal/evaluation/grader.go:121:8` | string &#96;same-as&#96; has 3 occurrences, make it a constant | OPEN |
-| L0902 | `internal/evaluation/grader.go:121:19` | string &#96;different-from&#96; has 3 occurrences, make it a constant | OPEN |
-| L0903 | `internal/evaluation/grader.go:166:25` | string &#96;resource&#96; has 5 occurrences, make it a constant | OPEN |
-| L0904 | `internal/evaluation/model.go:38:20` | string &#96;tool&#96; has 4 occurrences, make it a constant | OPEN |
-| L0905 | `internal/evaluation/model.go:52:20` | string &#96;resource&#96; has 5 occurrences, make it a constant | OPEN |
-| L0906 | `internal/evaluation/runner.go:74:9` | string &#96;same-as&#96; has 3 occurrences, make it a constant | OPEN |
-| L0907 | `internal/evaluation/runner.go:75:5` | string &#96;different-from&#96; has 3 occurrences, make it a constant | OPEN |
-| L0908 | `internal/evaluation/runner.go:91:29` | string &#96;send&#96; has 3 occurrences, make it a constant | OPEN |
-| L0909 | `internal/evaluation/runner.go:91:47` | string &#96;join&#96; has 3 occurrences, make it a constant | OPEN |
-| L0910 | `internal/evaluation/runner.go:91:65` | string &#96;history&#96; has 3 occurrences, make it a constant | OPEN |
-| L0911 | `internal/evaluation/runner.go:139:15` | string &#96;NOT_RUN&#96; has 10 occurrences, make it a constant | OPEN |
-| L0912 | `internal/evaluation/runner.go:146:50` | string &#96;model&#96; has 5 occurrences, make it a constant | OPEN |
-| L0913 | `internal/evaluation/runner.go:151:4` | string &#96;profile&#96; has 3 occurrences, make it a constant | OPEN |
-| L0914 | `internal/evaluation/runner.go:152:4` | string &#96;case_budget_seconds&#96; has 3 occurrences, make it a constant | OPEN |
-| L0915 | `internal/evaluation/runner.go:154:4` | string &#96;run_budget_seconds&#96; has 3 occurrences, make it a constant | OPEN |
-| L0916 | `internal/evaluation/runner.go:155:4` | string &#96;model_gate&#96; has 3 occurrences, make it a constant | OPEN |
-| L0917 | `internal/evaluation/runner.go:325:36` | string &#96;operation&#96; has 4 occurrences, make it a constant | OPEN |
-| L0918 | `internal/evaluation/runner.go:325:49` | string &#96;effects&#96; has 4 occurrences, make it a constant | OPEN |
-| L0919 | `internal/evaluation/runner.go:325:60` | string &#96;lifecycle&#96; has 4 occurrences, make it a constant | OPEN |
-| L0920 | `internal/evaluation/runner.go:332:46` | string &#96;case&#96; has 4 occurrences, make it a constant | OPEN |
-| L0921 | `internal/evaluation/runner.go:332:61` | string &#96;complete&#96; has 4 occurrences, make it a constant | OPEN |
-| L0922 | `internal/evaluation/runner.go:439:18` | string &#96;FAIL&#96; has 3 occurrences, make it a constant | OPEN |
-| L0923 | `internal/evaluation/scenarios.go:41:20` | string &#96;archive-dates&#96; has 3 occurrences, make it a constant | OPEN |
-| L0924 | `internal/evaluation/scenarios.go:41:54` | string &#96;archive-empty-page&#96; has 3 occurrences, make it a constant | OPEN |
-| L0925 | `internal/evaluation/scenarios.go:93:65` | string &#96;query&#96; has 6 occurrences, make it a constant | OPEN |
-| L0926 | `internal/evaluation/scenarios.go:93:74` | string &#96;ремонт&#96; has 6 occurrences, make it a constant | OPEN |
-| L0927 | `internal/evaluation/scenarios.go:93:90` | string &#96;limit&#96; has 6 occurrences, make it a constant | OPEN |
-| L0928 | `internal/evaluation/scenarios.go:95:42` | string &#96;peer&#96; has 3 occurrences, make it a constant | OPEN |
-| L0929 | `internal/evaluation/scenarios.go:95:50` | string &#96;text&#96; has 3 occurrences, make it a constant | OPEN |
-| L0930 | `internal/evaluation/scenarios.go:95:64` | string &#96;request_id&#96; has 7 occurrences, make it a constant | OPEN |
-| L0931 | `internal/evaluation/scenarios.go:117:33` | string &#96;direct&#96; has 9 occurrences, make it a constant | OPEN |
-| L0932 | `internal/evaluation/scenarios.go:117:43` | string &#96;group&#96; has 4 occurrences, make it a constant | OPEN |
-| L0933 | `internal/evaluation/scenarios.go:120:20` | string &#96;conversation_type&#96; has 9 occurrences, make it a constant | OPEN |
-| L0934 | `internal/evaluation/scenarios.go:120:47` | string &#96;conversation_id&#96; has 9 occurrences, make it a constant | OPEN |
-| L0935 | `internal/evaluation/scenarios.go:128:31` | string &#96;g-1&#96; has 5 occurrences, make it a constant | OPEN |
-| L0936 | `internal/evaluation/scenarios.go:154:4` | string &#96;since&#96; has 4 occurrences, make it a constant | OPEN |
-| L0937 | `internal/evaluation/scenarios.go:155:4` | string &#96;until&#96; has 3 occurrences, make it a constant | OPEN |
-| L0938 | `internal/evaluation/scenarios.go:274:52` | string &#96;operation_id&#96; has 3 occurrences, make it a constant | OPEN |
-| L0939 | `internal/events/message.go:140:33` | string &#96;name&#96; has 3 occurrences, make it a constant | OPEN |
-| L0940 | `internal/events/subscriptions.go:140:7` | string &#96;events/subscribe&#96; has 3 occurrences, make it a constant | OPEN |
-| L0941 | `internal/events/subscriptions.go:142:7` | string &#96;events/unsubscribe&#96; has 3 occurrences, make it a constant | OPEN |
-| L0942 | `internal/events/subscriptions.go:176:6` | string &#96;name&#96; has 3 occurrences, make it a constant | OPEN |
-| L0943 | `internal/events/worker.go:137:50` | string &#96;failed&#96; has 4 occurrences, make it a constant | OPEN |
-| L0944 | `internal/historyimport/manager.go:30:15` | string &#96;zalo_import_conversation_history&#96; has 4 occurrences, make it a constant | OPEN |
-| L0945 | `internal/historyimport/mobile_worker.go:111:38` | string &#96;running&#96; has 8 occurrences, make it a constant | OPEN |
-| L0946 | `internal/historyimport/mobile_worker.go:293:50` | string &#96;INVALID_ARGUMENT&#96; has 3 occurrences, make it a constant | OPEN |
-| L0947 | `internal/historyimport/mobile_worker.go:342:34` | string &#96;source_unsupported&#96; has 3 occurrences, make it a constant | OPEN |
-| L0948 | `internal/historyimport/mobile_worker.go:344:29` | string &#96;invalid_source_page&#96; has 5 occurrences, make it a constant | OPEN |
-| L0949 | `internal/historyimport/worker.go:100:25` | string &#96;running&#96; has 8 occurrences, make it a constant | OPEN |
-| L0950 | `internal/historyimport/worker.go:177:36` | string &#96;source_unsupported&#96; has 3 occurrences, make it a constant | OPEN |
-| L0951 | `internal/historyimport/worker.go:180:53` | string &#96;INVALID_ARGUMENT&#96; has 3 occurrences, make it a constant | OPEN |
-| L0952 | `internal/historyimport/worker.go:181:14` | string &#96;invalid_source_page&#96; has 5 occurrences, make it a constant | OPEN |
-| L0953 | `internal/mcpserver/catalog_diagnostics.go:22:14` | string &#96;application/json&#96; has 10 occurrences, make it a constant | OPEN |
-| L0954 | `internal/mcpserver/conversations.go:26:17` | string &#96;application/json&#96; has 10 occurrences, make it a constant | OPEN |
-| L0955 | `internal/mcpserver/conversations.go:34:33` | string &#96;zalo&#96; has 3 occurrences, make it a constant | OPEN |
-| L0956 | `internal/mcpserver/conversations.go:104:17` | string &#96;text/plain&#96; has 7 occurrences, make it a constant | OPEN |
-| L0957 | `internal/mcpserver/conversations.go:120:38` | string &#96;messages&#96; has 3 occurrences, make it a constant | OPEN |
-| L0958 | `internal/mcpserver/diagnostics.go:23:14` | string &#96;application/json&#96; has 10 occurrences, make it a constant | OPEN |
-| L0959 | `internal/mcpserver/discovery_logging.go:17:40` | string &#96;tools/list&#96; has 3 occurrences, make it a constant | OPEN |
-| L0960 | `internal/mcpserver/discovery_logging.go:61:7` | string &#96;2026-07-28&#96; has 3 occurrences, make it a constant | OPEN |
-| L0961 | `internal/mcpserver/http.go:89:9` | string &#96;application/json&#96; has 10 occurrences, make it a constant | OPEN |
-| L0962 | `internal/mcpserver/http.go:167:80` | string &#96;tools/list&#96; has 3 occurrences, make it a constant | OPEN |
-| L0963 | `internal/mcpserver/http.go:240:17` | string &#96;2026-07-28&#96; has 3 occurrences, make it a constant | OPEN |
-| L0964 | `internal/mcpserver/ports.go:39:3` | string &#96;messages&#96; has 3 occurrences, make it a constant | OPEN |
-| L0965 | `internal/mcpserver/server.go:30:2` | string &#96;zalo_ack_subscription_events&#96; has 3 occurrences, make it a constant | OPEN |
-| L0966 | `internal/mcpserver/server.go:33:2` | string &#96;zalo_cancel_history_import&#96; has 3 occurrences, make it a constant | OPEN |
-| L0967 | `internal/mcpserver/server.go:155:95` | string &#96;text/plain&#96; has 7 occurrences, make it a constant | OPEN |
-| L0968 | `internal/mcpserver/server.go:190:31` | string &#96;zalo&#96; has 3 occurrences, make it a constant | OPEN |
-| L0969 | `internal/mcpserver/server.go:194:38` | string &#96;messages&#96; has 3 occurrences, make it a constant | OPEN |
-| L0970 | `internal/mcpserver/server.go:228:15` | string &#96;STORAGE_ERROR&#96; has 3 occurrences, make it a constant | OPEN |
-| L0971 | `internal/mcpserver/server.go:246:20` | string &#96;TOOL_ERROR&#96; has 3 occurrences, make it a constant | OPEN |
-| L0972 | `internal/mobilebackup/account_metadata.go:107:17` | string &#96;plain&#96; has 3 occurrences, make it a constant | OPEN |
-| L0973 | `internal/mobilebackup/account_metadata.go:125:10` | string &#96;rtf&#96; has 3 occurrences, make it a constant | OPEN |
-| L0974 | `internal/mobilebackup/account_metadata.go:125:26` | string &#96;text&#96; has 3 occurrences, make it a constant | OPEN |
-| L0975 | `internal/mobilebackup/account_metadata.go:125:43` | string &#96;webchat&#96; has 5 occurrences, make it a constant | OPEN |
-| L0976 | `internal/mobilebackup/identities.go:57:11` | string &#96;fids&#96; has 3 occurrences, make it a constant | OPEN |
-| L0977 | `internal/mobilebackup/identities.go:59:11` | string &#96;gids&#96; has 3 occurrences, make it a constant | OPEN |
-| L0978 | `internal/mobilebackup/message_conversion.go:146:16` | string &#96;incoming&#96; has 3 occurrences, make it a constant | OPEN |
-| L0979 | `internal/mobilebackup/message_conversion.go:148:16` | string &#96;outgoing&#96; has 3 occurrences, make it a constant | OPEN |
-| L0980 | `internal/mobilebackup/message_conversion.go:205:22` | string &#96;webchat&#96; has 5 occurrences, make it a constant | OPEN |
-| L0981 | `internal/mobilebackup/message_conversion.go:211:39` | string &#96;rtf&#96; has 3 occurrences, make it a constant | OPEN |
-| L0982 | `internal/mobilebackup/row_page.go:45:10` | string &#96;webchat&#96; has 5 occurrences, make it a constant | OPEN |
-| L0983 | `internal/mobilebackup/row_page.go:227:19` | string &#96;incoming&#96; has 3 occurrences, make it a constant | OPEN |
-| L0984 | `internal/mobilebackup/row_page.go:229:20` | string &#96;outgoing&#96; has 3 occurrences, make it a constant | OPEN |
-| L0985 | `internal/mobilebackup/snapshot_page.go:44:3` | string &#96;timestamp&#96; has 4 occurrences, make it a constant | OPEN |
-| L0986 | `internal/mobilebackup/snapshot_page.go:45:3` | string &#96;text&#96; has 3 occurrences, make it a constant | OPEN |
-| L0987 | `internal/mobilebackup/snapshot_page.go:215:16` | string &#96;incoming&#96; has 3 occurrences, make it a constant | OPEN |
-| L0988 | `internal/mobilebackup/snapshot_page.go:217:17` | string &#96;outgoing&#96; has 3 occurrences, make it a constant | OPEN |
-| L0989 | `internal/mobilebackup/snapshot_page.go:222:15` | string &#96;plain&#96; has 3 occurrences, make it a constant | OPEN |
-| L0990 | `internal/mobilebackup/sqlite.go:295:3` | string &#96;timestamp&#96; has 4 occurrences, make it a constant | OPEN |
-| L0991 | `internal/mobilebackup/sqlite.go:561:15` | string &#96;text&#96; has 3 occurrences, make it a constant | OPEN |
-| L0992 | `internal/mobilebackup/sqlite.go:583:16` | string &#96;metadata&#96; has 3 occurrences, make it a constant | OPEN |
-| L0993 | `internal/service/account_archive.go:23:48` | string &#96;trans-bin.zaloapp.com&#96; has 3 occurrences, make it a constant | OPEN |
-| L0994 | `internal/service/account_archive.go:67:22` | string &#96;prepared&#96; has 6 occurrences, make it a constant | OPEN |
-| L0995 | `internal/service/account_archive.go:224:3` | string &#96;download_performed&#96; has 3 occurrences, make it a constant | OPEN |
-| L0996 | `internal/service/account_archive.go:225:3` | string &#96;import_performed&#96; has 4 occurrences, make it a constant | OPEN |
-| L0997 | `internal/service/account_archive.go:226:3` | string &#96;history_complete&#96; has 4 occurrences, make it a constant | OPEN |
-| L0998 | `internal/service/account_archive.go:248:24` | string &#96;source_id&#96; has 4 occurrences, make it a constant | OPEN |
-| L0999 | `internal/service/account_archive_control.go:16:19` | string &#96;cli_restore_account_archive&#96; has 4 occurrences, make it a constant | OPEN |
-| L1000 | `internal/service/account_archive_control.go:16:62` | string &#96;cli_preserve_account_archive&#96; has 4 occurrences, make it a constant | OPEN |
-| L1001 | `internal/service/account_archive_control.go:17:13` | string &#96;cli_prepare_account_archive&#96; has 3 occurrences, make it a constant | OPEN |
-| L1002 | `internal/service/account_archive_control.go:18:13` | string &#96;cli_capture_account_archive&#96; has 4 occurrences, make it a constant | OPEN |
-| L1003 | `internal/service/account_archive_control.go:19:13` | string &#96;cli_account_archive_status&#96; has 3 occurrences, make it a constant | OPEN |
-| L1004 | `internal/service/account_archive_control.go:20:13` | string &#96;cli_inspect_account_archive&#96; has 4 occurrences, make it a constant | OPEN |
-| L1005 | `internal/service/account_archive_control.go:21:13` | string &#96;cli_remove_account_archive&#96; has 3 occurrences, make it a constant | OPEN |
-| L1006 | `internal/service/account_archive_control.go:58:50` | string &#96;/rpc&#96; has 3 occurrences, make it a constant | OPEN |
-| L1007 | `internal/service/archive_catalog.go:151:3` | string &#96;has_more&#96; has 3 occurrences, make it a constant | OPEN |
-| L1008 | `internal/service/archive_catalog.go:154:32` | string &#96;retained_archive&#96; has 3 occurrences, make it a constant | OPEN |
-| L1009 | `internal/service/archive_catalog.go:177:26` | string &#96;unknown&#96; has 3 occurrences, make it a constant | OPEN |
-| L1010 | `internal/service/archive_messages.go:283:3` | string &#96;history_complete&#96; has 4 occurrences, make it a constant | OPEN |
-| L1011 | `internal/service/archive_messages.go:284:3` | string &#96;examined&#96; has 3 occurrences, make it a constant | OPEN |
-| L1012 | `internal/service/archive_messages.go:285:3` | string &#96;rejected&#96; has 3 occurrences, make it a constant | OPEN |
-| L1013 | `internal/service/archive_messages.go:301:3` | string &#96;has_more&#96; has 3 occurrences, make it a constant | OPEN |
-| L1014 | `internal/service/archive_read.go:47:43` | string &#96;history_complete&#96; has 4 occurrences, make it a constant | OPEN |
-| L1015 | `internal/service/archive_read.go:53:3` | string &#96;source_id&#96; has 4 occurrences, make it a constant | OPEN |
-| L1016 | `internal/service/bridge.go:190:17` | string &#96;other&#96; has 3 occurrences, make it a constant | OPEN |
-| L1017 | `internal/service/cli.go:64:7` | string &#96;probe-recall&#96; has 3 occurrences, make it a constant | OPEN |
-| L1018 | `internal/service/cli.go:65:3` | string &#96;mobile-backup-prepare&#96; has 3 occurrences, make it a constant | OPEN |
-| L1019 | `internal/service/cli.go:66:3` | string &#96;mobile-backup-status&#96; has 3 occurrences, make it a constant | OPEN |
-| L1020 | `internal/service/cli.go:67:3` | string &#96;mobile-backup-cancel&#96; has 3 occurrences, make it a constant | OPEN |
-| L1021 | `internal/service/cli.go:68:3` | string &#96;mobile-backup-probe-offer&#96; has 4 occurrences, make it a constant | OPEN |
-| L1022 | `internal/service/cli.go:69:3` | string &#96;mobile-backup-probe-archive&#96; has 5 occurrences, make it a constant | OPEN |
-| L1023 | `internal/service/cli.go:70:3` | string &#96;account-archive-prepare&#96; has 4 occurrences, make it a constant | OPEN |
-| L1024 | `internal/service/cli.go:71:3` | string &#96;account-archive-capture&#96; has 4 occurrences, make it a constant | OPEN |
-| L1025 | `internal/service/cli.go:72:3` | string &#96;account-archive-status&#96; has 3 occurrences, make it a constant | OPEN |
-| L1026 | `internal/service/cli.go:73:3` | string &#96;account-archive-preserve&#96; has 4 occurrences, make it a constant | OPEN |
-| L1027 | `internal/service/cli.go:74:3` | string &#96;account-archive-restore&#96; has 4 occurrences, make it a constant | OPEN |
-| L1028 | `internal/service/cli.go:75:3` | string &#96;account-archive-inspect&#96; has 4 occurrences, make it a constant | OPEN |
-| L1029 | `internal/service/cli.go:76:3` | string &#96;account-archive-remove&#96; has 3 occurrences, make it a constant | OPEN |
-| L1030 | `internal/service/cli_mobile_ledger.go:16:17` | string &#96;account-archive-restore&#96; has 4 occurrences, make it a constant | OPEN |
-| L1031 | `internal/service/cli_mobile_ledger.go:16:54` | string &#96;account-archive-preserve&#96; has 4 occurrences, make it a constant | OPEN |
-| L1032 | `internal/service/cli_mobile_ledger.go:17:11` | string &#96;account-archive-inspect&#96; has 4 occurrences, make it a constant | OPEN |
-| L1033 | `internal/service/cli_mobile_ledger.go:18:11` | string &#96;account-archive-remove&#96; has 3 occurrences, make it a constant | OPEN |
-| L1034 | `internal/service/cli_mobile_ledger.go:19:11` | string &#96;account-archive-prepare&#96; has 4 occurrences, make it a constant | OPEN |
-| L1035 | `internal/service/cli_mobile_ledger.go:20:11` | string &#96;account-archive-capture&#96; has 4 occurrences, make it a constant | OPEN |
-| L1036 | `internal/service/cli_mobile_ledger.go:21:11` | string &#96;account-archive-status&#96; has 3 occurrences, make it a constant | OPEN |
-| L1037 | `internal/service/cli_mobile_ledger.go:22:11` | string &#96;probe-recall&#96; has 3 occurrences, make it a constant | OPEN |
-| L1038 | `internal/service/cli_mobile_ledger.go:23:11` | string &#96;mobile-backup-prepare&#96; has 3 occurrences, make it a constant | OPEN |
-| L1039 | `internal/service/cli_mobile_ledger.go:24:11` | string &#96;mobile-backup-status&#96; has 3 occurrences, make it a constant | OPEN |
-| L1040 | `internal/service/cli_mobile_ledger.go:25:11` | string &#96;mobile-backup-cancel&#96; has 3 occurrences, make it a constant | OPEN |
-| L1041 | `internal/service/cli_mobile_ledger.go:26:11` | string &#96;mobile-backup-probe-offer&#96; has 4 occurrences, make it a constant | OPEN |
-| L1042 | `internal/service/cli_mobile_ledger.go:27:11` | string &#96;mobile-backup-probe-archive&#96; has 5 occurrences, make it a constant | OPEN |
-| L1043 | `internal/service/cli_mobile_ledger.go:38:10` | string &#96;cli_probe_recall&#96; has 4 occurrences, make it a constant | OPEN |
-| L1044 | `internal/service/cli_mobile_ledger.go:52:13` | string &#96;cli_prepare_mobile_backup&#96; has 3 occurrences, make it a constant | OPEN |
-| L1045 | `internal/service/cli_mobile_ledger.go:54:13` | string &#96;cli_prepare_account_archive&#96; has 3 occurrences, make it a constant | OPEN |
-| L1046 | `internal/service/cli_mobile_ledger.go:57:13` | string &#96;cli_inspect_account_archive&#96; has 4 occurrences, make it a constant | OPEN |
-| L1047 | `internal/service/cli_mobile_ledger.go:60:13` | string &#96;cli_preserve_account_archive&#96; has 4 occurrences, make it a constant | OPEN |
-| L1048 | `internal/service/cli_mobile_ledger.go:63:13` | string &#96;cli_restore_account_archive&#96; has 4 occurrences, make it a constant | OPEN |
-| L1049 | `internal/service/cli_mobile_ledger.go:70:28` | string &#96;source_id&#96; has 4 occurrences, make it a constant | OPEN |
-| L1050 | `internal/service/cli_mobile_ledger.go:74:10` | string &#96;cli_remove_account_archive&#96; has 3 occurrences, make it a constant | OPEN |
-| L1051 | `internal/service/cli_mobile_ledger.go:79:10` | string &#96;cli_account_archive_status&#96; has 3 occurrences, make it a constant | OPEN |
-| L1052 | `internal/service/cli_mobile_ledger.go:93:13` | string &#96;cli_cancel_prepared_mobile_backup&#96; has 3 occurrences, make it a constant | OPEN |
-| L1053 | `internal/service/cli_mobile_ledger.go:95:13` | string &#96;cli_probe_mobile_backup_offer&#96; has 5 occurrences, make it a constant | OPEN |
-| L1054 | `internal/service/cli_mobile_ledger.go:98:13` | string &#96;cli_probe_mobile_backup_archive&#96; has 6 occurrences, make it a constant | OPEN |
-| L1055 | `internal/service/cli_mobile_ledger.go:101:13` | string &#96;cli_capture_account_archive&#96; has 4 occurrences, make it a constant | OPEN |
-| L1056 | `internal/service/mobile_archive_probe.go:26:48` | string &#96;trans-bin.zaloapp.com&#96; has 3 occurrences, make it a constant | OPEN |
-| L1057 | `internal/service/mobile_archive_probe.go:53:60` | string &#96;prepared&#96; has 6 occurrences, make it a constant | OPEN |
-| L1058 | `internal/service/mobile_archive_probe.go:191:3` | string &#96;download_performed&#96; has 3 occurrences, make it a constant | OPEN |
-| L1059 | `internal/service/mobile_archive_probe.go:192:3` | string &#96;import_performed&#96; has 4 occurrences, make it a constant | OPEN |
-| L1060 | `internal/service/mobile_archive_probe.go:194:3` | string &#96;examined&#96; has 3 occurrences, make it a constant | OPEN |
-| L1061 | `internal/service/mobile_archive_probe.go:195:3` | string &#96;rejected&#96; has 3 occurrences, make it a constant | OPEN |
-| L1062 | `internal/service/mobile_archive_probe.go:248:3` | string &#96;has_more&#96; has 3 occurrences, make it a constant | OPEN |
-| L1063 | `internal/service/mobile_backup.go:93:72` | string &#96;prepared&#96; has 6 occurrences, make it a constant | OPEN |
-| L1064 | `internal/service/mobile_history.go:25:57` | string &#96;trans-bin.zaloapp.com&#96; has 3 occurrences, make it a constant | OPEN |
-| L1065 | `internal/service/mobile_ledger_control.go:18:51` | string &#96;cli_prepare_mobile_backup&#96; has 3 occurrences, make it a constant | OPEN |
-| L1066 | `internal/service/mobile_ledger_control.go:20:13` | string &#96;cli_cancel_prepared_mobile_backup&#96; has 3 occurrences, make it a constant | OPEN |
-| L1067 | `internal/service/mobile_ledger_control.go:21:14` | string &#96;cli_probe_mobile_backup_offer&#96; has 5 occurrences, make it a constant | OPEN |
-| L1068 | `internal/service/mobile_ledger_control.go:21:59` | string &#96;cli_probe_mobile_backup_archive&#96; has 6 occurrences, make it a constant | OPEN |
-| L1069 | `internal/service/mobile_ledger_control.go:106:50` | string &#96;/rpc&#96; has 3 occurrences, make it a constant | OPEN |
-| L1070 | `internal/service/mobile_ledger_control.go:160:59` | string &#96;prepared&#96; has 6 occurrences, make it a constant | OPEN |
-| L1071 | `internal/service/mobile_offer_probe.go:20:60` | string &#96;prepared&#96; has 6 occurrences, make it a constant | OPEN |
-| L1072 | `internal/service/mobile_offer_probe.go:50:3` | string &#96;download_performed&#96; has 3 occurrences, make it a constant | OPEN |
-| L1073 | `internal/service/mobile_offer_probe.go:51:3` | string &#96;import_performed&#96; has 4 occurrences, make it a constant | OPEN |
-| L1074 | `internal/service/recall_diagnostic.go:43:64` | string &#96;/rpc&#96; has 3 occurrences, make it a constant | OPEN |
-| L1075 | `internal/service/recall_diagnostic.go:191:14` | string &#96;unknown&#96; has 3 occurrences, make it a constant | OPEN |
-| L1076 | `internal/service/run.go:118:173` | string &#96;cli_probe_recall&#96; has 4 occurrences, make it a constant | OPEN |
-| L1077 | `internal/service/run.go:461:4` | string &#96;authenticated&#96; has 4 occurrences, make it a constant | OPEN |
-| L1078 | `internal/service/run.go:462:4` | string &#96;collector_state&#96; has 4 occurrences, make it a constant | OPEN |
-| L1079 | `internal/service/run.go:463:4` | string &#96;last_connected_at&#96; has 4 occurrences, make it a constant | OPEN |
-| L1080 | `internal/service/run.go:464:4` | string &#96;last_event_at&#96; has 4 occurrences, make it a constant | OPEN |
-| L1081 | `internal/service/run.go:465:4` | string &#96;last_persisted_at&#96; has 4 occurrences, make it a constant | OPEN |
-| L1082 | `internal/service/run.go:466:4` | string &#96;last_error&#96; has 4 occurrences, make it a constant | OPEN |
-| L1083 | `internal/service/run.go:549:33` | string &#96;STORAGE_ERROR&#96; has 3 occurrences, make it a constant | OPEN |
-| L1084 | `internal/service/run.go:578:7` | string &#96;code&#96; has 3 occurrences, make it a constant | OPEN |
-| L1085 | `internal/service/run.go:579:7` | string &#96;message&#96; has 3 occurrences, make it a constant | OPEN |
-| L1086 | `internal/storage/browse.go:35:11` | string &#96;desc&#96; has 3 occurrences, make it a constant | OPEN |
-| L1087 | `internal/storage/browse.go:120:5` | string &#96;conversation_type&#96; has 4 occurrences, make it a constant | OPEN |
-| L1088 | `internal/storage/browse.go:121:5` | string &#96;conversation_id&#96; has 4 occurrences, make it a constant | OPEN |
-| L1089 | `internal/storage/browse.go:130:26` | string &#96;unknown&#96; has 7 occurrences, make it a constant | OPEN |
-| L1090 | `internal/storage/browse.go:149:21` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | OPEN |
-| L1091 | `internal/storage/browse.go:151:21` | string &#96;incoming&#96; has 6 occurrences, make it a constant | OPEN |
-| L1092 | `internal/storage/browse.go:193:3` | string &#96;has_more&#96; has 4 occurrences, make it a constant | OPEN |
-| L1093 | `internal/storage/browse.go:194:3` | string &#96;next_cursor&#96; has 3 occurrences, make it a constant | OPEN |
-| L1094 | `internal/storage/browse.go:195:3` | string &#96;empty_reason&#96; has 3 occurrences, make it a constant | OPEN |
-| L1095 | `internal/storage/browse.go:196:3` | string &#96;coverage&#96; has 3 occurrences, make it a constant | OPEN |
-| L1096 | `internal/storage/contact_profiles.go:76:4` | string &#96;status&#96; has 3 occurrences, make it a constant | OPEN |
-| L1097 | `internal/storage/contact_profiles.go:76:23` | string &#96;not_attempted&#96; has 3 occurrences, make it a constant | OPEN |
-| L1098 | `internal/storage/contact_profiles.go:77:4` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L1099 | `internal/storage/contact_profiles.go:78:4` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L1100 | `internal/storage/contact_profiles.go:82:4` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | OPEN |
-| L1101 | `internal/storage/contacts.go:58:81` | string &#96;unknown&#96; has 7 occurrences, make it a constant | OPEN |
-| L1102 | `internal/storage/contacts.go:61:39` | string &#96;direct&#96; has 10 occurrences, make it a constant | OPEN |
-| L1103 | `internal/storage/contacts.go:139:4` | string &#96;status&#96; has 3 occurrences, make it a constant | OPEN |
-| L1104 | `internal/storage/contacts.go:139:23` | string &#96;not_attempted&#96; has 3 occurrences, make it a constant | OPEN |
-| L1105 | `internal/storage/contacts.go:140:4` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L1106 | `internal/storage/contacts.go:141:4` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L1107 | `internal/storage/contacts.go:144:4` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | OPEN |
-| L1108 | `internal/storage/conversation_views.go:97:3` | string &#96;history_complete&#96; has 3 occurrences, make it a constant | OPEN |
-| L1109 | `internal/storage/conversation_views.go:111:55` | string &#96;group&#96; has 9 occurrences, make it a constant | OPEN |
-| L1110 | `internal/storage/conversation_views.go:111:74` | string &#96;direct&#96; has 10 occurrences, make it a constant | OPEN |
-| L1111 | `internal/storage/conversation_views.go:179:6` | string &#96;conversation_type&#96; has 4 occurrences, make it a constant | OPEN |
-| L1112 | `internal/storage/conversation_views.go:180:6` | string &#96;conversation_id&#96; has 4 occurrences, make it a constant | OPEN |
-| L1113 | `internal/storage/conversation_views.go:185:6` | string &#96;updated_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L1114 | `internal/storage/conversation_views.go:226:3` | string &#96;has_more&#96; has 4 occurrences, make it a constant | OPEN |
-| L1115 | `internal/storage/conversation_views.go:227:3` | string &#96;next_cursor&#96; has 3 occurrences, make it a constant | OPEN |
-| L1116 | `internal/storage/conversation_views.go:228:3` | string &#96;catalog_complete&#96; has 4 occurrences, make it a constant | OPEN |
-| L1117 | `internal/storage/conversation_views.go:230:3` | string &#96;empty_reason&#96; has 3 occurrences, make it a constant | OPEN |
-| L1118 | `internal/storage/conversation_views.go:258:3` | string &#96;conversation&#96; has 9 occurrences, make it a constant | OPEN |
-| L1119 | `internal/storage/conversation_views.go:272:3` | string &#96;coverage&#96; has 3 occurrences, make it a constant | OPEN |
-| L1120 | `internal/storage/conversation_views.go:292:10` | string &#96;all&#96; has 6 occurrences, make it a constant | OPEN |
-| L1121 | `internal/storage/conversations.go:13:27` | string &#96;direct&#96; has 10 occurrences, make it a constant | OPEN |
-| L1122 | `internal/storage/conversations.go:13:40` | string &#96;group&#96; has 9 occurrences, make it a constant | OPEN |
-| L1123 | `internal/storage/deliveries.go:166:13` | string &#96;pending&#96; has 7 occurrences, make it a constant | OPEN |
-| L1124 | `internal/storage/deliveries.go:171:21` | string &#96;cancelled&#96; has 5 occurrences, make it a constant | OPEN |
-| L1125 | `internal/storage/deliveries.go:173:21` | string &#96;failed&#96; has 8 occurrences, make it a constant | OPEN |
-| L1126 | `internal/storage/deliveries.go:337:22` | string &#96;delivered&#96; has 3 occurrences, make it a constant | OPEN |
-| L1127 | `internal/storage/diagnostics.go:24:4` | string &#96;pending&#96; has 7 occurrences, make it a constant | OPEN |
-| L1128 | `internal/storage/diagnostics.go:26:4` | string &#96;delivered&#96; has 3 occurrences, make it a constant | OPEN |
-| L1129 | `internal/storage/diagnostics.go:27:4` | string &#96;failed&#96; has 8 occurrences, make it a constant | OPEN |
-| L1130 | `internal/storage/diagnostics.go:28:4` | string &#96;cancelled&#96; has 5 occurrences, make it a constant | OPEN |
-| L1131 | `internal/storage/event_journal.go:55:15` | string &#96;conversation&#96; has 9 occurrences, make it a constant | OPEN |
-| L1132 | `internal/storage/event_journal.go:71:5` | string &#96;conversation_type&#96; has 4 occurrences, make it a constant | OPEN |
-| L1133 | `internal/storage/event_journal.go:72:5` | string &#96;conversation_id&#96; has 4 occurrences, make it a constant | OPEN |
-| L1134 | `internal/storage/event_journal.go:192:15` | string &#96;pending&#96; has 7 occurrences, make it a constant | OPEN |
-| L1135 | `internal/storage/event_journal.go:210:15` | string &#96;delivered&#96; has 3 occurrences, make it a constant | OPEN |
-| L1136 | `internal/storage/event_journal.go:247:3` | string &#96;has_more&#96; has 4 occurrences, make it a constant | OPEN |
-| L1137 | `internal/storage/events.go:170:18` | string &#96;conversation&#96; has 9 occurrences, make it a constant | OPEN |
-| L1138 | `internal/storage/events.go:298:15` | string &#96;PERMISSION_DENIED&#96; has 3 occurrences, make it a constant | OPEN |
-| L1139 | `internal/storage/history.go:54:42` | string &#96;incoming&#96; has 6 occurrences, make it a constant | OPEN |
-| L1140 | `internal/storage/history.go:54:71` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | OPEN |
-| L1141 | `internal/storage/history.go:54:100` | string &#96;unknown&#96; has 7 occurrences, make it a constant | OPEN |
-| L1142 | `internal/storage/history_operations.go:215:25` | string &#96;queued&#96; has 6 occurrences, make it a constant | OPEN |
-| L1143 | `internal/storage/history_operations.go:221:24` | string &#96;conversation_preload&#96; has 3 occurrences, make it a constant | OPEN |
-| L1144 | `internal/storage/history_operations.go:224:37` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | OPEN |
-| L1145 | `internal/storage/history_operations.go:278:83` | string &#96;paused&#96; has 3 occurrences, make it a constant | OPEN |
-| L1146 | `internal/storage/history_operations.go:284:43` | string &#96;running&#96; has 13 occurrences, make it a constant | OPEN |
-| L1147 | `internal/storage/history_operations.go:660:13` | string &#96;failed&#96; has 8 occurrences, make it a constant | OPEN |
-| L1148 | `internal/storage/incoming.go:43:17` | string &#96;unknown&#96; has 7 occurrences, make it a constant | OPEN |
-| L1149 | `internal/storage/incoming.go:45:20` | string &#96;incoming&#96; has 6 occurrences, make it a constant | OPEN |
-| L1150 | `internal/storage/incoming.go:45:49` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | OPEN |
-| L1151 | `internal/storage/ingestion.go:30:35` | string &#96;direct&#96; has 10 occurrences, make it a constant | OPEN |
-| L1152 | `internal/storage/ingestion.go:30:75` | string &#96;group&#96; has 9 occurrences, make it a constant | OPEN |
-| L1153 | `internal/storage/mobile_backup.go:155:16` | string &#96;prepared&#96; has 4 occurrences, make it a constant | OPEN |
-| L1154 | `internal/storage/mobile_backup.go:216:11` | string &#96;failed&#96; has 8 occurrences, make it a constant | OPEN |
-| L1155 | `internal/storage/mobile_backup.go:216:29` | string &#96;cancelled&#96; has 5 occurrences, make it a constant | OPEN |
-| L1156 | `internal/storage/mobile_backup.go:216:50` | string &#96;interrupted&#96; has 3 occurrences, make it a constant | OPEN |
-| L1157 | `internal/storage/mobile_backup.go:217:40` | string &#96;dispatching&#96; has 5 occurrences, make it a constant | OPEN |
-| L1158 | `internal/storage/mobile_backup.go:217:65` | string &#96;waiting_for_confirmation&#96; has 3 occurrences, make it a constant | OPEN |
-| L1159 | `internal/storage/mobile_backup.go:218:12` | string &#96;request_result_unknown&#96; has 3 occurrences, make it a constant | OPEN |
-| L1160 | `internal/storage/mobile_backup.go:219:12` | string &#96;mobile_restoring&#96; has 3 occurrences, make it a constant | OPEN |
-| L1161 | `internal/storage/mobile_backup.go:220:12` | string &#96;waiting_for_backup&#96; has 3 occurrences, make it a constant | OPEN |
-| L1162 | `internal/storage/mobile_history.go:175:51` | string &#96;running&#96; has 13 occurrences, make it a constant | OPEN |
-| L1163 | `internal/storage/mobile_history_acquisition.go:46:51` | string &#96;running&#96; has 13 occurrences, make it a constant | OPEN |
-| L1164 | `internal/storage/mobile_history_acquisition.go:200:81` | string &#96;queued&#96; has 6 occurrences, make it a constant | OPEN |
-| L1165 | `internal/storage/mobile_history_acquisition.go:216:11` | string &#96;interrupted&#96; has 3 occurrences, make it a constant | OPEN |
-| L1166 | `internal/storage/mobile_history_acquisition.go:217:24` | string &#96;cancelled&#96; has 5 occurrences, make it a constant | OPEN |
-| L1167 | `internal/storage/preload_status.go:33:4` | string &#96;status&#96; has 3 occurrences, make it a constant | OPEN |
-| L1168 | `internal/storage/preload_status.go:33:25` | string &#96;not_attempted&#96; has 3 occurrences, make it a constant | OPEN |
-| L1169 | `internal/storage/preload_status.go:34:4` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L1170 | `internal/storage/preload_status.go:35:4` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L1171 | `internal/storage/preload_status.go:38:4` | string &#96;catalog_complete&#96; has 4 occurrences, make it a constant | OPEN |
-| L1172 | `internal/storage/preload_status.go:40:4` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | OPEN |
-| L1173 | `internal/storage/read_authority.go:58:16` | string &#96;PERMISSION_DENIED&#96; has 3 occurrences, make it a constant | OPEN |
-| L1174 | `internal/storage/sending.go:135:14` | string &#96;sent&#96; has 4 occurrences, make it a constant | OPEN |
-| L1175 | `internal/storage/sending.go:135:33` | string &#96;failed&#96; has 8 occurrences, make it a constant | OPEN |
-| L1176 | `internal/storage/sending.go:135:54` | string &#96;unknown&#96; has 7 occurrences, make it a constant | OPEN |
-| L1177 | `internal/storage/sending.go:149:8` | string &#96;interrupted&#96; has 3 occurrences, make it a constant | OPEN |
-| L1178 | `internal/storage/store.go:435:16` | string &#96;PERMISSION_DENIED&#96; has 3 occurrences, make it a constant | OPEN |
-| L1179 | `internal/storage/store.go:577:55` | string &#96;group&#96; has 9 occurrences, make it a constant | OPEN |
-| L1180 | `internal/storage/store.go:577:88` | string &#96;direct&#96; has 10 occurrences, make it a constant | OPEN |
-| L1181 | `internal/storage/subscription_scope.go:10:13` | string &#96;conversation&#96; has 9 occurrences, make it a constant | OPEN |
-| L1182 | `internal/storage/subscription_scope.go:27:7` | string &#96;all&#96; has 6 occurrences, make it a constant | OPEN |
-| L1183 | `internal/storage/subscription_scope.go:31:7` | string &#96;direct&#96; has 10 occurrences, make it a constant | OPEN |
-| L1184 | `internal/storage/subscription_scope.go:31:17` | string &#96;group&#96; has 9 occurrences, make it a constant | OPEN |
-| L1185 | `internal/storage/subscription_scope.go:41:44` | string &#96;incoming&#96; has 6 occurrences, make it a constant | OPEN |
-| L1186 | `internal/storage/subscription_scope.go:41:73` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | OPEN |
-| L1187 | `internal/storage/views.go:111:3` | string &#96;has_more&#96; has 4 occurrences, make it a constant | OPEN |
-| L1188 | `internal/storage/views.go:112:3` | string &#96;next_cursor&#96; has 3 occurrences, make it a constant | OPEN |
-| L1189 | `internal/storage/views.go:113:3` | string &#96;empty_reason&#96; has 3 occurrences, make it a constant | OPEN |
-| L1190 | `internal/storage/views.go:130:3` | string &#96;group&#96; has 9 occurrences, make it a constant | OPEN |
-| L1191 | `internal/storage/views.go:133:3` | string &#96;updated_at&#96; has 3 occurrences, make it a constant | OPEN |
-| L1192 | `internal/storage/views.go:262:3` | string &#96;history_complete&#96; has 3 occurrences, make it a constant | OPEN |
-| L1193 | `internal/storage/views.go:364:3` | string &#96;coverage&#96; has 3 occurrences, make it a constant | OPEN |
-| L1194 | `internal/toolruntime/outcome.go:46:12` | string &#96;zalo_send_direct_message&#96; has 4 occurrences, make it a constant | OPEN |
-| L1195 | `internal/toolruntime/outcome.go:46:50` | string &#96;zalo_join_group&#96; has 4 occurrences, make it a constant | OPEN |
-| L1196 | `internal/toolruntime/outcome.go:46:79` | string &#96;zalo_import_conversation_history&#96; has 4 occurrences, make it a constant | OPEN |
-| L1197 | `internal/toolruntime/runtime.go:25:2` | string &#96;zalo_search_messages&#96; has 3 occurrences, make it a constant | OPEN |
-| L1198 | `internal/toolruntime/runtime.go:26:2` | string &#96;zalo_search_conversation_messages&#96; has 3 occurrences, make it a constant | OPEN |
-| L1199 | `internal/toolruntime/runtime.go:27:2` | string &#96;zalo_get_message_context&#96; has 3 occurrences, make it a constant | OPEN |
-| L1200 | `internal/toolruntime/runtime.go:28:2` | string &#96;zalo_get_conversation_message_context&#96; has 3 occurrences, make it a constant | OPEN |
-| L1201 | `internal/toolruntime/runtime.go:419:7` | string &#96;zalo_send_direct_message&#96; has 4 occurrences, make it a constant | OPEN |
-| L1202 | `internal/toolruntime/runtime.go:420:3` | string &#96;zalo_join_group&#96; has 4 occurrences, make it a constant | OPEN |
-| L1203 | `internal/toolruntime/runtime.go:421:3` | string &#96;zalo_import_conversation_history&#96; has 4 occurrences, make it a constant | OPEN |
-| L1204 | `internal/toolruntime/runtime.go:422:3` | string &#96;zalo_cancel_history_import&#96; has 3 occurrences, make it a constant | OPEN |
-| L1205 | `internal/toolruntime/runtime.go:423:3` | string &#96;zalo_ack_subscription_events&#96; has 3 occurrences, make it a constant | OPEN |
-| L1206 | `internal/zalo/adapter.go:291:16` | string &#96;incoming&#96; has 3 occurrences, make it a constant | OPEN |
-| L1207 | `internal/zalo/adapter.go:293:17` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | OPEN |
-| L1208 | `internal/zalo/history.go:178:31` | string &#96;actionId&#96; has 3 occurrences, make it a constant | OPEN |
-| L1209 | `internal/zalo/history.go:178:52` | string &#96;cliMsgId&#96; has 3 occurrences, make it a constant | OPEN |
-| L1210 | `internal/zalo/history.go:178:89` | string &#96;userId&#96; has 3 occurrences, make it a constant | OPEN |
-| L1211 | `internal/zalo/history.go:178:99` | string &#96;realMsgId&#96; has 3 occurrences, make it a constant | OPEN |
-| L1212 | `internal/zalo/history.go:207:19` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | OPEN |
-| L1213 | `internal/zalo/mobile_backup.go:154:24` | string &#96;Web&#96; has 3 occurrences, make it a constant | OPEN |
-| L1214 | `internal/zalo/preload.go:148:20` | string &#96;incoming&#96; has 3 occurrences, make it a constant | OPEN |
-| L1215 | `internal/zalo/preload.go:150:21` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | OPEN |
-| L1216 | `internal/zalo/preload.go:194:31` | string &#96;actionId&#96; has 3 occurrences, make it a constant | OPEN |
-| L1217 | `internal/zalo/preload.go:194:52` | string &#96;cliMsgId&#96; has 3 occurrences, make it a constant | OPEN |
-| L1218 | `internal/zalo/preload.go:194:89` | string &#96;userId&#96; has 3 occurrences, make it a constant | OPEN |
-| L1219 | `internal/zalo/preload.go:194:99` | string &#96;realMsgId&#96; has 3 occurrences, make it a constant | OPEN |
-| L1220 | `tools/harness/internal/architecture/architecture.go:152:54` | string &#96;coverage&#96; has 6 occurrences, make it a constant | OPEN |
-| L1221 | `tools/harness/internal/architecture/architecture.go:286:36` | string &#96;database/sql&#96; has 3 occurrences, make it a constant | OPEN |
-| L1222 | `tools/harness/internal/architecture/architecture.go:286:52` | string &#96;dependency&#96; has 9 occurrences, make it a constant | OPEN |
-| L1223 | `tools/harness/internal/architecture/architecture.go:287:37` | string &#96;github.com/modelcontextprotocol/go-sdk/mcp&#96; has 3 occurrences, make it a constant | OPEN |
-| L1224 | `tools/harness/internal/architecture/architecture.go:294:76` | string &#96;positive&#96; has 6 occurrences, make it a constant | OPEN |
-| L1225 | `tools/harness/internal/architecture/architecture.go:297:27` | string &#96;internal/mobilebackup/archiveport&#96; has 3 occurrences, make it a constant | OPEN |
-| L1226 | `tools/harness/internal/architecture/architecture.go:377:61` | string &#96;PASS&#96; has 4 occurrences, make it a constant | OPEN |
-| L1227 | `tools/harness/internal/architecture/architecture.go:383:109` | string &#96;security&#96; has 3 occurrences, make it a constant | OPEN |
-| L1228 | `tools/harness/internal/performance/bench.go:19:47` | string &#96;status&#96; has 4 occurrences, make it a constant | OPEN |
-| L1229 | `tools/harness/internal/performance/bench.go:19:57` | string &#96;FAIL&#96; has 5 occurrences, make it a constant | OPEN |
-| L1230 | `tools/harness/internal/performance/bench.go:53:22` | string &#96;PASS&#96; has 10 occurrences, make it a constant | OPEN |
-| L1231 | `tools/harness/internal/performance/bench.go:65:45` | string &#96;system&#96; has 3 occurrences, make it a constant | OPEN |
-| L1232 | `tools/harness/internal/performance/bench.go:65:61` | string &#96;release&#96; has 3 occurrences, make it a constant | OPEN |
-| L1233 | `tools/harness/internal/performance/bench.go:65:78` | string &#96;machine&#96; has 4 occurrences, make it a constant | OPEN |
-| L1234 | `tools/harness/internal/performance/bench.go:98:80` | string &#96;model&#96; has 3 occurrences, make it a constant | OPEN |
-| L1235 | `tools/harness/internal/performance/bench.go:98:89` | string &#96;NOT_RUN&#96; has 6 occurrences, make it a constant | OPEN |
-| L1236 | `tools/harness/internal/performance/bench.go:98:100` | string &#96;live&#96; has 3 occurrences, make it a constant | OPEN |
-| L1237 | `tools/harness/internal/performance/bench.go:112:75` | string &#96;candidate&#96; has 6 occurrences, make it a constant | OPEN |
-| L1238 | `tools/harness/internal/performance/bench.go:112:105` | string &#96;./cmd/zl-mcp-eval&#96; has 5 occurrences, make it a constant | OPEN |
-| L1239 | `tools/harness/internal/performance/bench.go:147:267` | string &#96;fixture_sha256&#96; has 3 occurrences, make it a constant | OPEN |
-| L1240 | `tools/harness/internal/performance/bench.go:147:294` | string &#96;runs&#96; has 3 occurrences, make it a constant | OPEN |
-| L1241 | `tools/harness/internal/performance/bench.go:147:337` | string &#96;warmup_calls&#96; has 4 occurrences, make it a constant | OPEN |
-| L1242 | `tools/harness/internal/performance/bench.go:147:357` | string &#96;concurrency_per_kind&#96; has 4 occurrences, make it a constant | OPEN |
-| L1243 | `tools/harness/internal/performance/bench.go:147:384` | string &#96;parallel_kinds&#96; has 3 occurrences, make it a constant | OPEN |
-| L1244 | `tools/harness/internal/performance/bench.go:147:405` | string &#96;admission_enabled&#96; has 6 occurrences, make it a constant | OPEN |
-| L1245 | `tools/harness/internal/performance/bench.go:147:432` | string &#96;exporters_enabled&#96; has 6 occurrences, make it a constant | OPEN |
-| L1246 | `tools/harness/internal/performance/bench.go:147:460` | string &#96;pacing_millis&#96; has 6 occurrences, make it a constant | OPEN |
-| L1247 | `tools/harness/internal/performance/bench.go:194:32` | string &#96;p95_seconds&#96; has 4 occurrences, make it a constant | OPEN |
-| L1248 | `tools/harness/internal/performance/bench.go:194:47` | string &#96;allocations_per_op&#96; has 4 occurrences, make it a constant | OPEN |
-| L1249 | `tools/harness/internal/performance/bench.go:194:69` | string &#96;alloc_bytes_per_op&#96; has 4 occurrences, make it a constant | OPEN |
-| L1250 | `tools/harness/internal/performance/bench.go:204:240` | string &#96;errors&#96; has 4 occurrences, make it a constant | OPEN |
-| L1251 | `tools/harness/internal/performance/build.go:61:32` | string &#96;path&#96; has 3 occurrences, make it a constant | OPEN |
-| L1252 | `tools/harness/internal/performance/build.go:61:46` | string &#96;sha256&#96; has 3 occurrences, make it a constant | OPEN |
-| L1253 | `tools/harness/internal/performance/build.go:83:21` | string &#96;status&#96; has 4 occurrences, make it a constant | OPEN |
-| L1254 | `tools/harness/internal/performance/build.go:83:31` | string &#96;FAIL&#96; has 5 occurrences, make it a constant | OPEN |
-| L1255 | `tools/harness/internal/performance/build.go:83:58` | string &#96;model&#96; has 3 occurrences, make it a constant | OPEN |
-| L1256 | `tools/harness/internal/performance/build.go:83:67` | string &#96;NOT_RUN&#96; has 6 occurrences, make it a constant | OPEN |
-| L1257 | `tools/harness/internal/performance/build.go:83:78` | string &#96;live&#96; has 3 occurrences, make it a constant | OPEN |
-| L1258 | `tools/harness/internal/performance/build.go:106:62` | string &#96;./cmd/zl-mcp-eval&#96; has 5 occurrences, make it a constant | OPEN |
-| L1259 | `tools/harness/internal/performance/build.go:110:28` | string &#96;candidate&#96; has 6 occurrences, make it a constant | OPEN |
-| L1260 | `tools/harness/internal/performance/build.go:135:24` | string &#96;PASS&#96; has 10 occurrences, make it a constant | OPEN |
-| L1261 | `tools/harness/internal/performance/compare.go:20:31` | string &#96;fixture_sha256&#96; has 3 occurrences, make it a constant | OPEN |
-| L1262 | `tools/harness/internal/performance/compare.go:25:31` | string &#96;system&#96; has 3 occurrences, make it a constant | OPEN |
-| L1263 | `tools/harness/internal/performance/compare.go:25:41` | string &#96;release&#96; has 3 occurrences, make it a constant | OPEN |
-| L1264 | `tools/harness/internal/performance/compare.go:25:52` | string &#96;machine&#96; has 4 occurrences, make it a constant | OPEN |
-| L1265 | `tools/harness/internal/performance/compare.go:30:21` | string &#96;runs&#96; has 3 occurrences, make it a constant | OPEN |
-| L1266 | `tools/harness/internal/performance/compare.go:30:32` | string &#96;warmup_calls&#96; has 4 occurrences, make it a constant | OPEN |
-| L1267 | `tools/harness/internal/performance/compare.go:30:52` | string &#96;concurrency_per_kind&#96; has 4 occurrences, make it a constant | OPEN |
-| L1268 | `tools/harness/internal/performance/compare.go:30:79` | string &#96;parallel_kinds&#96; has 3 occurrences, make it a constant | OPEN |
-| L1269 | `tools/harness/internal/performance/compare.go:30:100` | string &#96;admission_enabled&#96; has 6 occurrences, make it a constant | OPEN |
-| L1270 | `tools/harness/internal/performance/compare.go:30:127` | string &#96;exporters_enabled&#96; has 6 occurrences, make it a constant | OPEN |
-| L1271 | `tools/harness/internal/performance/compare.go:30:155` | string &#96;pacing_millis&#96; has 6 occurrences, make it a constant | OPEN |
-| L1272 | `tools/harness/internal/performance/compare.go:60:30` | string &#96;p95_seconds&#96; has 4 occurrences, make it a constant | OPEN |
-| L1273 | `tools/harness/internal/performance/compare.go:60:45` | string &#96;allocations_per_op&#96; has 4 occurrences, make it a constant | OPEN |
-| L1274 | `tools/harness/internal/performance/compare.go:60:67` | string &#96;alloc_bytes_per_op&#96; has 4 occurrences, make it a constant | OPEN |
-| L1275 | `tools/harness/internal/performance/compare.go:65:49` | string &#96;errors&#96; has 4 occurrences, make it a constant | OPEN |
-| L1276 | `tools/harness/internal/performance/compare.go:100:24` | string &#96;PASS&#96; has 10 occurrences, make it a constant | OPEN |
-| L1277 | `tools/harness/internal/performance/compare.go:108:13` | string &#96;./cmd/zl-mcp-eval&#96; has 5 occurrences, make it a constant | OPEN |
-| L1278 | `tools/harness/internal/performance/compare.go:118:13` | string &#96;candidate&#96; has 6 occurrences, make it a constant | OPEN |
-| L1279 | `tools/harness/internal/performance/compare.go:145:16` | string &#96;status&#96; has 4 occurrences, make it a constant | OPEN |
-| L1280 | `tools/harness/internal/performance/compare.go:145:26` | string &#96;FAIL&#96; has 5 occurrences, make it a constant | OPEN |
-| L1281 | `tools/harness/internal/performance/compare.go:145:260` | string &#96;model&#96; has 3 occurrences, make it a constant | OPEN |
-| L1282 | `tools/harness/internal/performance/compare.go:145:269` | string &#96;NOT_RUN&#96; has 6 occurrences, make it a constant | OPEN |
-| L1283 | `tools/harness/internal/performance/compare.go:145:280` | string &#96;live&#96; has 3 occurrences, make it a constant | OPEN |
-| L1284 | `tools/harness/internal/performance/compare.go:273:34` | string &#96;path&#96; has 3 occurrences, make it a constant | OPEN |
-| L1285 | `tools/harness/internal/performance/compare.go:273:52` | string &#96;sha256&#96; has 3 occurrences, make it a constant | OPEN |
+| L0860 | `internal/collector/run.go:349:28` | string &#96;group_id&#96; has 3 occurrences, make it a constant | FIXED |
+| L0861 | `internal/domain/history.go:60:12` | string &#96;unknown&#96; has 3 occurrences, make it a constant | FIXED |
+| L0862 | `internal/domain/observation.go:28:10` | string &#96;unknown&#96; has 3 occurrences, make it a constant | FIXED |
+| L0863 | `internal/evalfixture/evidence.go:47:48` | string &#96;direct&#96; has 3 occurrences, make it a constant | FIXED |
+| L0864 | `internal/evalfixture/evidence.go:47:62` | string &#96;peer&#96; has 5 occurrences, make it a constant | FIXED |
+| L0865 | `internal/evalfixture/evidence.go:53:19` | string &#96;live&#96; has 4 occurrences, make it a constant | FIXED |
+| L0866 | `internal/evalfixture/fixture.go:92:44` | string &#96;g-join&#96; has 3 occurrences, make it a constant | FIXED |
+| L0867 | `internal/evalfixture/fixture.go:189:21` | string &#96;live&#96; has 4 occurrences, make it a constant | FIXED |
+| L0868 | `internal/evalfixture/offline.go:90:33` | string &#96;direct&#96; has 3 occurrences, make it a constant | FIXED |
+| L0869 | `internal/evalfixture/offline.go:96:20` | string &#96;peer&#96; has 5 occurrences, make it a constant | FIXED |
+| L0870 | `internal/evalfixture/offline.go:99:20` | string &#96;live&#96; has 4 occurrences, make it a constant | FIXED |
+| L0871 | `internal/evaluation/benchmark.go:60:10` | string &#96;zalo_search_messages&#96; has 4 occurrences, make it a constant | FIXED |
+| L0872 | `internal/evaluation/benchmark.go:61:19` | string &#96;ремонт&#96; has 6 occurrences, make it a constant | FIXED |
+| L0873 | `internal/evaluation/benchmark.go:63:10` | string &#96;zalo_get_message_context&#96; has 3 occurrences, make it a constant | FIXED |
+| L0874 | `internal/evaluation/benchmark.go:64:22` | string &#96;g-1&#96; has 5 occurrences, make it a constant | FIXED |
+| L0875 | `internal/evaluation/checkpoints.go:72:7` | string &#96;service-recommendation&#96; has 4 occurrences, make it a constant | FIXED |
+| L0876 | `internal/evaluation/checkpoints.go:73:3` | string &#96;agreement-history&#96; has 4 occurrences, make it a constant | FIXED |
+| L0877 | `internal/evaluation/checkpoints.go:74:3` | string &#96;duplicate-name&#96; has 3 occurrences, make it a constant | FIXED |
+| L0878 | `internal/evaluation/checkpoints.go:75:3` | string &#96;duplicate-followup&#96; has 3 occurrences, make it a constant | FIXED |
+| L0879 | `internal/evaluation/checkpoints.go:76:3` | string &#96;date-clarification&#96; has 3 occurrences, make it a constant | FIXED |
+| L0880 | `internal/evaluation/checkpoints.go:77:3` | string &#96;unicode&#96; has 3 occurrences, make it a constant | FIXED |
+| L0881 | `internal/evaluation/checkpoints.go:78:3` | string &#96;coverage&#96; has 4 occurrences, make it a constant | FIXED |
+| L0882 | `internal/evaluation/checkpoints.go:79:3` | string &#96;invalid-input&#96; has 3 occurrences, make it a constant | FIXED |
+| L0883 | `internal/evaluation/checkpoints.go:80:3` | string &#96;long-message&#96; has 3 occurrences, make it a constant | FIXED |
+| L0884 | `internal/evaluation/checkpoints.go:81:3` | string &#96;approved-join&#96; has 6 occurrences, make it a constant | FIXED |
+| L0885 | `internal/evaluation/checkpoints.go:82:3` | string &#96;adversarial&#96; has 4 occurrences, make it a constant | FIXED |
+| L0886 | `internal/evaluation/checkpoints.go:83:3` | string &#96;trigger&#96; has 5 occurrences, make it a constant | FIXED |
+| L0887 | `internal/evaluation/checkpoints.go:152:22` | string &#96;FAIL&#96; has 3 occurrences, make it a constant | FIXED |
+| L0888 | `internal/evaluation/checkpoints.go:154:22` | string &#96;NOT_RUN&#96; has 10 occurrences, make it a constant | FIXED |
+| L0889 | `internal/evaluation/checkpoints.go:177:16` | string &#96;tool&#96; has 4 occurrences, make it a constant | FIXED |
+| L0890 | `internal/evaluation/checkpoints.go:177:36` | string &#96;resource&#96; has 5 occurrences, make it a constant | FIXED |
+| L0891 | `internal/evaluation/checkpoints.go:203:4` | string &#96;zalo_search_messages&#96; has 4 occurrences, make it a constant | FIXED |
+| L0892 | `internal/evaluation/checkpoints.go:204:4` | string &#96;zalo_get_message_context&#96; has 3 occurrences, make it a constant | FIXED |
+| L0893 | `internal/evaluation/checkpoints.go:208:4` | string &#96;zalo_join_group&#96; has 3 occurrences, make it a constant | FIXED |
+| L0894 | `internal/evaluation/checkpoints.go:427:20` | string &#96;text&#96; has 3 occurrences, make it a constant | FIXED |
+| L0895 | `internal/evaluation/client.go:40:19` | string &#96;tool&#96; has 4 occurrences, make it a constant | FIXED |
+| L0896 | `internal/evaluation/client.go:60:19` | string &#96;resource&#96; has 5 occurrences, make it a constant | FIXED |
+| L0897 | `internal/evaluation/grader.go:30:16` | string &#96;tool&#96; has 4 occurrences, make it a constant | FIXED |
+| L0898 | `internal/evaluation/grader.go:92:32` | string &#96;send&#96; has 3 occurrences, make it a constant | FIXED |
+| L0899 | `internal/evaluation/grader.go:92:40` | string &#96;join&#96; has 3 occurrences, make it a constant | FIXED |
+| L0900 | `internal/evaluation/grader.go:92:48` | string &#96;history&#96; has 3 occurrences, make it a constant | FIXED |
+| L0901 | `internal/evaluation/grader.go:121:8` | string &#96;same-as&#96; has 3 occurrences, make it a constant | FIXED |
+| L0902 | `internal/evaluation/grader.go:121:19` | string &#96;different-from&#96; has 3 occurrences, make it a constant | FIXED |
+| L0903 | `internal/evaluation/grader.go:166:25` | string &#96;resource&#96; has 5 occurrences, make it a constant | FIXED |
+| L0904 | `internal/evaluation/model.go:38:20` | string &#96;tool&#96; has 4 occurrences, make it a constant | FIXED |
+| L0905 | `internal/evaluation/model.go:52:20` | string &#96;resource&#96; has 5 occurrences, make it a constant | FIXED |
+| L0906 | `internal/evaluation/runner.go:74:9` | string &#96;same-as&#96; has 3 occurrences, make it a constant | FIXED |
+| L0907 | `internal/evaluation/runner.go:75:5` | string &#96;different-from&#96; has 3 occurrences, make it a constant | FIXED |
+| L0908 | `internal/evaluation/runner.go:91:29` | string &#96;send&#96; has 3 occurrences, make it a constant | FIXED |
+| L0909 | `internal/evaluation/runner.go:91:47` | string &#96;join&#96; has 3 occurrences, make it a constant | FIXED |
+| L0910 | `internal/evaluation/runner.go:91:65` | string &#96;history&#96; has 3 occurrences, make it a constant | FIXED |
+| L0911 | `internal/evaluation/runner.go:139:15` | string &#96;NOT_RUN&#96; has 10 occurrences, make it a constant | FIXED |
+| L0912 | `internal/evaluation/runner.go:146:50` | string &#96;model&#96; has 5 occurrences, make it a constant | FIXED |
+| L0913 | `internal/evaluation/runner.go:151:4` | string &#96;profile&#96; has 3 occurrences, make it a constant | FIXED |
+| L0914 | `internal/evaluation/runner.go:152:4` | string &#96;case_budget_seconds&#96; has 3 occurrences, make it a constant | FIXED |
+| L0915 | `internal/evaluation/runner.go:154:4` | string &#96;run_budget_seconds&#96; has 3 occurrences, make it a constant | FIXED |
+| L0916 | `internal/evaluation/runner.go:155:4` | string &#96;model_gate&#96; has 3 occurrences, make it a constant | FIXED |
+| L0917 | `internal/evaluation/runner.go:325:36` | string &#96;operation&#96; has 4 occurrences, make it a constant | FIXED |
+| L0918 | `internal/evaluation/runner.go:325:49` | string &#96;effects&#96; has 4 occurrences, make it a constant | FIXED |
+| L0919 | `internal/evaluation/runner.go:325:60` | string &#96;lifecycle&#96; has 4 occurrences, make it a constant | FIXED |
+| L0920 | `internal/evaluation/runner.go:332:46` | string &#96;case&#96; has 4 occurrences, make it a constant | FIXED |
+| L0921 | `internal/evaluation/runner.go:332:61` | string &#96;complete&#96; has 4 occurrences, make it a constant | FIXED |
+| L0922 | `internal/evaluation/runner.go:439:18` | string &#96;FAIL&#96; has 3 occurrences, make it a constant | FIXED |
+| L0923 | `internal/evaluation/scenarios.go:41:20` | string &#96;archive-dates&#96; has 3 occurrences, make it a constant | FIXED |
+| L0924 | `internal/evaluation/scenarios.go:41:54` | string &#96;archive-empty-page&#96; has 3 occurrences, make it a constant | FIXED |
+| L0925 | `internal/evaluation/scenarios.go:93:65` | string &#96;query&#96; has 6 occurrences, make it a constant | FIXED |
+| L0926 | `internal/evaluation/scenarios.go:93:74` | string &#96;ремонт&#96; has 6 occurrences, make it a constant | FIXED |
+| L0927 | `internal/evaluation/scenarios.go:93:90` | string &#96;limit&#96; has 6 occurrences, make it a constant | FIXED |
+| L0928 | `internal/evaluation/scenarios.go:95:42` | string &#96;peer&#96; has 3 occurrences, make it a constant | FIXED |
+| L0929 | `internal/evaluation/scenarios.go:95:50` | string &#96;text&#96; has 3 occurrences, make it a constant | FIXED |
+| L0930 | `internal/evaluation/scenarios.go:95:64` | string &#96;request_id&#96; has 7 occurrences, make it a constant | FIXED |
+| L0931 | `internal/evaluation/scenarios.go:117:33` | string &#96;direct&#96; has 9 occurrences, make it a constant | FIXED |
+| L0932 | `internal/evaluation/scenarios.go:117:43` | string &#96;group&#96; has 4 occurrences, make it a constant | FIXED |
+| L0933 | `internal/evaluation/scenarios.go:120:20` | string &#96;conversation_type&#96; has 9 occurrences, make it a constant | FIXED |
+| L0934 | `internal/evaluation/scenarios.go:120:47` | string &#96;conversation_id&#96; has 9 occurrences, make it a constant | FIXED |
+| L0935 | `internal/evaluation/scenarios.go:128:31` | string &#96;g-1&#96; has 5 occurrences, make it a constant | FIXED |
+| L0936 | `internal/evaluation/scenarios.go:154:4` | string &#96;since&#96; has 4 occurrences, make it a constant | FIXED |
+| L0937 | `internal/evaluation/scenarios.go:155:4` | string &#96;until&#96; has 3 occurrences, make it a constant | FIXED |
+| L0938 | `internal/evaluation/scenarios.go:274:52` | string &#96;operation_id&#96; has 3 occurrences, make it a constant | FIXED |
+| L0939 | `internal/events/message.go:140:33` | string &#96;name&#96; has 3 occurrences, make it a constant | FIXED |
+| L0940 | `internal/events/subscriptions.go:140:7` | string &#96;events/subscribe&#96; has 3 occurrences, make it a constant | FIXED |
+| L0941 | `internal/events/subscriptions.go:142:7` | string &#96;events/unsubscribe&#96; has 3 occurrences, make it a constant | FIXED |
+| L0942 | `internal/events/subscriptions.go:176:6` | string &#96;name&#96; has 3 occurrences, make it a constant | FIXED |
+| L0943 | `internal/events/worker.go:137:50` | string &#96;failed&#96; has 4 occurrences, make it a constant | FIXED |
+| L0944 | `internal/historyimport/manager.go:30:15` | string &#96;zalo_import_conversation_history&#96; has 4 occurrences, make it a constant | FIXED |
+| L0945 | `internal/historyimport/mobile_worker.go:111:38` | string &#96;running&#96; has 8 occurrences, make it a constant | FIXED |
+| L0946 | `internal/historyimport/mobile_worker.go:293:50` | string &#96;INVALID_ARGUMENT&#96; has 3 occurrences, make it a constant | FIXED |
+| L0947 | `internal/historyimport/mobile_worker.go:342:34` | string &#96;source_unsupported&#96; has 3 occurrences, make it a constant | FIXED |
+| L0948 | `internal/historyimport/mobile_worker.go:344:29` | string &#96;invalid_source_page&#96; has 5 occurrences, make it a constant | FIXED |
+| L0949 | `internal/historyimport/worker.go:100:25` | string &#96;running&#96; has 8 occurrences, make it a constant | FIXED |
+| L0950 | `internal/historyimport/worker.go:177:36` | string &#96;source_unsupported&#96; has 3 occurrences, make it a constant | FIXED |
+| L0951 | `internal/historyimport/worker.go:180:53` | string &#96;INVALID_ARGUMENT&#96; has 3 occurrences, make it a constant | FIXED |
+| L0952 | `internal/historyimport/worker.go:181:14` | string &#96;invalid_source_page&#96; has 5 occurrences, make it a constant | FIXED |
+| L0953 | `internal/mcpserver/catalog_diagnostics.go:22:14` | string &#96;application/json&#96; has 10 occurrences, make it a constant | FIXED |
+| L0954 | `internal/mcpserver/conversations.go:26:17` | string &#96;application/json&#96; has 10 occurrences, make it a constant | FIXED |
+| L0955 | `internal/mcpserver/conversations.go:34:33` | string &#96;zalo&#96; has 3 occurrences, make it a constant | FIXED |
+| L0956 | `internal/mcpserver/conversations.go:104:17` | string &#96;text/plain&#96; has 7 occurrences, make it a constant | FIXED |
+| L0957 | `internal/mcpserver/conversations.go:120:38` | string &#96;messages&#96; has 3 occurrences, make it a constant | FIXED |
+| L0958 | `internal/mcpserver/diagnostics.go:23:14` | string &#96;application/json&#96; has 10 occurrences, make it a constant | FIXED |
+| L0959 | `internal/mcpserver/discovery_logging.go:17:40` | string &#96;tools/list&#96; has 3 occurrences, make it a constant | FIXED |
+| L0960 | `internal/mcpserver/discovery_logging.go:61:7` | string &#96;2026-07-28&#96; has 3 occurrences, make it a constant | FIXED |
+| L0961 | `internal/mcpserver/http.go:89:9` | string &#96;application/json&#96; has 10 occurrences, make it a constant | FIXED |
+| L0962 | `internal/mcpserver/http.go:167:80` | string &#96;tools/list&#96; has 3 occurrences, make it a constant | FIXED |
+| L0963 | `internal/mcpserver/http.go:240:17` | string &#96;2026-07-28&#96; has 3 occurrences, make it a constant | FIXED |
+| L0964 | `internal/mcpserver/ports.go:39:3` | string &#96;messages&#96; has 3 occurrences, make it a constant | FIXED |
+| L0965 | `internal/mcpserver/server.go:30:2` | string &#96;zalo_ack_subscription_events&#96; has 3 occurrences, make it a constant | FIXED |
+| L0966 | `internal/mcpserver/server.go:33:2` | string &#96;zalo_cancel_history_import&#96; has 3 occurrences, make it a constant | FIXED |
+| L0967 | `internal/mcpserver/server.go:155:95` | string &#96;text/plain&#96; has 7 occurrences, make it a constant | FIXED |
+| L0968 | `internal/mcpserver/server.go:190:31` | string &#96;zalo&#96; has 3 occurrences, make it a constant | FIXED |
+| L0969 | `internal/mcpserver/server.go:194:38` | string &#96;messages&#96; has 3 occurrences, make it a constant | FIXED |
+| L0970 | `internal/mcpserver/server.go:228:15` | string &#96;STORAGE_ERROR&#96; has 3 occurrences, make it a constant | FIXED |
+| L0971 | `internal/mcpserver/server.go:246:20` | string &#96;TOOL_ERROR&#96; has 3 occurrences, make it a constant | FIXED |
+| L0972 | `internal/mobilebackup/account_metadata.go:107:17` | string &#96;plain&#96; has 3 occurrences, make it a constant | FIXED |
+| L0973 | `internal/mobilebackup/account_metadata.go:125:10` | string &#96;rtf&#96; has 3 occurrences, make it a constant | FIXED |
+| L0974 | `internal/mobilebackup/account_metadata.go:125:26` | string &#96;text&#96; has 3 occurrences, make it a constant | FIXED |
+| L0975 | `internal/mobilebackup/account_metadata.go:125:43` | string &#96;webchat&#96; has 5 occurrences, make it a constant | FIXED |
+| L0976 | `internal/mobilebackup/identities.go:57:11` | string &#96;fids&#96; has 3 occurrences, make it a constant | FIXED |
+| L0977 | `internal/mobilebackup/identities.go:59:11` | string &#96;gids&#96; has 3 occurrences, make it a constant | FIXED |
+| L0978 | `internal/mobilebackup/message_conversion.go:146:16` | string &#96;incoming&#96; has 3 occurrences, make it a constant | FIXED |
+| L0979 | `internal/mobilebackup/message_conversion.go:148:16` | string &#96;outgoing&#96; has 3 occurrences, make it a constant | FIXED |
+| L0980 | `internal/mobilebackup/message_conversion.go:205:22` | string &#96;webchat&#96; has 5 occurrences, make it a constant | FIXED |
+| L0981 | `internal/mobilebackup/message_conversion.go:211:39` | string &#96;rtf&#96; has 3 occurrences, make it a constant | FIXED |
+| L0982 | `internal/mobilebackup/row_page.go:45:10` | string &#96;webchat&#96; has 5 occurrences, make it a constant | FIXED |
+| L0983 | `internal/mobilebackup/row_page.go:227:19` | string &#96;incoming&#96; has 3 occurrences, make it a constant | FIXED |
+| L0984 | `internal/mobilebackup/row_page.go:229:20` | string &#96;outgoing&#96; has 3 occurrences, make it a constant | FIXED |
+| L0985 | `internal/mobilebackup/snapshot_page.go:44:3` | string &#96;timestamp&#96; has 4 occurrences, make it a constant | FIXED |
+| L0986 | `internal/mobilebackup/snapshot_page.go:45:3` | string &#96;text&#96; has 3 occurrences, make it a constant | FIXED |
+| L0987 | `internal/mobilebackup/snapshot_page.go:215:16` | string &#96;incoming&#96; has 3 occurrences, make it a constant | FIXED |
+| L0988 | `internal/mobilebackup/snapshot_page.go:217:17` | string &#96;outgoing&#96; has 3 occurrences, make it a constant | FIXED |
+| L0989 | `internal/mobilebackup/snapshot_page.go:222:15` | string &#96;plain&#96; has 3 occurrences, make it a constant | FIXED |
+| L0990 | `internal/mobilebackup/sqlite.go:295:3` | string &#96;timestamp&#96; has 4 occurrences, make it a constant | FIXED |
+| L0991 | `internal/mobilebackup/sqlite.go:561:15` | string &#96;text&#96; has 3 occurrences, make it a constant | FIXED |
+| L0992 | `internal/mobilebackup/sqlite.go:583:16` | string &#96;metadata&#96; has 3 occurrences, make it a constant | FIXED |
+| L0993 | `internal/service/account_archive.go:23:48` | string &#96;trans-bin.zaloapp.com&#96; has 3 occurrences, make it a constant | FIXED |
+| L0994 | `internal/service/account_archive.go:67:22` | string &#96;prepared&#96; has 6 occurrences, make it a constant | FIXED |
+| L0995 | `internal/service/account_archive.go:224:3` | string &#96;download_performed&#96; has 3 occurrences, make it a constant | FIXED |
+| L0996 | `internal/service/account_archive.go:225:3` | string &#96;import_performed&#96; has 4 occurrences, make it a constant | FIXED |
+| L0997 | `internal/service/account_archive.go:226:3` | string &#96;history_complete&#96; has 4 occurrences, make it a constant | FIXED |
+| L0998 | `internal/service/account_archive.go:248:24` | string &#96;source_id&#96; has 4 occurrences, make it a constant | FIXED |
+| L0999 | `internal/service/account_archive_control.go:16:19` | string &#96;cli_restore_account_archive&#96; has 4 occurrences, make it a constant | FIXED |
+| L1000 | `internal/service/account_archive_control.go:16:62` | string &#96;cli_preserve_account_archive&#96; has 4 occurrences, make it a constant | FIXED |
+| L1001 | `internal/service/account_archive_control.go:17:13` | string &#96;cli_prepare_account_archive&#96; has 3 occurrences, make it a constant | FIXED |
+| L1002 | `internal/service/account_archive_control.go:18:13` | string &#96;cli_capture_account_archive&#96; has 4 occurrences, make it a constant | FIXED |
+| L1003 | `internal/service/account_archive_control.go:19:13` | string &#96;cli_account_archive_status&#96; has 3 occurrences, make it a constant | FIXED |
+| L1004 | `internal/service/account_archive_control.go:20:13` | string &#96;cli_inspect_account_archive&#96; has 4 occurrences, make it a constant | FIXED |
+| L1005 | `internal/service/account_archive_control.go:21:13` | string &#96;cli_remove_account_archive&#96; has 3 occurrences, make it a constant | FIXED |
+| L1006 | `internal/service/account_archive_control.go:58:50` | string &#96;/rpc&#96; has 3 occurrences, make it a constant | FIXED |
+| L1007 | `internal/service/archive_catalog.go:151:3` | string &#96;has_more&#96; has 3 occurrences, make it a constant | FIXED |
+| L1008 | `internal/service/archive_catalog.go:154:32` | string &#96;retained_archive&#96; has 3 occurrences, make it a constant | FIXED |
+| L1009 | `internal/service/archive_catalog.go:177:26` | string &#96;unknown&#96; has 3 occurrences, make it a constant | FIXED |
+| L1010 | `internal/service/archive_messages.go:283:3` | string &#96;history_complete&#96; has 4 occurrences, make it a constant | FIXED |
+| L1011 | `internal/service/archive_messages.go:284:3` | string &#96;examined&#96; has 3 occurrences, make it a constant | FIXED |
+| L1012 | `internal/service/archive_messages.go:285:3` | string &#96;rejected&#96; has 3 occurrences, make it a constant | FIXED |
+| L1013 | `internal/service/archive_messages.go:301:3` | string &#96;has_more&#96; has 3 occurrences, make it a constant | FIXED |
+| L1014 | `internal/service/archive_read.go:47:43` | string &#96;history_complete&#96; has 4 occurrences, make it a constant | FIXED |
+| L1015 | `internal/service/archive_read.go:53:3` | string &#96;source_id&#96; has 4 occurrences, make it a constant | FIXED |
+| L1016 | `internal/service/bridge.go:190:17` | string &#96;other&#96; has 3 occurrences, make it a constant | FIXED |
+| L1017 | `internal/service/cli.go:64:7` | string &#96;probe-recall&#96; has 3 occurrences, make it a constant | FIXED |
+| L1018 | `internal/service/cli.go:65:3` | string &#96;mobile-backup-prepare&#96; has 3 occurrences, make it a constant | FIXED |
+| L1019 | `internal/service/cli.go:66:3` | string &#96;mobile-backup-status&#96; has 3 occurrences, make it a constant | FIXED |
+| L1020 | `internal/service/cli.go:67:3` | string &#96;mobile-backup-cancel&#96; has 3 occurrences, make it a constant | FIXED |
+| L1021 | `internal/service/cli.go:68:3` | string &#96;mobile-backup-probe-offer&#96; has 4 occurrences, make it a constant | FIXED |
+| L1022 | `internal/service/cli.go:69:3` | string &#96;mobile-backup-probe-archive&#96; has 5 occurrences, make it a constant | FIXED |
+| L1023 | `internal/service/cli.go:70:3` | string &#96;account-archive-prepare&#96; has 4 occurrences, make it a constant | FIXED |
+| L1024 | `internal/service/cli.go:71:3` | string &#96;account-archive-capture&#96; has 4 occurrences, make it a constant | FIXED |
+| L1025 | `internal/service/cli.go:72:3` | string &#96;account-archive-status&#96; has 3 occurrences, make it a constant | FIXED |
+| L1026 | `internal/service/cli.go:73:3` | string &#96;account-archive-preserve&#96; has 4 occurrences, make it a constant | FIXED |
+| L1027 | `internal/service/cli.go:74:3` | string &#96;account-archive-restore&#96; has 4 occurrences, make it a constant | FIXED |
+| L1028 | `internal/service/cli.go:75:3` | string &#96;account-archive-inspect&#96; has 4 occurrences, make it a constant | FIXED |
+| L1029 | `internal/service/cli.go:76:3` | string &#96;account-archive-remove&#96; has 3 occurrences, make it a constant | FIXED |
+| L1030 | `internal/service/cli_mobile_ledger.go:16:17` | string &#96;account-archive-restore&#96; has 4 occurrences, make it a constant | FIXED |
+| L1031 | `internal/service/cli_mobile_ledger.go:16:54` | string &#96;account-archive-preserve&#96; has 4 occurrences, make it a constant | FIXED |
+| L1032 | `internal/service/cli_mobile_ledger.go:17:11` | string &#96;account-archive-inspect&#96; has 4 occurrences, make it a constant | FIXED |
+| L1033 | `internal/service/cli_mobile_ledger.go:18:11` | string &#96;account-archive-remove&#96; has 3 occurrences, make it a constant | FIXED |
+| L1034 | `internal/service/cli_mobile_ledger.go:19:11` | string &#96;account-archive-prepare&#96; has 4 occurrences, make it a constant | FIXED |
+| L1035 | `internal/service/cli_mobile_ledger.go:20:11` | string &#96;account-archive-capture&#96; has 4 occurrences, make it a constant | FIXED |
+| L1036 | `internal/service/cli_mobile_ledger.go:21:11` | string &#96;account-archive-status&#96; has 3 occurrences, make it a constant | FIXED |
+| L1037 | `internal/service/cli_mobile_ledger.go:22:11` | string &#96;probe-recall&#96; has 3 occurrences, make it a constant | FIXED |
+| L1038 | `internal/service/cli_mobile_ledger.go:23:11` | string &#96;mobile-backup-prepare&#96; has 3 occurrences, make it a constant | FIXED |
+| L1039 | `internal/service/cli_mobile_ledger.go:24:11` | string &#96;mobile-backup-status&#96; has 3 occurrences, make it a constant | FIXED |
+| L1040 | `internal/service/cli_mobile_ledger.go:25:11` | string &#96;mobile-backup-cancel&#96; has 3 occurrences, make it a constant | FIXED |
+| L1041 | `internal/service/cli_mobile_ledger.go:26:11` | string &#96;mobile-backup-probe-offer&#96; has 4 occurrences, make it a constant | FIXED |
+| L1042 | `internal/service/cli_mobile_ledger.go:27:11` | string &#96;mobile-backup-probe-archive&#96; has 5 occurrences, make it a constant | FIXED |
+| L1043 | `internal/service/cli_mobile_ledger.go:38:10` | string &#96;cli_probe_recall&#96; has 4 occurrences, make it a constant | FIXED |
+| L1044 | `internal/service/cli_mobile_ledger.go:52:13` | string &#96;cli_prepare_mobile_backup&#96; has 3 occurrences, make it a constant | FIXED |
+| L1045 | `internal/service/cli_mobile_ledger.go:54:13` | string &#96;cli_prepare_account_archive&#96; has 3 occurrences, make it a constant | FIXED |
+| L1046 | `internal/service/cli_mobile_ledger.go:57:13` | string &#96;cli_inspect_account_archive&#96; has 4 occurrences, make it a constant | FIXED |
+| L1047 | `internal/service/cli_mobile_ledger.go:60:13` | string &#96;cli_preserve_account_archive&#96; has 4 occurrences, make it a constant | FIXED |
+| L1048 | `internal/service/cli_mobile_ledger.go:63:13` | string &#96;cli_restore_account_archive&#96; has 4 occurrences, make it a constant | FIXED |
+| L1049 | `internal/service/cli_mobile_ledger.go:70:28` | string &#96;source_id&#96; has 4 occurrences, make it a constant | FIXED |
+| L1050 | `internal/service/cli_mobile_ledger.go:74:10` | string &#96;cli_remove_account_archive&#96; has 3 occurrences, make it a constant | FIXED |
+| L1051 | `internal/service/cli_mobile_ledger.go:79:10` | string &#96;cli_account_archive_status&#96; has 3 occurrences, make it a constant | FIXED |
+| L1052 | `internal/service/cli_mobile_ledger.go:93:13` | string &#96;cli_cancel_prepared_mobile_backup&#96; has 3 occurrences, make it a constant | FIXED |
+| L1053 | `internal/service/cli_mobile_ledger.go:95:13` | string &#96;cli_probe_mobile_backup_offer&#96; has 5 occurrences, make it a constant | FIXED |
+| L1054 | `internal/service/cli_mobile_ledger.go:98:13` | string &#96;cli_probe_mobile_backup_archive&#96; has 6 occurrences, make it a constant | FIXED |
+| L1055 | `internal/service/cli_mobile_ledger.go:101:13` | string &#96;cli_capture_account_archive&#96; has 4 occurrences, make it a constant | FIXED |
+| L1056 | `internal/service/mobile_archive_probe.go:26:48` | string &#96;trans-bin.zaloapp.com&#96; has 3 occurrences, make it a constant | FIXED |
+| L1057 | `internal/service/mobile_archive_probe.go:53:60` | string &#96;prepared&#96; has 6 occurrences, make it a constant | FIXED |
+| L1058 | `internal/service/mobile_archive_probe.go:191:3` | string &#96;download_performed&#96; has 3 occurrences, make it a constant | FIXED |
+| L1059 | `internal/service/mobile_archive_probe.go:192:3` | string &#96;import_performed&#96; has 4 occurrences, make it a constant | FIXED |
+| L1060 | `internal/service/mobile_archive_probe.go:194:3` | string &#96;examined&#96; has 3 occurrences, make it a constant | FIXED |
+| L1061 | `internal/service/mobile_archive_probe.go:195:3` | string &#96;rejected&#96; has 3 occurrences, make it a constant | FIXED |
+| L1062 | `internal/service/mobile_archive_probe.go:248:3` | string &#96;has_more&#96; has 3 occurrences, make it a constant | FIXED |
+| L1063 | `internal/service/mobile_backup.go:93:72` | string &#96;prepared&#96; has 6 occurrences, make it a constant | FIXED |
+| L1064 | `internal/service/mobile_history.go:25:57` | string &#96;trans-bin.zaloapp.com&#96; has 3 occurrences, make it a constant | FIXED |
+| L1065 | `internal/service/mobile_ledger_control.go:18:51` | string &#96;cli_prepare_mobile_backup&#96; has 3 occurrences, make it a constant | FIXED |
+| L1066 | `internal/service/mobile_ledger_control.go:20:13` | string &#96;cli_cancel_prepared_mobile_backup&#96; has 3 occurrences, make it a constant | FIXED |
+| L1067 | `internal/service/mobile_ledger_control.go:21:14` | string &#96;cli_probe_mobile_backup_offer&#96; has 5 occurrences, make it a constant | FIXED |
+| L1068 | `internal/service/mobile_ledger_control.go:21:59` | string &#96;cli_probe_mobile_backup_archive&#96; has 6 occurrences, make it a constant | FIXED |
+| L1069 | `internal/service/mobile_ledger_control.go:106:50` | string &#96;/rpc&#96; has 3 occurrences, make it a constant | FIXED |
+| L1070 | `internal/service/mobile_ledger_control.go:160:59` | string &#96;prepared&#96; has 6 occurrences, make it a constant | FIXED |
+| L1071 | `internal/service/mobile_offer_probe.go:20:60` | string &#96;prepared&#96; has 6 occurrences, make it a constant | FIXED |
+| L1072 | `internal/service/mobile_offer_probe.go:50:3` | string &#96;download_performed&#96; has 3 occurrences, make it a constant | FIXED |
+| L1073 | `internal/service/mobile_offer_probe.go:51:3` | string &#96;import_performed&#96; has 4 occurrences, make it a constant | FIXED |
+| L1074 | `internal/service/recall_diagnostic.go:43:64` | string &#96;/rpc&#96; has 3 occurrences, make it a constant | FIXED |
+| L1075 | `internal/service/recall_diagnostic.go:191:14` | string &#96;unknown&#96; has 3 occurrences, make it a constant | FIXED |
+| L1076 | `internal/service/run.go:118:173` | string &#96;cli_probe_recall&#96; has 4 occurrences, make it a constant | FIXED |
+| L1077 | `internal/service/run.go:461:4` | string &#96;authenticated&#96; has 4 occurrences, make it a constant | FIXED |
+| L1078 | `internal/service/run.go:462:4` | string &#96;collector_state&#96; has 4 occurrences, make it a constant | FIXED |
+| L1079 | `internal/service/run.go:463:4` | string &#96;last_connected_at&#96; has 4 occurrences, make it a constant | FIXED |
+| L1080 | `internal/service/run.go:464:4` | string &#96;last_event_at&#96; has 4 occurrences, make it a constant | FIXED |
+| L1081 | `internal/service/run.go:465:4` | string &#96;last_persisted_at&#96; has 4 occurrences, make it a constant | FIXED |
+| L1082 | `internal/service/run.go:466:4` | string &#96;last_error&#96; has 4 occurrences, make it a constant | FIXED |
+| L1083 | `internal/service/run.go:549:33` | string &#96;STORAGE_ERROR&#96; has 3 occurrences, make it a constant | FIXED |
+| L1084 | `internal/service/run.go:578:7` | string &#96;code&#96; has 3 occurrences, make it a constant | FIXED |
+| L1085 | `internal/service/run.go:579:7` | string &#96;message&#96; has 3 occurrences, make it a constant | FIXED |
+| L1086 | `internal/storage/browse.go:35:11` | string &#96;desc&#96; has 3 occurrences, make it a constant | FIXED |
+| L1087 | `internal/storage/browse.go:120:5` | string &#96;conversation_type&#96; has 4 occurrences, make it a constant | FIXED |
+| L1088 | `internal/storage/browse.go:121:5` | string &#96;conversation_id&#96; has 4 occurrences, make it a constant | FIXED |
+| L1089 | `internal/storage/browse.go:130:26` | string &#96;unknown&#96; has 7 occurrences, make it a constant | FIXED |
+| L1090 | `internal/storage/browse.go:149:21` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | FIXED |
+| L1091 | `internal/storage/browse.go:151:21` | string &#96;incoming&#96; has 6 occurrences, make it a constant | FIXED |
+| L1092 | `internal/storage/browse.go:193:3` | string &#96;has_more&#96; has 4 occurrences, make it a constant | FIXED |
+| L1093 | `internal/storage/browse.go:194:3` | string &#96;next_cursor&#96; has 3 occurrences, make it a constant | FIXED |
+| L1094 | `internal/storage/browse.go:195:3` | string &#96;empty_reason&#96; has 3 occurrences, make it a constant | FIXED |
+| L1095 | `internal/storage/browse.go:196:3` | string &#96;coverage&#96; has 3 occurrences, make it a constant | FIXED |
+| L1096 | `internal/storage/contact_profiles.go:76:4` | string &#96;status&#96; has 3 occurrences, make it a constant | FIXED |
+| L1097 | `internal/storage/contact_profiles.go:76:23` | string &#96;not_attempted&#96; has 3 occurrences, make it a constant | FIXED |
+| L1098 | `internal/storage/contact_profiles.go:77:4` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L1099 | `internal/storage/contact_profiles.go:78:4` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L1100 | `internal/storage/contact_profiles.go:82:4` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | FIXED |
+| L1101 | `internal/storage/contacts.go:58:81` | string &#96;unknown&#96; has 7 occurrences, make it a constant | FIXED |
+| L1102 | `internal/storage/contacts.go:61:39` | string &#96;direct&#96; has 10 occurrences, make it a constant | FIXED |
+| L1103 | `internal/storage/contacts.go:139:4` | string &#96;status&#96; has 3 occurrences, make it a constant | FIXED |
+| L1104 | `internal/storage/contacts.go:139:23` | string &#96;not_attempted&#96; has 3 occurrences, make it a constant | FIXED |
+| L1105 | `internal/storage/contacts.go:140:4` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L1106 | `internal/storage/contacts.go:141:4` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L1107 | `internal/storage/contacts.go:144:4` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | FIXED |
+| L1108 | `internal/storage/conversation_views.go:97:3` | string &#96;history_complete&#96; has 3 occurrences, make it a constant | FIXED |
+| L1109 | `internal/storage/conversation_views.go:111:55` | string &#96;group&#96; has 9 occurrences, make it a constant | FIXED |
+| L1110 | `internal/storage/conversation_views.go:111:74` | string &#96;direct&#96; has 10 occurrences, make it a constant | FIXED |
+| L1111 | `internal/storage/conversation_views.go:179:6` | string &#96;conversation_type&#96; has 4 occurrences, make it a constant | FIXED |
+| L1112 | `internal/storage/conversation_views.go:180:6` | string &#96;conversation_id&#96; has 4 occurrences, make it a constant | FIXED |
+| L1113 | `internal/storage/conversation_views.go:185:6` | string &#96;updated_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L1114 | `internal/storage/conversation_views.go:226:3` | string &#96;has_more&#96; has 4 occurrences, make it a constant | FIXED |
+| L1115 | `internal/storage/conversation_views.go:227:3` | string &#96;next_cursor&#96; has 3 occurrences, make it a constant | FIXED |
+| L1116 | `internal/storage/conversation_views.go:228:3` | string &#96;catalog_complete&#96; has 4 occurrences, make it a constant | FIXED |
+| L1117 | `internal/storage/conversation_views.go:230:3` | string &#96;empty_reason&#96; has 3 occurrences, make it a constant | FIXED |
+| L1118 | `internal/storage/conversation_views.go:258:3` | string &#96;conversation&#96; has 9 occurrences, make it a constant | FIXED |
+| L1119 | `internal/storage/conversation_views.go:272:3` | string &#96;coverage&#96; has 3 occurrences, make it a constant | FIXED |
+| L1120 | `internal/storage/conversation_views.go:292:10` | string &#96;all&#96; has 6 occurrences, make it a constant | FIXED |
+| L1121 | `internal/storage/conversations.go:13:27` | string &#96;direct&#96; has 10 occurrences, make it a constant | FIXED |
+| L1122 | `internal/storage/conversations.go:13:40` | string &#96;group&#96; has 9 occurrences, make it a constant | FIXED |
+| L1123 | `internal/storage/deliveries.go:166:13` | string &#96;pending&#96; has 7 occurrences, make it a constant | FIXED |
+| L1124 | `internal/storage/deliveries.go:171:21` | string &#96;cancelled&#96; has 5 occurrences, make it a constant | FIXED |
+| L1125 | `internal/storage/deliveries.go:173:21` | string &#96;failed&#96; has 8 occurrences, make it a constant | FIXED |
+| L1126 | `internal/storage/deliveries.go:337:22` | string &#96;delivered&#96; has 3 occurrences, make it a constant | FIXED |
+| L1127 | `internal/storage/diagnostics.go:24:4` | string &#96;pending&#96; has 7 occurrences, make it a constant | FIXED |
+| L1128 | `internal/storage/diagnostics.go:26:4` | string &#96;delivered&#96; has 3 occurrences, make it a constant | FIXED |
+| L1129 | `internal/storage/diagnostics.go:27:4` | string &#96;failed&#96; has 8 occurrences, make it a constant | FIXED |
+| L1130 | `internal/storage/diagnostics.go:28:4` | string &#96;cancelled&#96; has 5 occurrences, make it a constant | FIXED |
+| L1131 | `internal/storage/event_journal.go:55:15` | string &#96;conversation&#96; has 9 occurrences, make it a constant | FIXED |
+| L1132 | `internal/storage/event_journal.go:71:5` | string &#96;conversation_type&#96; has 4 occurrences, make it a constant | FIXED |
+| L1133 | `internal/storage/event_journal.go:72:5` | string &#96;conversation_id&#96; has 4 occurrences, make it a constant | FIXED |
+| L1134 | `internal/storage/event_journal.go:192:15` | string &#96;pending&#96; has 7 occurrences, make it a constant | FIXED |
+| L1135 | `internal/storage/event_journal.go:210:15` | string &#96;delivered&#96; has 3 occurrences, make it a constant | FIXED |
+| L1136 | `internal/storage/event_journal.go:247:3` | string &#96;has_more&#96; has 4 occurrences, make it a constant | FIXED |
+| L1137 | `internal/storage/events.go:170:18` | string &#96;conversation&#96; has 9 occurrences, make it a constant | FIXED |
+| L1138 | `internal/storage/events.go:298:15` | string &#96;PERMISSION_DENIED&#96; has 3 occurrences, make it a constant | FIXED |
+| L1139 | `internal/storage/history.go:54:42` | string &#96;incoming&#96; has 6 occurrences, make it a constant | FIXED |
+| L1140 | `internal/storage/history.go:54:71` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | FIXED |
+| L1141 | `internal/storage/history.go:54:100` | string &#96;unknown&#96; has 7 occurrences, make it a constant | FIXED |
+| L1142 | `internal/storage/history_operations.go:215:25` | string &#96;queued&#96; has 6 occurrences, make it a constant | FIXED |
+| L1143 | `internal/storage/history_operations.go:221:24` | string &#96;conversation_preload&#96; has 3 occurrences, make it a constant | FIXED |
+| L1144 | `internal/storage/history_operations.go:224:37` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | FIXED |
+| L1145 | `internal/storage/history_operations.go:278:83` | string &#96;paused&#96; has 3 occurrences, make it a constant | FIXED |
+| L1146 | `internal/storage/history_operations.go:284:43` | string &#96;running&#96; has 13 occurrences, make it a constant | FIXED |
+| L1147 | `internal/storage/history_operations.go:660:13` | string &#96;failed&#96; has 8 occurrences, make it a constant | FIXED |
+| L1148 | `internal/storage/incoming.go:43:17` | string &#96;unknown&#96; has 7 occurrences, make it a constant | FIXED |
+| L1149 | `internal/storage/incoming.go:45:20` | string &#96;incoming&#96; has 6 occurrences, make it a constant | FIXED |
+| L1150 | `internal/storage/incoming.go:45:49` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | FIXED |
+| L1151 | `internal/storage/ingestion.go:30:35` | string &#96;direct&#96; has 10 occurrences, make it a constant | FIXED |
+| L1152 | `internal/storage/ingestion.go:30:75` | string &#96;group&#96; has 9 occurrences, make it a constant | FIXED |
+| L1153 | `internal/storage/mobile_backup.go:155:16` | string &#96;prepared&#96; has 4 occurrences, make it a constant | FIXED |
+| L1154 | `internal/storage/mobile_backup.go:216:11` | string &#96;failed&#96; has 8 occurrences, make it a constant | FIXED |
+| L1155 | `internal/storage/mobile_backup.go:216:29` | string &#96;cancelled&#96; has 5 occurrences, make it a constant | FIXED |
+| L1156 | `internal/storage/mobile_backup.go:216:50` | string &#96;interrupted&#96; has 3 occurrences, make it a constant | FIXED |
+| L1157 | `internal/storage/mobile_backup.go:217:40` | string &#96;dispatching&#96; has 5 occurrences, make it a constant | FIXED |
+| L1158 | `internal/storage/mobile_backup.go:217:65` | string &#96;waiting_for_confirmation&#96; has 3 occurrences, make it a constant | FIXED |
+| L1159 | `internal/storage/mobile_backup.go:218:12` | string &#96;request_result_unknown&#96; has 3 occurrences, make it a constant | FIXED |
+| L1160 | `internal/storage/mobile_backup.go:219:12` | string &#96;mobile_restoring&#96; has 3 occurrences, make it a constant | FIXED |
+| L1161 | `internal/storage/mobile_backup.go:220:12` | string &#96;waiting_for_backup&#96; has 3 occurrences, make it a constant | FIXED |
+| L1162 | `internal/storage/mobile_history.go:175:51` | string &#96;running&#96; has 13 occurrences, make it a constant | FIXED |
+| L1163 | `internal/storage/mobile_history_acquisition.go:46:51` | string &#96;running&#96; has 13 occurrences, make it a constant | FIXED |
+| L1164 | `internal/storage/mobile_history_acquisition.go:200:81` | string &#96;queued&#96; has 6 occurrences, make it a constant | FIXED |
+| L1165 | `internal/storage/mobile_history_acquisition.go:216:11` | string &#96;interrupted&#96; has 3 occurrences, make it a constant | FIXED |
+| L1166 | `internal/storage/mobile_history_acquisition.go:217:24` | string &#96;cancelled&#96; has 5 occurrences, make it a constant | FIXED |
+| L1167 | `internal/storage/preload_status.go:33:4` | string &#96;status&#96; has 3 occurrences, make it a constant | FIXED |
+| L1168 | `internal/storage/preload_status.go:33:25` | string &#96;not_attempted&#96; has 3 occurrences, make it a constant | FIXED |
+| L1169 | `internal/storage/preload_status.go:34:4` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L1170 | `internal/storage/preload_status.go:35:4` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L1171 | `internal/storage/preload_status.go:38:4` | string &#96;catalog_complete&#96; has 4 occurrences, make it a constant | FIXED |
+| L1172 | `internal/storage/preload_status.go:40:4` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | FIXED |
+| L1173 | `internal/storage/read_authority.go:58:16` | string &#96;PERMISSION_DENIED&#96; has 3 occurrences, make it a constant | FIXED |
+| L1174 | `internal/storage/sending.go:135:14` | string &#96;sent&#96; has 4 occurrences, make it a constant | FIXED |
+| L1175 | `internal/storage/sending.go:135:33` | string &#96;failed&#96; has 8 occurrences, make it a constant | FIXED |
+| L1176 | `internal/storage/sending.go:135:54` | string &#96;unknown&#96; has 7 occurrences, make it a constant | FIXED |
+| L1177 | `internal/storage/sending.go:149:8` | string &#96;interrupted&#96; has 3 occurrences, make it a constant | FIXED |
+| L1178 | `internal/storage/store.go:435:16` | string &#96;PERMISSION_DENIED&#96; has 3 occurrences, make it a constant | FIXED |
+| L1179 | `internal/storage/store.go:577:55` | string &#96;group&#96; has 9 occurrences, make it a constant | FIXED |
+| L1180 | `internal/storage/store.go:577:88` | string &#96;direct&#96; has 10 occurrences, make it a constant | FIXED |
+| L1181 | `internal/storage/subscription_scope.go:10:13` | string &#96;conversation&#96; has 9 occurrences, make it a constant | FIXED |
+| L1182 | `internal/storage/subscription_scope.go:27:7` | string &#96;all&#96; has 6 occurrences, make it a constant | FIXED |
+| L1183 | `internal/storage/subscription_scope.go:31:7` | string &#96;direct&#96; has 10 occurrences, make it a constant | FIXED |
+| L1184 | `internal/storage/subscription_scope.go:31:17` | string &#96;group&#96; has 9 occurrences, make it a constant | FIXED |
+| L1185 | `internal/storage/subscription_scope.go:41:44` | string &#96;incoming&#96; has 6 occurrences, make it a constant | FIXED |
+| L1186 | `internal/storage/subscription_scope.go:41:73` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | FIXED |
+| L1187 | `internal/storage/views.go:111:3` | string &#96;has_more&#96; has 4 occurrences, make it a constant | FIXED |
+| L1188 | `internal/storage/views.go:112:3` | string &#96;next_cursor&#96; has 3 occurrences, make it a constant | FIXED |
+| L1189 | `internal/storage/views.go:113:3` | string &#96;empty_reason&#96; has 3 occurrences, make it a constant | FIXED |
+| L1190 | `internal/storage/views.go:130:3` | string &#96;group&#96; has 9 occurrences, make it a constant | FIXED |
+| L1191 | `internal/storage/views.go:133:3` | string &#96;updated_at&#96; has 3 occurrences, make it a constant | FIXED |
+| L1192 | `internal/storage/views.go:262:3` | string &#96;history_complete&#96; has 3 occurrences, make it a constant | FIXED |
+| L1193 | `internal/storage/views.go:364:3` | string &#96;coverage&#96; has 3 occurrences, make it a constant | FIXED |
+| L1194 | `internal/toolruntime/outcome.go:46:12` | string &#96;zalo_send_direct_message&#96; has 4 occurrences, make it a constant | FIXED |
+| L1195 | `internal/toolruntime/outcome.go:46:50` | string &#96;zalo_join_group&#96; has 4 occurrences, make it a constant | FIXED |
+| L1196 | `internal/toolruntime/outcome.go:46:79` | string &#96;zalo_import_conversation_history&#96; has 4 occurrences, make it a constant | FIXED |
+| L1197 | `internal/toolruntime/runtime.go:25:2` | string &#96;zalo_search_messages&#96; has 3 occurrences, make it a constant | FIXED |
+| L1198 | `internal/toolruntime/runtime.go:26:2` | string &#96;zalo_search_conversation_messages&#96; has 3 occurrences, make it a constant | FIXED |
+| L1199 | `internal/toolruntime/runtime.go:27:2` | string &#96;zalo_get_message_context&#96; has 3 occurrences, make it a constant | FIXED |
+| L1200 | `internal/toolruntime/runtime.go:28:2` | string &#96;zalo_get_conversation_message_context&#96; has 3 occurrences, make it a constant | FIXED |
+| L1201 | `internal/toolruntime/runtime.go:419:7` | string &#96;zalo_send_direct_message&#96; has 4 occurrences, make it a constant | FIXED |
+| L1202 | `internal/toolruntime/runtime.go:420:3` | string &#96;zalo_join_group&#96; has 4 occurrences, make it a constant | FIXED |
+| L1203 | `internal/toolruntime/runtime.go:421:3` | string &#96;zalo_import_conversation_history&#96; has 4 occurrences, make it a constant | FIXED |
+| L1204 | `internal/toolruntime/runtime.go:422:3` | string &#96;zalo_cancel_history_import&#96; has 3 occurrences, make it a constant | FIXED |
+| L1205 | `internal/toolruntime/runtime.go:423:3` | string &#96;zalo_ack_subscription_events&#96; has 3 occurrences, make it a constant | FIXED |
+| L1206 | `internal/zalo/adapter.go:291:16` | string &#96;incoming&#96; has 3 occurrences, make it a constant | FIXED |
+| L1207 | `internal/zalo/adapter.go:293:17` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | FIXED |
+| L1208 | `internal/zalo/history.go:178:31` | string &#96;actionId&#96; has 3 occurrences, make it a constant | FIXED |
+| L1209 | `internal/zalo/history.go:178:52` | string &#96;cliMsgId&#96; has 3 occurrences, make it a constant | FIXED |
+| L1210 | `internal/zalo/history.go:178:89` | string &#96;userId&#96; has 3 occurrences, make it a constant | FIXED |
+| L1211 | `internal/zalo/history.go:178:99` | string &#96;realMsgId&#96; has 3 occurrences, make it a constant | FIXED |
+| L1212 | `internal/zalo/history.go:207:19` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | FIXED |
+| L1213 | `internal/zalo/mobile_backup.go:154:24` | string &#96;Web&#96; has 3 occurrences, make it a constant | FIXED |
+| L1214 | `internal/zalo/preload.go:148:20` | string &#96;incoming&#96; has 3 occurrences, make it a constant | FIXED |
+| L1215 | `internal/zalo/preload.go:150:21` | string &#96;outgoing&#96; has 4 occurrences, make it a constant | FIXED |
+| L1216 | `internal/zalo/preload.go:194:31` | string &#96;actionId&#96; has 3 occurrences, make it a constant | FIXED |
+| L1217 | `internal/zalo/preload.go:194:52` | string &#96;cliMsgId&#96; has 3 occurrences, make it a constant | FIXED |
+| L1218 | `internal/zalo/preload.go:194:89` | string &#96;userId&#96; has 3 occurrences, make it a constant | FIXED |
+| L1219 | `internal/zalo/preload.go:194:99` | string &#96;realMsgId&#96; has 3 occurrences, make it a constant | FIXED |
+| L1220 | `tools/harness/internal/architecture/architecture.go:152:54` | string &#96;coverage&#96; has 6 occurrences, make it a constant | FIXED |
+| L1221 | `tools/harness/internal/architecture/architecture.go:286:36` | string &#96;database/sql&#96; has 3 occurrences, make it a constant | FIXED |
+| L1222 | `tools/harness/internal/architecture/architecture.go:286:52` | string &#96;dependency&#96; has 9 occurrences, make it a constant | FIXED |
+| L1223 | `tools/harness/internal/architecture/architecture.go:287:37` | string &#96;github.com/modelcontextprotocol/go-sdk/mcp&#96; has 3 occurrences, make it a constant | FIXED |
+| L1224 | `tools/harness/internal/architecture/architecture.go:294:76` | string &#96;positive&#96; has 6 occurrences, make it a constant | FIXED |
+| L1225 | `tools/harness/internal/architecture/architecture.go:297:27` | string &#96;internal/mobilebackup/archiveport&#96; has 3 occurrences, make it a constant | FIXED |
+| L1226 | `tools/harness/internal/architecture/architecture.go:377:61` | string &#96;PASS&#96; has 4 occurrences, make it a constant | FIXED |
+| L1227 | `tools/harness/internal/architecture/architecture.go:383:109` | string &#96;security&#96; has 3 occurrences, make it a constant | FIXED |
+| L1228 | `tools/harness/internal/performance/bench.go:19:47` | string &#96;status&#96; has 4 occurrences, make it a constant | FIXED |
+| L1229 | `tools/harness/internal/performance/bench.go:19:57` | string &#96;FAIL&#96; has 5 occurrences, make it a constant | FIXED |
+| L1230 | `tools/harness/internal/performance/bench.go:53:22` | string &#96;PASS&#96; has 10 occurrences, make it a constant | FIXED |
+| L1231 | `tools/harness/internal/performance/bench.go:65:45` | string &#96;system&#96; has 3 occurrences, make it a constant | FIXED |
+| L1232 | `tools/harness/internal/performance/bench.go:65:61` | string &#96;release&#96; has 3 occurrences, make it a constant | FIXED |
+| L1233 | `tools/harness/internal/performance/bench.go:65:78` | string &#96;machine&#96; has 4 occurrences, make it a constant | FIXED |
+| L1234 | `tools/harness/internal/performance/bench.go:98:80` | string &#96;model&#96; has 3 occurrences, make it a constant | FIXED |
+| L1235 | `tools/harness/internal/performance/bench.go:98:89` | string &#96;NOT_RUN&#96; has 6 occurrences, make it a constant | FIXED |
+| L1236 | `tools/harness/internal/performance/bench.go:98:100` | string &#96;live&#96; has 3 occurrences, make it a constant | FIXED |
+| L1237 | `tools/harness/internal/performance/bench.go:112:75` | string &#96;candidate&#96; has 6 occurrences, make it a constant | FIXED |
+| L1238 | `tools/harness/internal/performance/bench.go:112:105` | string &#96;./cmd/zl-mcp-eval&#96; has 5 occurrences, make it a constant | FIXED |
+| L1239 | `tools/harness/internal/performance/bench.go:147:267` | string &#96;fixture_sha256&#96; has 3 occurrences, make it a constant | FIXED |
+| L1240 | `tools/harness/internal/performance/bench.go:147:294` | string &#96;runs&#96; has 3 occurrences, make it a constant | FIXED |
+| L1241 | `tools/harness/internal/performance/bench.go:147:337` | string &#96;warmup_calls&#96; has 4 occurrences, make it a constant | FIXED |
+| L1242 | `tools/harness/internal/performance/bench.go:147:357` | string &#96;concurrency_per_kind&#96; has 4 occurrences, make it a constant | FIXED |
+| L1243 | `tools/harness/internal/performance/bench.go:147:384` | string &#96;parallel_kinds&#96; has 3 occurrences, make it a constant | FIXED |
+| L1244 | `tools/harness/internal/performance/bench.go:147:405` | string &#96;admission_enabled&#96; has 6 occurrences, make it a constant | FIXED |
+| L1245 | `tools/harness/internal/performance/bench.go:147:432` | string &#96;exporters_enabled&#96; has 6 occurrences, make it a constant | FIXED |
+| L1246 | `tools/harness/internal/performance/bench.go:147:460` | string &#96;pacing_millis&#96; has 6 occurrences, make it a constant | FIXED |
+| L1247 | `tools/harness/internal/performance/bench.go:194:32` | string &#96;p95_seconds&#96; has 4 occurrences, make it a constant | FIXED |
+| L1248 | `tools/harness/internal/performance/bench.go:194:47` | string &#96;allocations_per_op&#96; has 4 occurrences, make it a constant | FIXED |
+| L1249 | `tools/harness/internal/performance/bench.go:194:69` | string &#96;alloc_bytes_per_op&#96; has 4 occurrences, make it a constant | FIXED |
+| L1250 | `tools/harness/internal/performance/bench.go:204:240` | string &#96;errors&#96; has 4 occurrences, make it a constant | FIXED |
+| L1251 | `tools/harness/internal/performance/build.go:61:32` | string &#96;path&#96; has 3 occurrences, make it a constant | FIXED |
+| L1252 | `tools/harness/internal/performance/build.go:61:46` | string &#96;sha256&#96; has 3 occurrences, make it a constant | FIXED |
+| L1253 | `tools/harness/internal/performance/build.go:83:21` | string &#96;status&#96; has 4 occurrences, make it a constant | FIXED |
+| L1254 | `tools/harness/internal/performance/build.go:83:31` | string &#96;FAIL&#96; has 5 occurrences, make it a constant | FIXED |
+| L1255 | `tools/harness/internal/performance/build.go:83:58` | string &#96;model&#96; has 3 occurrences, make it a constant | FIXED |
+| L1256 | `tools/harness/internal/performance/build.go:83:67` | string &#96;NOT_RUN&#96; has 6 occurrences, make it a constant | FIXED |
+| L1257 | `tools/harness/internal/performance/build.go:83:78` | string &#96;live&#96; has 3 occurrences, make it a constant | FIXED |
+| L1258 | `tools/harness/internal/performance/build.go:106:62` | string &#96;./cmd/zl-mcp-eval&#96; has 5 occurrences, make it a constant | FIXED |
+| L1259 | `tools/harness/internal/performance/build.go:110:28` | string &#96;candidate&#96; has 6 occurrences, make it a constant | FIXED |
+| L1260 | `tools/harness/internal/performance/build.go:135:24` | string &#96;PASS&#96; has 10 occurrences, make it a constant | FIXED |
+| L1261 | `tools/harness/internal/performance/compare.go:20:31` | string &#96;fixture_sha256&#96; has 3 occurrences, make it a constant | FIXED |
+| L1262 | `tools/harness/internal/performance/compare.go:25:31` | string &#96;system&#96; has 3 occurrences, make it a constant | FIXED |
+| L1263 | `tools/harness/internal/performance/compare.go:25:41` | string &#96;release&#96; has 3 occurrences, make it a constant | FIXED |
+| L1264 | `tools/harness/internal/performance/compare.go:25:52` | string &#96;machine&#96; has 4 occurrences, make it a constant | FIXED |
+| L1265 | `tools/harness/internal/performance/compare.go:30:21` | string &#96;runs&#96; has 3 occurrences, make it a constant | FIXED |
+| L1266 | `tools/harness/internal/performance/compare.go:30:32` | string &#96;warmup_calls&#96; has 4 occurrences, make it a constant | FIXED |
+| L1267 | `tools/harness/internal/performance/compare.go:30:52` | string &#96;concurrency_per_kind&#96; has 4 occurrences, make it a constant | FIXED |
+| L1268 | `tools/harness/internal/performance/compare.go:30:79` | string &#96;parallel_kinds&#96; has 3 occurrences, make it a constant | FIXED |
+| L1269 | `tools/harness/internal/performance/compare.go:30:100` | string &#96;admission_enabled&#96; has 6 occurrences, make it a constant | FIXED |
+| L1270 | `tools/harness/internal/performance/compare.go:30:127` | string &#96;exporters_enabled&#96; has 6 occurrences, make it a constant | FIXED |
+| L1271 | `tools/harness/internal/performance/compare.go:30:155` | string &#96;pacing_millis&#96; has 6 occurrences, make it a constant | FIXED |
+| L1272 | `tools/harness/internal/performance/compare.go:60:30` | string &#96;p95_seconds&#96; has 4 occurrences, make it a constant | FIXED |
+| L1273 | `tools/harness/internal/performance/compare.go:60:45` | string &#96;allocations_per_op&#96; has 4 occurrences, make it a constant | FIXED |
+| L1274 | `tools/harness/internal/performance/compare.go:60:67` | string &#96;alloc_bytes_per_op&#96; has 4 occurrences, make it a constant | FIXED |
+| L1275 | `tools/harness/internal/performance/compare.go:65:49` | string &#96;errors&#96; has 4 occurrences, make it a constant | FIXED |
+| L1276 | `tools/harness/internal/performance/compare.go:100:24` | string &#96;PASS&#96; has 10 occurrences, make it a constant | FIXED |
+| L1277 | `tools/harness/internal/performance/compare.go:108:13` | string &#96;./cmd/zl-mcp-eval&#96; has 5 occurrences, make it a constant | FIXED |
+| L1278 | `tools/harness/internal/performance/compare.go:118:13` | string &#96;candidate&#96; has 6 occurrences, make it a constant | FIXED |
+| L1279 | `tools/harness/internal/performance/compare.go:145:16` | string &#96;status&#96; has 4 occurrences, make it a constant | FIXED |
+| L1280 | `tools/harness/internal/performance/compare.go:145:26` | string &#96;FAIL&#96; has 5 occurrences, make it a constant | FIXED |
+| L1281 | `tools/harness/internal/performance/compare.go:145:260` | string &#96;model&#96; has 3 occurrences, make it a constant | FIXED |
+| L1282 | `tools/harness/internal/performance/compare.go:145:269` | string &#96;NOT_RUN&#96; has 6 occurrences, make it a constant | FIXED |
+| L1283 | `tools/harness/internal/performance/compare.go:145:280` | string &#96;live&#96; has 3 occurrences, make it a constant | FIXED |
+| L1284 | `tools/harness/internal/performance/compare.go:273:34` | string &#96;path&#96; has 3 occurrences, make it a constant | FIXED |
+| L1285 | `tools/harness/internal/performance/compare.go:273:52` | string &#96;sha256&#96; has 3 occurrences, make it a constant | FIXED |
 
 ### gocritic (9)
 
@@ -1780,15 +1876,15 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L1286 | `internal/evaluation/grader.go:108:3` | ifElseChain: rewrite if-else to switch statement | OPEN |
-| L1287 | `internal/mobilebackup/account_metadata.go:102:3` | ifElseChain: rewrite if-else to switch statement | OPEN |
-| L1288 | `internal/mobilebackup/control_scan_test.go:76:4` | assignOp: replace &#96;*counter = *counter + 1&#96; with &#96;*counter++&#96; | OPEN |
+| L1286 | `internal/evaluation/grader.go:108:3` | ifElseChain: rewrite if-else to switch statement | FIXED |
+| L1287 | `internal/mobilebackup/account_metadata.go:102:3` | ifElseChain: rewrite if-else to switch statement | FIXED |
+| L1288 | `internal/mobilebackup/control_scan_test.go:76:4` | assignOp: replace &#96;*counter = *counter + 1&#96; with &#96;*counter++&#96; | FIXED |
 | L1289 | `internal/mobilebackup/retained_archive_test.go:197:11` | elseif: can replace 'else {if cond {}}' with 'else if cond {}' | FIXED |
-| L1290 | `internal/storage/event_journal.go:202:3` | ifElseChain: rewrite if-else to switch statement | OPEN |
-| L1291 | `internal/storage/history_operations.go:219:2` | ifElseChain: rewrite if-else to switch statement | OPEN |
-| L1292 | `internal/storage/history_operations.go:583:3` | ifElseChain: rewrite if-else to switch statement | OPEN |
-| L1293 | `internal/storage/mobile_history.go:236:2` | ifElseChain: rewrite if-else to switch statement | OPEN |
-| L1294 | `internal/storage/views.go:434:2` | ifElseChain: rewrite if-else to switch statement | OPEN |
+| L1290 | `internal/storage/event_journal.go:202:3` | ifElseChain: rewrite if-else to switch statement | FIXED |
+| L1291 | `internal/storage/history_operations.go:219:2` | ifElseChain: rewrite if-else to switch statement | FIXED |
+| L1292 | `internal/storage/history_operations.go:583:3` | ifElseChain: rewrite if-else to switch statement | FIXED |
+| L1293 | `internal/storage/mobile_history.go:236:2` | ifElseChain: rewrite if-else to switch statement | FIXED |
+| L1294 | `internal/storage/views.go:434:2` | ifElseChain: rewrite if-else to switch statement | FIXED |
 
 ### gocyclo (72)
 
@@ -1883,14 +1979,14 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L1367 | `internal/app/eventaccess/journal.go:8:1` | godoc should start with symbol name ("Subscription") | OPEN |
-| L1368 | `internal/app/eventaccess/journal.go:43:1` | godoc should start with symbol name ("MarshalJSON") | OPEN |
-| L1369 | `internal/app/history/command.go:10:1` | godoc should start with symbol name ("StartRequest") | OPEN |
-| L1370 | `internal/evaluation/scenarios.go:357:1` | godoc should start with symbol name ("DefaultChildOptions") | OPEN |
-| L1371 | `internal/mobilebackup/archive_tokens.go:9:1` | godoc should start with symbol name ("SealArchiveToken") | OPEN |
-| L1372 | `internal/mobilebackup/sqlite.go:36:1` | godoc should start with symbol name ("SQLiteCoverage") | OPEN |
-| L1373 | `internal/storage/event_journal.go:136:1` | godoc should start with symbol name ("ReadSubscriptionEvents") | OPEN |
-| L1374 | `tools/harness/internal/performance/process.go:16:1` | text "exec.Cmd.Wait" should be replaced with "[exec.Cmd.Wait]" to link to stdlib method | OPEN |
+| L1367 | `internal/app/eventaccess/journal.go:8:1` | godoc should start with symbol name ("Subscription") | FIXED |
+| L1368 | `internal/app/eventaccess/journal.go:43:1` | godoc should start with symbol name ("MarshalJSON") | FIXED |
+| L1369 | `internal/app/history/command.go:10:1` | godoc should start with symbol name ("StartRequest") | FIXED |
+| L1370 | `internal/evaluation/scenarios.go:357:1` | godoc should start with symbol name ("DefaultChildOptions") | FIXED |
+| L1371 | `internal/mobilebackup/archive_tokens.go:9:1` | godoc should start with symbol name ("SealArchiveToken") | FIXED |
+| L1372 | `internal/mobilebackup/sqlite.go:36:1` | godoc should start with symbol name ("SQLiteCoverage") | FIXED |
+| L1373 | `internal/storage/event_journal.go:136:1` | godoc should start with symbol name ("ReadSubscriptionEvents") | FIXED |
+| L1374 | `tools/harness/internal/performance/process.go:16:1` | text "exec.Cmd.Wait" should be replaced with "[exec.Cmd.Wait]" to link to stdlib method | FIXED |
 
 ### golines (7)
 
@@ -1902,13 +1998,13 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L1376 | `tools/harness/cmd/harness/main.go:52:1` | File is not properly formatted | OPEN |
-| L1377 | `tools/harness/internal/architecture/architecture.go:163:1` | File is not properly formatted | OPEN |
-| L1378 | `tools/harness/internal/architecture/architecture_test.go:195:1` | File is not properly formatted | OPEN |
-| L1379 | `tools/harness/internal/performance/bench.go:32:1` | File is not properly formatted | OPEN |
-| L1380 | `tools/harness/internal/performance/build.go:67:1` | File is not properly formatted | OPEN |
-| L1381 | `tools/harness/internal/performance/compare.go:30:1` | File is not properly formatted | OPEN |
-| L1382 | `tools/harness/internal/performance/performance_test.go:61:1` | File is not properly formatted | OPEN |
+| L1376 | `tools/harness/cmd/harness/main.go:52:1` | File is not properly formatted | FIXED |
+| L1377 | `tools/harness/internal/architecture/architecture.go:163:1` | File is not properly formatted | FIXED |
+| L1378 | `tools/harness/internal/architecture/architecture_test.go:195:1` | File is not properly formatted | FIXED |
+| L1379 | `tools/harness/internal/performance/bench.go:32:1` | File is not properly formatted | FIXED |
+| L1380 | `tools/harness/internal/performance/build.go:67:1` | File is not properly formatted | FIXED |
+| L1381 | `tools/harness/internal/performance/compare.go:30:1` | File is not properly formatted | FIXED |
+| L1382 | `tools/harness/internal/performance/performance_test.go:61:1` | File is not properly formatted | FIXED |
 
 ### gosec (151)
 
@@ -2051,13 +2147,13 @@ _Заполнить._
 | L1511 | `internal/storage/views.go:40:4` | G104: Errors unhandled | SUPPRESSED |
 | L1512 | `internal/storage/views.go:53:2` | G104: Errors unhandled | SUPPRESSED |
 | L1513 | `internal/storage/views.go:306:4` | G202: SQL string concatenation | SUPPRESSED |
-| L1514 | `internal/zalo/cookies.go:38:3` | G124: http.Cookie missing or has insecure Secure, HttpOnly, or SameSite attribute | SUPPRESSED |
+| L1514 | `internal/zalo/cookies.go:38:3` | G124: http.Cookie missing or has insecure Secure, HttpOnly, or SameSite attribute | FIXED |
 | L1515 | `tools/harness/internal/architecture/architecture.go:92:28` | G702: Command injection via taint analysis | SUPPRESSED |
 | L1516 | `tools/harness/internal/architecture/architecture.go:233:24` | G703: Path traversal via taint analysis | SUPPRESSED |
 | L1517 | `tools/harness/internal/architecture/architecture.go:406:3` | G104: Errors unhandled | SUPPRESSED |
 | L1518 | `tools/harness/internal/architecture/architecture.go:549:3` | G104: Errors unhandled | SUPPRESSED |
-| L1519 | `tools/harness/internal/performance/bench.go:32:17` | G306: Expect WriteFile permissions to be 0600 or less | SUPPRESSED |
-| L1520 | `tools/harness/internal/performance/bench.go:35:17` | G306: Expect WriteFile permissions to be 0600 or less | SUPPRESSED |
+| L1519 | `tools/harness/internal/performance/bench.go:32:17` | G306: Expect WriteFile permissions to be 0600 or less | FIXED |
+| L1520 | `tools/harness/internal/performance/bench.go:35:17` | G306: Expect WriteFile permissions to be 0600 or less | FIXED |
 | L1521 | `tools/harness/internal/performance/bench.go:95:9` | G301: Expect directory permissions to be 0750 or less | SUPPRESSED |
 | L1522 | `tools/harness/internal/performance/build.go:80:9` | G301: Expect directory permissions to be 0750 or less | SUPPRESSED |
 | L1523 | `tools/harness/internal/performance/build.go:109:13` | G306: Expect WriteFile permissions to be 0600 or less | SUPPRESSED |
@@ -2313,7 +2409,7 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L1744 | `internal/mobilebackup/attachment_test.go:76:45` | avoid allocations with strings.Contains | OPEN |
+| L1744 | `internal/mobilebackup/attachment_test.go:76:45` | avoid allocations with strings.Contains | FIXED |
 
 ### mnd (388)
 
@@ -2325,394 +2421,394 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L1745 | `cmd/zl-mcp-eval/main.go:84:60` | Magic number: 20, in <argument> detected | OPEN |
-| L1746 | `cmd/zl-mcp-eval/main.go:103:17` | Magic number: 60, in <operation> detected | OPEN |
-| L1747 | `cmd/zl-mcp-eval/main.go:105:17` | Magic number: 180, in <operation> detected | OPEN |
-| L1748 | `internal/app/conversations/catalog.go:131:46` | Magic number: 5, in <argument> detected | OPEN |
-| L1749 | `internal/app/history/command.go:29:42` | Magic number: 35, in <argument> detected | OPEN |
-| L1750 | `internal/app/history/command.go:34:42` | Magic number: 35, in <argument> detected | OPEN |
-| L1751 | `internal/app/history/read.go:22:42` | Magic number: 35, in <argument> detected | OPEN |
-| L1752 | `internal/app/membership/command.go:19:42` | Magic number: 6, in <argument> detected | OPEN |
-| L1753 | `internal/app/membership/read.go:52:42` | Magic number: 6, in <argument> detected | OPEN |
-| L1754 | `internal/app/membership/read.go:58:42` | Magic number: 6, in <argument> detected | OPEN |
-| L1755 | `internal/app/messaging/command.go:16:42` | Magic number: 35, in <argument> detected | OPEN |
-| L1756 | `internal/app/messaging/read.go:22:42` | Magic number: 35, in <argument> detected | OPEN |
-| L1757 | `internal/app/shared/telemetry.go:72:43` | Magic number: 100, in <argument> detected | OPEN |
-| L1758 | `internal/collector/contact_profiles.go:27:45` | Magic number: 30, in <argument> detected | OPEN |
-| L1759 | `internal/collector/contact_profiles.go:67:65` | Magic number: 100, in <argument> detected | OPEN |
-| L1760 | `internal/collector/contacts.go:31:45` | Magic number: 30, in <argument> detected | OPEN |
-| L1761 | `internal/collector/contacts.go:64:48` | Magic number: 200, in <argument> detected | OPEN |
-| L1762 | `internal/collector/contacts.go:79:21` | Magic number: 200, in <condition> detected | OPEN |
-| L1763 | `internal/collector/contacts.go:102:21` | Magic number: 200, in <condition> detected | OPEN |
-| L1764 | `internal/collector/contacts.go:113:27` | Magic number: 5, in <argument> detected | OPEN |
-| L1765 | `internal/collector/join.go:113:35` | Magic number: 10, in <argument> detected | OPEN |
-| L1766 | `internal/collector/join.go:185:20` | Magic number: 32, in <argument> detected | OPEN |
-| L1767 | `internal/collector/join.go:307:50` | Magic number: 60000, in <assign> detected | OPEN |
-| L1768 | `internal/collector/join.go:325:25` | Magic number: 1000, in <assign> detected | OPEN |
-| L1769 | `internal/collector/join.go:382:45` | Magic number: 45, in <argument> detected | OPEN |
-| L1770 | `internal/collector/join.go:397:68` | Magic number: 5, in <argument> detected | OPEN |
-| L1771 | `internal/collector/join.go:443:48` | Magic number: 15, in <argument> detected | OPEN |
-| L1772 | `internal/collector/preload_catalog.go:19:45` | Magic number: 30, in <argument> detected | OPEN |
-| L1773 | `internal/collector/preload_catalog.go:74:27` | Magic number: 5, in <argument> detected | OPEN |
-| L1774 | `internal/collector/preload_probe.go:33:45` | Magic number: 30, in <argument> detected | OPEN |
-| L1775 | `internal/collector/run.go:118:44` | Magic number: 30, in <argument> detected | OPEN |
-| L1776 | `internal/collector/run.go:155:23` | Magic number: 10, in <argument> detected | OPEN |
-| L1777 | `internal/collector/run.go:157:35` | Magic number: 5, in <argument> detected | OPEN |
-| L1778 | `internal/collector/run.go:177:63` | Magic number: 5, in <argument> detected | OPEN |
-| L1779 | `internal/collector/run.go:264:24` | Magic number: 40, in <argument> detected | OPEN |
-| L1780 | `internal/collector/run.go:295:53` | Magic number: 16, in <argument> detected | OPEN |
-| L1781 | `internal/collector/run.go:295:57` | Magic number: 10, in <argument> detected | OPEN |
-| L1782 | `internal/collector/run.go:393:45` | Magic number: 5, in <argument> detected | OPEN |
-| L1783 | `internal/control/client.go:48:53` | Magic number: 20, in <argument> detected | OPEN |
-| L1784 | `internal/domain/mobile_backup_request.go:39:24` | Magic number: 512, in <operation> detected | OPEN |
-| L1785 | `internal/domain/mobile_backup_request.go:39:31` | Magic number: 20, in <operation> detected | OPEN |
-| L1786 | `internal/domain/mobile_backup_request.go:58:23` | Magic number: 64, in <operation> detected | OPEN |
-| L1787 | `internal/domain/mobile_backup_request.go:58:29` | Magic number: 20, in <operation> detected | OPEN |
-| L1788 | `internal/evalfixture/fixture.go:170:96` | Magic number: 90, in <argument> detected | OPEN |
-| L1789 | `internal/evalfixture/fixture.go:172:87` | Magic number: 90, in <argument> detected | OPEN |
-| L1790 | `internal/evalfixture/fixture.go:287:87` | Magic number: 5, in <assign> detected | OPEN |
-| L1791 | `internal/evalfixture/fixture.go:325:28` | Magic number: 10, in <argument> detected | OPEN |
-| L1792 | `internal/evalfixture/fixture.go:346:60` | Magic number: 5, in <argument> detected | OPEN |
-| L1793 | `internal/evalfixture/offline.go:76:87` | Magic number: 8, in <argument> detected | OPEN |
-| L1794 | `internal/evalfixture/offline.go:76:90` | Magic number: 20, in <argument> detected | OPEN |
-| L1795 | `internal/evalfixture/offline.go:247:49` | Magic number: 4, in <argument> detected | OPEN |
-| L1796 | `internal/evalfixture/offline.go:250:3` | Magic number: 8, in <argument> detected | OPEN |
-| L1797 | `internal/evalfixture/offline.go:250:6` | Magic number: 20, in <argument> detected | OPEN |
-| L1798 | `internal/evalfixture/offline.go:257:96` | Magic number: 8, in <argument> detected | OPEN |
-| L1799 | `internal/evalfixture/offline.go:257:99` | Magic number: 20, in <argument> detected | OPEN |
-| L1800 | `internal/evaluation/benchmark.go:42:17` | Magic number: 50, in <assign> detected | OPEN |
-| L1801 | `internal/evaluation/benchmark.go:47:17` | Magic number: 110, in <assign> detected | OPEN |
-| L1802 | `internal/evaluation/benchmark.go:51:13` | Magic number: 1000, in <condition> detected | OPEN |
-| L1803 | `internal/evaluation/benchmark.go:107:21` | Magic number: 110, in <argument> detected | OPEN |
-| L1804 | `internal/evaluation/benchmark.go:129:40` | Magic number: 99, in <operation> detected | OPEN |
-| L1805 | `internal/evaluation/client.go:37:20` | Magic number: 110, in <argument> detected | OPEN |
-| L1806 | `internal/evaluation/model.go:41:24` | Magic number: 30, in <operation> detected | OPEN |
-| L1807 | `internal/evaluation/model.go:104:22` | Magic number: 5, in <assign> detected | OPEN |
-| L1808 | `internal/evaluation/model.go:136:3` | Magic number: 4, in <argument> detected | OPEN |
-| L1809 | `internal/evaluation/model.go:136:6` | Magic number: 20, in <argument> detected | OPEN |
-| L1810 | `internal/evaluation/runner.go:113:45` | Magic number: 64, in <operation> detected | OPEN |
-| L1811 | `internal/evaluation/runner.go:113:49` | Magic number: 10, in <operation> detected | OPEN |
-| L1812 | `internal/evaluation/runner.go:152:27` | Magic number: 180, in <assign> detected | OPEN |
-| L1813 | `internal/evaluation/runner.go:153:27` | Magic number: 30, in <assign> detected | OPEN |
-| L1814 | `internal/evaluation/runner.go:168:27` | Magic number: 180, in <assign> detected | OPEN |
-| L1815 | `internal/evaluation/runner.go:169:27` | Magic number: 30, in <assign> detected | OPEN |
-| L1816 | `internal/evaluation/runner.go:197:50` | Magic number: 6, in <operation> detected | OPEN |
-| L1817 | `internal/evaluation/runner.go:217:32` | Magic number: 60, in <assign> detected | OPEN |
-| L1818 | `internal/evaluation/runner.go:218:32` | Magic number: 4, in <assign> detected | OPEN |
-| L1819 | `internal/evaluation/runner.go:218:37` | Magic number: 20, in <assign> detected | OPEN |
-| L1820 | `internal/evaluation/runner.go:219:32` | Magic number: 4, in <assign> detected | OPEN |
-| L1821 | `internal/evaluation/runner.go:219:37` | Magic number: 20, in <assign> detected | OPEN |
+| L1745 | `cmd/zl-mcp-eval/main.go:84:60` | Magic number: 20, in <argument> detected | FIXED |
+| L1746 | `cmd/zl-mcp-eval/main.go:103:17` | Magic number: 60, in <operation> detected | FIXED |
+| L1747 | `cmd/zl-mcp-eval/main.go:105:17` | Magic number: 180, in <operation> detected | FIXED |
+| L1748 | `internal/app/conversations/catalog.go:131:46` | Magic number: 5, in <argument> detected | FIXED |
+| L1749 | `internal/app/history/command.go:29:42` | Magic number: 35, in <argument> detected | FIXED |
+| L1750 | `internal/app/history/command.go:34:42` | Magic number: 35, in <argument> detected | FIXED |
+| L1751 | `internal/app/history/read.go:22:42` | Magic number: 35, in <argument> detected | FIXED |
+| L1752 | `internal/app/membership/command.go:19:42` | Magic number: 6, in <argument> detected | FIXED |
+| L1753 | `internal/app/membership/read.go:52:42` | Magic number: 6, in <argument> detected | FIXED |
+| L1754 | `internal/app/membership/read.go:58:42` | Magic number: 6, in <argument> detected | FIXED |
+| L1755 | `internal/app/messaging/command.go:16:42` | Magic number: 35, in <argument> detected | FIXED |
+| L1756 | `internal/app/messaging/read.go:22:42` | Magic number: 35, in <argument> detected | FIXED |
+| L1757 | `internal/app/shared/telemetry.go:72:43` | Magic number: 100, in <argument> detected | FIXED |
+| L1758 | `internal/collector/contact_profiles.go:27:45` | Magic number: 30, in <argument> detected | FIXED |
+| L1759 | `internal/collector/contact_profiles.go:67:65` | Magic number: 100, in <argument> detected | FIXED |
+| L1760 | `internal/collector/contacts.go:31:45` | Magic number: 30, in <argument> detected | FIXED |
+| L1761 | `internal/collector/contacts.go:64:48` | Magic number: 200, in <argument> detected | FIXED |
+| L1762 | `internal/collector/contacts.go:79:21` | Magic number: 200, in <condition> detected | FIXED |
+| L1763 | `internal/collector/contacts.go:102:21` | Magic number: 200, in <condition> detected | FIXED |
+| L1764 | `internal/collector/contacts.go:113:27` | Magic number: 5, in <argument> detected | FIXED |
+| L1765 | `internal/collector/join.go:113:35` | Magic number: 10, in <argument> detected | FIXED |
+| L1766 | `internal/collector/join.go:185:20` | Magic number: 32, in <argument> detected | FIXED |
+| L1767 | `internal/collector/join.go:307:50` | Magic number: 60000, in <assign> detected | FIXED |
+| L1768 | `internal/collector/join.go:325:25` | Magic number: 1000, in <assign> detected | FIXED |
+| L1769 | `internal/collector/join.go:382:45` | Magic number: 45, in <argument> detected | FIXED |
+| L1770 | `internal/collector/join.go:397:68` | Magic number: 5, in <argument> detected | FIXED |
+| L1771 | `internal/collector/join.go:443:48` | Magic number: 15, in <argument> detected | FIXED |
+| L1772 | `internal/collector/preload_catalog.go:19:45` | Magic number: 30, in <argument> detected | FIXED |
+| L1773 | `internal/collector/preload_catalog.go:74:27` | Magic number: 5, in <argument> detected | FIXED |
+| L1774 | `internal/collector/preload_probe.go:33:45` | Magic number: 30, in <argument> detected | FIXED |
+| L1775 | `internal/collector/run.go:118:44` | Magic number: 30, in <argument> detected | FIXED |
+| L1776 | `internal/collector/run.go:155:23` | Magic number: 10, in <argument> detected | FIXED |
+| L1777 | `internal/collector/run.go:157:35` | Magic number: 5, in <argument> detected | FIXED |
+| L1778 | `internal/collector/run.go:177:63` | Magic number: 5, in <argument> detected | FIXED |
+| L1779 | `internal/collector/run.go:264:24` | Magic number: 40, in <argument> detected | FIXED |
+| L1780 | `internal/collector/run.go:295:53` | Magic number: 16, in <argument> detected | FIXED |
+| L1781 | `internal/collector/run.go:295:57` | Magic number: 10, in <argument> detected | FIXED |
+| L1782 | `internal/collector/run.go:393:45` | Magic number: 5, in <argument> detected | FIXED |
+| L1783 | `internal/control/client.go:48:53` | Magic number: 20, in <argument> detected | FIXED |
+| L1784 | `internal/domain/mobile_backup_request.go:39:24` | Magic number: 512, in <operation> detected | FIXED |
+| L1785 | `internal/domain/mobile_backup_request.go:39:31` | Magic number: 20, in <operation> detected | FIXED |
+| L1786 | `internal/domain/mobile_backup_request.go:58:23` | Magic number: 64, in <operation> detected | FIXED |
+| L1787 | `internal/domain/mobile_backup_request.go:58:29` | Magic number: 20, in <operation> detected | FIXED |
+| L1788 | `internal/evalfixture/fixture.go:170:96` | Magic number: 90, in <argument> detected | FIXED |
+| L1789 | `internal/evalfixture/fixture.go:172:87` | Magic number: 90, in <argument> detected | FIXED |
+| L1790 | `internal/evalfixture/fixture.go:287:87` | Magic number: 5, in <assign> detected | FIXED |
+| L1791 | `internal/evalfixture/fixture.go:325:28` | Magic number: 10, in <argument> detected | FIXED |
+| L1792 | `internal/evalfixture/fixture.go:346:60` | Magic number: 5, in <argument> detected | FIXED |
+| L1793 | `internal/evalfixture/offline.go:76:87` | Magic number: 8, in <argument> detected | FIXED |
+| L1794 | `internal/evalfixture/offline.go:76:90` | Magic number: 20, in <argument> detected | FIXED |
+| L1795 | `internal/evalfixture/offline.go:247:49` | Magic number: 4, in <argument> detected | FIXED |
+| L1796 | `internal/evalfixture/offline.go:250:3` | Magic number: 8, in <argument> detected | FIXED |
+| L1797 | `internal/evalfixture/offline.go:250:6` | Magic number: 20, in <argument> detected | FIXED |
+| L1798 | `internal/evalfixture/offline.go:257:96` | Magic number: 8, in <argument> detected | FIXED |
+| L1799 | `internal/evalfixture/offline.go:257:99` | Magic number: 20, in <argument> detected | FIXED |
+| L1800 | `internal/evaluation/benchmark.go:42:17` | Magic number: 50, in <assign> detected | FIXED |
+| L1801 | `internal/evaluation/benchmark.go:47:17` | Magic number: 110, in <assign> detected | FIXED |
+| L1802 | `internal/evaluation/benchmark.go:51:13` | Magic number: 1000, in <condition> detected | FIXED |
+| L1803 | `internal/evaluation/benchmark.go:107:21` | Magic number: 110, in <argument> detected | FIXED |
+| L1804 | `internal/evaluation/benchmark.go:129:40` | Magic number: 99, in <operation> detected | FIXED |
+| L1805 | `internal/evaluation/client.go:37:20` | Magic number: 110, in <argument> detected | FIXED |
+| L1806 | `internal/evaluation/model.go:41:24` | Magic number: 30, in <operation> detected | FIXED |
+| L1807 | `internal/evaluation/model.go:104:22` | Magic number: 5, in <assign> detected | FIXED |
+| L1808 | `internal/evaluation/model.go:136:3` | Magic number: 4, in <argument> detected | FIXED |
+| L1809 | `internal/evaluation/model.go:136:6` | Magic number: 20, in <argument> detected | FIXED |
+| L1810 | `internal/evaluation/runner.go:113:45` | Magic number: 64, in <operation> detected | FIXED |
+| L1811 | `internal/evaluation/runner.go:113:49` | Magic number: 10, in <operation> detected | FIXED |
+| L1812 | `internal/evaluation/runner.go:152:27` | Magic number: 180, in <assign> detected | FIXED |
+| L1813 | `internal/evaluation/runner.go:153:27` | Magic number: 30, in <assign> detected | FIXED |
+| L1814 | `internal/evaluation/runner.go:168:27` | Magic number: 180, in <assign> detected | FIXED |
+| L1815 | `internal/evaluation/runner.go:169:27` | Magic number: 30, in <assign> detected | FIXED |
+| L1816 | `internal/evaluation/runner.go:197:50` | Magic number: 6, in <operation> detected | FIXED |
+| L1817 | `internal/evaluation/runner.go:217:32` | Magic number: 60, in <assign> detected | FIXED |
+| L1818 | `internal/evaluation/runner.go:218:32` | Magic number: 4, in <assign> detected | FIXED |
+| L1819 | `internal/evaluation/runner.go:218:37` | Magic number: 20, in <assign> detected | FIXED |
+| L1820 | `internal/evaluation/runner.go:219:32` | Magic number: 4, in <assign> detected | FIXED |
+| L1821 | `internal/evaluation/runner.go:219:37` | Magic number: 20, in <assign> detected | FIXED |
 | L1822 | `internal/evaluation/runner.go:248:16` | Magic number: 60, in <operation> detected | FIXED |
-| L1823 | `internal/evaluation/runner.go:295:63` | Magic number: 4, in <argument> detected | OPEN |
-| L1824 | `internal/evaluation/runner.go:295:66` | Magic number: 20, in <argument> detected | OPEN |
-| L1825 | `internal/evaluation/runner.go:354:20` | Magic number: 3, in <assign> detected | OPEN |
-| L1826 | `internal/evaluation/runner.go:355:20` | Magic number: 8192, in <assign> detected | OPEN |
-| L1827 | `internal/evaluation/runner.go:368:22` | Magic number: 5, in <assign> detected | OPEN |
-| L1828 | `internal/evaluation/scenarios.go:93:99` | Magic number: 10, in <assign> detected | OPEN |
-| L1829 | `internal/evaluation/scenarios.go:338:71` | Magic number: 20, in <assign> detected | OPEN |
-| L1830 | `internal/events/subscriptions.go:242:51` | Magic number: 10, in <argument> detected | OPEN |
-| L1831 | `internal/events/subscriptions.go:249:27` | Magic number: 512, in <condition> detected | OPEN |
-| L1832 | `internal/events/webhook.go:51:68` | Magic number: 10, in <argument> detected | OPEN |
-| L1833 | `internal/events/webhook.go:70:17` | Magic number: 262144, in <condition> detected | OPEN |
-| L1834 | `internal/events/webhook.go:102:33` | Magic number: 32, in <argument> detected | OPEN |
-| L1835 | `internal/events/webhook.go:116:56` | Magic number: 65537, in <argument> detected | OPEN |
-| L1836 | `internal/events/worker.go:63:51` | Magic number: 400001, in <argument> detected | OPEN |
-| L1837 | `internal/events/worker.go:63:61` | Magic number: 200000, in <operation> detected | OPEN |
-| L1838 | `internal/events/worker.go:64:49` | Magic number: 1000000, in <argument> detected | OPEN |
-| L1839 | `internal/events/worker.go:111:49` | Magic number: 10, in <argument> detected | OPEN |
-| L1840 | `internal/events/worker.go:136:16` | Magic number: 410, in <case> detected | OPEN |
-| L1841 | `internal/events/worker.go:138:16` | Magic number: 413, in <case> detected | OPEN |
-| L1842 | `internal/events/worker.go:162:77` | Magic number: 5, in <argument> detected | OPEN |
-| L1843 | `internal/events/worker.go:194:27` | Magic number: 5, in <argument> detected | OPEN |
-| L1844 | `internal/events/worker.go:195:30` | Magic number: 4, in <argument> detected | OPEN |
-| L1845 | `internal/events/worker.go:199:28` | Magic number: 250, in <argument> detected | OPEN |
-| L1846 | `internal/events/worker.go:224:26` | Magic number: 250, in <argument> detected | OPEN |
-| L1847 | `internal/historyimport/mobile_worker.go:42:27` | Magic number: 500, in <argument> detected | OPEN |
-| L1848 | `internal/historyimport/mobile_worker.go:53:61` | Magic number: 20, in <argument> detected | OPEN |
-| L1849 | `internal/historyimport/mobile_worker.go:177:37` | Magic number: 180, in <argument> detected | OPEN |
-| L1850 | `internal/historyimport/mobile_worker.go:207:36` | Magic number: 120, in <argument> detected | OPEN |
-| L1851 | `internal/historyimport/mobile_worker.go:240:37` | Magic number: 30, in <argument> detected | OPEN |
-| L1852 | `internal/historyimport/worker.go:31:27` | Magic number: 500, in <argument> detected | OPEN |
-| L1853 | `internal/historyimport/worker.go:34:55` | Magic number: 20, in <argument> detected | OPEN |
-| L1854 | `internal/historyimport/worker.go:112:35` | Magic number: 30, in <argument> detected | OPEN |
-| L1855 | `internal/local/files.go:30:17` | Magic number: 0600, in <argument> detected | OPEN |
-| L1856 | `internal/logging/startup.go:44:26` | Magic number: 5, in <argument> detected | OPEN |
-| L1857 | `internal/logging/startup.go:44:29` | Magic number: 3, in <argument> detected | OPEN |
-| L1858 | `internal/logging/startup.go:66:14` | Magic number: 10, in <argument> detected | OPEN |
-| L1859 | `internal/mcpserver/http.go:34:18` | Magic number: 32, in <condition> detected | OPEN |
-| L1860 | `internal/mcpserver/http.go:135:57` | Magic number: 256, in <argument> detected | OPEN |
-| L1861 | `internal/mcpserver/http.go:135:62` | Magic number: 10, in <argument> detected | OPEN |
-| L1862 | `internal/mcpserver/server.go:302:50` | Magic number: 1000, in <assign> detected | OPEN |
-| L1863 | `internal/messaging/manager.go:120:47` | Magic number: 30, in <argument> detected | OPEN |
-| L1864 | `internal/messaging/manager.go:139:63` | Magic number: 3, in <argument> detected | OPEN |
-| L1865 | `internal/mobilebackup/account_inspection.go:77:66` | Magic number: 50, in <argument> detected | OPEN |
-| L1866 | `internal/mobilebackup/archive_library.go:27:30` | Magic number: 32, in <argument> detected | OPEN |
-| L1867 | `internal/mobilebackup/archive_restore.go:45:43` | Magic number: 33, in <argument> detected | OPEN |
-| L1868 | `internal/mobilebackup/attachment.go:62:8` | Magic number: 40, in <case> detected | OPEN |
-| L1869 | `internal/mobilebackup/attachment.go:64:8` | Magic number: 41, in <case> detected | OPEN |
-| L1870 | `internal/mobilebackup/attachment.go:66:8` | Magic number: 42, in <case> detected | OPEN |
-| L1871 | `internal/mobilebackup/attachment.go:68:8` | Magic number: 43, in <case> detected | OPEN |
-| L1872 | `internal/mobilebackup/attachment.go:70:8` | Magic number: 44, in <case> detected | OPEN |
-| L1873 | `internal/mobilebackup/attachment.go:72:8` | Magic number: 45, in <case> detected | OPEN |
-| L1874 | `internal/mobilebackup/attachment.go:74:8` | Magic number: 46, in <case> detected | OPEN |
-| L1875 | `internal/mobilebackup/attachment.go:76:8` | Magic number: 47, in <case> detected | OPEN |
-| L1876 | `internal/mobilebackup/attachment.go:78:8` | Magic number: 48, in <case> detected | OPEN |
-| L1877 | `internal/mobilebackup/attachment.go:80:8` | Magic number: 49, in <case> detected | OPEN |
-| L1878 | `internal/mobilebackup/attachment.go:82:8` | Magic number: 50, in <case> detected | OPEN |
-| L1879 | `internal/mobilebackup/attachment.go:84:8` | Magic number: 66, in <case> detected | OPEN |
-| L1880 | `internal/mobilebackup/attachment.go:86:8` | Magic number: 67, in <case> detected | OPEN |
-| L1881 | `internal/mobilebackup/attachment.go:88:8` | Magic number: 68, in <case> detected | OPEN |
-| L1882 | `internal/mobilebackup/binnet.go:48:15` | Magic number: 6, in <condition> detected | OPEN |
-| L1883 | `internal/mobilebackup/binnet.go:57:15` | Magic number: 8, in <condition> detected | OPEN |
-| L1884 | `internal/mobilebackup/binnet.go:66:15` | Magic number: 7, in <condition> detected | OPEN |
-| L1885 | `internal/mobilebackup/checksum.go:18:15` | Magic number: 16, in <condition> detected | OPEN |
-| L1886 | `internal/mobilebackup/checksum.go:19:28` | Magic number: 606290984, in <argument> detected | OPEN |
-| L1887 | `internal/mobilebackup/checksum.go:19:62` | Magic number: 1640531535, in <argument> detected | OPEN |
-| L1888 | `internal/mobilebackup/checksum.go:20:107` | Magic number: 13, in <argument> detected | OPEN |
-| L1889 | `internal/mobilebackup/checksum.go:28:56` | Magic number: 7, in <argument> detected | OPEN |
-| L1890 | `internal/mobilebackup/checksum.go:28:83` | Magic number: 12, in <argument> detected | OPEN |
-| L1891 | `internal/mobilebackup/checksum.go:28:111` | Magic number: 18, in <argument> detected | OPEN |
-| L1892 | `internal/mobilebackup/checksum.go:34:69` | Magic number: 17, in <argument> detected | OPEN |
-| L1893 | `internal/mobilebackup/checksum.go:38:41` | Magic number: 11, in <argument> detected | OPEN |
-| L1894 | `internal/mobilebackup/checksum.go:40:12` | Magic number: 15, in <operation> detected | OPEN |
-| L1895 | `internal/mobilebackup/checksum.go:42:12` | Magic number: 13, in <operation> detected | OPEN |
-| L1896 | `internal/mobilebackup/checksum.go:44:12` | Magic number: 16, in <operation> detected | OPEN |
-| L1897 | `internal/mobilebackup/control_scan.go:50:45` | Magic number: 30, in <argument> detected | OPEN |
-| L1898 | `internal/mobilebackup/control_scan.go:57:52` | Magic number: 253402300800000, in <argument> detected | OPEN |
-| L1899 | `internal/mobilebackup/control_scan.go:70:8` | Magic number: 50, in <argument> detected | OPEN |
-| L1900 | `internal/mobilebackup/download.go:41:65` | Magic number: 120, in <argument> detected | OPEN |
-| L1901 | `internal/mobilebackup/header.go:76:17` | Magic number: 4, in <condition> detected | OPEN |
-| L1902 | `internal/mobilebackup/header.go:88:18` | Magic number: 4, in <condition> detected | OPEN |
-| L1903 | `internal/mobilebackup/history_page.go:89:83` | Magic number: 5000, in <argument> detected | OPEN |
-| L1904 | `internal/mobilebackup/id_diagnostics.go:22:15` | Magic number: 64, in <condition> detected | OPEN |
-| L1905 | `internal/mobilebackup/id_diagnostics.go:40:15` | Magic number: 20, in <condition> detected | OPEN |
-| L1906 | `internal/mobilebackup/mentions.go:43:8` | Magic number: 100, in <case> detected | OPEN |
-| L1907 | `internal/mobilebackup/mentions.go:45:8` | Magic number: 101, in <case> detected | OPEN |
-| L1908 | `internal/mobilebackup/mentions.go:47:8` | Magic number: 102, in <case> detected | OPEN |
-| L1909 | `internal/mobilebackup/mentions.go:49:8` | Magic number: 103, in <case> detected | OPEN |
-| L1910 | `internal/mobilebackup/message_conversion.go:118:41` | Magic number: 50, in <argument> detected | OPEN |
-| L1911 | `internal/mobilebackup/message_conversion.go:234:51` | Magic number: 6, in <argument> detected | OPEN |
-| L1912 | `internal/mobilebackup/message_conversion.go:256:51` | Magic number: 6, in <argument> detected | OPEN |
-| L1913 | `internal/mobilebackup/offer_runner.go:81:60` | Magic number: 15, in <argument> detected | OPEN |
-| L1914 | `internal/mobilebackup/page_walk.go:40:45` | Magic number: 120, in <argument> detected | OPEN |
-| L1915 | `internal/mobilebackup/quote.go:48:32` | Magic number: 6, in <argument> detected | OPEN |
-| L1916 | `internal/mobilebackup/quote.go:67:15` | Magic number: 4, in <condition> detected | OPEN |
-| L1917 | `internal/mobilebackup/quote.go:69:16` | Magic number: 80, in <condition> detected | OPEN |
-| L1918 | `internal/mobilebackup/quote.go:78:8` | Magic number: 81, in <case> detected | OPEN |
-| L1919 | `internal/mobilebackup/quote.go:80:8` | Magic number: 82, in <case> detected | OPEN |
-| L1920 | `internal/mobilebackup/quote.go:82:8` | Magic number: 84, in <case> detected | OPEN |
-| L1921 | `internal/mobilebackup/quote.go:84:8` | Magic number: 85, in <case> detected | OPEN |
-| L1922 | `internal/mobilebackup/quote_fields.go:61:8` | Magic number: 86, in <case> detected | OPEN |
-| L1923 | `internal/mobilebackup/quote_fields.go:63:8` | Magic number: 87, in <case> detected | OPEN |
-| L1924 | `internal/mobilebackup/quote_fields.go:65:8` | Magic number: 88, in <case> detected | OPEN |
-| L1925 | `internal/mobilebackup/quote_fields.go:67:8` | Magic number: 90, in <case> detected | OPEN |
-| L1926 | `internal/mobilebackup/retained_archive.go:292:17` | Magic number: 4, in <argument> detected | OPEN |
-| L1927 | `internal/mobilebackup/retained_archive.go:304:12` | Magic number: 4, in <operation> detected | OPEN |
-| L1928 | `internal/mobilebackup/retained_archive.go:323:75` | Magic number: 0600, in <argument> detected | OPEN |
-| L1929 | `internal/mobilebackup/retained_archive.go:454:95` | Magic number: 4, in <argument> detected | OPEN |
-| L1930 | `internal/mobilebackup/retained_archive.go:505:11` | Magic number: 4, in <operation> detected | OPEN |
-| L1931 | `internal/mobilebackup/retained_archive.go:543:28` | Magic number: 32, in <argument> detected | OPEN |
-| L1932 | `internal/mobilebackup/row_page.go:48:7` | Magic number: 3, in <case> detected | OPEN |
-| L1933 | `internal/mobilebackup/row_page.go:48:10` | Magic number: 4, in <case> detected | OPEN |
-| L1934 | `internal/mobilebackup/row_page.go:48:13` | Magic number: 31, in <case> detected | OPEN |
-| L1935 | `internal/mobilebackup/row_page.go:50:7` | Magic number: 6, in <case> detected | OPEN |
-| L1936 | `internal/mobilebackup/row_page.go:52:7` | Magic number: 10, in <case> detected | OPEN |
-| L1937 | `internal/mobilebackup/row_page.go:54:7` | Magic number: 12, in <case> detected | OPEN |
-| L1938 | `internal/mobilebackup/row_page.go:56:7` | Magic number: 15, in <case> detected | OPEN |
-| L1939 | `internal/mobilebackup/row_page.go:58:7` | Magic number: 18, in <case> detected | OPEN |
-| L1940 | `internal/mobilebackup/row_page.go:60:7` | Magic number: 19, in <case> detected | OPEN |
-| L1941 | `internal/mobilebackup/row_page.go:62:7` | Magic number: 22, in <case> detected | OPEN |
-| L1942 | `internal/mobilebackup/row_page.go:64:7` | Magic number: 23, in <case> detected | OPEN |
-| L1943 | `internal/mobilebackup/row_page.go:66:7` | Magic number: 24, in <case> detected | OPEN |
-| L1944 | `internal/mobilebackup/row_page.go:68:7` | Magic number: 53, in <case> detected | OPEN |
-| L1945 | `internal/mobilebackup/row_page.go:75:7` | Magic number: 20, in <case> detected | OPEN |
-| L1946 | `internal/mobilebackup/row_page.go:75:11` | Magic number: 21, in <case> detected | OPEN |
-| L1947 | `internal/mobilebackup/row_page.go:75:15` | Magic number: 25, in <case> detected | OPEN |
-| L1948 | `internal/mobilebackup/row_page.go:75:19` | Magic number: 26, in <case> detected | OPEN |
-| L1949 | `internal/mobilebackup/row_page.go:75:23` | Magic number: 29, in <case> detected | OPEN |
-| L1950 | `internal/mobilebackup/row_page.go:75:27` | Magic number: 32, in <case> detected | OPEN |
-| L1951 | `internal/mobilebackup/row_page.go:75:31` | Magic number: 33, in <case> detected | OPEN |
-| L1952 | `internal/mobilebackup/row_page.go:75:35` | Magic number: 34, in <case> detected | OPEN |
-| L1953 | `internal/mobilebackup/row_page.go:75:39` | Magic number: 35, in <case> detected | OPEN |
-| L1954 | `internal/mobilebackup/row_page.go:75:43` | Magic number: 36, in <case> detected | OPEN |
-| L1955 | `internal/mobilebackup/row_page.go:75:47` | Magic number: 45, in <case> detected | OPEN |
-| L1956 | `internal/mobilebackup/row_page.go:75:51` | Magic number: 51, in <case> detected | OPEN |
-| L1957 | `internal/mobilebackup/row_page.go:75:55` | Magic number: 52, in <case> detected | OPEN |
-| L1958 | `internal/mobilebackup/snapshot.go:172:85` | Magic number: 0600, in <argument> detected | OPEN |
-| L1959 | `internal/mobilebackup/snapshot.go:201:29` | Magic number: 64, in <argument> detected | OPEN |
-| L1960 | `internal/mobilebackup/snapshot.go:206:23` | Magic number: 32, in <argument> detected | OPEN |
-| L1961 | `internal/mobilebackup/snapshot.go:211:77` | Magic number: 0600, in <argument> detected | OPEN |
-| L1962 | `internal/mobilebackup/snapshot.go:242:43` | Magic number: 33, in <argument> detected | OPEN |
-| L1963 | `internal/mobilebackup/snapshot.go:364:68` | Magic number: 0600, in <argument> detected | OPEN |
-| L1964 | `internal/mobilebackup/snapshot.go:457:60` | Magic number: 64, in <operation> detected | OPEN |
-| L1965 | `internal/mobilebackup/snapshot.go:459:79` | Magic number: 4, in <argument> detected | OPEN |
-| L1966 | `internal/mobilebackup/snapshot.go:511:43` | Magic number: 4, in <argument> detected | OPEN |
-| L1967 | `internal/mobilebackup/snapshot_page.go:135:18` | Magic number: 20, in <condition> detected | OPEN |
-| L1968 | `internal/mobilebackup/snapshot_recalls.go:74:43` | Magic number: 253402300800000, in <argument> detected | OPEN |
-| L1969 | `internal/mobilebackup/snapshot_terminal.go:30:45` | Magic number: 4, in <argument> detected | OPEN |
-| L1970 | `internal/mobilebackup/snapshot_terminal.go:65:110` | Magic number: 4, in <argument> detected | OPEN |
-| L1971 | `internal/mobilebackup/sqlite.go:109:42` | Magic number: 20, in <argument> detected | OPEN |
-| L1972 | `internal/mobilebackup/sqlite.go:203:24` | Magic number: 20, in <condition> detected | OPEN |
-| L1973 | `internal/mobilebackup/sqlite.go:226:45` | Magic number: 30, in <argument> detected | OPEN |
-| L1974 | `internal/mobilebackup/sqlite.go:377:29` | Magic number: 5000, in <condition> detected | OPEN |
-| L1975 | `internal/mobilebackup/xz.go:38:44` | Magic number: 4096, in <assign> detected | OPEN |
-| L1976 | `internal/mobilebackup/xz.go:82:8` | Magic number: 4, in <case> detected | OPEN |
-| L1977 | `internal/mobilebackup/xz.go:84:8` | Magic number: 10, in <case> detected | OPEN |
-| L1978 | `internal/mobilebackup/xz.go:89:71` | Magic number: 4, in <operation> detected | OPEN |
-| L1979 | `internal/mobilebackup/xz.go:90:44` | Magic number: 24, in <argument> detected | OPEN |
-| L1980 | `internal/mobilebackup/xz.go:93:23` | Magic number: 12, in <operation> detected | OPEN |
-| L1981 | `internal/mobilebackup/xz.go:116:23` | Magic number: 3, in <operation> detected | OPEN |
-| L1982 | `internal/mobilebackup/xz.go:116:36` | Magic number: 3, in <argument> detected | OPEN |
-| L1983 | `internal/mobilebackup/xz.go:125:43` | Magic number: 12, in <operation> detected | OPEN |
-| L1984 | `internal/mobilebackup/xz.go:131:18` | Magic number: 12, in <operation> detected | OPEN |
-| L1985 | `internal/mobilebackup/xz.go:136:35` | Magic number: 3, in <operation> detected | OPEN |
-| L1986 | `internal/mobilebackup/xz.go:136:48` | Magic number: 3, in <argument> detected | OPEN |
-| L1987 | `internal/mobilebackup/xz.go:157:37` | Magic number: 4, in <operation> detected | OPEN |
-| L1988 | `internal/mobilebackup/xz.go:188:16` | Magic number: 40, in <condition> detected | OPEN |
-| L1989 | `internal/mobilebackup/xz.go:192:17` | Magic number: 40, in <condition> detected | OPEN |
-| L1990 | `internal/mobilebackup/xz.go:195:56` | Magic number: 11, in <operation> detected | OPEN |
-| L1991 | `internal/mobilebackup/xz.go:205:21` | Magic number: 0x7f, in <argument> detected | OPEN |
-| L1992 | `internal/mobilebackup/xz.go:205:31` | Magic number: 7, in <operation> detected | OPEN |
-| L1993 | `internal/netpolicy/http.go:70:33` | Magic number: 5, in <assign> detected | OPEN |
-| L1994 | `internal/netpolicy/http.go:75:24` | Magic number: 5, in <assign> detected | OPEN |
-| L1995 | `internal/netpolicy/http.go:75:64` | Magic number: 5, in <assign> detected | OPEN |
-| L1996 | `internal/service/account_archive.go:39:45` | Magic number: 420, in <argument> detected | OPEN |
-| L1997 | `internal/service/account_archive.go:170:42` | Magic number: 120, in <argument> detected | OPEN |
-| L1998 | `internal/service/archive_catalog.go:35:10` | Magic number: 20, in <return> detected | OPEN |
-| L1999 | `internal/service/archive_catalog.go:76:36` | Magic number: 7, in <operation> detected | OPEN |
-| L2000 | `internal/service/archive_catalog.go:76:39` | Magic number: 8, in <argument> detected | OPEN |
-| L2001 | `internal/service/archive_catalog.go:108:48` | Magic number: 8, in <argument> detected | OPEN |
-| L2002 | `internal/service/archive_catalog.go:115:45` | Magic number: 8, in <argument> detected | OPEN |
-| L2003 | `internal/service/archive_messages.go:321:28` | Magic number: 2048, in <operation> detected | OPEN |
-| L2004 | `internal/service/bridge.go:50:18` | Magic number: 40, in <assign> detected | OPEN |
-| L2005 | `internal/service/bridge.go:189:24` | Magic number: 256, in <condition> detected | OPEN |
-| L2006 | `internal/service/bridge.go:208:24` | Magic number: 4096, in <condition> detected | OPEN |
-| L2007 | `internal/service/bridge.go:214:72` | Magic number: 24, in <argument> detected | OPEN |
-| L2008 | `internal/service/cli.go:93:48` | Magic number: 35, in <argument> detected | OPEN |
-| L2009 | `internal/service/cli.go:109:41` | Magic number: 5, in <argument> detected | OPEN |
-| L2010 | `internal/service/cli.go:129:57` | Magic number: 5, in <argument> detected | OPEN |
-| L2011 | `internal/service/cli.go:146:48` | Magic number: 3, in <argument> detected | OPEN |
-| L2012 | `internal/service/cli_mobile_ledger.go:47:47` | Magic number: 16, in <operation> detected | OPEN |
-| L2013 | `internal/service/cli_mobile_ledger.go:47:51` | Magic number: 10, in <operation> detected | OPEN |
-| L2014 | `internal/service/cli_mobile_ledger.go:71:19` | Magic number: 3, in <condition> detected | OPEN |
-| L2015 | `internal/service/cli_mobile_ledger.go:104:19` | Magic number: 4, in <condition> detected | OPEN |
-| L2016 | `internal/service/cli_mobile_ledger.go:116:12` | Magic number: 10, in <operation> detected | OPEN |
-| L2017 | `internal/service/cli_mobile_ledger.go:119:12` | Magic number: 140, in <operation> detected | OPEN |
-| L2018 | `internal/service/cli_mobile_ledger.go:122:12` | Magic number: 40, in <operation> detected | OPEN |
-| L2019 | `internal/service/cli_mobile_ledger.go:125:12` | Magic number: 205, in <operation> detected | OPEN |
-| L2020 | `internal/service/cli_mobile_ledger.go:128:12` | Magic number: 445, in <operation> detected | OPEN |
-| L2021 | `internal/service/mobile_archive_probe.go:67:46` | Magic number: 420, in <argument> detected | OPEN |
-| L2022 | `internal/service/mobile_archive_probe.go:99:33` | Magic number: 500, in <argument> detected | OPEN |
-| L2023 | `internal/service/mobile_archive_probe.go:114:5` | Magic number: 50, in <argument> detected | OPEN |
-| L2024 | `internal/service/mobile_archive_probe.go:115:5` | Magic number: 100, in <argument> detected | OPEN |
-| L2025 | `internal/service/mobile_ledger_control.go:30:14` | Magic number: 4, in <condition> detected | OPEN |
-| L2026 | `internal/service/mobile_offer_probe.go:23:44` | Magic number: 185, in <argument> detected | OPEN |
-| L2027 | `internal/service/recall_diagnostic.go:58:50` | Magic number: 30, in <argument> detected | OPEN |
-| L2028 | `internal/service/recall_diagnostic.go:99:44` | Magic number: 0700, in <argument> detected | OPEN |
-| L2029 | `internal/service/recall_diagnostic.go:122:43` | Magic number: 513, in <argument> detected | OPEN |
-| L2030 | `internal/service/recall_diagnostic.go:151:28` | Magic number: 21, in <argument> detected | OPEN |
-| L2031 | `internal/service/recall_diagnostic.go:156:63` | Magic number: 0600, in <argument> detected | OPEN |
-| L2032 | `internal/service/run.go:113:55` | Magic number: 16, in <argument> detected | OPEN |
-| L2033 | `internal/service/run.go:113:59` | Magic number: 10, in <argument> detected | OPEN |
-| L2034 | `internal/service/run.go:251:97` | Magic number: 512, in <argument> detected | OPEN |
-| L2035 | `internal/service/run.go:251:102` | Magic number: 20, in <argument> detected | OPEN |
-| L2036 | `internal/service/run.go:256:106` | Magic number: 30, in <argument> detected | OPEN |
-| L2037 | `internal/service/run.go:265:6` | Magic number: 30, in <argument> detected | OPEN |
-| L2038 | `internal/service/run.go:336:22` | Magic number: 5, in <assign> detected | OPEN |
-| L2039 | `internal/service/run.go:337:22` | Magic number: 15, in <assign> detected | OPEN |
-| L2040 | `internal/service/run.go:338:22` | Magic number: 45, in <assign> detected | OPEN |
-| L2041 | `internal/service/run.go:339:22` | Magic number: 30, in <assign> detected | OPEN |
-| L2042 | `internal/service/run.go:345:22` | Magic number: 5, in <assign> detected | OPEN |
-| L2043 | `internal/service/run.go:346:22` | Magic number: 10, in <assign> detected | OPEN |
-| L2044 | `internal/service/run.go:347:22` | Magic number: 450, in <assign> detected | OPEN |
-| L2045 | `internal/service/run.go:349:31` | Magic number: 8, in <argument> detected | OPEN |
-| L2046 | `internal/service/run.go:390:28` | Magic number: 5, in <argument> detected | OPEN |
-| L2047 | `internal/service/run.go:408:62` | Magic number: 5, in <argument> detected | OPEN |
-| L2048 | `internal/service/run.go:417:75` | Magic number: 500, in <argument> detected | OPEN |
-| L2049 | `internal/service/run.go:442:66` | Magic number: 10, in <argument> detected | OPEN |
-| L2050 | `internal/service/run.go:511:48` | Magic number: 30, in <argument> detected | OPEN |
-| L2051 | `internal/service/run.go:636:24` | Magic number: 40, in <argument> detected | OPEN |
-| L2052 | `internal/service/telemetry.go:19:27` | Magic number: 500, in <argument> detected | OPEN |
-| L2053 | `internal/service/token.go:16:26` | Magic number: 32, in <argument> detected | OPEN |
-| L2054 | `internal/storage/browse.go:111:29` | Magic number: 150, in <operation> detected | OPEN |
-| L2055 | `internal/storage/contacts.go:46:21` | Magic number: 200, in <condition> detected | OPEN |
-| L2056 | `internal/storage/deliveries.go:23:16` | Magic number: 100000, in <assign> detected | OPEN |
-| L2057 | `internal/storage/deliveries.go:24:16` | Magic number: 256, in <assign> detected | OPEN |
-| L2058 | `internal/storage/deliveries.go:24:23` | Magic number: 20, in <assign> detected | OPEN |
-| L2059 | `internal/storage/deliveries.go:25:16` | Magic number: 256, in <assign> detected | OPEN |
-| L2060 | `internal/storage/deliveries.go:27:16` | Magic number: 30, in <assign> detected | OPEN |
-| L2061 | `internal/storage/events.go:220:15` | Magic number: 100, in <condition> detected | OPEN |
-| L2062 | `internal/storage/history_expiry.go:61:20` | Magic number: 50, in <condition> detected | OPEN |
-| L2063 | `internal/storage/history_operations.go:349:20` | Magic number: 50, in <condition> detected | OPEN |
-| L2064 | `internal/storage/history_operations.go:721:11` | Magic number: 30, in <operation> detected | OPEN |
-| L2065 | `internal/storage/history_operations.go:723:11` | Magic number: 180, in <operation> detected | OPEN |
-| L2066 | `internal/storage/mobile_backup.go:141:14` | Magic number: 10000, in <condition> detected | OPEN |
-| L2067 | `internal/storage/preload_directory.go:14:20` | Magic number: 5000, in <condition> detected | OPEN |
-| L2068 | `internal/storage/store.go:80:21` | Magic number: 32, in <argument> detected | OPEN |
-| L2069 | `internal/storage/store.go:690:30` | Magic number: 150, in <operation> detected | OPEN |
-| L2070 | `internal/storage/views.go:266:64` | Magic number: 8000, in <argument> detected | OPEN |
-| L2071 | `internal/storage/views.go:380:50` | Magic number: 1000, in <condition> detected | OPEN |
-| L2072 | `internal/storage/views.go:381:46` | Magic number: 1000, in <argument> detected | OPEN |
-| L2073 | `internal/storage/views.go:385:27` | Magic number: 1000, in <argument> detected | OPEN |
-| L2074 | `internal/toolruntime/binder.go:48:35` | Magic number: 20, in <argument> detected | OPEN |
-| L2075 | `internal/toolruntime/binder.go:68:40` | Magic number: 5, in <argument> detected | OPEN |
-| L2076 | `internal/toolruntime/binder.go:69:39` | Magic number: 5, in <argument> detected | OPEN |
-| L2077 | `internal/toolruntime/runtime.go:543:26` | Magic number: 20, in <argument> detected | OPEN |
-| L2078 | `internal/toolruntime/runtime.go:574:38` | Magic number: 20, in <argument> detected | OPEN |
-| L2079 | `internal/toolruntime/runtime.go:584:36` | Magic number: 20, in <argument> detected | OPEN |
-| L2080 | `internal/toolruntime/runtime.go:603:46` | Magic number: 20, in <argument> detected | OPEN |
-| L2081 | `internal/toolruntime/runtime.go:616:42` | Magic number: 20, in <argument> detected | OPEN |
-| L2082 | `internal/toolruntime/runtime.go:634:35` | Magic number: 20, in <argument> detected | OPEN |
-| L2083 | `internal/zalo/adapter.go:46:46` | Magic number: 30, in <assign> detected | OPEN |
-| L2084 | `internal/zalo/adapter.go:183:20` | Magic number: 50, in <argument> detected | OPEN |
-| L2085 | `internal/zalo/events.go:60:32` | Magic number: 15, in <argument> detected | OPEN |
-| L2086 | `internal/zalo/mobile_backup.go:52:73` | Magic number: 2048, in <argument> detected | OPEN |
-| L2087 | `internal/zalo/mobile_backup.go:71:43` | Magic number: 180, in <argument> detected | OPEN |
-| L2088 | `internal/zalo/mobile_backup.go:164:13` | Magic number: 3, in <case> detected | OPEN |
-| L2089 | `internal/zalo/replay.go:51:18` | Magic number: 100, in <case> detected | OPEN |
-| L2090 | `internal/zalo/replay.go:53:21` | Magic number: 10000, in <case> detected | OPEN |
-| L2091 | `tools/harness/internal/architecture/architecture.go:77:16` | Magic number: 20, in <operation> detected | OPEN |
-| L2092 | `tools/harness/internal/architecture/architecture.go:90:42` | Magic number: 60, in <argument> detected | OPEN |
-| L2093 | `tools/harness/internal/performance/bench.go:28:42` | Magic number: 900, in <argument> detected | OPEN |
-| L2094 | `tools/harness/internal/performance/bench.go:30:67` | Magic number: 4, in <argument> detected | OPEN |
-| L2095 | `tools/harness/internal/performance/bench.go:30:70` | Magic number: 20, in <argument> detected | OPEN |
-| L2096 | `tools/harness/internal/performance/bench.go:46:68` | Magic number: 1000, in <argument> detected | OPEN |
-| L2097 | `tools/harness/internal/performance/bench.go:46:107` | Magic number: 50, in <argument> detected | OPEN |
-| L2098 | `tools/harness/internal/performance/bench.go:46:262` | Magic number: 110, in <argument> detected | OPEN |
-| L2099 | `tools/harness/internal/performance/bench.go:76:42` | Magic number: 1200, in <argument> detected | OPEN |
-| L2100 | `tools/harness/internal/performance/bench.go:147:302` | Magic number: 5, in <assign> detected | OPEN |
-| L2101 | `tools/harness/internal/performance/bench.go:147:331` | Magic number: 1000, in <assign> detected | OPEN |
-| L2102 | `tools/harness/internal/performance/bench.go:147:353` | Magic number: 50, in <assign> detected | OPEN |
-| L2103 | `tools/harness/internal/performance/bench.go:147:402` | Magic number: 3, in <assign> detected | OPEN |
-| L2104 | `tools/harness/internal/performance/bench.go:147:477` | Magic number: 110, in <assign> detected | OPEN |
-| L2105 | `tools/harness/internal/performance/bench.go:147:504` | Magic number: 1200, in <assign> detected | OPEN |
-| L2106 | `tools/harness/internal/performance/bench.go:147:534` | Magic number: 900, in <assign> detected | OPEN |
-| L2107 | `tools/harness/internal/performance/bench.go:147:562` | Magic number: 1.15, in <assign> detected | OPEN |
-| L2108 | `tools/harness/internal/performance/bench.go:147:599` | Magic number: 2.0, in <assign> detected | OPEN |
-| L2109 | `tools/harness/internal/performance/bench.go:147:635` | Magic number: 1.20, in <assign> detected | OPEN |
-| L2110 | `tools/harness/internal/performance/bench.go:151:27` | Magic number: 3, in <argument> detected | OPEN |
-| L2111 | `tools/harness/internal/performance/build.go:15:33` | Magic number: 30, in <argument> detected | OPEN |
-| L2112 | `tools/harness/internal/performance/build.go:23:55` | Magic number: 4, in <argument> detected | OPEN |
-| L2113 | `tools/harness/internal/performance/build.go:23:58` | Magic number: 20, in <argument> detected | OPEN |
-| L2114 | `tools/harness/internal/performance/build.go:85:43` | Magic number: 180, in <argument> detected | OPEN |
-| L2115 | `tools/harness/internal/performance/build.go:108:57` | Magic number: 4, in <argument> detected | OPEN |
-| L2116 | `tools/harness/internal/performance/build.go:108:60` | Magic number: 20, in <argument> detected | OPEN |
-| L2117 | `tools/harness/internal/performance/compare.go:30:29` | Magic number: 5, in <assign> detected | OPEN |
-| L2118 | `tools/harness/internal/performance/compare.go:30:48` | Magic number: 50, in <assign> detected | OPEN |
-| L2119 | `tools/harness/internal/performance/compare.go:30:97` | Magic number: 3, in <assign> detected | OPEN |
-| L2120 | `tools/harness/internal/performance/compare.go:30:172` | Magic number: 110, in <assign> detected | OPEN |
-| L2121 | `tools/harness/internal/performance/compare.go:41:21` | Magic number: 15, in <condition> detected | OPEN |
-| L2122 | `tools/harness/internal/performance/compare.go:145:167` | Magic number: 2.0, in <assign> detected | OPEN |
-| L2123 | `tools/harness/internal/performance/compare.go:145:187` | Magic number: 1.20, in <assign> detected | OPEN |
-| L2124 | `tools/harness/internal/performance/compare.go:171:45` | Magic number: 1.15, in <assign> detected | OPEN |
-| L2125 | `tools/harness/internal/performance/compare.go:171:82` | Magic number: 2.0, in <assign> detected | OPEN |
-| L2126 | `tools/harness/internal/performance/compare.go:252:51` | Magic number: 1.20, in <operation> detected | OPEN |
-| L2127 | `tools/harness/internal/performance/compare.go:253:232` | Magic number: 1.20, in <assign> detected | OPEN |
-| L2128 | `tools/harness/internal/performance/json.go:24:44` | Magic number: .0078683, in <assign> detected | OPEN |
-| L2129 | `tools/harness/internal/performance/json.go:24:64` | Magic number: .0070726337, in <assign> detected | OPEN |
-| L2130 | `tools/harness/internal/performance/json.go:24:88` | Magic number: .0069967799, in <assign> detected | OPEN |
-| L2131 | `tools/harness/internal/performance/json.go:94:15` | Magic number: 64, in <condition> detected | OPEN |
-| L2132 | `tools/harness/internal/performance/process.go:54:23` | Magic number: 8192, in <argument> detected | OPEN |
+| L1823 | `internal/evaluation/runner.go:295:63` | Magic number: 4, in <argument> detected | FIXED |
+| L1824 | `internal/evaluation/runner.go:295:66` | Magic number: 20, in <argument> detected | FIXED |
+| L1825 | `internal/evaluation/runner.go:354:20` | Magic number: 3, in <assign> detected | FIXED |
+| L1826 | `internal/evaluation/runner.go:355:20` | Magic number: 8192, in <assign> detected | FIXED |
+| L1827 | `internal/evaluation/runner.go:368:22` | Magic number: 5, in <assign> detected | FIXED |
+| L1828 | `internal/evaluation/scenarios.go:93:99` | Magic number: 10, in <assign> detected | FIXED |
+| L1829 | `internal/evaluation/scenarios.go:338:71` | Magic number: 20, in <assign> detected | FIXED |
+| L1830 | `internal/events/subscriptions.go:242:51` | Magic number: 10, in <argument> detected | FIXED |
+| L1831 | `internal/events/subscriptions.go:249:27` | Magic number: 512, in <condition> detected | FIXED |
+| L1832 | `internal/events/webhook.go:51:68` | Magic number: 10, in <argument> detected | FIXED |
+| L1833 | `internal/events/webhook.go:70:17` | Magic number: 262144, in <condition> detected | FIXED |
+| L1834 | `internal/events/webhook.go:102:33` | Magic number: 32, in <argument> detected | FIXED |
+| L1835 | `internal/events/webhook.go:116:56` | Magic number: 65537, in <argument> detected | FIXED |
+| L1836 | `internal/events/worker.go:63:51` | Magic number: 400001, in <argument> detected | FIXED |
+| L1837 | `internal/events/worker.go:63:61` | Magic number: 200000, in <operation> detected | FIXED |
+| L1838 | `internal/events/worker.go:64:49` | Magic number: 1000000, in <argument> detected | FIXED |
+| L1839 | `internal/events/worker.go:111:49` | Magic number: 10, in <argument> detected | FIXED |
+| L1840 | `internal/events/worker.go:136:16` | Magic number: 410, in <case> detected | FIXED |
+| L1841 | `internal/events/worker.go:138:16` | Magic number: 413, in <case> detected | FIXED |
+| L1842 | `internal/events/worker.go:162:77` | Magic number: 5, in <argument> detected | FIXED |
+| L1843 | `internal/events/worker.go:194:27` | Magic number: 5, in <argument> detected | FIXED |
+| L1844 | `internal/events/worker.go:195:30` | Magic number: 4, in <argument> detected | FIXED |
+| L1845 | `internal/events/worker.go:199:28` | Magic number: 250, in <argument> detected | FIXED |
+| L1846 | `internal/events/worker.go:224:26` | Magic number: 250, in <argument> detected | FIXED |
+| L1847 | `internal/historyimport/mobile_worker.go:42:27` | Magic number: 500, in <argument> detected | FIXED |
+| L1848 | `internal/historyimport/mobile_worker.go:53:61` | Magic number: 20, in <argument> detected | FIXED |
+| L1849 | `internal/historyimport/mobile_worker.go:177:37` | Magic number: 180, in <argument> detected | FIXED |
+| L1850 | `internal/historyimport/mobile_worker.go:207:36` | Magic number: 120, in <argument> detected | FIXED |
+| L1851 | `internal/historyimport/mobile_worker.go:240:37` | Magic number: 30, in <argument> detected | FIXED |
+| L1852 | `internal/historyimport/worker.go:31:27` | Magic number: 500, in <argument> detected | FIXED |
+| L1853 | `internal/historyimport/worker.go:34:55` | Magic number: 20, in <argument> detected | FIXED |
+| L1854 | `internal/historyimport/worker.go:112:35` | Magic number: 30, in <argument> detected | FIXED |
+| L1855 | `internal/local/files.go:30:17` | Magic number: 0600, in <argument> detected | FIXED |
+| L1856 | `internal/logging/startup.go:44:26` | Magic number: 5, in <argument> detected | FIXED |
+| L1857 | `internal/logging/startup.go:44:29` | Magic number: 3, in <argument> detected | FIXED |
+| L1858 | `internal/logging/startup.go:66:14` | Magic number: 10, in <argument> detected | FIXED |
+| L1859 | `internal/mcpserver/http.go:34:18` | Magic number: 32, in <condition> detected | FIXED |
+| L1860 | `internal/mcpserver/http.go:135:57` | Magic number: 256, in <argument> detected | FIXED |
+| L1861 | `internal/mcpserver/http.go:135:62` | Magic number: 10, in <argument> detected | FIXED |
+| L1862 | `internal/mcpserver/server.go:302:50` | Magic number: 1000, in <assign> detected | FIXED |
+| L1863 | `internal/messaging/manager.go:120:47` | Magic number: 30, in <argument> detected | FIXED |
+| L1864 | `internal/messaging/manager.go:139:63` | Magic number: 3, in <argument> detected | FIXED |
+| L1865 | `internal/mobilebackup/account_inspection.go:77:66` | Magic number: 50, in <argument> detected | FIXED |
+| L1866 | `internal/mobilebackup/archive_library.go:27:30` | Magic number: 32, in <argument> detected | FIXED |
+| L1867 | `internal/mobilebackup/archive_restore.go:45:43` | Magic number: 33, in <argument> detected | FIXED |
+| L1868 | `internal/mobilebackup/attachment.go:62:8` | Magic number: 40, in <case> detected | FIXED |
+| L1869 | `internal/mobilebackup/attachment.go:64:8` | Magic number: 41, in <case> detected | FIXED |
+| L1870 | `internal/mobilebackup/attachment.go:66:8` | Magic number: 42, in <case> detected | FIXED |
+| L1871 | `internal/mobilebackup/attachment.go:68:8` | Magic number: 43, in <case> detected | FIXED |
+| L1872 | `internal/mobilebackup/attachment.go:70:8` | Magic number: 44, in <case> detected | FIXED |
+| L1873 | `internal/mobilebackup/attachment.go:72:8` | Magic number: 45, in <case> detected | FIXED |
+| L1874 | `internal/mobilebackup/attachment.go:74:8` | Magic number: 46, in <case> detected | FIXED |
+| L1875 | `internal/mobilebackup/attachment.go:76:8` | Magic number: 47, in <case> detected | FIXED |
+| L1876 | `internal/mobilebackup/attachment.go:78:8` | Magic number: 48, in <case> detected | FIXED |
+| L1877 | `internal/mobilebackup/attachment.go:80:8` | Magic number: 49, in <case> detected | FIXED |
+| L1878 | `internal/mobilebackup/attachment.go:82:8` | Magic number: 50, in <case> detected | FIXED |
+| L1879 | `internal/mobilebackup/attachment.go:84:8` | Magic number: 66, in <case> detected | FIXED |
+| L1880 | `internal/mobilebackup/attachment.go:86:8` | Magic number: 67, in <case> detected | FIXED |
+| L1881 | `internal/mobilebackup/attachment.go:88:8` | Magic number: 68, in <case> detected | FIXED |
+| L1882 | `internal/mobilebackup/binnet.go:48:15` | Magic number: 6, in <condition> detected | FIXED |
+| L1883 | `internal/mobilebackup/binnet.go:57:15` | Magic number: 8, in <condition> detected | FIXED |
+| L1884 | `internal/mobilebackup/binnet.go:66:15` | Magic number: 7, in <condition> detected | FIXED |
+| L1885 | `internal/mobilebackup/checksum.go:18:15` | Magic number: 16, in <condition> detected | FIXED |
+| L1886 | `internal/mobilebackup/checksum.go:19:28` | Magic number: 606290984, in <argument> detected | FIXED |
+| L1887 | `internal/mobilebackup/checksum.go:19:62` | Magic number: 1640531535, in <argument> detected | FIXED |
+| L1888 | `internal/mobilebackup/checksum.go:20:107` | Magic number: 13, in <argument> detected | FIXED |
+| L1889 | `internal/mobilebackup/checksum.go:28:56` | Magic number: 7, in <argument> detected | FIXED |
+| L1890 | `internal/mobilebackup/checksum.go:28:83` | Magic number: 12, in <argument> detected | FIXED |
+| L1891 | `internal/mobilebackup/checksum.go:28:111` | Magic number: 18, in <argument> detected | FIXED |
+| L1892 | `internal/mobilebackup/checksum.go:34:69` | Magic number: 17, in <argument> detected | FIXED |
+| L1893 | `internal/mobilebackup/checksum.go:38:41` | Magic number: 11, in <argument> detected | FIXED |
+| L1894 | `internal/mobilebackup/checksum.go:40:12` | Magic number: 15, in <operation> detected | FIXED |
+| L1895 | `internal/mobilebackup/checksum.go:42:12` | Magic number: 13, in <operation> detected | FIXED |
+| L1896 | `internal/mobilebackup/checksum.go:44:12` | Magic number: 16, in <operation> detected | FIXED |
+| L1897 | `internal/mobilebackup/control_scan.go:50:45` | Magic number: 30, in <argument> detected | FIXED |
+| L1898 | `internal/mobilebackup/control_scan.go:57:52` | Magic number: 253402300800000, in <argument> detected | FIXED |
+| L1899 | `internal/mobilebackup/control_scan.go:70:8` | Magic number: 50, in <argument> detected | FIXED |
+| L1900 | `internal/mobilebackup/download.go:41:65` | Magic number: 120, in <argument> detected | FIXED |
+| L1901 | `internal/mobilebackup/header.go:76:17` | Magic number: 4, in <condition> detected | FIXED |
+| L1902 | `internal/mobilebackup/header.go:88:18` | Magic number: 4, in <condition> detected | FIXED |
+| L1903 | `internal/mobilebackup/history_page.go:89:83` | Magic number: 5000, in <argument> detected | FIXED |
+| L1904 | `internal/mobilebackup/id_diagnostics.go:22:15` | Magic number: 64, in <condition> detected | FIXED |
+| L1905 | `internal/mobilebackup/id_diagnostics.go:40:15` | Magic number: 20, in <condition> detected | FIXED |
+| L1906 | `internal/mobilebackup/mentions.go:43:8` | Magic number: 100, in <case> detected | FIXED |
+| L1907 | `internal/mobilebackup/mentions.go:45:8` | Magic number: 101, in <case> detected | FIXED |
+| L1908 | `internal/mobilebackup/mentions.go:47:8` | Magic number: 102, in <case> detected | FIXED |
+| L1909 | `internal/mobilebackup/mentions.go:49:8` | Magic number: 103, in <case> detected | FIXED |
+| L1910 | `internal/mobilebackup/message_conversion.go:118:41` | Magic number: 50, in <argument> detected | FIXED |
+| L1911 | `internal/mobilebackup/message_conversion.go:234:51` | Magic number: 6, in <argument> detected | FIXED |
+| L1912 | `internal/mobilebackup/message_conversion.go:256:51` | Magic number: 6, in <argument> detected | FIXED |
+| L1913 | `internal/mobilebackup/offer_runner.go:81:60` | Magic number: 15, in <argument> detected | FIXED |
+| L1914 | `internal/mobilebackup/page_walk.go:40:45` | Magic number: 120, in <argument> detected | FIXED |
+| L1915 | `internal/mobilebackup/quote.go:48:32` | Magic number: 6, in <argument> detected | FIXED |
+| L1916 | `internal/mobilebackup/quote.go:67:15` | Magic number: 4, in <condition> detected | FIXED |
+| L1917 | `internal/mobilebackup/quote.go:69:16` | Magic number: 80, in <condition> detected | FIXED |
+| L1918 | `internal/mobilebackup/quote.go:78:8` | Magic number: 81, in <case> detected | FIXED |
+| L1919 | `internal/mobilebackup/quote.go:80:8` | Magic number: 82, in <case> detected | FIXED |
+| L1920 | `internal/mobilebackup/quote.go:82:8` | Magic number: 84, in <case> detected | FIXED |
+| L1921 | `internal/mobilebackup/quote.go:84:8` | Magic number: 85, in <case> detected | FIXED |
+| L1922 | `internal/mobilebackup/quote_fields.go:61:8` | Magic number: 86, in <case> detected | FIXED |
+| L1923 | `internal/mobilebackup/quote_fields.go:63:8` | Magic number: 87, in <case> detected | FIXED |
+| L1924 | `internal/mobilebackup/quote_fields.go:65:8` | Magic number: 88, in <case> detected | FIXED |
+| L1925 | `internal/mobilebackup/quote_fields.go:67:8` | Magic number: 90, in <case> detected | FIXED |
+| L1926 | `internal/mobilebackup/retained_archive.go:292:17` | Magic number: 4, in <argument> detected | FIXED |
+| L1927 | `internal/mobilebackup/retained_archive.go:304:12` | Magic number: 4, in <operation> detected | FIXED |
+| L1928 | `internal/mobilebackup/retained_archive.go:323:75` | Magic number: 0600, in <argument> detected | FIXED |
+| L1929 | `internal/mobilebackup/retained_archive.go:454:95` | Magic number: 4, in <argument> detected | FIXED |
+| L1930 | `internal/mobilebackup/retained_archive.go:505:11` | Magic number: 4, in <operation> detected | FIXED |
+| L1931 | `internal/mobilebackup/retained_archive.go:543:28` | Magic number: 32, in <argument> detected | FIXED |
+| L1932 | `internal/mobilebackup/row_page.go:48:7` | Magic number: 3, in <case> detected | FIXED |
+| L1933 | `internal/mobilebackup/row_page.go:48:10` | Magic number: 4, in <case> detected | FIXED |
+| L1934 | `internal/mobilebackup/row_page.go:48:13` | Magic number: 31, in <case> detected | FIXED |
+| L1935 | `internal/mobilebackup/row_page.go:50:7` | Magic number: 6, in <case> detected | FIXED |
+| L1936 | `internal/mobilebackup/row_page.go:52:7` | Magic number: 10, in <case> detected | FIXED |
+| L1937 | `internal/mobilebackup/row_page.go:54:7` | Magic number: 12, in <case> detected | FIXED |
+| L1938 | `internal/mobilebackup/row_page.go:56:7` | Magic number: 15, in <case> detected | FIXED |
+| L1939 | `internal/mobilebackup/row_page.go:58:7` | Magic number: 18, in <case> detected | FIXED |
+| L1940 | `internal/mobilebackup/row_page.go:60:7` | Magic number: 19, in <case> detected | FIXED |
+| L1941 | `internal/mobilebackup/row_page.go:62:7` | Magic number: 22, in <case> detected | FIXED |
+| L1942 | `internal/mobilebackup/row_page.go:64:7` | Magic number: 23, in <case> detected | FIXED |
+| L1943 | `internal/mobilebackup/row_page.go:66:7` | Magic number: 24, in <case> detected | FIXED |
+| L1944 | `internal/mobilebackup/row_page.go:68:7` | Magic number: 53, in <case> detected | FIXED |
+| L1945 | `internal/mobilebackup/row_page.go:75:7` | Magic number: 20, in <case> detected | SUPPRESSED |
+| L1946 | `internal/mobilebackup/row_page.go:75:11` | Magic number: 21, in <case> detected | SUPPRESSED |
+| L1947 | `internal/mobilebackup/row_page.go:75:15` | Magic number: 25, in <case> detected | SUPPRESSED |
+| L1948 | `internal/mobilebackup/row_page.go:75:19` | Magic number: 26, in <case> detected | SUPPRESSED |
+| L1949 | `internal/mobilebackup/row_page.go:75:23` | Magic number: 29, in <case> detected | SUPPRESSED |
+| L1950 | `internal/mobilebackup/row_page.go:75:27` | Magic number: 32, in <case> detected | SUPPRESSED |
+| L1951 | `internal/mobilebackup/row_page.go:75:31` | Magic number: 33, in <case> detected | SUPPRESSED |
+| L1952 | `internal/mobilebackup/row_page.go:75:35` | Magic number: 34, in <case> detected | SUPPRESSED |
+| L1953 | `internal/mobilebackup/row_page.go:75:39` | Magic number: 35, in <case> detected | SUPPRESSED |
+| L1954 | `internal/mobilebackup/row_page.go:75:43` | Magic number: 36, in <case> detected | SUPPRESSED |
+| L1955 | `internal/mobilebackup/row_page.go:75:47` | Magic number: 45, in <case> detected | SUPPRESSED |
+| L1956 | `internal/mobilebackup/row_page.go:75:51` | Magic number: 51, in <case> detected | SUPPRESSED |
+| L1957 | `internal/mobilebackup/row_page.go:75:55` | Magic number: 52, in <case> detected | SUPPRESSED |
+| L1958 | `internal/mobilebackup/snapshot.go:172:85` | Magic number: 0600, in <argument> detected | FIXED |
+| L1959 | `internal/mobilebackup/snapshot.go:201:29` | Magic number: 64, in <argument> detected | FIXED |
+| L1960 | `internal/mobilebackup/snapshot.go:206:23` | Magic number: 32, in <argument> detected | FIXED |
+| L1961 | `internal/mobilebackup/snapshot.go:211:77` | Magic number: 0600, in <argument> detected | FIXED |
+| L1962 | `internal/mobilebackup/snapshot.go:242:43` | Magic number: 33, in <argument> detected | FIXED |
+| L1963 | `internal/mobilebackup/snapshot.go:364:68` | Magic number: 0600, in <argument> detected | FIXED |
+| L1964 | `internal/mobilebackup/snapshot.go:457:60` | Magic number: 64, in <operation> detected | FIXED |
+| L1965 | `internal/mobilebackup/snapshot.go:459:79` | Magic number: 4, in <argument> detected | FIXED |
+| L1966 | `internal/mobilebackup/snapshot.go:511:43` | Magic number: 4, in <argument> detected | FIXED |
+| L1967 | `internal/mobilebackup/snapshot_page.go:135:18` | Magic number: 20, in <condition> detected | FIXED |
+| L1968 | `internal/mobilebackup/snapshot_recalls.go:74:43` | Magic number: 253402300800000, in <argument> detected | FIXED |
+| L1969 | `internal/mobilebackup/snapshot_terminal.go:30:45` | Magic number: 4, in <argument> detected | FIXED |
+| L1970 | `internal/mobilebackup/snapshot_terminal.go:65:110` | Magic number: 4, in <argument> detected | FIXED |
+| L1971 | `internal/mobilebackup/sqlite.go:109:42` | Magic number: 20, in <argument> detected | FIXED |
+| L1972 | `internal/mobilebackup/sqlite.go:203:24` | Magic number: 20, in <condition> detected | FIXED |
+| L1973 | `internal/mobilebackup/sqlite.go:226:45` | Magic number: 30, in <argument> detected | FIXED |
+| L1974 | `internal/mobilebackup/sqlite.go:377:29` | Magic number: 5000, in <condition> detected | FIXED |
+| L1975 | `internal/mobilebackup/xz.go:38:44` | Magic number: 4096, in <assign> detected | FIXED |
+| L1976 | `internal/mobilebackup/xz.go:82:8` | Magic number: 4, in <case> detected | FIXED |
+| L1977 | `internal/mobilebackup/xz.go:84:8` | Magic number: 10, in <case> detected | FIXED |
+| L1978 | `internal/mobilebackup/xz.go:89:71` | Magic number: 4, in <operation> detected | FIXED |
+| L1979 | `internal/mobilebackup/xz.go:90:44` | Magic number: 24, in <argument> detected | FIXED |
+| L1980 | `internal/mobilebackup/xz.go:93:23` | Magic number: 12, in <operation> detected | FIXED |
+| L1981 | `internal/mobilebackup/xz.go:116:23` | Magic number: 3, in <operation> detected | FIXED |
+| L1982 | `internal/mobilebackup/xz.go:116:36` | Magic number: 3, in <argument> detected | FIXED |
+| L1983 | `internal/mobilebackup/xz.go:125:43` | Magic number: 12, in <operation> detected | FIXED |
+| L1984 | `internal/mobilebackup/xz.go:131:18` | Magic number: 12, in <operation> detected | FIXED |
+| L1985 | `internal/mobilebackup/xz.go:136:35` | Magic number: 3, in <operation> detected | FIXED |
+| L1986 | `internal/mobilebackup/xz.go:136:48` | Magic number: 3, in <argument> detected | FIXED |
+| L1987 | `internal/mobilebackup/xz.go:157:37` | Magic number: 4, in <operation> detected | FIXED |
+| L1988 | `internal/mobilebackup/xz.go:188:16` | Magic number: 40, in <condition> detected | FIXED |
+| L1989 | `internal/mobilebackup/xz.go:192:17` | Magic number: 40, in <condition> detected | FIXED |
+| L1990 | `internal/mobilebackup/xz.go:195:56` | Magic number: 11, in <operation> detected | FIXED |
+| L1991 | `internal/mobilebackup/xz.go:205:21` | Magic number: 0x7f, in <argument> detected | FIXED |
+| L1992 | `internal/mobilebackup/xz.go:205:31` | Magic number: 7, in <operation> detected | FIXED |
+| L1993 | `internal/netpolicy/http.go:70:33` | Magic number: 5, in <assign> detected | FIXED |
+| L1994 | `internal/netpolicy/http.go:75:24` | Magic number: 5, in <assign> detected | FIXED |
+| L1995 | `internal/netpolicy/http.go:75:64` | Magic number: 5, in <assign> detected | FIXED |
+| L1996 | `internal/service/account_archive.go:39:45` | Magic number: 420, in <argument> detected | FIXED |
+| L1997 | `internal/service/account_archive.go:170:42` | Magic number: 120, in <argument> detected | FIXED |
+| L1998 | `internal/service/archive_catalog.go:35:10` | Magic number: 20, in <return> detected | FIXED |
+| L1999 | `internal/service/archive_catalog.go:76:36` | Magic number: 7, in <operation> detected | FIXED |
+| L2000 | `internal/service/archive_catalog.go:76:39` | Magic number: 8, in <argument> detected | FIXED |
+| L2001 | `internal/service/archive_catalog.go:108:48` | Magic number: 8, in <argument> detected | FIXED |
+| L2002 | `internal/service/archive_catalog.go:115:45` | Magic number: 8, in <argument> detected | FIXED |
+| L2003 | `internal/service/archive_messages.go:321:28` | Magic number: 2048, in <operation> detected | FIXED |
+| L2004 | `internal/service/bridge.go:50:18` | Magic number: 40, in <assign> detected | FIXED |
+| L2005 | `internal/service/bridge.go:189:24` | Magic number: 256, in <condition> detected | FIXED |
+| L2006 | `internal/service/bridge.go:208:24` | Magic number: 4096, in <condition> detected | FIXED |
+| L2007 | `internal/service/bridge.go:214:72` | Magic number: 24, in <argument> detected | FIXED |
+| L2008 | `internal/service/cli.go:93:48` | Magic number: 35, in <argument> detected | FIXED |
+| L2009 | `internal/service/cli.go:109:41` | Magic number: 5, in <argument> detected | FIXED |
+| L2010 | `internal/service/cli.go:129:57` | Magic number: 5, in <argument> detected | FIXED |
+| L2011 | `internal/service/cli.go:146:48` | Magic number: 3, in <argument> detected | FIXED |
+| L2012 | `internal/service/cli_mobile_ledger.go:47:47` | Magic number: 16, in <operation> detected | FIXED |
+| L2013 | `internal/service/cli_mobile_ledger.go:47:51` | Magic number: 10, in <operation> detected | FIXED |
+| L2014 | `internal/service/cli_mobile_ledger.go:71:19` | Magic number: 3, in <condition> detected | FIXED |
+| L2015 | `internal/service/cli_mobile_ledger.go:104:19` | Magic number: 4, in <condition> detected | FIXED |
+| L2016 | `internal/service/cli_mobile_ledger.go:116:12` | Magic number: 10, in <operation> detected | FIXED |
+| L2017 | `internal/service/cli_mobile_ledger.go:119:12` | Magic number: 140, in <operation> detected | FIXED |
+| L2018 | `internal/service/cli_mobile_ledger.go:122:12` | Magic number: 40, in <operation> detected | FIXED |
+| L2019 | `internal/service/cli_mobile_ledger.go:125:12` | Magic number: 205, in <operation> detected | FIXED |
+| L2020 | `internal/service/cli_mobile_ledger.go:128:12` | Magic number: 445, in <operation> detected | FIXED |
+| L2021 | `internal/service/mobile_archive_probe.go:67:46` | Magic number: 420, in <argument> detected | FIXED |
+| L2022 | `internal/service/mobile_archive_probe.go:99:33` | Magic number: 500, in <argument> detected | FIXED |
+| L2023 | `internal/service/mobile_archive_probe.go:114:5` | Magic number: 50, in <argument> detected | FIXED |
+| L2024 | `internal/service/mobile_archive_probe.go:115:5` | Magic number: 100, in <argument> detected | FIXED |
+| L2025 | `internal/service/mobile_ledger_control.go:30:14` | Magic number: 4, in <condition> detected | FIXED |
+| L2026 | `internal/service/mobile_offer_probe.go:23:44` | Magic number: 185, in <argument> detected | FIXED |
+| L2027 | `internal/service/recall_diagnostic.go:58:50` | Magic number: 30, in <argument> detected | FIXED |
+| L2028 | `internal/service/recall_diagnostic.go:99:44` | Magic number: 0700, in <argument> detected | FIXED |
+| L2029 | `internal/service/recall_diagnostic.go:122:43` | Magic number: 513, in <argument> detected | FIXED |
+| L2030 | `internal/service/recall_diagnostic.go:151:28` | Magic number: 21, in <argument> detected | FIXED |
+| L2031 | `internal/service/recall_diagnostic.go:156:63` | Magic number: 0600, in <argument> detected | FIXED |
+| L2032 | `internal/service/run.go:113:55` | Magic number: 16, in <argument> detected | FIXED |
+| L2033 | `internal/service/run.go:113:59` | Magic number: 10, in <argument> detected | FIXED |
+| L2034 | `internal/service/run.go:251:97` | Magic number: 512, in <argument> detected | FIXED |
+| L2035 | `internal/service/run.go:251:102` | Magic number: 20, in <argument> detected | FIXED |
+| L2036 | `internal/service/run.go:256:106` | Magic number: 30, in <argument> detected | FIXED |
+| L2037 | `internal/service/run.go:265:6` | Magic number: 30, in <argument> detected | FIXED |
+| L2038 | `internal/service/run.go:336:22` | Magic number: 5, in <assign> detected | FIXED |
+| L2039 | `internal/service/run.go:337:22` | Magic number: 15, in <assign> detected | FIXED |
+| L2040 | `internal/service/run.go:338:22` | Magic number: 45, in <assign> detected | FIXED |
+| L2041 | `internal/service/run.go:339:22` | Magic number: 30, in <assign> detected | FIXED |
+| L2042 | `internal/service/run.go:345:22` | Magic number: 5, in <assign> detected | FIXED |
+| L2043 | `internal/service/run.go:346:22` | Magic number: 10, in <assign> detected | FIXED |
+| L2044 | `internal/service/run.go:347:22` | Magic number: 450, in <assign> detected | FIXED |
+| L2045 | `internal/service/run.go:349:31` | Magic number: 8, in <argument> detected | FIXED |
+| L2046 | `internal/service/run.go:390:28` | Magic number: 5, in <argument> detected | FIXED |
+| L2047 | `internal/service/run.go:408:62` | Magic number: 5, in <argument> detected | FIXED |
+| L2048 | `internal/service/run.go:417:75` | Magic number: 500, in <argument> detected | FIXED |
+| L2049 | `internal/service/run.go:442:66` | Magic number: 10, in <argument> detected | FIXED |
+| L2050 | `internal/service/run.go:511:48` | Magic number: 30, in <argument> detected | FIXED |
+| L2051 | `internal/service/run.go:636:24` | Magic number: 40, in <argument> detected | FIXED |
+| L2052 | `internal/service/telemetry.go:19:27` | Magic number: 500, in <argument> detected | FIXED |
+| L2053 | `internal/service/token.go:16:26` | Magic number: 32, in <argument> detected | FIXED |
+| L2054 | `internal/storage/browse.go:111:29` | Magic number: 150, in <operation> detected | FIXED |
+| L2055 | `internal/storage/contacts.go:46:21` | Magic number: 200, in <condition> detected | FIXED |
+| L2056 | `internal/storage/deliveries.go:23:16` | Magic number: 100000, in <assign> detected | FIXED |
+| L2057 | `internal/storage/deliveries.go:24:16` | Magic number: 256, in <assign> detected | FIXED |
+| L2058 | `internal/storage/deliveries.go:24:23` | Magic number: 20, in <assign> detected | FIXED |
+| L2059 | `internal/storage/deliveries.go:25:16` | Magic number: 256, in <assign> detected | FIXED |
+| L2060 | `internal/storage/deliveries.go:27:16` | Magic number: 30, in <assign> detected | FIXED |
+| L2061 | `internal/storage/events.go:220:15` | Magic number: 100, in <condition> detected | FIXED |
+| L2062 | `internal/storage/history_expiry.go:61:20` | Magic number: 50, in <condition> detected | FIXED |
+| L2063 | `internal/storage/history_operations.go:349:20` | Magic number: 50, in <condition> detected | FIXED |
+| L2064 | `internal/storage/history_operations.go:721:11` | Magic number: 30, in <operation> detected | FIXED |
+| L2065 | `internal/storage/history_operations.go:723:11` | Magic number: 180, in <operation> detected | FIXED |
+| L2066 | `internal/storage/mobile_backup.go:141:14` | Magic number: 10000, in <condition> detected | FIXED |
+| L2067 | `internal/storage/preload_directory.go:14:20` | Magic number: 5000, in <condition> detected | FIXED |
+| L2068 | `internal/storage/store.go:80:21` | Magic number: 32, in <argument> detected | FIXED |
+| L2069 | `internal/storage/store.go:690:30` | Magic number: 150, in <operation> detected | FIXED |
+| L2070 | `internal/storage/views.go:266:64` | Magic number: 8000, in <argument> detected | FIXED |
+| L2071 | `internal/storage/views.go:380:50` | Magic number: 1000, in <condition> detected | FIXED |
+| L2072 | `internal/storage/views.go:381:46` | Magic number: 1000, in <argument> detected | FIXED |
+| L2073 | `internal/storage/views.go:385:27` | Magic number: 1000, in <argument> detected | FIXED |
+| L2074 | `internal/toolruntime/binder.go:48:35` | Magic number: 20, in <argument> detected | FIXED |
+| L2075 | `internal/toolruntime/binder.go:68:40` | Magic number: 5, in <argument> detected | FIXED |
+| L2076 | `internal/toolruntime/binder.go:69:39` | Magic number: 5, in <argument> detected | FIXED |
+| L2077 | `internal/toolruntime/runtime.go:543:26` | Magic number: 20, in <argument> detected | FIXED |
+| L2078 | `internal/toolruntime/runtime.go:574:38` | Magic number: 20, in <argument> detected | FIXED |
+| L2079 | `internal/toolruntime/runtime.go:584:36` | Magic number: 20, in <argument> detected | FIXED |
+| L2080 | `internal/toolruntime/runtime.go:603:46` | Magic number: 20, in <argument> detected | FIXED |
+| L2081 | `internal/toolruntime/runtime.go:616:42` | Magic number: 20, in <argument> detected | FIXED |
+| L2082 | `internal/toolruntime/runtime.go:634:35` | Magic number: 20, in <argument> detected | FIXED |
+| L2083 | `internal/zalo/adapter.go:46:46` | Magic number: 30, in <assign> detected | FIXED |
+| L2084 | `internal/zalo/adapter.go:183:20` | Magic number: 50, in <argument> detected | FIXED |
+| L2085 | `internal/zalo/events.go:60:32` | Magic number: 15, in <argument> detected | FIXED |
+| L2086 | `internal/zalo/mobile_backup.go:52:73` | Magic number: 2048, in <argument> detected | FIXED |
+| L2087 | `internal/zalo/mobile_backup.go:71:43` | Magic number: 180, in <argument> detected | FIXED |
+| L2088 | `internal/zalo/mobile_backup.go:164:13` | Magic number: 3, in <case> detected | SUPPRESSED |
+| L2089 | `internal/zalo/replay.go:51:18` | Magic number: 100, in <case> detected | FIXED |
+| L2090 | `internal/zalo/replay.go:53:21` | Magic number: 10000, in <case> detected | FIXED |
+| L2091 | `tools/harness/internal/architecture/architecture.go:77:16` | Magic number: 20, in <operation> detected | FIXED |
+| L2092 | `tools/harness/internal/architecture/architecture.go:90:42` | Magic number: 60, in <argument> detected | FIXED |
+| L2093 | `tools/harness/internal/performance/bench.go:28:42` | Magic number: 900, in <argument> detected | FIXED |
+| L2094 | `tools/harness/internal/performance/bench.go:30:67` | Magic number: 4, in <argument> detected | FIXED |
+| L2095 | `tools/harness/internal/performance/bench.go:30:70` | Magic number: 20, in <argument> detected | FIXED |
+| L2096 | `tools/harness/internal/performance/bench.go:46:68` | Magic number: 1000, in <argument> detected | FIXED |
+| L2097 | `tools/harness/internal/performance/bench.go:46:107` | Magic number: 50, in <argument> detected | FIXED |
+| L2098 | `tools/harness/internal/performance/bench.go:46:262` | Magic number: 110, in <argument> detected | FIXED |
+| L2099 | `tools/harness/internal/performance/bench.go:76:42` | Magic number: 1200, in <argument> detected | FIXED |
+| L2100 | `tools/harness/internal/performance/bench.go:147:302` | Magic number: 5, in <assign> detected | FIXED |
+| L2101 | `tools/harness/internal/performance/bench.go:147:331` | Magic number: 1000, in <assign> detected | FIXED |
+| L2102 | `tools/harness/internal/performance/bench.go:147:353` | Magic number: 50, in <assign> detected | FIXED |
+| L2103 | `tools/harness/internal/performance/bench.go:147:402` | Magic number: 3, in <assign> detected | FIXED |
+| L2104 | `tools/harness/internal/performance/bench.go:147:477` | Magic number: 110, in <assign> detected | FIXED |
+| L2105 | `tools/harness/internal/performance/bench.go:147:504` | Magic number: 1200, in <assign> detected | FIXED |
+| L2106 | `tools/harness/internal/performance/bench.go:147:534` | Magic number: 900, in <assign> detected | FIXED |
+| L2107 | `tools/harness/internal/performance/bench.go:147:562` | Magic number: 1.15, in <assign> detected | FIXED |
+| L2108 | `tools/harness/internal/performance/bench.go:147:599` | Magic number: 2.0, in <assign> detected | FIXED |
+| L2109 | `tools/harness/internal/performance/bench.go:147:635` | Magic number: 1.20, in <assign> detected | FIXED |
+| L2110 | `tools/harness/internal/performance/bench.go:151:27` | Magic number: 3, in <argument> detected | FIXED |
+| L2111 | `tools/harness/internal/performance/build.go:15:33` | Magic number: 30, in <argument> detected | FIXED |
+| L2112 | `tools/harness/internal/performance/build.go:23:55` | Magic number: 4, in <argument> detected | FIXED |
+| L2113 | `tools/harness/internal/performance/build.go:23:58` | Magic number: 20, in <argument> detected | FIXED |
+| L2114 | `tools/harness/internal/performance/build.go:85:43` | Magic number: 180, in <argument> detected | FIXED |
+| L2115 | `tools/harness/internal/performance/build.go:108:57` | Magic number: 4, in <argument> detected | FIXED |
+| L2116 | `tools/harness/internal/performance/build.go:108:60` | Magic number: 20, in <argument> detected | FIXED |
+| L2117 | `tools/harness/internal/performance/compare.go:30:29` | Magic number: 5, in <assign> detected | FIXED |
+| L2118 | `tools/harness/internal/performance/compare.go:30:48` | Magic number: 50, in <assign> detected | FIXED |
+| L2119 | `tools/harness/internal/performance/compare.go:30:97` | Magic number: 3, in <assign> detected | FIXED |
+| L2120 | `tools/harness/internal/performance/compare.go:30:172` | Magic number: 110, in <assign> detected | FIXED |
+| L2121 | `tools/harness/internal/performance/compare.go:41:21` | Magic number: 15, in <condition> detected | FIXED |
+| L2122 | `tools/harness/internal/performance/compare.go:145:167` | Magic number: 2.0, in <assign> detected | FIXED |
+| L2123 | `tools/harness/internal/performance/compare.go:145:187` | Magic number: 1.20, in <assign> detected | FIXED |
+| L2124 | `tools/harness/internal/performance/compare.go:171:45` | Magic number: 1.15, in <assign> detected | FIXED |
+| L2125 | `tools/harness/internal/performance/compare.go:171:82` | Magic number: 2.0, in <assign> detected | FIXED |
+| L2126 | `tools/harness/internal/performance/compare.go:252:51` | Magic number: 1.20, in <operation> detected | FIXED |
+| L2127 | `tools/harness/internal/performance/compare.go:253:232` | Magic number: 1.20, in <assign> detected | FIXED |
+| L2128 | `tools/harness/internal/performance/json.go:24:44` | Magic number: .0078683, in <assign> detected | FIXED |
+| L2129 | `tools/harness/internal/performance/json.go:24:64` | Magic number: .0070726337, in <assign> detected | FIXED |
+| L2130 | `tools/harness/internal/performance/json.go:24:88` | Magic number: .0069967799, in <assign> detected | FIXED |
+| L2131 | `tools/harness/internal/performance/json.go:94:15` | Magic number: 64, in <condition> detected | FIXED |
+| L2132 | `tools/harness/internal/performance/process.go:54:23` | Magic number: 8192, in <argument> detected | FIXED |
 
 ### modernize (5)
 
@@ -2724,11 +2820,11 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L2133 | `tools/harness/internal/architecture/architecture.go:122:6` | errorsastype: errors.As can be simplified using AsType[*exec.ExitError] | OPEN |
-| L2134 | `tools/harness/internal/architecture/architecture.go:308:5` | stringscutprefix: HasPrefix + TrimPrefix can be simplified to CutPrefix | OPEN |
-| L2135 | `tools/harness/internal/performance/bench.go:127:26` | stringsseq: Ranging over SplitSeq is more efficient | OPEN |
-| L2136 | `tools/harness/internal/performance/bench.go:148:4` | mapsloop: Replace m[k]=v loop with maps.Copy | OPEN |
-| L2137 | `tools/harness/internal/performance/compare.go:137:2` | slicescontains: Loop can be simplified using slices.Contains | OPEN |
+| L2133 | `tools/harness/internal/architecture/architecture.go:122:6` | errorsastype: errors.As can be simplified using AsType[*exec.ExitError] | FIXED |
+| L2134 | `tools/harness/internal/architecture/architecture.go:308:5` | stringscutprefix: HasPrefix + TrimPrefix can be simplified to CutPrefix | FIXED |
+| L2135 | `tools/harness/internal/performance/bench.go:127:26` | stringsseq: Ranging over SplitSeq is more efficient | FIXED |
+| L2136 | `tools/harness/internal/performance/bench.go:148:4` | mapsloop: Replace m[k]=v loop with maps.Copy | FIXED |
+| L2137 | `tools/harness/internal/performance/compare.go:137:2` | slicescontains: Loop can be simplified using slices.Contains | FIXED |
 
 ### musttag (33)
 
@@ -2952,17 +3048,17 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L2284 | `tools/harness/cmd/harness/main.go:71:12` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
-| L2285 | `tools/harness/cmd/harness/main.go:82:12` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
-| L2286 | `tools/harness/internal/performance/bench.go:40:8` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
-| L2287 | `tools/harness/internal/performance/bench.go:47:10` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
-| L2288 | `tools/harness/internal/performance/bench.go:117:11` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
-| L2289 | `tools/harness/internal/performance/bench.go:137:11` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
-| L2290 | `tools/harness/internal/performance/bench.go:172:12` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
-| L2291 | `tools/harness/internal/performance/build.go:96:11` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
-| L2292 | `tools/harness/internal/performance/build.go:133:11` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
-| L2293 | `tools/harness/internal/performance/json.go:36:15` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
-| L2294 | `tools/harness/internal/performance/json.go:40:15` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
+| L2284 | `tools/harness/cmd/harness/main.go:71:12` | error-format: fmt.Errorf can be replaced with errors.New | FIXED |
+| L2285 | `tools/harness/cmd/harness/main.go:82:12` | error-format: fmt.Errorf can be replaced with errors.New | FIXED |
+| L2286 | `tools/harness/internal/performance/bench.go:40:8` | error-format: fmt.Errorf can be replaced with errors.New | FIXED |
+| L2287 | `tools/harness/internal/performance/bench.go:47:10` | error-format: fmt.Errorf can be replaced with errors.New | FIXED |
+| L2288 | `tools/harness/internal/performance/bench.go:117:11` | error-format: fmt.Errorf can be replaced with errors.New | FIXED |
+| L2289 | `tools/harness/internal/performance/bench.go:137:11` | error-format: fmt.Errorf can be replaced with errors.New | FIXED |
+| L2290 | `tools/harness/internal/performance/bench.go:172:12` | error-format: fmt.Errorf can be replaced with errors.New | FIXED |
+| L2291 | `tools/harness/internal/performance/build.go:96:11` | error-format: fmt.Errorf can be replaced with errors.New | FIXED |
+| L2292 | `tools/harness/internal/performance/build.go:133:11` | error-format: fmt.Errorf can be replaced with errors.New | FIXED |
+| L2293 | `tools/harness/internal/performance/json.go:36:15` | error-format: fmt.Errorf can be replaced with errors.New | FIXED |
+| L2294 | `tools/harness/internal/performance/json.go:40:15` | error-format: fmt.Errorf can be replaced with errors.New | FIXED |
 
 ### predeclared (4)
 
@@ -2974,10 +3070,10 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L2295 | `internal/mcpserver/http_test.go:32:2` | variable copy has same name as predeclared identifier | OPEN |
-| L2296 | `internal/mobilebackup/snapshot_page.go:117:3` | variable copy has same name as predeclared identifier | OPEN |
-| L2297 | `internal/service/events_restart_test.go:77:2` | variable copy has same name as predeclared identifier | OPEN |
-| L2298 | `internal/zalo/cookies.go:38:3` | variable copy has same name as predeclared identifier | OPEN |
+| L2295 | `internal/mcpserver/http_test.go:32:2` | variable copy has same name as predeclared identifier | FIXED |
+| L2296 | `internal/mobilebackup/snapshot_page.go:117:3` | variable copy has same name as predeclared identifier | FIXED |
+| L2297 | `internal/service/events_restart_test.go:77:2` | variable copy has same name as predeclared identifier | FIXED |
+| L2298 | `internal/zalo/cookies.go:38:3` | variable copy has same name as predeclared identifier | FIXED |
 
 ### reassign (4)
 
@@ -2989,10 +3085,10 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L2299 | `internal/service/cli_recall_command_test.go:50:3` | reassigning variable Args in other package os | OPEN |
-| L2300 | `internal/service/cli_recall_command_test.go:51:3` | reassigning variable Stdout in other package os | OPEN |
-| L2301 | `internal/service/cli_recall_command_test.go:57:2` | reassigning variable Args in other package os | OPEN |
-| L2302 | `internal/service/cli_recall_command_test.go:58:2` | reassigning variable Stdout in other package os | OPEN |
+| L2299 | `internal/service/cli_recall_command_test.go:50:3` | reassigning variable Args in other package os | SUPPRESSED |
+| L2300 | `internal/service/cli_recall_command_test.go:51:3` | reassigning variable Stdout in other package os | SUPPRESSED |
+| L2301 | `internal/service/cli_recall_command_test.go:57:2` | reassigning variable Args in other package os | SUPPRESSED |
+| L2302 | `internal/service/cli_recall_command_test.go:58:2` | reassigning variable Stdout in other package os | SUPPRESSED |
 
 ### recvcheck (21)
 
@@ -3036,104 +3132,104 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L2324 | `internal/app/eventaccess/journal.go:8:1` | exported: comment on exported type Subscription should be of the form "Subscription ..." (with optional leading article) | OPEN |
-| L2325 | `internal/app/eventaccess/journal.go:43:1` | exported: comment on exported method EventData.MarshalJSON should be of the form "MarshalJSON ..." | OPEN |
-| L2326 | `internal/app/history/command.go:10:1` | exported: comment on exported type StartRequest should be of the form "StartRequest ..." (with optional leading article) | OPEN |
-| L2327 | `internal/collector/contact_profiles_test.go:59:50` | unused-parameter: parameter 'ids' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2328 | `internal/collector/contact_profiles_test.go:200:35` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2329 | `internal/collector/contacts_test.go:50:32` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2330 | `internal/collector/contacts_test.go:121:51` | unused-parameter: parameter 'page' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2331 | `internal/collector/contacts_test.go:121:57` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2332 | `internal/collector/conversations.go:20:2` | context-as-argument: context.Context should be the first parameter of a function | OPEN |
-| L2333 | `internal/collector/history_test.go:33:43` | unused-parameter: parameter 'ref' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2334 | `internal/collector/history_test.go:33:71` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2335 | `internal/collector/history_test.go:33:86` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | OPEN |
+| L2324 | `internal/app/eventaccess/journal.go:8:1` | exported: comment on exported type Subscription should be of the form "Subscription ..." (with optional leading article) | FIXED |
+| L2325 | `internal/app/eventaccess/journal.go:43:1` | exported: comment on exported method EventData.MarshalJSON should be of the form "MarshalJSON ..." | FIXED |
+| L2326 | `internal/app/history/command.go:10:1` | exported: comment on exported type StartRequest should be of the form "StartRequest ..." (with optional leading article) | FIXED |
+| L2327 | `internal/collector/contact_profiles_test.go:59:50` | unused-parameter: parameter 'ids' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2328 | `internal/collector/contact_profiles_test.go:200:35` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2329 | `internal/collector/contacts_test.go:50:32` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2330 | `internal/collector/contacts_test.go:121:51` | unused-parameter: parameter 'page' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2331 | `internal/collector/contacts_test.go:121:57` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2332 | `internal/collector/conversations.go:20:2` | context-as-argument: context.Context should be the first parameter of a function | FIXED |
+| L2333 | `internal/collector/history_test.go:33:43` | unused-parameter: parameter 'ref' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2334 | `internal/collector/history_test.go:33:71` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2335 | `internal/collector/history_test.go:33:86` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | FIXED |
 | L2336 | `internal/collector/join.go:157:64` | unexported-return: exported method Preview returns unexported type collector.preview, which can be annoying to use | FIXED |
-| L2337 | `internal/evalfixture/fixture_test.go:97:35` | context-as-argument: context.Context should be the first parameter of a function | OPEN |
-| L2338 | `internal/evalfixture/fixture_test.go:116:2` | context-as-argument: context.Context should be the first parameter of a function | OPEN |
-| L2339 | `internal/evaluation/process_test.go:17:24` | unused-parameter: parameter 't' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2340 | `internal/evaluation/scenarios.go:357:1` | exported: comment on exported function DefaultChildOptions should be of the form "DefaultChildOptions ..." | OPEN |
-| L2341 | `internal/events/webhook_test.go:123:10` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2342 | `internal/events/webhook_test.go:123:31` | unused-parameter: parameter 'network' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2343 | `internal/historyimport/mcp_test.go:125:59` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2344 | `internal/historyimport/mcp_test.go:125:108` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2345 | `internal/historyimport/mcp_test.go:125:123` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2346 | `internal/historyimport/worker_test.go:126:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2347 | `internal/historyimport/worker_test.go:185:53` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2348 | `internal/historyimport/worker_test.go:185:102` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2349 | `internal/historyimport/worker_test.go:185:117` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2350 | `internal/historyimport/worker_test.go:206:102` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2351 | `internal/historyimport/worker_test.go:206:117` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2352 | `internal/historyimport/worker_test.go:399:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2353 | `internal/historyimport/worker_test.go:399:83` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2354 | `internal/mcpserver/http_test.go:32:2` | redefines-builtin-id: redefinition of the built-in function copy | OPEN |
-| L2355 | `internal/messaging/manager_test.go:138:49` | unused-parameter: parameter 'text' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2356 | `internal/mobilebackup/archive_tokens.go:9:1` | exported: comment on exported method RetainedArchiveStore.SealArchiveToken should be of the form "SealArchiveToken ..." | OPEN |
-| L2357 | `internal/mobilebackup/control_scan_test.go:75:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2358 | `internal/mobilebackup/history_worker_test.go:69:9` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2359 | `internal/mobilebackup/history_worker_test.go:632:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2360 | `internal/mobilebackup/offer_logging_test.go:50:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2361 | `internal/mobilebackup/offer_runner_test.go:109:10` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2362 | `internal/mobilebackup/offer_runner_test.go:155:8` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2363 | `internal/mobilebackup/offer_runner_test.go:203:8` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2364 | `internal/mobilebackup/offer_runner_test.go:220:32` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2365 | `internal/mobilebackup/own_recall_test.go:20:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2366 | `internal/mobilebackup/recall_history_test.go:109:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2367 | `internal/mobilebackup/row_page_test.go:46:8` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2368 | `internal/mobilebackup/row_page_test.go:91:10` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2369 | `internal/mobilebackup/row_page_test.go:91:29` | unused-parameter: parameter 'r' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2370 | `internal/mobilebackup/selected_fetch_test.go:45:46` | unused-parameter: parameter 'r' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2371 | `internal/mobilebackup/selected_fetch_test.go:55:8` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2372 | `internal/mobilebackup/selected_fetch_test.go:94:48` | unused-parameter: parameter 'r' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2373 | `internal/mobilebackup/selected_fetch_test.go:106:10` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2374 | `internal/mobilebackup/snapshot_page.go:117:3` | redefines-builtin-id: redefinition of the built-in function copy | OPEN |
-| L2375 | `internal/mobilebackup/sqlite.go:36:1` | exported: comment on exported type SQLiteCoverage should be of the form "SQLiteCoverage ..." (with optional leading article) | OPEN |
-| L2376 | `internal/service/events_restart_test.go:77:2` | redefines-builtin-id: redefinition of the built-in function copy | OPEN |
-| L2377 | `internal/service/history_test.go:41:2` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2378 | `internal/service/history_test.go:43:2` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2379 | `internal/service/history_test.go:44:2` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2380 | `internal/service/history_test.go:63:2` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2381 | `internal/service/history_test.go:65:2` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2382 | `internal/service/mobile_backup_test.go:28:2` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2383 | `internal/service/mobile_page_test.go:54:2` | unused-parameter: parameter 'req' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2384 | `internal/service/mobile_page_test.go:55:2` | unused-parameter: parameter 'client' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2385 | `internal/service/run_test.go:37:2` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2386 | `internal/service/sending_test.go:64:2` | unused-parameter: parameter 'peer' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2387 | `internal/storage/event_journal.go:136:1` | exported: comment on exported method Store.ReadSubscriptionEvents should be of the form "ReadSubscriptionEvents ..." | OPEN |
-| L2388 | `internal/storage/incoming_test.go:138:21` | unused-parameter: parameter 'm' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2389 | `internal/storage/incoming_test.go:163:21` | unused-parameter: parameter 'm' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2390 | `internal/storage/store.go:19:2` | blank-imports: a blank import should be only in a main or test package, or have a comment justifying it | OPEN |
-| L2391 | `internal/zalo/contact_profiles_test.go:70:38` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2392 | `internal/zalo/cookies.go:38:3` | redefines-builtin-id: redefinition of the built-in function copy | OPEN |
-| L2393 | `internal/zalo/history_test.go:24:2` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2394 | `internal/zalo/history_test.go:25:2` | unused-parameter: parameter 'id' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2395 | `internal/zalo/history_test.go:25:6` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2396 | `internal/zalo/history_test.go:26:2` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2397 | `internal/zalo/mobile_backup_test.go:35:55` | unused-parameter: parameter 'host' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2398 | `internal/zalo/mobile_backup_test.go:43:47` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2399 | `internal/zalo/mobile_backup_test.go:53:52` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2400 | `internal/zalo/mobile_backup_test.go:53:81` | unused-parameter: parameter 'groups' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2401 | `internal/zalo/mobile_backup_test.go:161:51` | unused-parameter: parameter 'p' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2402 | `internal/zalo/mobile_identities_test.go:22:56` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2403 | `internal/zalo/mobile_identities_test.go:22:77` | unused-parameter: parameter 'direct' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2404 | `internal/zalo/mobile_identities_test.go:22:85` | unused-parameter: parameter 'groups' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2405 | `tools/harness/internal/performance/performance_test.go:96:27` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2406 | `tools/harness/internal/performance/performance_test.go:102:29` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2407 | `tools/harness/internal/performance/performance_test.go:102:96` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2408 | `tools/harness/internal/performance/performance_test.go:106:28` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2409 | `tools/harness/internal/performance/performance_test.go:111:21` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2410 | `tools/harness/internal/performance/performance_test.go:111:103` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2411 | `tools/harness/internal/performance/performance_test.go:111:179` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2412 | `tools/harness/internal/performance/performance_test.go:111:243` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2413 | `tools/harness/internal/performance/performance_test.go:111:320` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2414 | `tools/harness/internal/performance/performance_test.go:111:409` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2415 | `tools/harness/internal/performance/performance_test.go:111:485` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2416 | `tools/harness/internal/performance/performance_test.go:111:900` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2417 | `tools/harness/internal/performance/performance_test.go:112:16` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2418 | `tools/harness/internal/performance/performance_test.go:112:100` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2419 | `tools/harness/internal/performance/performance_test.go:112:211` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2420 | `tools/harness/internal/performance/performance_test.go:112:327` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2421 | `tools/harness/internal/performance/performance_test.go:112:429` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | OPEN |
+| L2337 | `internal/evalfixture/fixture_test.go:97:35` | context-as-argument: context.Context should be the first parameter of a function | FIXED |
+| L2338 | `internal/evalfixture/fixture_test.go:116:2` | context-as-argument: context.Context should be the first parameter of a function | FIXED |
+| L2339 | `internal/evaluation/process_test.go:17:24` | unused-parameter: parameter 't' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2340 | `internal/evaluation/scenarios.go:357:1` | exported: comment on exported function DefaultChildOptions should be of the form "DefaultChildOptions ..." | FIXED |
+| L2341 | `internal/events/webhook_test.go:123:10` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2342 | `internal/events/webhook_test.go:123:31` | unused-parameter: parameter 'network' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2343 | `internal/historyimport/mcp_test.go:125:59` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2344 | `internal/historyimport/mcp_test.go:125:108` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2345 | `internal/historyimport/mcp_test.go:125:123` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2346 | `internal/historyimport/worker_test.go:126:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2347 | `internal/historyimport/worker_test.go:185:53` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2348 | `internal/historyimport/worker_test.go:185:102` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2349 | `internal/historyimport/worker_test.go:185:117` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2350 | `internal/historyimport/worker_test.go:206:102` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2351 | `internal/historyimport/worker_test.go:206:117` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2352 | `internal/historyimport/worker_test.go:399:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2353 | `internal/historyimport/worker_test.go:399:83` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2354 | `internal/mcpserver/http_test.go:32:2` | redefines-builtin-id: redefinition of the built-in function copy | FIXED |
+| L2355 | `internal/messaging/manager_test.go:138:49` | unused-parameter: parameter 'text' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2356 | `internal/mobilebackup/archive_tokens.go:9:1` | exported: comment on exported method RetainedArchiveStore.SealArchiveToken should be of the form "SealArchiveToken ..." | FIXED |
+| L2357 | `internal/mobilebackup/control_scan_test.go:75:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2358 | `internal/mobilebackup/history_worker_test.go:69:9` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2359 | `internal/mobilebackup/history_worker_test.go:632:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2360 | `internal/mobilebackup/offer_logging_test.go:50:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2361 | `internal/mobilebackup/offer_runner_test.go:109:10` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2362 | `internal/mobilebackup/offer_runner_test.go:155:8` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2363 | `internal/mobilebackup/offer_runner_test.go:203:8` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2364 | `internal/mobilebackup/offer_runner_test.go:220:32` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2365 | `internal/mobilebackup/own_recall_test.go:20:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2366 | `internal/mobilebackup/recall_history_test.go:109:8` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2367 | `internal/mobilebackup/row_page_test.go:46:8` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2368 | `internal/mobilebackup/row_page_test.go:91:10` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2369 | `internal/mobilebackup/row_page_test.go:91:29` | unused-parameter: parameter 'r' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2370 | `internal/mobilebackup/selected_fetch_test.go:45:46` | unused-parameter: parameter 'r' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2371 | `internal/mobilebackup/selected_fetch_test.go:55:8` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2372 | `internal/mobilebackup/selected_fetch_test.go:94:48` | unused-parameter: parameter 'r' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2373 | `internal/mobilebackup/selected_fetch_test.go:106:10` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2374 | `internal/mobilebackup/snapshot_page.go:117:3` | redefines-builtin-id: redefinition of the built-in function copy | FIXED |
+| L2375 | `internal/mobilebackup/sqlite.go:36:1` | exported: comment on exported type SQLiteCoverage should be of the form "SQLiteCoverage ..." (with optional leading article) | FIXED |
+| L2376 | `internal/service/events_restart_test.go:77:2` | redefines-builtin-id: redefinition of the built-in function copy | FIXED |
+| L2377 | `internal/service/history_test.go:41:2` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2378 | `internal/service/history_test.go:43:2` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2379 | `internal/service/history_test.go:44:2` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2380 | `internal/service/history_test.go:63:2` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2381 | `internal/service/history_test.go:65:2` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2382 | `internal/service/mobile_backup_test.go:28:2` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2383 | `internal/service/mobile_page_test.go:54:2` | unused-parameter: parameter 'req' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2384 | `internal/service/mobile_page_test.go:55:2` | unused-parameter: parameter 'client' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2385 | `internal/service/run_test.go:37:2` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2386 | `internal/service/sending_test.go:64:2` | unused-parameter: parameter 'peer' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2387 | `internal/storage/event_journal.go:136:1` | exported: comment on exported method Store.ReadSubscriptionEvents should be of the form "ReadSubscriptionEvents ..." | FIXED |
+| L2388 | `internal/storage/incoming_test.go:138:21` | unused-parameter: parameter 'm' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2389 | `internal/storage/incoming_test.go:163:21` | unused-parameter: parameter 'm' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2390 | `internal/storage/store.go:19:2` | blank-imports: a blank import should be only in a main or test package, or have a comment justifying it | FIXED |
+| L2391 | `internal/zalo/contact_profiles_test.go:70:38` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2392 | `internal/zalo/cookies.go:38:3` | redefines-builtin-id: redefinition of the built-in function copy | FIXED |
+| L2393 | `internal/zalo/history_test.go:24:2` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2394 | `internal/zalo/history_test.go:25:2` | unused-parameter: parameter 'id' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2395 | `internal/zalo/history_test.go:25:6` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2396 | `internal/zalo/history_test.go:26:2` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2397 | `internal/zalo/mobile_backup_test.go:35:55` | unused-parameter: parameter 'host' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2398 | `internal/zalo/mobile_backup_test.go:43:47` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2399 | `internal/zalo/mobile_backup_test.go:53:52` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2400 | `internal/zalo/mobile_backup_test.go:53:81` | unused-parameter: parameter 'groups' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2401 | `internal/zalo/mobile_backup_test.go:161:51` | unused-parameter: parameter 'p' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2402 | `internal/zalo/mobile_identities_test.go:22:56` | unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2403 | `internal/zalo/mobile_identities_test.go:22:77` | unused-parameter: parameter 'direct' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2404 | `internal/zalo/mobile_identities_test.go:22:85` | unused-parameter: parameter 'groups' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2405 | `tools/harness/internal/performance/performance_test.go:96:27` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2406 | `tools/harness/internal/performance/performance_test.go:102:29` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2407 | `tools/harness/internal/performance/performance_test.go:102:96` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2408 | `tools/harness/internal/performance/performance_test.go:106:28` | unused-parameter: parameter 'c' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2409 | `tools/harness/internal/performance/performance_test.go:111:21` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2410 | `tools/harness/internal/performance/performance_test.go:111:103` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2411 | `tools/harness/internal/performance/performance_test.go:111:179` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2412 | `tools/harness/internal/performance/performance_test.go:111:243` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2413 | `tools/harness/internal/performance/performance_test.go:111:320` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2414 | `tools/harness/internal/performance/performance_test.go:111:409` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2415 | `tools/harness/internal/performance/performance_test.go:111:485` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2416 | `tools/harness/internal/performance/performance_test.go:111:900` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2417 | `tools/harness/internal/performance/performance_test.go:112:16` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2418 | `tools/harness/internal/performance/performance_test.go:112:100` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2419 | `tools/harness/internal/performance/performance_test.go:112:211` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2420 | `tools/harness/internal/performance/performance_test.go:112:327` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
+| L2421 | `tools/harness/internal/performance/performance_test.go:112:429` | unused-parameter: parameter 'b' seems to be unused, consider removing or renaming it as _ | FIXED |
 
 ### sloglint (63)
 
@@ -3145,69 +3241,69 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L2422 | `cmd/zl-mcp-eval-fixture/main.go:71:3` | default logger should not be used | OPEN |
-| L2423 | `internal/collector/join.go:392:4` | default logger should not be used | OPEN |
-| L2424 | `internal/collector/join.go:405:4` | default logger should not be used | OPEN |
-| L2425 | `internal/collector/run.go:164:5` | default logger should not be used | OPEN |
-| L2426 | `internal/historyimport/worker.go:249:2` | default logger should not be used | OPEN |
-| L2427 | `internal/mcpserver/discovery_logging.go:115:2` | default logger should not be used | OPEN |
-| L2428 | `internal/mcpserver/server.go:257:3` | default logger should not be used | OPEN |
-| L2429 | `internal/mobilebackup/account_fetch.go:81:2` | default logger should not be used | OPEN |
-| L2430 | `internal/mobilebackup/archive.go:45:3` | default logger should not be used | OPEN |
-| L2431 | `internal/mobilebackup/archive.go:61:3` | default logger should not be used | OPEN |
-| L2432 | `internal/mobilebackup/blocks.go:57:3` | default logger should not be used | OPEN |
-| L2433 | `internal/mobilebackup/blocks.go:91:3` | default logger should not be used | OPEN |
-| L2434 | `internal/mobilebackup/download.go:107:3` | default logger should not be used | OPEN |
-| L2435 | `internal/mobilebackup/download.go:111:3` | default logger should not be used | OPEN |
-| L2436 | `internal/mobilebackup/download.go:122:3` | default logger should not be used | OPEN |
-| L2437 | `internal/mobilebackup/download.go:126:3` | default logger should not be used | OPEN |
-| L2438 | `internal/mobilebackup/download.go:140:3` | default logger should not be used | OPEN |
-| L2439 | `internal/mobilebackup/encrypted_archive.go:41:3` | default logger should not be used | OPEN |
-| L2440 | `internal/mobilebackup/encrypted_archive.go:46:3` | default logger should not be used | OPEN |
-| L2441 | `internal/mobilebackup/offer_runner.go:37:4` | default logger should not be used | OPEN |
-| L2442 | `internal/mobilebackup/offer_runner.go:45:4` | default logger should not be used | OPEN |
-| L2443 | `internal/mobilebackup/offer_runner.go:65:2` | default logger should not be used | OPEN |
-| L2444 | `internal/mobilebackup/offer_runner.go:85:3` | default logger should not be used | OPEN |
-| L2445 | `internal/mobilebackup/offer_runner.go:106:4` | default logger should not be used | OPEN |
-| L2446 | `internal/mobilebackup/offer_runner.go:118:3` | default logger should not be used | OPEN |
-| L2447 | `internal/mobilebackup/prepared_page.go:57:4` | default logger should not be used | OPEN |
-| L2448 | `internal/mobilebackup/selected_fetch.go:49:2` | default logger should not be used | OPEN |
-| L2449 | `internal/mobilebackup/selected_fetch.go:59:3` | default logger should not be used | OPEN |
-| L2450 | `internal/mobilebackup/sqlite.go:182:4` | default logger should not be used | OPEN |
-| L2451 | `internal/mobilebackup/sqlite.go:207:3` | default logger should not be used | OPEN |
-| L2452 | `internal/service/mobile_archive_probe.go:125:7` | default logger should not be used | OPEN |
-| L2453 | `internal/service/mobile_archive_probe.go:167:3` | default logger should not be used | OPEN |
-| L2454 | `internal/service/mobile_archive_probe.go:174:2` | default logger should not be used | OPEN |
-| L2455 | `internal/service/mobile_backup.go:113:3` | default logger should not be used | OPEN |
-| L2456 | `internal/service/run.go:194:3` | default logger should not be used | OPEN |
-| L2457 | `internal/service/run.go:228:4` | default logger should not be used | OPEN |
-| L2458 | `internal/service/run.go:258:3` | default logger should not be used | OPEN |
-| L2459 | `internal/service/run.go:268:3` | default logger should not be used | OPEN |
-| L2460 | `internal/service/run.go:381:2` | default logger should not be used | OPEN |
-| L2461 | `internal/service/run.go:421:2` | default logger should not be used | OPEN |
-| L2462 | `internal/service/run.go:585:4` | default logger should not be used | OPEN |
-| L2463 | `internal/service/run.go:628:3` | default logger should not be used | OPEN |
-| L2464 | `internal/zalo/adapter.go:283:2` | default logger should not be used | OPEN |
-| L2465 | `internal/zalo/events.go:75:4` | default logger should not be used | OPEN |
-| L2466 | `internal/zalo/events.go:78:4` | default logger should not be used | OPEN |
-| L2467 | `internal/zalo/events.go:178:3` | default logger should not be used | OPEN |
-| L2468 | `internal/zalo/events.go:199:2` | default logger should not be used | OPEN |
-| L2469 | `internal/zalo/events.go:218:2` | default logger should not be used | OPEN |
-| L2470 | `internal/zalo/mobile_backup.go:134:4` | default logger should not be used | OPEN |
-| L2471 | `internal/zalo/mobile_backup.go:145:4` | default logger should not be used | OPEN |
-| L2472 | `internal/zalo/mobile_backup.go:182:6` | default logger should not be used | OPEN |
-| L2473 | `internal/zalo/mobile_backup.go:186:6` | default logger should not be used | OPEN |
-| L2474 | `internal/zalo/mobile_backup.go:192:6` | default logger should not be used | OPEN |
-| L2475 | `internal/zalo/mobile_backup.go:207:6` | default logger should not be used | OPEN |
-| L2476 | `internal/zalo/mobile_backup.go:211:6` | default logger should not be used | OPEN |
-| L2477 | `internal/zalo/mobile_backup.go:214:5` | default logger should not be used | OPEN |
-| L2478 | `internal/zalo/mobile_backup.go:217:6` | default logger should not be used | OPEN |
-| L2479 | `internal/zalo/mobile_backup.go:227:5` | default logger should not be used | OPEN |
-| L2480 | `internal/zalo/mobile_backup.go:289:2` | default logger should not be used | OPEN |
-| L2481 | `internal/zalo/mobile_backup.go:325:2` | default logger should not be used | OPEN |
-| L2482 | `internal/zalo/mobile_identities.go:62:3` | default logger should not be used | OPEN |
-| L2483 | `internal/zalo/mobile_identities.go:67:3` | default logger should not be used | OPEN |
-| L2484 | `internal/zalo/replay.go:62:3` | default logger should not be used | OPEN |
+| L2422 | `cmd/zl-mcp-eval-fixture/main.go:71:3` | default logger should not be used | SUPPRESSED |
+| L2423 | `internal/collector/join.go:392:4` | default logger should not be used | SUPPRESSED |
+| L2424 | `internal/collector/join.go:405:4` | default logger should not be used | SUPPRESSED |
+| L2425 | `internal/collector/run.go:164:5` | default logger should not be used | SUPPRESSED |
+| L2426 | `internal/historyimport/worker.go:249:2` | default logger should not be used | SUPPRESSED |
+| L2427 | `internal/mcpserver/discovery_logging.go:115:2` | default logger should not be used | SUPPRESSED |
+| L2428 | `internal/mcpserver/server.go:257:3` | default logger should not be used | SUPPRESSED |
+| L2429 | `internal/mobilebackup/account_fetch.go:81:2` | default logger should not be used | SUPPRESSED |
+| L2430 | `internal/mobilebackup/archive.go:45:3` | default logger should not be used | SUPPRESSED |
+| L2431 | `internal/mobilebackup/archive.go:61:3` | default logger should not be used | SUPPRESSED |
+| L2432 | `internal/mobilebackup/blocks.go:57:3` | default logger should not be used | SUPPRESSED |
+| L2433 | `internal/mobilebackup/blocks.go:91:3` | default logger should not be used | SUPPRESSED |
+| L2434 | `internal/mobilebackup/download.go:107:3` | default logger should not be used | SUPPRESSED |
+| L2435 | `internal/mobilebackup/download.go:111:3` | default logger should not be used | SUPPRESSED |
+| L2436 | `internal/mobilebackup/download.go:122:3` | default logger should not be used | SUPPRESSED |
+| L2437 | `internal/mobilebackup/download.go:126:3` | default logger should not be used | SUPPRESSED |
+| L2438 | `internal/mobilebackup/download.go:140:3` | default logger should not be used | SUPPRESSED |
+| L2439 | `internal/mobilebackup/encrypted_archive.go:41:3` | default logger should not be used | SUPPRESSED |
+| L2440 | `internal/mobilebackup/encrypted_archive.go:46:3` | default logger should not be used | SUPPRESSED |
+| L2441 | `internal/mobilebackup/offer_runner.go:37:4` | default logger should not be used | SUPPRESSED |
+| L2442 | `internal/mobilebackup/offer_runner.go:45:4` | default logger should not be used | SUPPRESSED |
+| L2443 | `internal/mobilebackup/offer_runner.go:65:2` | default logger should not be used | SUPPRESSED |
+| L2444 | `internal/mobilebackup/offer_runner.go:85:3` | default logger should not be used | SUPPRESSED |
+| L2445 | `internal/mobilebackup/offer_runner.go:106:4` | default logger should not be used | SUPPRESSED |
+| L2446 | `internal/mobilebackup/offer_runner.go:118:3` | default logger should not be used | SUPPRESSED |
+| L2447 | `internal/mobilebackup/prepared_page.go:57:4` | default logger should not be used | SUPPRESSED |
+| L2448 | `internal/mobilebackup/selected_fetch.go:49:2` | default logger should not be used | SUPPRESSED |
+| L2449 | `internal/mobilebackup/selected_fetch.go:59:3` | default logger should not be used | SUPPRESSED |
+| L2450 | `internal/mobilebackup/sqlite.go:182:4` | default logger should not be used | SUPPRESSED |
+| L2451 | `internal/mobilebackup/sqlite.go:207:3` | default logger should not be used | SUPPRESSED |
+| L2452 | `internal/service/mobile_archive_probe.go:125:7` | default logger should not be used | SUPPRESSED |
+| L2453 | `internal/service/mobile_archive_probe.go:167:3` | default logger should not be used | SUPPRESSED |
+| L2454 | `internal/service/mobile_archive_probe.go:174:2` | default logger should not be used | SUPPRESSED |
+| L2455 | `internal/service/mobile_backup.go:113:3` | default logger should not be used | SUPPRESSED |
+| L2456 | `internal/service/run.go:194:3` | default logger should not be used | SUPPRESSED |
+| L2457 | `internal/service/run.go:228:4` | default logger should not be used | SUPPRESSED |
+| L2458 | `internal/service/run.go:258:3` | default logger should not be used | SUPPRESSED |
+| L2459 | `internal/service/run.go:268:3` | default logger should not be used | SUPPRESSED |
+| L2460 | `internal/service/run.go:381:2` | default logger should not be used | SUPPRESSED |
+| L2461 | `internal/service/run.go:421:2` | default logger should not be used | SUPPRESSED |
+| L2462 | `internal/service/run.go:585:4` | default logger should not be used | SUPPRESSED |
+| L2463 | `internal/service/run.go:628:3` | default logger should not be used | SUPPRESSED |
+| L2464 | `internal/zalo/adapter.go:283:2` | default logger should not be used | SUPPRESSED |
+| L2465 | `internal/zalo/events.go:75:4` | default logger should not be used | SUPPRESSED |
+| L2466 | `internal/zalo/events.go:78:4` | default logger should not be used | SUPPRESSED |
+| L2467 | `internal/zalo/events.go:178:3` | default logger should not be used | SUPPRESSED |
+| L2468 | `internal/zalo/events.go:199:2` | default logger should not be used | SUPPRESSED |
+| L2469 | `internal/zalo/events.go:218:2` | default logger should not be used | SUPPRESSED |
+| L2470 | `internal/zalo/mobile_backup.go:134:4` | default logger should not be used | SUPPRESSED |
+| L2471 | `internal/zalo/mobile_backup.go:145:4` | default logger should not be used | SUPPRESSED |
+| L2472 | `internal/zalo/mobile_backup.go:182:6` | default logger should not be used | SUPPRESSED |
+| L2473 | `internal/zalo/mobile_backup.go:186:6` | default logger should not be used | SUPPRESSED |
+| L2474 | `internal/zalo/mobile_backup.go:192:6` | default logger should not be used | SUPPRESSED |
+| L2475 | `internal/zalo/mobile_backup.go:207:6` | default logger should not be used | SUPPRESSED |
+| L2476 | `internal/zalo/mobile_backup.go:211:6` | default logger should not be used | SUPPRESSED |
+| L2477 | `internal/zalo/mobile_backup.go:214:5` | default logger should not be used | SUPPRESSED |
+| L2478 | `internal/zalo/mobile_backup.go:217:6` | default logger should not be used | SUPPRESSED |
+| L2479 | `internal/zalo/mobile_backup.go:227:5` | default logger should not be used | SUPPRESSED |
+| L2480 | `internal/zalo/mobile_backup.go:289:2` | default logger should not be used | SUPPRESSED |
+| L2481 | `internal/zalo/mobile_backup.go:325:2` | default logger should not be used | SUPPRESSED |
+| L2482 | `internal/zalo/mobile_identities.go:62:3` | default logger should not be used | SUPPRESSED |
+| L2483 | `internal/zalo/mobile_identities.go:67:3` | default logger should not be used | SUPPRESSED |
+| L2484 | `internal/zalo/replay.go:62:3` | default logger should not be used | SUPPRESSED |
 
 ### spancheck (6)
 
@@ -3261,21 +3357,21 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L2505 | `internal/app/eventaccess/journal.go:8:1` | ST1021: comment on exported type Subscription should be of the form "Subscription ..." (with optional leading article) | OPEN |
-| L2506 | `internal/app/eventaccess/journal.go:43:1` | ST1020: comment on exported method MarshalJSON should be of the form "MarshalJSON ..." | OPEN |
-| L2507 | `internal/app/history/command.go:10:1` | ST1021: comment on exported type StartRequest should be of the form "StartRequest ..." (with optional leading article) | OPEN |
+| L2505 | `internal/app/eventaccess/journal.go:8:1` | ST1021: comment on exported type Subscription should be of the form "Subscription ..." (with optional leading article) | FIXED |
+| L2506 | `internal/app/eventaccess/journal.go:43:1` | ST1020: comment on exported method MarshalJSON should be of the form "MarshalJSON ..." | FIXED |
+| L2507 | `internal/app/history/command.go:10:1` | ST1021: comment on exported type StartRequest should be of the form "StartRequest ..." (with optional leading article) | FIXED |
 | L2508 | `internal/evaluation/process.go:70:3` | SA4006: this value of err is never used | FIXED |
-| L2509 | `internal/evaluation/scenarios.go:357:1` | ST1020: comment on exported function DefaultChildOptions should be of the form "DefaultChildOptions ..." | OPEN |
-| L2510 | `internal/mcpserver/http.go:42:15` | ST1005: error strings should not be capitalized | OPEN |
-| L2511 | `internal/messaging/manager.go:16:19` | ST1005: error strings should not be capitalized | OPEN |
-| L2512 | `internal/mobilebackup/archive_tokens.go:9:1` | ST1020: comment on exported method SealArchiveToken should be of the form "SealArchiveToken ..." | OPEN |
+| L2509 | `internal/evaluation/scenarios.go:357:1` | ST1020: comment on exported function DefaultChildOptions should be of the form "DefaultChildOptions ..." | FIXED |
+| L2510 | `internal/mcpserver/http.go:42:15` | ST1005: error strings should not be capitalized | SUPPRESSED |
+| L2511 | `internal/messaging/manager.go:16:19` | ST1005: error strings should not be capitalized | SUPPRESSED |
+| L2512 | `internal/mobilebackup/archive_tokens.go:9:1` | ST1020: comment on exported method SealArchiveToken should be of the form "SealArchiveToken ..." | FIXED |
 | L2513 | `internal/mobilebackup/retained_archive_test.go:198:8` | SA4000: identical expressions on the left and right side of the '\|\|' operator | FIXED |
-| L2514 | `internal/mobilebackup/sqlite.go:36:1` | ST1021: comment on exported type SQLiteCoverage should be of the form "SQLiteCoverage ..." (with optional leading article) | OPEN |
-| L2515 | `internal/storage/event_journal.go:136:1` | ST1020: comment on exported method ReadSubscriptionEvents should be of the form "ReadSubscriptionEvents ..." | OPEN |
-| L2516 | `internal/storage/subscription_scope.go:48:33` | QF1001: could apply De Morgan's law | OPEN |
+| L2514 | `internal/mobilebackup/sqlite.go:36:1` | ST1021: comment on exported type SQLiteCoverage should be of the form "SQLiteCoverage ..." (with optional leading article) | FIXED |
+| L2515 | `internal/storage/event_journal.go:136:1` | ST1020: comment on exported method ReadSubscriptionEvents should be of the form "ReadSubscriptionEvents ..." | FIXED |
+| L2516 | `internal/storage/subscription_scope.go:48:33` | QF1001: could apply De Morgan's law | FIXED |
 | L2517 | `internal/zalo/mobile_backup.go:270:16` | SA1019: crypto/rsa.DecryptPKCS1v15 has been deprecated since Go 1.26 because it shouldn't be used: PKCS #1 v1.5 encryption is dangerous and should not be used. Whether this function returns an error or not discloses secret information. If an attacker can cause this function to run repeatedly and learn whether each instance returned an error then they can decrypt and forge signatures as if they had the private key. See [draft-irtf-cfrg-rsa-guidance-05] for more information. Use [EncryptOAEP] and [DecryptOAEP] instead. | SUPPRESSED |
 | L2518 | `internal/zalo/mobile_backup_test.go:84:17` | SA1019: crypto/rsa.EncryptPKCS1v15 has been deprecated since Go 1.26 because it shouldn't be used: PKCS #1 v1.5 encryption is dangerous and should not be used. See [draft-irtf-cfrg-rsa-guidance-05] for more information. Use [EncryptOAEP] and [DecryptOAEP] instead. | SUPPRESSED |
-| L2519 | `tools/harness/internal/performance/json.go:98:6` | QF1001: could apply De Morgan's law | OPEN |
+| L2519 | `tools/harness/internal/performance/json.go:98:6` | QF1001: could apply De Morgan's law | FIXED |
 
 ### unparam (1)
 
@@ -3327,20 +3423,20 @@ _Заполнить._
 
 | ID | Файл:строка:колонка | Замечание | Статус |
 |---|---|---|---|
-| L2525 | `internal/collector/run_test.go:36:14` | os.MkdirTemp() could be replaced by t.TempDir() in sessionStore | OPEN |
-| L2526 | `internal/mcpserver/sdk_stdio_identity_test.go:76:93` | os.TempDir() could be replaced by t.TempDir() in sdkStartRawBridge | OPEN |
-| L2527 | `internal/mobilebackup/native_binary_test.go:52:16` | os.MkdirTemp() could be replaced by t.TempDir() in TestNativeBinaryTerminalStartupAcceptance | OPEN |
-| L2528 | `internal/service/cli_recall_command_test.go:18:14` | os.MkdirTemp() could be replaced by t.TempDir() in TestRecallCommandRoutesThroughExistingOwnerSocket | OPEN |
-| L2529 | `internal/service/conversations_test.go:125:14` | os.MkdirTemp() could be replaced by t.TempDir() in testConversationServiceProfile | OPEN |
-| L2530 | `internal/service/events_restart_test.go:126:14` | os.MkdirTemp() could be replaced by t.TempDir() in TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary | OPEN |
-| L2531 | `internal/service/history_test.go:89:16` | os.MkdirTemp() could be replaced by t.TempDir() in TestHTTPHistoryToolsUseExistingCollectorSession | OPEN |
-| L2532 | `internal/service/mobile_backup_recovery_test.go:23:12` | os.MkdirTemp() could be replaced by t.TempDir() in TestServiceRecoversMobileAttemptsBeforeExposingEndpoint | OPEN |
-| L2533 | `internal/service/mobile_ledger_control_test.go:212:12` | os.MkdirTemp() could be replaced by t.TempDir() in TestMobileLedgerUsesProductionControlSocketWithoutSessionRestore | OPEN |
-| L2534 | `internal/service/multiprocess_test.go:42:14` | os.MkdirTemp() could be replaced by t.TempDir() in TestTwoMCPProcessesReadCollectorWrites | OPEN |
-| L2535 | `internal/service/preload_probe_test.go:44:14` | os.MkdirTemp() could be replaced by t.TempDir() in TestPrivatePreloadProbeUsesServiceSessionWithoutPersistingCorpus | OPEN |
-| L2536 | `internal/service/run_test.go:53:16` | os.MkdirTemp() could be replaced by t.TempDir() in TestServicePreservesMCPWhenAuthenticationIsRequired | OPEN |
-| L2537 | `internal/service/sending_test.go:81:14` | os.MkdirTemp() could be replaced by t.TempDir() in TestServiceSendAndReplyUseCollectorSessionAndPersistAcrossRestart | OPEN |
-| L2538 | `tools/harness/internal/performance/performance_test.go:206:13` | os.MkdirTemp() could be replaced by t.TempDir() in worker | OPEN |
+| L2525 | `internal/collector/run_test.go:36:14` | os.MkdirTemp() could be replaced by t.TempDir() in sessionStore | SUPPRESSED |
+| L2526 | `internal/mcpserver/sdk_stdio_identity_test.go:76:93` | os.TempDir() could be replaced by t.TempDir() in sdkStartRawBridge | FIXED |
+| L2527 | `internal/mobilebackup/native_binary_test.go:52:16` | os.MkdirTemp() could be replaced by t.TempDir() in TestNativeBinaryTerminalStartupAcceptance | SUPPRESSED |
+| L2528 | `internal/service/cli_recall_command_test.go:18:14` | os.MkdirTemp() could be replaced by t.TempDir() in TestRecallCommandRoutesThroughExistingOwnerSocket | SUPPRESSED |
+| L2529 | `internal/service/conversations_test.go:125:14` | os.MkdirTemp() could be replaced by t.TempDir() in testConversationServiceProfile | SUPPRESSED |
+| L2530 | `internal/service/events_restart_test.go:126:14` | os.MkdirTemp() could be replaced by t.TempDir() in TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary | SUPPRESSED |
+| L2531 | `internal/service/history_test.go:89:16` | os.MkdirTemp() could be replaced by t.TempDir() in TestHTTPHistoryToolsUseExistingCollectorSession | SUPPRESSED |
+| L2532 | `internal/service/mobile_backup_recovery_test.go:23:12` | os.MkdirTemp() could be replaced by t.TempDir() in TestServiceRecoversMobileAttemptsBeforeExposingEndpoint | SUPPRESSED |
+| L2533 | `internal/service/mobile_ledger_control_test.go:212:12` | os.MkdirTemp() could be replaced by t.TempDir() in TestMobileLedgerUsesProductionControlSocketWithoutSessionRestore | SUPPRESSED |
+| L2534 | `internal/service/multiprocess_test.go:42:14` | os.MkdirTemp() could be replaced by t.TempDir() in TestTwoMCPProcessesReadCollectorWrites | SUPPRESSED |
+| L2535 | `internal/service/preload_probe_test.go:44:14` | os.MkdirTemp() could be replaced by t.TempDir() in TestPrivatePreloadProbeUsesServiceSessionWithoutPersistingCorpus | SUPPRESSED |
+| L2536 | `internal/service/run_test.go:53:16` | os.MkdirTemp() could be replaced by t.TempDir() in TestServicePreservesMCPWhenAuthenticationIsRequired | SUPPRESSED |
+| L2537 | `internal/service/sending_test.go:81:14` | os.MkdirTemp() could be replaced by t.TempDir() in TestServiceSendAndReplyUseCollectorSessionAndPersistAcrossRestart | SUPPRESSED |
+| L2538 | `tools/harness/internal/performance/performance_test.go:206:13` | os.MkdirTemp() could be replaced by t.TempDir() in worker | SUPPRESSED |
 
 ### wastedassign (5)
 
@@ -3420,3 +3516,17 @@ Root/tools race и vet PASS, architecture host/hidden graph 100%, 14 isolated + 
 Независимые итоговые review статусы фиксируются в L04 acceptance. L05/L06, mandatory CI lint, финальный patched-zcago/native/platform и полный performance остаются OPEN; model/live NOT_RUN. Историческая evidence и бюджеты сохранены.
 
 L04 принят: independent completeness 100% (8/8) и correctness PASS для итогового hash. Первый незавершённый шаг — L05; результаты и исправленные findings сохранены в `docs/lint-evidence/L04/acceptance.md`.
+
+## L05 — контракт исправлений
+
+L04 принят отдельным commit; L05 закрывает constants, sparse DTO, comments, declaration order, builtin shadowing, formatting и накопленные autofix. Конфиг/thresholds/exclusions не расширяются; локальные исключения описывают конкретное zero-value/fixture/logger/CLI назначение. Existing semantic constants переиспользуются только при совпадении смысла и типа. Wire strings, JSON bytes/order/null/empty и persisted hashes сохраняются. Formatting выполняется отдельно от autofix анализаторов; общий `run --fix` не используется. L05 OPEN до успешного full loader/lint и независимого review.
+
+## L05 — итоговый candidate для независимого review
+
+14 октября 2026: полный root/tools lint — 0/0, successful loaders; nolintlint PASS. Исходные IDs и закрытые/новые diagnostics сохранены в registry и таблицах; предыдущие OPEN snapshots выше — история, не текущая приёмка. Подавленные DTO/logger/CLI/fixture findings имеют локальные причины в source; конфиг SHA256 прежний.
+
+Candidate `068698f35ce34848a582314118dc68ed55d19b17366889650a18d50fa1801fcd`, 373 Go files, parent L04 `9e8865e3`. Root/tools tests/race/vet PASS; architecture100% и 20 controls, offline50/50 cases480/480 assertions. Isolated errorlint/fatcontext/modernize fixes stable (no source delta); isolated no-callback/IDs/privacy tests PASS. Domain conversation constants reuse untyped existing values; boundaries, pacing и budgets не менялись. Whole workspace --fix не запускался.
+
+Scope correction: root fmt traversed third_party/zcago despite module boundary. 89 formatter-only AST-equivalent files восстановлены точно из чистого HEAD; source restoration checksums сохранены, final third_party diff empty. После этого formatter получает только явные root/tools file paths. Ошибочный package name generated limits.go был исправлен; failed loader run не использован для закрытия findings.
+
+L05 acceptance report и raw checks: `docs/lint-evidence/L05/`; independent reviews PENDING. L06 pinned lint/check/CI, Go1.27.2 provenance и final platform/native/zcago/performance checks OPEN/NOT_RUN. Model/live NOT_RUN.

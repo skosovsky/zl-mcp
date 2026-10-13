@@ -132,7 +132,9 @@ func TestConversationScopesSignedDeliveryAndCancellation(t *testing.T) {
 		mac := hmac.New(sha256.New, key)
 		mac.Write([]byte(r.Header.Get("Webhook-Id") + "." + r.Header.Get("Webhook-Timestamp") + "."))
 		mac.Write(body)
-		signature, readAllErr := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"))
+		signature, readAllErr := base64.StdEncoding.DecodeString(
+			strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"),
+		)
 		if readAllErr != nil || !hmac.Equal(signature, mac.Sum(nil)) {
 			t.Fatal("bad signature")
 		}

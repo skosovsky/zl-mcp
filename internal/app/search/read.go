@@ -149,6 +149,7 @@ func (e *ConversationExecution) Shorten(ctx context.Context) error {
 }
 
 func groupResult(ctx context.Context, reads ReadPort, r GroupRequest, p *Page) (GroupResult, error) {
+	//nolint:exhaustruct_v5 // GroupResult preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	out := GroupResult{
 		Messages:   p.Hits,
 		HasMore:    p.NextCursor != nil,
@@ -182,7 +183,7 @@ func groupResult(ctx context.Context, reads ReadPort, r GroupRequest, p *Page) (
 			return out, err
 		}
 		if count == 0 || (r.GroupID != "" && len(out.Coverage) == 1 && out.Coverage[0].EarliestStoredAt == nil) {
-			reason = "no_collected_data"
+			reason = reasonNoCollectedData
 		}
 		out.EmptyReason = &reason
 	}
@@ -197,6 +198,7 @@ func conversationResult(
 	r ConversationRequest,
 	p *Page,
 ) (ConversationResult, error) {
+	//nolint:exhaustruct_v5 // ConversationResult preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	out := ConversationResult{
 		Messages:   []shared.ConversationHit{},
 		HasMore:    p.NextCursor != nil,
@@ -233,7 +235,12 @@ type AccessPort interface {
 	CheckConversationSearch(context.Context, ConversationRequest) error
 }
 
-func populateEmptyConversationSearch(ctx context.Context, reads ReadPort, r ConversationRequest, out *ConversationResult) error {
+func populateEmptyConversationSearch(
+	ctx context.Context,
+	reads ReadPort,
+	r ConversationRequest,
+	out *ConversationResult,
+) error {
 	reason := "no_matches"
 	if r.Conversation.ID == "" {
 		count, err := reads.StoredMessageCount(ctx)
@@ -241,7 +248,7 @@ func populateEmptyConversationSearch(ctx context.Context, reads ReadPort, r Conv
 			return err
 		}
 		if count == 0 {
-			reason = "no_collected_data"
+			reason = reasonNoCollectedData
 		}
 
 		out.EmptyReason = &reason
@@ -253,7 +260,7 @@ func populateEmptyConversationSearch(ctx context.Context, reads ReadPort, r Conv
 	}
 	out.Coverage = append(out.Coverage, shared.Coverage(r.Conversation, c))
 	if c.EarliestStoredAt == nil {
-		reason = "no_collected_data"
+		reason = reasonNoCollectedData
 	}
 	out.EmptyReason = &reason
 	return nil

@@ -156,6 +156,7 @@ func mobilePositionAfter(a, b domain.MobileHistoryPosition) bool {
 
 // CommitMobileHistoryPage commits one source page and its exact binding/checkpoint.
 // No phone, Events or public source selection is performed by this internal port.
+//
 //nolint:cyclop,funlen,gocognit,gocyclo // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) CommitMobileHistoryPage(
 	ctx context.Context,
@@ -175,12 +176,12 @@ func (s *Store) CommitMobileHistoryPage(
 	if err != nil {
 		return HistoryOperation{}, err
 	}
-	if op.Revision != revision || op.Status.State != "running" ||
+	if op.Revision != revision || op.Status.State != stateRunningText ||
 		op.Status.Source != domain.HistorySourceMobileArchive {
 		return HistoryOperation{}, ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {
-		historyStopped(&op, "cancelled", "access_revoked")
+		historyStopped(&op, stateCancelledText, "access_revoked")
 		if err = saveHistoryOperation(ctx, tx, &op); err != nil {
 			return HistoryOperation{}, err
 		}
@@ -236,18 +237,19 @@ func (s *Store) CommitMobileHistoryPage(
 	if e != nil && (op.Status.PagesObserved != 0 || op.Status.MobileCoverage != nil) {
 		return HistoryOperation{}, ErrMobileHistorySource
 	}
-	if e != nil {
+	switch {
+	case e != nil:
 		if len(page.Recalls) != page.Snapshot.ControlRows {
 			return HistoryOperation{}, ErrMobileHistorySource
 		}
-	} else if page.Snapshot.ControlPreludeComplete {
+	case page.Snapshot.ControlPreludeComplete:
 		coverage := op.Status.MobileCoverage
 		if len(page.Recalls) != 0 || coverage == nil || !coverage.ControlPreludeComplete ||
 			coverage.SourceRecalls != page.Snapshot.ControlRows ||
 			coverage.OwnRecalls+page.Counts.OwnRecalls > page.Snapshot.ControlRows {
 			return HistoryOperation{}, ErrMobileHistorySource
 		}
-	} else if len(page.Recalls) != 0 || op.Status.MobileCoverage == nil || op.Status.MobileCoverage.OwnRecalls != page.Snapshot.ControlRows {
+	case len(page.Recalls) != 0 || op.Status.MobileCoverage == nil || op.Status.MobileCoverage.OwnRecalls != page.Snapshot.ControlRows:
 		return HistoryOperation{}, ErrMobileHistorySource
 	}
 	if page.HasMore {
@@ -307,6 +309,7 @@ func (s *Store) CommitMobileHistoryPage(
 			op.Status.LatestImportedAt = &last
 		}
 	}
+	//nolint:exhaustruct_v5 // MobileHistoryCoverage preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	coverage := domain.MobileHistoryCoverage{
 		SourceRows:           page.Snapshot.SourceRows,
 		PeriodRows:           page.Snapshot.PeriodRows,

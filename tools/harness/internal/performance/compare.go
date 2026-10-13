@@ -2,6 +2,7 @@ package performance
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -17,28 +18,36 @@ func validate(m Object, side, buildPath string) []string {
 	if n, ok := integer(m["cpu_count"]); !ok || n <= 0 {
 		bad("missing/invalid cpu_count")
 	}
-	for _, key := range []string{"fixture_sha256", "binary_sha256", "build_manifest_sha256"} {
+	for _, key := range []string{wireFixtureSHA256, "binary_sha256", "build_manifest_sha256"} {
 		if !validDigest(m[key]) {
 			bad("missing/invalid " + key)
 		}
 	}
-	for _, key := range []string{"system", "release", "machine"} {
-		if !nonempty(object(m["machine"])[key]) {
+	for _, key := range []string{wireSystem, wireRelease, wireMachine} {
+		if !nonempty(object(m[wireMachine])[key]) {
 			bad("missing/invalid machine." + key)
 		}
 	}
-	settings := Object{"runs": 5, "warmup_calls": 50, "concurrency_per_kind": 1, "parallel_kinds": 3, "admission_enabled": true, "exporters_enabled": false, "pacing_millis": 110}
+	settings := Object{
+		wireRuns:               measurementRuns,
+		wireWarmupCalls:        measurementWarmupCalls,
+		wireConcurrencyPerKind: 1,
+		wireParallelKinds:      parallelMeasurementKinds,
+		wireAdmissionEnabled:   true,
+		wireExportersEnabled:   false,
+		wirePacingMillis:       measurementPacingMillis,
+	}
 	for key, want := range settings {
 		if !equal(m[key], want) {
 			bad("invalid protocol " + key)
 		}
 	}
 	calls, ok := integer(m["calls_per_kind_per_run"])
-	if !ok || calls != 1000 {
+	if !ok || calls != callsPerKindPerRun {
 		bad("invalid protocol calls_per_kind_per_run")
 	}
 	records := array(m["records"])
-	if len(records) != 15 {
+	if len(records) != measurementRecords {
 		bad("incomplete run records")
 	}
 	for _, raw := range records {
@@ -48,28 +57,37 @@ func validate(m Object, side, buildPath string) []string {
 	return errs
 }
 func contains(xs []string, s string) bool {
-	for _, x := range xs {
-		if s == x {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(xs, s)
 }
 func failure(errs []string) Object {
-	return Object{"status": "FAIL", "errors": errs, "summaries": Object{}, "gates": Object{}, "fixed_thresholds": Object{"p95_limits_seconds": P95Limits, "allocations": 2.0, "alloc_bytes": 1.20, "zero_baseline": 0}, "gate_contract_revision": AcceptanceRevision, "model": "NOT_RUN", "live": "NOT_RUN"}
+	return Object{
+		fieldStatus: codeFail,
+		wireErrors:  errs,
+		"summaries": Object{},
+		"gates":     Object{},
+		"fixed_thresholds": Object{
+			"p95_limits_seconds": p95Limits(),
+			"allocations":        maxAllocationRatio,
+			"alloc_bytes":        maxAllocBytesRatio,
+			"zero_baseline":      0,
+		},
+		"gate_contract_revision": AcceptanceRevision,
+		wireModel:                codeNotRun,
+		wireLive:                 codeNotRun,
+	}
 }
 
 // Compare recomputes every median from verified raw records. Reported summaries
 // are informational and never inputs to the acceptance decision.
 func Compare(baseline, candidate Object, baselineBuild, candidateBuild string) Object {
-	errs := append(validate(baseline, "baseline", baselineBuild), validate(candidate, "candidate", candidateBuild)...)
+	errs := append(validate(baseline, "baseline", baselineBuild), validate(candidate, wireCandidate, candidateBuild)...)
 	result := failure(errs)
 	if len(errs) > 0 {
 		return result
 	}
 	errs = append(errs, compatibleMeasurements(baseline, candidate)...)
 	summaries := Object{}
-	for side, m := range map[string]Object{"baseline": baseline, "candidate": candidate} {
+	for side, m := range map[string]Object{"baseline": baseline, wireCandidate: candidate} {
 		summary, sideErrors := summarizeSide(side, m)
 		errs = append(errs, sideErrors...)
 		summaries[side] = summary
@@ -86,25 +104,32 @@ func Compare(baseline, candidate Object, baselineBuild, candidateBuild string) O
 		}
 	}
 	gates := Object{}
-	for _, kind := range Kinds {
+	for _, kind := range measurementKinds() {
 		b := object(object(summaries["baseline"])[kind])
-		c := object(object(summaries["candidate"])[kind])
+		c := object(object(summaries[wireCandidate])[kind])
 		if b == nil || c == nil {
 			continue
 		}
-		p95 := value(c["p95_seconds"]) <= P95Limits[kind]
-		objects := value(c["allocations_per_op"]) <= 2*value(b["allocations_per_op"])
-		allocBytes := value(c["alloc_bytes_per_op"]) <= 1.20*value(b["alloc_bytes_per_op"])
-		gates[kind] = Object{"p95_pass": p95, "allocations_pass": objects, "alloc_bytes_pass": allocBytes, "p95_limit_seconds": P95Limits[kind], "allocations_limit_per_op": 2 * value(b["allocations_per_op"]), "alloc_bytes_limit_per_op": 1.20 * value(b["alloc_bytes_per_op"])}
+		p95 := value(c[wireP95Seconds]) <= p95Limits()[kind]
+		objects := value(c[wireAllocationsPerOp]) <= 2*value(b[wireAllocationsPerOp])
+		allocBytes := value(c[wireAllocBytesPerOp]) <= maxAllocBytesRatio*value(b[wireAllocBytesPerOp])
+		gates[kind] = Object{
+			"p95_pass":                 p95,
+			"allocations_pass":         objects,
+			"alloc_bytes_pass":         allocBytes,
+			"p95_limit_seconds":        p95Limits()[kind],
+			"allocations_limit_per_op": 2 * value(b[wireAllocationsPerOp]),
+			"alloc_bytes_limit_per_op": maxAllocBytesRatio * value(b[wireAllocBytesPerOp]),
+		}
 		if !p95 || !objects || !allocBytes {
 			errs = append(errs, kind+" performance threshold exceeded")
 		}
 	}
 	result["summaries"] = summaries
 	result["gates"] = gates
-	result["errors"] = errs
+	result[wireErrors] = errs
 	if len(errs) == 0 {
-		result["status"] = "PASS"
+		result[fieldStatus] = codePass
 	}
 	result["measurement_gate_metadata_revision"] = MeasurementRevision
 	result["latency_acceptance_basis"] = "User-authorized retrospective candidate +10% fixed budgets; not original frozen-baseline latency parity"
@@ -115,10 +140,10 @@ func CompareFiles(baseline, candidate, baselineBuild, candidateBuild, output str
 	c, cr, ce := readObject(candidate)
 	inputs := []Object{}
 	if br != nil {
-		inputs = append(inputs, Object{"path": baseline, "sha256": digest(br)})
+		inputs = append(inputs, Object{wirePath: baseline, wireSHA256: digest(br)})
 	}
 	if cr != nil {
-		inputs = append(inputs, Object{"path": candidate, "sha256": digest(cr)})
+		inputs = append(inputs, Object{wirePath: candidate, wireSHA256: digest(cr)})
 	}
 	var r Object
 	if be != nil || ce != nil {
@@ -130,8 +155,8 @@ func CompareFiles(baseline, candidate, baselineBuild, candidateBuild, output str
 	if e := Write(output, r); e != nil {
 		return e
 	}
-	if r["status"] != "PASS" {
-		return fmt.Errorf("performance FAIL: %v", r["errors"])
+	if r[fieldStatus] != codePass {
+		return fmt.Errorf("performance FAIL: %v", r[wireErrors])
 	}
 	return nil
 }
@@ -139,7 +164,7 @@ func CompareFiles(baseline, candidate, baselineBuild, candidateBuild, output str
 func validateRecord(r Object, calls int64, bad func(string)) {
 	kind := str(r["kind"])
 	index, iok := integer(r["run"])
-	if !contains(Kinds, kind) || !iok || index < 1 || index > 5 {
+	if !contains(measurementKinds(), kind) || !iok || index < 1 || index > measurementRuns {
 		bad("invalid run record")
 		return
 	}
@@ -151,12 +176,12 @@ func validateRecord(r Object, calls int64, bad func(string)) {
 	if a["kind"] != kind {
 		bad("measurement kind mismatch")
 	}
-	for _, k := range []string{"p95_seconds", "allocations_per_op", "alloc_bytes_per_op", "elapsed_seconds"} {
+	for _, k := range []string{wireP95Seconds, wireAllocationsPerOp, wireAllocBytesPerOp, "elapsed_seconds"} {
 		if _, ok := number(a[k]); !ok {
 			bad("invalid measurement " + k)
 		}
 	}
-	for _, k := range []string{"calls", "warmup", "errors", "bytes", "concurrency", "pacing_millis"} {
+	for _, k := range []string{"calls", "warmup", wireErrors, "bytes", "concurrency", wirePacingMillis} {
 		if _, ok := integer(a[k]); !ok {
 			bad("invalid measurement " + k)
 		}
@@ -171,7 +196,7 @@ func validateRecord(r Object, calls int64, bad func(string)) {
 			bad("missing/invalid measurement " + k)
 		}
 	}
-	for _, k := range []string{"cleanup", "admission_enabled", "exporters_enabled"} {
+	for _, k := range []string{"cleanup", wireAdmissionEnabled, wireExportersEnabled} {
 		if _, ok := a[k].(bool); !ok {
 			bad("invalid measurement " + k)
 		}
@@ -179,7 +204,6 @@ func validateRecord(r Object, calls int64, bad func(string)) {
 	if _, ok := integer(r["exit_status"]); !ok {
 		bad("invalid exit status")
 	}
-
 }
 
 func validateBuildProvenance(m Object, side, buildPath string, records []any, bad func(string)) {
@@ -194,7 +218,7 @@ func validateBuildProvenance(m Object, side, buildPath string, records []any, ba
 	if digest(raw) != m["build_manifest_sha256"] {
 		bad("invalid build provenance: build manifest digest mismatch")
 	}
-	if build["status"] != "PASS" {
+	if build[fieldStatus] != codePass {
 		bad("invalid build provenance: failed build manifest")
 	}
 	var matches []Object
@@ -202,9 +226,10 @@ func validateBuildProvenance(m Object, side, buildPath string, records []any, ba
 		b := object(raw)
 		target := str(b["target"])
 		if target == "" {
-			target = "./cmd/zl-mcp-eval"
+			target = wireCmdZlMcpEval
 		}
-		if b["binary_sha256"] == m["binary_sha256"] && b["kind"] == side && target == "./cmd/zl-mcp-eval" && equal(b["exit_status"], 0) {
+		if b["binary_sha256"] == m["binary_sha256"] && b["kind"] == side && target == wireCmdZlMcpEval &&
+			equal(b["exit_status"], 0) {
 			matches = append(matches, b)
 		}
 	}
@@ -212,7 +237,7 @@ func validateBuildProvenance(m Object, side, buildPath string, records []any, ba
 		bad("invalid build provenance: measured binary role/digest mismatch")
 		return
 	}
-	if side == "candidate" && !validDigest(object(build["candidate_sources"])["source_digest_sha256"]) {
+	if side == wireCandidate && !validDigest(object(build["candidate_sources"])["source_digest_sha256"]) {
 		bad("invalid build provenance: missing candidate source digest")
 	}
 	match := matches[0]
@@ -220,7 +245,8 @@ func validateBuildProvenance(m Object, side, buildPath string, records []any, ba
 		r := object(raw)
 		a := object(r["measurement"])
 		goVersion := str(a["go"])
-		if goVersion != "go1.27.1" || !strings.Contains(str(build["toolchain"]), goVersion) || !strings.Contains(str(match["build_info"]), goVersion) {
+		if goVersion != "go1.27.1" || !strings.Contains(str(build["toolchain"]), goVersion) ||
+			!strings.Contains(str(match["build_info"]), goVersion) {
 			bad("invalid build provenance: measured Go differs from pinned build toolchain")
 		}
 		command := array(r["command"])
@@ -232,15 +258,19 @@ func validateBuildProvenance(m Object, side, buildPath string, records []any, ba
 
 func summarizeSide(side string, m Object) (Object, []string) {
 	var errs []string
-	if m["status"] != "PASS" {
+	if m[fieldStatus] != codePass {
 		errs = append(errs, side+" incomplete measurement")
 	}
-	expected := Object{"p95_ratio_threshold": 1.15, "allocations_ratio_threshold": 2.0, "zero_baseline_allocation_threshold": 0}
-	revised := side == "candidate" || m["performance_gate_revision"] != nil
+	expected := Object{
+		"p95_ratio_threshold":                historicalP95Ratio,
+		"allocations_ratio_threshold":        maxAllocationRatio,
+		"zero_baseline_allocation_threshold": 0,
+	}
+	revised := side == wireCandidate || m["performance_gate_revision"] != nil
 	if !revised {
-		expected["allocations_ratio_threshold"] = 1.20
+		expected["allocations_ratio_threshold"] = historicalAllocationRatio
 	} else {
-		expected["alloc_bytes_ratio_threshold"] = 1.20
+		expected["alloc_bytes_ratio_threshold"] = maxAllocBytesRatio
 		if m["performance_gate_revision"] != MeasurementRevision {
 			errs = append(errs, side+" missing/changed gate revision")
 		}
@@ -252,7 +282,7 @@ func summarizeSide(side string, m Object) (Object, []string) {
 	}
 	summary := Object{}
 	records := array(m["records"])
-	for _, kind := range Kinds {
+	for _, kind := range measurementKinds() {
 		kindSummary, kindErrors := summarizeKind(side, kind, m, records)
 		errs = append(errs, kindErrors...)
 		if kindSummary != nil {
@@ -277,7 +307,7 @@ func summarizeKind(side, kind string, m Object, records []any) (Object, []string
 			rows = append(rows, r)
 		}
 	}
-	if len(rows) != 5 || len(seen) != 5 {
+	if len(rows) != measurementRuns || len(seen) != measurementRuns {
 		errs = append(errs, side+" missing/duplicate run "+kind)
 		return nil, errs
 	}
@@ -285,36 +315,44 @@ func summarizeKind(side, kind string, m Object, records []any) (Object, []string
 	var calls, errorsCount, response int64
 	for _, r := range rows {
 		a := object(r["measurement"])
-		if r["status"] != "PASS" || !equal(r["exit_status"], 0) || !equal(a["errors"], 0) || a["cleanup"] != true {
+		if r[fieldStatus] != codePass || !equal(r["exit_status"], 0) || !equal(a[wireErrors], 0) ||
+			a["cleanup"] != true {
 			errs = append(errs, side+" failed/invalid run "+kind)
 		}
-		for field, outer := range map[string]string{"warmup": "warmup_calls", "pacing_millis": "pacing_millis", "concurrency": "concurrency_per_kind", "admission_enabled": "admission_enabled", "exporters_enabled": "exporters_enabled"} {
+		for field, outer := range map[string]string{"warmup": wireWarmupCalls, wirePacingMillis: wirePacingMillis, "concurrency": wireConcurrencyPerKind, wireAdmissionEnabled: wireAdmissionEnabled, wireExportersEnabled: wireExportersEnabled} {
 			if !equal(a[field], m[outer]) {
 				errs = append(errs, side+" mismatched run setting "+field)
 			}
 		}
-		for _, field := range []string{"p95_seconds", "allocations_per_op", "alloc_bytes_per_op"} {
+		for _, field := range []string{wireP95Seconds, wireAllocationsPerOp, wireAllocBytesPerOp} {
 			vals[field] = append(vals[field], value(a[field]))
 		}
 		n, _ := integer(a["calls"])
 		calls += n
-		n, _ = integer(a["errors"])
+		n, _ = integer(a[wireErrors])
 		errorsCount += n
 		n, _ = integer(a["bytes"])
 		response += n
 	}
-	return Object{"p95_seconds": median(vals["p95_seconds"]), "allocations_per_op": median(vals["allocations_per_op"]), "alloc_bytes_per_op": median(vals["alloc_bytes_per_op"]), "calls": calls, "errors": errorsCount, "response_bytes": response}, errs
+	return Object{
+		wireP95Seconds:       median(vals[wireP95Seconds]),
+		wireAllocationsPerOp: median(vals[wireAllocationsPerOp]),
+		wireAllocBytesPerOp:  median(vals[wireAllocBytesPerOp]),
+		"calls":              calls,
+		wireErrors:           errorsCount,
+		"response_bytes":     response,
+	}, errs
 }
 
 func compatibleMeasurements(baseline, candidate Object) []string {
 	var errs []string
-	for _, k := range []string{"cpu_count", "cpu_model", "fixture_sha256", "runs", "calls_per_kind_per_run", "warmup_calls", "concurrency_per_kind", "parallel_kinds", "admission_enabled", "exporters_enabled", "pacing_millis"} {
+	for _, k := range []string{"cpu_count", "cpu_model", wireFixtureSHA256, wireRuns, "calls_per_kind_per_run", wireWarmupCalls, wireConcurrencyPerKind, wireParallelKinds, wireAdmissionEnabled, wireExportersEnabled, wirePacingMillis} {
 		if !equal(baseline[k], candidate[k]) {
 			errs = append(errs, "incompatible "+k)
 		}
 	}
-	for _, k := range []string{"system", "release", "machine"} {
-		if !equal(object(baseline["machine"])[k], object(candidate["machine"])[k]) {
+	for _, k := range []string{wireSystem, wireRelease, wireMachine} {
+		if !equal(object(baseline[wireMachine])[k], object(candidate[wireMachine])[k]) {
 			errs = append(errs, "incompatible machine."+k)
 		}
 	}

@@ -66,6 +66,7 @@ type AccountMetadataDiagnostics struct {
 // inspectAccountMetadata reports protocol observations only. It never renders
 // source text or accepts an attachment action, and retains no raw metadata.
 func inspectAccountMetadata(ctx context.Context, rows []SQLiteRow) (*AccountMetadataDiagnostics, error) {
+	//nolint:exhaustruct_v5 // AccountMetadataDiagnostics keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	result := &AccountMetadataDiagnostics{
 		ActionClasses:         map[string]int{},
 		TextProjectionClasses: map[string]int{},
@@ -97,14 +98,16 @@ func inspectAccountMetadata(ctx context.Context, rows []SQLiteRow) (*AccountMeta
 			continue
 		}
 		kind, _ := mobilePayloadKind(row.Type)
+		//nolint:exhaustruct_v5 // PreparedRow keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 		_, rich, supported, valid := archiveText(PreparedRow{Row: row, Kind: kind, Metadata: meta})
 		projection := "unsupported"
-		if !valid {
+		switch {
+		case !valid:
 			projection = "invalid"
-		} else if supported && rich {
+		case supported && rich:
 			projection = "rich"
-		} else if supported {
-			projection = "plain"
+		case supported:
+			projection = contentKindPlain
 		}
 		result.TextProjectionClasses[projection]++
 		result.UnsupportedFields += meta.UnsupportedFields
@@ -116,7 +119,12 @@ func inspectAccountMetadata(ctx context.Context, rows []SQLiteRow) (*AccountMeta
 	return result, nil
 }
 
-func recordAccountAttachment(result *AccountMetadataDiagnostics, attachment Attachment, text string, seen map[string]bool) {
+func recordAccountAttachment(
+	result *AccountMetadataDiagnostics,
+	attachment Attachment,
+	text string,
+	seen map[string]bool,
+) {
 	result.AttachmentCount++
 	if attachment.Title.Present {
 		result.TitlePresent++
@@ -130,7 +138,7 @@ func recordAccountAttachment(result *AccountMetadataDiagnostics, attachment Atta
 		switch string(attachment.Action.Bytes) {
 		case "":
 			class = "empty"
-		case "rtf", "ecard", "text", "plain", "webchat":
+		case contentKindRTF, "ecard", fieldText, contentKindPlain, nativeClientWebchat:
 			class = string(attachment.Action.Bytes)
 		}
 		digest := sha256.Sum256(attachment.Action.Bytes)

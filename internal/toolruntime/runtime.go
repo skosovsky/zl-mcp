@@ -21,11 +21,12 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
+//nolint:gochecknoglobals // Private immutable read-capability allowlist is shared by admission and dispatch.
 var readNames = []string{
-	"zalo_search_messages",
-	"zalo_search_conversation_messages",
-	"zalo_get_message_context",
-	"zalo_get_conversation_message_context",
+	toolSearchMessages,
+	toolSearchConversationMessages,
+	toolGetMessageContext,
+	toolGetConversationMessageContext,
 }
 
 type Authority interface {
@@ -152,6 +153,7 @@ func New(
 		conversationHandler.Reads == nil {
 		return nil, errors.New("typed handlers and read authority are required")
 	}
+	//nolint:exhaustruct_v5 // Runtime preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	r := &Runtime{
 		authority:     authority,
 		search:        searchHandler,
@@ -210,11 +212,11 @@ func New(
 			}
 			names = append(
 				names,
-				"zalo_send_direct_message",
-				"zalo_join_group",
-				"zalo_import_conversation_history",
-				"zalo_cancel_history_import",
-				"zalo_ack_subscription_events",
+				toolSendDirectMessage,
+				toolJoinGroup,
+				toolImportConversationHistory,
+				toolCancelHistoryImport,
+				toolAckSubscriptionEvents,
 			)
 		}
 	}
@@ -259,6 +261,7 @@ func New(
 					return bindArgumentsErr
 				}
 				return yield(
+					//nolint:exhaustruct_v5 // Chunk preserves optional upstream fields absent from this request/projection.
 					toolsy.Chunk{
 						Event:       toolsy.EventResult,
 						MimeType:    toolsy.MimeTypeJSON,
@@ -278,6 +281,7 @@ func New(
 		return nil, err
 	}
 	r.view, err = registry.View(
+		//nolint:exhaustruct_v5 // RegistryViewSpec preserves optional upstream fields absent from this request/projection.
 		toolsy.RegistryViewSpec{
 			ToolNames:         names,
 			RequiredToolNames: names,
@@ -306,9 +310,11 @@ func (r *Runtime) Bind(ctx context.Context) (Binding, error) {
 	return Binding{owner: r, identity: identity}, nil
 }
 func permission() error {
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 	return &domain.Error{
-		Code:       "PERMISSION_DENIED",
-		Message:    "Local read authority is unavailable.",
+		Code:    "PERMISSION_DENIED",
+		Message: "Local read authority is unavailable.",
+		//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 		NextAction: domain.NextAction{Instruction: "Use the authorized local MCP transport."},
 		Details:    map[string]any{},
 	}
@@ -359,8 +365,9 @@ func (r *Runtime) execute(ctx context.Context, binding Binding, name string, raw
 	var result *Result
 	call := toolsy.ToolCall{
 		ToolName: name,
-		Input:    toolsy.ToolInput{ArgsJSON: normalized},
-		Env:      toolsy.NewRunEnv(nil),
+		//nolint:exhaustruct_v5 // ToolInput preserves optional upstream fields absent from this request/projection.
+		Input: toolsy.ToolInput{ArgsJSON: normalized},
+		Env:   toolsy.NewRunEnv(nil),
 		CallContext: toolsy.NewCallContext(
 			subject{r, binding.identity.Principal, binding.identity.Account},
 			scope{r, binding.identity.PolicyRevision},
@@ -409,19 +416,19 @@ func (r *Runtime) decide(ctx context.Context, req toolsy.PolicyRequest) toolsy.D
 		return deny(invalidSchema())
 	}
 	switch req.Manifest.Name {
-	case "zalo_search_messages":
+	case toolSearchMessages:
 		err = r.authority.CheckGroupSearch(ctx, groupRequest(args))
-	case "zalo_search_conversation_messages":
+	case toolSearchConversationMessages:
 		err = r.authority.CheckConversationSearch(ctx, conversationRequest(args))
-	case "zalo_get_message_context":
+	case toolGetMessageContext:
 		err = r.authority.CheckGroupContext(ctx, contextRequest(args, true))
-	case "zalo_get_conversation_message_context":
+	case toolGetConversationMessageContext:
 		err = r.authority.CheckConversationContext(ctx, contextRequest(args, false))
-	case "zalo_send_direct_message",
-		"zalo_join_group",
-		"zalo_import_conversation_history",
-		"zalo_cancel_history_import",
-		"zalo_ack_subscription_events",
+	case toolSendDirectMessage,
+		toolJoinGroup,
+		toolImportConversationHistory,
+		toolCancelHistoryImport,
+		toolAckSubscriptionEvents,
 		"zalo_list_event_subscriptions",
 		"zalo_read_subscription_events",
 		"zalo_get_conversation",
@@ -465,10 +472,11 @@ func mapError(err error) error {
 
 //nolint:cyclop,funlen,gocognit,gocyclo // The closed typed operation dispatch keeps each BYOT request/result pair visible and invokes exactly one consumer-owned operation.
 func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any) (*Result, error) {
+	//nolint:exhaustruct_v5 // Result preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	out := &Result{}
 	var err error
 	switch name {
-	case "zalo_send_direct_message":
+	case toolSendDirectMessage:
 		var reply *string
 		if text, ok := args["reply_to_message_id"].(string); ok {
 			reply = &text
@@ -484,14 +492,14 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 			},
 		)
 		out.SendStatus = &v
-	case "zalo_join_group":
+	case toolJoinGroup:
 		var v membership.JoinStatus
 		v, err = r.operations.Membership.Join(
 			ctx,
 			membership.JoinRequest{PlanToken: stringArg(args, "plan_token"), RequestID: stringArg(args, "request_id")},
 		)
 		out.JoinStatus = &v
-	case "zalo_import_conversation_history":
+	case toolImportConversationHistory:
 		var v domain.HistoryImportStatus
 		v, err = r.operations.History.Start(
 			ctx,
@@ -508,11 +516,11 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 			},
 		)
 		out.ImportStatus = &v
-	case "zalo_cancel_history_import":
+	case toolCancelHistoryImport:
 		var v domain.HistoryImportStatus
 		v, err = r.operations.History.Cancel(ctx, stringArg(args, "operation_id"))
 		out.ImportStatus = &v
-	case "zalo_ack_subscription_events":
+	case toolAckSubscriptionEvents:
 		identity, e := r.authority.ReadIdentity(ctx)
 		if e != nil {
 			return nil, e
@@ -543,18 +551,18 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 			ctx,
 			identity.Principal,
 			stringArg(args, "subscription_id"),
-			intArg(args, "limit", 20),
+			intArg(args, "limit", defaultReadLimit),
 		)
 		out.Events = &v
-	case "zalo_search_messages":
+	case toolSearchMessages:
 		out.GroupSearch, err = r.search.Group(ctx, groupRequest(args))
-	case "zalo_search_conversation_messages":
+	case toolSearchConversationMessages:
 		out.ConversationSearch, err = r.search.Conversation(ctx, conversationRequest(args))
-	case "zalo_get_message_context":
+	case toolGetMessageContext:
 		var v conversations.GroupContext
 		v, err = r.conversations.GroupContext(ctx, contextRequest(args, true))
 		out.GroupContext = &v
-	case "zalo_get_conversation_message_context":
+	case toolGetConversationMessageContext:
 		var v conversations.ConversationContext
 		v, err = r.conversations.ConversationContext(ctx, contextRequest(args, false))
 		out.ConversationContext = &v
@@ -574,7 +582,7 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 					Type:     stringArg(args, "conversation_type"),
 					Query:    stringArg(args, "query"),
 					Cursor:   stringArg(args, "cursor"),
-					Limit:    intArg(args, "limit", 20),
+					Limit:    intArg(args, "limit", defaultReadLimit),
 				},
 			)
 		} else {
@@ -584,7 +592,7 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 					Type:   stringArg(args, "conversation_type"),
 					Query:  stringArg(args, "query"),
 					Cursor: stringArg(args, "cursor"),
-					Limit:  intArg(args, "limit", 20),
+					Limit:  intArg(args, "limit", defaultReadLimit),
 				},
 			)
 		}
@@ -603,7 +611,7 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 					Until:            stringArg(args, "until"),
 					Order:            stringArg(args, "order"),
 					Cursor:           stringArg(args, "cursor"),
-					Limit:            intArg(args, "limit", 20),
+					Limit:            intArg(args, "limit", defaultReadLimit),
 				},
 			)
 		} else {
@@ -616,7 +624,7 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 					Until:        stringArg(args, "until"),
 					Order:        stringArg(args, "order"),
 					Cursor:       stringArg(args, "cursor"),
-					Limit:        intArg(args, "limit", 20),
+					Limit:        intArg(args, "limit", defaultReadLimit),
 				},
 			)
 			out.Browse = &v
@@ -634,7 +642,7 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 			ctx,
 			conversations.GroupRequest{
 				Query:  stringArg(args, "query"),
-				Limit:  intArg(args, "limit", 20),
+				Limit:  intArg(args, "limit", defaultReadLimit),
 				Cursor: stringArg(args, "cursor"),
 			},
 		)
@@ -666,11 +674,11 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 
 func isCommand(name string) bool {
 	switch name {
-	case "zalo_send_direct_message",
-		"zalo_join_group",
-		"zalo_import_conversation_history",
-		"zalo_cancel_history_import",
-		"zalo_ack_subscription_events":
+	case toolSendDirectMessage,
+		toolJoinGroup,
+		toolImportConversationHistory,
+		toolCancelHistoryImport,
+		toolAckSubscriptionEvents:
 		return true
 	}
 	return false

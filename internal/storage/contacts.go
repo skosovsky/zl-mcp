@@ -43,9 +43,10 @@ func ContactNameKey(value string) string {
 }
 
 // PutContacts atomically merges a bounded page without messages/events/novelty.
+//
 //nolint:gocognit // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) PutContacts(ctx context.Context, contacts []domain.Contact) (int, error) {
-	if len(contacts) > 200 {
+	if len(contacts) > maximumContactBatch {
 		return 0, domain.Invalid("Contact page exceeds 200 records.")
 	}
 	tx, err := s.DB.BeginTx(ctx, nil)
@@ -58,10 +59,10 @@ func (s *Store) PutContacts(ctx context.Context, contacts []domain.Contact) (int
 	stamp := now()
 	for _, c := range contacts {
 		if c.ID == "" || len(c.ID) > 256 || len(c.Name) > 4096 ||
-			(c.Friendship != "friend" && c.Friendship != "non_friend" && c.Friendship != "unknown") {
+			(c.Friendship != "friend" && c.Friendship != "non_friend" && c.Friendship != stateUnknownText) {
 			return 0, domain.Invalid("Invalid contact metadata.")
 		}
-		ref := domain.ConversationRef{Type: "direct", ID: c.ID}
+		ref := domain.ConversationRef{Type: domain.ConversationDirect, ID: c.ID}
 		if !s.AllowsConversation(ref) {
 			continue
 		}
@@ -139,12 +140,12 @@ func (s *Store) ContactStatus(ctx context.Context) (map[string]any, error) {
 	}
 	if len(v) == 0 {
 		v = map[string]any{
-			"status":          "not_attempted",
-			"last_attempt_at": nil,
-			"last_success_at": nil,
-			"observed_count":  0,
-			"permitted_count": 0,
-			"stop_reason":     nil,
+			fieldStatus:        stateNotAttemptedText,
+			fieldLastAttemptAt: nil,
+			fieldLastSuccessAt: nil,
+			"observed_count":   0,
+			"permitted_count":  0,
+			fieldStopReason:    nil,
 		}
 	}
 	return v, nil

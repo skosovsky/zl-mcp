@@ -267,7 +267,10 @@ func TestRetainedArchiveTamperingKeyLossAndUnsafeArtifacts(t *testing.T) {
 				}
 			}
 			// Act / Assert: reopening fails without exposing any prefix or rotating keys.
-			if got, newRetainedArchiveStoreErr := NewRetainedArchiveStore(dir, 8<<20); newRetainedArchiveStoreErr == nil {
+			if got, newRetainedArchiveStoreErr := NewRetainedArchiveStore(
+				dir,
+				8<<20,
+			); newRetainedArchiveStoreErr == nil {
 				got.Close()
 				t.Fatal("unsafe archive reopened")
 			}

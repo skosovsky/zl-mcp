@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -41,7 +42,12 @@ func recallTestPort(t *testing.T, text, sender string) (*membershipPort, *recall
 	t.Helper()
 	dir := t.TempDir()
 	ctx := context.Background()
-	store, e := storage.OpenWithPolicy(ctx, filepath.Join(dir, "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	store, e := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(dir, "messages.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -60,7 +66,23 @@ func recallTestPort(t *testing.T, text, sender string) (*membershipPort, *recall
 	if e = store.CompleteSend(ctx, id, "sent", &message, nil); e != nil {
 		t.Fatal(e)
 	}
-	if e = store.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: "direct", ID: "12"}, ID: message, SenderID: sender, Text: text, SentAt: time.Now().UTC(), Source: "live", Direction: "outgoing", QuoteMetadata: &domain.QuoteMetadata{ClientMessageID: "102", MessageType: "webchat", Timestamp: "1791280000000"}}); e != nil {
+	if e = store.Put(
+		ctx,
+		domain.Message{
+			Conversation: domain.ConversationRef{Type: "direct", ID: "12"},
+			ID:           message,
+			SenderID:     sender,
+			Text:         text,
+			SentAt:       time.Now().UTC(),
+			Source:       "live",
+			Direction:    "outgoing",
+			QuoteMetadata: &domain.QuoteMetadata{
+				ClientMessageID: "102",
+				MessageType:     "webchat",
+				Timestamp:       "1791280000000",
+			},
+		},
+	); e != nil {
 		t.Fatal(e)
 	}
 	upstream := &recallTestSender{}
@@ -133,9 +155,8 @@ func TestRecallDiagnosticConcurrentReservation(t *testing.T) {
 	p, upstream, id := recallTestPort(t, recallDiagnosticText, "10")
 	var wg sync.WaitGroup
 	// Act: concurrent callers may observe a reserved/incomplete receipt, but cannot dispatch twice.
-	for i := 0; i < 6; i++ {
-		wg.Add(1)
-		go func() { defer wg.Done(); p.probeRecall(context.Background(), id) }()
+	for range 6 {
+		wg.Go(func() { ; p.probeRecall(context.Background(), id) })
 	}
 	wg.Wait()
 	// Assert.
@@ -171,7 +192,7 @@ func TestRecallControlRejectsAmbiguousArguments(t *testing.T) {
 		// Arrange: exact source exists, but the owner request violates its executable contract.
 		p, upstream, _ := recallTestPort(t, recallDiagnosticText, "10")
 		recorder := httptest.NewRecorder()
-		request := httptest.NewRequest("POST", "/rpc", strings.NewReader(body))
+		request := httptest.NewRequest(http.MethodPost, "/rpc", strings.NewReader(body))
 		// Act.
 		p.cliHandler().ServeHTTP(recorder, request)
 		// Assert.

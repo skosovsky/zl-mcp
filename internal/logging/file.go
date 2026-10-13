@@ -58,7 +58,9 @@ func Open(path string, maxSizeMB, backups int, fallback io.Writer) (*File, error
 	if err = f.Close(); err != nil {
 		return nil, err
 	}
+	//nolint:exhaustruct_v5 // File initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	return &File{
+		//nolint:exhaustruct_v5 // Preserve rotation defaults for omitted optional settings; configured size/backups remain explicit.
 		writer:   &lumberjack.Logger{Filename: path, MaxSize: maxSizeMB, MaxBackups: backups},
 		fallback: fallback,
 		failed:   make(chan struct{}),

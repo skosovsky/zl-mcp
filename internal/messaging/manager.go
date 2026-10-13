@@ -13,6 +13,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
+//nolint:staticcheck // Keep the established externally observable error spelling unchanged.
 var ErrRejected = errors.New("Zalo rejected send")
 
 type Sender interface {
@@ -27,9 +28,11 @@ type Manager struct {
 }
 
 func failure(code, message string) error {
+	//nolint:exhaustruct_v5 // Omitted error fields retain their non-retryable/absent defaults in the existing response contract.
 	return &domain.Error{
-		Code:       code,
-		Message:    message,
+		Code:    code,
+		Message: message,
+		//nolint:exhaustruct_v5 // Optional tool/arguments stay absent until an actionable follow-up exists; preserve the response contract.
 		NextAction: domain.NextAction{Instruction: "Inspect send status before creating another request."},
 		Details:    map[string]any{},
 	}
@@ -139,8 +142,13 @@ func (m *Manager) replyQuote(ctx context.Context, r domain.SendRequest) (*domain
 	return quote, nil
 }
 
-func (m *Manager) sendOnceObserved(ctx context.Context, r domain.SendRequest, quote *domain.SendQuote, created time.Time) (map[string]any, error) {
-	sendCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+func (m *Manager) sendOnceObserved(
+	ctx context.Context,
+	r domain.SendRequest,
+	quote *domain.SendQuote,
+	created time.Time,
+) (map[string]any, error) {
+	sendCtx, cancel := context.WithTimeout(ctx, managersendOnceObservedSendTimeout)
 	id, sendErr := shared.ObserveUpstream(sendCtx, domain.WorkSend, func(ctx context.Context) (string, error) {
 		return m.Sender.SendDirect(ctx, r.RecipientID, r.Text, quote)
 	})
@@ -159,7 +167,7 @@ func (m *Manager) sendOnceObserved(ctx context.Context, r domain.SendRequest, qu
 		reason = &category
 	}
 	// A cancelled client must not prevent recording a confirmed upstream result.
-	finish, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	finish, cancel := context.WithTimeout(context.Background(), managersendOnceObservedFinishTimeout)
 	defer cancel()
 	if err := m.Store.CompleteSend(finish, r.RequestID, state, messageID, reason); err != nil {
 		return nil, failure("STORAGE_ERROR", "Cannot record send result; do not create another request.")
@@ -175,7 +183,10 @@ func (m *Manager) sendOnceObserved(ctx context.Context, r domain.SendRequest, qu
 func (m *Manager) prepareSend(ctx context.Context, r domain.SendRequest) (domain.SendOperation, error) {
 	op, err := m.Store.PrepareSend(ctx, r)
 	if errors.Is(err, storage.ErrSendConflict) {
-		return domain.SendOperation{}, failure("REQUEST_CONFLICT", "request_id already belongs to different send arguments.")
+		return domain.SendOperation{}, failure(
+			"REQUEST_CONFLICT",
+			"request_id already belongs to different send arguments.",
+		)
 	}
 	if errors.Is(err, storage.ErrSendCapacity) {
 		return domain.SendOperation{}, failure("CAPACITY_EXCEEDED", "Send operation ledger is full.")

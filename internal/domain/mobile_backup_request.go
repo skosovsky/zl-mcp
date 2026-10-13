@@ -30,13 +30,14 @@ func (r MobileBackupRequest) Normalize() (MobileBackupRequest, error) {
 	if r.RetentionHours != 0 {
 		return r, Invalid("Selected import cannot set account archive retention.")
 	}
+	//nolint:exhaustruct_v5 // HistoryImportRequest preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	h, err := (HistoryImportRequest{RequestID: r.RequestID, ConversationType: r.ConversationType, ConversationID: r.ConversationID, Since: r.Since, Until: r.Until, MaxMessages: r.MaxMessages}).Normalize()
 	if err != nil {
 		return r, err
 	}
 	r.RequestID, r.Since, r.Until, r.MaxMessages = h.RequestID, h.Since, h.Until, h.MaxMessages
 	if r.MaxArchiveBytes == 0 {
-		r.MaxArchiveBytes = 64 << 20
+		r.MaxArchiveBytes = defaultMobileArchiveBytes
 	}
 	if r.MaxArchiveBytes < 1 || r.MaxArchiveBytes > 512<<20 {
 		return r, Invalid("Mobile archive byte budget exceeds the contract.")
@@ -62,7 +63,7 @@ func (r MobileBackupRequest) normalizeAccountCapture() (MobileBackupRequest, err
 	}
 	r.RequestID = id.String()
 	if r.MaxArchiveBytes == 0 {
-		r.MaxArchiveBytes = 512 << 20
+		r.MaxArchiveBytes = defaultAccountArchiveBytes
 	}
 	if r.RetentionHours == 0 {
 		r.RetentionHours = 168

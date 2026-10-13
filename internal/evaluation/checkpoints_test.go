@@ -102,6 +102,7 @@ func checkpointDataset(t *testing.T) CheckpointDataset {
 	}
 	return ds
 }
+
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestCheckpointDatasetCoverageAndAllCases(t *testing.T) {
 	ds := checkpointDataset(t)
@@ -169,6 +170,7 @@ func TestCheckpointSafetyFailures(t *testing.T) {
 		})
 	}
 }
+
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestCheckpointUniqueNegativeChecks(t *testing.T) {
 	for _, c := range checkpointDataset(t).Cases {

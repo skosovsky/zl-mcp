@@ -12,7 +12,13 @@ import (
 
 func (r *Reader) ReadIdentity(ctx context.Context) (shared.ReadIdentity, error) {
 	account, revision, err := r.owner.ReadIdentity(ctx)
-	return shared.ReadIdentity{Principal: "local:" + strconv.Itoa(os.Getuid()), Account: account, PolicyRevision: revision}, readError(err)
+	return shared.ReadIdentity{
+		Principal:      "local:" + strconv.Itoa(os.Getuid()),
+		Account:        account,
+		PolicyRevision: revision,
+	}, readError(
+		err,
+	)
 }
 func (r *Reader) CheckGroupSearch(ctx context.Context, input search.GroupRequest) error {
 	q := query(input.Query)

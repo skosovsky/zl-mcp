@@ -33,6 +33,7 @@ func (a *AccountArchive) Clear() {
 	}
 	a.archive.Clear()
 	clear(a.pairs)
+	//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 	*a = AccountArchive{}
 }
 func (a AccountArchive) groupFiles() int {
@@ -80,6 +81,7 @@ func FetchAccountArchive(
 	if err != nil {
 		return AccountArchive{}, ErrArchive
 	}
+	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.InfoContext(
 		ctx,
 		"mobile_account_archive_acquired",
@@ -106,6 +108,7 @@ func ownAccountArchive(ctx context.Context, decoded *Format1Archive, pairs []Ide
 	if _, err := SelectArchiveIndex(ctx, decoded.Archive, pairs, ref); err != nil {
 		return AccountArchive{}, ErrArchive
 	}
+	//nolint:exhaustruct_v5 // AccountArchive keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	result := AccountArchive{
 		archive:         decoded.Archive,
 		pairs:           append([]IdentityPair(nil), pairs...),
@@ -113,6 +116,7 @@ func ownAccountArchive(ctx context.Context, decoded *Format1Archive, pairs []Ide
 		containerBytes:  decoded.ContainerBytes,
 		trailingBytes:   decoded.TrailingBytes,
 	}
+	//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 	decoded.Archive = PlainArchive{}
 
 	if ctx.Err() != nil {

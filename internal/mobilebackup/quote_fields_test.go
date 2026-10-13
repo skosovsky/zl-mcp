@@ -11,16 +11,25 @@ import (
 
 func TestQuoteUTF8PresenceOwnershipAndUnknown(t *testing.T) {
 	// Arrange: literal nested stream, Unicode text with embedded NUL, empty attachment.
-	input, _ := hex.DecodeString("0000005600000004c3a90078000000570000000000000058000000027b7d0000005a000000013100000059000000017a")
+	input, _ := hex.DecodeString(
+		"0000005600000004c3a90078000000570000000000000058000000027b7d0000005a000000013100000059000000017a",
+	)
 	original := append([]byte(nil), input...)
 	// Act.
 	got, err := ParseQuote(context.Background(), input)
 	// Assert: presence distinct from absence, unsupported field counted, no interpretation.
-	if err != nil || !got.Message.Present || !bytes.Equal(got.Message.Bytes, []byte{0xc3, 0xa9, 0, 'x'}) || !got.Attachment.Present || len(got.Attachment.Bytes) != 0 || string(got.FromD.Bytes) != "{}" || string(got.Status.Bytes) != "1" || got.UnsupportedFields != 1 || got.Scalars.OwnerID != nil {
+	if err != nil || !got.Message.Present || !bytes.Equal(got.Message.Bytes, []byte{0xc3, 0xa9, 0, 'x'}) ||
+		!got.Attachment.Present ||
+		len(got.Attachment.Bytes) != 0 ||
+		string(got.FromD.Bytes) != "{}" ||
+		string(got.Status.Bytes) != "1" ||
+		got.UnsupportedFields != 1 ||
+		got.Scalars.OwnerID != nil {
 		t.Fatal("quote fields mismatch", err)
 	}
 	b, _ := json.Marshal(got)
-	if string(b) != "{}" || fmt.Sprintf("%#v", got) != "mobile backup quote [redacted]" || fmt.Sprintf("%#v", got.Message) != "mobile backup quote value [redacted]" {
+	if string(b) != "{}" || fmt.Sprintf("%#v", got) != "mobile backup quote [redacted]" ||
+		fmt.Sprintf("%#v", got.Message) != "mobile backup quote value [redacted]" {
 		t.Fatal("quote fields exposed")
 	}
 	got.Message.Bytes[0] = 'q'
@@ -51,7 +60,10 @@ func FuzzQuoteWholeResult(f *testing.F) {
 	f.Fuzz(func(t *testing.T, input []byte) {
 		got, err := ParseQuote(context.Background(), input)
 		if err != nil {
-			if got.Scalars.ClientMessageID != nil || got.Message.Present || got.Attachment.Present || got.FromD.Present || got.Status.Present || got.UnsupportedFields != 0 {
+			if got.Scalars.ClientMessageID != nil || got.Message.Present || got.Attachment.Present ||
+				got.FromD.Present ||
+				got.Status.Present ||
+				got.UnsupportedFields != 0 {
 				t.Fatal("partial quote result")
 			}
 			return

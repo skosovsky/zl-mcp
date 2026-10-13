@@ -41,8 +41,8 @@ func (r SnapshotRecord) TransportRecord() map[string]any {
 		"sender_id":             sender,
 		"sender_mapping":        mapping,
 		"direction":             r.Direction,
-		"timestamp":             time.UnixMilli(r.TimestampMS).UTC().Format(time.RFC3339Nano),
-		"text":                  r.Text,
+		fieldTimestamp:          time.UnixMilli(r.TimestampMS).UTC().Format(time.RFC3339Nano),
+		fieldText:               r.Text,
 		"text_kind":             r.TextKind,
 		"quote_anchor_eligible": false,
 	}
@@ -68,6 +68,7 @@ func (p *SnapshotPage) Clear() {
 	if p != nil {
 		clear(p.Records)
 		clear(p.Unsupported)
+		//nolint:exhaustruct_v5 // Clearing owned state resets every field to its zero value, including nil slices and pointers.
 		*p = SnapshotPage{}
 	}
 }
@@ -117,8 +118,8 @@ func (a AccountArchive) ReadSnapshotPage(
 	result.SourceRecallRows = batch.SourceRecallRows
 	result.HasMore = batch.HasMore
 	if batch.Next != nil {
-		copy := *batch.Next
-		result.Next = &copy
+		pageAfter := *batch.Next
+		result.Next = &pageAfter
 	}
 	result.Unsupported = map[string]int{}
 	mapped := map[string]string{}
@@ -128,7 +129,17 @@ func (a AccountArchive) ReadSnapshotPage(
 		}
 	}
 	for _, row := range batch.Rows {
-		if rowErr := a.appendSnapshotRow(ctx, row, &batch, mapped, ref, sourceID, index, nowMS, &result); rowErr != nil {
+		if rowErr := a.appendSnapshotRow(
+			ctx,
+			row,
+			&batch,
+			mapped,
+			ref,
+			sourceID,
+			index,
+			nowMS,
+			&result,
+		); rowErr != nil {
 			return result, rowErr
 		}
 	}
@@ -138,7 +149,17 @@ func (a AccountArchive) ReadSnapshotPage(
 	return result, nil
 }
 
-func (a AccountArchive) appendSnapshotRow(ctx context.Context, row SQLiteRow, batch *SQLiteBatch, mapped map[string]string, ref domain.ConversationRef, sourceID string, index int, nowMS int64, result *SnapshotPage) error {
+func (a AccountArchive) appendSnapshotRow(
+	ctx context.Context,
+	row SQLiteRow,
+	batch *SQLiteBatch,
+	mapped map[string]string,
+	ref domain.ConversationRef,
+	sourceID string,
+	index int,
+	nowMS int64,
+	result *SnapshotPage,
+) error {
 	if ctx.Err() != nil {
 		return ErrArchive
 	}
@@ -146,7 +167,7 @@ func (a AccountArchive) appendSnapshotRow(ctx context.Context, row SQLiteRow, ba
 		result.SuppressedSource++
 		return nil
 	}
-	if row.Type == 20 {
+	if row.Type == nativeInformationalRowType {
 		return inspectExcludedSnapshotRow(ctx, row, result)
 	}
 	expiry, declared, e := MessageExpiryMS(row.TimestampMS, row.TTL)
@@ -179,14 +200,14 @@ func (a AccountArchive) appendSnapshotRow(ctx context.Context, row SQLiteRow, ba
 			result.Unsupported["sender_conversation_mismatch"]++
 			return nil
 		}
-		direction = "incoming"
+		direction = directionIncoming
 		if sender == a.ownerAccount {
-			direction = "outgoing"
+			direction = directionOutgoing
 		}
 	} else {
 		result.UnresolvedSenders++
 	}
-	textKind := "plain"
+	textKind := contentKindPlain
 	if rich {
 		textKind = "rich"
 	}
@@ -234,7 +255,12 @@ func inspectExcludedSnapshotRow(ctx context.Context, row SQLiteRow, result *Snap
 	return nil
 }
 
-func snapshotRowProjection(ctx context.Context, row SQLiteRow, kind string, result *SnapshotPage) (string, bool, bool, error) {
+func snapshotRowProjection(
+	ctx context.Context,
+	row SQLiteRow,
+	kind string,
+	result *SnapshotPage,
+) (string, bool, bool, error) {
 	metadata, e := ParseBinNet(ctx, row.BinNet)
 	if ctx.Err() != nil {
 		metadata.Clear()
@@ -246,6 +272,7 @@ func snapshotRowProjection(ctx context.Context, row SQLiteRow, kind string, resu
 		//nolint:nilerr // Malformed row metadata is counted and omitted; it does not invalidate the complete bounded page.
 		return "", false, false, nil
 	}
+	//nolint:exhaustruct_v5 // PreparedRow keeps absent decoded metadata and zero counters unchanged until this phase populates them.
 	text, rich, supported, valid := archiveText(PreparedRow{Row: row, Kind: kind, Metadata: metadata})
 	result.UnsupportedMetadataFields += metadata.UnsupportedFields
 	if metadata.Quote != nil {

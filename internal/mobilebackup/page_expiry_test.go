@@ -18,17 +18,39 @@ func TestPageExpirySeparatesMessageAndQuote(t *testing.T) {
 	future.TimestampMS = 1000
 	future.TTL = 11
 	ts, ttl := int64(1000), int64(10)
-	quote := &Quote{Scalars: QuoteScalars{Timestamp: &ts, TTL: &ttl}, Message: QuoteValue{Present: true, Bytes: []byte("synthetic quote")}, Attachment: QuoteValue{Present: true, Bytes: []byte("synthetic attachment")}, FromD: QuoteValue{Present: true, Bytes: []byte("synthetic name")}, Status: QuoteValue{Present: true, Bytes: []byte("synthetic status")}}
-	p := PreparedRowPage{Examined: 5, DeferredControls: 2, Rows: []PreparedRow{{Row: old}, {Row: stable, Metadata: BinNet{Quote: quote}}, {Row: future}}}
+	quote := &Quote{
+		Scalars:    QuoteScalars{Timestamp: &ts, TTL: &ttl},
+		Message:    QuoteValue{Present: true, Bytes: []byte("synthetic quote")},
+		Attachment: QuoteValue{Present: true, Bytes: []byte("synthetic attachment")},
+		FromD:      QuoteValue{Present: true, Bytes: []byte("synthetic name")},
+		Status:     QuoteValue{Present: true, Bytes: []byte("synthetic status")},
+	}
+	p := PreparedRowPage{
+		Examined:         5,
+		DeferredControls: 2,
+		Rows:             []PreparedRow{{Row: old}, {Row: stable, Metadata: BinNet{Quote: quote}}, {Row: future}},
+	}
 	removedBytes, quoteBytes := old.BinNet, quote.Message.Bytes
 	quoteRawBytes := stable.BinNet
 	// Act: exact eligibility boundary, not rounded client cleanup time.
 	removed, quotes, err := p.ApplyExpiry(1010)
 	// Assert: no resurrection or loss of the containing message/coverage metadata.
-	if err != nil || removed != 1 || quotes != 1 || len(p.Rows) != 2 || p.Examined != 5 || p.DeferredControls != 2 || p.Rows[0].Row.SenderID != "902" || !p.Rows[1].ExpiryDeclared || p.Rows[1].ExpiresMS != 1011 {
+	if err != nil || removed != 1 || quotes != 1 || len(p.Rows) != 2 || p.Examined != 5 || p.DeferredControls != 2 ||
+		p.Rows[0].Row.SenderID != "902" ||
+		!p.Rows[1].ExpiryDeclared ||
+		p.Rows[1].ExpiresMS != 1011 {
 		t.Fatal("wrong eligibility result", err)
 	}
-	if !bytes.Equal(removedBytes, make([]byte, len(removedBytes))) || !bytes.Equal(quoteBytes, make([]byte, len(quoteBytes))) || !bytes.Equal(quoteRawBytes, make([]byte, len(quoteRawBytes))) || !p.Rows[0].QuoteExpired || p.Rows[0].Row.BinNet != nil || quote.Message.Present || quote.Attachment.Present || quote.FromD.Present || !quote.Status.Present || *quote.Scalars.Timestamp != 1000 {
+	if !bytes.Equal(removedBytes, make([]byte, len(removedBytes))) ||
+		!bytes.Equal(quoteBytes, make([]byte, len(quoteBytes))) ||
+		!bytes.Equal(quoteRawBytes, make([]byte, len(quoteRawBytes))) ||
+		!p.Rows[0].QuoteExpired ||
+		p.Rows[0].Row.BinNet != nil ||
+		quote.Message.Present ||
+		quote.Attachment.Present ||
+		quote.FromD.Present ||
+		!quote.Status.Present ||
+		*quote.Scalars.Timestamp != 1000 {
 		t.Fatal("expired owned content retained or unrelated metadata removed")
 	}
 	// Repeated checks do not remove future messages or resurrect content.
@@ -65,7 +87,8 @@ func TestPageExpiryValidatesBeforeMutation(t *testing.T) {
 			// Act.
 			removed, quotes, err := p.ApplyExpiry(clock)
 			// Assert: no successful prefix or private-buffer mutation.
-			if !errors.Is(err, ErrExpiry) || removed != 0 || quotes != 0 || len(p.Rows) != 2 || !bytes.Equal(first.BinNet, original) {
+			if !errors.Is(err, ErrExpiry) || removed != 0 || quotes != 0 || len(p.Rows) != 2 ||
+				!bytes.Equal(first.BinNet, original) {
 				t.Fatal("failed page mutated")
 			}
 			p.Clear()

@@ -32,7 +32,7 @@ type mobileOfferFake struct {
 	mapping            func([]string) ([]byte, error)
 }
 
-func (f *mobileOfferFake) SubscribeMobileSync(public, host string) (listener.MobileSyncSubscription, func(), error) {
+func (f *mobileOfferFake) SubscribeMobileSync(public, _ string) (listener.MobileSyncSubscription, func(), error) {
 	f.public = public
 	f.registered = true
 	return listener.MobileSyncSubscription{
@@ -40,7 +40,7 @@ func (f *mobileOfferFake) SubscribeMobileSync(public, host string) (listener.Mob
 		Errors: f.failures,
 	}, func() { f.registered = false; f.releases++ }, nil
 }
-func (f *mobileOfferFake) RequestMobileBackup(ctx context.Context, public string) error {
+func (f *mobileOfferFake) RequestMobileBackup(_ context.Context, public string) error {
 	if !f.registered || public != f.public {
 		return errors.New("receiver not registered")
 	}
@@ -50,7 +50,7 @@ func (f *mobileOfferFake) RequestMobileBackup(ctx context.Context, public string
 	}
 	return f.ack
 }
-func (f *mobileOfferFake) GetMobileIdentityMapping(ctx context.Context, direct, groups []string) ([]byte, error) {
+func (f *mobileOfferFake) GetMobileIdentityMapping(_ context.Context, direct, _ []string) ([]byte, error) {
 	if f.mapping != nil {
 		return f.mapping(direct)
 	}
@@ -159,7 +159,7 @@ func TestMobileBackupOfferTermination(t *testing.T) {
 			n := 0
 			f.events <- model.MobileSyncEvent{Action: "user_confirm", PublicKey: p, PCName: "Web", UserAction: &n}
 		}, domain.ErrMobileBackupRejected},
-		{"queue failure", nil, func(f *mobileOfferFake, p string) { f.failures <- errors.New("synthetic-private-detail") }, domain.ErrMobileBackupInvalid},
+		{"queue failure", nil, func(f *mobileOfferFake, _ string) { f.failures <- errors.New("synthetic-private-detail") }, domain.ErrMobileBackupInvalid},
 		{"unsupported format", nil, func(f *mobileOfferFake, p string) {
 			e := syntheticOffer(t, p)
 			e.DatabaseInfo = `{"db_format":0}`
