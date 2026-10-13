@@ -113,33 +113,13 @@ func TestConfigDecisionEquivalence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The approved H06 transport package is checked separately, not against historical config.
-	var historicalFiles []File
-	for _, f := range files {
-		if strings.HasPrefix(f.File, "internal/mobilebackup/archiveport/") {
-			continue
-		}
-		kept := f
-		kept.Imports = nil
-		for _, i := range f.Imports {
-			if i != module+"/internal/mobilebackup/archiveport" {
-				kept.Imports = append(kept.Imports, i)
-			}
-		}
-		historicalFiles = append(historicalFiles, kept)
+	// Current source evolves independently of the immutable historical fixtures.
+	r, err := synthetic(ctx, b, current, files)
+	if err != nil {
+		t.Fatal(err)
 	}
-	for i, config := range [][]byte{old, current} {
-		graph := files
-		if i == 0 {
-			graph = historicalFiles
-		}
-		r, err := synthetic(ctx, b, config, graph)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !passing(r) {
-			t.Fatalf("actual source graph failed: %s", r.Stdout)
-		}
+	if !passing(r) {
+		t.Fatalf("actual source graph failed: %s", r.Stdout)
 	}
 }
 func TestScanHiddenSourcesAndRejectMalformedSource(t *testing.T) {

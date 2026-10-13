@@ -33,6 +33,7 @@ dependenciesRules:
       external:
         - '^github[.]com/modelcontextprotocol/go-sdk/mcp$'
       standard:
+        - '^errors$'
         - '^context$'
         - '^encoding/json$'
         - '^flag$'
@@ -66,6 +67,7 @@ dependenciesRules:
       external:
         - '^github[.]com/google/uuid$'
       standard:
+        - '^maps$'
         - '^context$'
         - '^crypto/rand$'
         - '^crypto/sha256$'
@@ -105,6 +107,7 @@ dependenciesRules:
       internal:
         - '^github[.]com/skosovsky/zl-mcp/internal/domain.**'
       standard:
+        - '^errors$'
         - '^bytes$'
         - '^context$'
         - '^encoding/json$'
@@ -235,6 +238,7 @@ dependenciesRules:
       external:
         - '^golang[.]org/x/sys/unix$'
       standard:
+        - '^errors$'
         - '^fmt$'
         - '^os$'
         - '^path/filepath$'
@@ -279,6 +283,7 @@ dependenciesRules:
         - '^github[.]com/santhosh-tekuri/jsonschema/v6$'
         - '^github[.]com/modelcontextprotocol/go-sdk/jsonrpc$'
       standard:
+        - '^maps$'
         - '^bytes$'
         - '^context$'
         - '^crypto/sha256$'
@@ -326,6 +331,7 @@ dependenciesRules:
         - '^modernc[.]org/sqlite$'
         - '^modernc[.]org/sqlite/lib$'
       standard:
+        - '^slices$'
         - '^bytes$'
         - '^context$'
         - '^crypto/aes$'
