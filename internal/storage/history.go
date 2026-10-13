@@ -14,7 +14,11 @@ type HistoryPageCounts struct {
 
 // PutHistoryPage persists a validated page silently. It is an internal storage
 // port, not an MCP capability or a substitute for the durable operation journal.
-func (s *Store) PutHistoryPage(ctx context.Context, ref domain.ConversationRef, messages []domain.Message) (HistoryPageCounts, error) {
+func (s *Store) PutHistoryPage(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	messages []domain.Message,
+) (HistoryPageCounts, error) {
 	if err := s.validateHistoryPage(ref, messages); err != nil {
 		return HistoryPageCounts{}, err
 	}
@@ -22,6 +26,7 @@ func (s *Store) PutHistoryPage(ctx context.Context, ref domain.ConversationRef, 
 	if err != nil {
 		return HistoryPageCounts{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	counts, err := s.putHistoryPageTx(ctx, tx, messages)
 	if err != nil {
@@ -43,7 +48,8 @@ func (s *Store) validateHistoryPage(ref domain.ConversationRef, messages []domai
 	// Validate the whole page before entering the transaction. Normalized source
 	// records must not be reclassified ordinary live/replay records.
 	for _, m := range messages {
-		if m.Ref() != ref || m.ID == "" || m.SenderID == "" || m.SentAt.IsZero() || len(m.Text) > 1<<20 || m.Source != "" {
+		if m.Ref() != ref || m.ID == "" || m.SenderID == "" || m.SentAt.IsZero() || len(m.Text) > 1<<20 ||
+			m.Source != "" {
 			return domain.Invalid("Invalid normalized history record.")
 		}
 		if m.Direction != "" && m.Direction != "incoming" && m.Direction != "outgoing" && m.Direction != "unknown" {
@@ -55,7 +61,11 @@ func (s *Store) validateHistoryPage(ref domain.ConversationRef, messages []domai
 
 // A durable operation can use this helper and advance its checkpoint in the
 // same transaction. The caller must perform whole-page validation first.
-func (s *Store) putHistoryPageTx(ctx context.Context, tx *sql.Tx, messages []domain.Message) (HistoryPageCounts, error) {
+func (s *Store) putHistoryPageTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	messages []domain.Message,
+) (HistoryPageCounts, error) {
 	counts := HistoryPageCounts{}
 	for _, m := range messages {
 		m.Source = "history"
@@ -77,13 +87,24 @@ func (s *Store) putHistoryPageTx(ctx context.Context, tx *sql.Tx, messages []dom
 }
 
 func appendHistoryIdentity(ctx context.Context, tx *sql.Tx, seq int64, m domain.Message) error {
-	if _, err := tx.ExecContext(ctx, "INSERT OR IGNORE INTO message_identities(group_id,conversation_type,message_id,first_seq) VALUES(?,?,?,?)", m.Ref().ID, m.Ref().Type, m.ID, seq); err != nil {
+	if _, err := tx.ExecContext(
+		ctx,
+		"INSERT OR IGNORE INTO message_identities(group_id,conversation_type,message_id,first_seq) VALUES(?,?,?,?)",
+		m.Ref().ID,
+		m.Ref().Type,
+		m.ID,
+		seq,
+	); err != nil {
 		return err
 	}
 	if m.Ref().Type == domain.ConversationDirect {
 		// Incomplete old history cannot prove a new contact. Preserve any existing
 		// known fact; unknown does not match a positive first-incoming filter.
-		_, err := tx.ExecContext(ctx, "INSERT OR IGNORE INTO peer_first_incoming(peer_id,first_seq,certainty) VALUES(?,NULL,'unknown')", m.Ref().ID)
+		_, err := tx.ExecContext(
+			ctx,
+			"INSERT OR IGNORE INTO peer_first_incoming(peer_id,first_seq,certainty) VALUES(?,NULL,'unknown')",
+			m.Ref().ID,
+		)
 		return err
 	}
 	return nil

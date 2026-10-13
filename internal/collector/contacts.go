@@ -34,7 +34,15 @@ func refreshContacts(parent context.Context, store *storage.Store, source domain
 	if err != nil {
 		return err
 	}
-	status := map[string]any{"status": "running", "last_attempt_at": time.Now().UTC().Format(time.RFC3339Nano), "last_success_at": previous["last_success_at"], "observed_count": 0, "permitted_count": 0, "stop_reason": nil}
+	var observedCount, permittedCount int
+	status := map[string]any{
+		"status":          "running",
+		"last_attempt_at": time.Now().UTC().Format(time.RFC3339Nano),
+		"last_success_at": previous["last_success_at"],
+		"observed_count":  0,
+		"permitted_count": 0,
+		"stop_reason":     nil,
+	}
 	if err = store.SetContactStatus(ctx, status); err != nil {
 		return err
 	}
@@ -87,9 +95,11 @@ func refreshContacts(parent context.Context, store *storage.Store, source domain
 				continue
 			}
 			seen[record.ID] = true
-			status["observed_count"] = status["observed_count"].(int) + 1
+			observedCount += 1
+			status["observed_count"] = observedCount
 			if store.AllowsConversation(domain.ConversationRef{Type: domain.ConversationDirect, ID: record.ID}) {
-				status["permitted_count"] = status["permitted_count"].(int) + 1
+				permittedCount += 1
+				status["permitted_count"] = permittedCount
 			}
 		}
 		if len(records) < 200 {

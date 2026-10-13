@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -38,6 +39,7 @@ func (s *Store) migrateMobileBackup(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	_, err = tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS mobile_backup_attempts(
  operation_id TEXT PRIMARY KEY,request_id TEXT UNIQUE NOT NULL,account_key TEXT NOT NULL,fingerprint TEXT NOT NULL,
@@ -55,7 +57,8 @@ func (s *Store) migrateMobileBackup(ctx context.Context) error {
 func (s *Store) loadMobileBackup(ctx context.Context, q historyReader, id string) (MobileBackupAttempt, error) {
 	var a MobileBackupAttempt
 	var body string
-	err := q.QueryRowContext(ctx, "SELECT operation_id,account_key,state,public_key,revision,request,created_at,updated_at FROM mobile_backup_attempts WHERE operation_id=?", id).Scan(&a.OperationID, &a.account, &a.State, &a.PublicKey, &a.Revision, &body, &a.CreatedAt, &a.UpdatedAt)
+	err := q.QueryRowContext(ctx, "SELECT operation_id,account_key,state,public_key,revision,request,created_at,updated_at FROM mobile_backup_attempts WHERE operation_id=?", id).
+		Scan(&a.OperationID, &a.account, &a.State, &a.PublicKey, &a.Revision, &body, &a.CreatedAt, &a.UpdatedAt)
 	if err != nil {
 		return a, err
 	}
@@ -67,7 +70,9 @@ func (s *Store) loadMobileBackup(ctx context.Context, q historyReader, id string
 		return MobileBackupAttempt{}, err
 	}
 	if account != a.account || (a.Request.ArchiveScope != "account" && !s.AllowsConversation(a.Request.Ref())) {
-		return MobileBackupAttempt{}, subscriptionPermission("Mobile backup attempt is outside account or collection policy.")
+		return MobileBackupAttempt{}, subscriptionPermission(
+			"Mobile backup attempt is outside account or collection policy.",
+		)
 	}
 	return a, nil
 }
@@ -75,7 +80,10 @@ func (s *Store) MobileBackupAttempt(ctx context.Context, id string) (MobileBacku
 	return s.loadMobileBackup(ctx, s.DB, id)
 }
 
-func (s *Store) PrepareMobileBackup(ctx context.Context, request domain.MobileBackupRequest) (MobileBackupAttempt, error) {
+func (s *Store) PrepareMobileBackup(
+	ctx context.Context,
+	request domain.MobileBackupRequest,
+) (MobileBackupAttempt, error) {
 	r, err := request.Normalize()
 	if err != nil {
 		return MobileBackupAttempt{}, err
@@ -87,6 +95,7 @@ func (s *Store) PrepareMobileBackup(ctx context.Context, request domain.MobileBa
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	a, err := s.prepareMobileBackupTx(ctx, tx, r, false)
 	if err != nil {
@@ -98,13 +107,19 @@ func (s *Store) PrepareMobileBackup(ctx context.Context, request domain.MobileBa
 	return a, nil
 }
 
-func (s *Store) prepareMobileBackupTx(ctx context.Context, tx *sql.Tx, r domain.MobileBackupRequest, rejectExisting bool) (MobileBackupAttempt, error) {
+func (s *Store) prepareMobileBackupTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	r domain.MobileBackupRequest,
+	rejectExisting bool,
+) (MobileBackupAttempt, error) {
 	account, err := historyAccount(ctx, tx)
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
 	var id, fingerprint string
-	err = tx.QueryRowContext(ctx, "SELECT operation_id,fingerprint FROM mobile_backup_attempts WHERE request_id=?", r.RequestID).Scan(&id, &fingerprint)
+	err = tx.QueryRowContext(ctx, "SELECT operation_id,fingerprint FROM mobile_backup_attempts WHERE request_id=?", r.RequestID).
+		Scan(&id, &fingerprint)
 	if err == nil {
 		if rejectExisting {
 			return MobileBackupAttempt{}, ErrMobileBackupConflict
@@ -128,26 +143,50 @@ func (s *Store) prepareMobileBackupTx(ctx context.Context, tx *sql.Tx, r domain.
 	if total >= 10000 {
 		return MobileBackupAttempt{}, ErrMobileBackupCapacity
 	}
-	if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM mobile_backup_attempts WHERE account_key=? AND state IN ('prepared','dispatching','waiting_for_confirmation','request_result_unknown','mobile_restoring','waiting_for_backup')", account).Scan(&active); err != nil {
+	if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM mobile_backup_attempts WHERE account_key=? AND state IN ('prepared','dispatching','waiting_for_confirmation','request_result_unknown','mobile_restoring','waiting_for_backup')", account).
+		Scan(&active); err != nil {
 		return MobileBackupAttempt{}, err
 	}
 	if active > 0 {
 		return MobileBackupAttempt{}, ErrMobileBackupBusy
 	}
 	stamp := now()
-	a := MobileBackupAttempt{Request: r, OperationID: uuid.NewString(), State: "prepared", CreatedAt: stamp, UpdatedAt: stamp, account: account}
+	a := MobileBackupAttempt{
+		Request:     r,
+		OperationID: uuid.NewString(),
+		State:       "prepared",
+		CreatedAt:   stamp,
+		UpdatedAt:   stamp,
+		account:     account,
+	}
 	body, err := json.Marshal(r)
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
-	_, err = tx.ExecContext(ctx, "INSERT INTO mobile_backup_attempts(operation_id,request_id,account_key,fingerprint,state,request,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)", a.OperationID, r.RequestID, account, r.Fingerprint(), a.State, string(body), stamp, stamp)
+	_, err = tx.ExecContext(
+		ctx,
+		"INSERT INTO mobile_backup_attempts(operation_id,request_id,account_key,fingerprint,state,request,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",
+		a.OperationID,
+		r.RequestID,
+		account,
+		r.Fingerprint(),
+		a.State,
+		string(body),
+		stamp,
+		stamp,
+	)
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
 	return a, nil
 }
 
-func (s *Store) DispatchMobileBackup(ctx context.Context, id string, revision int64, public string) (MobileBackupAttempt, error) {
+func (s *Store) DispatchMobileBackup(
+	ctx context.Context,
+	id string,
+	revision int64,
+	public string,
+) (MobileBackupAttempt, error) {
 	if public == "" || len(public) > 1024 {
 		return MobileBackupAttempt{}, ErrMobileBackupState
 	}
@@ -165,13 +204,22 @@ func (s *Store) DispatchMobileBackup(ctx context.Context, id string, revision in
 	}
 	return s.transitionMobileBackup(ctx, id, revision, "dispatching", public)
 }
-func (s *Store) ProgressMobileBackup(ctx context.Context, id string, revision int64, state string) (MobileBackupAttempt, error) {
+
+func (s *Store) ProgressMobileBackup(
+	ctx context.Context,
+	id string,
+	revision int64,
+	state string,
+) (MobileBackupAttempt, error) {
 	return s.transitionMobileBackup(ctx, id, revision, state, "")
 }
 
 func mobileBackupTransition(from, to string) bool {
 	if to == "failed" || to == "cancelled" || to == "interrupted" {
-		return from == "prepared" || from == "dispatching" || from == "waiting_for_confirmation" || from == "request_result_unknown" || from == "mobile_restoring" || from == "waiting_for_backup"
+		return from == "prepared" || from == "dispatching" || from == "waiting_for_confirmation" ||
+			from == "request_result_unknown" ||
+			from == "mobile_restoring" ||
+			from == "waiting_for_backup"
 	}
 	if from == "prepared" {
 		return to == "dispatching"
@@ -179,16 +227,24 @@ func mobileBackupTransition(from, to string) bool {
 	if from == "dispatching" {
 		return to == "waiting_for_confirmation" || to == "request_result_unknown"
 	}
-	if from == "waiting_for_confirmation" || from == "request_result_unknown" || from == "mobile_restoring" || from == "waiting_for_backup" {
+	if from == "waiting_for_confirmation" || from == "request_result_unknown" || from == "mobile_restoring" ||
+		from == "waiting_for_backup" {
 		return to == "mobile_restoring" || to == "waiting_for_backup" || to == "offer_ready"
 	}
 	return false
 }
-func (s *Store) transitionMobileBackup(ctx context.Context, id string, revision int64, state, public string) (MobileBackupAttempt, error) {
+
+func (s *Store) transitionMobileBackup(
+	ctx context.Context,
+	id string,
+	revision int64,
+	state, public string,
+) (MobileBackupAttempt, error) {
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	a, err := s.loadMobileBackup(ctx, tx, id)
 	if err != nil {
@@ -207,7 +263,16 @@ func (s *Store) transitionMobileBackup(ctx context.Context, id string, revision 
 	}
 	a.State = state
 	a.UpdatedAt = now()
-	result, err := tx.ExecContext(ctx, "UPDATE mobile_backup_attempts SET state=?,public_key=?,revision=revision+1,updated_at=? WHERE operation_id=? AND revision=? AND account_key=?", a.State, a.PublicKey, a.UpdatedAt, id, revision, a.account)
+	result, err := tx.ExecContext(
+		ctx,
+		"UPDATE mobile_backup_attempts SET state=?,public_key=?,revision=revision+1,updated_at=? WHERE operation_id=? AND revision=? AND account_key=?",
+		a.State,
+		a.PublicKey,
+		a.UpdatedAt,
+		id,
+		revision,
+		a.account,
+	)
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
@@ -242,7 +307,12 @@ func (s *Store) RecoverMobileBackupAttempts(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.DB.ExecContext(ctx, "UPDATE mobile_backup_attempts SET state='interrupted',revision=revision+1,updated_at=? WHERE account_key=? AND state IN ('prepared','dispatching','waiting_for_confirmation','request_result_unknown','mobile_restoring','waiting_for_backup')", now(), account)
+	_, err = s.DB.ExecContext(
+		ctx,
+		"UPDATE mobile_backup_attempts SET state='interrupted',revision=revision+1,updated_at=? WHERE account_key=? AND state IN ('prepared','dispatching','waiting_for_confirmation','request_result_unknown','mobile_restoring','waiting_for_backup')",
+		now(),
+		account,
+	)
 	return err
 }
 

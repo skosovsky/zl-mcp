@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"sort"
+	"slices"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -20,32 +21,36 @@ func TestSearchPerformance100k(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	stmt, e := tx.PrepareContext(ctx, `INSERT INTO messages(group_id,message_id,sender_id,sent_at,received_at,text,attachments,source) VALUES('g1',?,'sender',?,? ,?,'[]','live')`)
+	stmt, e := tx.PrepareContext(
+		ctx,
+		`INSERT INTO messages(group_id,message_id,sender_id,sent_at,received_at,text,attachments,source) VALUES('g1',?,'sender',?,? ,?,'[]','live')`,
+	)
 	if e != nil {
 		t.Fatal(e)
 	}
 	at := time.Now().UTC()
-	for i := 0; i < 100000; i++ {
+	for i := range 100000 {
 		ts := at.Add(time.Duration(i) * time.Second).Format("2006-01-02T15:04:05.000000000Z")
 		text := fmt.Sprintf("Обсуждение %d: ремонт кондиционера, cà phê и бытовые услуги", i)
-		if _, e = stmt.ExecContext(ctx, fmt.Sprint(i), ts, ts, text); e != nil {
+		if _, e = stmt.ExecContext(ctx, strconv.Itoa(i), ts, ts, text); e != nil {
 			t.Fatal(e)
 		}
 	}
+	//nolint:sqlclosecheck // Close this query before reusing the connection; all return paths close it.
 	if e = stmt.Close(); e != nil {
 		t.Fatal(e)
 	}
 	if e = tx.Commit(); e != nil {
 		t.Fatal(e)
 	}
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		if _, _, _, e = s.Search(ctx, Search{Query: "ремонт кондиционера", Limit: 20}); e != nil {
 			t.Fatal(e)
 		}
 	}
 	// Act: warm-cache first-page latency over 100 independent queries.
 	timings := []time.Duration{}
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		start := time.Now()
 		hits, _, _, err := s.Search(ctx, Search{Query: "ремонт кондиционера", Limit: 20})
 		timings = append(timings, time.Since(start))
@@ -53,7 +58,7 @@ func TestSearchPerformance100k(t *testing.T) {
 			t.Fatalf("bad result count: %d %v", len(hits), err)
 		}
 	}
-	sort.Slice(timings, func(i, j int) bool { return timings[i] < timings[j] })
+	slices.Sort(timings)
 	p95 := timings[94]
 	// Assert
 	t.Logf("100000 messages, warm first page, 100 samples: p95=%s, median=%s", p95, timings[49])

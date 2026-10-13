@@ -30,7 +30,16 @@ func refreshContactProfiles(parent context.Context, store *storage.Store, source
 	if err != nil {
 		return err
 	}
-	status := map[string]any{"status": "running", "last_attempt_at": time.Now().UTC().Format(time.RFC3339Nano), "last_success_at": previous["last_success_at"], "requested_count": 0, "returned_count": 0, "missing_count": 0, "stop_reason": nil}
+	var requestedCount, returnedCount, missingCount int
+	status := map[string]any{
+		"status":          "running",
+		"last_attempt_at": time.Now().UTC().Format(time.RFC3339Nano),
+		"last_success_at": previous["last_success_at"],
+		"requested_count": 0,
+		"returned_count":  0,
+		"missing_count":   0,
+		"stop_reason":     nil,
+	}
 	if err = store.SetProfileStatus(ctx, status); err != nil {
 		return err
 	}
@@ -55,14 +64,15 @@ func refreshContactProfiles(parent context.Context, store *storage.Store, source
 		return finish("partial", reason, cause)
 	}
 	after := ""
-	for batch := 0; batch < 20; batch++ {
+	for range 20 {
 		ids, cursor, more, e := store.UnenrichedDirectIDs(ctx, after, 100)
 		if e != nil {
 			return storageFailure(e)
 		}
 		after = cursor
 		if len(ids) > 0 {
-			status["requested_count"] = status["requested_count"].(int) + len(ids)
+			requestedCount += len(ids)
+			status["requested_count"] = requestedCount
 			records, e := source.ContactProfiles(ctx, ids)
 			if e != nil {
 				state, reason := "partial", "upstream_unavailable"
@@ -84,18 +94,24 @@ func refreshContactProfiles(parent context.Context, store *storage.Store, source
 			}
 			for _, record := range records {
 				if !requested[record.ID] || returned[record.ID] {
-					return finish("partial", "storage_or_metadata_error", domain.Invalid("Invalid profile response identity."))
+					return finish(
+						"partial",
+						"storage_or_metadata_error",
+						domain.Invalid("Invalid profile response identity."),
+					)
 				}
 				returned[record.ID] = true
 			}
 			if _, e = store.PutContacts(ctx, records); e != nil {
 				return storageFailure(e)
 			}
-			status["returned_count"] = status["returned_count"].(int) + len(records)
-			status["missing_count"] = status["missing_count"].(int) + len(ids) - len(records)
+			returnedCount += len(records)
+			status["returned_count"] = returnedCount
+			missingCount += len(ids) - len(records)
+			status["missing_count"] = missingCount
 		}
 		if !more {
-			if status["missing_count"].(int) > 0 {
+			if missingCount > 0 {
 				return finish("partial", "missing_profiles", nil)
 			}
 			return finish("completed", "known_ids_processed", nil)

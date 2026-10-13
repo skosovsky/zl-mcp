@@ -1,10 +1,11 @@
 package local
 
 import (
-	"fmt"
-	"golang.org/x/sys/unix"
+	"errors"
 	"os"
 	"path/filepath"
+
+	"golang.org/x/sys/unix"
 )
 
 // Lock is held for the lifetime of the collector or interactive login.
@@ -14,10 +15,16 @@ func Lock(dir string) (func(), error) {
 		return nil, e
 	}
 	if e = unix.Flock(int(f.Fd()), unix.LOCK_EX|unix.LOCK_NB); e != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		f.Close()
-		return nil, fmt.Errorf("another collector or login owns this account")
+		return nil, errors.New("another collector or login owns this account")
 	}
-	return func() { unix.Flock(int(f.Fd()), unix.LOCK_UN); f.Close() }, nil
+	return func() {
+		//nolint:errcheck,gosec // Closing the descriptor also releases the advisory lock.
+		unix.Flock(int(f.Fd()), unix.LOCK_UN)
+		//nolint:gosec // Lock cleanup has no caller error channel and must run exactly once.
+		f.Close()
+	}, nil
 }
 func WritePrivate(path string, b []byte) error {
 	f, e := os.CreateTemp(filepath.Dir(path), ".private-*")
@@ -25,6 +32,7 @@ func WritePrivate(path string, b []byte) error {
 		return e
 	}
 	tmp := f.Name()
+	// G104: Scratch cleanup preserves the write/rename result.
 	defer os.Remove(tmp)
 	if e = f.Chmod(0600); e == nil {
 		_, e = f.Write(b)
@@ -47,7 +55,7 @@ func ReadPrivate(path string) ([]byte, error) {
 		return nil, e
 	}
 	if !st.Mode().IsRegular() || st.Mode().Perm()&0077 != 0 {
-		return nil, fmt.Errorf("private file must be regular and accessible only to its owner")
+		return nil, errors.New("private file must be regular and accessible only to its owner")
 	}
 	return os.ReadFile(path)
 }

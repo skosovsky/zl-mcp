@@ -2,11 +2,13 @@ package evaluation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/evalfixture"
 )
@@ -20,7 +22,13 @@ type ChildOptions struct{ CaseID, StateDir, EffectsFile, Corpus, ArchiveVector s
 func RunCase(ctx context.Context, opts ChildOptions) (out Output, err error) {
 	out.CaseID = opts.CaseID
 	out.Facts = map[string]any{}
-	options := evalfixture.Options{Offline: true, StateDir: opts.StateDir, KeepState: true, EffectsFile: opts.EffectsFile, Fixtures: opts.Corpus}
+	options := evalfixture.Options{
+		Offline:     true,
+		StateDir:    opts.StateDir,
+		KeepState:   true,
+		EffectsFile: opts.EffectsFile,
+		Fixtures:    opts.Corpus,
+	}
 	if opts.CaseID == "empty-corpus" {
 		options.Empty = true
 	}
@@ -39,6 +47,7 @@ func RunCase(ctx context.Context, opts ChildOptions) (out Output, err error) {
 	}
 	c, err := connect(ctx, f)
 	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		f.Close()
 		return out, err
 	}
@@ -103,16 +112,27 @@ func RunCase(ctx context.Context, opts ChildOptions) (out Output, err error) {
 					err = e
 					break
 				}
-				out.Facts["sdk-envelope-"+raw] = string(marshaled(msg.(*jsonrpc.Request).ID.Raw()))
+				request, ok := msg.(*jsonrpc.Request)
+				if !ok {
+					err = errors.New("SDK did not decode a request")
+					break
+				}
+				out.Facts["sdk-envelope-"+raw] = string(marshaled(request.ID.Raw()))
 			}
 		}
 		for _, kind := range []string{"direct", "group"} {
-			tool("zalo_list_conversation_messages", map[string]any{"conversation_type": kind, "conversation_id": collisionID})
+			tool(
+				"zalo_list_conversation_messages",
+				map[string]any{"conversation_type": kind, "conversation_id": collisionID},
+			)
 		}
 	case "empty-corpus":
 		search()
 	case "large-resource":
-		r := tool("zalo_get_message_context", map[string]any{"group_id": "g-1", "message_id": "m-long", "before": 0, "after": 0})
+		r := tool(
+			"zalo_get_message_context",
+			map[string]any{"group_id": "g-1", "message_id": "m-long", "before": 0, "after": 0},
+		)
 		if err == nil {
 			c.resource(ctx, stringAt(payload(r), "anchor.text_resource_uri"))
 		}
@@ -128,9 +148,20 @@ func RunCase(ctx context.Context, opts ChildOptions) (out Output, err error) {
 		r := tool("zalo_list_archive_sources", map[string]any{})
 		source := stringAt(payload(r), "sources.0.source_id")
 		if opts.CaseID == "archive-dates" {
-			tool("zalo_list_conversation_messages", map[string]any{"source_id": source, "conversation_type": "direct", "conversation_id": "12"})
+			tool(
+				"zalo_list_conversation_messages",
+				map[string]any{"source_id": source, "conversation_type": "direct", "conversation_id": "12"},
+			)
 		}
-		args := map[string]any{"source_id": source, "conversation_type": "direct", "conversation_id": "12", "since": "2000-01-01T00:00:00Z", "until": "2030-01-01T00:00:00Z", "order": "asc", "limit": 1}
+		args := map[string]any{
+			"source_id":         source,
+			"conversation_type": "direct",
+			"conversation_id":   "12",
+			"since":             "2000-01-01T00:00:00Z",
+			"until":             "2030-01-01T00:00:00Z",
+			"order":             "asc",
+			"limit":             1,
+		}
 		if opts.CaseID == "archive-empty-page" {
 			args["order"] = "desc"
 		}
@@ -145,10 +176,18 @@ func RunCase(ctx context.Context, opts ChildOptions) (out Output, err error) {
 				emptyMore = true
 			}
 			for _, item := range items {
-				m := item.(map[string]any)
-				id := m["archive_row_id"].(string)
+				m, ok := item.(map[string]any)
+				if !ok {
+					err = errors.New("invalid archive row")
+					break
+				}
+				id, ok := m["archive_row_id"].(string)
+				if !ok {
+					err = errors.New("invalid archive row ID")
+					break
+				}
 				if seen[id] {
-					err = fmt.Errorf("duplicate archive row")
+					err = errors.New("duplicate archive row")
 				}
 				seen[id] = true
 				if uri, ok := m["text_resource_uri"].(string); ok && !fullResource {
@@ -166,17 +205,42 @@ func RunCase(ctx context.Context, opts ChildOptions) (out Output, err error) {
 	case "ttl":
 		ref := domain.ConversationRef{Type: "direct", ID: "ttl-peer"}
 		now := time.Now().UTC()
-		_, err = f.Store.PutExpiringHistoryPage(ctx, ref, []domain.ExpiringHistoryRecord{{Message: domain.Message{Conversation: ref, ID: "ttl-message", SenderID: "peer", Text: "expiring", SentAt: now.Add(-time.Hour)}, ExpiresAtMS: now.Add(time.Hour).UnixMilli()}})
-		tool("zalo_list_conversation_messages", map[string]any{"conversation_type": "direct", "conversation_id": ref.ID})
+		_, err = f.Store.PutExpiringHistoryPage(
+			ctx,
+			ref,
+			[]domain.ExpiringHistoryRecord{
+				{
+					Message: domain.Message{
+						Conversation: ref,
+						ID:           "ttl-message",
+						SenderID:     "peer",
+						Text:         "expiring",
+						SentAt:       now.Add(-time.Hour),
+					},
+					ExpiresAtMS: now.Add(time.Hour).UnixMilli(),
+				},
+			},
+		)
+		tool(
+			"zalo_list_conversation_messages",
+			map[string]any{"conversation_type": "direct", "conversation_id": ref.ID},
+		)
 		if err == nil {
 			err = f.Store.ExpireHistoryAt(ctx, now.Add(2*time.Hour))
 		}
-		tool("zalo_list_conversation_messages", map[string]any{"conversation_type": "direct", "conversation_id": ref.ID})
+		tool(
+			"zalo_list_conversation_messages",
+			map[string]any{"conversation_type": "direct", "conversation_id": ref.ID},
+		)
 	case "tombstone":
 		args := map[string]any{"conversation_type": "direct", "conversation_id": collisionID}
 		tool("zalo_list_conversation_messages", args)
 		if err == nil {
-			err = f.Store.DeleteConversation(ctx, domain.ConversationRef{Type: "direct", ID: collisionID}, "9007199254740995")
+			err = f.Store.DeleteConversation(
+				ctx,
+				domain.ConversationRef{Type: "direct", ID: collisionID},
+				"9007199254740995",
+			)
 		}
 		restart(nil)
 		tool("zalo_list_conversation_messages", args)
@@ -192,7 +256,10 @@ func RunCase(ctx context.Context, opts ChildOptions) (out Output, err error) {
 		tool("zalo_search_messages", map[string]any{"query": "ремонт", "limit": "10"})
 		tool("zalo_search_messages", map[string]any{"query": "ремонт", "limit": 0})
 		tool("zalo_search_messages", map[string]any{"query": "ремонт", "since": "bad-date"})
-		tool("zalo_send_direct_message", map[string]any{"recipient_id": "peer", "text": "synthetic", "request_id": "bad-uuid"})
+		tool(
+			"zalo_send_direct_message",
+			map[string]any{"recipient_id": "peer", "text": "synthetic", "request_id": "bad-uuid"},
+		)
 		tool("zalo_get_status", map[string]any{"extra": nil})
 	case "send-allowed":
 		send("authorized synthetic text", "")
@@ -229,7 +296,16 @@ func RunCase(ctx context.Context, opts ChildOptions) (out Output, err error) {
 			err = e
 			break
 		}
-		r := tool("zalo_import_conversation_history", map[string]any{"request_id": requestID, "conversation_type": "group", "conversation_id": "g-1", "since": "2026-10-01T00:00:00Z", "until": "2026-10-02T00:00:00Z"})
+		r := tool(
+			"zalo_import_conversation_history",
+			map[string]any{
+				"request_id":        requestID,
+				"conversation_type": "group",
+				"conversation_id":   "g-1",
+				"since":             "2026-10-01T00:00:00Z",
+				"until":             "2026-10-02T00:00:00Z",
+			},
+		)
 		operation := stringAt(payload(r), "operation_id")
 		started, release, e := f.StartBlockedHistory(ctx)
 		if e != nil {
@@ -249,7 +325,16 @@ func RunCase(ctx context.Context, opts ChildOptions) (out Output, err error) {
 		release()
 		restart(nil)
 		tool("zalo_get_history_import_status", map[string]any{"operation_id": operation})
-		tool("zalo_import_conversation_history", map[string]any{"request_id": requestID, "conversation_type": "group", "conversation_id": "g-1", "since": "2026-10-01T00:00:00Z", "until": "2026-10-02T00:00:00Z"})
+		tool(
+			"zalo_import_conversation_history",
+			map[string]any{
+				"request_id":        requestID,
+				"conversation_type": "group",
+				"conversation_id":   "g-1",
+				"since":             "2026-10-01T00:00:00Z",
+				"until":             "2026-10-02T00:00:00Z",
+			},
+		)
 		if err != nil {
 			break
 		}
@@ -285,5 +370,11 @@ func RunCase(ctx context.Context, opts ChildOptions) (out Output, err error) {
 
 // Paths are synthetic fixture assets; no live state path is accepted implicitly.
 func DefaultChildOptions(root, state, id string) ChildOptions {
-	return ChildOptions{CaseID: id, StateDir: filepath.Join(state, "state"), EffectsFile: filepath.Join(state, "effects.jsonl"), Corpus: filepath.Join(root, "docs/evals/fixtures.json"), ArchiveVector: filepath.Join(root, "internal/mobilebackup/testdata/format1-account-vector.json")}
+	return ChildOptions{
+		CaseID:        id,
+		StateDir:      filepath.Join(state, "state"),
+		EffectsFile:   filepath.Join(state, "effects.jsonl"),
+		Corpus:        filepath.Join(root, "docs/evals/fixtures.json"),
+		ArchiveVector: filepath.Join(root, "internal/mobilebackup/testdata/format1-account-vector.json"),
+	}
 }

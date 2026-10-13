@@ -3,6 +3,7 @@ package mobilebackup
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"io"
 	"sort"
 	"strings"
@@ -24,8 +25,9 @@ func (s *RetainedArchiveStore) Sources(ctx context.Context, accountKey string) (
 		return nil, ErrRetainedArchive
 	}
 	entries, err := dir.ReadDir(32)
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	dir.Close()
-	if err != nil && err != io.EOF || len(entries) > retainedMaxSources+3 {
+	if err != nil && !errors.Is(err, io.EOF) || len(entries) > retainedMaxSources+3 {
 		return nil, ErrRetainedArchive
 	}
 	result := []PreservationReceipt{}
@@ -63,11 +65,18 @@ type PreservationReceipt struct {
 }
 
 func preservationReceipt(meta retainedMetadata, stored int64) PreservationReceipt {
-	return PreservationReceipt{Source: retainedManifest(meta, stored), Retention: "until_owner_deletion", PreservedAt: time.UnixMilli(meta.PreservedMS).UTC().Format(time.RFC3339Nano)}
+	return PreservationReceipt{
+		Source:      retainedManifest(meta, stored),
+		Retention:   "until_owner_deletion",
+		PreservedAt: time.UnixMilli(meta.PreservedMS).UTC().Format(time.RFC3339Nano),
+	}
 }
 
 // PreservationStatus authenticates durable provenance without opening a Zalo session.
-func (s *RetainedArchiveStore) PreservationStatus(ctx context.Context, id, accountKey string) (PreservationReceipt, error) {
+func (s *RetainedArchiveStore) PreservationStatus(
+	ctx context.Context,
+	id, accountKey string,
+) (PreservationReceipt, error) {
 	if !s.lock(ctx) {
 		return PreservationReceipt{}, ErrRetainedArchive
 	}
@@ -85,7 +94,11 @@ func (s *RetainedArchiveStore) PreservationStatus(ctx context.Context, id, accou
 
 // PreserveFrom promotes one authenticated cache source into this library. It
 // keeps original bytes and provenance and uses the library's independent key.
-func (s *RetainedArchiveStore) PreserveFrom(ctx context.Context, source *RetainedArchiveStore, id, accountKey string) (PreservationReceipt, error) {
+func (s *RetainedArchiveStore) PreserveFrom(
+	ctx context.Context,
+	source *RetainedArchiveStore,
+	id, accountKey string,
+) (PreservationReceipt, error) {
 	if source == nil || source == s || !s.permanent || source.permanent || !source.lock(ctx) {
 		return PreservationReceipt{}, ErrRetainedArchive
 	}
@@ -98,7 +111,13 @@ func (s *RetainedArchiveStore) PreserveFrom(ctx context.Context, source *Retaine
 	return s.preserveAuthenticated(ctx, meta, a, originalStored, accountKey)
 }
 
-func (s *RetainedArchiveStore) preserveAuthenticated(ctx context.Context, meta retainedMetadata, a AccountArchive, originalStored int64, accountKey string) (PreservationReceipt, error) {
+func (s *RetainedArchiveStore) preserveAuthenticated(
+	ctx context.Context,
+	meta retainedMetadata,
+	a AccountArchive,
+	originalStored int64,
+	accountKey string,
+) (PreservationReceipt, error) {
 	id := meta.SourceID
 	if !s.lock(ctx) {
 		return PreservationReceipt{}, ErrRetainedArchive
@@ -110,7 +129,10 @@ func (s *RetainedArchiveStore) preserveAuthenticated(ctx context.Context, meta r
 		if e != nil {
 			return PreservationReceipt{}, e
 		}
-		if old.Digest != meta.Digest || old.CreatedMS != meta.CreatedMS || old.ExpiresMS != meta.ExpiresMS || old.CiphertextBytes != meta.CiphertextBytes || old.ContainerBytes != meta.ContainerBytes || old.TrailingBytes != meta.TrailingBytes {
+		if old.Digest != meta.Digest || old.CreatedMS != meta.CreatedMS || old.ExpiresMS != meta.ExpiresMS ||
+			old.CiphertextBytes != meta.CiphertextBytes ||
+			old.ContainerBytes != meta.ContainerBytes ||
+			old.TrailingBytes != meta.TrailingBytes {
 			return PreservationReceipt{}, ErrRetainedConflict
 		}
 		return preservationReceipt(old, stored), nil
@@ -121,5 +143,9 @@ func (s *RetainedArchiveStore) preserveAuthenticated(ctx context.Context, meta r
 	if err != nil {
 		return PreservationReceipt{}, err
 	}
-	return PreservationReceipt{Source: m, Retention: "until_owner_deletion", PreservedAt: time.UnixMilli(meta.PreservedMS).UTC().Format(time.RFC3339Nano)}, nil
+	return PreservationReceipt{
+		Source:      m,
+		Retention:   "until_owner_deletion",
+		PreservedAt: time.UnixMilli(meta.PreservedMS).UTC().Format(time.RFC3339Nano),
+	}, nil
 }

@@ -2,10 +2,11 @@ package evaluation
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/skosovsky/zl-mcp/internal/evalfixture"
 )
 
@@ -23,6 +24,7 @@ func connect(ctx context.Context, f *evalfixture.Fixture) (*client, error) {
 	}
 	cs, err := mcp.NewClient(&mcp.Implementation{Name: "offline-eval", Version: "1"}, nil).Connect(ctx, ct, nil)
 	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		ss.Close()
 		return nil, err
 	}
@@ -50,7 +52,7 @@ func (c *client) tool(ctx context.Context, name string, args any) (map[string]an
 	}
 	result, ok := v.(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("invalid result object")
+		return nil, errors.New("invalid result object")
 	}
 	return result, nil
 }

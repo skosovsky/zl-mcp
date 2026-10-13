@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/config"
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -41,12 +43,29 @@ func BridgeStdio(ctx context.Context, c config.Config) error {
 	if err != nil {
 		return err
 	}
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+	base, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		return errors.New("default HTTP transport does not support cloning")
+	}
+	transport := base.Clone()
 	transport.Proxy = nil
 	defer transport.CloseIdleConnections()
-	httpClient := &http.Client{Timeout: 40 * time.Second, Transport: bearerTransport{token: token, base: transport}, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	httpClient := &http.Client{
+		Timeout:       40 * time.Second,
+		Transport:     bearerTransport{token: token, base: transport},
+		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
+	}
 	client := mcp.NewClient(&mcp.Implementation{Name: "zl-mcp-stdio-bridge", Version: "0.1.0-dev"}, nil)
-	session, err := client.Connect(ctx, &mcp.StreamableClientTransport{Endpoint: "http://" + c.MCP.Listen + "/mcp", HTTPClient: httpClient, DisableStandaloneSSE: true, MaxRetries: -1}, nil)
+	session, err := client.Connect(
+		ctx,
+		&mcp.StreamableClientTransport{
+			Endpoint:             "http://" + c.MCP.Listen + "/mcp",
+			HTTPClient:           httpClient,
+			DisableStandaloneSSE: true,
+			MaxRetries:           -1,
+		},
+		nil,
+	)
 	if err != nil {
 		return fmt.Errorf("cannot connect to zl-mcp service: %w", err)
 	}
@@ -86,11 +105,11 @@ func BridgeStdio(ctx context.Context, c config.Config) error {
 func validateToken(data []byte) (string, error) {
 	token := strings.TrimSpace(string(data))
 	if len(token) < 32 || len(token) > 4096 {
-		return "", fmt.Errorf("MCP token length must be 32..4096 ASCII characters")
+		return "", errors.New("MCP token length must be 32..4096 ASCII characters")
 	}
 	for _, r := range token {
 		if r < 33 || r > 126 {
-			return "", fmt.Errorf("MCP token must contain printable ASCII without spaces")
+			return "", errors.New("MCP token must contain printable ASCII without spaces")
 		}
 	}
 	return token, nil
@@ -103,6 +122,7 @@ func (stdioOutput) Close() error { return nil }
 
 type stdioCountingWriter struct {
 	io.WriteCloser
+
 	bytes int64
 	batch bool
 }
@@ -132,7 +152,12 @@ func (t *observedStdioTransport) Connect(ctx context.Context) (mcp.Connection, e
 	if err != nil {
 		return nil, err
 	}
-	return &observedStdioConnection{Connection: connection, writer: counted, observer: t.observer, requests: map[jsonrpc.ID]stdioRequest{}}, nil
+	return &observedStdioConnection{
+		Connection: connection,
+		writer:     counted,
+		observer:   t.observer,
+		requests:   map[jsonrpc.ID]stdioRequest{},
+	}, nil
 }
 
 type stdioRequest struct {
@@ -142,6 +167,7 @@ type stdioRequest struct {
 }
 type observedStdioConnection struct {
 	mcp.Connection
+
 	writer   *stdioCountingWriter
 	observer shared.TelemetryPort
 	writeMu  sync.Mutex
@@ -153,7 +179,8 @@ type observedStdioConnection struct {
 func (c *observedStdioConnection) Read(ctx context.Context) (jsonrpc.Message, error) {
 	message, err := c.Connection.Read(ctx)
 	request, ok := message.(*jsonrpc.Request)
-	if err != nil || !ok || !request.ID.IsValid() || (request.Method != "tools/call" && request.Method != "resources/read") {
+	if err != nil || !ok || !request.ID.IsValid() ||
+		(request.Method != "tools/call" && request.Method != "resources/read") {
 		return message, err
 	}
 	if id, ok := request.ID.Raw().(string); ok && len(id) > 2048 {

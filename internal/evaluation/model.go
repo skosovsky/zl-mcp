@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/skosovsky/zl-mcp/internal/evalfixture"
 )
 
@@ -27,12 +28,12 @@ type modelCapture struct {
 
 func (c *modelCapture) middleware(next mcp.MethodHandler) mcp.MethodHandler {
 	return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
-		t := Trace{}
+		var t Trace
 		switch method {
 		case "tools/call":
 			params, ok := req.GetParams().(*mcp.CallToolParamsRaw)
 			if !ok {
-				return nil, fmt.Errorf("invalid model call params")
+				return nil, errors.New("invalid model call params")
 			}
 			t = Trace{Kind: "tool", Name: params.Name, Input: params.Arguments}
 			c.mu.Lock()
@@ -41,12 +42,12 @@ func (c *modelCapture) middleware(next mcp.MethodHandler) mcp.MethodHandler {
 			c.violated = c.violated || denied
 			c.mu.Unlock()
 			if denied {
-				return nil, fmt.Errorf("model tool budget or allowlist exceeded")
+				return nil, errors.New("model tool budget or allowlist exceeded")
 			}
 		case "resources/read":
 			params, ok := req.GetParams().(*mcp.ReadResourceParams)
 			if !ok {
-				return nil, fmt.Errorf("invalid model resource params")
+				return nil, errors.New("invalid model resource params")
 			}
 			t = Trace{Kind: "resource", Name: params.URI}
 		default:
@@ -73,9 +74,18 @@ func RunModelCase(ctx context.Context, opts ChildOptions, cs Case, driver string
 		return out, fmt.Errorf("unsupported model scenario %s: full model gate NOT_RUN", cs.ID)
 	}
 	if !filepath.IsAbs(driver) {
-		return out, fmt.Errorf("absolute model driver required")
+		return out, errors.New("absolute model driver required")
 	}
-	f, err := evalfixture.New(ctx, evalfixture.Options{Offline: true, StateDir: opts.StateDir, KeepState: true, EffectsFile: opts.EffectsFile, Fixtures: opts.Corpus})
+	f, err := evalfixture.New(
+		ctx,
+		evalfixture.Options{
+			Offline:     true,
+			StateDir:    opts.StateDir,
+			KeepState:   true,
+			EffectsFile: opts.EffectsFile,
+			Fixtures:    opts.Corpus,
+		},
+	)
 	if err != nil {
 		return out, err
 	}
@@ -86,10 +96,15 @@ func RunModelCase(ctx context.Context, opts ChildOptions, cs Case, driver string
 	f.Server.AddReceivingMiddleware(capture.middleware)
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		f.Close()
 		return out, err
 	}
-	server := &http.Server{Handler: mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return f.Server }, nil), ReadHeaderTimeout: 5 * time.Second, BaseContext: func(net.Listener) context.Context { return ctx }}
+	server := &http.Server{
+		Handler:           mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return f.Server }, nil),
+		ReadHeaderTimeout: 5 * time.Second,
+		BaseContext:       func(net.Listener) context.Context { return ctx },
+	}
 	done := make(chan error, 1)
 	go func() { done <- server.Serve(listener) }()
 	defer func() {
@@ -104,7 +119,7 @@ func RunModelCase(ctx context.Context, opts ChildOptions, cs Case, driver string
 		violated := capture.violated
 		capture.mu.Unlock()
 		if violated {
-			err = errors.Join(err, fmt.Errorf("model tool budget or allowlist violation"))
+			err = errors.Join(err, errors.New("model tool budget or allowlist violation"))
 		}
 		cleanupErr := errors.Join(closeErr, serveErr, fixtureErr)
 		out.Cleanup = cleanupErr == nil
@@ -115,7 +130,13 @@ func RunModelCase(ctx context.Context, opts ChildOptions, cs Case, driver string
 	if err = os.WriteFile(caseFile, marshaled(cs), 0600); err != nil {
 		return out, err
 	}
-	raw, logs, err := process(ctx, driver, []string{"--mcp-url", "http://" + listener.Addr().String(), "--case-file", caseFile}, 4<<20, false)
+	raw, logs, err := process(
+		ctx,
+		driver,
+		[]string{"--mcp-url", "http://" + listener.Addr().String(), "--case-file", caseFile},
+		4<<20,
+		false,
+	)
 	for name, data := range map[string][]byte{"model-driver.stdout.json": raw, "model-driver.stderr.log": logs} {
 		if e := os.WriteFile(filepath.Join(filepath.Dir(opts.EffectsFile), name), data, 0600); e != nil {
 			err = errors.Join(err, e)

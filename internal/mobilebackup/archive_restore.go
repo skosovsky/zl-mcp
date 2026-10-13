@@ -27,6 +27,7 @@ func openArchiveBackup(dir string) (*RetainedArchiveStore, error) {
 	failed := true
 	defer func() {
 		if failed {
+			//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 			root.Close()
 		}
 	}()
@@ -39,10 +40,12 @@ func openArchiveBackup(dir string) (*RetainedArchiveStore, error) {
 		return nil, ErrRetainedArchive
 	}
 	if !samePrivateFile(f, info) {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		f.Close()
 		return nil, ErrRetainedArchive
 	}
 	key, err := io.ReadAll(io.LimitReader(f, 33))
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	f.Close()
 	defer clear(key)
 	if err != nil || len(key) != 32 {
@@ -60,7 +63,10 @@ func openArchiveBackup(dir string) (*RetainedArchiveStore, error) {
 	if err != nil {
 		return nil, ErrRetainedArchive
 	}
-	store := &RetainedArchiveStore{backup: true, ledger: &SnapshotStore{root: root, aead: aead, claims: claims, now: time.Now, mu: make(chan struct{}, 1)}}
+	store := &RetainedArchiveStore{
+		backup: true,
+		ledger: &SnapshotStore{root: root, aead: aead, claims: claims, now: time.Now, mu: make(chan struct{}, 1)},
+	}
 	store.ledger.mu <- struct{}{}
 	failed = false
 	return store, nil
@@ -68,7 +74,10 @@ func openArchiveBackup(dir string) (*RetainedArchiveStore, error) {
 
 // RestoreBackup explicitly admits an authenticated recovery copy after its
 // original cache expiry. It neither changes that copy nor fabricates provenance.
-func (s *RetainedArchiveStore) RestoreBackup(ctx context.Context, dir, id, accountKey, expectedDigest string) (PreservationReceipt, error) {
+func (s *RetainedArchiveStore) RestoreBackup(
+	ctx context.Context,
+	dir, id, accountKey, expectedDigest string,
+) (PreservationReceipt, error) {
 	if s == nil || !s.permanent || ctx.Err() != nil {
 		return PreservationReceipt{}, ErrRetainedArchive
 	}
@@ -76,6 +85,7 @@ func (s *RetainedArchiveStore) RestoreBackup(ctx context.Context, dir, id, accou
 	if err != nil {
 		return PreservationReceipt{}, err
 	}
+	// G104: Cleanup preserves the original setup/operation error.
 	defer backup.Close()
 	if !backup.lock(ctx) {
 		return PreservationReceipt{}, ErrRetainedArchive

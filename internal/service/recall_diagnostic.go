@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
@@ -34,11 +35,14 @@ func (p *membershipPort) recallControl(w http.ResponseWriter, r *http.Request, b
 	w.Header().Set("Content-Type", "application/json")
 	fail := func() {
 		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(&domain.Error{Code: "RECALL_DIAGNOSTIC_UNAVAILABLE", Message: "Local recall diagnostic is unavailable.", NextAction: domain.NextAction{Instruction: "Read the diagnostic receipt or collector status; never redispatch an ambiguous recall."}, Details: map[string]any{}})
+		_ = json.NewEncoder(w).
+			Encode(&domain.Error{Code: "RECALL_DIAGNOSTIC_UNAVAILABLE", Message: "Local recall diagnostic is unavailable.", NextAction: domain.NextAction{Instruction: "Read the diagnostic receipt or collector status; never redispatch an ambiguous recall."}, Details: map[string]any{}})
 	}
 	schema, err := contracts.Compile("cli_probe_recall", "input")
 	var raw any
-	if err != nil || r.Method != "POST" || r.URL.Path != "/rpc" || !uniqueLedgerJSON(body) || json.Unmarshal(body, &raw) != nil || schema.Validate(raw) != nil {
+	if err != nil || r.Method != http.MethodPost || r.URL.Path != "/rpc" || !uniqueLedgerJSON(body) ||
+		json.Unmarshal(body, &raw) != nil ||
+		schema.Validate(raw) != nil {
 		fail()
 		return
 	}
@@ -75,7 +79,8 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 	empty := recallReceipt{}
 	normalized, e := uuid.Parse(id)
 	recaller, ok := p.sender.(diagnosticRecaller)
-	if e != nil || normalized.String() != id || !ok || p.store == nil || ctx.Err() != nil || !filepath.IsAbs(p.stateDir) {
+	if e != nil || normalized.String() != id || !ok || p.store == nil || ctx.Err() != nil ||
+		!filepath.IsAbs(p.stateDir) {
 		return empty, bad
 	}
 	own := recaller.AccountID()
@@ -90,6 +95,7 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 	if e != nil {
 		return empty, bad
 	}
+	// G104: Cleanup preserves the original setup/operation error.
 	defer parent.Close()
 	if e = parent.Mkdir("diagnostic-recalls", 0700); e != nil && !errors.Is(e, os.ErrExist) {
 		return empty, bad
@@ -102,6 +108,7 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 	if e != nil {
 		return empty, bad
 	}
+	// G104: Cleanup preserves the original setup/operation error.
 	defer root.Close()
 	digest := sha256.Sum256([]byte(own + "\x00" + id))
 	name := hex.EncodeToString(digest[:]) + ".receipt"
@@ -113,6 +120,7 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 		if e != nil {
 			return empty, bad
 		}
+		// G104: Cleanup preserves the original setup/operation error.
 		defer f.Close()
 		data, e := io.ReadAll(io.LimitReader(f, 513))
 		if e != nil {
@@ -121,18 +129,22 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 		var out recallReceipt
 		schema, e := contracts.Compile("cli_probe_recall", "output")
 		var raw any
-		if e != nil || json.Unmarshal(data, &raw) != nil || schema.Validate(raw) != nil || json.Unmarshal(data, &out) != nil {
+		if e != nil || json.Unmarshal(data, &raw) != nil || schema.Validate(raw) != nil ||
+			json.Unmarshal(data, &out) != nil {
 			return empty, bad
 		}
 		return out, nil
 	} else if !errors.Is(e, os.ErrNotExist) {
 		return empty, bad
 	}
-	if time.Since(op.UpdatedAt) > 30*time.Minute || time.Until(op.UpdatedAt) > time.Minute || !canonicalDiagnosticID(op.RecipientID) || !canonicalDiagnosticID(*op.MessageID) {
+	if time.Since(op.UpdatedAt) > 30*time.Minute || time.Until(op.UpdatedAt) > time.Minute ||
+		!canonicalDiagnosticID(op.RecipientID) ||
+		!canonicalDiagnosticID(*op.MessageID) {
 		return empty, bad
 	}
 	quote, e := p.store.SendQuote(ctx, op.RecipientID, *op.MessageID)
-	if e != nil || quote.SenderID != own || quote.Text != recallDiagnosticText || !canonicalDiagnosticID(quote.Metadata.ClientMessageID) {
+	if e != nil || quote.SenderID != own || quote.Text != recallDiagnosticText ||
+		!canonicalDiagnosticID(quote.Metadata.ClientMessageID) {
 		return empty, bad
 	}
 	dir, e := root.Open(".")
@@ -140,14 +152,16 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 		return empty, bad
 	}
 	entries, e := dir.ReadDir(21)
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	dir.Close()
-	if e != nil && e != io.EOF || len(entries) >= 20 {
+	if e != nil && !errors.Is(e, io.EOF) || len(entries) >= 20 {
 		return empty, bad
 	}
 	f, e := root.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
 	if e != nil {
 		return empty, bad
 	}
+	// G104: Cleanup preserves the original setup/operation error.
 	defer f.Close()
 	write := func(out recallReceipt) error {
 		b, e := json.Marshal(out)
@@ -171,6 +185,7 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 		return empty, bad
 	}
 	e = dir.Sync()
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	dir.Close()
 	if e != nil {
 		return empty, bad

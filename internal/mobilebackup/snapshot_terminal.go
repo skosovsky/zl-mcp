@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"io"
 	"strings"
 )
@@ -11,7 +12,10 @@ import (
 // CleanupTerminal removes only authenticated snapshots whose bound request and
 // account are terminal according to the trusted local operation journal. It
 // retains spent UUIDs, so cleanup never authorizes a renewed source or dispatch.
-func (s *SnapshotStore) CleanupTerminal(ctx context.Context, eligible func(context.Context, string, string, string) (bool, error)) error {
+func (s *SnapshotStore) CleanupTerminal(
+	ctx context.Context,
+	eligible func(context.Context, string, string, string) (bool, error),
+) error {
 	if eligible == nil || !s.lock(ctx) {
 		return ErrSnapshot
 	}
@@ -24,8 +28,9 @@ func (s *SnapshotStore) CleanupTerminal(ctx context.Context, eligible func(conte
 		return ErrSnapshot
 	}
 	entries, err := dir.ReadDir(maxSnapshots + 4)
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	dir.Close()
-	if err != nil && err != io.EOF || len(entries) > maxSnapshots+3 {
+	if err != nil && !errors.Is(err, io.EOF) || len(entries) > maxSnapshots+3 {
 		return ErrSnapshotCapacity
 	}
 	if s.terminalHints == nil {
@@ -41,8 +46,8 @@ func (s *SnapshotStore) CleanupTerminal(ctx context.Context, eligible func(conte
 		if name == snapshotKeyName || name == snapshotClaimsName {
 			continue
 		}
-		if strings.HasSuffix(name, ".tmp") {
-			id := strings.TrimSuffix(name, ".tmp")
+		if before, ok := strings.CutSuffix(name, ".tmp"); ok {
+			id := before
 			_, ok := snapshotName(id)
 			info, e := s.root.Lstat(name)
 			if !ok || e != nil || !privateRegular(info) || s.root.Remove(name) != nil {
@@ -58,7 +63,8 @@ func (s *SnapshotStore) CleanupTerminal(ctx context.Context, eligible func(conte
 			return ErrSnapshot
 		}
 		seen[id] = true
-		if len(seen) > maxSnapshots || info.Size() < int64(len(snapshotMagic)+s.aead.NonceSize()+s.aead.Overhead()+4) || info.Size() > int64(MaxFileBytes)+snapshotMetadataLimit+64 {
+		if len(seen) > maxSnapshots || info.Size() < int64(len(snapshotMagic)+s.aead.NonceSize()+s.aead.Overhead()+4) ||
+			info.Size() > int64(MaxFileBytes)+snapshotMetadataLimit+64 {
 			return ErrSnapshotCapacity
 		}
 		// A hint can only skip work. It cannot authorize deletion or serve data.

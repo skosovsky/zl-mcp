@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -53,11 +54,11 @@ func loadDataset(path string) (Dataset, error) {
 	if err = decoder.Decode(&ds); err != nil {
 		return ds, err
 	}
-	if err = decoder.Decode(new(any)); err != io.EOF {
-		return ds, fmt.Errorf("trailing dataset content")
+	if err = decoder.Decode(new(any)); !errors.Is(err, io.EOF) {
+		return ds, errors.New("trailing dataset content")
 	}
 	if len(ds.Cases) < 22 || ds.Revision == "" || ds.GraderRevision == "" {
-		return ds, fmt.Errorf("incomplete dataset")
+		return ds, errors.New("incomplete dataset")
 	}
 	ids := map[string]bool{}
 	for _, cs := range ds.Cases {
@@ -70,7 +71,17 @@ func loadDataset(path string) (Dataset, error) {
 				return ds, fmt.Errorf("invalid check in %s", cs.ID)
 			}
 			switch check.Op {
-			case "same-as", "different-from", "equal", "length", "min-length", "gte", "contains", "success", "resource-error", "code", "one-of":
+			case "same-as",
+				"different-from",
+				"equal",
+				"length",
+				"min-length",
+				"gte",
+				"contains",
+				"success",
+				"resource-error",
+				"code",
+				"one-of":
 			default:
 				return ds, fmt.Errorf("unknown check op %q", check.Op)
 			}
@@ -98,16 +109,17 @@ func readEffects(path string) (map[string]int, error) {
 	if err != nil {
 		return nil, err
 	}
+	// G104: Read-only input file cleanup cannot replace the parse error.
 	defer file.Close()
 	b, err := io.ReadAll(io.LimitReader(file, (64<<10)+1))
 	if err != nil {
 		return nil, err
 	}
 	if len(b) > 64<<10 {
-		return nil, fmt.Errorf("effect journal overflow")
+		return nil, errors.New("effect journal overflow")
 	}
 	counts := map[string]int{}
-	for _, line := range strings.Split(string(b), "\n") {
+	for line := range strings.SplitSeq(string(b), "\n") {
 		if line == "" {
 			continue
 		}
@@ -115,22 +127,35 @@ func readEffects(path string) (map[string]int, error) {
 			Kind string `json:"kind"`
 		}
 		if err = json.Unmarshal([]byte(line), &effect); err != nil || effect.Kind == "" {
-			return counts, fmt.Errorf("incomplete effect journal")
+			return counts, errors.New("incomplete effect journal")
 		}
 		counts[effect.Kind]++
 	}
 	return counts, nil
 }
 func Run(ctx context.Context, opts Options) (report Report, err error) {
-	report = Report{Status: "INCOMPLETE", ExitStatus: 2, ModelGate: "NOT_RUN", LiveGate: "NOT_RUN", Manifest: map[string]any{}}
+	report = Report{
+		Status:     "INCOMPLETE",
+		ExitStatus: 2,
+		ModelGate:  "NOT_RUN",
+		LiveGate:   "NOT_RUN",
+		Manifest:   map[string]any{},
+	}
 	if opts.RunBudget <= 0 || opts.Repeats <= 0 {
-		return report, fmt.Errorf("explicit positive run budget/repeats required")
+		return report, errors.New("explicit positive run budget/repeats required")
 	}
 	if opts.Profile != "offline" && opts.Profile != "model" {
-		return report, fmt.Errorf("unknown evaluation profile")
+		return report, errors.New("unknown evaluation profile")
 	}
 	if opts.Profile == "model" && opts.ModelDriver == "" {
-		report.Manifest = map[string]any{"profile": opts.Profile, "case_budget_seconds": 180, "max_tool_calls": 30, "run_budget_seconds": opts.RunBudget.Seconds(), "model_gate": "NOT_RUN", "live_gate": "NOT_RUN"}
+		report.Manifest = map[string]any{
+			"profile":             opts.Profile,
+			"case_budget_seconds": 180,
+			"max_tool_calls":      30,
+			"run_budget_seconds":  opts.RunBudget.Seconds(),
+			"model_gate":          "NOT_RUN",
+			"live_gate":           "NOT_RUN",
+		}
 		report.Reason = "Model profile requires a separately authorized host agent driver; no model executed"
 		return report, nil
 	}
@@ -139,7 +164,21 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 		return report, err
 	}
 	if opts.Profile == "model" {
-		report.Manifest = map[string]any{"profile": "model", "case_budget_seconds": 180, "max_tool_calls": 30, "run_budget_seconds": opts.RunBudget.Seconds(), "model_gate": "NOT_RUN", "full_model_gate": "NOT_RUN", "model_driver_sha256": hashFile(opts.ModelDriver), "model_id": nil, "model_settings": nil, "prompt_revision": nil, "skill_revision": nil, "tokens": nil, "unavailable_reason": "No separately authorized full scenario model driver run"}
+		report.Manifest = map[string]any{
+			"profile":             "model",
+			"case_budget_seconds": 180,
+			"max_tool_calls":      30,
+			"run_budget_seconds":  opts.RunBudget.Seconds(),
+			"model_gate":          "NOT_RUN",
+			"full_model_gate":     "NOT_RUN",
+			"model_driver_sha256": hashFile(opts.ModelDriver),
+			"model_id":            nil,
+			"model_settings":      nil,
+			"prompt_revision":     nil,
+			"skill_revision":      nil,
+			"tokens":              nil,
+			"unavailable_reason":  "No separately authorized full scenario model driver run",
+		}
 		for _, cs := range ds.Cases {
 			if !modelScenarioSupported(cs.ID) {
 				report.SkippedCases = append(report.SkippedCases, cs.ID)
@@ -159,7 +198,32 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 		report.ExpectedAssertions += (len(cs.Checks) + 6) * opts.Repeats
 	}
 	info, _ := debug.ReadBuildInfo()
-	report.Manifest = map[string]any{"profile": opts.Profile, "dataset_revision": ds.Revision, "dataset_sha256": hashFile(opts.DatasetPath), "fixture_sha256": hashFile(filepath.Join(opts.Root, "docs/evals/fixtures.json")), "archive_fixture_sha256": hashFile(filepath.Join(opts.Root, "internal/mobilebackup/testdata/format1-account-vector.json")), "binary_sha256": hashFile(opts.Binary), "go": runtime.Version(), "os": runtime.GOOS, "arch": runtime.GOARCH, "module_build_info": info, "seed": opts.Seed, "repeats": opts.Repeats, "concurrency": 1, "run_budget_seconds": opts.RunBudget.Seconds(), "case_budget_seconds": 60, "stdout_max_bytes": 4 << 20, "stderr_max_bytes": 4 << 20, "tokens": nil, "tokens_unavailable_reason": "offline scripted clients expose no model usage", "grader_revision": ds.GraderRevision, "model_gate": "NOT_RUN", "live_gate": "NOT_RUN"}
+	report.Manifest = map[string]any{
+		"profile":          opts.Profile,
+		"dataset_revision": ds.Revision,
+		"dataset_sha256":   hashFile(opts.DatasetPath),
+		"fixture_sha256":   hashFile(filepath.Join(opts.Root, "docs/evals/fixtures.json")),
+		"archive_fixture_sha256": hashFile(
+			filepath.Join(opts.Root, "internal/mobilebackup/testdata/format1-account-vector.json"),
+		),
+		"binary_sha256":             hashFile(opts.Binary),
+		"go":                        runtime.Version(),
+		"os":                        runtime.GOOS,
+		"arch":                      runtime.GOARCH,
+		"module_build_info":         info,
+		"seed":                      opts.Seed,
+		"repeats":                   opts.Repeats,
+		"concurrency":               1,
+		"run_budget_seconds":        opts.RunBudget.Seconds(),
+		"case_budget_seconds":       60,
+		"stdout_max_bytes":          4 << 20,
+		"stderr_max_bytes":          4 << 20,
+		"tokens":                    nil,
+		"tokens_unavailable_reason": "offline scripted clients expose no model usage",
+		"grader_revision":           ds.GraderRevision,
+		"model_gate":                "NOT_RUN",
+		"live_gate":                 "NOT_RUN",
+	}
 	// Only attach build provenance when the recorded executable digest matches.
 	buildPath := filepath.Join(filepath.Dir(opts.Binary), "build-manifest.json")
 	if raw, e := os.ReadFile(buildPath); e == nil {
@@ -193,11 +257,23 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 	if err != nil {
 		return report, err
 	}
+	fixtureHash, ok := report.Manifest["fixture_sha256"].(string)
+	if !ok {
+		return report, errors.New("invalid fixture digest")
+	}
 	makeConfig := func(binary, traceDir, id string) evaly.RunConfig[Case, Output, Case, *environment] {
 		opts := opts
 		opts.Binary, opts.ReportDir = binary, traceDir
-		return evaly.RunConfig[Case, Output, Case, *environment]{ID: id, Dataset: dataset, OutputCodec: evaly.JSONCodec[Output]{ID: "zl-mcp-output", Version: "1"},
-			Lifecycle: evaly.LifecycleFuncs[*environment]{IdentityValue: evaly.LifecycleIdentity{Fixture: report.Manifest["fixture_sha256"].(string), Reset: "fresh-state-v1", Isolation: evaly.Isolated},
+		return evaly.RunConfig[Case, Output, Case, *environment]{
+			ID:          id,
+			Dataset:     dataset,
+			OutputCodec: evaly.JSONCodec[Output]{ID: "zl-mcp-output", Version: "1"},
+			Lifecycle: evaly.LifecycleFuncs[*environment]{
+				IdentityValue: evaly.LifecycleIdentity{
+					Fixture:   fixtureHash,
+					Reset:     "fresh-state-v1",
+					Isolation: evaly.Isolated,
+				},
 				PrepareFunc: func(_ context.Context, id string) (*environment, error) {
 					dir, e := os.MkdirTemp("", "zl-mcp-case-")
 					if e != nil {
@@ -214,55 +290,97 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 				ResetFunc: func(_ context.Context, e *environment) error {
 					return os.WriteFile(filepath.Join(e.dir, "effects.jsonl"), nil, 0600)
 				},
-				CleanupFunc: func(_ context.Context, e *environment) error { return os.RemoveAll(e.dir) }},
-			Target: evaly.TargetFunc[Case, Output, *environment](func(ctx context.Context, cs Case, trial evaly.TrialContext[*environment]) (evaly.TargetResult[Output], error) {
-				before := time.Now()
-				e := trial.Environment
-				args := []string{"--child-case", cs.ID, "--state-dir", e.dir, "--root", opts.Root}
-				raw, logs, processErr := Process(ctx, opts.Binary, args, 4<<20)
-				output := Output{CaseID: cs.ID, Failure: "missing child output"}
-				decoder := json.NewDecoder(bytes.NewReader(raw))
-				decoder.UseNumber()
-				decodeErr := decoder.Decode(&output)
-				if decodeErr == nil {
-					if trailingErr := decoder.Decode(new(any)); trailingErr != io.EOF {
-						decodeErr = fmt.Errorf("trailing child output")
+				CleanupFunc: func(_ context.Context, e *environment) error { return os.RemoveAll(e.dir) },
+			},
+			Target: evaly.TargetFunc[Case, Output, *environment](
+				func(ctx context.Context, cs Case, trial evaly.TrialContext[*environment]) (evaly.TargetResult[Output], error) {
+					before := time.Now()
+					e := trial.Environment
+					args := []string{"--child-case", cs.ID, "--state-dir", e.dir, "--root", opts.Root}
+					raw, logs, processErr := Process(ctx, opts.Binary, args, 4<<20)
+					output := Output{CaseID: cs.ID, Failure: "missing child output"}
+					decoder := json.NewDecoder(bytes.NewReader(raw))
+					decoder.UseNumber()
+					decodeErr := decoder.Decode(&output)
+					if decodeErr == nil {
+						if trailingErr := decoder.Decode(new(any)); trailingErr != io.EOF {
+							decodeErr = errors.New("trailing child output")
+						}
 					}
-				}
-				if processErr != nil {
-					output.Complete = false
-					output.Failure = processErr.Error() + ": " + output.Failure
-				} else if decodeErr != nil {
-					output.Complete = false
-					output.Failure = decodeErr.Error()
-				}
-				counts, effectErr := readEffects(filepath.Join(e.dir, "effects.jsonl"))
-				output.Effects = counts
-				if effectErr != nil {
-					output.Complete = false
-					output.Failure = effectErr.Error()
-				}
-				output.ElapsedSeconds = time.Since(before).Seconds()
-				output.Bytes = len(raw)
-				for name, data := range map[string][]byte{"stdout.json": raw, "stderr.log": logs, "effects.json": marshaled(counts), "output.json": marshaled(output)} {
-					if writeErr := os.WriteFile(filepath.Join(e.traceDir, name), data, 0600); writeErr != nil {
-						return evaly.TargetResult[Output]{Output: output}, writeErr
+					if processErr != nil {
+						output.Complete = false
+						output.Failure = processErr.Error() + ": " + output.Failure
+					} else if decodeErr != nil {
+						output.Complete = false
+						output.Failure = decodeErr.Error()
 					}
-				}
-				for i, kind := range []string{"operation", "effects", "lifecycle"} {
-					if recordErr := trial.Evidence.Record(ctx, evaly.Event{Version: 1, Sequence: i + 1, Kind: kind, Payload: marshaled(map[string]any{"case": cs.ID, "complete": output.Complete}), References: []string{filepath.Base(e.traceDir) + "/output.json"}}); recordErr != nil {
-						return evaly.TargetResult[Output]{Output: output}, recordErr
+					counts, effectErr := readEffects(filepath.Join(e.dir, "effects.jsonl"))
+					output.Effects = counts
+					if effectErr != nil {
+						output.Complete = false
+						output.Failure = effectErr.Error()
 					}
-				}
-				return evaly.TargetResult[Output]{Output: output, Usage: evaly.Usage{Known: false}}, nil
-			}),
-			Capture: evaly.CaptureConfig{Policy: evaly.FieldPolicy{ID: "synthetic-metadata-v1", Allowed: map[string][]string{"operation": {"case", "complete"}, "effects": {"case", "complete"}, "lifecycle": {"case", "complete"}}, KeepReferences: true}, RequiredKinds: []string{"operation", "effects", "lifecycle"}, KnownKinds: []string{"operation", "effects", "lifecycle"}, MaxEvents: 3, MaxBytes: 8192}, CriticalEvidence: true,
-			ProjectionRevision: "raw-synthetic-trace-v1", Project: func(_ context.Context, cs evaly.Case[Case, Case], out Output, evidence evaly.EvidenceRecord) (evaly.View[Case, Output, Case], error) {
+					output.ElapsedSeconds = time.Since(before).Seconds()
+					output.Bytes = len(raw)
+					for name, data := range map[string][]byte{"stdout.json": raw, "stderr.log": logs, "effects.json": marshaled(counts), "output.json": marshaled(output)} {
+						if writeErr := os.WriteFile(filepath.Join(e.traceDir, name), data, 0600); writeErr != nil {
+							return evaly.TargetResult[Output]{Output: output}, writeErr
+						}
+					}
+					for i, kind := range []string{"operation", "effects", "lifecycle"} {
+						if recordErr := trial.Evidence.Record(
+							ctx,
+							evaly.Event{
+								Version:    1,
+								Sequence:   i + 1,
+								Kind:       kind,
+								Payload:    marshaled(map[string]any{"case": cs.ID, "complete": output.Complete}),
+								References: []string{filepath.Base(e.traceDir) + "/output.json"},
+							},
+						); recordErr != nil {
+							return evaly.TargetResult[Output]{Output: output}, recordErr
+						}
+					}
+					return evaly.TargetResult[Output]{Output: output, Usage: evaly.Usage{Known: false}}, nil
+				},
+			),
+			Capture: evaly.CaptureConfig{
+				Policy: evaly.FieldPolicy{
+					ID: "synthetic-metadata-v1",
+					Allowed: map[string][]string{
+						"operation": {"case", "complete"},
+						"effects":   {"case", "complete"},
+						"lifecycle": {"case", "complete"},
+					},
+					KeepReferences: true,
+				},
+				RequiredKinds: []string{"operation", "effects", "lifecycle"},
+				KnownKinds:    []string{"operation", "effects", "lifecycle"},
+				MaxEvents:     3,
+				MaxBytes:      8192,
+			},
+			CriticalEvidence:   true,
+			ProjectionRevision: "raw-synthetic-trace-v1",
+			Project: func(_ context.Context, cs evaly.Case[Case, Case], out Output, evidence evaly.EvidenceRecord) (evaly.View[Case, Output, Case], error) {
 				return evaly.View[Case, Output, Case]{Case: cs, Output: out, Evidence: evidence}, nil
 			},
-			Graders:    []evaly.Grader[Case, Output, Case]{grader(ds.GraderRevision)},
-			Plan:       evaly.RunPlan{Repeats: opts.Repeats, Concurrency: 1, MaxAttempts: 1, Timeout: caseBudget, CleanupTimeout: 5 * time.Second, Seed: opts.Seed, AssertionPolicy: "all"},
-			Provenance: evaly.Provenance{Target: "real-mcp-offline-v1", Tools: "contracts-22", Policy: "case-tools-effects-v1", Unknown: []string{"model", "prompt"}}}
+			Graders: []evaly.Grader[Case, Output, Case]{grader(ds.GraderRevision)},
+			Plan: evaly.RunPlan{
+				Repeats:         opts.Repeats,
+				Concurrency:     1,
+				MaxAttempts:     1,
+				Timeout:         caseBudget,
+				CleanupTimeout:  5 * time.Second,
+				Seed:            opts.Seed,
+				AssertionPolicy: "all",
+			},
+			Provenance: evaly.Provenance{
+				Target:  "real-mcp-offline-v1",
+				Tools:   "contracts-22",
+				Policy:  "case-tools-effects-v1",
+				Unknown: []string{"model", "prompt"},
+			},
+		}
 	}
 	experiment, err := evaly.Run(run, makeConfig(opts.Binary, opts.ReportDir, "offline"))
 	report.Manifest["elapsed_seconds"] = time.Since(started).Seconds()
@@ -299,7 +417,12 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 	for _, trial := range record.Trials {
 		observed[trial.CaseID]++
 		quality, scored := evaly.AssertionOutcome(trial.Grades, "all")
-		healthy := trial.Status == evaly.Completed && trial.Cleanup.State == "completed" && trial.UsageError == "" && evaly.CompleteFor(trial.Evidence, "operation") && evaly.CompleteFor(trial.Evidence, "effects") && evaly.CompleteFor(trial.Evidence, "lifecycle") && len(trial.Grades) == 1 && len(trial.SkippedGraders) == 0
+		healthy := trial.Status == evaly.Completed && trial.Cleanup.State == "completed" && trial.UsageError == "" &&
+			evaly.CompleteFor(trial.Evidence, "operation") &&
+			evaly.CompleteFor(trial.Evidence, "effects") &&
+			evaly.CompleteFor(trial.Evidence, "lifecycle") &&
+			len(trial.Grades) == 1 &&
+			len(trial.SkippedGraders) == 0
 		for _, grade := range trial.Grades {
 			for _, a := range grade.Assertions {
 				if a.Pass {
@@ -324,7 +447,9 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 		report.Status = "INCOMPLETE"
 		report.ExitStatus = 2
 	}
-	if report.PassedCases == report.ExpectedCases && report.PassedAssertions == report.ExpectedAssertions && len(report.SkippedCases) == 0 && run.Err() == nil {
+	if report.PassedCases == report.ExpectedCases && report.PassedAssertions == report.ExpectedAssertions &&
+		len(report.SkippedCases) == 0 &&
+		run.Err() == nil {
 		report.Status = "PASS"
 		report.ExitStatus = 0
 	}

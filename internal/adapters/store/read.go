@@ -22,12 +22,24 @@ var _ conversations.ReadPort = (*Reader)(nil)
 
 func readError(err error) error {
 	if errors.Is(err, sql.ErrNoRows) {
-		return &domain.Error{Code: "NOT_FOUND", Message: "No accessible local record was found.", NextAction: domain.NextAction{Instruction: "Use IDs returned by zalo_list_groups or zalo_search_messages."}, Details: map[string]any{}}
+		return &domain.Error{
+			Code:       "NOT_FOUND",
+			Message:    "No accessible local record was found.",
+			NextAction: domain.NextAction{Instruction: "Use IDs returned by zalo_list_groups or zalo_search_messages."},
+			Details:    map[string]any{},
+		}
 	}
 	return err
 }
 func query(q search.Query) storage.Search {
-	return storage.Search{Query: q.Text, SenderID: q.SenderID, Since: q.Since, Until: q.Until, Limit: q.Limit, Cursor: q.Cursor}
+	return storage.Search{
+		Query:    q.Text,
+		SenderID: q.SenderID,
+		Since:    q.Since,
+		Until:    q.Until,
+		Limit:    q.Limit,
+		Cursor:   q.Cursor,
+	}
 }
 func (r *Reader) GroupPage(ctx context.Context, input search.GroupRequest) (*search.Page, error) {
 	q := query(input.Query)
@@ -69,21 +81,47 @@ func (r *Reader) GroupSummary(ctx context.Context) (search.GroupSummary, error) 
 	if err != nil {
 		return search.GroupSummary{}, readError(err)
 	}
-	return search.GroupSummary{GroupCount: value["group_count"].(int), HistoryComplete: value["history_complete"].(bool), GroupsWithKnownGaps: value["groups_with_known_gaps"].(int)}, nil
+	groupCount, groupCountOK := value["group_count"].(int)
+	historyComplete, historyCompleteOK := value["history_complete"].(bool)
+	groupsWithKnownGaps, groupsWithKnownGapsOK := value["groups_with_known_gaps"].(int)
+	if !groupCountOK || !historyCompleteOK || !groupsWithKnownGapsOK {
+		return search.GroupSummary{}, errors.New("invalid storage GroupSummary projection")
+	}
+
+	return search.GroupSummary{
+		GroupCount:          groupCount,
+		HistoryComplete:     historyComplete,
+		GroupsWithKnownGaps: groupsWithKnownGaps,
+	}, nil
 }
 func (r *Reader) ConversationSummary(ctx context.Context) (search.ConversationSummary, error) {
 	value, err := r.owner.ConversationSummary(ctx)
 	if err != nil {
 		return search.ConversationSummary{}, readError(err)
 	}
-	return search.ConversationSummary{ConversationCount: value["conversation_count"].(int), HistoryComplete: value["history_complete"].(bool), ConversationsWithKnownGaps: value["conversations_with_known_gaps"].(int)}, nil
+	conversationCount, conversationCountOK := value["conversation_count"].(int)
+	historyComplete, historyCompleteOK := value["history_complete"].(bool)
+	conversationsWithKnownGaps, conversationsWithKnownGapsOK := value["conversations_with_known_gaps"].(int)
+	if !conversationCountOK || !historyCompleteOK || !conversationsWithKnownGapsOK {
+		return search.ConversationSummary{}, errors.New("invalid storage ConversationSummary projection")
+	}
+
+	return search.ConversationSummary{
+		ConversationCount:          conversationCount,
+		HistoryComplete:            historyComplete,
+		ConversationsWithKnownGaps: conversationsWithKnownGaps,
+	}, nil
 }
 func (r *Reader) StoredMessageCount(ctx context.Context) (int, error) {
 	value, err := r.owner.State(ctx)
 	if err != nil {
 		return 0, readError(err)
 	}
-	return value["stored_message_count"].(int), nil
+	count, ok := value["stored_message_count"].(int)
+	if !ok {
+		return 0, errors.New("invalid stored message count projection")
+	}
+	return count, nil
 }
 func optionalID(value any) *string {
 	if id, ok := value.(string); ok {
@@ -91,18 +129,44 @@ func optionalID(value any) *string {
 	}
 	return nil
 }
-func (r *Reader) GroupContext(ctx context.Context, input conversations.ContextRequest) (conversations.GroupContext, error) {
+
+func (r *Reader) GroupContext(
+	ctx context.Context,
+	input conversations.ContextRequest,
+) (conversations.GroupContext, error) {
 	value, err := r.owner.Context(ctx, input.Conversation.ID, input.MessageID, input.Before, input.After)
 	if err != nil {
 		return conversations.GroupContext{}, readError(err)
 	}
-	out := conversations.GroupContext{Anchor: value["anchor"].(domain.Message), Before: value["before"].([]domain.Message), After: value["after"].([]domain.Message), ReplyTo: value["reply_to"].(*domain.Message), Coverage: value["coverage"].(domain.Coverage), ContextTruncated: value["context_truncated"].(bool), OmittedBeforeID: optionalID(value["omitted_before_id"]), OmittedAfterID: optionalID(value["omitted_after_id"])}
+	anchor, anchorOK := value["anchor"].(domain.Message)
+	before, beforeOK := value["before"].([]domain.Message)
+	after, afterOK := value["after"].([]domain.Message)
+	replyTo, replyToOK := value["reply_to"].(*domain.Message)
+	coverage, coverageOK := value["coverage"].(domain.Coverage)
+	contextTruncated, contextTruncatedOK := value["context_truncated"].(bool)
+	if !anchorOK || !beforeOK || !afterOK || !replyToOK || !coverageOK || !contextTruncatedOK {
+		return conversations.GroupContext{}, errors.New("invalid storage GroupContext projection")
+	}
+	out := conversations.GroupContext{
+		Anchor:           anchor,
+		Before:           before,
+		After:            after,
+		ReplyTo:          replyTo,
+		Coverage:         coverage,
+		ContextTruncated: contextTruncated,
+		OmittedBeforeID:  optionalID(value["omitted_before_id"]),
+		OmittedAfterID:   optionalID(value["omitted_after_id"]),
+	}
 	if action, ok := value["next_action"].(domain.NextAction); ok {
 		out.NextAction = &action
 	}
 	return out, nil
 }
-func (r *Reader) ConversationContext(ctx context.Context, input conversations.ContextRequest) (conversations.ConversationContext, error) {
+
+func (r *Reader) ConversationContext(
+	ctx context.Context,
+	input conversations.ContextRequest,
+) (conversations.ConversationContext, error) {
 	value, err := r.owner.ConversationContext(ctx, input.Conversation, input.MessageID, input.Before, input.After)
 	if err != nil {
 		return conversations.ConversationContext{}, readError(err)

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -113,28 +114,43 @@ func newRetainedArchiveStore(dir string, budget int64, permanent bool) (*Retaine
 	}
 	key, err := snapshotKey(root)
 	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		root.Close()
 		return nil, ErrRetainedArchive
 	}
 	defer clear(key)
 	block, err := aes.NewCipher(key)
 	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		root.Close()
 		return nil, ErrRetainedArchive
 	}
 	aead, err := cipher.NewGCM(block)
 	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		root.Close()
 		return nil, ErrRetainedArchive
 	}
 	claims, err := readSnapshotClaims(root)
 	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		root.Close()
 		return nil, ErrRetainedArchive
 	}
-	s := &RetainedArchiveStore{permanent: permanent, ledger: &SnapshotStore{root: root, aead: aead, claims: claims, budget: budget, now: time.Now, mu: make(chan struct{}, 1)}}
+	s := &RetainedArchiveStore{
+		permanent: permanent,
+		ledger: &SnapshotStore{
+			root:   root,
+			aead:   aead,
+			claims: claims,
+			budget: budget,
+			now:    time.Now,
+			mu:     make(chan struct{}, 1),
+		},
+	}
 	s.ledger.mu <- struct{}{}
 	if _, _, err = s.inventory(); err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		root.Close()
 		return nil, err
 	}
@@ -183,7 +199,16 @@ func describeRetained(a AccountArchive) ([]retainedFile, string, error) {
 	for _, f := range a.archive.Files {
 		p := byName[f.Name]
 		hash := sha256.Sum256(f.Data)
-		files = append(files, retainedFile{Name: f.Name, SessionID: p.Session, Group: p.Group, Size: int64(len(f.Data)), Digest: hex.EncodeToString(hash[:])})
+		files = append(
+			files,
+			retainedFile{
+				Name:      f.Name,
+				SessionID: p.Session,
+				Group:     p.Group,
+				Size:      int64(len(f.Data)),
+				Digest:    hex.EncodeToString(hash[:]),
+			},
+		)
 	}
 	description, err := json.Marshal(files)
 	if err != nil || len(description) > retainedMetadataLimit {
@@ -194,13 +219,19 @@ func describeRetained(a AccountArchive) ([]retainedFile, string, error) {
 	return files, hex.EncodeToString(digest[:]), nil
 }
 
-func (s *RetainedArchiveStore) Save(ctx context.Context, id, account string, a AccountArchive, lifetime time.Duration) (RetainedArchiveManifest, error) {
+func (s *RetainedArchiveStore) Save(
+	ctx context.Context,
+	id, account string,
+	a AccountArchive,
+	lifetime time.Duration,
+) (RetainedArchiveManifest, error) {
 	if !s.lock(ctx) {
 		return RetainedArchiveManifest{}, ErrRetainedArchive
 	}
 	defer s.ledger.unlock()
 	_, ok := retainedName(id)
-	if s.permanent || s.backup || !ok || !canonicalIdentity(account) || (a.ownerAccount != "" && a.ownerAccount != account) {
+	if s.permanent || s.backup || !ok || !canonicalIdentity(account) ||
+		(a.ownerAccount != "" && a.ownerAccount != account) {
 		return RetainedArchiveManifest{}, ErrRetainedArchive
 	}
 	if lifetime == 0 {
@@ -219,18 +250,35 @@ func (s *RetainedArchiveStore) Save(ctx context.Context, id, account string, a A
 		if err != nil {
 			return RetainedArchiveManifest{}, err
 		}
-		if meta.Digest != digest || meta.ExpiresMS-meta.CreatedMS != lifetime.Milliseconds() || meta.CiphertextBytes != a.ciphertextBytes || meta.ContainerBytes != a.containerBytes || meta.TrailingBytes != a.trailingBytes {
+		if meta.Digest != digest || meta.ExpiresMS-meta.CreatedMS != lifetime.Milliseconds() ||
+			meta.CiphertextBytes != a.ciphertextBytes ||
+			meta.ContainerBytes != a.containerBytes ||
+			meta.TrailingBytes != a.trailingBytes {
 			return RetainedArchiveManifest{}, ErrRetainedConflict
 		}
 		return retainedManifest(meta, stored), nil
 	}
 	now := s.ledger.now()
-	meta := retainedMetadata{SourceID: id, Account: account, CreatedMS: now.UnixMilli(), ExpiresMS: now.Add(lifetime).UnixMilli(), Digest: digest, Files: files, CiphertextBytes: a.ciphertextBytes, ContainerBytes: a.containerBytes, TrailingBytes: a.trailingBytes}
+	meta := retainedMetadata{
+		SourceID:        id,
+		Account:         account,
+		CreatedMS:       now.UnixMilli(),
+		ExpiresMS:       now.Add(lifetime).UnixMilli(),
+		Digest:          digest,
+		Files:           files,
+		CiphertextBytes: a.ciphertextBytes,
+		ContainerBytes:  a.containerBytes,
+		TrailingBytes:   a.trailingBytes,
+	}
 	return s.publish(ctx, meta, a)
 }
 
 // publish requires the caller to hold the store lock and validate the complete source.
-func (s *RetainedArchiveStore) publish(ctx context.Context, meta retainedMetadata, a AccountArchive) (RetainedArchiveManifest, error) {
+func (s *RetainedArchiveStore) publish(
+	ctx context.Context,
+	meta retainedMetadata,
+	a AccountArchive,
+) (RetainedArchiveManifest, error) {
 	id := meta.SourceID
 	name, ok := retainedName(id)
 	if !ok || s.ledger.claims[id] {
@@ -281,6 +329,7 @@ func (s *RetainedArchiveStore) publish(ctx context.Context, meta retainedMetadat
 	if err != nil {
 		return RetainedArchiveManifest{}, ErrRetainedArchive
 	}
+	//nolint:errcheck // Best-effort scratch cleanup must preserve the write/rename error.
 	defer s.ledger.root.Remove(tmp)
 	_, err = f.Write(sealed)
 	if err == nil {
@@ -306,10 +355,23 @@ func retainedManifest(m retainedMetadata, stored int64) RetainedArchiveManifest 
 			groups++
 		}
 	}
-	return RetainedArchiveManifest{SourceID: m.SourceID, Scope: "account", CapturedAt: time.UnixMilli(m.CreatedMS).UTC().Format(time.RFC3339Nano), ExpiresAt: time.UnixMilli(m.ExpiresMS).UTC().Format(time.RFC3339Nano), Digest: m.Digest, FileCount: len(m.Files), DirectFiles: len(m.Files) - groups, GroupFiles: groups, StoredBytes: stored}
+	return RetainedArchiveManifest{
+		SourceID:    m.SourceID,
+		Scope:       "account",
+		CapturedAt:  time.UnixMilli(m.CreatedMS).UTC().Format(time.RFC3339Nano),
+		ExpiresAt:   time.UnixMilli(m.ExpiresMS).UTC().Format(time.RFC3339Nano),
+		Digest:      m.Digest,
+		FileCount:   len(m.Files),
+		DirectFiles: len(m.Files) - groups,
+		GroupFiles:  groups,
+		StoredBytes: stored,
+	}
 }
 
-func (s *RetainedArchiveStore) Read(ctx context.Context, id, account string) (AccountArchive, RetainedArchiveManifest, error) {
+func (s *RetainedArchiveStore) Read(
+	ctx context.Context,
+	id, account string,
+) (AccountArchive, RetainedArchiveManifest, error) {
 	if !s.lock(ctx) {
 		return AccountArchive{}, RetainedArchiveManifest{}, ErrRetainedArchive
 	}
@@ -320,7 +382,11 @@ func (s *RetainedArchiveStore) Read(ctx context.Context, id, account string) (Ac
 	}
 	return a, retainedManifest(m, stored), nil
 }
-func (s *RetainedArchiveStore) read(ctx context.Context, id, account string) (retainedMetadata, AccountArchive, int64, error) {
+
+func (s *RetainedArchiveStore) read(
+	ctx context.Context,
+	id, account string,
+) (retainedMetadata, AccountArchive, int64, error) {
 	if !canonicalIdentity(account) {
 		return retainedMetadata{}, AccountArchive{}, 0, ErrRetainedArchive
 	}
@@ -330,7 +396,10 @@ func (s *RetainedArchiveStore) read(ctx context.Context, id, account string) (re
 
 // ReadBound permits offline owner access using the persisted account binding.
 // It never needs a running collector or exposes the raw account ID in manifest.
-func (s *RetainedArchiveStore) ReadBound(ctx context.Context, id, accountKey string) (AccountArchive, RetainedArchiveManifest, error) {
+func (s *RetainedArchiveStore) ReadBound(
+	ctx context.Context,
+	id, accountKey string,
+) (AccountArchive, RetainedArchiveManifest, error) {
 	if !s.lock(ctx) {
 		return AccountArchive{}, RetainedArchiveManifest{}, ErrRetainedArchive
 	}
@@ -342,9 +411,15 @@ func (s *RetainedArchiveStore) ReadBound(ctx context.Context, id, accountKey str
 	return a, retainedManifest(m, stored), nil
 }
 
-func (s *RetainedArchiveStore) readBound(ctx context.Context, id, accountKey string) (retainedMetadata, AccountArchive, int64, error) {
+func (s *RetainedArchiveStore) readBound(
+	ctx context.Context,
+	id, accountKey string,
+) (retainedMetadata, AccountArchive, int64, error) {
 	key, decodeErr := hex.DecodeString(accountKey)
-	if _, ok := retainedName(id); !ok || decodeErr != nil || len(key) != 32 || hex.EncodeToString(key) != accountKey || ctx.Err() != nil {
+	if _, ok := retainedName(
+		id,
+	); !ok || decodeErr != nil || len(key) != 32 || hex.EncodeToString(key) != accountKey ||
+		ctx.Err() != nil {
 		return retainedMetadata{}, AccountArchive{}, 0, ErrRetainedArchive
 	}
 	if !s.ledger.claims[id] {
@@ -391,10 +466,12 @@ func (s *RetainedArchiveStore) decode(id string) (retainedMetadata, AccountArchi
 		return retainedMetadata{}, AccountArchive{}, 0, ErrRetainedArchive
 	}
 	if !samePrivateFile(f, info) {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		f.Close()
 		return retainedMetadata{}, AccountArchive{}, 0, ErrRetainedArchive
 	}
 	sealed, err := io.ReadAll(io.LimitReader(f, info.Size()+1))
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	f.Close()
 	defer clear(sealed)
 	if err != nil || int64(len(sealed)) != info.Size() || string(sealed[:len(retainedMagic)]) != retainedMagic {
@@ -417,10 +494,22 @@ func (s *RetainedArchiveStore) decode(id string) (retainedMetadata, AccountArchi
 	var meta retainedMetadata
 	d := json.NewDecoder(bytes.NewReader(plain[4 : 4+headerSize]))
 	d.DisallowUnknownFields()
-	if d.Decode(&meta) != nil || d.Decode(new(any)) != io.EOF || meta.SourceID != id || !canonicalIdentity(meta.Account) || meta.CreatedMS <= 0 || meta.ExpiresMS-meta.CreatedMS < time.Hour.Milliseconds() || meta.ExpiresMS-meta.CreatedMS > retainedMaxLifetime.Milliseconds() || len(meta.Files) < 1 || len(meta.Files) > MaxFiles || (s.permanent && (meta.PreservedMS <= 0 || meta.SourceStoredBytes <= 0)) || (!s.permanent && (meta.PreservedMS != 0 || meta.SourceStoredBytes != 0)) {
+	if d.Decode(&meta) != nil || d.Decode(new(any)) != io.EOF || meta.SourceID != id ||
+		!canonicalIdentity(meta.Account) ||
+		meta.CreatedMS <= 0 ||
+		meta.ExpiresMS-meta.CreatedMS < time.Hour.Milliseconds() ||
+		meta.ExpiresMS-meta.CreatedMS > retainedMaxLifetime.Milliseconds() ||
+		len(meta.Files) < 1 ||
+		len(meta.Files) > MaxFiles ||
+		(s.permanent && (meta.PreservedMS <= 0 || meta.SourceStoredBytes <= 0)) ||
+		(!s.permanent && (meta.PreservedMS != 0 || meta.SourceStoredBytes != 0)) {
 		return fail()
 	}
-	archive := AccountArchive{ciphertextBytes: meta.CiphertextBytes, containerBytes: meta.ContainerBytes, trailingBytes: meta.TrailingBytes}
+	archive := AccountArchive{
+		ciphertextBytes: meta.CiphertextBytes,
+		containerBytes:  meta.ContainerBytes,
+		trailingBytes:   meta.TrailingBytes,
+	}
 	offset = 4 + headerSize
 	for _, file := range meta.Files {
 		if file.Size < 1 || uint64(file.Size) > MaxFileBytes || file.Size > int64(len(plain)-offset) {
@@ -433,7 +522,14 @@ func (s *RetainedArchiveStore) decode(id string) (retainedMetadata, AccountArchi
 			return fail()
 		}
 		archive.archive.Files = append(archive.archive.Files, ArchiveFile{Name: file.Name, Data: data})
-		archive.pairs = append(archive.pairs, IdentityPair{Plain: strings.TrimSuffix(strings.TrimPrefix(file.Name, "group_"), ".db"), Session: file.SessionID, Group: file.Group})
+		archive.pairs = append(
+			archive.pairs,
+			IdentityPair{
+				Plain:   strings.TrimSuffix(strings.TrimPrefix(file.Name, "group_"), ".db"),
+				Session: file.SessionID,
+				Group:   file.Group,
+			},
+		)
 		offset = end
 	}
 	if offset != len(plain) {
@@ -453,8 +549,9 @@ func (s *RetainedArchiveStore) inventory() (int, int64, error) {
 		return 0, 0, ErrRetainedArchive
 	}
 	entries, err := f.ReadDir(32)
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	f.Close()
-	if err != nil && err != io.EOF || len(entries) > retainedMaxSources+3 {
+	if err != nil && !errors.Is(err, io.EOF) || len(entries) > retainedMaxSources+3 {
 		return 0, 0, ErrRetainedCapacity
 	}
 	count := 0
@@ -468,8 +565,11 @@ func (s *RetainedArchiveStore) inventory() (int, int64, error) {
 		if name == snapshotKeyName || name == snapshotClaimsName {
 			continue
 		}
-		if strings.HasSuffix(name, ".tmp") {
-			if _, ok := retainedName(strings.TrimSuffix(name, ".tmp")); !ok || s.ledger.root.Remove(name) != nil || snapshotSyncDirectory(s.ledger.root) != nil {
+		if before, ok := strings.CutSuffix(name, ".tmp"); ok {
+			if _, ok := retainedName(
+				before,
+			); !ok || s.ledger.root.Remove(name) != nil ||
+				snapshotSyncDirectory(s.ledger.root) != nil {
 				return 0, 0, ErrRetainedArchive
 			}
 			continue

@@ -20,11 +20,15 @@ func (s *Store) migrateEventJournal(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
-	_, err = tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS event_processing(subscription_id TEXT NOT NULL,generation TEXT NOT NULL,ack_id INTEGER NOT NULL DEFAULT 0,pruned_id INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(subscription_id,generation));
+	_, err = tx.ExecContext(
+		ctx,
+		`CREATE TABLE IF NOT EXISTS event_processing(subscription_id TEXT NOT NULL,generation TEXT NOT NULL,ack_id INTEGER NOT NULL DEFAULT 0,pruned_id INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(subscription_id,generation));
 UPDATE event_subscriptions SET active=0 WHERE profile='zalo.conversation.message.created';
 UPDATE event_deliveries SET state='cancelled',payload=X'',lease_until=NULL,completed_at=COALESCE(completed_at,strftime('%Y-%m-%dT%H:%M:%fZ','now')),last_reason='profile_removed' WHERE subscription_id IN (SELECT id FROM event_subscriptions WHERE profile='zalo.conversation.message.created') AND state IN ('pending','sending');
-INSERT OR IGNORE INTO schema_migrations VALUES(12);`)
+INSERT OR IGNORE INTO schema_migrations VALUES(12);`,
+	)
 	if err != nil {
 		return err
 	}
@@ -32,10 +36,16 @@ INSERT OR IGNORE INTO schema_migrations VALUES(12);`)
 }
 
 func (s *Store) EventSubscriptions(ctx context.Context, principal string) (map[string]any, error) {
-	rows, err := s.DB.QueryContext(ctx, `SELECT id,profile,scope,conversation_type,group_id,direction,first_incoming_only FROM event_subscriptions WHERE principal=? AND active=1 AND profile!='zalo.conversation.message.created' AND (expires_at IS NULL OR julianday(expires_at)>julianday(?)) ORDER BY id`, principal, now())
+	rows, err := s.DB.QueryContext(
+		ctx,
+		`SELECT id,profile,scope,conversation_type,group_id,direction,first_incoming_only FROM event_subscriptions WHERE principal=? AND active=1 AND profile!='zalo.conversation.message.created' AND (expires_at IS NULL OR julianday(expires_at)>julianday(?)) ORDER BY id`,
+		principal,
+		now(),
+	)
 	if err != nil {
 		return nil, err
 	}
+	// G104: Read-only query cleanup; Scan/Rows.Err determines the result.
 	defer rows.Close()
 	values := []map[string]any{}
 	for rows.Next() {
@@ -54,7 +64,18 @@ func (s *Store) EventSubscriptions(ctx context.Context, principal string) (map[s
 		if peer != "" {
 			p = peer
 		}
-		values = append(values, map[string]any{"subscription_id": id, "event_name": profile, "scope": scope, "conversation_type": k, "conversation_id": p, "direction": dir, "first_incoming_only": first})
+		values = append(
+			values,
+			map[string]any{
+				"subscription_id":     id,
+				"event_name":          profile,
+				"scope":               scope,
+				"conversation_type":   k,
+				"conversation_id":     p,
+				"direction":           dir,
+				"first_incoming_only": first,
+			},
+		)
 	}
 	return map[string]any{"subscriptions": values}, rows.Err()
 }
@@ -96,14 +117,21 @@ func (s *Store) journalSubscription(ctx context.Context, tx *sql.Tx, id, princip
 	var gen, profile, scope, kind, peer string
 	var active bool
 	var expiry sql.NullString
-	err := tx.QueryRowContext(ctx, `SELECT generation,profile,scope,conversation_type,group_id,active,expires_at FROM event_subscriptions WHERE id=? AND principal=? AND (expires_at IS NULL OR julianday(expires_at)>julianday(?))`, id, principal, now()).Scan(&gen, &profile, &scope, &kind, &peer, &active, &expiry)
+	err := tx.QueryRowContext(ctx, `SELECT generation,profile,scope,conversation_type,group_id,active,expires_at FROM event_subscriptions WHERE id=? AND principal=? AND (expires_at IS NULL OR julianday(expires_at)>julianday(?))`, id, principal, now()).
+		Scan(&gen, &profile, &scope, &kind, &peer, &active, &expiry)
 	if err != nil {
 		return "", err
 	}
-	if !active || profile == "zalo.conversation.message.created" || (scope == "conversation" && !s.AllowsConversation(domain.ConversationRef{Type: kind, ID: peer})) {
+	if !active || profile == "zalo.conversation.message.created" ||
+		(scope == "conversation" && !s.AllowsConversation(domain.ConversationRef{Type: kind, ID: peer})) {
 		return "", subscriptionPermission("Subscription is inactive or access was revoked.")
 	}
-	_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO event_processing(subscription_id,generation) VALUES(?,?)`, id, gen)
+	_, err = tx.ExecContext(
+		ctx,
+		`INSERT OR IGNORE INTO event_processing(subscription_id,generation) VALUES(?,?)`,
+		id,
+		gen,
+	)
 	return gen, err
 }
 
@@ -117,22 +145,39 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	gen, err := s.journalSubscription(ctx, tx, id, principal)
 	if err != nil {
 		return nil, err
 	}
 	var ack, pruned int64
-	if err = tx.QueryRowContext(ctx, `SELECT ack_id,pruned_id FROM event_processing WHERE subscription_id=? AND generation=?`, id, gen).Scan(&ack, &pruned); err != nil {
+	if err = tx.QueryRowContext(ctx, `SELECT ack_id,pruned_id FROM event_processing WHERE subscription_id=? AND generation=?`, id, gen).
+		Scan(&ack, &pruned); err != nil {
 		return nil, err
 	}
 	entries := []map[string]any{}
 	from := ack
 	if pruned > from {
-		entries = append(entries, map[string]any{"event": nil, "delivery_state": "pruned", "gap_reason": "retention_expired", "receipt": s.receipt(processingReceipt{id, gen, from, pruned})})
+		entries = append(
+			entries,
+			map[string]any{
+				"event":          nil,
+				"delivery_state": "pruned",
+				"gap_reason":     "retention_expired",
+				"receipt":        s.receipt(processingReceipt{id, gen, from, pruned}),
+			},
+		)
 		from = pruned
 	}
-	rows, err := tx.QueryContext(ctx, `SELECT d.id,d.payload,d.state,m.conversation_type,m.conversation_id FROM event_deliveries d LEFT JOIN messages m ON m.seq=d.message_seq WHERE d.subscription_id=? AND d.generation=? AND d.id>? ORDER BY d.id LIMIT ?`, id, gen, from, limit+1)
+	rows, err := tx.QueryContext(
+		ctx,
+		`SELECT d.id,d.payload,d.state,m.conversation_type,m.conversation_id FROM event_deliveries d LEFT JOIN messages m ON m.seq=d.message_seq WHERE d.subscription_id=? AND d.generation=? AND d.id>? ORDER BY d.id LIMIT ?`,
+		id,
+		gen,
+		from,
+		limit+1,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -144,6 +189,7 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 		var state string
 		var kind, peer sql.NullString
 		if err = rows.Scan(&n, &payload, &state, &kind, &peer); err != nil {
+			//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
 			rows.Close()
 			return nil, err
 		}
@@ -169,12 +215,21 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 			event = nil
 			reason = "delivery_" + state
 		}
-		entry := map[string]any{"event": event, "delivery_state": state, "gap_reason": reason, "receipt": s.receipt(processingReceipt{id, gen, from, n})}
+		entry := map[string]any{
+			"event":          event,
+			"delivery_state": state,
+			"gap_reason":     reason,
+			"receipt":        s.receipt(processingReceipt{id, gen, from, n}),
+		}
 		b, _ := json.Marshal(entry)
 		if used+len(b) > 28<<10 {
 			if len(entries) == 0 {
+				//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
 				rows.Close()
-				return nil, domain.ResponseTooLarge("Event exceeds recovery response budget.", "Read the retained message through its context tool; report this limitation.")
+				return nil, domain.ResponseTooLarge(
+					"Event exceeds recovery response budget.",
+					"Read the retained message through its context tool; report this limitation.",
+				)
 			}
 			more = true
 			break
@@ -184,6 +239,7 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 		from = n
 	}
 	err = rows.Err()
+	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
 	rows.Close()
 	if err != nil {
 		return nil, err
@@ -191,7 +247,12 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 	if err = tx.Commit(); err != nil {
 		return nil, err
 	}
-	return map[string]any{"subscription_id": id, "events": entries, "has_more": more, "blocked_on_delivery": blocked}, nil
+	return map[string]any{
+		"subscription_id":     id,
+		"events":              entries,
+		"has_more":            more,
+		"blocked_on_delivery": blocked,
+	}, nil
 }
 func (s *Store) AckSubscriptionEvents(ctx context.Context, principal, id, token string) (map[string]any, error) {
 	r, err := s.parseReceipt(token)
@@ -205,6 +266,7 @@ func (s *Store) AckSubscriptionEvents(ctx context.Context, principal, id, token 
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	gen, err := s.journalSubscription(ctx, tx, id, principal)
 	if err != nil {
@@ -214,14 +276,22 @@ func (s *Store) AckSubscriptionEvents(ctx context.Context, principal, id, token 
 		return nil, domain.Invalid("Subscription generation changed.")
 	}
 	var ack int64
-	if err = tx.QueryRowContext(ctx, `SELECT ack_id FROM event_processing WHERE subscription_id=? AND generation=?`, id, gen).Scan(&ack); err != nil {
+	if err = tx.QueryRowContext(ctx, `SELECT ack_id FROM event_processing WHERE subscription_id=? AND generation=?`, id, gen).
+		Scan(&ack); err != nil {
 		return nil, err
 	}
 	if ack < r.To {
 		if ack != r.From {
 			return nil, domain.Invalid("Processing cursor changed; read remaining events again.")
 		}
-		if _, err = tx.ExecContext(ctx, `UPDATE event_processing SET ack_id=? WHERE subscription_id=? AND generation=? AND ack_id=?`, r.To, id, gen, r.From); err != nil {
+		if _, err = tx.ExecContext(
+			ctx,
+			`UPDATE event_processing SET ack_id=? WHERE subscription_id=? AND generation=? AND ack_id=?`,
+			r.To,
+			id,
+			gen,
+			r.From,
+		); err != nil {
 			return nil, err
 		}
 	}
@@ -236,15 +306,26 @@ func (s *Store) pruneEventJournal(ctx context.Context, at time.Time) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	cutoff := at.Add(-7 * 24 * time.Hour).UTC().Format(time.RFC3339Nano)
-	_, err = tx.ExecContext(ctx, `INSERT INTO event_processing(subscription_id,generation,pruned_id) SELECT subscription_id,generation,max(id) FROM event_deliveries WHERE completed_at IS NOT NULL AND julianday(completed_at)<julianday(?) AND NOT EXISTS(SELECT 1 FROM event_deliveries earlier WHERE earlier.subscription_id=event_deliveries.subscription_id AND earlier.generation=event_deliveries.generation AND earlier.id<event_deliveries.id AND (earlier.completed_at IS NULL OR julianday(earlier.completed_at)>=julianday(?))) GROUP BY subscription_id,generation ON CONFLICT(subscription_id,generation) DO UPDATE SET pruned_id=max(pruned_id,excluded.pruned_id)`, cutoff, cutoff)
+	_, err = tx.ExecContext(
+		ctx,
+		`INSERT INTO event_processing(subscription_id,generation,pruned_id) SELECT subscription_id,generation,max(id) FROM event_deliveries WHERE completed_at IS NOT NULL AND julianday(completed_at)<julianday(?) AND NOT EXISTS(SELECT 1 FROM event_deliveries earlier WHERE earlier.subscription_id=event_deliveries.subscription_id AND earlier.generation=event_deliveries.generation AND earlier.id<event_deliveries.id AND (earlier.completed_at IS NULL OR julianday(earlier.completed_at)>=julianday(?))) GROUP BY subscription_id,generation ON CONFLICT(subscription_id,generation) DO UPDATE SET pruned_id=max(pruned_id,excluded.pruned_id)`,
+		cutoff,
+		cutoff,
+	)
 	if err != nil {
 		return err
 	}
 	// Do not prune beyond an unfinished earlier record: doing so would let a
 	// retention gap acknowledge work that has not yet completed delivery.
-	_, err = tx.ExecContext(ctx, `DELETE FROM event_deliveries WHERE completed_at IS NOT NULL AND julianday(completed_at)<julianday(?) AND NOT EXISTS(SELECT 1 FROM event_deliveries earlier WHERE earlier.subscription_id=event_deliveries.subscription_id AND earlier.generation=event_deliveries.generation AND earlier.id<event_deliveries.id AND (earlier.completed_at IS NULL OR julianday(earlier.completed_at)>=julianday(?)))`, cutoff, cutoff)
+	_, err = tx.ExecContext(
+		ctx,
+		`DELETE FROM event_deliveries WHERE completed_at IS NOT NULL AND julianday(completed_at)<julianday(?) AND NOT EXISTS(SELECT 1 FROM event_deliveries earlier WHERE earlier.subscription_id=event_deliveries.subscription_id AND earlier.generation=event_deliveries.generation AND earlier.id<event_deliveries.id AND (earlier.completed_at IS NULL OR julianday(earlier.completed_at)>=julianday(?)))`,
+		cutoff,
+		cutoff,
+	)
 	if err != nil {
 		return err
 	}

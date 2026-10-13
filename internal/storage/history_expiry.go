@@ -15,6 +15,7 @@ func (s *Store) migrateHistoryExpiry(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	_, err = tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS history_message_expiry(
  conversation_type TEXT NOT NULL,conversation_id TEXT NOT NULL,message_id TEXT NOT NULL,
@@ -32,7 +33,11 @@ func (s *Store) migrateHistoryExpiry(ctx context.Context) error {
 
 // PutExpiringHistoryPage persists silent messages and original deadlines atomically.
 // A durable importer must use its own transaction for the page and checkpoint.
-func (s *Store) PutExpiringHistoryPage(ctx context.Context, ref domain.ConversationRef, records []ExpiringHistoryRecord) (HistoryPageCounts, error) {
+func (s *Store) PutExpiringHistoryPage(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	records []ExpiringHistoryRecord,
+) (HistoryPageCounts, error) {
 	if err := s.validateExpiringHistoryPage(ref, records); err != nil {
 		return HistoryPageCounts{}, err
 	}
@@ -40,6 +45,7 @@ func (s *Store) PutExpiringHistoryPage(ctx context.Context, ref domain.Conversat
 	if err != nil {
 		return HistoryPageCounts{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	counts, err := s.putExpiringHistoryPageTx(ctx, tx, records)
 	if err != nil {
@@ -60,14 +66,19 @@ func (s *Store) validateExpiringHistoryPage(ref domain.ConversationRef, records 
 	messages := make([]domain.Message, len(records))
 	for i, r := range records {
 		messages[i] = r.Message
-		if r.ExpiresAtMS < 0 || r.ExpiresAtMS > 0 && (r.Message.SentAt.UnixMilli() <= 0 || r.ExpiresAtMS <= r.Message.SentAt.UnixMilli()) {
+		if r.ExpiresAtMS < 0 ||
+			r.ExpiresAtMS > 0 && (r.Message.SentAt.UnixMilli() <= 0 || r.ExpiresAtMS <= r.Message.SentAt.UnixMilli()) {
 			return domain.Invalid("Invalid historical expiry deadline.")
 		}
 	}
 	return s.validateHistoryPage(ref, messages)
 }
 
-func (s *Store) putExpiringHistoryPageTx(ctx context.Context, tx *sql.Tx, records []ExpiringHistoryRecord) (HistoryPageCounts, error) {
+func (s *Store) putExpiringHistoryPageTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	records []ExpiringHistoryRecord,
+) (HistoryPageCounts, error) {
 	counts := HistoryPageCounts{}
 	for _, r := range records {
 		single, e := s.putHistoryPageTx(ctx, tx, []domain.Message{r.Message})
@@ -78,7 +89,14 @@ func (s *Store) putExpiringHistoryPageTx(ctx context.Context, tx *sql.Tx, record
 		counts.Duplicates += single.Duplicates
 		if single.Inserted == 1 && r.ExpiresAtMS > 0 {
 			ref := r.Message.Ref()
-			if _, e = tx.ExecContext(ctx, `INSERT OR IGNORE INTO history_message_expiry(conversation_type,conversation_id,message_id,expires_ms) VALUES(?,?,?,?)`, ref.Type, ref.ID, r.Message.ID, r.ExpiresAtMS); e != nil {
+			if _, e = tx.ExecContext(
+				ctx,
+				`INSERT OR IGNORE INTO history_message_expiry(conversation_type,conversation_id,message_id,expires_ms) VALUES(?,?,?,?)`,
+				ref.Type,
+				ref.ID,
+				r.Message.ID,
+				r.ExpiresAtMS,
+			); e != nil {
 				return HistoryPageCounts{}, e
 			}
 		}
@@ -95,6 +113,7 @@ func (s *Store) ExpireHistoryAt(ctx context.Context, at time.Time) error {
 	if e != nil {
 		return e
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	if e = s.expireHistoryTx(ctx, tx, at); e != nil {
 		return e
@@ -103,8 +122,17 @@ func (s *Store) ExpireHistoryAt(ctx context.Context, at time.Time) error {
 }
 
 func (s *Store) expireHistoryTx(ctx context.Context, tx *sql.Tx, at time.Time) error {
-	if _, e := tx.ExecContext(ctx, "UPDATE history_message_expiry SET expired=1 WHERE expired=0 AND expires_ms<=?", at.UnixMilli()); e != nil {
+	if _, e := tx.ExecContext(
+		ctx,
+		"UPDATE history_message_expiry SET expired=1 WHERE expired=0 AND expires_ms<=?",
+		at.UnixMilli(),
+	); e != nil {
 		return e
 	}
-	return s.removeMessagesTx(ctx, tx, `EXISTS (SELECT 1 FROM history_message_expiry e WHERE e.conversation_type=messages.conversation_type AND e.conversation_id=messages.group_id AND e.message_id=messages.message_id AND e.expired=1)`, "record_expired")
+	return s.removeMessagesTx(
+		ctx,
+		tx,
+		`EXISTS (SELECT 1 FROM history_message_expiry e WHERE e.conversation_type=messages.conversation_type AND e.conversation_id=messages.group_id AND e.message_id=messages.message_id AND e.expired=1)`,
+		"record_expired",
+	)
 }

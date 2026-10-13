@@ -8,17 +8,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/skosovsky/zl-mcp/docs/contracts"
 	"math/big"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/skosovsky/zl-mcp/docs/contracts"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 func mobileJournalRequest() domain.MobileBackupRequest {
-	return domain.MobileBackupRequest{RequestID: "00000000-0000-4000-8000-000000000001", ConversationType: "direct", ConversationID: "synthetic-peer", Since: "2026-09-01T00:00:00Z", Until: "2026-10-01T00:00:00Z"}
+	return domain.MobileBackupRequest{
+		RequestID:        "00000000-0000-4000-8000-000000000001",
+		ConversationType: "direct",
+		ConversationID:   "synthetic-peer",
+		Since:            "2026-09-01T00:00:00Z",
+		Until:            "2026-10-01T00:00:00Z",
+	}
 }
 func mobileJournalPublic(t *testing.T) string {
 	t.Helper()
@@ -83,10 +90,19 @@ func TestMobileBackupJournalIdentityCASAndRestart(t *testing.T) {
 	}
 	recovered, err := s.PrepareMobileBackup(ctx, r)
 	// Assert: no restart/retry creates a new operation or resets it to dispatchable.
-	if err != nil || recovered.OperationID != a.OperationID || recovered.State != "interrupted" || recovered.PublicKey != public {
+	if err != nil || recovered.OperationID != a.OperationID || recovered.State != "interrupted" ||
+		recovered.PublicKey != public {
 		t.Fatal("restart identity or interrupted state lost")
 	}
-	if _, err = s.DispatchMobileBackup(ctx, recovered.OperationID, recovered.Revision, public); !errors.Is(err, ErrMobileBackupState) {
+	if _, err = s.DispatchMobileBackup(
+		ctx,
+		recovered.OperationID,
+		recovered.Revision,
+		public,
+	); !errors.Is(
+		err,
+		ErrMobileBackupState,
+	) {
 		t.Fatal("interrupted attempt redispatched")
 	}
 	serialized, _ := json.Marshal(recovered)
@@ -128,10 +144,26 @@ func TestMobileBackupJournalPolicyAndTransitions(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Act / Assert: no progress before durable dispatch, and malformed public keys fail closed.
-	if _, err = s.ProgressMobileBackup(ctx, a.OperationID, a.Revision, "waiting_for_backup"); !errors.Is(err, ErrMobileBackupState) {
+	if _, err = s.ProgressMobileBackup(
+		ctx,
+		a.OperationID,
+		a.Revision,
+		"waiting_for_backup",
+	); !errors.Is(
+		err,
+		ErrMobileBackupState,
+	) {
 		t.Fatal("progress bypassed dispatch")
 	}
-	if _, err = s.DispatchMobileBackup(ctx, a.OperationID, a.Revision, base64.StdEncoding.EncodeToString([]byte("not SPKI"))); !errors.Is(err, ErrMobileBackupState) {
+	if _, err = s.DispatchMobileBackup(
+		ctx,
+		a.OperationID,
+		a.Revision,
+		base64.StdEncoding.EncodeToString([]byte("not SPKI")),
+	); !errors.Is(
+		err,
+		ErrMobileBackupState,
+	) {
 		t.Fatal("malformed correlation key stored")
 	}
 	a, err = s.DispatchMobileBackup(ctx, a.OperationID, a.Revision, mobileJournalPublic(t))
@@ -144,13 +176,27 @@ func TestMobileBackupJournalPolicyAndTransitions(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if _, err = s.ProgressMobileBackup(ctx, a.OperationID, a.Revision, "dispatching"); !errors.Is(err, ErrMobileBackupState) {
+	if _, err = s.ProgressMobileBackup(
+		ctx,
+		a.OperationID,
+		a.Revision,
+		"dispatching",
+	); !errors.Is(
+		err,
+		ErrMobileBackupState,
+	) {
 		t.Fatal("terminal attempt restarted")
 	}
 	if err = s.Close(); err != nil {
 		t.Fatal(err)
 	}
-	s = historyOperationStore(t, path, domain.CollectionPolicy{Selected: map[domain.ConversationRef]bool{{Type: domain.ConversationDirect, ID: "other-peer"}: true}})
+	s = historyOperationStore(
+		t,
+		path,
+		domain.CollectionPolicy{
+			Selected: map[domain.ConversationRef]bool{{Type: domain.ConversationDirect, ID: "other-peer"}: true},
+		},
+	)
 	if _, err = s.MobileBackupAttempt(ctx, a.OperationID); err == nil {
 		t.Fatal("revoked scope read accepted")
 	}
@@ -172,7 +218,9 @@ func TestMobileBackupMigrationRollback(t *testing.T) {
 		t.Fatal("migration failure ignored")
 	}
 	var count int
-	if err = s.DB.QueryRow("SELECT count(*) FROM sqlite_master WHERE name='mobile_backup_attempts'").Scan(&count); err != nil || count != 0 {
+	if err = s.DB.QueryRow("SELECT count(*) FROM sqlite_master WHERE name='mobile_backup_attempts'").
+		Scan(&count); err != nil ||
+		count != 0 {
 		t.Fatal("partial table retained")
 	}
 }
@@ -204,7 +252,7 @@ func TestMobileBackupJournalAccountAndCapacity(t *testing.T) {
 	if _, err = s.DB.Exec("UPDATE metadata SET value=? WHERE key='account'", original); err != nil {
 		t.Fatal(err)
 	}
-	a, err = s.ProgressMobileBackup(ctx, a.OperationID, a.Revision, "cancelled")
+	_, err = s.ProgressMobileBackup(ctx, a.OperationID, a.Revision, "cancelled")
 	if err != nil {
 		t.Fatal(err)
 	}

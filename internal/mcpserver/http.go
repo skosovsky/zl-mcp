@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"maps"
 	"mime"
 	"net"
 	"net/http"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
@@ -39,7 +41,15 @@ func NewHTTP(token string, reads Ports, protocol EventsProtocolPort) (*HTTPServi
 	if protocol == nil {
 		return nil, errors.New("Events protocol port is required")
 	}
-	return &HTTPService{Events: protocol, tokenHash: sha256.Sum256([]byte(token)), principal: "local:" + strconv.Itoa(os.Getuid()), sdk: mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return server }, &mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true, PropagateRequestCancellation: true})}, nil
+	return &HTTPService{
+		Events:    protocol,
+		tokenHash: sha256.Sum256([]byte(token)),
+		principal: "local:" + strconv.Itoa(os.Getuid()),
+		sdk: mcp.NewStreamableHTTPHandler(
+			func(*http.Request) *mcp.Server { return server },
+			&mcp.StreamableHTTPOptions{Stateless: true, JSONResponse: true, PropagateRequestCancellation: true},
+		),
+	}, nil
 }
 
 type rpcRequest struct {
@@ -60,7 +70,9 @@ func writeRPC(w http.ResponseWriter, id json.RawMessage, result any, err error) 
 		response["result"] = result
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	if json.NewEncoder(w).Encode(response) != nil {
+		return // The response may be partial; never retry it.
+	}
 }
 
 func writeRPCStatus(w http.ResponseWriter, status int, id json.RawMessage, err error) {
@@ -73,7 +85,7 @@ func writeRPCStatus(w http.ResponseWriter, status int, id json.RawMessage, err e
 func acceptsMCP(values []string) bool {
 	var jsonOK, streamOK bool
 	for _, value := range values {
-		for _, raw := range strings.Split(value, ",") {
+		for raw := range strings.SplitSeq(value, ",") {
 			base, _, _ := strings.Cut(raw, ";")
 			switch strings.ToLower(strings.TrimSpace(base)) {
 			case "application/json", "application/*":
@@ -137,7 +149,10 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.Body = io.NopCloser(bytes.NewReader(body))
-	if observer := shared.Telemetry(r.Context()); observer != nil && (request.Method == "tools/call" || request.Method == "resources/read") {
+	if observer := shared.Telemetry(
+		r.Context(),
+	); observer != nil &&
+		(request.Method == "tools/call" || request.Method == "resources/read") {
 		var params struct {
 			Name string `json:"name"`
 		}
@@ -153,7 +168,7 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if discoveryMethod(request.Method) {
 		observed := &discoveryResponse{ResponseWriter: w, capture: request.Method == "tools/list"}
 		w = observed
-		defer logDiscovery(request.Method, r.Header.Get("MCP-Protocol-Version"), observed, time.Now())
+		defer logDiscovery(request.Method, r.Header.Get("Mcp-Protocol-Version"), observed, time.Now())
 	}
 	if strings.HasPrefix(request.Method, "events/") {
 		media, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
@@ -177,7 +192,12 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if r.Header.Get("Mcp-Method") != request.Method {
-			writeRPCStatus(w, http.StatusBadRequest, request.ID, &protocolError{Code: mcp.CodeHeaderMismatch, Message: "Missing or mismatched Mcp-Method header."})
+			writeRPCStatus(
+				w,
+				http.StatusBadRequest,
+				request.ID,
+				&protocolError{Code: mcp.CodeHeaderMismatch, Message: "Missing or mismatched Mcp-Method header."},
+			)
 			return
 		}
 		var params struct {
@@ -188,21 +208,48 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if _, ok := params.Meta["io.modelcontextprotocol/clientCapabilities"].(map[string]any); !ok {
-			writeRPC(w, request.ID, nil, &protocolError{Code: -32602, Message: "Missing or invalid client capabilities."})
+			writeRPC(
+				w,
+				request.ID,
+				nil,
+				&protocolError{Code: -32602, Message: "Missing or invalid client capabilities."},
+			)
 			return
 		}
 		version, _ := params.Meta["io.modelcontextprotocol/protocolVersion"].(string)
-		header := r.Header.Get("MCP-Protocol-Version")
+		header := r.Header.Get("Mcp-Protocol-Version")
 		if header == "" || (version != "" && header != version) {
-			writeRPCStatus(w, http.StatusBadRequest, request.ID, &protocolError{Code: mcp.CodeHeaderMismatch, Message: "Missing or mismatched MCP-Protocol-Version header."})
+			writeRPCStatus(
+				w,
+				http.StatusBadRequest,
+				request.ID,
+				&protocolError{
+					Code:    mcp.CodeHeaderMismatch,
+					Message: "Missing or mismatched MCP-Protocol-Version header.",
+				},
+			)
 			return
 		}
 		if version == "" {
-			writeRPCStatus(w, http.StatusBadRequest, request.ID, &protocolError{Code: -32602, Message: "Missing or invalid protocol version metadata."})
+			writeRPCStatus(
+				w,
+				http.StatusBadRequest,
+				request.ID,
+				&protocolError{Code: -32602, Message: "Missing or invalid protocol version metadata."},
+			)
 			return
 		}
 		if version != "2026-07-28" {
-			writeRPCStatus(w, http.StatusBadRequest, request.ID, &protocolError{Code: mcp.CodeUnsupportedProtocolVersion, Message: "Unsupported protocol version.", Data: map[string]any{"supported": []string{"2026-07-28"}, "requested": version}})
+			writeRPCStatus(
+				w,
+				http.StatusBadRequest,
+				request.ID,
+				&protocolError{
+					Code:    mcp.CodeUnsupportedProtocolVersion,
+					Message: "Unsupported protocol version.",
+					Data:    map[string]any{"supported": []string{"2026-07-28"}, "requested": version},
+				},
+			)
 			return
 		}
 		if len(request.ID) == 0 || idDecodeErr != nil || id == nil {
@@ -231,14 +278,14 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				capture.header.Del("Content-Length")
 			}
 		}
-		for key, values := range capture.header {
-			w.Header()[key] = values
-		}
+		maps.Copy(w.Header(), capture.header)
 		if capture.status == 0 {
 			capture.status = http.StatusOK
 		}
 		w.WriteHeader(capture.status)
-		w.Write(capture.body.Bytes())
+		if _, err := w.Write(capture.body.Bytes()); err != nil {
+			return // Do not replay a partially delivered response.
+		}
 		return
 	}
 	s.sdk.ServeHTTP(w, r)
@@ -299,6 +346,7 @@ func (c *jsonResponseCapture) Write(body []byte) (int, error) {
 // the JSON-RPC envelope and SDK escaping; it neither buffers nor re-encodes.
 type telemetryResponse struct {
 	http.ResponseWriter
+
 	bytes int64
 }
 

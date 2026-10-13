@@ -5,9 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/skosovsky/zl-mcp/internal/domain"
+	"errors"
 	"net/url"
 	"sort"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 func ConversationMessageURI(ref domain.ConversationRef, id string) string {
@@ -50,27 +52,51 @@ func (s *Store) ConversationCoverage(ctx context.Context, ref domain.Conversatio
 	}
 	return coverageView(c, ref), nil
 }
-func (s *Store) ConversationContext(ctx context.Context, ref domain.ConversationRef, id string, before, after int) (map[string]any, error) {
+
+func (s *Store) ConversationContext(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	id string,
+	before, after int,
+) (map[string]any, error) {
 	result, err := s.context(ctx, ref, id, before, after, true)
 	if err != nil {
 		return nil, err
 	}
-	result["anchor"] = ConversationMessageView(result["anchor"].(domain.Message))
+	anchor, ok := result["anchor"].(domain.Message)
+	if !ok {
+		return nil, errors.New("invalid context anchor projection")
+	}
+	result["anchor"] = ConversationMessageView(anchor)
 	for _, key := range []string{"before", "after"} {
 		values := []map[string]any{}
-		for _, m := range result[key].([]domain.Message) {
+		messages, ok := result[key].([]domain.Message)
+		if !ok {
+			return nil, errors.New("invalid context messages projection")
+		}
+		for _, m := range messages {
 			values = append(values, ConversationMessageView(m))
 		}
 		result[key] = values
 	}
-	if r := result["reply_to"].(*domain.Message); r != nil {
+	reply, ok := result["reply_to"].(*domain.Message)
+	if !ok {
+		return nil, errors.New("invalid context reply projection")
+	}
+	if r := reply; r != nil {
 		result["reply_to"] = ConversationMessageView(*r)
 	} else {
 		result["reply_to"] = nil
 	}
-	result["coverage"] = coverageView(result["coverage"].(domain.Coverage), ref)
+	coverage, ok := result["coverage"].(domain.Coverage)
+	if !ok {
+		return nil, errors.New("invalid context coverage projection")
+	}
+	result["coverage"] = coverageView(coverage, ref)
 	if result["next_action"] != nil {
-		result["next_action"] = domain.NextAction{Instruction: "Read omitted message IDs with zalo_get_conversation_message_context."}
+		result["next_action"] = domain.NextAction{
+			Instruction: "Read omitted message IDs with zalo_get_conversation_message_context.",
+		}
 	}
 	return result, nil
 }
@@ -83,9 +109,19 @@ func (s *Store) ConversationSummary(ctx context.Context) (map[string]any, error)
 	if err != nil {
 		return nil, err
 	}
-	return map[string]any{"conversation_count": len(refs), "history_complete": false, "conversations_with_known_gaps": gaps["direct"] + gaps["group"]}, nil
+	return map[string]any{
+		"conversation_count":            len(refs),
+		"history_complete":              false,
+		"conversations_with_known_gaps": gaps["direct"] + gaps["group"],
+	}, nil
 }
-func (s *Store) Conversations(ctx context.Context, kind, query string, limit int, token string) (map[string]any, error) {
+
+func (s *Store) Conversations(
+	ctx context.Context,
+	kind, query string,
+	limit int,
+	token string,
+) (map[string]any, error) {
 	if limit == 0 {
 		limit = 20
 	}
@@ -116,7 +152,19 @@ func (s *Store) Conversations(ctx context.Context, kind, query string, limit int
 		var source, availability, first, updated string
 		var aliasesJSON, friendship string
 		var hasMessages bool
-		if err = rows.Scan(&ref.Type, &ref.ID, &name, &source, &availability, &first, &updated, &aliasesJSON, &friendship, &hasMessages); err != nil {
+		if err = rows.Scan(
+			&ref.Type,
+			&ref.ID,
+			&name,
+			&source,
+			&availability,
+			&first,
+			&updated,
+			&aliasesJSON,
+			&friendship,
+			&hasMessages,
+		); err != nil {
+			//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
 			rows.Close()
 			return nil, err
 		}
@@ -127,6 +175,7 @@ func (s *Store) Conversations(ctx context.Context, kind, query string, limit int
 		sources[source] = true
 		aliases, metadataSources, err := directoryMetadata(aliasesJSON, source)
 		if err != nil {
+			//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
 			rows.Close()
 			return nil, err
 		}
@@ -143,10 +192,27 @@ func (s *Store) Conversations(ctx context.Context, kind, query string, limit int
 			continue
 		}
 		if len(values) <= limit {
-			values = append(values, map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "name": name, "metadata_source": source, "availability": availability, "first_discovered_at": first, "updated_at": updated, "collection_enabled": true, "aliases": aliases, "friendship": friendship, "has_stored_messages": hasMessages, "metadata_sources": metadataSources})
+			values = append(
+				values,
+				map[string]any{
+					"conversation_type":   ref.Type,
+					"conversation_id":     ref.ID,
+					"name":                name,
+					"metadata_source":     source,
+					"availability":        availability,
+					"first_discovered_at": first,
+					"updated_at":          updated,
+					"collection_enabled":  true,
+					"aliases":             aliases,
+					"friendship":          friendship,
+					"has_stored_messages": hasMessages,
+					"metadata_sources":    metadataSources,
+				},
+			)
 		}
 	}
 	err = rows.Err()
+	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
 	rows.Close()
 	if err != nil {
 		return nil, err
@@ -156,8 +222,12 @@ func (s *Store) Conversations(ctx context.Context, kind, query string, limit int
 	if more {
 		values = values[:limit]
 		last := values[len(values)-1]
-		c.Kind = last["conversation_type"].(string)
-		c.ID = last["conversation_id"].(string)
+		kind, kindOK := last["conversation_type"].(string)
+		id, idOK := last["conversation_id"].(string)
+		if !kindOK || !idOK {
+			return nil, errors.New("invalid conversation cursor projection")
+		}
+		c.Kind, c.ID = kind, id
 		t, err := s.EncodeCursor(c)
 		if err != nil {
 			return nil, err
@@ -175,7 +245,14 @@ func (s *Store) Conversations(ctx context.Context, kind, query string, limit int
 		ordered = append(ordered, source)
 	}
 	sort.Strings(ordered)
-	return map[string]any{"conversations": values, "has_more": more, "next_cursor": next, "catalog_complete": false, "catalog_sources": ordered, "empty_reason": reason}, nil
+	return map[string]any{
+		"conversations":    values,
+		"has_more":         more,
+		"next_cursor":      next,
+		"catalog_complete": false,
+		"catalog_sources":  ordered,
+		"empty_reason":     reason,
+	}, nil
 }
 func (s *Store) Conversation(ctx context.Context, ref domain.ConversationRef) (map[string]any, error) {
 	if !ref.Valid() {
@@ -188,7 +265,8 @@ func (s *Store) Conversation(ctx context.Context, ref domain.ConversationRef) (m
 	var source, availability, first, updated string
 	var aliasesJSON, friendship string
 	var hasMessages bool
-	err := s.DB.QueryRowContext(ctx, directorySelect+" WHERE c.conversation_type=? AND c.conversation_id=?", ref.Type, ref.ID).Scan(&ref.Type, &ref.ID, &name, &source, &availability, &first, &updated, &aliasesJSON, &friendship, &hasMessages)
+	err := s.DB.QueryRowContext(ctx, directorySelect+" WHERE c.conversation_type=? AND c.conversation_id=?", ref.Type, ref.ID).
+		Scan(&ref.Type, &ref.ID, &name, &source, &availability, &first, &updated, &aliasesJSON, &friendship, &hasMessages)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +278,24 @@ func (s *Store) Conversation(ctx context.Context, ref domain.ConversationRef) (m
 	if err != nil {
 		return nil, err
 	}
-	return map[string]any{"conversation": map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "name": name, "metadata_source": source, "availability": availability, "first_discovered_at": first, "updated_at": updated, "collection_enabled": true, "aliases": aliases, "friendship": friendship, "has_stored_messages": hasMessages, "metadata_sources": sources}, "coverage": coverage, "catalog_complete": false}, nil
+	return map[string]any{
+		"conversation": map[string]any{
+			"conversation_type":   ref.Type,
+			"conversation_id":     ref.ID,
+			"name":                name,
+			"metadata_source":     source,
+			"availability":        availability,
+			"first_discovered_at": first,
+			"updated_at":          updated,
+			"collection_enabled":  true,
+			"aliases":             aliases,
+			"friendship":          friendship,
+			"has_stored_messages": hasMessages,
+			"metadata_sources":    sources,
+		},
+		"coverage":         coverage,
+		"catalog_complete": false,
+	}, nil
 }
 
 func (s *Store) CollectionStatus(ctx context.Context) (map[string]any, error) {
@@ -220,5 +315,11 @@ func (s *Store) CollectionStatus(ctx context.Context) (map[string]any, error) {
 	if s.policy.All {
 		mode = "all"
 	}
-	return map[string]any{"mode": mode, "conversation_counts": conversations, "message_counts": messages, "catalog_complete": false, "history_complete": false}, nil
+	return map[string]any{
+		"mode":                mode,
+		"conversation_counts": conversations,
+		"message_counts":      messages,
+		"catalog_complete":    false,
+		"history_complete":    false,
+	}, nil
 }

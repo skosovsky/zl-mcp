@@ -31,19 +31,31 @@ func reportStartupFailure(path string, cause error, fallback io.Writer) bool {
 	case strings.HasPrefix(cause.Error(), "invalid config TOML:") || strings.HasPrefix(cause.Error(), "invalid MCP service configuration:") || strings.HasPrefix(cause.Error(), "invalid service logging configuration:"):
 		category = "invalid_config"
 	}
-	body, _ := json.Marshal(map[string]any{"time": time.Now().UTC().Format(time.RFC3339Nano), "level": "ERROR", "msg": "zl-mcp service failed; run interactively for details", "category": category, "pid": os.Getpid()})
+	body, _ := json.Marshal(
+		map[string]any{
+			"time":     time.Now().UTC().Format(time.RFC3339Nano),
+			"level":    "ERROR",
+			"msg":      "zl-mcp service failed; run interactively for details",
+			"category": category,
+			"pid":      os.Getpid(),
+		},
+	)
 	body = append(body, '\n')
 	sink, err := Open(path, 5, 3, fallback)
 	if err != nil {
+		//nolint:errcheck,gosec // Last-resort diagnostic output cannot report its own failure recursively.
 		fallback.Write(body)
 		return false
 	}
+	// G104: Cleanup preserves the original setup/operation error.
 	defer sink.Close()
 	lock, err := os.OpenFile(path+".lock", os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
+		//nolint:errcheck,gosec // Last-resort diagnostic output cannot report its own failure recursively.
 		fallback.Write(body)
 		return false
 	}
+	// G104: Cleanup preserves the original setup/operation error.
 	defer lock.Close()
 	deadline := time.Now().Add(time.Second)
 	for {
@@ -52,11 +64,13 @@ func reportStartupFailure(path string, cause error, fallback io.Writer) bool {
 			break
 		}
 		if !errors.Is(err, unix.EWOULDBLOCK) || time.Now().After(deadline) {
+			//nolint:errcheck,gosec // Last-resort diagnostic output cannot report its own failure recursively.
 			fallback.Write(body)
 			return false
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
+	//nolint:errcheck // Unlock is fallback cleanup; closing lock releases the OS lock.
 	defer unix.Flock(int(lock.Fd()), unix.LOCK_UN)
 	_, err = sink.Write(body)
 	return err == nil

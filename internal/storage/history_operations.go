@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -42,6 +43,7 @@ func (s *Store) migrateHistoryOperations(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	_, err = tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS history_operations(
  operation_id TEXT PRIMARY KEY,request_id TEXT UNIQUE NOT NULL,account_key TEXT NOT NULL,fingerprint TEXT NOT NULL,
@@ -73,7 +75,8 @@ func historyAccount(ctx context.Context, q historyReader) (string, error) {
 func loadHistoryOperation(ctx context.Context, q historyReader, id string) (HistoryOperation, error) {
 	var op HistoryOperation
 	var body string
-	err := q.QueryRowContext(ctx, "SELECT payload,cursor,revision,work_ns,reserved_ns,account_key FROM history_operations WHERE operation_id=?", id).Scan(&body, &op.Cursor, &op.Revision, &op.WorkDuration, &op.ReservedDuration, &op.accountKey)
+	err := q.QueryRowContext(ctx, "SELECT payload,cursor,revision,work_ns,reserved_ns,account_key FROM history_operations WHERE operation_id=?", id).
+		Scan(&body, &op.Cursor, &op.Revision, &op.WorkDuration, &op.ReservedDuration, &op.accountKey)
 	if err != nil {
 		return op, err
 	}
@@ -96,7 +99,18 @@ func saveHistoryOperation(ctx context.Context, tx *sql.Tx, op *HistoryOperation)
 	if err != nil {
 		return err
 	}
-	result, err := tx.ExecContext(ctx, "UPDATE history_operations SET state=?,cursor=?,revision=revision+1,work_ns=?,reserved_ns=?,payload=? WHERE operation_id=? AND revision=? AND account_key=?", op.Status.State, op.Cursor, int64(op.WorkDuration), int64(op.ReservedDuration), string(body), op.Status.OperationID, op.Revision, op.accountKey)
+	result, err := tx.ExecContext(
+		ctx,
+		"UPDATE history_operations SET state=?,cursor=?,revision=revision+1,work_ns=?,reserved_ns=?,payload=? WHERE operation_id=? AND revision=? AND account_key=?",
+		op.Status.State,
+		op.Cursor,
+		int64(op.WorkDuration),
+		int64(op.ReservedDuration),
+		string(body),
+		op.Status.OperationID,
+		op.Revision,
+		op.accountKey,
+	)
 	if err != nil {
 		return err
 	}
@@ -121,16 +135,26 @@ func commitHistoryResult(tx *sql.Tx, op HistoryOperation) (HistoryOperation, err
 	return op, nil
 }
 
-func (s *Store) PrepareHistoryOperation(ctx context.Context, request domain.HistoryImportRequest) (HistoryOperation, error) {
+func (s *Store) PrepareHistoryOperation(
+	ctx context.Context,
+	request domain.HistoryImportRequest,
+) (HistoryOperation, error) {
 	return s.prepareHistoryOperation(ctx, request, false)
 }
 
 // PrepareMobileHistoryOperation is an internal driver port, not a public source selector.
-func (s *Store) PrepareMobileHistoryOperation(ctx context.Context, request domain.HistoryImportRequest) (HistoryOperation, error) {
+func (s *Store) PrepareMobileHistoryOperation(
+	ctx context.Context,
+	request domain.HistoryImportRequest,
+) (HistoryOperation, error) {
 	return s.prepareHistoryOperation(ctx, request, true)
 }
 
-func (s *Store) prepareHistoryOperation(ctx context.Context, request domain.HistoryImportRequest, mobile bool) (HistoryOperation, error) {
+func (s *Store) prepareHistoryOperation(
+	ctx context.Context,
+	request domain.HistoryImportRequest,
+	mobile bool,
+) (HistoryOperation, error) {
 	if mobile {
 		if request.Source != "" && request.Source != domain.HistorySourceMobileArchive {
 			return HistoryOperation{}, domain.Invalid("Invalid mobile history source.")
@@ -151,13 +175,15 @@ func (s *Store) prepareHistoryOperation(ctx context.Context, request domain.Hist
 	if err != nil {
 		return HistoryOperation{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	account, err := historyAccount(ctx, tx)
 	if err != nil {
 		return HistoryOperation{}, err
 	}
 	var id, fingerprint string
-	err = tx.QueryRowContext(ctx, "SELECT operation_id,fingerprint FROM history_operations WHERE request_id=?", r.RequestID).Scan(&id, &fingerprint)
+	err = tx.QueryRowContext(ctx, "SELECT operation_id,fingerprint FROM history_operations WHERE request_id=?", r.RequestID).
+		Scan(&id, &fingerprint)
 	if err == nil {
 		if fingerprint != r.Fingerprint() {
 			return HistoryOperation{}, ErrHistoryConflict
@@ -168,20 +194,30 @@ func (s *Store) prepareHistoryOperation(ctx context.Context, request domain.Hist
 		return HistoryOperation{}, err
 	}
 	var total, active, busy int
-	if err = tx.QueryRowContext(ctx, "SELECT count(*),coalesce(sum(state IN ('queued','running','paused')),0) FROM history_operations").Scan(&total, &active); err != nil {
+	if err = tx.QueryRowContext(ctx, "SELECT count(*),coalesce(sum(state IN ('queued','running','paused')),0) FROM history_operations").
+		Scan(&total, &active); err != nil {
 		return HistoryOperation{}, err
 	}
 	if total >= 100000 || active >= 100 {
 		return HistoryOperation{}, ErrHistoryCapacity
 	}
-	if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM history_operations WHERE conversation_type=? AND conversation_id=? AND state IN ('queued','running','paused')", r.ConversationType, r.ConversationID).Scan(&busy); err != nil {
+	if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM history_operations WHERE conversation_type=? AND conversation_id=? AND state IN ('queued','running','paused')", r.ConversationType, r.ConversationID).
+		Scan(&busy); err != nil {
 		return HistoryOperation{}, err
 	}
 	if busy > 0 {
 		return HistoryOperation{}, ErrHistoryBusy
 	}
 	stamp := now()
-	status := domain.HistoryImportStatus{HistoryImportRequest: r, OperationID: uuid.NewString(), NotificationPolicy: "none", SourceKind: "group_cloud", State: "queued", CreatedAt: stamp, UpdatedAt: stamp}
+	status := domain.HistoryImportStatus{
+		HistoryImportRequest: r,
+		OperationID:          uuid.NewString(),
+		NotificationPolicy:   "none",
+		SourceKind:           "group_cloud",
+		State:                "queued",
+		CreatedAt:            stamp,
+		UpdatedAt:            stamp,
+	}
 	if mobile {
 		status.SourceKind = domain.HistorySourceMobileArchive
 	} else if r.Source == "conversation_preload" {
@@ -195,7 +231,18 @@ func (s *Store) prepareHistoryOperation(ctx context.Context, request domain.Hist
 	if err != nil {
 		return HistoryOperation{}, err
 	}
-	if _, err = tx.ExecContext(ctx, "INSERT INTO history_operations(operation_id,request_id,account_key,fingerprint,conversation_type,conversation_id,state,cursor,payload) VALUES(?,?,?,?,?,?,?,'0',?)", status.OperationID, r.RequestID, account, r.Fingerprint(), r.ConversationType, r.ConversationID, status.State, string(body)); err != nil {
+	if _, err = tx.ExecContext(
+		ctx,
+		"INSERT INTO history_operations(operation_id,request_id,account_key,fingerprint,conversation_type,conversation_id,state,cursor,payload) VALUES(?,?,?,?,?,?,?,'0',?)",
+		status.OperationID,
+		r.RequestID,
+		account,
+		r.Fingerprint(),
+		r.ConversationType,
+		r.ConversationID,
+		status.State,
+		string(body),
+	); err != nil {
 		return HistoryOperation{}, err
 	}
 	if _, err = tx.ExecContext(ctx, "INSERT INTO history_cursors VALUES(?,'0')", status.OperationID); err != nil {
@@ -225,6 +272,7 @@ func (s *Store) ClaimHistoryOperation(ctx context.Context, id string, revision i
 	if err != nil {
 		return HistoryOperation{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	op, err := loadHistoryOperation(ctx, tx, id)
 	if err != nil {
@@ -249,6 +297,7 @@ func (s *Store) CancelHistoryOperation(ctx context.Context, id string) (HistoryO
 	if err != nil {
 		return HistoryOperation{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	op, err := loadHistoryOperation(ctx, tx, id)
 	if err != nil {
@@ -277,14 +326,27 @@ func exactHistoryCursor(v string) bool {
 
 // CommitHistoryOperationPage atomically imports records and advances the saved
 // checkpoint. Stale workers cannot persist after cancellation or another claim.
-func (s *Store) CommitHistoryOperationPage(ctx context.Context, id string, revision int64, page domain.HistoryPage, elapsed time.Duration) (HistoryOperation, error) {
+func (s *Store) CommitHistoryOperationPage(
+	ctx context.Context,
+	id string,
+	revision int64,
+	page domain.HistoryPage,
+	elapsed time.Duration,
+) (HistoryOperation, error) {
 	return s.commitHistoryOperationPage(ctx, id, revision, page, nil, elapsed)
 }
 
 // CommitExpiringHistoryOperationPage derives messages from the trusted records.
 // TTL evidence and checkpoint share the operation's ownership/revision transaction.
 // This adds no public source and performs no archive request or download.
-func (s *Store) CommitExpiringHistoryOperationPage(ctx context.Context, id string, revision int64, page domain.HistoryPage, records []ExpiringHistoryRecord, elapsed time.Duration) (HistoryOperation, error) {
+func (s *Store) CommitExpiringHistoryOperationPage(
+	ctx context.Context,
+	id string,
+	revision int64,
+	page domain.HistoryPage,
+	records []ExpiringHistoryRecord,
+	elapsed time.Duration,
+) (HistoryOperation, error) {
 	if len(page.Messages) != 0 {
 		return HistoryOperation{}, domain.Invalid("Provide records without a second message list.")
 	}
@@ -301,18 +363,27 @@ func (s *Store) CommitExpiringHistoryOperationPage(ctx context.Context, id strin
 	return s.commitHistoryOperationPage(ctx, id, revision, page, records, elapsed)
 }
 
-func (s *Store) commitHistoryOperationPage(ctx context.Context, id string, revision int64, page domain.HistoryPage, records []ExpiringHistoryRecord, elapsed time.Duration) (HistoryOperation, error) {
+func (s *Store) commitHistoryOperationPage(
+	ctx context.Context,
+	id string,
+	revision int64,
+	page domain.HistoryPage,
+	records []ExpiringHistoryRecord,
+	elapsed time.Duration,
+) (HistoryOperation, error) {
 	started := time.Now()
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return HistoryOperation{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	op, err := loadHistoryOperation(ctx, tx, id)
 	if err != nil {
 		return op, err
 	}
-	if op.Revision != revision || op.Status.State != "running" || op.Status.Source == domain.HistorySourceMobileArchive {
+	if op.Revision != revision || op.Status.State != "running" ||
+		op.Status.Source == domain.HistorySourceMobileArchive {
 		return op, ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {
@@ -329,8 +400,14 @@ func (s *Store) commitHistoryOperationPage(ctx context.Context, id string, revis
 				return op, err
 			}
 		}
-		if elapsed < 0 || elapsed > HistoryWorkBudget || len(page.Messages) > op.Status.PageSize || len(page.Messages) > op.Status.MaxMessages-op.Status.RecordsObserved || op.Status.PagesObserved >= op.Status.MaxPages || (page.Cursor != nil && !exactHistoryCursor(*page.Cursor)) || (page.JoinTimestampMillis != nil && !exactHistoryCursor(*page.JoinTimestampMillis)) {
-			return op, domain.Invalid("History page exceeds operation bounds or contains invalid continuation evidence.")
+		if elapsed < 0 || elapsed > HistoryWorkBudget || len(page.Messages) > op.Status.PageSize ||
+			len(page.Messages) > op.Status.MaxMessages-op.Status.RecordsObserved ||
+			op.Status.PagesObserved >= op.Status.MaxPages ||
+			(page.Cursor != nil && !exactHistoryCursor(*page.Cursor)) ||
+			(page.JoinTimestampMillis != nil && !exactHistoryCursor(*page.JoinTimestampMillis)) {
+			return op, domain.Invalid(
+				"History page exceeds operation bounds or contains invalid continuation evidence.",
+			)
 		}
 		op.WorkDuration += elapsed
 		op.ReservedDuration = 0
@@ -355,7 +432,13 @@ func (s *Store) commitHistoryOperationPage(ctx context.Context, id string, revis
 	return commitHistoryResult(tx, op)
 }
 
-func (s *Store) commitHistoryRecords(ctx context.Context, tx *sql.Tx, op *HistoryOperation, page domain.HistoryPage, records []ExpiringHistoryRecord) error {
+func (s *Store) commitHistoryRecords(
+	ctx context.Context,
+	tx *sql.Tx,
+	op *HistoryOperation,
+	page domain.HistoryPage,
+	records []ExpiringHistoryRecord,
+) error {
 	status := &op.Status
 	since, _ := time.Parse(time.RFC3339Nano, status.Since)
 	until, _ := time.Parse(time.RFC3339Nano, status.Until)
@@ -391,7 +474,8 @@ func (s *Store) commitHistoryRecords(ctx context.Context, tx *sql.Tx, op *Histor
 	status.PagesObserved++
 	if counts.Inserted > 0 {
 		var earliest, latest string
-		if err = tx.QueryRowContext(ctx, "SELECT min(sent_at),max(sent_at) FROM messages WHERE seq>?", snapshot).Scan(&earliest, &latest); err != nil {
+		if err = tx.QueryRowContext(ctx, "SELECT min(sent_at),max(sent_at) FROM messages WHERE seq>?", snapshot).
+			Scan(&earliest, &latest); err != nil {
 			return err
 		}
 		if status.EarliestImportedAt == nil || earlierHistoryTime(earliest, *status.EarliestImportedAt) {
@@ -411,7 +495,8 @@ func (s *Store) commitHistoryRecords(ctx context.Context, tx *sql.Tx, op *Histor
 		if page.PhaseRequired && page.IsOld != nil && *page.IsOld {
 			continuation = "old:" + continuation
 		}
-		if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM history_cursors WHERE operation_id=? AND cursor=?", status.OperationID, continuation).Scan(&seen); err != nil {
+		if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM history_cursors WHERE operation_id=? AND cursor=?", status.OperationID, continuation).
+			Scan(&seen); err != nil {
 			return err
 		}
 	}
@@ -435,7 +520,12 @@ func (s *Store) commitHistoryRecords(ctx context.Context, tx *sql.Tx, op *Histor
 		historyStopped(op, "partial", "repeated_cursor")
 	default:
 		op.Cursor = *page.Cursor
-		if _, err = tx.ExecContext(ctx, "INSERT INTO history_cursors VALUES(?,?)", status.OperationID, continuation); err != nil {
+		if _, err = tx.ExecContext(
+			ctx,
+			"INSERT INTO history_cursors VALUES(?,?)",
+			status.OperationID,
+			continuation,
+		); err != nil {
 			return err
 		}
 		switch {
@@ -463,12 +553,17 @@ func (s *Store) RecoverInterruptedHistory(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	account, err := historyAccount(ctx, tx)
 	if err != nil {
 		return err
 	}
-	rows, err := tx.QueryContext(ctx, "SELECT operation_id FROM history_operations WHERE account_key=? AND state IN ('queued','running','paused')", account)
+	rows, err := tx.QueryContext(
+		ctx,
+		"SELECT operation_id FROM history_operations WHERE account_key=? AND state IN ('queued','running','paused')",
+		account,
+	)
 	if err != nil {
 		return err
 	}
@@ -476,12 +571,14 @@ func (s *Store) RecoverInterruptedHistory(ctx context.Context) error {
 	for rows.Next() {
 		var id string
 		if err = rows.Scan(&id); err != nil {
+			//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
 			rows.Close()
 			return err
 		}
 		ids = append(ids, id)
 	}
 	err = rows.Err()
+	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
 	rows.Close()
 	if err != nil {
 		return err
@@ -533,10 +630,17 @@ func (s *Store) pendingHistoryOperations(ctx context.Context, limit int, mobile 
 	if mobile {
 		comparison = "="
 	}
-	rows, err := s.DB.QueryContext(ctx, "SELECT payload,cursor,revision,work_ns FROM history_operations WHERE account_key=? AND state IN ('queued','paused') AND coalesce(json_extract(payload,'$.source'),'') "+comparison+" ? ORDER BY rowid LIMIT ?", account, domain.HistorySourceMobileArchive, limit)
+	rows, err := s.DB.QueryContext(
+		ctx,
+		"SELECT payload,cursor,revision,work_ns FROM history_operations WHERE account_key=? AND state IN ('queued','paused') AND coalesce(json_extract(payload,'$.source'),'') "+comparison+" ? ORDER BY rowid LIMIT ?",
+		account,
+		domain.HistorySourceMobileArchive,
+		limit,
+	)
 	if err != nil {
 		return nil, err
 	}
+	// G104: Read-only query cleanup; Scan/Rows.Err determines the result.
 	defer rows.Close()
 	result := []HistoryOperation{}
 	for rows.Next() {
@@ -553,7 +657,13 @@ func (s *Store) pendingHistoryOperations(ctx context.Context, limit int, mobile 
 	return result, rows.Err()
 }
 
-func (s *Store) StopHistoryOperation(ctx context.Context, id string, revision int64, state, reason string, elapsed time.Duration) (HistoryOperation, error) {
+func (s *Store) StopHistoryOperation(
+	ctx context.Context,
+	id string,
+	revision int64,
+	state, reason string,
+	elapsed time.Duration,
+) (HistoryOperation, error) {
 	valid := (state == "paused" && reason == "auth_required") ||
 		(state == "unsupported" && reason == "source_unsupported") ||
 		(state == "failed" && (reason == "upstream_unavailable" || reason == "invalid_source_page" || reason == "storage_error")) ||
@@ -566,6 +676,7 @@ func (s *Store) StopHistoryOperation(ctx context.Context, id string, revision in
 	if err != nil {
 		return HistoryOperation{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	op, err := loadHistoryOperation(ctx, tx, id)
 	if err != nil {
@@ -592,15 +703,31 @@ func (s *Store) StopHistoryOperation(ctx context.Context, id string, revision in
 // ReserveHistoryPage records the maximum in-flight source duration before the
 // network call. Normal completion reconciles actual work; crash recovery charges
 // the reservation, without charging time spent waiting for authentication.
-func (s *Store) ReserveHistoryPage(ctx context.Context, id string, revision int64, budget time.Duration) (HistoryOperation, error) {
+func (s *Store) ReserveHistoryPage(
+	ctx context.Context,
+	id string,
+	revision int64,
+	budget time.Duration,
+) (HistoryOperation, error) {
 	return s.reserveHistoryWork(ctx, id, revision, budget, false)
 }
 
-func (s *Store) ReserveMobileHistoryWork(ctx context.Context, id string, revision int64, budget time.Duration) (HistoryOperation, error) {
+func (s *Store) ReserveMobileHistoryWork(
+	ctx context.Context,
+	id string,
+	revision int64,
+	budget time.Duration,
+) (HistoryOperation, error) {
 	return s.reserveHistoryWork(ctx, id, revision, budget, true)
 }
 
-func (s *Store) reserveHistoryWork(ctx context.Context, id string, revision int64, budget time.Duration, mobile bool) (HistoryOperation, error) {
+func (s *Store) reserveHistoryWork(
+	ctx context.Context,
+	id string,
+	revision int64,
+	budget time.Duration,
+	mobile bool,
+) (HistoryOperation, error) {
 	limit := 30 * time.Second
 	if mobile {
 		limit = 180 * time.Second
@@ -612,12 +739,14 @@ func (s *Store) reserveHistoryWork(ctx context.Context, id string, revision int6
 	if err != nil {
 		return HistoryOperation{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	op, err := loadHistoryOperation(ctx, tx, id)
 	if err != nil {
 		return HistoryOperation{}, err
 	}
-	if op.Revision != revision || op.Status.State != "running" || op.ReservedDuration != 0 || (op.Status.Source == domain.HistorySourceMobileArchive) != mobile {
+	if op.Revision != revision || op.Status.State != "running" || op.ReservedDuration != 0 ||
+		(op.Status.Source == domain.HistorySourceMobileArchive) != mobile {
 		return HistoryOperation{}, ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {

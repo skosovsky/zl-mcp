@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/skosovsky/zl-mcp/internal/logging"
 	"io"
 	"log/slog"
 	"net"
@@ -15,6 +14,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/skosovsky/zl-mcp/internal/logging"
 
 	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/collector"
@@ -40,7 +41,13 @@ func Run(ctx context.Context, c config.Config) error {
 			return nil, err
 		}
 		return client, nil
-	}, func(client collector.ListenerUpstream) error { return client.(*zalo.Client).Save(c.StateDir) }, nil)
+	}, func(client collector.ListenerUpstream) error {
+		native, ok := client.(*zalo.Client)
+		if !ok {
+			return errors.New("unexpected restored client type")
+		}
+		return native.Save(c.StateDir)
+	}, nil)
 }
 
 // membershipPort blocks network operations while the collector lacks a session.
@@ -76,14 +83,21 @@ func (p *membershipPort) Call(ctx context.Context, method string, args any) (map
 	}
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	if method == "zalo_list_archive_sources" || method == "zalo_list_conversations" || method == "zalo_list_conversation_messages" || method == "read_archive_resource" {
+	if method == "zalo_list_archive_sources" || method == "zalo_list_conversations" ||
+		method == "zalo_list_conversation_messages" ||
+		method == "read_archive_resource" {
 		return p.archiveRead(ctx, method, args)
 	}
-	if method == "zalo_import_conversation_history" || method == "zalo_get_history_import_status" || method == "zalo_cancel_history_import" {
+	if method == "zalo_import_conversation_history" || method == "zalo_get_history_import_status" ||
+		method == "zalo_cancel_history_import" {
 		return (&historyimport.Manager{Store: p.store}).Call(ctx, method, args)
 	}
 	if method == "zalo_send_direct_message" || method == "zalo_get_send_status" {
-		return (&messaging.Manager{Store: p.store, Sender: p.sender, Enabled: p.allowSend, Recipients: p.recipients}).Call(ctx, method, args)
+		return (&messaging.Manager{Store: p.store, Sender: p.sender, Enabled: p.allowSend, Recipients: p.recipients}).Call(
+			ctx,
+			method,
+			args,
+		)
 	}
 	if p.current != nil {
 		return p.current.Call(ctx, method, args)
@@ -91,7 +105,14 @@ func (p *membershipPort) Call(ctx context.Context, method string, args any) (map
 	if method == "zalo_get_join_status" {
 		return collector.NewJoin(ctx, p.store, nil, false).Call(ctx, method, args)
 	}
-	return nil, &domain.Error{Code: "NOT_AUTHENTICATED", Message: "Zalo session is unavailable.", NextAction: domain.NextAction{Instruction: "Check status; when auth_required, stop service and run local login."}, Details: map[string]any{}}
+	return nil, &domain.Error{
+		Code:    "NOT_AUTHENTICATED",
+		Message: "Zalo session is unavailable.",
+		NextAction: domain.NextAction{
+			Instruction: "Check status; when auth_required, stop service and run local login.",
+		},
+		Details: map[string]any{},
+	}
 }
 func (p *membershipPort) cliHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +120,8 @@ func (p *membershipPort) cliHandler() http.Handler {
 		var request struct {
 			Method string `json:"method"`
 		}
-		if err != nil || json.Unmarshal(b, &request) != nil || (request.Method != "cli_preview" && request.Method != "cli_approve" && request.Method != "cli_probe_preload" && !mobileLedgerMethod(request.Method) && request.Method != "cli_probe_recall") {
+		if err != nil || json.Unmarshal(b, &request) != nil ||
+			(request.Method != "cli_preview" && request.Method != "cli_approve" && request.Method != "cli_probe_preload" && !mobileLedgerMethod(request.Method) && request.Method != "cli_probe_recall") {
 			http.Error(w, "Only trusted CLI routes are available.", http.StatusBadRequest)
 			return
 		}
@@ -123,13 +145,26 @@ func (p *membershipPort) cliHandler() http.Handler {
 }
 
 // ready exposes the bound endpoint only to integration tests, never credentials.
-func run(parent context.Context, c config.Config, restore restoreFunc, save func(collector.ListenerUpstream) error, ready func(net.Addr)) error {
+func run(
+	parent context.Context,
+	c config.Config,
+	restore restoreFunc,
+	save func(collector.ListenerUpstream) error,
+	ready func(net.Addr),
+) error {
 	return runConfigured(parent, c, restore, save, ready, nil)
 }
 
 // configure permits offline integration tests to inject a TLS receiver transport
 // before goroutines start. Production Run always uses the validated HTTP client.
-func runConfigured(parent context.Context, c config.Config, restore restoreFunc, save func(collector.ListenerUpstream) error, ready func(net.Addr), configure func(*mcpserver.HTTPService, *events.Worker)) (resultErr error) {
+func runConfigured(
+	parent context.Context,
+	c config.Config,
+	restore restoreFunc,
+	save func(collector.ListenerUpstream) error,
+	ready func(net.Addr),
+	configure func(*mcpserver.HTTPService, *events.Worker),
+) (resultErr error) {
 	unlock, err := local.Lock(c.StateDir)
 	if err != nil {
 		return err
@@ -162,9 +197,21 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 	if c.Collection.Mode == "" {
-		slog.Warn("legacy_collection_config", "format", "group_ids", "next_action", "Use explicit selected mode with typed conversations to preserve the group-only scope; all mode widens collection.")
+		slog.WarnContext(
+			parent,
+			"legacy_collection_config",
+			"format",
+			"group_ids",
+			"next_action",
+			"Use explicit selected mode with typed conversations to preserve the group-only scope; all mode widens collection.",
+		)
 	}
-	store, err := storage.OpenWithPolicy(ctx, filepath.Join(c.StateDir, "messages.sqlite"), c.Policy(), c.Storage.RetentionDays)
+	store, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(c.StateDir, "messages.sqlite"),
+		c.Policy(),
+		c.Storage.RetentionDays,
+	)
 	if err != nil {
 		return err
 	}
@@ -184,7 +231,7 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	}
 	defer func() {
 		if err := telemetryOwner.Shutdown(ctx); err != nil {
-			slog.Warn("telemetry_shutdown_failed")
+			slog.WarnContext(parent, "telemetry_shutdown_failed")
 		}
 	}()
 	if observer != nil {
@@ -214,19 +261,31 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	defer snapshots.Close()
 	archives, err := mobilebackup.NewRetainedArchiveStore(filepath.Join(c.StateDir, "account-archives"), 1<<30)
 	if err != nil {
-		slog.Warn("account_archive_store_unavailable")
+		slog.WarnContext(parent, "account_archive_store_unavailable")
 	}
 	if archives != nil {
 		defer archives.Close()
 	}
-	library, libraryErr := mobilebackup.NewArchiveLibraryStore(filepath.Join(c.StateDir, "account-archive-library", "sources"), 1<<30)
+	library, libraryErr := mobilebackup.NewArchiveLibraryStore(
+		filepath.Join(c.StateDir, "account-archive-library", "sources"),
+		1<<30,
+	)
 	if libraryErr != nil {
-		slog.Warn("account_archive_library_unavailable")
+		slog.WarnContext(parent, "account_archive_library_unavailable")
 	}
 	if library != nil {
 		defer library.Close()
 	}
-	port := &membershipPort{stateDir: c.StateDir, store: store, allowSend: c.Permissions.AllowSend, recipients: recipients, lifecycle: ctx, snapshots: snapshots, archives: archives, library: library}
+	port := &membershipPort{
+		stateDir:   c.StateDir,
+		store:      store,
+		allowSend:  c.Permissions.AllowSend,
+		recipients: recipients,
+		lifecycle:  ctx,
+		snapshots:  snapshots,
+		archives:   archives,
+		library:    library,
+	}
 	if err = port.CleanupHistorySnapshots(ctx); err != nil {
 		return errors.New("private mobile snapshot cleanup unavailable")
 	}
@@ -277,23 +336,33 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	}
 	// Allow the 30s upstream send plus independent result persistence to finish.
 	// Shutdown cancels requests before waiting for session ports and closing SQLite.
-	httpServer := &http.Server{Handler: handler, BaseContext: func(net.Listener) context.Context { return ctx }, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 45 * time.Second, IdleTimeout: 30 * time.Second}
+	httpServer := &http.Server{
+		Handler:           handler,
+		BaseContext:       func(net.Listener) context.Context { return ctx },
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      45 * time.Second,
+		IdleTimeout:       30 * time.Second,
+	}
 	// The owner-only mobile probe may wait 185s and finish its ledger independently.
 	// Keep the Unix response deadline above the 190s CLI request budget.
-	cliServer := &http.Server{Handler: port.cliHandler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 450 * time.Second}
+	cliServer := &http.Server{
+		Handler:           port.cliHandler(),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      450 * time.Second,
+	}
 	errorsCh := make(chan error, 8)
 	var wg sync.WaitGroup
 	launch := func(fn func() error) {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			err := fn()
 			if errors.Is(err, http.ErrServerClosed) {
 				err = nil
 			}
 			errorsCh <- err
 			cancel()
-		}()
+		})
 	}
 	if logFile != nil {
 		launch(func() error {
@@ -315,7 +384,7 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 			}
 		})
 	}
-	slog.Info("service started", "mcp_listen", listener.Addr().String())
+	slog.InfoContext(parent, "service started", "mcp_listen", listener.Addr().String())
 	launch(func() error { return httpServer.Serve(listener) })
 	launch(func() error { return cliServer.Serve(ipc) })
 	launch(func() error { return worker.Run(ctx) })
@@ -355,7 +424,7 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 		sampleNativeQueues(sample, store)
 		cancelSample()
 	}
-	slog.Info("service stopped")
+	slog.InfoContext(parent, "service stopped")
 	if logFile != nil && logFile.Err() != nil {
 		return logFile.Err()
 	}
@@ -368,16 +437,41 @@ func runConfigured(parent context.Context, c config.Config, restore restoreFunc,
 	return nil
 }
 
-func collect(ctx context.Context, c config.Config, store *storage.Store, port *membershipPort, restore restoreFunc, save func(collector.ListenerUpstream) error) error {
+func collect(
+	ctx context.Context,
+	c config.Config,
+	store *storage.Store,
+	port *membershipPort,
+	restore restoreFunc,
+	save func(collector.ListenerUpstream) error,
+) error {
 	return collectWithHeartbeat(ctx, c, store, port, restore, save, 10*time.Second)
 }
 
-func collectWithHeartbeat(parent context.Context, c config.Config, store *storage.Store, port *membershipPort, restore restoreFunc, save func(collector.ListenerUpstream) error, interval time.Duration) error {
+func collectWithHeartbeat(
+	parent context.Context,
+	c config.Config,
+	store *storage.Store,
+	port *membershipPort,
+	restore restoreFunc,
+	save func(collector.ListenerUpstream) error,
+	interval time.Duration,
+) error {
 	// Capture the previous process's liveness before writing a fresh heartbeat.
 	if err := store.BeginGap(parent, "collector_start_or_restart"); err != nil {
 		return err
 	}
-	if err := store.SetState(parent, map[string]any{"authenticated": false, "collector_state": "reconnecting", "last_connected_at": nil, "last_event_at": nil, "last_persisted_at": nil, "last_error": nil}); err != nil {
+	if err := store.SetState(
+		parent,
+		map[string]any{
+			"authenticated":     false,
+			"collector_state":   "reconnecting",
+			"last_connected_at": nil,
+			"last_event_at":     nil,
+			"last_persisted_at": nil,
+			"last_error":        nil,
+		},
+	); err != nil {
 		return err
 	}
 	ctx, cancel := context.WithCancelCause(parent)
@@ -401,13 +495,23 @@ func collectWithHeartbeat(parent context.Context, c config.Config, store *storag
 	err := collectSession(ctx, c, store, port, restore, save)
 	cancel(nil)
 	<-done
-	if cause := context.Cause(ctx); cause != nil && !errors.Is(cause, context.Canceled) && !errors.Is(cause, context.DeadlineExceeded) {
+	if cause := context.Cause(
+		ctx,
+	); cause != nil && !errors.Is(cause, context.Canceled) &&
+		!errors.Is(cause, context.DeadlineExceeded) {
 		return cause
 	}
 	return err
 }
 
-func collectSession(ctx context.Context, c config.Config, store *storage.Store, port *membershipPort, restore restoreFunc, save func(collector.ListenerUpstream) error) error {
+func collectSession(
+	ctx context.Context,
+	c config.Config,
+	store *storage.Store,
+	port *membershipPort,
+	restore restoreFunc,
+	save func(collector.ListenerUpstream) error,
+) error {
 	delay := time.Second
 	for {
 		restoreCtx, stop := context.WithTimeout(ctx, 30*time.Second)
@@ -468,16 +572,42 @@ func collectSession(ctx context.Context, c config.Config, store *storage.Store, 
 			if err = store.BeginGap(ctx, "auth_required"); err != nil {
 				return err
 			}
-			if err = store.SetState(ctx, map[string]any{"authenticated": false, "collector_state": "auth_required", "last_connected_at": nil, "last_event_at": nil, "last_persisted_at": nil, "last_error": map[string]any{"code": "NOT_AUTHENTICATED", "message": "Stop service and run local login."}}); err != nil {
+			if err = store.SetState(
+				ctx,
+				map[string]any{
+					"authenticated":     false,
+					"collector_state":   "auth_required",
+					"last_connected_at": nil,
+					"last_event_at":     nil,
+					"last_persisted_at": nil,
+					"last_error": map[string]any{
+						"code":    "NOT_AUTHENTICATED",
+						"message": "Stop service and run local login.",
+					},
+				},
+			); err != nil {
 				return err
 			}
-			slog.Warn("Zalo authentication required; waiting for local login")
+			slog.WarnContext(ctx, "Zalo authentication required; waiting for local login")
 			<-ctx.Done()
 			return nil
 		}
 		var typed *domain.Error
 		if errors.As(err, &typed) && typed.Code == "STORAGE_ERROR" {
-			if saveErr := store.SetState(ctx, map[string]any{"authenticated": false, "collector_state": "stopped", "last_connected_at": nil, "last_event_at": nil, "last_persisted_at": nil, "last_error": map[string]any{"code": "STORAGE_ERROR", "message": "Cannot read private saved session."}}); saveErr != nil {
+			if saveErr := store.SetState(
+				ctx,
+				map[string]any{
+					"authenticated":     false,
+					"collector_state":   "stopped",
+					"last_connected_at": nil,
+					"last_event_at":     nil,
+					"last_persisted_at": nil,
+					"last_error": map[string]any{
+						"code":    "STORAGE_ERROR",
+						"message": "Cannot read private saved session.",
+					},
+				},
+			); saveErr != nil {
 				return saveErr
 			}
 			return err
@@ -485,10 +615,23 @@ func collectSession(ctx context.Context, c config.Config, store *storage.Store, 
 		if err = store.BeginGap(ctx, "session_restore_failed"); err != nil {
 			return err
 		}
-		if err = store.SetState(ctx, map[string]any{"authenticated": false, "collector_state": "reconnecting", "last_connected_at": nil, "last_event_at": nil, "last_persisted_at": nil, "last_error": map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": "Saved session verification failed; retrying."}}); err != nil {
+		if err = store.SetState(
+			ctx,
+			map[string]any{
+				"authenticated":     false,
+				"collector_state":   "reconnecting",
+				"last_connected_at": nil,
+				"last_event_at":     nil,
+				"last_persisted_at": nil,
+				"last_error": map[string]any{
+					"code":    "UPSTREAM_UNAVAILABLE",
+					"message": "Saved session verification failed; retrying.",
+				},
+			},
+		); err != nil {
 			return err
 		}
-		slog.Warn("Zalo session verification unavailable; retrying", "retry_seconds", delay.Seconds())
+		slog.WarnContext(ctx, "Zalo session verification unavailable; retrying", "retry_seconds", delay.Seconds())
 		timer := time.NewTimer(delay)
 		select {
 		case <-ctx.Done():

@@ -40,7 +40,11 @@ func archiveInvalidCursor() error {
 	return domain.Invalid("Archive cursor does not match this source, account or filter.")
 }
 
-func (p *membershipPort) archiveConversations(ctx context.Context, args map[string]any, binding string) (map[string]any, error) {
+func (p *membershipPort) archiveConversations(
+	ctx context.Context,
+	args map[string]any,
+	binding string,
+) (map[string]any, error) {
 	sourceID := archiveString(args, "source_id")
 	source, manifest, err := p.library.ReadBound(ctx, sourceID, binding)
 	if err != nil {
@@ -55,8 +59,22 @@ func (p *membershipPort) archiveConversations(ctx context.Context, args map[stri
 	if err != nil {
 		return nil, archiveReadUnavailable()
 	}
-	kind, query := archiveString(args, "conversation_type"), strings.ToLower(strings.TrimSpace(archiveString(args, "query")))
-	cursor := archiveCatalogueCursor{Version: 1, Kind: "catalogue", Account: binding, Source: sourceID, Digest: manifest.Digest, Type: kind, Query: query, Members: make([]byte, (len(refs)+7)/8)}
+	kind, query := archiveString(
+		args,
+		"conversation_type",
+	), strings.ToLower(
+		strings.TrimSpace(archiveString(args, "query")),
+	)
+	cursor := archiveCatalogueCursor{
+		Version: 1,
+		Kind:    "catalogue",
+		Account: binding,
+		Source:  sourceID,
+		Digest:  manifest.Digest,
+		Type:    kind,
+		Query:   query,
+		Members: make([]byte, (len(refs)+7)/8),
+	}
 	token := archiveString(args, "cursor")
 	if token != "" {
 		body, err := p.library.OpenArchiveToken(ctx, "cursor", token)
@@ -65,7 +83,15 @@ func (p *membershipPort) archiveConversations(ctx context.Context, args map[stri
 		}
 		defer clear(body)
 		var saved archiveCatalogueCursor
-		if json.Unmarshal(body, &saved) != nil || saved.Version != cursor.Version || saved.Kind != cursor.Kind || saved.Account != binding || saved.Source != sourceID || saved.Digest != manifest.Digest || saved.Type != kind || saved.Query != query || saved.Next < 0 || saved.Next >= len(refs) || len(saved.Members) != len(cursor.Members) {
+		if json.Unmarshal(body, &saved) != nil || saved.Version != cursor.Version || saved.Kind != cursor.Kind ||
+			saved.Account != binding ||
+			saved.Source != sourceID ||
+			saved.Digest != manifest.Digest ||
+			saved.Type != kind ||
+			saved.Query != query ||
+			saved.Next < 0 ||
+			saved.Next >= len(refs) ||
+			len(saved.Members) != len(cursor.Members) {
 			return nil, archiveInvalidCursor()
 		}
 		cursor = saved
@@ -120,18 +146,47 @@ func (p *membershipPort) archiveConversations(ctx context.Context, args map[stri
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
-	return map[string]any{"conversations": values, "has_more": next < len(refs), "next_cursor": nextToken, "catalog_complete": false, "catalog_sources": []string{"retained_archive"}, "empty_reason": emptyReason, "source": archiveDescriptor(receipt)}, nil
+	return map[string]any{
+		"conversations":    values,
+		"has_more":         next < len(refs),
+		"next_cursor":      nextToken,
+		"catalog_complete": false,
+		"catalog_sources":  []string{"retained_archive"},
+		"empty_reason":     emptyReason,
+		"source":           archiveDescriptor(receipt),
+	}, nil
 }
 
-func (p *membershipPort) archiveConversation(ctx context.Context, ref domain.ConversationRef, captured string) (map[string]any, error) {
+func (p *membershipPort) archiveConversation(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	captured string,
+) (map[string]any, error) {
 	result, err := p.store.Conversation(ctx, ref)
 	if err == nil {
-		return result["conversation"].(map[string]any), nil
+		conversation, ok := result["conversation"].(map[string]any)
+		if !ok {
+			return nil, errors.New("invalid conversation projection")
+		}
+		return conversation, nil
 	}
 	if !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
-	return map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "name": nil, "metadata_source": "retained_archive", "availability": "unknown", "first_discovered_at": captured, "updated_at": captured, "collection_enabled": true, "aliases": []string{}, "friendship": "unknown", "has_stored_messages": false, "metadata_sources": []string{"retained_archive"}}, nil
+	return map[string]any{
+		"conversation_type":   ref.Type,
+		"conversation_id":     ref.ID,
+		"name":                nil,
+		"metadata_source":     "retained_archive",
+		"availability":        "unknown",
+		"first_discovered_at": captured,
+		"updated_at":          captured,
+		"collection_enabled":  true,
+		"aliases":             []string{},
+		"friendship":          "unknown",
+		"has_stored_messages": false,
+		"metadata_sources":    []string{"retained_archive"},
+	}, nil
 }
 
 func archiveNameMatches(item map[string]any, query string) bool {

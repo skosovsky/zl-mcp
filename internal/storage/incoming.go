@@ -13,9 +13,11 @@ func (s *Store) migrateIncoming(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	var count int
-	if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM schema_migrations WHERE version=6").Scan(&count); err != nil {
+	if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM schema_migrations WHERE version=6").
+		Scan(&count); err != nil {
 		return err
 	}
 	if count > 0 {
@@ -45,7 +47,11 @@ func markIncoming(ctx context.Context, tx *sql.Tx, seq int64, m *domain.Message)
 		return domain.Invalid("Invalid message direction.")
 	}
 	if m.Ref().Type == domain.ConversationDirect && m.Direction == "unknown" {
-		_, err := tx.ExecContext(ctx, "INSERT OR IGNORE INTO peer_first_incoming(peer_id,first_seq,certainty) VALUES(?,NULL,'unknown')", m.Ref().ID)
+		_, err := tx.ExecContext(
+			ctx,
+			"INSERT OR IGNORE INTO peer_first_incoming(peer_id,first_seq,certainty) VALUES(?,NULL,'unknown')",
+			m.Ref().ID,
+		)
 		return err
 	}
 	if m.Ref().Type != domain.ConversationDirect || m.Direction != "incoming" {
@@ -53,9 +59,15 @@ func markIncoming(ctx context.Context, tx *sql.Tx, seq int64, m *domain.Message)
 	}
 	var first sql.NullInt64
 	var certainty string
-	err := tx.QueryRowContext(ctx, "SELECT first_seq,certainty FROM peer_first_incoming WHERE peer_id=?", m.Ref().ID).Scan(&first, &certainty)
+	err := tx.QueryRowContext(ctx, "SELECT first_seq,certainty FROM peer_first_incoming WHERE peer_id=?", m.Ref().ID).
+		Scan(&first, &certainty)
 	if errors.Is(err, sql.ErrNoRows) {
-		if _, err = tx.ExecContext(ctx, "INSERT INTO peer_first_incoming(peer_id,first_seq,certainty) VALUES(?,?,'known')", m.Ref().ID, seq); err != nil {
+		if _, err = tx.ExecContext(
+			ctx,
+			"INSERT INTO peer_first_incoming(peer_id,first_seq,certainty) VALUES(?,?,'known')",
+			m.Ref().ID,
+			seq,
+		); err != nil {
 			return err
 		}
 		v := true

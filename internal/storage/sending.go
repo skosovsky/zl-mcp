@@ -20,6 +20,7 @@ func (s *Store) migrateSending(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	_, err = tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS send_operations(
  request_id TEXT PRIMARY KEY,recipient_id TEXT NOT NULL,fingerprint TEXT NOT NULL,
@@ -43,7 +44,8 @@ func (s *Store) SendQuote(ctx context.Context, peer, id string) (*domain.SendQuo
 		return nil, domain.Invalid("Reply source is outside collection policy.")
 	}
 	var q domain.SendQuote
-	err := s.DB.QueryRowContext(ctx, `SELECT m.message_id,m.sender_id,m.text,q.client_message_id,q.message_type,q.timestamp,q.ttl FROM visible_messages m JOIN message_quote_metadata q ON q.message_seq=m.seq WHERE m.conversation_type='direct' AND m.group_id=? AND m.message_id=?`, peer, id).Scan(&q.MessageID, &q.SenderID, &q.Text, &q.Metadata.ClientMessageID, &q.Metadata.MessageType, &q.Metadata.Timestamp, &q.Metadata.TTL)
+	err := s.DB.QueryRowContext(ctx, `SELECT m.message_id,m.sender_id,m.text,q.client_message_id,q.message_type,q.timestamp,q.ttl FROM visible_messages m JOIN message_quote_metadata q ON q.message_seq=m.seq WHERE m.conversation_type='direct' AND m.group_id=? AND m.message_id=?`, peer, id).
+		Scan(&q.MessageID, &q.SenderID, &q.Text, &q.Metadata.ClientMessageID, &q.Metadata.MessageType, &q.Metadata.Timestamp, &q.Metadata.TTL)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +58,11 @@ func (s *Store) SendQuote(ctx context.Context, peer, id string) (*domain.SendQuo
 // RecoverInterruptedSends runs once under the service account lock, before calls.
 // Opening another Store for read/diagnostics must not interrupt a live sender.
 func (s *Store) RecoverInterruptedSends(ctx context.Context) error {
-	_, err := s.DB.ExecContext(ctx, "UPDATE send_operations SET state='unknown',reason='interrupted',updated_at=? WHERE state='sending'", now())
+	_, err := s.DB.ExecContext(
+		ctx,
+		"UPDATE send_operations SET state='unknown',reason='interrupted',updated_at=? WHERE state='sending'",
+		now(),
+	)
 	return err
 }
 
@@ -72,6 +78,7 @@ func (s *Store) PrepareSend(ctx context.Context, r domain.SendRequest) (domain.S
 	if err != nil {
 		return domain.SendOperation{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	var fingerprint string
 	err = tx.QueryRowContext(ctx, "SELECT fingerprint FROM send_operations WHERE request_id=?", id).Scan(&fingerprint)
@@ -86,7 +93,14 @@ func (s *Store) PrepareSend(ctx context.Context, r domain.SendRequest) (domain.S
 		if count >= SendLedgerCapacity {
 			return domain.SendOperation{}, ErrSendCapacity
 		}
-		_, err = tx.ExecContext(ctx, "INSERT INTO send_operations(request_id,recipient_id,fingerprint,state,updated_at) VALUES(?,?,?,'pending',?)", id, r.RecipientID, r.Fingerprint(), now())
+		_, err = tx.ExecContext(
+			ctx,
+			"INSERT INTO send_operations(request_id,recipient_id,fingerprint,state,updated_at) VALUES(?,?,?,'pending',?)",
+			id,
+			r.RecipientID,
+			r.Fingerprint(),
+			now(),
+		)
 	}
 	if err != nil {
 		return domain.SendOperation{}, err
@@ -102,7 +116,12 @@ func (s *Store) ClaimSend(ctx context.Context, id string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	r, err := s.DB.ExecContext(ctx, "UPDATE send_operations SET state='sending',updated_at=? WHERE request_id=? AND state='pending'", now(), id)
+	r, err := s.DB.ExecContext(
+		ctx,
+		"UPDATE send_operations SET state='sending',updated_at=? WHERE request_id=? AND state='pending'",
+		now(),
+		id,
+	)
 	if err != nil {
 		return false, err
 	}
@@ -129,12 +148,25 @@ func (s *Store) CompleteSend(ctx context.Context, id, state string, messageID *s
 	}
 	if reason != nil {
 		switch *reason {
-		case "interrupted", "upstream_rejected", "upstream_ambiguous", "quote_unavailable", "not_authenticated", "permission_denied":
+		case "interrupted",
+			"upstream_rejected",
+			"upstream_ambiguous",
+			"quote_unavailable",
+			"not_authenticated",
+			"permission_denied":
 		default:
 			return domain.Invalid("Invalid send reason category.")
 		}
 	}
-	r, err := s.DB.ExecContext(ctx, "UPDATE send_operations SET state=?,message_id=?,reason=?,updated_at=? WHERE request_id=? AND state='sending'", state, messageID, reason, now(), id)
+	r, err := s.DB.ExecContext(
+		ctx,
+		"UPDATE send_operations SET state=?,message_id=?,reason=?,updated_at=? WHERE request_id=? AND state='sending'",
+		state,
+		messageID,
+		reason,
+		now(),
+		id,
+	)
 	if err != nil {
 		return err
 	}
@@ -155,7 +187,8 @@ func (s *Store) SendStatus(ctx context.Context, id string) (domain.SendOperation
 		return op, err
 	}
 	var stamp string
-	err = s.DB.QueryRowContext(ctx, "SELECT request_id,recipient_id,state,message_id,reason,updated_at FROM send_operations WHERE request_id=?", id).Scan(&op.RequestID, &op.RecipientID, &op.Status, &op.MessageID, &op.Reason, &stamp)
+	err = s.DB.QueryRowContext(ctx, "SELECT request_id,recipient_id,state,message_id,reason,updated_at FROM send_operations WHERE request_id=?", id).
+		Scan(&op.RequestID, &op.RecipientID, &op.Status, &op.MessageID, &op.Reason, &stamp)
 	if err != nil {
 		return op, err
 	}

@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
@@ -46,8 +47,18 @@ func NewMessageEncoder() (*MessageEncoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	properties := doc["properties"].(map[string]any)
-	text := properties["text"].(map[string]any)
+	properties, ok := doc["properties"].(map[string]any)
+	if !ok {
+		return nil, errors.New("invalid event schema properties")
+	}
+	text, ok := properties["text"].(map[string]any)
+	if !ok {
+		return nil, errors.New("invalid event text schema")
+	}
+	maxLength, ok := text["maxLength"].(float64)
+	if !ok || maxLength != 2048 {
+		return nil, errors.New("invalid event text limit")
+	}
 	schema, err := contracts.Compile("mcp_event", "delivery")
 	if err != nil {
 		return nil, err
@@ -56,7 +67,7 @@ func NewMessageEncoder() (*MessageEncoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &MessageEncoder{schema: schema, conversationV2Schema: v2, textLimit: int(text["maxLength"].(float64))}, nil
+	return &MessageEncoder{schema: schema, conversationV2Schema: v2, textLimit: int(maxLength)}, nil
 }
 
 // Encode uses the journal's stable ID. The returned bytes are persisted and signed
@@ -69,7 +80,14 @@ func (e *MessageEncoder) Encode(eventID string, message domain.Message) ([]byte,
 		return nil, errors.New("legacy event requires group message")
 	}
 	message.GroupID = message.Ref().ID
-	data := MessageData{GroupID: message.GroupID, MessageID: message.ID, SenderID: message.SenderID, SenderName: message.SenderName, SentAt: message.SentAt.UTC(), Text: message.Text}
+	data := MessageData{
+		GroupID:    message.GroupID,
+		MessageID:  message.ID,
+		SenderID:   message.SenderID,
+		SenderName: message.SenderName,
+		SentAt:     message.SentAt.UTC(),
+		Text:       message.Text,
+	}
 	runes := []rune(message.Text)
 	if len(runes) > e.textLimit {
 		data.Text = string(runes[:e.textLimit])
@@ -77,7 +95,9 @@ func (e *MessageEncoder) Encode(eventID string, message domain.Message) ([]byte,
 		uri := "zalo://groups/" + url.PathEscape(message.GroupID) + "/messages/" + url.PathEscape(message.ID)
 		data.TextResourceURI = &uri
 	}
-	wire, err := json.Marshal(MessageEvent{EventID: eventID, Name: MessageCreated, Timestamp: message.SentAt.UTC(), Data: data})
+	wire, err := json.Marshal(
+		MessageEvent{EventID: eventID, Name: MessageCreated, Timestamp: message.SentAt.UTC(), Data: data},
+	)
 	if err != nil || len(wire) > 256<<10 {
 		return nil, errors.New("event exceeds delivery body limit")
 	}
@@ -101,16 +121,34 @@ func (e *MessageEncoder) EncodeProfile(profile, id string, m domain.Message) ([]
 	var uri *string
 	if truncated {
 		text = string(runes[:e.textLimit])
-		v := "zalo://conversations/" + m.Ref().Type + "/" + url.PathEscape(m.Ref().ID) + "/messages/" + url.PathEscape(m.ID)
+		v := "zalo://conversations/" + m.Ref().Type + "/" + url.PathEscape(
+			m.Ref().ID,
+		) + "/messages/" + url.PathEscape(
+			m.ID,
+		)
 		uri = &v
 	}
-	data := map[string]any{"schema_version": 2, "conversation_type": m.Ref().Type, "conversation_id": m.Ref().ID, "conversation_name": m.ConversationName, "message_id": m.ID, "sender_id": m.SenderID, "sender_name": m.SenderName, "sent_at": m.SentAt.UTC(), "text": text, "text_truncated": truncated, "text_resource_uri": uri}
+	data := map[string]any{
+		"schema_version":    2,
+		"conversation_type": m.Ref().Type,
+		"conversation_id":   m.Ref().ID,
+		"conversation_name": m.ConversationName,
+		"message_id":        m.ID,
+		"sender_id":         m.SenderID,
+		"sender_name":       m.SenderName,
+		"sent_at":           m.SentAt.UTC(),
+		"text":              text,
+		"text_truncated":    truncated,
+		"text_resource_uri": uri,
+	}
 	if m.Direction == "" {
 		m.Direction = "unknown"
 	}
 	data["direction"] = m.Direction
 	data["first_incoming"] = m.FirstIncoming
-	body, err := json.Marshal(map[string]any{"eventId": id, "name": profile, "timestamp": m.SentAt.UTC(), "data": data, "cursor": nil})
+	body, err := json.Marshal(
+		map[string]any{"eventId": id, "name": profile, "timestamp": m.SentAt.UTC(), "data": data, "cursor": nil},
+	)
 	if err != nil || len(body) > 256<<10 {
 		return nil, errors.New("event exceeds delivery body limit")
 	}

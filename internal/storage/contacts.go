@@ -6,8 +6,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"golang.org/x/text/unicode/norm"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 func (s *Store) migrateContacts(ctx context.Context) error {
@@ -15,8 +16,12 @@ func (s *Store) migrateContacts(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
-	if _, err = tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS directory_contacts(peer_id TEXT PRIMARY KEY,name TEXT NOT NULL,aliases TEXT NOT NULL,friendship TEXT NOT NULL CHECK(friendship IN ('friend','non_friend','unknown')),updated_at TEXT NOT NULL); INSERT OR IGNORE INTO schema_migrations VALUES(7);`); err != nil {
+	if _, err = tx.ExecContext(
+		ctx,
+		`CREATE TABLE IF NOT EXISTS directory_contacts(peer_id TEXT PRIMARY KEY,name TEXT NOT NULL,aliases TEXT NOT NULL,friendship TEXT NOT NULL CHECK(friendship IN ('friend','non_friend','unknown')),updated_at TEXT NOT NULL); INSERT OR IGNORE INTO schema_migrations VALUES(7);`,
+	); err != nil {
 		return err
 	}
 	return tx.Commit()
@@ -46,11 +51,13 @@ func (s *Store) PutContacts(ctx context.Context, contacts []domain.Contact) (int
 	if err != nil {
 		return 0, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	count := 0
 	stamp := now()
 	for _, c := range contacts {
-		if c.ID == "" || len(c.ID) > 256 || len(c.Name) > 4096 || (c.Friendship != "friend" && c.Friendship != "non_friend" && c.Friendship != "unknown") {
+		if c.ID == "" || len(c.ID) > 256 || len(c.Name) > 4096 ||
+			(c.Friendship != "friend" && c.Friendship != "non_friend" && c.Friendship != "unknown") {
 			return 0, domain.Invalid("Invalid contact metadata.")
 		}
 		ref := domain.ConversationRef{Type: "direct", ID: c.ID}
@@ -72,14 +79,29 @@ func (s *Store) PutContacts(ctx context.Context, contacts []domain.Contact) (int
 		if err != nil {
 			return 0, err
 		}
-		if _, err = tx.ExecContext(ctx, `INSERT INTO directory_contacts VALUES(?,?,?,?,?) ON CONFLICT(peer_id) DO UPDATE SET name=excluded.name,aliases=excluded.aliases,friendship=excluded.friendship,updated_at=excluded.updated_at`, c.ID, c.Name, string(body), c.Friendship, stamp); err != nil {
+		if _, err = tx.ExecContext(
+			ctx,
+			`INSERT INTO directory_contacts VALUES(?,?,?,?,?) ON CONFLICT(peer_id) DO UPDATE SET name=excluded.name,aliases=excluded.aliases,friendship=excluded.friendship,updated_at=excluded.updated_at`,
+			c.ID,
+			c.Name,
+			string(body),
+			c.Friendship,
+			stamp,
+		); err != nil {
 			return 0, err
 		}
 		var name any
 		if c.Name != "" {
 			name = c.Name
 		}
-		if _, err = tx.ExecContext(ctx, `INSERT INTO conversations VALUES('direct',?,?,'contacts_catalog','unknown',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=COALESCE(excluded.name,conversations.name),updated_at=excluded.updated_at`, c.ID, name, stamp, stamp); err != nil {
+		if _, err = tx.ExecContext(
+			ctx,
+			`INSERT INTO conversations VALUES('direct',?,?,'contacts_catalog','unknown',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=COALESCE(excluded.name,conversations.name),updated_at=excluded.updated_at`,
+			c.ID,
+			name,
+			stamp,
+			stamp,
+		); err != nil {
 			return 0, err
 		}
 		count++
@@ -95,13 +117,18 @@ func (s *Store) SetContactStatus(ctx context.Context, status map[string]any) err
 	if err != nil {
 		return err
 	}
-	_, err = s.DB.ExecContext(ctx, `INSERT INTO metadata(key,value) VALUES('contacts_status',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`, string(body))
+	_, err = s.DB.ExecContext(
+		ctx,
+		`INSERT INTO metadata(key,value) VALUES('contacts_status',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`,
+		string(body),
+	)
 	return err
 }
 
 func (s *Store) ContactStatus(ctx context.Context) (map[string]any, error) {
 	var body string
-	err := s.DB.QueryRowContext(ctx, "SELECT COALESCE((SELECT value FROM metadata WHERE key='contacts_status'),'{}')").Scan(&body)
+	err := s.DB.QueryRowContext(ctx, "SELECT COALESCE((SELECT value FROM metadata WHERE key='contacts_status'),'{}')").
+		Scan(&body)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +137,14 @@ func (s *Store) ContactStatus(ctx context.Context) (map[string]any, error) {
 		return nil, err
 	}
 	if len(v) == 0 {
-		v = map[string]any{"status": "not_attempted", "last_attempt_at": nil, "last_success_at": nil, "observed_count": 0, "permitted_count": 0, "stop_reason": nil}
+		v = map[string]any{
+			"status":          "not_attempted",
+			"last_attempt_at": nil,
+			"last_success_at": nil,
+			"observed_count":  0,
+			"permitted_count": 0,
+			"stop_reason":     nil,
+		}
 	}
 	return v, nil
 }

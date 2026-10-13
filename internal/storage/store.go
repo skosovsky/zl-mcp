@@ -10,15 +10,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 	"unicode"
 
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	_ "modernc.org/sqlite"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 type Store struct {
@@ -43,11 +43,15 @@ func OpenWithPolicy(ctx context.Context, path string, policy domain.CollectionPo
 	if err != nil {
 		return nil, err
 	}
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	f.Close()
 	if err = os.Chmod(path, 0600); err != nil {
 		return nil, err
 	}
-	db, err := sql.Open("sqlite", "file:"+filepath.ToSlash(path)+"?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(1)")
+	db, err := sql.Open(
+		"sqlite",
+		"file:"+filepath.ToSlash(path)+"?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(1)",
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +59,7 @@ func OpenWithPolicy(ctx context.Context, path string, policy domain.CollectionPo
 	selected := map[domain.ConversationRef]bool{}
 	for ref, enabled := range policy.Selected {
 		if !ref.Valid() {
+			//nolint:gosec // G104: Read-only archive connection cleanup preserves the query result.
 			db.Close()
 			return nil, domain.Invalid("Invalid collection reference.")
 		}
@@ -68,6 +73,7 @@ func OpenWithPolicy(ctx context.Context, path string, policy domain.CollectionPo
 		}
 	}
 	if err = s.migrate(ctx); err != nil {
+		//nolint:gosec // G104: Read-only archive connection cleanup preserves the query result.
 		db.Close()
 		return nil, err
 	}
@@ -76,6 +82,7 @@ func OpenWithPolicy(ctx context.Context, path string, policy domain.CollectionPo
 	if errors.Is(err, sql.ErrNoRows) {
 		b := make([]byte, 32)
 		if _, err = rand.Read(b); err != nil {
+			//nolint:gosec // G104: Read-only archive connection cleanup preserves the query result.
 			db.Close()
 			return nil, err
 		}
@@ -86,6 +93,7 @@ func OpenWithPolicy(ctx context.Context, path string, policy domain.CollectionPo
 		}
 	}
 	if err != nil {
+		//nolint:gosec // G104: Read-only archive connection cleanup preserves the query result.
 		db.Close()
 		return nil, err
 	}
@@ -164,7 +172,7 @@ func (s *Store) BindAccount(ctx context.Context, account string) error {
 		return err
 	}
 	if existing != value {
-		return fmt.Errorf("state directory belongs to another Zalo account; use a separate state directory")
+		return errors.New("state directory belongs to another Zalo account; use a separate state directory")
 	}
 	return nil
 }
@@ -174,12 +182,28 @@ func (s *Store) UpsertGroup(ctx context.Context, g domain.Group, description *st
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	at := now()
-	if _, err = tx.ExecContext(ctx, `INSERT INTO groups(group_id,name,description,member_count,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(group_id) DO UPDATE SET name=excluded.name,description=excluded.description,member_count=excluded.member_count,updated_at=excluded.updated_at,membership='member'`, g.ID, g.Name, description, g.MemberCount, at); err != nil {
+	if _, err = tx.ExecContext(
+		ctx,
+		`INSERT INTO groups(group_id,name,description,member_count,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(group_id) DO UPDATE SET name=excluded.name,description=excluded.description,member_count=excluded.member_count,updated_at=excluded.updated_at,membership='member'`,
+		g.ID,
+		g.Name,
+		description,
+		g.MemberCount,
+		at,
+	); err != nil {
 		return err
 	}
-	if _, err = tx.ExecContext(ctx, `INSERT INTO conversations(conversation_type,conversation_id,name,metadata_source,availability,first_discovered_at,updated_at) VALUES('group',?,?,'group_catalog','member',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=excluded.name,metadata_source='group_catalog',availability='member',updated_at=excluded.updated_at`, g.ID, g.Name, at, at); err != nil {
+	if _, err = tx.ExecContext(
+		ctx,
+		`INSERT INTO conversations(conversation_type,conversation_id,name,metadata_source,availability,first_discovered_at,updated_at) VALUES('group',?,?,'group_catalog','member',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=excluded.name,metadata_source='group_catalog',availability='member',updated_at=excluded.updated_at`,
+		g.ID,
+		g.Name,
+		at,
+		at,
+	); err != nil {
 		return err
 	}
 	return tx.Commit()
@@ -207,7 +231,7 @@ func (s *Store) Put(ctx context.Context, m domain.Message) (err error) {
 		return domain.Invalid("Message ID, sender ID and timestamp are required.")
 	}
 	if len(m.Text) > 1<<20 {
-		return fmt.Errorf("message exceeds 1 MiB text limit")
+		return errors.New("message exceeds 1 MiB text limit")
 	}
 	if m.Source != "live" && m.Source != "replay" {
 		return domain.Invalid("Message source must be live or replay.")
@@ -219,6 +243,7 @@ func (s *Store) Put(ctx context.Context, m domain.Message) (err error) {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	inserted, err := s.putMessageTx(ctx, tx, m, false)
 	if err != nil {
@@ -240,14 +265,16 @@ func (s *Store) Put(ctx context.Context, m domain.Message) (err error) {
 func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, historical bool) (bool, error) {
 	ref := m.Ref()
 	var deleted int
-	if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM message_tombstones WHERE conversation_type=? AND conversation_id=? AND message_id=?", ref.Type, ref.ID, m.ID).Scan(&deleted); err != nil {
+	if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM message_tombstones WHERE conversation_type=? AND conversation_id=? AND message_id=?", ref.Type, ref.ID, m.ID).
+		Scan(&deleted); err != nil {
 		return false, err
 	}
 	if deleted > 0 {
 		return false, nil
 	}
 	var expired int
-	if err := tx.QueryRowContext(ctx, `SELECT count(*) FROM history_message_expiry WHERE conversation_type=? AND conversation_id=? AND message_id=? AND (expired=1 OR expires_ms<=?)`, ref.Type, ref.ID, m.ID, time.Now().UnixMilli()).Scan(&expired); err != nil {
+	if err := tx.QueryRowContext(ctx, `SELECT count(*) FROM history_message_expiry WHERE conversation_type=? AND conversation_id=? AND message_id=? AND (expired=1 OR expires_ms<=?)`, ref.Type, ref.ID, m.ID, time.Now().UnixMilli()).
+		Scan(&expired); err != nil {
 		return false, err
 	}
 	if expired > 0 {
@@ -257,7 +284,21 @@ func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, 
 	if err != nil {
 		return false, err
 	}
-	result, err := tx.ExecContext(ctx, `INSERT OR IGNORE INTO messages(group_id,conversation_type,message_id,sender_id,sender_name,sent_at,received_at,text,reply_id,attachments,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)`, ref.ID, ref.Type, m.ID, m.SenderID, m.SenderName, m.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"), now(), m.Text, m.ReplyTo, string(a), m.Source)
+	result, err := tx.ExecContext(
+		ctx,
+		`INSERT OR IGNORE INTO messages(group_id,conversation_type,message_id,sender_id,sender_name,sent_at,received_at,text,reply_id,attachments,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
+		ref.ID,
+		ref.Type,
+		m.ID,
+		m.SenderID,
+		m.SenderName,
+		m.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"),
+		now(),
+		m.Text,
+		m.ReplyTo,
+		string(a),
+		m.Source,
+	)
 	if err != nil {
 		return false, err
 	}
@@ -283,12 +324,30 @@ func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, 
 	// changing retained text, permanent identity or event eligibility.
 	if m.QuoteMetadata != nil && ref.Type == domain.ConversationDirect {
 		q := m.QuoteMetadata
-		if _, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO message_quote_metadata(message_seq,client_message_id,message_type,timestamp,ttl) SELECT seq,?,?,?,? FROM messages WHERE conversation_type='direct' AND group_id=? AND message_id=? AND sender_id=? AND text=? AND sent_at=?`, q.ClientMessageID, q.MessageType, q.Timestamp, q.TTL, ref.ID, m.ID, m.SenderID, m.Text, m.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z")); err != nil {
+		if _, err = tx.ExecContext(
+			ctx,
+			`INSERT OR IGNORE INTO message_quote_metadata(message_seq,client_message_id,message_type,timestamp,ttl) SELECT seq,?,?,?,? FROM messages WHERE conversation_type='direct' AND group_id=? AND message_id=? AND sender_id=? AND text=? AND sent_at=?`,
+			q.ClientMessageID,
+			q.MessageType,
+			q.Timestamp,
+			q.TTL,
+			ref.ID,
+			m.ID,
+			m.SenderID,
+			m.Text,
+			m.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"),
+		); err != nil {
 			return false, err
 		}
 	}
 	if !historical {
-		_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO collection_started(group_id,conversation_type,started_at) VALUES(?,?,?)`, ref.ID, ref.Type, now())
+		_, err = tx.ExecContext(
+			ctx,
+			`INSERT OR IGNORE INTO collection_started(group_id,conversation_type,started_at) VALUES(?,?,?)`,
+			ref.ID,
+			ref.Type,
+			now(),
+		)
 		if err != nil {
 			return false, err
 		}
@@ -301,7 +360,16 @@ func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, 
 	if historical {
 		metadataSource = "stored_message"
 	}
-	if _, err = tx.ExecContext(ctx, `INSERT INTO conversations(conversation_type,conversation_id,name,metadata_source,availability,first_discovered_at,updated_at) VALUES(?,?,?,?,'observed',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=COALESCE(excluded.name,conversations.name),availability=CASE WHEN excluded.conversation_type='direct' THEN 'observed' ELSE conversations.availability END,updated_at=excluded.updated_at`, ref.Type, ref.ID, peerName, metadataSource, now(), now()); err != nil {
+	if _, err = tx.ExecContext(
+		ctx,
+		`INSERT INTO conversations(conversation_type,conversation_id,name,metadata_source,availability,first_discovered_at,updated_at) VALUES(?,?,?,?,'observed',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=COALESCE(excluded.name,conversations.name),availability=CASE WHEN excluded.conversation_type='direct' THEN 'observed' ELSE conversations.availability END,updated_at=excluded.updated_at`,
+		ref.Type,
+		ref.ID,
+		peerName,
+		metadataSource,
+		now(),
+		now(),
+	); err != nil {
 		return false, err
 	}
 	return inserted != 0, nil
@@ -326,6 +394,7 @@ func (s *Store) removeMessages(ctx context.Context, predicate, reason string, ar
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	if err = s.removeMessagesTx(ctx, tx, predicate, reason, args...); err != nil {
 		return err
@@ -336,7 +405,10 @@ func (s *Store) removeMessagesTx(ctx context.Context, tx *sql.Tx, predicate, rea
 	selection := "SELECT seq FROM messages WHERE " + predicate
 	values := append([]any{now(), reason}, args...)
 	values = append(values, args...)
-	_, err := tx.ExecContext(ctx, `UPDATE event_deliveries SET payload=X'',state=CASE WHEN state IN ('pending','sending') THEN 'cancelled' ELSE state END,completed_at=COALESCE(completed_at,?),lease_until=NULL,last_reason=? WHERE message_seq IN (`+selection+`) OR event_id IN (SELECT event_id FROM message_events WHERE seq IN (`+selection+`))`, values...)
+	_, err := tx.ExecContext(
+		ctx,
+		`UPDATE event_deliveries SET payload=X'',state=CASE WHEN state IN ('pending','sending') THEN 'cancelled' ELSE state END,completed_at=COALESCE(completed_at,?),lease_until=NULL,last_reason=? WHERE message_seq IN (`+selection+`) OR event_id IN (SELECT event_id FROM message_events WHERE seq IN (`+selection+`))`,
+		values...)
 	if err != nil {
 		return err
 	}
@@ -367,9 +439,21 @@ func scanMessage(row interface{ Scan(...any) error }) (domain.Message, error) {
 }
 func (s *Store) Message(ctx context.Context, g, id string) (domain.Message, error) {
 	if !s.Allowed(g) {
-		return domain.Message{}, &domain.Error{Code: "PERMISSION_DENIED", Message: "Group is outside the configured collection allowlist.", NextAction: domain.NextAction{Instruction: "Update the local collection allowlist if access is intended."}, Details: map[string]any{}}
+		return domain.Message{}, &domain.Error{
+			Code:       "PERMISSION_DENIED",
+			Message:    "Group is outside the configured collection allowlist.",
+			NextAction: domain.NextAction{Instruction: "Update the local collection allowlist if access is intended."},
+			Details:    map[string]any{},
+		}
 	}
-	return scanMessage(s.DB.QueryRowContext(ctx, "SELECT "+messageColumns+" FROM visible_messages WHERE conversation_type='group' AND group_id=? AND message_id=?", g, id))
+	return scanMessage(
+		s.DB.QueryRowContext(
+			ctx,
+			"SELECT "+messageColumns+" FROM visible_messages WHERE conversation_type='group' AND group_id=? AND message_id=?",
+			g,
+			id,
+		),
+	)
 }
 
 type Search struct {
@@ -434,7 +518,10 @@ func fingerprint(q Search) string {
 	return hex.EncodeToString(h[:])
 }
 func searchText(q string) string {
-	words := strings.FieldsFunc(q, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsNumber(r) && !unicode.IsMark(r) })
+	words := strings.FieldsFunc(
+		q,
+		func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsNumber(r) && !unicode.IsMark(r) },
+	)
 	for i, w := range words {
 		words[i] = "\"" + strings.ReplaceAll(w, "\"", "\"\"") + "\""
 	}
@@ -494,10 +581,12 @@ func (s *Store) prepareSearch(ctx context.Context, q Search) (preparedSearch, er
 			return preparedSearch{}, err
 		}
 	}
-	if q.General && ((q.ConversationType != "" && q.ConversationType != "group" && q.ConversationType != "direct") || (q.ConversationID != "" && q.ConversationType == "")) {
+	if q.General &&
+		((q.ConversationType != "" && q.ConversationType != "group" && q.ConversationType != "direct") || (q.ConversationID != "" && q.ConversationType == "")) {
 		return preparedSearch{}, domain.Invalid("A concrete conversation requires its type.")
 	}
-	if q.General && q.ConversationID != "" && !s.AllowsConversation(domain.ConversationRef{Type: q.ConversationType, ID: q.ConversationID}) {
+	if q.General && q.ConversationID != "" &&
+		!s.AllowsConversation(domain.ConversationRef{Type: q.ConversationType, ID: q.ConversationID}) {
 		return preparedSearch{}, subscriptionPermission("Conversation is outside the collection policy.")
 	}
 
@@ -560,7 +649,10 @@ func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *
 		args = append(args, until.UTC().Format("2006-01-02T15:04:05.000000000Z"))
 	}
 	if c.At != "" {
-		clauses = append(clauses, "(m.sent_at<? OR (m.sent_at=? AND (m.conversation_type>? OR (m.conversation_type=? AND (m.group_id>? OR (m.group_id=? AND m.message_id>?))))))")
+		clauses = append(
+			clauses,
+			"(m.sent_at<? OR (m.sent_at=? AND (m.conversation_type>? OR (m.conversation_type=? AND (m.group_id>? OR (m.group_id=? AND m.message_id>?))))))",
+		)
 		kind := c.Kind
 		if kind == "" {
 			kind = domain.ConversationGroup
@@ -568,7 +660,13 @@ func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *
 		args = append(args, c.At, c.At, kind, kind, c.Group, c.Group, c.ID)
 	}
 	args = append(args, q.Limit+1)
-	rows, err := s.DB.QueryContext(ctx, `SELECT m.conversation_type,m.group_id,m.message_id,m.sender_id,g.name,m.sender_name,m.sent_at,m.text FROM visible_messages m JOIN messages_fts ON messages_fts.rowid=m.seq LEFT JOIN conversations g ON g.conversation_type=m.conversation_type AND g.conversation_id=m.group_id WHERE `+strings.Join(clauses, " AND ")+` ORDER BY m.sent_at DESC,m.conversation_type,m.group_id,m.message_id LIMIT ?`, args...)
+	rows, err := s.DB.QueryContext(
+		ctx,
+		`SELECT m.conversation_type,m.group_id,m.message_id,m.sender_id,g.name,m.sender_name,m.sent_at,m.text FROM visible_messages m JOIN messages_fts ON messages_fts.rowid=m.seq LEFT JOIN conversations g ON g.conversation_type=m.conversation_type AND g.conversation_id=m.group_id WHERE `+strings.Join(
+			clauses,
+			" AND ",
+		)+` ORDER BY m.sent_at DESC,m.conversation_type,m.group_id,m.message_id LIMIT ?`,
+		args...)
 	if err != nil {
 		return nil, nil, "", cursor{}, err
 	}
@@ -577,13 +675,24 @@ func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *
 	for rows.Next() {
 		var h domain.SearchHit
 		var ts, txt string
-		if err = rows.Scan(&h.Conversation.Type, &h.GroupID, &h.ID, &h.SenderID, &h.GroupName, &h.SenderName, &ts, &txt); err != nil {
+		if err = rows.Scan(
+			&h.Conversation.Type,
+			&h.GroupID,
+			&h.ID,
+			&h.SenderID,
+			&h.GroupName,
+			&h.SenderName,
+			&ts,
+			&txt,
+		); err != nil {
+			//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
 			rows.Close()
 			return nil, nil, "", cursor{}, err
 		}
 		h.Conversation.ID = h.GroupID
 		h.SentAt, err = time.Parse(time.RFC3339Nano, ts)
 		if err != nil {
+			//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
 			rows.Close()
 			return nil, nil, "", cursor{}, err
 		}
@@ -597,6 +706,7 @@ func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *
 		times = append(times, ts)
 	}
 	err = rows.Err()
+	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
 	rows.Close()
 	if err != nil {
 		return nil, nil, "", cursor{}, err

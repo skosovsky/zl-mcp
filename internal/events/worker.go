@@ -16,7 +16,12 @@ import (
 
 // Queue keeps delivery scheduling independent of Zalo and of the MCP transport.
 type Queue interface {
-	FanoutEvents(context.Context, time.Time, storage.DeliveryPolicy, func(string, domain.Message) ([]byte, error)) (int, error)
+	FanoutEvents(
+		context.Context,
+		time.Time,
+		storage.DeliveryPolicy,
+		func(string, domain.Message) ([]byte, error),
+	) (int, error)
 	ClaimDelivery(context.Context, time.Time, storage.DeliveryPolicy) (*storage.EventDelivery, error)
 	FinishDelivery(context.Context, storage.EventDelivery, storage.DeliveryOutcome, time.Time) error
 	PruneDeliveries(context.Context, time.Time) error
@@ -36,7 +41,12 @@ func NewWorker(queue Queue) (*Worker, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Worker{Queue: queue, Client: NewCallbackClient(), Policy: storage.DefaultDeliveryPolicy(), Encoder: encoder}, nil
+	return &Worker{
+		Queue:   queue,
+		Client:  NewCallbackClient(),
+		Policy:  storage.DefaultDeliveryPolicy(),
+		Encoder: encoder,
+	}, nil
 }
 
 func retryDelay(attempt int) time.Duration {
@@ -92,17 +102,21 @@ func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.Ev
 		logger = slog.Default()
 	}
 	attrs := []any{"correlation_id", rand.Text(), "attempt", d.Attempts, "body_bytes", len(d.Payload)}
-	logger.Info("mcp_event_delivery_started", attrs...)
+	logger.InfoContext(ctx, "mcp_event_delivery_started", attrs...)
 	if w.TraceLogger != nil {
-		w.TraceLogger.Info("mcp_event_request", attrs...)
+		w.TraceLogger.InfoContext(ctx, "mcp_event_request", attrs...)
 	}
 	started := time.Now()
 	statusCode := 0
 	requestCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	response, requestErr := shared.ObserveUpstream(requestCtx, domain.WorkEvents, func(ctx context.Context) (*http.Response, error) {
-		return postCallback(ctx, w.Client, d.Callback, d.Secret, d.SubscriptionID, d.EventID, d.Payload)
-	})
+	response, requestErr := shared.ObserveUpstream(
+		requestCtx,
+		domain.WorkEvents,
+		func(ctx context.Context) (*http.Response, error) {
+			return postCallback(ctx, w.Client, d.Callback, d.Secret, d.SubscriptionID, d.EventID, d.Payload)
+		},
+	)
 	outcome := storage.DeliveryOutcome{State: "pending", Reason: "network", RetryAt: at.Add(retryDelay(d.Attempts))}
 	if requestErr == nil {
 		statusCode = response.StatusCode
@@ -110,8 +124,12 @@ func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.Ev
 			statusCode = 0
 		}
 		if w.TraceLogger != nil {
-			w.TraceLogger.Info("mcp_event_response", append(append([]any{}, attrs...), "http_status", statusCode)...)
+			w.TraceLogger.InfoContext(
+				ctx,
+				"mcp_event_response",
+				append(append([]any{}, attrs...), "http_status", statusCode)...)
 		}
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		response.Body.Close()
 		switch code := response.StatusCode; {
 		case code >= 200 && code < 300:
@@ -148,10 +166,22 @@ func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.Ev
 	if finishErr == nil {
 		shared.ObserveTransition(ctx, domain.WorkEvents, "sending", outcome.State, created)
 	}
-	attrs = append(attrs, "elapsed_ms", time.Since(started).Milliseconds(), "http_status", statusCode, "outcome", outcome.State, "reason", outcome.Reason, "receipt_persisted", finishErr == nil)
-	logger.Info("mcp_event_delivery_finished", attrs...)
+	attrs = append(
+		attrs,
+		"elapsed_ms",
+		time.Since(started).Milliseconds(),
+		"http_status",
+		statusCode,
+		"outcome",
+		outcome.State,
+		"reason",
+		outcome.Reason,
+		"receipt_persisted",
+		finishErr == nil,
+	)
+	logger.InfoContext(ctx, "mcp_event_delivery_finished", attrs...)
 	if w.TraceLogger != nil {
-		w.TraceLogger.Info("mcp_event_delivery_finished", attrs...)
+		w.TraceLogger.InfoContext(ctx, "mcp_event_delivery_finished", attrs...)
 	}
 	return true, finishErr
 }

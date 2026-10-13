@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"sync"
@@ -42,7 +41,7 @@ func Process(ctx context.Context, binary string, args []string, limit int) ([]by
 // A model driver inherits the case process group so the outer watchdog owns descendants.
 func process(ctx context.Context, binary string, args []string, limit int, ownGroup bool) ([]byte, []byte, error) {
 	if limit <= 0 {
-		return nil, nil, fmt.Errorf("invalid output bound")
+		return nil, nil, errors.New("invalid output bound")
 	}
 	run, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -68,7 +67,7 @@ func process(ctx context.Context, binary string, args []string, limit int, ownGr
 		} else {
 			_ = cmd.Process.Kill()
 		}
-		err = <-done
+		<-done // Reap the child; cancellation/output budget determines the returned error.
 		if ctx.Err() != nil {
 			err = ctx.Err()
 		} else {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/skosovsky/evaly"
+
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 )
 
@@ -16,7 +17,10 @@ func assertion(name string, pass bool, reason string) evaly.Assertion {
 	return evaly.Assertion{Name: name, Pass: pass, Reason: reason}
 }
 func Grade(cs Case, out Output) []evaly.Assertion {
-	assertions := []evaly.Assertion{assertion("complete-evidence", out.Complete && out.CaseID == cs.ID && len(out.Trace) > 0, out.Failure), assertion("child-cleanup", out.Cleanup, "child lifecycle cleanup")}
+	assertions := []evaly.Assertion{
+		assertion("complete-evidence", out.Complete && out.CaseID == cs.ID && len(out.Trace) > 0, out.Failure),
+		assertion("child-cleanup", out.Cleanup, "child lifecycle cleanup"),
+	}
 	allowed := map[string]bool{}
 	for _, name := range cs.AllowedTools {
 		allowed[name] = true
@@ -62,7 +66,10 @@ func Grade(cs Case, out Output) []evaly.Assertion {
 				continue
 			}
 			var doc any
-			json.Unmarshal(docRaw, &doc)
+			if e = json.Unmarshal(docRaw, &doc); e != nil {
+				schemasOK = false
+				continue
+			}
 			compiler := jsonschema.NewCompiler()
 			compiler.AssertFormat()
 			e = compiler.AddResource("https://zl-mcp.local/error.json", doc)
@@ -78,7 +85,12 @@ func Grade(cs Case, out Output) []evaly.Assertion {
 			schemasOK = false
 		}
 	}
-	assertions = append(assertions, assertion("allowed-tools", toolsOK, "declared tool allowlist"), assertion("wire-schemas-and-budget", schemasOK, "executable success/error schemas +64KiB"), assertion("text-structured-projection", projectionsOK, "original wire projections must agree"))
+	assertions = append(
+		assertions,
+		assertion("allowed-tools", toolsOK, "declared tool allowlist"),
+		assertion("wire-schemas-and-budget", schemasOK, "executable success/error schemas +64KiB"),
+		assertion("text-structured-projection", projectionsOK, "original wire projections must agree"),
+	)
 	effectsOK := true
 	for _, kind := range []string{"send", "join", "history"} {
 		effectsOK = effectsOK && out.Effects[kind] == cs.ExpectedEffects[kind]
@@ -88,7 +100,10 @@ func Grade(cs Case, out Output) []evaly.Assertion {
 			effectsOK = false
 		}
 	}
-	assertions = append(assertions, assertion("independent-effects", effectsOK, "durable upstream journal matches exact allowed counts"))
+	assertions = append(
+		assertions,
+		assertion("independent-effects", effectsOK, "durable upstream journal matches exact allowed counts"),
+	)
 	for _, check := range cs.Checks {
 		var value any
 		exists := false
@@ -148,7 +163,8 @@ func Grade(cs Case, out Output) []evaly.Assertion {
 		case "success":
 			root, _ := decode(trace.Result)
 			flag, _ := path(root, "isError")
-			pass = check.Step >= 0 && check.Step < len(out.Trace) && trace.Error == "" && len(trace.Result) > 0 && flag != true
+			pass = check.Step >= 0 && check.Step < len(out.Trace) && trace.Error == "" && len(trace.Result) > 0 &&
+				flag != true
 		case "resource-error":
 			pass = trace.Kind == "resource" && trace.Error != ""
 		case "code":
@@ -159,14 +175,32 @@ func Grade(cs Case, out Output) []evaly.Assertion {
 			flag, _ := path(root, "isError")
 			pass = flag == true && code == check.Value
 		}
-		assertions = append(assertions, assertion(check.Name, pass, fmt.Sprintf("step%d %s %s expected %v", check.Step, check.Path, check.Op, check.Value)))
+		assertions = append(
+			assertions,
+			assertion(
+				check.Name,
+				pass,
+				fmt.Sprintf("step%d %s %s expected %v", check.Step, check.Path, check.Op, check.Value),
+			),
+		)
 	}
 	return assertions
 }
 func grader(revision string) evaly.Grader[Case, Output, Case] {
-	return evaly.GraderFunc[Case, Output, Case]{Identity: evaly.GraderRevision{ID: "contract-safety", Implementation: revision, Rubric: "all-required-assertions-v1"}, Evaluate: func(_ context.Context, v evaly.View[Case, Output, Case]) (evaly.Grade, error) {
-		return evaly.Grade{Status: evaly.Scored, Usage: evaly.Usage{Known: true}, Assertions: Grade(v.Case.Input, v.Output)}, nil
-	}}
+	return evaly.GraderFunc[Case, Output, Case]{
+		Identity: evaly.GraderRevision{
+			ID:             "contract-safety",
+			Implementation: revision,
+			Rubric:         "all-required-assertions-v1",
+		},
+		Evaluate: func(_ context.Context, v evaly.View[Case, Output, Case]) (evaly.Grade, error) {
+			return evaly.Grade{
+				Status:     evaly.Scored,
+				Usage:      evaly.Usage{Known: true},
+				Assertions: Grade(v.Case.Input, v.Output),
+			}, nil
+		},
+	}
 }
 
 func number(v any) int64 {

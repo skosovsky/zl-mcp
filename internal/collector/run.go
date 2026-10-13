@@ -34,7 +34,13 @@ func (e *storageFailure) Unwrap() error { return e.cause }
 
 // RunInternal runs the collector inside a service which owns storage and account lock.
 // It opens no control socket; ready supplies the in-process membership port.
-func RunInternal(ctx context.Context, c config.Config, store *storage.Store, client ListenerUpstream, ready func(*JoinManager) error) error {
+func RunInternal(
+	ctx context.Context,
+	c config.Config,
+	store *storage.Store,
+	client ListenerUpstream,
+	ready func(*JoinManager) error,
+) error {
 	if ready == nil {
 		return errors.New("collector readiness callback is required")
 	}
@@ -46,7 +52,13 @@ func RunInternal(ctx context.Context, c config.Config, store *storage.Store, cli
 	return runSession(ctx, c, store, guard, ready)
 }
 
-func runSession(ctx context.Context, c config.Config, store *storage.Store, client ListenerUpstream, ready func(*JoinManager) error) (resultErr error) {
+func runSession(
+	ctx context.Context,
+	c config.Config,
+	store *storage.Store,
+	client ListenerUpstream,
+	ready func(*JoinManager) error,
+) (resultErr error) {
 	var e error
 	runCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -87,7 +99,14 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 			return e
 		}
 	}
-	state := map[string]any{"authenticated": true, "collector_state": "connecting", "last_connected_at": nil, "last_event_at": nil, "last_persisted_at": nil, "last_error": nil}
+	state := map[string]any{
+		"authenticated":     true,
+		"collector_state":   "connecting",
+		"last_connected_at": nil,
+		"last_event_at":     nil,
+		"last_persisted_at": nil,
+		"last_error":        nil,
+	}
 	var mu sync.Mutex
 	set := func(key string, value any) error {
 		mu.Lock()
@@ -115,7 +134,10 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 		return e
 	}
 	if e = refresh(); e != nil {
-		_ = set("last_error", map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": "Group catalog refresh failed."})
+		_ = set(
+			"last_error",
+			map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": "Group catalog refresh failed."},
+		)
 	}
 	if source, ok := client.(domain.ConversationPreloadSource); ok {
 		done := make(chan struct{})
@@ -139,7 +161,7 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 			case <-runCtx.Done():
 				return
 			case <-t.C:
-				slog.Info("zalo_persistence_diagnostics", "counts", store.IngestionDiagnostics())
+				slog.InfoContext(ctx, "zalo_persistence_diagnostics", "counts", store.IngestionDiagnostics())
 				mu.Lock()
 				_ = store.SetState(runCtx, state)
 				mu.Unlock()
@@ -169,7 +191,10 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 			_ = set("last_event_at", time.Now().UTC().Format(time.RFC3339Nano))
 			err := store.Put(runCtx, m)
 			if err != nil {
-				_ = set("last_error", map[string]any{"code": "STORAGE_ERROR", "message": "A message could not be persisted."})
+				_ = set(
+					"last_error",
+					map[string]any{"code": "STORAGE_ERROR", "message": "A message could not be persisted."},
+				)
 				_ = store.BeginGap(runCtx, "storage_error")
 				return &storageFailure{cause: err}
 			}
@@ -182,7 +207,10 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 				return nil
 			}
 			if err := store.DeleteConversation(runCtx, ref, id); err != nil {
-				_ = set("last_error", map[string]any{"code": "STORAGE_ERROR", "message": "A deletion could not be persisted."})
+				_ = set(
+					"last_error",
+					map[string]any{"code": "STORAGE_ERROR", "message": "A deletion could not be persisted."},
+				)
 				_ = store.BeginGap(runCtx, "storage_error")
 				return &storageFailure{cause: err}
 			}
@@ -194,7 +222,8 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 			defer mu.Unlock()
 			state["last_connected_at"] = time.Now().UTC().Format(time.RFC3339Nano)
 			state["collector_state"] = "connected"
-			if last, ok := state["last_error"].(map[string]any); ok && last["code"] == "UPSTREAM_UNAVAILABLE" && last["message"] == listenerUnavailableMessage {
+			if last, ok := state["last_error"].(map[string]any); ok && last["code"] == "UPSTREAM_UNAVAILABLE" &&
+				last["message"] == listenerUnavailableMessage {
 				state["last_error"] = nil
 			}
 			return store.SetState(runCtx, state)
@@ -217,8 +246,7 @@ func runSession(ctx context.Context, c config.Config, store *storage.Store, clie
 		}
 		_ = store.BeginGap(runCtx, "listener_disconnected")
 		_ = set("collector_state", "reconnecting")
-		var storageErr *storageFailure
-		if !errors.As(e, &storageErr) {
+		if _, ok := errors.AsType[*storageFailure](e); !ok {
 			_ = set("last_error", map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": listenerUnavailableMessage})
 		}
 		jitter, _ := rand.Int(rand.Reader, big.NewInt(int64(delay/2)+1))
@@ -244,15 +272,21 @@ func ControlHandler(j *JoinManager) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fail := func(err error) {
-			de := &domain.Error{Code: "UPSTREAM_UNAVAILABLE", Message: "Collector request failed.", NextAction: domain.NextAction{Instruction: "Check collector status and retry reads later."}, Details: map[string]any{}}
-			var typed *domain.Error
-			if errors.As(err, &typed) {
+			de := &domain.Error{
+				Code:       "UPSTREAM_UNAVAILABLE",
+				Message:    "Collector request failed.",
+				NextAction: domain.NextAction{Instruction: "Check collector status and retry reads later."},
+				Details:    map[string]any{},
+			}
+			if typed, ok := errors.AsType[*domain.Error](err); ok {
 				de = typed
 			}
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(de)
+			if json.NewEncoder(w).Encode(de) != nil {
+				return // A partial HTTP response must not be retried.
+			}
 		}
-		if r.Method != "POST" || r.URL.Path != "/rpc" {
+		if r.Method != http.MethodPost || r.URL.Path != "/rpc" {
 			fail(domain.Invalid("Use POST /rpc."))
 			return
 		}
@@ -288,7 +322,9 @@ func ControlHandler(j *JoinManager) http.Handler {
 				fail(domain.Invalid("Probe result does not match its contract."))
 				return
 			}
-			json.NewEncoder(w).Encode(result)
+			if json.NewEncoder(w).Encode(result) != nil {
+				return // A partial HTTP response must not be retried.
+			}
 			return
 		}
 		if v.Method == "cli_preview" || v.Method == "cli_approve" {
@@ -313,7 +349,9 @@ func ControlHandler(j *JoinManager) http.Handler {
 					fail(e)
 					return
 				}
-				json.NewEncoder(w).Encode(map[string]any{"group_id": p.GroupID, "name": p.Name, "approval_required": p.Approval})
+				if json.NewEncoder(w).Encode(map[string]any{"group_id": p.GroupID, "name": p.Name, "approval_required": p.Approval}) != nil {
+					return // A partial HTTP response must not be retried.
+				}
 				return
 			}
 			token, e := j.Approve(r.Context(), id)
@@ -321,7 +359,9 @@ func ControlHandler(j *JoinManager) http.Handler {
 				fail(e)
 				return
 			}
-			json.NewEncoder(w).Encode(map[string]any{"plan_token": token})
+			if json.NewEncoder(w).Encode(map[string]any{"plan_token": token}) != nil {
+				return // A partial HTTP response must not be retried.
+			}
 			return
 		}
 		result, e := j.Call(r.Context(), v.Method, v.Arguments)
@@ -329,7 +369,9 @@ func ControlHandler(j *JoinManager) http.Handler {
 			fail(e)
 			return
 		}
-		json.NewEncoder(w).Encode(result)
+		if json.NewEncoder(w).Encode(result) != nil {
+			return // A partial HTTP response must not be retried.
+		}
 	})
 }
 
@@ -348,10 +390,27 @@ func (j *JoinManager) Call(parent context.Context, method string, arguments any)
 	if json.Unmarshal(b, &request) != nil || schema.Validate(request) != nil {
 		return nil, domain.Invalid("Arguments do not match control schema.")
 	}
-	if status, ok := j.API.(interface{ AuthenticationRequired() bool }); ok && status.AuthenticationRequired() && method != "zalo_get_join_status" {
-		return nil, safeError("NOT_AUTHENTICATED", "Zalo authentication is required.", "Stop service and run local login.")
+	if status, ok := j.API.(interface{ AuthenticationRequired() bool }); ok && status.AuthenticationRequired() &&
+		method != "zalo_get_join_status" {
+		return nil, safeError(
+			"NOT_AUTHENTICATED",
+			"Zalo authentication is required.",
+			"Stop service and run local login.",
+		)
 	}
-	args := request["arguments"].(map[string]any)
+	var decoded struct {
+		Arguments struct {
+			GroupID     string `json:"group_id"`
+			InviteURL   string `json:"invite_url"`
+			PlanToken   string `json:"plan_token"`
+			RequestID   string `json:"request_id"`
+			OperationID string `json:"operation_id"`
+		} `json:"arguments"`
+	}
+	if json.Unmarshal(b, &decoded) != nil {
+		return nil, domain.Invalid("Invalid membership arguments.")
+	}
+	args := decoded.Arguments
 	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
 	defer cancel()
 	var result map[string]any
@@ -361,7 +420,7 @@ func (j *JoinManager) Call(parent context.Context, method string, arguments any)
 		if e = j.enter(ctx); e != nil {
 			return nil, e
 		}
-		g, d, err := j.API.Group(ctx, args["group_id"].(string))
+		g, d, err := j.API.Group(ctx, args.GroupID)
 		j.leave()
 		e = err
 		if e == nil {
@@ -375,15 +434,19 @@ func (j *JoinManager) Call(parent context.Context, method string, arguments any)
 		if e = j.enter(ctx); e != nil {
 			return nil, e
 		}
-		result, e = j.Inspect(ctx, args["invite_url"].(string))
+		result, e = j.Inspect(ctx, args.InviteURL)
 		j.leave()
 	case "zalo_join_group":
-		result, e = j.Start(ctx, args["plan_token"].(string), args["request_id"].(string))
+		result, e = j.Start(ctx, args.PlanToken, args.RequestID)
 	case "zalo_get_join_status":
-		result, e = j.Operation(ctx, args["operation_id"].(string))
+		result, e = j.Operation(ctx, args.OperationID)
 	}
 	if errors.Is(e, domain.ErrAuthenticationRequired) {
-		return nil, safeError("NOT_AUTHENTICATED", "Zalo authentication is required.", "Stop service and run local login.")
+		return nil, safeError(
+			"NOT_AUTHENTICATED",
+			"Zalo authentication is required.",
+			"Stop service and run local login.",
+		)
 	}
 	return result, e
 }

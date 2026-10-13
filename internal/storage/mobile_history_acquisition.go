@@ -14,6 +14,7 @@ func (s *Store) migrateMobileHistoryAcquisition(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	_, err = tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS history_mobile_attempts(
  operation_id TEXT PRIMARY KEY REFERENCES history_operations(operation_id),
@@ -28,17 +29,24 @@ func (s *Store) migrateMobileHistoryAcquisition(ctx context.Context) error {
 
 // PrepareMobileHistoryAcquisition binds exactly one attempt before dispatch.
 // Restart/retry returns that same attempt, never a replacement phone request.
-func (s *Store) PrepareMobileHistoryAcquisition(ctx context.Context, id string, revision int64, maxArchiveBytes int64) (MobileBackupAttempt, error) {
+func (s *Store) PrepareMobileHistoryAcquisition(
+	ctx context.Context,
+	id string,
+	revision int64,
+	maxArchiveBytes int64,
+) (MobileBackupAttempt, error) {
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	op, err := loadHistoryOperation(ctx, tx, id)
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
-	if op.Revision != revision || op.Status.State != "running" || op.Status.Source != domain.HistorySourceMobileArchive {
+	if op.Revision != revision || op.Status.State != "running" ||
+		op.Status.Source != domain.HistorySourceMobileArchive {
 		return MobileBackupAttempt{}, ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {
@@ -49,7 +57,8 @@ func (s *Store) PrepareMobileHistoryAcquisition(ctx context.Context, id string, 
 		return MobileBackupAttempt{}, err
 	}
 	var attemptID string
-	err = tx.QueryRowContext(ctx, "SELECT attempt_id FROM history_mobile_attempts WHERE operation_id=?", id).Scan(&attemptID)
+	err = tx.QueryRowContext(ctx, "SELECT attempt_id FROM history_mobile_attempts WHERE operation_id=?", id).
+		Scan(&attemptID)
 	if err == nil {
 		attempt, e := s.loadMobileBackup(ctx, tx, attemptID)
 		if e != nil {
@@ -70,7 +79,13 @@ func (s *Store) PrepareMobileHistoryAcquisition(ctx context.Context, id string, 
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
-	_, err = tx.ExecContext(ctx, "INSERT INTO history_mobile_attempts(operation_id,attempt_id,dispatch_revision) VALUES(?,?,?)", id, attempt.OperationID, revision)
+	_, err = tx.ExecContext(
+		ctx,
+		"INSERT INTO history_mobile_attempts(operation_id,attempt_id,dispatch_revision) VALUES(?,?,?)",
+		id,
+		attempt.OperationID,
+		revision,
+	)
 	if err != nil {
 		return MobileBackupAttempt{}, err
 	}
@@ -83,7 +98,8 @@ func (s *Store) PrepareMobileHistoryAcquisition(ctx context.Context, id string, 
 func (s *Store) checkMobileHistoryDispatch(ctx context.Context, tx *sql.Tx, attemptID string) error {
 	var id string
 	var revision int64
-	err := tx.QueryRowContext(ctx, "SELECT operation_id,dispatch_revision FROM history_mobile_attempts WHERE attempt_id=?", attemptID).Scan(&id, &revision)
+	err := tx.QueryRowContext(ctx, "SELECT operation_id,dispatch_revision FROM history_mobile_attempts WHERE attempt_id=?", attemptID).
+		Scan(&id, &revision)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil // Existing owner-only diagnostic attempt, not a history acquisition.
 	}
@@ -94,7 +110,10 @@ func (s *Store) checkMobileHistoryDispatch(ctx context.Context, tx *sql.Tx, atte
 	if err != nil {
 		return err
 	}
-	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State != "running" || op.Revision != revision || op.ReservedDuration <= 0 || op.ReservedDuration > 180*time.Second {
+	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State != "running" ||
+		op.Revision != revision ||
+		op.ReservedDuration <= 0 ||
+		op.ReservedDuration > 180*time.Second {
 		return ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {
@@ -113,7 +132,8 @@ func (s *Store) MobileHistoryAcquisition(ctx context.Context, id string) (Mobile
 		return MobileBackupAttempt{}, ErrHistoryState
 	}
 	var attemptID string
-	if err = s.DB.QueryRowContext(ctx, "SELECT attempt_id FROM history_mobile_attempts WHERE operation_id=?", id).Scan(&attemptID); err != nil {
+	if err = s.DB.QueryRowContext(ctx, "SELECT attempt_id FROM history_mobile_attempts WHERE operation_id=?", id).
+		Scan(&attemptID); err != nil {
 		return MobileBackupAttempt{}, err
 	}
 	return s.MobileBackupAttempt(ctx, attemptID)
@@ -121,7 +141,12 @@ func (s *Store) MobileHistoryAcquisition(ctx context.Context, id string) (Mobile
 
 // CompleteMobileHistoryWork reconciles one non-page stage without changing source
 // counts or committing records. A page reconciles work in its own atomic commit.
-func (s *Store) CompleteMobileHistoryWork(ctx context.Context, id string, revision int64, elapsed time.Duration) (HistoryOperation, error) {
+func (s *Store) CompleteMobileHistoryWork(
+	ctx context.Context,
+	id string,
+	revision int64,
+	elapsed time.Duration,
+) (HistoryOperation, error) {
 	if elapsed < 0 || elapsed > MobileHistoryWorkBudget {
 		return HistoryOperation{}, domain.Invalid("Invalid mobile history stage duration.")
 	}
@@ -130,12 +155,17 @@ func (s *Store) CompleteMobileHistoryWork(ctx context.Context, id string, revisi
 	if err != nil {
 		return HistoryOperation{}, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	op, err := loadHistoryOperation(ctx, tx, id)
 	if err != nil {
 		return HistoryOperation{}, err
 	}
-	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State != "running" || op.Revision != revision || op.ReservedDuration <= 0 || op.WorkDuration < 0 || op.WorkDuration > MobileHistoryWorkBudget {
+	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State != "running" ||
+		op.Revision != revision ||
+		op.ReservedDuration <= 0 ||
+		op.WorkDuration < 0 ||
+		op.WorkDuration > MobileHistoryWorkBudget {
 		return HistoryOperation{}, ErrHistoryState
 	}
 	if !s.AllowsConversation(op.Status.Ref()) {
@@ -165,12 +195,14 @@ func (s *Store) CloseMobileHistoryAcquisition(ctx context.Context, id string) er
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	op, err := loadHistoryOperation(ctx, tx, id)
 	if err != nil {
 		return err
 	}
-	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State == "queued" || op.Status.State == "running" {
+	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State == "queued" ||
+		op.Status.State == "running" {
 		return ErrHistoryState
 	}
 	if err = closeMobileHistoryAcquisitionTx(ctx, tx, op); err != nil {
@@ -181,7 +213,8 @@ func (s *Store) CloseMobileHistoryAcquisition(ctx context.Context, id string) er
 
 // Terminal publication and transfer release share the caller's transaction.
 func closeMobileHistoryAcquisitionTx(ctx context.Context, tx *sql.Tx, op HistoryOperation) error {
-	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State == "queued" || op.Status.State == "running" {
+	if op.Status.Source != domain.HistorySourceMobileArchive || op.Status.State == "queued" ||
+		op.Status.State == "running" {
 		return nil
 	}
 	state := "interrupted"

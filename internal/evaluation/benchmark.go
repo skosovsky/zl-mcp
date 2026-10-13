@@ -2,6 +2,7 @@ package evaluation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/skosovsky/zl-mcp/internal/evalfixture"
 )
 
@@ -35,11 +37,21 @@ type Measurement struct {
 
 // Measure times complete real SDK calls; admission pacing is outside each sample.
 func Measure(ctx context.Context, root, state, kind string, count int) (result Measurement, err error) {
-	result = Measurement{Kind: kind, Warmup: 50, Go: runtime.Version(), OS: runtime.GOOS, Arch: runtime.GOARCH, Concurrency: 1, PacingMillis: 110, Admission: true, Exporters: false}
-	if count < 1000 {
-		return result, fmt.Errorf("at least1000 measurements required")
+	result = Measurement{
+		Kind:         kind,
+		Warmup:       50,
+		Go:           runtime.Version(),
+		OS:           runtime.GOOS,
+		Arch:         runtime.GOARCH,
+		Concurrency:  1,
+		PacingMillis: 110,
+		Admission:    true,
+		Exporters:    false,
 	}
-	name := ""
+	if count < 1000 {
+		return result, errors.New("at least1000 measurements required")
+	}
+	var name string
 	args := map[string]any{}
 	switch kind {
 	case "read":
@@ -54,18 +66,27 @@ func Measure(ctx context.Context, root, state, kind string, count int) (result M
 		args["before"] = 0
 		args["after"] = 0
 	default:
-		return result, fmt.Errorf("unknown measurement kind")
+		return result, errors.New("unknown measurement kind")
 	}
 	effects := filepath.Join(state, "effects.jsonl")
 	if err = os.WriteFile(effects, nil, 0600); err != nil {
 		return result, err
 	}
-	f, err := evalfixture.New(ctx, evalfixture.Options{Offline: true, StateDir: filepath.Join(state, "state"), EffectsFile: effects, Fixtures: filepath.Join(root, "docs/evals/fixtures.json")})
+	f, err := evalfixture.New(
+		ctx,
+		evalfixture.Options{
+			Offline:     true,
+			StateDir:    filepath.Join(state, "state"),
+			EffectsFile: effects,
+			Fixtures:    filepath.Join(root, "docs/evals/fixtures.json"),
+		},
+	)
 	if err != nil {
 		return result, err
 	}
 	c, err := connect(ctx, f)
 	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		f.Close()
 		return result, err
 	}
@@ -95,7 +116,10 @@ func Measure(ctx context.Context, root, state, kind string, count int) (result M
 		runtime.ReadMemStats(&after)
 		if e != nil || response == nil || response.IsError {
 			result.Errors++
-			return result, fmt.Errorf("benchmark MCP failure: %v", e)
+			if e != nil {
+				return result, fmt.Errorf("benchmark MCP failure: %w", e)
+			}
+			return result, errors.New("benchmark MCP failure: <nil>")
 		}
 		if i >= 0 {
 			result.Calls++

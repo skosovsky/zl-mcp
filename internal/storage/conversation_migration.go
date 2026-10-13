@@ -10,9 +10,11 @@ func (s *Store) migrateConversations(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	var exists int
-	if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM schema_migrations WHERE version=4").Scan(&exists); err != nil {
+	if err = tx.QueryRowContext(ctx, "SELECT count(*) FROM schema_migrations WHERE version=4").
+		Scan(&exists); err != nil {
 		return err
 	}
 	if exists != 0 {
@@ -21,7 +23,8 @@ func (s *Store) migrateConversations(ctx context.Context) error {
 	// Deleted rows still contribute to the subscription activation boundary.
 	// Rebuilding the table must not reset its AUTOINCREMENT high-water mark.
 	var highWater int64
-	if err = tx.QueryRowContext(ctx, "SELECT COALESCE((SELECT seq FROM sqlite_sequence WHERE name='messages'),0)").Scan(&highWater); err != nil {
+	if err = tx.QueryRowContext(ctx, "SELECT COALESCE((SELECT seq FROM sqlite_sequence WHERE name='messages'),0)").
+		Scan(&highWater); err != nil {
 		return err
 	}
 	_, err = tx.ExecContext(ctx, `
@@ -71,10 +74,18 @@ INSERT INTO schema_migrations VALUES(4);
 	if err != nil {
 		return err
 	}
-	if _, err = tx.ExecContext(ctx, "UPDATE sqlite_sequence SET seq=MAX(seq,?) WHERE name='messages'", highWater); err != nil {
+	if _, err = tx.ExecContext(
+		ctx,
+		"UPDATE sqlite_sequence SET seq=MAX(seq,?) WHERE name='messages'",
+		highWater,
+	); err != nil {
 		return err
 	}
-	if _, err = tx.ExecContext(ctx, "INSERT INTO sqlite_sequence(name,seq) SELECT 'messages',? WHERE NOT EXISTS(SELECT 1 FROM sqlite_sequence WHERE name='messages')", highWater); err != nil {
+	if _, err = tx.ExecContext(
+		ctx,
+		"INSERT INTO sqlite_sequence(name,seq) SELECT 'messages',? WHERE NOT EXISTS(SELECT 1 FROM sqlite_sequence WHERE name='messages')",
+		highWater,
+	); err != nil {
 		return err
 	}
 	return tx.Commit()

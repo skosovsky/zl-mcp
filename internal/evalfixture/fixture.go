@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/skosovsky/zl-mcp/internal/collector"
 	"github.com/skosovsky/zl-mcp/internal/control"
 	"github.com/skosovsky/zl-mcp/internal/domain"
@@ -154,6 +155,7 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	f := &Fixture{Dir: dir, cancel: cancel, done: make(chan error, 1), keepState: opts.KeepState}
 	defer func() {
 		if err != nil {
+			//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 			f.Close()
 		}
 	}()
@@ -194,7 +196,14 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	if err = f.Store.BeginGap(runCtx, "synthetic_missing_history"); err != nil {
 		return nil, err
 	}
-	state := map[string]any{"authenticated": true, "collector_state": "connected", "last_connected_at": time.Now().UTC().Format(time.RFC3339Nano), "last_event_at": nil, "last_persisted_at": nil, "last_error": nil}
+	state := map[string]any{
+		"authenticated":     true,
+		"collector_state":   "connected",
+		"last_connected_at": time.Now().UTC().Format(time.RFC3339Nano),
+		"last_event_at":     nil,
+		"last_persisted_at": nil,
+		"last_error":        nil,
+	}
 	if opts.Stopped {
 		state["collector_state"] = "stopped"
 	}
@@ -204,14 +213,18 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	f.Upstream = &Upstream{groups: corpus.Groups, timeout: opts.JoinTimeout, accountID: account}
 	f.joins = collector.NewJoin(runCtx, f.Store, f.Upstream, true)
 	if opts.ApprovalFile != "" && opts.ApprovalTokenFile != "" {
-		return nil, fmt.Errorf("use only one synthetic approval mode")
+		return nil, errors.New("use only one synthetic approval mode")
 	}
 	if opts.ApprovalFile != "" || opts.ApprovalTokenFile != "" {
 		preview, e := f.joins.Inspect(runCtx, InviteURL)
 		if e != nil {
 			return nil, e
 		}
-		token, e := f.joins.Approve(runCtx, *preview["preview_id"].(*string))
+		previewID, ok := preview["preview_id"].(*string)
+		if !ok || previewID == nil {
+			return nil, errors.New("invalid synthetic approval preview")
+		}
+		token, e := f.joins.Approve(runCtx, *previewID)
 		if e != nil {
 			return nil, e
 		}
@@ -222,18 +235,30 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 			}
 			seed := strings.TrimSpace(string(provided))
 			if _, decodeErr := hex.DecodeString(seed); decodeErr != nil || len(seed) != 64 {
-				return nil, fmt.Errorf("synthetic token must be 64 hex characters")
+				return nil, errors.New("synthetic token must be 64 hex characters")
 			}
 			oldHash, newHash := sha256.Sum256([]byte(token)), sha256.Sum256([]byte(seed))
 			// Replace only this fixture's fresh approval hash. This keeps the
 			// real approval/preview ledger and lets harness supply the token
 			// as trusted user input before Codex starts its MCP subprocess.
-			if _, e = f.Store.DB.ExecContext(runCtx, "UPDATE join_approvals SET token_hash=? WHERE token_hash=?", hex.EncodeToString(newHash[:]), hex.EncodeToString(oldHash[:])); e != nil {
+			if _, e = f.Store.DB.ExecContext(
+				runCtx,
+				"UPDATE join_approvals SET token_hash=? WHERE token_hash=?",
+				hex.EncodeToString(newHash[:]),
+				hex.EncodeToString(oldHash[:]),
+			); e != nil {
 				return nil, e
 			}
 		}
 		if opts.ApprovalFile != "" {
-			approval, e := json.Marshal(map[string]any{"synthetic_only": true, "invite_url": InviteURL, "preview": preview, "plan_token": token})
+			approval, e := json.Marshal(
+				map[string]any{
+					"synthetic_only": true,
+					"invite_url":     InviteURL,
+					"preview":        preview,
+					"plan_token":     token,
+				},
+			)
 			if e != nil {
 				return nil, e
 			}
@@ -261,6 +286,7 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 		return nil, err
 	}
 	if err = os.Chmod(sock, 0600); err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		listener.Close()
 		return nil, err
 	}
@@ -288,9 +314,14 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 			}
 			uri := "eval://skills/researching-zalo-groups/" + name
 			body := string(contents)
-			f.Server.AddResource(&mcp.Resource{URI: uri, Name: name, MIMEType: "text/markdown"}, func(_ context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-				return &mcp.ReadResourceResult{Contents: []*mcp.ResourceContents{{URI: uri, MIMEType: "text/markdown", Text: body}}}, nil
-			})
+			f.Server.AddResource(
+				&mcp.Resource{URI: uri, Name: name, MIMEType: "text/markdown"},
+				func(_ context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+					return &mcp.ReadResourceResult{
+						Contents: []*mcp.ResourceContents{{URI: uri, MIMEType: "text/markdown", Text: body}},
+					}, nil
+				},
+			)
 		}
 	}
 	// Keep synthetic connected status current throughout long model turns.

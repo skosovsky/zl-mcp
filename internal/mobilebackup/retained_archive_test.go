@@ -19,7 +19,11 @@ const retainedTestID = "00000000-0000-4000-8000-000000000001"
 func retainedFixture(t *testing.T) AccountArchive {
 	t.Helper()
 	decoded := Format1Archive{Archive: selectionArchive(), CiphertextBytes: 123, ContainerBytes: 100, TrailingBytes: 23}
-	pairs := []IdentityPair{{Plain: "9007199254740993", Session: "12"}, {Plain: "9007199254740993", Session: "12", Group: true}, {Plain: "18446744073709551615", Session: "13"}}
+	pairs := []IdentityPair{
+		{Plain: "9007199254740993", Session: "12"},
+		{Plain: "9007199254740993", Session: "12", Group: true},
+		{Plain: "18446744073709551615", Session: "13"},
+	}
 	a, err := ownAccountArchive(context.Background(), &decoded, pairs)
 	if err != nil {
 		t.Fatal(err)
@@ -69,7 +73,16 @@ func TestRetainedArchiveRestartOfflineReadsAndImmutableRetry(t *testing.T) {
 	defer read.Clear()
 	after, _ := os.ReadFile(filepath.Join(dir, name))
 	// Assert: source and expiry unchanged, all files/mappings survived with no network.
-	if !reflect.DeepEqual(first, retry) || !reflect.DeepEqual(first, manifest) || !bytes.Equal(before, after) || len(read.archive.Files) != 3 || read.pairs[2].Session != "13" || string(read.archive.Files[2].Data) != "synthetic-c" || first.Scope != "account" || first.FileCount != 3 || first.DirectFiles != 2 || first.GroupFiles != 1 || first.HistoryComplete || first.ImportPerformed {
+	if !reflect.DeepEqual(first, retry) || !reflect.DeepEqual(first, manifest) || !bytes.Equal(before, after) ||
+		len(read.archive.Files) != 3 ||
+		read.pairs[2].Session != "13" ||
+		string(read.archive.Files[2].Data) != "synthetic-c" ||
+		first.Scope != "account" ||
+		first.FileCount != 3 ||
+		first.DirectFiles != 2 ||
+		first.GroupFiles != 1 ||
+		first.HistoryComplete ||
+		first.ImportPerformed {
 		t.Fatal("retained source changed or lost files")
 	}
 	for _, marker := range []string{"synthetic-a", "synthetic-b", "synthetic-c", "9007199254740993.db", "18446744073709551615.db"} {
@@ -144,7 +157,14 @@ func TestRetainedArchiveConflictAndCapacityDoNotReplaceSource(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer small.Close()
-	if _, err = small.Save(ctx, retainedTestID, "123", a, 0); !errors.Is(err, ErrRetainedCapacity) || small.ledger.claims[retainedTestID] {
+	if _, err = small.Save(
+		ctx,
+		retainedTestID,
+		"123",
+		a,
+		0,
+	); !errors.Is(err, ErrRetainedCapacity) ||
+		small.ledger.claims[retainedTestID] {
 		t.Fatal("byte quota partially published or spent source", err)
 	}
 }
@@ -175,8 +195,11 @@ func TestRetainedArchiveExpiryRemovalAndSpentIDs(t *testing.T) {
 					t.Fatal("expiry ignored", err)
 				}
 			} else {
-				if s.Remove(ctx, retainedTestID, "123") != nil || s.Remove(ctx, retainedTestID, "123") != nil {
-					t.Fatal("owner removal failed")
+				if err = s.Remove(ctx, retainedTestID, "123"); err != nil {
+					t.Fatal("owner removal failed", err)
+				}
+				if err = s.Remove(ctx, retainedTestID, "123"); err != nil {
+					t.Fatal("idempotent owner removal failed", err)
 				}
 			}
 			s.Close()
@@ -186,7 +209,14 @@ func TestRetainedArchiveExpiryRemovalAndSpentIDs(t *testing.T) {
 			}
 			defer s.Close()
 			// Assert: restart cannot renew a removed/expired UUID.
-			if _, err = s.Save(ctx, retainedTestID, "123", a, time.Hour); err == nil || !s.ledger.claims[retainedTestID] {
+			if _, err = s.Save(
+				ctx,
+				retainedTestID,
+				"123",
+				a,
+				time.Hour,
+			); err == nil ||
+				!s.ledger.claims[retainedTestID] {
 				t.Fatal("spent UUID republished")
 			}
 		})

@@ -6,12 +6,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
@@ -20,7 +21,12 @@ import (
 type Subscriptions interface {
 	Allowed(string) bool
 	SubscriptionRevision(context.Context, string) (int64, error)
-	ActivateSubscription(context.Context, storage.EventSubscription, int64, time.Time) (storage.EventSubscription, error)
+	ActivateSubscription(
+		context.Context,
+		storage.EventSubscription,
+		int64,
+		time.Time,
+	) (storage.EventSubscription, error)
 	CancelSubscription(context.Context, string, string, time.Time) error
 }
 
@@ -48,7 +54,14 @@ type SubscriptionManager struct {
 }
 
 func NewSubscriptionManager(store Subscriptions, namespace string) (*SubscriptionManager, error) {
-	m := &SubscriptionManager{Store: store, Client: NewCallbackClient(), namespace: namespace, input: map[string]*jsonschema.Schema{}, output: map[string]*jsonschema.Schema{}, verified: map[string]time.Time{}}
+	m := &SubscriptionManager{
+		Store:     store,
+		Client:    NewCallbackClient(),
+		namespace: namespace,
+		input:     map[string]*jsonschema.Schema{},
+		output:    map[string]*jsonschema.Schema{},
+		verified:  map[string]time.Time{},
+	}
 	for _, name := range []string{"events_list", "events_subscribe", "events_unsubscribe"} {
 		for suffix, target := range map[string]map[string]*jsonschema.Schema{"input": m.input, "output": m.output} {
 			schema, err := contracts.Compile(name, suffix)
@@ -89,13 +102,21 @@ type subscriptionRequest struct {
 func (m *SubscriptionManager) subscriptionID(principal string, p subscriptionRequest) string {
 	parts := []string{m.namespace, principal, p.Delivery.URL, p.Name, p.Arguments.GroupID}
 	if p.Name == domain.ConversationMessageCreatedV2 {
-		parts = []string{m.namespace, principal, p.Delivery.URL, p.Name, p.Arguments.Scope, p.Arguments.ConversationType, p.Arguments.ConversationID}
+		parts = []string{
+			m.namespace,
+			principal,
+			p.Delivery.URL,
+			p.Name,
+			p.Arguments.Scope,
+			p.Arguments.ConversationType,
+			p.Arguments.ConversationID,
+		}
 	}
 	if p.Name == domain.ConversationMessageCreatedV2 {
 		if p.Arguments.Direction == "" {
 			p.Arguments.Direction = "all"
 		}
-		parts = append(parts, p.Arguments.Direction, fmt.Sprint(p.Arguments.FirstIncomingOnly))
+		parts = append(parts, p.Arguments.Direction, strconv.FormatBool(p.Arguments.FirstIncomingOnly))
 	}
 	identity, _ := json.Marshal(parts)
 	digest := sha256.Sum256(identity)
@@ -112,7 +133,7 @@ func (m *SubscriptionManager) Call(ctx context.Context, method, principal string
 	if principal == "" {
 		return nil, eventRPCError(-32000, "Access denied.", "unauthenticated")
 	}
-	name := ""
+	var name string
 	switch method {
 	case "events/list":
 		name = "events_list"
@@ -146,16 +167,40 @@ func (m *SubscriptionManager) Call(ctx context.Context, method, principal string
 	}
 	var result any
 	if method == "events/list" {
-		input, _ := contracts.Document("events_subscribe", "input")
-		payload, _ := contracts.Document("zalo_message_created", "payload")
-		arguments := input["properties"].(map[string]any)["arguments"]
-		result = map[string]any{"events": []any{map[string]any{"name": MessageCreated, "description": "Newly collected messages from one explicitly enabled group. Text is limited to 2048 Unicode characters; truncated text includes a resource URI for the full record. Subscriptions survive restart; prior corpus is not replayed.", "delivery": []string{"webhook"}, "inputSchema": arguments, "payloadSchema": payload}}}
-		entries := result.(map[string]any)["events"].([]any)
-		v2, _ := contracts.Document("conversation_v2_events_subscribe", "input")
-		v2Payload, _ := contracts.Document("conversation_v2_message_created", "payload")
-		entries = append(entries, map[string]any{"name": domain.ConversationMessageCreatedV2, "description": "New locally collected messages with explicit direction and first locally known incoming evidence. Supports incoming/outgoing filters and first_incoming_only for direct incoming chats. First known is not first ever in Zalo history.", "delivery": []string{"webhook"}, "inputSchema": v2["properties"].(map[string]any)["arguments"], "payloadSchema": v2Payload})
-		result.(map[string]any)["events"] = entries
-
+		arguments, err := eventArguments("events_subscribe")
+		if err != nil {
+			return nil, err
+		}
+		payload, err := contracts.Document("zalo_message_created", "payload")
+		if err != nil {
+			return nil, err
+		}
+		v2Arguments, err := eventArguments("conversation_v2_events_subscribe")
+		if err != nil {
+			return nil, err
+		}
+		v2Payload, err := contracts.Document("conversation_v2_message_created", "payload")
+		if err != nil {
+			return nil, err
+		}
+		result = map[string]any{
+			"events": []any{
+				map[string]any{
+					"name":          MessageCreated,
+					"description":   "Newly collected messages from one explicitly enabled group. Text is limited to 2048 Unicode characters; truncated text includes a resource URI for the full record. Subscriptions survive restart; prior corpus is not replayed.",
+					"delivery":      []string{"webhook"},
+					"inputSchema":   arguments,
+					"payloadSchema": payload,
+				},
+				map[string]any{
+					"name":          domain.ConversationMessageCreatedV2,
+					"description":   "New locally collected messages with explicit direction and first locally known incoming evidence. Supports incoming/outgoing filters and first_incoming_only for direct incoming chats. First known is not first ever in Zalo history.",
+					"delivery":      []string{"webhook"},
+					"inputSchema":   v2Arguments,
+					"payloadSchema": v2Payload,
+				},
+			},
+		}
 	} else {
 		var p subscriptionRequest
 		if json.Unmarshal(raw, &p) != nil {
@@ -168,7 +213,10 @@ func (m *SubscriptionManager) Call(ctx context.Context, method, principal string
 				port, ok := m.Store.(interface {
 					AllowsConversation(domain.ConversationRef) bool
 				})
-				permitted = ok && port.AllowsConversation(domain.ConversationRef{Type: p.Arguments.ConversationType, ID: p.Arguments.ConversationID})
+				permitted = ok &&
+					port.AllowsConversation(
+						domain.ConversationRef{Type: p.Arguments.ConversationType, ID: p.Arguments.ConversationID},
+					)
 			}
 		}
 		if !permitted && method == "events/subscribe" {
@@ -211,7 +259,13 @@ func (m *SubscriptionManager) Call(ctx context.Context, method, principal string
 				m.mu.Unlock()
 			}
 			at := time.Now().UTC()
-			sub := storage.EventSubscription{ID: id, Principal: principal, GroupID: p.Arguments.GroupID, Callback: p.Delivery.URL, Secret: p.Delivery.Secret}
+			sub := storage.EventSubscription{
+				ID:        id,
+				Principal: principal,
+				GroupID:   p.Arguments.GroupID,
+				Callback:  p.Delivery.URL,
+				Secret:    p.Delivery.Secret,
+			}
 			if p.Name == domain.ConversationMessageCreatedV2 {
 				sub.Direction = p.Arguments.Direction
 				sub.FirstIncomingOnly = p.Arguments.FirstIncomingOnly
@@ -245,4 +299,20 @@ func (m *SubscriptionManager) Call(ctx context.Context, method, principal string
 		return nil, eventRPCError(-32603, "Invalid event result.", "contract")
 	}
 	return result, nil
+}
+
+func eventArguments(name string) (any, error) {
+	doc, err := contracts.Document(name, "input")
+	if err != nil {
+		return nil, err
+	}
+	properties, ok := doc["properties"].(map[string]any)
+	if !ok {
+		return nil, errors.New("invalid event argument properties")
+	}
+	arguments, ok := properties["arguments"]
+	if !ok {
+		return nil, errors.New("missing event arguments")
+	}
+	return arguments, nil
 }

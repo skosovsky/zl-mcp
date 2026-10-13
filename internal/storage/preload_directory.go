@@ -17,7 +17,10 @@ func (s *Store) PutPreloadEntries(ctx context.Context, entries []domain.PreloadE
 	seen := map[domain.ConversationRef]bool{}
 	for _, entry := range entries {
 		ref := entry.Conversation
-		if !ref.Valid() || ref.ID == "0" || len(ref.ID) > 256 || !utf8.ValidString(ref.ID) || strings.TrimSpace(ref.ID) != ref.ID || seen[ref] || (entry.Name != nil && (len(*entry.Name) > 4096 || !utf8.ValidString(*entry.Name))) {
+		if !ref.Valid() || ref.ID == "0" || len(ref.ID) > 256 || !utf8.ValidString(ref.ID) ||
+			strings.TrimSpace(ref.ID) != ref.ID ||
+			seen[ref] ||
+			(entry.Name != nil && (len(*entry.Name) > 4096 || !utf8.ValidString(*entry.Name))) {
 			return 0, domain.Invalid("Invalid preload directory metadata.")
 		}
 		seen[ref] = true
@@ -26,6 +29,7 @@ func (s *Store) PutPreloadEntries(ctx context.Context, entries []domain.PreloadE
 	if err != nil {
 		return 0, err
 	}
+	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
 	if _, err = historyAccount(ctx, tx); err != nil {
 		return 0, err
@@ -41,7 +45,15 @@ func (s *Store) PutPreloadEntries(ctx context.Context, entries []domain.PreloadE
 		if entry.Name != nil && *entry.Name != "" {
 			name = *entry.Name
 		}
-		if _, err = tx.ExecContext(ctx, `INSERT INTO conversations VALUES(?,?,?,'preload_catalog','unknown',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=COALESCE(conversations.name,excluded.name),updated_at=excluded.updated_at`, ref.Type, ref.ID, name, stamp, stamp); err != nil {
+		if _, err = tx.ExecContext(
+			ctx,
+			`INSERT INTO conversations VALUES(?,?,?,'preload_catalog','unknown',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=COALESCE(conversations.name,excluded.name),updated_at=excluded.updated_at`,
+			ref.Type,
+			ref.ID,
+			name,
+			stamp,
+			stamp,
+		); err != nil {
 			return 0, err
 		}
 		count++

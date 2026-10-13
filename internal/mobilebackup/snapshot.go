@@ -13,10 +13,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -83,28 +85,40 @@ func NewSnapshotStore(dir string, budget int64) (*SnapshotStore, error) {
 	}
 	key, err := snapshotKey(root)
 	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		root.Close()
 		return nil, err
 	}
 	defer clear(key)
 	block, err := aes.NewCipher(key)
 	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		root.Close()
 		return nil, ErrSnapshot
 	}
 	aead, err := cipher.NewGCM(block)
 	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		root.Close()
 		return nil, ErrSnapshot
 	}
 	claims, err := readSnapshotClaims(root)
 	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		root.Close()
 		return nil, err
 	}
-	store := &SnapshotStore{mu: make(chan struct{}, 1), root: root, aead: aead, budget: budget, now: time.Now, claims: claims}
+	store := &SnapshotStore{
+		mu:     make(chan struct{}, 1),
+		root:   root,
+		aead:   aead,
+		budget: budget,
+		now:    time.Now,
+		claims: claims,
+	}
 	store.mu <- struct{}{}
 	if err = store.Cleanup(context.Background()); err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		store.Close()
 		return nil, err
 	}
@@ -125,10 +139,12 @@ func readSnapshotClaims(root *os.Root) (map[string]bool, error) {
 		return nil, ErrSnapshot
 	}
 	if !samePrivateFile(f, info) {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		f.Close()
 		return nil, ErrSnapshot
 	}
 	data, err := io.ReadAll(io.LimitReader(f, 37*maxSnapshotClaims+1))
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	f.Close()
 	if err != nil || int64(len(data)) != info.Size() {
 		return nil, ErrSnapshot
@@ -139,7 +155,7 @@ func readSnapshotClaims(root *os.Root) (map[string]bool, error) {
 	if data[len(data)-1] != '\n' {
 		return nil, ErrSnapshot
 	}
-	for _, id := range strings.Split(string(data[:len(data)-1]), "\n") {
+	for id := range strings.SplitSeq(string(data[:len(data)-1]), "\n") {
 		_, ok := snapshotName(id)
 		if !ok || result[id] {
 			return nil, ErrSnapshot
@@ -166,6 +182,7 @@ func (s *SnapshotStore) claim(id string) error {
 	}
 	opened, statErr := f.Stat()
 	if statErr != nil || !privateRegular(opened) || info != nil && !os.SameFile(info, opened) {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		f.Close()
 		return ErrSnapshot
 	}
@@ -190,8 +207,9 @@ func snapshotKey(root *os.Root) ([]byte, error) {
 			return nil, ErrSnapshot
 		}
 		entries, e := dir.ReadDir(64)
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		dir.Close()
-		if e != nil && e != io.EOF || len(entries) != 0 {
+		if e != nil && !errors.Is(e, io.EOF) || len(entries) != 0 {
 			return nil, ErrSnapshot
 		}
 		key := make([]byte, 32)
@@ -227,10 +245,12 @@ func snapshotKey(root *os.Root) ([]byte, error) {
 		return nil, ErrSnapshot
 	}
 	if !samePrivateFile(f, info) {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		f.Close()
 		return nil, ErrSnapshot
 	}
 	key, err := io.ReadAll(io.LimitReader(f, 33))
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	f.Close()
 	if err != nil || len(key) != 32 {
 		clear(key)
@@ -266,13 +286,25 @@ func snapshotName(id string) (string, bool) {
 }
 
 // Save binds one exact immutable source. Retrying never extends its lifetime.
-func (s *SnapshotStore) Save(ctx context.Context, selected SelectedArchive, request domain.MobileBackupRequest, account string) error {
+func (s *SnapshotStore) Save(
+	ctx context.Context,
+	selected SelectedArchive,
+	request domain.MobileBackupRequest,
+	account string,
+) error {
 	if !s.lock(ctx) {
 		return ErrSnapshot
 	}
 	defer s.unlock()
 	r, err := request.Normalize()
-	if err != nil || ctx == nil || ctx.Err() != nil || s.root == nil || !canonicalIdentity(account) || !canonicalIdentity(r.ConversationID) || selected.requestID != r.RequestID || selected.requestFingerprint != r.Fingerprint() || selected.ref != r.Ref() || !validName(selected.File.Name) || uint64(len(selected.File.Data)) > MaxFileBytes || !standaloneSQLite(selected.File.Data) {
+	if err != nil || ctx == nil || ctx.Err() != nil || s.root == nil || !canonicalIdentity(account) ||
+		!canonicalIdentity(r.ConversationID) ||
+		selected.requestID != r.RequestID ||
+		selected.requestFingerprint != r.Fingerprint() ||
+		selected.ref != r.Ref() ||
+		!validName(selected.File.Name) ||
+		uint64(len(selected.File.Data)) > MaxFileBytes ||
+		!standaloneSQLite(selected.File.Data) {
 		return ErrSnapshot
 	}
 	name, ok := snapshotName(r.RequestID)
@@ -285,7 +317,8 @@ func (s *SnapshotStore) Save(ctx context.Context, selected SelectedArchive, requ
 		if e != nil {
 			return e
 		}
-		if prior.File.Name != selected.File.Name || sha256.Sum256(prior.File.Data) != sha256.Sum256(selected.File.Data) {
+		if prior.File.Name != selected.File.Name ||
+			sha256.Sum256(prior.File.Data) != sha256.Sum256(selected.File.Data) {
 			return ErrSnapshotConflict
 		}
 		return nil
@@ -301,7 +334,17 @@ func (s *SnapshotStore) Save(ctx context.Context, selected SelectedArchive, requ
 	}
 	digest := sha256.Sum256(selected.File.Data)
 	now := s.now()
-	meta := snapshotMetadata{Account: account, Fingerprint: r.Fingerprint(), Filename: selected.File.Name, Digest: hex.EncodeToString(digest[:]), CreatedMS: now.UnixMilli(), ExpiresMS: now.Add(snapshotLifetime).UnixMilli(), CiphertextBytes: selected.CiphertextBytes, ContainerBytes: selected.ContainerBytes, TrailingBytes: selected.TrailingBytes}
+	meta := snapshotMetadata{
+		Account:         account,
+		Fingerprint:     r.Fingerprint(),
+		Filename:        selected.File.Name,
+		Digest:          hex.EncodeToString(digest[:]),
+		CreatedMS:       now.UnixMilli(),
+		ExpiresMS:       now.Add(snapshotLifetime).UnixMilli(),
+		CiphertextBytes: selected.CiphertextBytes,
+		ContainerBytes:  selected.ContainerBytes,
+		TrailingBytes:   selected.TrailingBytes,
+	}
 	metadata, err := json.Marshal(meta)
 	if err != nil || len(metadata) > snapshotMetadataLimit {
 		return ErrSnapshot
@@ -333,6 +376,7 @@ func (s *SnapshotStore) Save(ctx context.Context, selected SelectedArchive, requ
 	if err != nil {
 		return ErrSnapshot
 	}
+	//nolint:errcheck // Best-effort scratch cleanup must preserve the write/rename error.
 	defer s.root.Remove(tmp)
 	_, err = f.Write(sealed)
 	if err == nil {
@@ -353,6 +397,7 @@ func snapshotSyncDirectory(root *os.Root) error {
 	if err != nil {
 		return ErrSnapshot
 	}
+	// G104: Cleanup preserves the original setup/operation error.
 	defer f.Close()
 	if f.Sync() != nil {
 		return ErrSnapshot
@@ -360,7 +405,11 @@ func snapshotSyncDirectory(root *os.Root) error {
 	return nil
 }
 
-func (s *SnapshotStore) Read(ctx context.Context, request domain.MobileBackupRequest, account string) (SelectedArchive, error) {
+func (s *SnapshotStore) Read(
+	ctx context.Context,
+	request domain.MobileBackupRequest,
+	account string,
+) (SelectedArchive, error) {
 	if !s.lock(ctx) {
 		return SelectedArchive{}, ErrSnapshot
 	}
@@ -375,7 +424,11 @@ func (s *SnapshotStore) Read(ctx context.Context, request domain.MobileBackupReq
 	return s.read(ctx, r, account)
 }
 
-func (s *SnapshotStore) read(ctx context.Context, r domain.MobileBackupRequest, account string) (SelectedArchive, error) {
+func (s *SnapshotStore) read(
+	ctx context.Context,
+	r domain.MobileBackupRequest,
+	account string,
+) (SelectedArchive, error) {
 	name, ok := snapshotName(r.RequestID)
 	if !ok {
 		return SelectedArchive{}, ErrSnapshot
@@ -398,14 +451,26 @@ func (s *SnapshotStore) read(ctx context.Context, r domain.MobileBackupRequest, 
 		clear(data)
 		return SelectedArchive{}, ErrSnapshotConflict
 	}
-	return SelectedArchive{requestID: r.RequestID, requestFingerprint: r.Fingerprint(), ref: r.Ref(), snapshotCreatedMS: meta.CreatedMS, snapshotExpiresMS: meta.ExpiresMS, File: ArchiveFile{Name: meta.Filename, Data: data}, CiphertextBytes: meta.CiphertextBytes, ContainerBytes: meta.ContainerBytes, TrailingBytes: meta.TrailingBytes}, nil
+	return SelectedArchive{
+		requestID:          r.RequestID,
+		requestFingerprint: r.Fingerprint(),
+		ref:                r.Ref(),
+		snapshotCreatedMS:  meta.CreatedMS,
+		snapshotExpiresMS:  meta.ExpiresMS,
+		File:               ArchiveFile{Name: meta.Filename, Data: data},
+		CiphertextBytes:    meta.CiphertextBytes,
+		ContainerBytes:     meta.ContainerBytes,
+		TrailingBytes:      meta.TrailingBytes,
+	}, nil
 }
 
 func (s *SnapshotStore) decode(name, id string) (snapshotMetadata, []byte, error) {
 	var meta snapshotMetadata
 	info, err := s.root.Lstat(name)
 	maxBytes := int64(MaxFileBytes) + snapshotMetadataLimit + 64
-	if err != nil || !privateRegular(info) || info.Size() < int64(len(snapshotMagic)+s.aead.NonceSize()+s.aead.Overhead()+4) || info.Size() > maxBytes {
+	if err != nil || !privateRegular(info) ||
+		info.Size() < int64(len(snapshotMagic)+s.aead.NonceSize()+s.aead.Overhead()+4) ||
+		info.Size() > maxBytes {
 		return meta, nil, ErrSnapshot
 	}
 	f, err := s.root.Open(name)
@@ -413,10 +478,12 @@ func (s *SnapshotStore) decode(name, id string) (snapshotMetadata, []byte, error
 		return meta, nil, ErrSnapshot
 	}
 	if !samePrivateFile(f, info) {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		f.Close()
 		return meta, nil, ErrSnapshot
 	}
 	sealed, err := io.ReadAll(io.LimitReader(f, maxBytes+1))
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	f.Close()
 	defer clear(sealed)
 	if err != nil || int64(len(sealed)) != info.Size() || string(sealed[:len(snapshotMagic)]) != snapshotMagic {
@@ -429,18 +496,24 @@ func (s *SnapshotStore) decode(name, id string) (snapshotMetadata, []byte, error
 		return meta, nil, ErrSnapshot
 	}
 	size := int(binary.BigEndian.Uint32(plain[:4]))
-	if size < 1 || size > snapshotMetadataLimit || size > len(plain)-4 || json.Unmarshal(plain[4:4+size], &meta) != nil {
+	if size < 1 || size > snapshotMetadataLimit || size > len(plain)-4 ||
+		json.Unmarshal(plain[4:4+size], &meta) != nil {
 		clear(plain)
 		return snapshotMetadata{}, nil, ErrSnapshot
 	}
 	data := plain[4+size:]
 	digest := sha256.Sum256(data)
-	if !canonicalIdentity(meta.Account) || !validName(meta.Filename) || len(meta.Fingerprint) != 64 || meta.CreatedMS <= 0 || meta.ExpiresMS-meta.CreatedMS != snapshotLifetime.Milliseconds() || uint64(len(data)) > MaxFileBytes || meta.Digest != hex.EncodeToString(digest[:]) || !standaloneSQLite(data) {
+	if !canonicalIdentity(meta.Account) || !validName(meta.Filename) || len(meta.Fingerprint) != 64 ||
+		meta.CreatedMS <= 0 ||
+		meta.ExpiresMS-meta.CreatedMS != snapshotLifetime.Milliseconds() ||
+		uint64(len(data)) > MaxFileBytes ||
+		meta.Digest != hex.EncodeToString(digest[:]) ||
+		!standaloneSQLite(data) {
 		clear(plain)
 		return snapshotMetadata{}, nil, ErrSnapshot
 	}
 	clear(plain[:4+size])
-	return meta, data[:len(data):len(data)], nil
+	return meta, slices.Clip(data), nil
 }
 
 // sweep counts bounded owned artifacts and removes only authenticated expired
@@ -451,8 +524,9 @@ func (s *SnapshotStore) sweep(ctx context.Context) (int, int64, error) {
 		return 0, 0, ErrSnapshot
 	}
 	entries, err := f.ReadDir(maxSnapshots + 4)
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 	f.Close()
-	if err != nil && err != io.EOF || len(entries) > maxSnapshots+3 {
+	if err != nil && !errors.Is(err, io.EOF) || len(entries) > maxSnapshots+3 {
 		return 0, 0, ErrSnapshotCapacity
 	}
 	count := 0
@@ -465,8 +539,8 @@ func (s *SnapshotStore) sweep(ctx context.Context) (int, int64, error) {
 		if name == snapshotKeyName || name == snapshotClaimsName {
 			continue
 		}
-		if strings.HasSuffix(name, ".tmp") {
-			id := strings.TrimSuffix(name, ".tmp")
+		if before, ok := strings.CutSuffix(name, ".tmp"); ok {
+			id := before
 			_, ok := snapshotName(id)
 			info, e := s.root.Lstat(name)
 			if !ok || e != nil || !privateRegular(info) || s.root.Remove(name) != nil {
