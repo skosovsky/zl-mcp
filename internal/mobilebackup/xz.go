@@ -22,7 +22,8 @@ var ErrXZ = errors.New("invalid mobile backup compressed stream")
 // DecompressXZ validates allocation declarations before invoking the decoder.
 // It does not validate archive ownership or persist any records.
 func DecompressXZ(ctx context.Context, r io.Reader, compressedLimit, outputLimit int64) ([]byte, error) {
-	if ctx == nil || r == nil || compressedLimit <= 0 || outputLimit <= 0 || uint64(compressedLimit) > MaxTotalBytes || uint64(outputLimit) > MaxTotalBytes {
+	if ctx == nil || r == nil || compressedLimit <= 0 || outputLimit <= 0 || uint64(compressedLimit) > MaxTotalBytes ||
+		uint64(outputLimit) > MaxTotalBytes {
 		return nil, ErrXZ
 	}
 	data, err := io.ReadAll(io.LimitReader(cancelReader{ctx, r}, compressedLimit+1))
@@ -69,7 +70,8 @@ func inspectXZ(ctx context.Context, data []byte, outputLimit uint64) (uint64, er
 		}
 		streams++
 		footer := data[end-12 : end]
-		if string(footer[10:]) != "YZ" || crc32.ChecksumIEEE(footer[4:10]) != binary.LittleEndian.Uint32(footer[:4]) || footer[8] != 0 {
+		if string(footer[10:]) != "YZ" || crc32.ChecksumIEEE(footer[4:10]) != binary.LittleEndian.Uint32(footer[:4]) ||
+			footer[8] != 0 {
 			return 0, ErrXZ
 		}
 		checkBytes := 0
@@ -88,6 +90,7 @@ func inspectXZ(ctx context.Context, data []byte, outputLimit uint64) (uint64, er
 		if indexLen < 8 || indexLen > uint64(end-24) {
 			return 0, ErrXZ
 		}
+		//nolint:gosec // G115: indexLen <= end-24, with end >= 32 derived from len(data).
 		indexStart := end - 12 - int(indexLen)
 		index := data[indexStart : end-12]
 		if !xzCRC(index) || index[0] != 0 {
@@ -98,11 +101,14 @@ func inspectXZ(ctx context.Context, data []byte, outputLimit uint64) (uint64, er
 		if !ok || count > uint64(maxXZBlocks-blocks) {
 			return 0, ErrXZ
 		}
+		//nolint:gosec // G115: count <= maxXZBlocks-blocks <= 1000 before conversion.
 		blocks += int(count)
+		//nolint:gosec // G115: count <= maxXZBlocks-blocks <= 1000 before conversion.
 		records := make([]xzRecord, 0, int(count))
 		var blockBytes uint64
-		for i := uint64(0); i < count; i++ {
+		for range count {
 			u, ok := xzVLI(&body)
+			//nolint:gosec // G115: validated indexLen <= end-24 makes indexStart >= 12 before unsigned conversion.
 			if !ok || u < 5 || u > uint64(indexStart) {
 				return 0, ErrXZ
 			}
@@ -112,17 +118,20 @@ func inspectXZ(ctx context.Context, data []byte, outputLimit uint64) (uint64, er
 			}
 			output += n
 			blockBytes += (u + 3) &^ uint64(3)
+			//nolint:gosec // G115: validated indexLen <= end-24 makes indexStart >= 12 before unsigned conversion.
 			if blockBytes > uint64(indexStart) {
 				return 0, ErrXZ
 			}
 			records = append(records, xzRecord{u, n})
 		}
+		//nolint:gosec // G115: validated indexLen <= end-24 makes indexStart >= 12 before unsigned conversion.
 		if len(body) > 3 || !xzZeros(body) || blockBytes+12 > uint64(indexStart) {
 			return 0, ErrXZ
 		}
 		start := indexStart - int(blockBytes) - 12
 		header := data[start : start+12]
-		if !bytes.Equal(header[:6], []byte{0xfd, '7', 'z', 'X', 'Z', 0}) || !xzCRC(header[6:]) || !bytes.Equal(header[6:8], footer[8:10]) {
+		if !bytes.Equal(header[:6], []byte{0xfd, '7', 'z', 'X', 'Z', 0}) || !xzCRC(header[6:]) ||
+			!bytes.Equal(header[6:8], footer[8:10]) {
 			return 0, ErrXZ
 		}
 		pos := start + 12
@@ -130,8 +139,14 @@ func inspectXZ(ctx context.Context, data []byte, outputLimit uint64) (uint64, er
 			if ctx.Err() != nil {
 				return 0, ErrXZ
 			}
-			size := int((record.unpadded + 3) &^ uint64(3))
-			if size > indexStart-pos || !inspectXZBlock(data[pos:pos+size], record, checkBytes) {
+			padded := (record.unpadded + 3) &^ uint64(3)
+			//nolint:gosec // G115: short-circuit pos <= indexStart proves the remaining length is non-negative.
+			if pos > indexStart || padded > uint64(indexStart-pos) {
+				return 0, ErrXZ
+			}
+			//nolint:gosec // G115: padded size is bounded by the remaining int-sized input region above.
+			size := int(padded)
+			if !inspectXZBlock(data[pos:pos+size], record, checkBytes) {
 				return 0, ErrXZ
 			}
 			pos += size
@@ -152,6 +167,7 @@ func inspectXZBlock(block []byte, record xzRecord, checkBytes int) bool {
 		return false
 	}
 	headerLen := (int(block[0]) + 1) * 4
+	//nolint:gosec // G115: byte-derived headerLen <= 1024 and checkBytes is one of 0,4,8,32.
 	if headerLen < 8 || uint64(headerLen+checkBytes) >= record.unpadded || headerLen > len(block) {
 		return false
 	}
@@ -160,6 +176,7 @@ func inspectXZBlock(block []byte, record xzRecord, checkBytes int) bool {
 		return false
 	}
 	body := header[2 : headerLen-4]
+	//nolint:gosec // G115: byte-derived headerLen <= 1024 and checkBytes is one of 0,4,8,32.
 	compressed := record.unpadded - uint64(headerLen+checkBytes)
 	if header[1]&0x40 != 0 {
 		n, ok := xzVLI(&body)

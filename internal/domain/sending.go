@@ -22,13 +22,15 @@ func (r SendRequest) Validate() error {
 	if _, err := uuid.Parse(r.RequestID); err != nil || len(r.RequestID) != 36 {
 		return Invalid("request_id must be a UUID.")
 	}
-	if !utf8.ValidString(r.RecipientID) || utf8.RuneCountInString(r.RecipientID) < 1 || utf8.RuneCountInString(r.RecipientID) > 256 {
+	if !utf8.ValidString(r.RecipientID) || utf8.RuneCountInString(r.RecipientID) < 1 ||
+		utf8.RuneCountInString(r.RecipientID) > 256 {
 		return Invalid("recipient_id must contain 1–256 Unicode characters.")
 	}
 	if !utf8.ValidString(r.Text) || strings.TrimSpace(r.Text) == "" || utf8.RuneCountInString(r.Text) > 2048 {
 		return Invalid("text must be nonblank UTF-8 with at most 2048 Unicode characters.")
 	}
-	if r.ReplyTo != nil && (!utf8.ValidString(*r.ReplyTo) || len(*r.ReplyTo) == 0 || utf8.RuneCountInString(*r.ReplyTo) > 256) {
+	if r.ReplyTo != nil &&
+		(!utf8.ValidString(*r.ReplyTo) || len(*r.ReplyTo) == 0 || utf8.RuneCountInString(*r.ReplyTo) > 256) {
 		return Invalid("reply_to_message_id must contain 1–256 Unicode characters.")
 	}
 	return nil
@@ -37,9 +39,9 @@ func (r SendRequest) Validate() error {
 // Fingerprint preserves exact arguments without storing the message text.
 func (r SendRequest) Fingerprint() string {
 	b, _ := json.Marshal(struct {
-		Recipient string
-		Text      string
-		Reply     *string
+		Recipient string  `json:"Recipient"`
+		Text      string  `json:"Text"`
+		Reply     *string `json:"Reply"`
 	}{r.RecipientID, r.Text, r.ReplyTo})
 	h := sha256.Sum256(b)
 	return hex.EncodeToString(h[:])

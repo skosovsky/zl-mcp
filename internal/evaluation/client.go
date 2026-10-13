@@ -30,6 +30,8 @@ func connect(ctx context.Context, f *evalfixture.Fixture) (*client, error) {
 	}
 	return &client{session: cs, server: ss}, nil
 }
+
+//nolint:gosec // G104: synthetic fixture/session cleanup preserves the primary evaluation error.
 func (c *client) close() { c.session.Close(); c.server.Close() }
 func (c *client) tool(ctx context.Context, name string, args any) (map[string]any, error) {
 	select {

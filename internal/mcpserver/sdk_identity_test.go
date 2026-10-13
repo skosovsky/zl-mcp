@@ -15,6 +15,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
@@ -74,7 +75,10 @@ func sdkRawBody(method, id string, params map[string]any) []byte {
 	if params == nil {
 		params = map[string]any{}
 	}
-	params["_meta"] = map[string]any{"io.modelcontextprotocol/protocolVersion": "2026-07-28", "io.modelcontextprotocol/clientCapabilities": map[string]any{}}
+	params["_meta"] = map[string]any{
+		"io.modelcontextprotocol/protocolVersion":    "2026-07-28",
+		"io.modelcontextprotocol/clientCapabilities": map[string]any{},
+	}
 	encoded, err := json.Marshal(params)
 	if err != nil {
 		panic(err)
@@ -85,7 +89,7 @@ func sdkHTTPHeaders(req *http.Request, token, method string, params map[string]a
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json, text/event-stream")
-	req.Header.Set("MCP-Protocol-Version", "2026-07-28")
+	req.Header.Set("Mcp-Protocol-Version", "2026-07-28")
 	req.Header.Set("Mcp-Method", method)
 	if name, ok := params["name"].(string); ok {
 		req.Header.Set("Mcp-Name", name)
@@ -136,7 +140,9 @@ func TestSDK01CodecIdentityRequestsAndResponses(t *testing.T) {
 					t.Fatal(err)
 				}
 				// Assert.
-				var envelope struct{ ID json.RawMessage }
+				var envelope struct {
+					ID json.RawMessage `json:"ID"`
+				}
 				if err := json.Unmarshal(wire, &envelope); err != nil {
 					t.Fatal(err)
 				}
@@ -160,16 +166,20 @@ func TestSDK01HTTPWrappersPreserveEnvelopeIdentity(t *testing.T) {
 					params["name"] = "zalo_get_status"
 					params["arguments"] = map[string]any{}
 				}
-				request := httptest.NewRequest(http.MethodPost, "http://localhost/mcp", bytes.NewReader(sdkRawBody(method, tc.input, params)))
+				request := httptest.NewRequest(
+					http.MethodPost,
+					"http://localhost/mcp",
+					bytes.NewReader(sdkRawBody(method, tc.input, params)),
+				)
 				sdkHTTPHeaders(request, token, method, params)
 				response := httptest.NewRecorder()
 				// Act.
 				handler.ServeHTTP(response, request)
 				// Assert.
 				var envelope struct {
-					ID     json.RawMessage
-					Result json.RawMessage
-					Error  *protocolError
+					ID     json.RawMessage `json:"ID"`
+					Result json.RawMessage `json:"Result"`
+					Error  *protocolError  `json:"Error"`
 				}
 				if err := json.Unmarshal(response.Body.Bytes(), &envelope); err != nil {
 					t.Fatalf("status%d body%s: %v", response.Code, response.Body, err)
@@ -183,8 +193,14 @@ func TestSDK01HTTPWrappersPreserveEnvelopeIdentity(t *testing.T) {
 					t.Fatalf("request failed status%d body%s", response.Code, response.Body)
 				}
 				if method == "server/discover" {
-					var result struct{ Capabilities map[string]json.RawMessage }
-					if err := json.Unmarshal(envelope.Result, &result); err != nil || string(result.Capabilities["events"]) != "{}" {
+					var result struct {
+						Capabilities map[string]json.RawMessage `json:"Capabilities"`
+					}
+					if err := json.Unmarshal(
+						envelope.Result,
+						&result,
+					); err != nil ||
+						string(result.Capabilities["events"]) != "{}" {
 						t.Fatal("Events capability absent")
 					}
 				}
@@ -202,6 +218,7 @@ func (p *sdkCountEvents) Call(context.Context, string, string, json.RawMessage) 
 
 type sdkCountAdmission struct {
 	shared.AdmissionPort
+
 	calls atomic.Int64
 }
 
@@ -221,7 +238,17 @@ func TestSDK01RejectInvalidIDsBeforeApplicationDispatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	invalid := []string{"1.5", "-1.5", "9223372036854775808", "-9223372036854775809", "9223372036854775807.000000001", "1e100000000", "1e-100000000", "0." + strings.Repeat("0", 127), "0." + strings.Repeat("0", 100000)}
+	invalid := []string{
+		"1.5",
+		"-1.5",
+		"9223372036854775808",
+		"-9223372036854775809",
+		"9223372036854775807.000000001",
+		"1e100000000",
+		"1e-100000000",
+		"0." + strings.Repeat("0", 127),
+		"0." + strings.Repeat("0", 100000),
+	}
 	for _, id := range invalid {
 		for _, method := range []string{"events/list", "tools/call", "server/discover", "resources/read"} {
 			params := map[string]any{}
@@ -232,18 +259,33 @@ func TestSDK01RejectInvalidIDsBeforeApplicationDispatch(t *testing.T) {
 			if method == "resources/read" {
 				params["uri"] = "zalo://capabilities"
 			}
-			request := httptest.NewRequest(http.MethodPost, "http://localhost/mcp", bytes.NewReader(sdkRawBody(method, id, params)))
+			request := httptest.NewRequest(
+				http.MethodPost,
+				"http://localhost/mcp",
+				bytes.NewReader(sdkRawBody(method, id, params)),
+			)
 			sdkHTTPHeaders(request, token, method, params)
 			response := httptest.NewRecorder()
 			// Act.
 			handler.ServeHTTP(response, request)
 			// Assert: raw JSON null, fixed protocol code, never a rounded or truncated number.
 			var envelope struct {
-				ID    json.RawMessage
-				Error *protocolError
+				ID    json.RawMessage `json:"ID"`
+				Error *protocolError  `json:"Error"`
 			}
-			if err := json.Unmarshal(response.Body.Bytes(), &envelope); err != nil || string(envelope.ID) != "null" || envelope.Error == nil || envelope.Error.Code != -32600 {
-				t.Fatalf("method%s length%d status%d body%s error%v", method, len(id), response.Code, response.Body, err)
+			if err := json.Unmarshal(
+				response.Body.Bytes(),
+				&envelope,
+			); err != nil || string(envelope.ID) != "null" || envelope.Error == nil ||
+				envelope.Error.Code != -32600 {
+				t.Fatalf(
+					"method%s length%d status%d body%s error%v",
+					method,
+					len(id),
+					response.Code,
+					response.Body,
+					err,
+				)
 			}
 		}
 	}

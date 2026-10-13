@@ -10,7 +10,7 @@ var ErrExpiry = errors.New("mobile backup expiry invalid")
 // MessageExpiryMS computes the client-derived expiry without importing a row or
 // applying a wall-clock fallback. A zero TTL means no message expiry is declared.
 // Callers must use the archive's server timestamp, never the time of import.
-func MessageExpiryMS(serverTimestampMS, ttlMS int64) (expiresMS int64, declared bool, err error) {
+func MessageExpiryMS(serverTimestampMS, ttlMS int64) (int64, bool, error) {
 	if serverTimestampMS <= 0 || ttlMS < 0 {
 		return 0, false, ErrExpiry
 	}

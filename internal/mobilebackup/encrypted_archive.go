@@ -8,6 +8,7 @@ import (
 	"log/slog"
 )
 
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type Format1Archive struct {
 	Archive                                        PlainArchive `json:"-"`
 	CiphertextBytes, ContainerBytes, TrailingBytes uint64       `json:"-"`
@@ -21,7 +22,13 @@ func (a *Format1Archive) Clear() {
 		*a = Format1Archive{}
 	}
 }
-func ReadFormat1Archive(ctx context.Context, r io.Reader, key string, ciphertextLimit, outputLimit uint64) (Format1Archive, error) {
+
+func ReadFormat1Archive(
+	ctx context.Context,
+	r io.Reader,
+	key string,
+	ciphertextLimit, outputLimit uint64,
+) (Format1Archive, error) {
 	if ciphertextLimit == 0 || ciphertextLimit > MaxTotalBytes || outputLimit == 0 || outputLimit > MaxTotalBytes {
 		return Format1Archive{}, ErrArchive
 	}
@@ -32,17 +39,23 @@ func ReadFormat1Archive(ctx context.Context, r io.Reader, key string, ciphertext
 	defer clear(plain)
 	end := uint64(binary.BigEndian.Uint32(plain[6:10]))
 	if end < 18 || end > uint64(len(plain)) {
-		slog.Warn("mobile_archive_format_failed", "stage", "CONTAINER_BOUNDARY")
+		slog.WarnContext(ctx, "mobile_archive_format_failed", "stage", "CONTAINER_BOUNDARY")
 		return Format1Archive{}, ErrArchive
 	}
+	//nolint:gosec // G115: end was checked against len(plain), so it is representable as int.
 	archive, e := ReadPlainArchive(ctx, bytes.NewReader(plain[:int(end)]), end, outputLimit)
 	if e != nil {
-		slog.Warn("mobile_archive_format_failed", "stage", "PLAIN_CONTAINER")
+		slog.WarnContext(ctx, "mobile_archive_format_failed", "stage", "PLAIN_CONTAINER")
 		return Format1Archive{}, ErrArchive
 	}
 	if ctx.Err() != nil {
 		archive.Clear()
 		return Format1Archive{}, ErrArchive
 	}
-	return Format1Archive{Archive: archive, CiphertextBytes: physicalBytes, ContainerBytes: end, TrailingBytes: physicalBytes - end}, nil
+	return Format1Archive{
+		Archive:         archive,
+		CiphertextBytes: physicalBytes,
+		ContainerBytes:  end,
+		TrailingBytes:   physicalBytes - end,
+	}, nil
 }

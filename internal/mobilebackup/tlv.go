@@ -9,6 +9,8 @@ import (
 var ErrTLV = errors.New("invalid mobile backup TLV stream")
 
 // TLV owns bounded uninterpreted field values, including repeats and unknown tags.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type TLV struct {
 	Fields []TLVField `json:"-"`
 }
@@ -32,6 +34,7 @@ func (t *TLV) Clear() {
 	t.Fields = nil
 }
 
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
 func ParseTLV(ctx context.Context, data []byte) (result TLV, err error) {
 	if ctx == nil || ctx.Err() != nil || len(data) == 0 || len(data) > 256<<10 {
 		return TLV{}, ErrTLV

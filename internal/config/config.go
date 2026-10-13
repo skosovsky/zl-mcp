@@ -1,15 +1,18 @@
 package config
 
 import (
+	"errors"
 	"fmt"
-	"github.com/pelletier/go-toml/v2"
-	"github.com/skosovsky/zl-mcp/docs/contracts"
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 	"syscall"
+
+	"github.com/pelletier/go-toml/v2"
+
+	"github.com/skosovsky/zl-mcp/docs/contracts"
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 type Config struct {
@@ -54,13 +57,13 @@ func Load(path string) (Config, error) {
 		return c, err
 	}
 	if err = toml.Unmarshal(b, &c); err != nil {
-		return c, fmt.Errorf("invalid config TOML")
+		return c, errors.New("invalid config TOML")
 	}
 	if err = c.Telemetry.Validate(); err != nil {
 		return c, err
 	}
 	if c.StateDir == "" {
-		return c, fmt.Errorf("state_dir is required")
+		return c, errors.New("state_dir is required")
 	}
 	if !filepath.IsAbs(c.StateDir) {
 		c.StateDir = filepath.Join(filepath.Dir(path), c.StateDir)
@@ -89,7 +92,7 @@ func Load(path string) (Config, error) {
 	ip := net.ParseIP(host)
 	n, portErr := strconv.Atoi(port)
 	if err != nil || ip == nil || !ip.IsLoopback() || portErr != nil || n < 1 || n > 65535 {
-		return c, fmt.Errorf("mcp.listen requires a literal loopback IP and port 1..65535")
+		return c, errors.New("mcp.listen requires a literal loopback IP and port 1..65535")
 	}
 	if c.Logging.File == "" {
 		home, homeErr := os.UserHomeDir()
@@ -108,24 +111,32 @@ func Load(path string) (Config, error) {
 	if err != nil {
 		return c, err
 	}
-	if err = logSchema.Validate(map[string]any{"file": c.Logging.File, "max_size_mb": c.Logging.MaxSizeMB, "max_backups": c.Logging.MaxBackups, "event_trace_file": c.Logging.EventTraceFile}); err != nil {
+	if err = logSchema.Validate(
+		map[string]any{
+			"file":             c.Logging.File,
+			"max_size_mb":      c.Logging.MaxSizeMB,
+			"max_backups":      c.Logging.MaxBackups,
+			"event_trace_file": c.Logging.EventTraceFile,
+		},
+	); err != nil {
 		return c, fmt.Errorf("invalid service logging configuration: %w", err)
 	}
-	if c.Logging.EventTraceFile != "" && (!filepath.IsAbs(c.Logging.EventTraceFile) || filepath.Clean(c.Logging.EventTraceFile) == filepath.Clean(c.Logging.File)) {
-		return c, fmt.Errorf("event_trace_file must be absolute and separate from the service log")
+	if c.Logging.EventTraceFile != "" &&
+		(!filepath.IsAbs(c.Logging.EventTraceFile) || filepath.Clean(c.Logging.EventTraceFile) == filepath.Clean(c.Logging.File)) {
+		return c, errors.New("event_trace_file must be absolute and separate from the service log")
 	}
 	if c.Storage.RetentionDays < 0 {
-		return c, fmt.Errorf("retention_days must be nonnegative")
+		return c, errors.New("retention_days must be nonnegative")
 	}
 	switch c.Logging.Level {
 	case "debug", "info", "warn", "error":
 	default:
-		return c, fmt.Errorf("invalid logging.level")
+		return c, errors.New("invalid logging.level")
 	}
 	seen := map[string]bool{}
 	for _, id := range c.Collection.GroupIDs {
 		if id == "" || seen[id] {
-			return c, fmt.Errorf("group_ids must contain unique nonempty strings")
+			return c, errors.New("group_ids must contain unique nonempty strings")
 		}
 		seen[id] = true
 	}
@@ -147,7 +158,13 @@ func (c Config) validatePermissions() error {
 	for _, id := range c.Permissions.SendRecipientIDs {
 		ids = append(ids, id)
 	}
-	if err = schema.Validate(map[string]any{"allow_join": c.Permissions.AllowJoin, "allow_send": c.Permissions.AllowSend, "send_recipient_ids": ids}); err != nil {
+	if err = schema.Validate(
+		map[string]any{
+			"allow_join":         c.Permissions.AllowJoin,
+			"allow_send":         c.Permissions.AllowSend,
+			"send_recipient_ids": ids,
+		},
+	); err != nil {
 		return fmt.Errorf("invalid sending permission configuration: %w", err)
 	}
 	return nil
@@ -170,12 +187,12 @@ func (c Config) Policy() domain.CollectionPolicy {
 func (c Config) validateCollection() error {
 	if c.Collection.Mode == "" {
 		if c.Collection.Conversations != nil {
-			return fmt.Errorf("collection.conversations requires an explicit mode")
+			return errors.New("collection.conversations requires an explicit mode")
 		}
 		return nil // Existing configs, including an empty group allowlist, keep their meaning.
 	}
 	if c.Collection.GroupIDs != nil {
-		return fmt.Errorf("collection.mode cannot be combined with legacy group_ids")
+		return errors.New("collection.mode cannot be combined with legacy group_ids")
 	}
 	args := map[string]any{"mode": c.Collection.Mode}
 	if c.Collection.Conversations != nil {
@@ -203,11 +220,13 @@ func (c Config) Prepare() error {
 		return err
 	}
 	if !st.IsDir() || st.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("state_dir must be a real directory")
+		return errors.New("state_dir must be a real directory")
 	}
 	stat, ok := st.Sys().(*syscall.Stat_t)
+	//nolint:gosec // G115: supported Unix targets use the same 32-bit uid_t for Getuid and Stat_t.Uid.
 	if !ok || stat.Uid != uint32(os.Getuid()) {
-		return fmt.Errorf("state_dir must belong to current OS user")
+		return errors.New("state_dir must belong to current OS user")
 	}
+	//nolint:gosec // G302: 0700 is a private directory; owner execute is required for traversal.
 	return os.Chmod(c.StateDir, 0700)
 }

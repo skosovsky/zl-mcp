@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -28,17 +29,35 @@ func conversionPage(t *testing.T) (PreparedArchivePage, domain.MobileBackupReque
 			if i == 2 {
 				sender = "01"
 			}
-			if _, e := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", sender, fmt.Sprint(i), fmt.Sprint(i), "synthetic", ts, ttl, 0, 1, []byte{0, 0, 0, 9, 0, 0, 0, 1, 'x'}); e != nil {
+			if _, e := db.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				sender,
+				strconv.Itoa(i),
+				strconv.Itoa(i),
+				"synthetic",
+				ts,
+				ttl,
+				0,
+				1,
+				[]byte{0, 0, 0, 9, 0, 0, 0, 1, 'x'},
+			); e != nil {
 				t.Fatal(e)
 			}
 		}
 	})
-	archive := SelectedArchive{File: ArchiveFile{Name: "902.db", Data: data}, ref: normalized.Ref(), requestID: normalized.RequestID, requestFingerprint: normalized.Fingerprint()}
+	archive := SelectedArchive{
+		File:               ArchiveFile{Name: "902.db", Data: data},
+		ref:                normalized.Ref(),
+		requestID:          normalized.RequestID,
+		requestFingerprint: normalized.Fingerprint(),
+	}
 	defer archive.Clear()
 	now := time.Date(2026, 9, 16, 0, 0, 0, 0, time.UTC).UnixMilli()
-	mapper := identitySourceFunc(func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-		return []domain.MobileIdentityPair{{Plain: "901", Session: "12"}}, nil
-	})
+	mapper := identitySourceFunc(
+		func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+			return []domain.MobileIdentityPair{{Plain: "901", Session: "12"}}, nil
+		},
+	)
 	page, e := ReadPreparedArchivePage(context.Background(), archive, r, "10", t.TempDir(), now, 50, nil, mapper)
 	if e != nil {
 		t.Fatal(e)
@@ -52,7 +71,10 @@ func TestMobileRichTextProjectionBoundaries(t *testing.T) {
 			// Arrange: owned candidates; rich title must not overwrite the source row.
 			page, request, now := conversionPage(t)
 			defer page.Clear()
-			a := Attachment{Action: AttachmentValue{Present: true, Bytes: []byte("rtf")}, Title: AttachmentValue{Present: true, Bytes: []byte("Visible formatted text")}}
+			a := Attachment{
+				Action: AttachmentValue{Present: true, Bytes: []byte("rtf")},
+				Title:  AttachmentValue{Present: true, Bytes: []byte("Visible formatted text")},
+			}
 			switch mode {
 			case "empty":
 				a.Title.Bytes = nil
@@ -103,7 +125,9 @@ func TestMobileRichTextProjectionBoundaries(t *testing.T) {
 			if mode == "empty" || mode == "absent" {
 				want = original
 			}
-			if len(got.Records) != 2 || got.Records[0].Message.Text != want || len(got.Records[0].Message.AttachmentTypes) != 1 || got.Records[0].Message.AttachmentTypes[0] != "rtf" {
+			if len(got.Records) != 2 || got.Records[0].Message.Text != want ||
+				len(got.Records[0].Message.AttachmentTypes) != 1 ||
+				got.Records[0].Message.AttachmentTypes[0] != "rtf" {
 				t.Fatal("native rich-text rule lost")
 			}
 		})
@@ -123,7 +147,15 @@ func TestMobileMessageConversionPreservesExactIDsAndOriginalMetadata(t *testing.
 		t.Fatal("conversion failed", e)
 	}
 	m := got.Records[0].Message
-	if m.ID != "18446744073709551615" || m.QuoteMetadata.ClientMessageID != "9007199254740993" || m.Conversation != r.Ref() || m.SenderID != "12" || m.Direction != "incoming" || m.Source != "" || m.FirstIncoming != nil || m.ReplyTo != nil || m.QuoteMetadata.Timestamp != fmt.Sprint(page.Candidates.Rows[0].Row.TimestampMS) || !m.SentAt.Equal(time.UnixMilli(page.Candidates.Rows[0].Row.TimestampMS)) {
+	if m.ID != "18446744073709551615" || m.QuoteMetadata.ClientMessageID != "9007199254740993" ||
+		m.Conversation != r.Ref() ||
+		m.SenderID != "12" ||
+		m.Direction != "incoming" ||
+		m.Source != "" ||
+		m.FirstIncoming != nil ||
+		m.ReplyTo != nil ||
+		m.QuoteMetadata.Timestamp != strconv.FormatInt(page.Candidates.Rows[0].Row.TimestampMS, 10) ||
+		!m.SentAt.Equal(time.UnixMilli(page.Candidates.Rows[0].Row.TimestampMS)) {
 		t.Fatal("conversion invented/lost metadata")
 	}
 	b, _ := json.Marshal(got)
@@ -147,7 +179,9 @@ func TestMobileMessageConversionExpiryContentAndMetadataGaps(t *testing.T) {
 	got, e := ConvertPreparedArchivePage(context.Background(), page, r, "10", now)
 	defer got.Clear()
 	// Assert: exact text of the supported row only, with gaps rather than fabricated attachment/reply.
-	if e != nil || len(got.Records) != 1 || got.UnsupportedContent != 1 || got.UnresolvedQuotes != 1 || got.UnresolvedMentions != 1 || got.Records[0].Message.ReplyTo != nil {
+	if e != nil || len(got.Records) != 1 || got.UnsupportedContent != 1 || got.UnresolvedQuotes != 1 ||
+		got.UnresolvedMentions != 1 ||
+		got.Records[0].Message.ReplyTo != nil {
 		t.Fatal("content gaps lost", e)
 	}
 	row.Kind = "webchat"
@@ -216,7 +250,13 @@ func TestMobileInspectionValidatesBlockedSnapshotWithoutReleasingRecords(t *test
 	converted, convertErr := ConvertPreparedArchivePage(context.Background(), page, request, "10", now)
 	defer converted.Clear()
 	// Assert: content evidence survives the gates, which still prohibit records.
-	if err != nil || got.TextCandidates != 1 || got.UnsupportedContent != 1 || got.UnresolvedQuotes != 1 || got.UnresolvedMentions != 1 || len(got.BlockReasons) != 2 || got.BlockReasons[0] != "unverified_wal_snapshot" || got.BlockReasons[1] != "unverified_source_controls" || convertErr == nil || len(converted.Records) != 0 {
+	if err != nil || got.TextCandidates != 1 || got.UnsupportedContent != 1 || got.UnresolvedQuotes != 1 ||
+		got.UnresolvedMentions != 1 ||
+		len(got.BlockReasons) != 2 ||
+		got.BlockReasons[0] != "unverified_wal_snapshot" ||
+		got.BlockReasons[1] != "unverified_source_controls" ||
+		convertErr == nil ||
+		len(converted.Records) != 0 {
 		t.Fatal("blocked snapshot evidence or persistence boundary lost", err)
 	}
 	if got.UnsupportedContentReasons["non_text_kind"] != 1 || got.UnsupportedContentKinds["chat.photo"] != 1 {
@@ -226,7 +266,8 @@ func TestMobileInspectionValidatesBlockedSnapshotWithoutReleasingRecords(t *test
 	page.Candidates.Rows[1].Row.ClientID = "01"
 	got, err = InspectPreparedArchivePage(context.Background(), page, request, "10", now)
 	// Assert: no prefix counts or misleading safety-only result escapes.
-	if err == nil || got.TextCandidates != 0 || len(got.BlockReasons) != 0 || len(got.UnsupportedContentReasons) != 0 || len(got.UnsupportedContentKinds) != 0 {
+	if err == nil || got.TextCandidates != 0 || len(got.BlockReasons) != 0 || len(got.UnsupportedContentReasons) != 0 ||
+		len(got.UnsupportedContentKinds) != 0 {
 		t.Fatal("source gate masked an invalid candidate")
 	}
 }
@@ -241,7 +282,10 @@ func TestMobileInspectionContentCategoriesRedactPrivateMetadata(t *testing.T) {
 			page.SourceWAL = true
 			row := &page.Candidates.Rows[0]
 			row.Row.Text = "PRIVATE-BODY-MARKER"
-			attachment := Attachment{Action: AttachmentValue{Present: true, Bytes: []byte("PRIVATE-ACTION-MARKER")}, Title: AttachmentValue{Present: true, Bytes: []byte("PRIVATE-TITLE-MARKER")}}
+			attachment := Attachment{
+				Action: AttachmentValue{Present: true, Bytes: []byte("PRIVATE-ACTION-MARKER")},
+				Title:  AttachmentValue{Present: true, Bytes: []byte("PRIVATE-TITLE-MARKER")},
+			}
 			row.Metadata.Attachments = []Attachment{attachment}
 			kind := "webchat"
 			switch reason {
@@ -257,7 +301,13 @@ func TestMobileInspectionContentCategoriesRedactPrivateMetadata(t *testing.T) {
 			got, err := InspectPreparedArchivePage(context.Background(), page, request, "10", now)
 			encoded, marshalErr := json.Marshal(got)
 			// Assert: counts partition rejected content and survive private cleanup.
-			if err != nil || marshalErr != nil || got.UnsupportedContent != 1 || got.TextCandidates != 1 || len(got.UnsupportedContentReasons) != 1 || got.UnsupportedContentReasons[reason] != 1 || len(got.UnsupportedContentKinds) != 1 || got.UnsupportedContentKinds[kind] != 1 || len(got.BlockReasons) != 1 || got.BlockReasons[0] != "unverified_wal_snapshot" {
+			if err != nil || marshalErr != nil || got.UnsupportedContent != 1 || got.TextCandidates != 1 ||
+				len(got.UnsupportedContentReasons) != 1 ||
+				got.UnsupportedContentReasons[reason] != 1 ||
+				len(got.UnsupportedContentKinds) != 1 ||
+				got.UnsupportedContentKinds[kind] != 1 ||
+				len(got.BlockReasons) != 1 ||
+				got.BlockReasons[0] != "unverified_wal_snapshot" {
 				t.Fatal("content classification or source gate changed", err)
 			}
 			for _, marker := range []string{"PRIVATE-BODY-MARKER", "PRIVATE-ACTION-MARKER", "PRIVATE-TITLE-MARKER"} {
@@ -277,10 +327,12 @@ func TestMobileControlsOutsideIntervalPreventConversion(t *testing.T) {
 	archive := preparedArchiveFixture(t, r)
 	defer archive.Clear()
 	calls := 0
-	mapper := identitySourceFunc(func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-		calls++
-		return nil, nil
-	})
+	mapper := identitySourceFunc(
+		func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+			calls++
+			return nil, nil
+		},
+	)
 	now := time.Date(2026, 9, 17, 0, 0, 0, 0, time.UTC).UnixMilli()
 	page, e := ReadPreparedArchivePage(context.Background(), archive, r, "10", t.TempDir(), now, 2, nil, mapper)
 	if e != nil {
@@ -341,7 +393,8 @@ func TestMobilePlainAttachmentFallbackKeepsAdmissionGates(t *testing.T) {
 				t.Fatal("diagnostic changed source", ie)
 			}
 			if mode == "wal" || mode == "controls" {
-				if err == nil || len(got.Records) != 0 || len(inspection.BlockReasons) != 1 || inspection.TextCandidates != 2 {
+				if err == nil || len(got.Records) != 0 || len(inspection.BlockReasons) != 1 ||
+					inspection.TextCandidates != 2 {
 					t.Fatal("admission gate bypassed")
 				}
 				return
@@ -352,7 +405,9 @@ func TestMobilePlainAttachmentFallbackKeepsAdmissionGates(t *testing.T) {
 				}
 				return
 			}
-			if err != nil || len(got.Records) != 2 || got.UnsupportedContent != 0 || got.Records[0].Message.Text != original || len(got.Records[0].Message.AttachmentTypes) != 0 {
+			if err != nil || len(got.Records) != 2 || got.UnsupportedContent != 0 ||
+				got.Records[0].Message.Text != original ||
+				len(got.Records[0].Message.AttachmentTypes) != 0 {
 				t.Fatal("plain native fallback lost", err)
 			}
 		})

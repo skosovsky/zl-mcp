@@ -18,7 +18,14 @@ var ErrMobileHistorySourceUnavailable = errors.New("mobile history source unavai
 type MobileHistorySession interface {
 	ReceiveOffer(context.Context, string) (domain.MobileBackupOffer, error)
 	SaveOffer(context.Context, domain.MobileBackupRequest, domain.MobileBackupOffer) error
-	ReadHistoryPage(context.Context, domain.MobileBackupRequest, int, int, *domain.MobileHistorySnapshot, *domain.MobileHistoryPosition) (domain.MobileHistoryPage, error)
+	ReadHistoryPage(
+		context.Context,
+		domain.MobileBackupRequest,
+		int,
+		int,
+		*domain.MobileHistorySnapshot,
+		*domain.MobileHistoryPosition,
+	) (domain.MobileHistoryPage, error)
 }
 
 type MobileHistorySource interface {
@@ -77,12 +84,29 @@ func RunMobile(ctx context.Context, store *storage.Store, source MobileHistorySo
 	}
 }
 
-func runMobileOperation(ctx context.Context, store *storage.Store, source MobileHistorySource, pending storage.HistoryOperation) error {
-	return shared.ObserveWorker(ctx, domain.WorkHistory, pending.Status.OperationID, func(ctx context.Context) error { return runMobileOperationObserved(ctx, store, source, pending) })
+func runMobileOperation(
+	ctx context.Context,
+	store *storage.Store,
+	source MobileHistorySource,
+	pending storage.HistoryOperation,
+) error {
+	return shared.ObserveWorker(
+		ctx,
+		domain.WorkHistory,
+		pending.Status.OperationID,
+		func(ctx context.Context) error { return runMobileOperationObserved(ctx, store, source, pending) },
+	)
 }
-func runMobileOperationObserved(ctx context.Context, store *storage.Store, source MobileHistorySource, pending storage.HistoryOperation) error {
+
+func runMobileOperationObserved(
+	ctx context.Context,
+	store *storage.Store,
+	source MobileHistorySource,
+	pending storage.HistoryOperation,
+) error {
 	op, err := store.ClaimHistoryOperation(ctx, pending.Status.OperationID, pending.Revision)
 	if ctx.Err() != nil || errors.Is(err, storage.ErrHistoryState) {
+		//nolint:nilerr // Claim races and cancellation stop this worker successfully; storage failures are returned separately.
 		return nil
 	}
 	if err != nil || op.Status.State != "running" {
@@ -93,12 +117,20 @@ func runMobileOperationObserved(ctx context.Context, store *storage.Store, sourc
 	storageFailed := false
 	stop := func(state, reason string, elapsed time.Duration) error {
 		remaining := max(storage.MobileHistoryWorkBudget-op.WorkDuration, 0)
-		next, e := store.StopHistoryOperation(ctx, op.Status.OperationID, op.Revision, state, reason, min(elapsed, remaining))
+		next, e := store.StopHistoryOperation(
+			ctx,
+			op.Status.OperationID,
+			op.Revision,
+			state,
+			reason,
+			min(elapsed, remaining),
+		)
 		if e == nil {
 			shared.ObserveTransition(ctx, domain.WorkHistory, op.Status.State, next.Status.State, created)
 			op = next
 		}
 		if ctx.Err() != nil || errors.Is(e, storage.ErrHistoryState) {
+			//nolint:nilerr // Claim races and cancellation stop this worker successfully; storage failures are returned separately.
 			return nil
 		}
 		if e == nil {
@@ -127,7 +159,12 @@ func runMobileOperationObserved(ctx context.Context, store *storage.Store, sourc
 		return budget, nil
 	}
 	complete := func(stage context.Context, started time.Time) error {
-		next, e := store.CompleteMobileHistoryWork(stage, op.Status.OperationID, op.Revision, min(time.Since(started), storage.MobileHistoryWorkBudget))
+		next, e := store.CompleteMobileHistoryWork(
+			stage,
+			op.Status.OperationID,
+			op.Revision,
+			min(time.Since(started), storage.MobileHistoryWorkBudget),
+		)
 		if e == nil {
 			op = next
 		}
@@ -150,9 +187,13 @@ func runMobileOperationObserved(ctx context.Context, store *storage.Store, sourc
 			}
 			request, cancel := context.WithTimeout(sessionCtx, budget)
 			started := time.Now()
-			offer, receiveErr := shared.ObserveUpstream(request, domain.WorkHistory, func(ctx context.Context) (domain.MobileBackupOffer, error) {
-				return session.ReceiveOffer(ctx, attempt.OperationID)
-			})
+			offer, receiveErr := shared.ObserveUpstream(
+				request,
+				domain.WorkHistory,
+				func(ctx context.Context) (domain.MobileBackupOffer, error) {
+					return session.ReceiveOffer(ctx, attempt.OperationID)
+				},
+			)
 			cancel()
 			defer func() { offer = domain.MobileBackupOffer{} }()
 			if sessionCtx.Err() != nil {
@@ -172,9 +213,13 @@ func runMobileOperationObserved(ctx context.Context, store *storage.Store, sourc
 			request, cancel = context.WithTimeout(sessionCtx, budget)
 			started = time.Now()
 			saveErr := func() error {
-				_, err := shared.ObserveUpstream(request, domain.WorkHistory, func(ctx context.Context) (struct{}, error) {
-					return struct{}{}, session.SaveOffer(ctx, attempt.Request, offer)
-				})
+				_, err := shared.ObserveUpstream(
+					request,
+					domain.WorkHistory,
+					func(ctx context.Context) (struct{}, error) {
+						return struct{}{}, session.SaveOffer(ctx, attempt.Request, offer)
+					},
+				)
 				return err
 			}()
 			cancel()
@@ -210,9 +255,20 @@ func runMobileOperationObserved(ctx context.Context, store *storage.Store, sourc
 			}
 			request, cancel := context.WithTimeout(sessionCtx, budget)
 			started := time.Now()
-			page, readErr := shared.ObserveUpstream(request, domain.WorkHistory, func(ctx context.Context) (domain.MobileHistoryPage, error) {
-				return session.ReadHistoryPage(ctx, attempt.Request, op.Status.PageSize, op.Status.RecordsObserved, previous, after)
-			})
+			page, readErr := shared.ObserveUpstream(
+				request,
+				domain.WorkHistory,
+				func(ctx context.Context) (domain.MobileHistoryPage, error) {
+					return session.ReadHistoryPage(
+						ctx,
+						attempt.Request,
+						op.Status.PageSize,
+						op.Status.RecordsObserved,
+						previous,
+						after,
+					)
+				},
+			)
 			cancel()
 			elapsed := time.Since(started)
 			if readErr != nil || sessionCtx.Err() != nil {
@@ -226,11 +282,18 @@ func runMobileOperationObserved(ctx context.Context, store *storage.Store, sourc
 				}
 				return readErr
 			}
-			next, e := store.CommitMobileHistoryPage(sessionCtx, op.Status.OperationID, op.Revision, page, min(elapsed, storage.MobileHistoryWorkBudget))
+			next, e := store.CommitMobileHistoryPage(
+				sessionCtx,
+				op.Status.OperationID,
+				op.Revision,
+				page,
+				min(elapsed, storage.MobileHistoryWorkBudget),
+			)
 			page.Clear()
 			if e != nil {
 				var invalid *domain.Error
-				if errors.As(e, &invalid) && invalid.Code == "INVALID_ARGUMENT" || errors.Is(e, storage.ErrMobileHistorySource) {
+				if errors.As(e, &invalid) && invalid.Code == "INVALID_ARGUMENT" ||
+					errors.Is(e, storage.ErrMobileHistorySource) {
 					sourceErr := domain.ErrHistoryInvalidPage
 					if errors.Is(e, storage.ErrMobileHistorySource) {
 						sourceErr = ErrMobileHistorySourceUnavailable
@@ -252,10 +315,15 @@ func runMobileOperationObserved(ctx context.Context, store *storage.Store, sourc
 		return nil
 	})
 	if ctx.Err() != nil {
+		//nolint:nilerr // Claim races and cancellation stop this worker successfully; storage failures are returned separately.
 		return nil
 	}
 	if errors.Is(err, storage.ErrHistoryState) || op.Status.State != "running" {
-		if e := store.CloseMobileHistoryAcquisition(ctx, op.Status.OperationID); e != nil && !errors.Is(e, storage.ErrHistoryState) {
+		if e := store.CloseMobileHistoryAcquisition(
+			ctx,
+			op.Status.OperationID,
+		); e != nil &&
+			!errors.Is(e, storage.ErrHistoryState) {
 			return e
 		}
 		return nil

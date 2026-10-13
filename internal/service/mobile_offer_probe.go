@@ -27,7 +27,8 @@ func (p *membershipPort) probeMobileOffer(ctx context.Context, id string, revisi
 		return nil, err
 	}
 	u, err := url.Parse(offer.URL)
-	if err != nil || u.Scheme != "https" || u.User != nil || u.Port() != "" && u.Port() != "443" || u.Fragment != "" || offer.FileSize == 0 {
+	if err != nil || u.Scheme != "https" || u.User != nil || u.Port() != "" && u.Port() != "443" || u.Fragment != "" ||
+		offer.FileSize == 0 {
 		return nil, domain.Invalid("Mobile offer metadata is unavailable.")
 	}
 	host := strings.ToLower(u.Hostname())
@@ -41,5 +42,13 @@ func (p *membershipPort) probeMobileOffer(ctx context.Context, id string, revisi
 	if request.Err() != nil || attempt.State != "offer_ready" {
 		return nil, storage.ErrMobileBackupState
 	}
-	return map[string]any{"attempt": attempt, "download_host": host, "archive_bytes": strconv.FormatUint(offer.FileSize, 10), "within_archive_budget": offer.FileSize <= uint64(attempt.Request.MaxArchiveBytes), "download_performed": false, "import_performed": false}, nil
+	return map[string]any{
+		"attempt":       attempt,
+		"download_host": host,
+		"archive_bytes": strconv.FormatUint(offer.FileSize, 10),
+		// Positive MaxArchiveBytes is checked before the unsigned budget comparison.
+		"within_archive_budget": attempt.Request.MaxArchiveBytes > 0 && offer.FileSize <= uint64(attempt.Request.MaxArchiveBytes),
+		"download_performed":    false,
+		"import_performed":      false,
+	}, nil
 }

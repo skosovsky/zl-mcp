@@ -54,9 +54,11 @@ func Write(p string, m Object) error {
 	if e != nil {
 		return e
 	}
+	//nolint:gosec // G301: this directory holds shareable synthetic evidence/executables, never account state.
 	if e = os.MkdirAll(filepath.Dir(p), 0755); e != nil {
 		return e
 	}
+	//nolint:gosec // G306: this synthetic evidence contains build/host provenance, never account credentials.
 	return os.WriteFile(p, append(b, '\n'), 0644)
 }
 func object(v any) Object { m, _ := v.(map[string]any); return m }

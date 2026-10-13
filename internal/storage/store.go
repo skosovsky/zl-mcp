@@ -407,14 +407,17 @@ func (s *Store) removeMessagesTx(ctx context.Context, tx *sql.Tx, predicate, rea
 	values = append(values, args...)
 	_, err := tx.ExecContext(
 		ctx,
+		//nolint:gosec // G202: SQL fragments are fixed internal predicates/operators; all client values use placeholders.
 		`UPDATE event_deliveries SET payload=X'',state=CASE WHEN state IN ('pending','sending') THEN 'cancelled' ELSE state END,completed_at=COALESCE(completed_at,?),lease_until=NULL,last_reason=? WHERE message_seq IN (`+selection+`) OR event_id IN (SELECT event_id FROM message_events WHERE seq IN (`+selection+`))`,
 		values...)
 	if err != nil {
 		return err
 	}
+	//nolint:gosec // G202: SQL fragments are fixed internal predicates/operators; all client values use placeholders.
 	if _, err = tx.ExecContext(ctx, "DELETE FROM message_events WHERE seq IN ("+selection+")", args...); err != nil {
 		return err
 	}
+	//nolint:gosec // G202: SQL fragments are fixed internal predicates/operators; all client values use placeholders.
 	if _, err = tx.ExecContext(ctx, "DELETE FROM messages WHERE "+predicate, args...); err != nil {
 		return err
 	}
@@ -662,6 +665,7 @@ func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *
 	args = append(args, q.Limit+1)
 	rows, err := s.DB.QueryContext(
 		ctx,
+		//nolint:gosec // G202: SQL fragments are fixed internal predicates/operators; all client values use placeholders.
 		`SELECT m.conversation_type,m.group_id,m.message_id,m.sender_id,g.name,m.sender_name,m.sent_at,m.text FROM visible_messages m JOIN messages_fts ON messages_fts.rowid=m.seq LEFT JOIN conversations g ON g.conversation_type=m.conversation_type AND g.conversation_id=m.group_id WHERE `+strings.Join(
 			clauses,
 			" AND ",

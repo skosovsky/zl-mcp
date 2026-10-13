@@ -2,7 +2,7 @@
 
 Актуализировано после упрощения context-тестов: 2026-10-13. golangci-lint 2.14.0, root toolchain Go 1.27.2, конфиг `.golangci.yml`.
 
-Всего **2300** актуальных замечаний после L02: root — **2086**, `tools/harness` — **214**. Root lint успешно загрузил пакеты; compiler/loader blocker отсутствует. Lint остаётся FAIL из-за перечисленных diagnostics. Несколько правил на одной строке учитываются отдельно.
+Всего **2114** актуальных замечаний после L03: root — **1919**, `tools/harness` — **195**. Root lint успешно загрузил пакеты; compiler/loader blocker отсутствует. Lint остаётся FAIL из-за перечисленных diagnostics. Несколько правил на одной строке учитываются отдельно.
 
 По сравнению со снимком до восстановления компиляции не воспроизвелись **18** записей (включая агрегированный compile blocker), новых записей — **2**. ID совпавших замечаний сохранены. Исчезнувшие записи вынесены в конец документа и не входят в актуальную сводку.
 
@@ -16,7 +16,8 @@
 |---|---|---|
 | L01 | Architecture PASS: host/all-build 100%, 14 isolated + 6 source controls. Tools tests/race/vet PASS. | `/tmp/zl-lint-L01-checks.log` |
 | L02 | Compilation PASS; race PASS для 11 затронутых пакетов; audit/telemetry targeted race PASS. errcheck/ineffassign/wastedassign/sqlclosecheck/nolintlint: 0 diagnostics. | `/tmp/zl-lint-L02-race.log`, `/tmp/zl-lint-L02-final-root.json` |
-| L03–L06 | OPEN | — |
+| L03 | Compilation PASS; root contract/privacy/parsing race PASS; tools race PASS; frozen hash/null/Unicode and negative persisted-budget golden checks PASS. | `/tmp/zl-lint-L03-race.log`, `/tmp/zl-lint-L03-goldens.log`, `/tmp/zl-lint-L03-tools-race.log` |
+| L04–L06 | OPEN | — |
 
 L01 закрывает архитектурный blocker. Статусы lint IDs обновляются по полному успешному loader run; текущий registry сохраняет закрытые и новые IDs. Shared performance worker уже имеет cleanup в TestMain; сохраняем его и проверяем build-failure путь, не создаём второй lifetime.
 
@@ -181,27 +182,36 @@ GOWORK=off golangci-lint run --config ../../.golangci.yml --timeout 10m --max-is
 
 ## Diagnostics, добавленные при реализации
 
-Состояние после L02. OPEN — актуальный diagnostic; FIXED — устранён кодом или заменён новым diagnostic; SUPPRESSED — минимальный объяснённый nolint. Исходные группы ниже сохранены как evidence. Текущие позиции и статусы всех ID: `docs/lint-evidence/registry.json`.
+Состояние после L03. OPEN — актуальный diagnostic; FIXED — устранён кодом или заменён новым diagnostic; SUPPRESSED — минимальный объяснённый nolint. Исходные группы ниже сохранены как evidence. Текущие позиции и статусы всех ID: `docs/lint-evidence/registry.json`.
 
 | ID | Правило | Файл:строка | Замечание |
 |---|---|---|---|
 | L2548 | cyclop | `internal/evalfixture/fixture.go:133` | calculated cyclomatic complexity for function New is 49, max is 30 |
 | L2549 | cyclop | `internal/evaluation/grader.go:19` | calculated cyclomatic complexity for function Grade is 72, max is 30 |
-| L2550 | cyclop | `internal/evaluation/process_test.go:1` | the average complexity for the package evaluation is 11.241935, max is 10.000000 |
+| L2596 | cyclop | `internal/evaluation/process_test.go:1` | the average complexity for the package evaluation is 11.258065, max is 10.000000 |
 | L2551 | cyclop | `internal/evaluation/runner.go:136` | calculated cyclomatic complexity for function Run is 62, max is 30 |
-| L2552 | cyclop | `internal/evaluation/scenarios.go:22` | calculated cyclomatic complexity for function RunCase is 74, max is 30 |
+| L2552 | cyclop | `internal/evaluation/scenarios.go:23` | calculated cyclomatic complexity for function RunCase is 74, max is 30 |
 | L2553 | cyclop | `internal/events/subscriptions.go:132` | calculated cyclomatic complexity for function Call is 41, max is 30 |
 | L2554 | cyclop | `internal/mcpserver/http.go:112` | calculated cyclomatic complexity for function ServeHTTP is 42, max is 30 |
+| L2597 | cyclop | `internal/mobilebackup/xz.go:53` | calculated cyclomatic complexity for function inspectXZ is 44, max is 30 |
 | L2555 | cyclop | `internal/storage/browse.go:18` | calculated cyclomatic complexity for function Browse is 48, max is 30 |
 | L2556 | cyclop | `internal/storage/conversation_views.go:119` | calculated cyclomatic complexity for function Conversations is 32, max is 30 |
+| L2598 | exhaustruct_v5 | `internal/evalfixture/fixture.go:284` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
+| L2599 | exhaustruct_v5 | `internal/evaluation/model.go:99` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
+| L2600 | exhaustruct_v5 | `internal/service/run.go:316` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
+| L2601 | exhaustruct_v5 | `internal/service/run.go:328` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
 | L2557 | funlen | `internal/collector/contact_profiles.go:26` | Function 'refreshContactProfiles' has too many statements (64 > 50) |
 | L2558 | funlen | `internal/collector/contacts.go:30` | Function 'refreshContacts' has too many statements (56 > 50) |
 | L2559 | funlen | `internal/evalfixture/fixture.go:133` | Function 'New' has too many statements (118 > 50) |
+| L2602 | funlen | `internal/evaluation/benchmark.go:41` | Function 'Measure' has too many statements (66 > 50) |
 | L2560 | funlen | `internal/evaluation/grader.go:19` | Function 'Grade' has too many statements (115 > 50) |
-| L2561 | funlen | `internal/evaluation/runner.go:136` | Function 'Run' has too many statements (104 > 50) |
-| L2562 | funlen | `internal/evaluation/scenarios.go:22` | Function 'RunCase' has too many statements (227 > 50) |
+| L2603 | funlen | `internal/evaluation/runner.go:136` | Function 'Run' has too many statements (106 > 50) |
+| L2562 | funlen | `internal/evaluation/scenarios.go:23` | Function 'RunCase' has too many statements (227 > 50) |
 | L2563 | funlen | `internal/events/subscriptions.go:132` | Function 'Call' is too long (169 > 100) |
 | L2564 | funlen | `internal/mcpserver/http.go:112` | Function 'ServeHTTP' has too many statements (110 > 50) |
+| L2604 | funlen | `internal/mcpserver/server.go:241` | Function 'call' has too many statements (98 > 50) |
+| L2605 | funlen | `internal/mobilebackup/history_page.go:17` | Function 'ReadHistoryPage' has too many statements (61 > 50) |
+| L2606 | funlen | `internal/mobilebackup/xz.go:53` | Function 'inspectXZ' has too many statements (77 > 50) |
 | L2565 | funlen | `internal/storage/browse.go:18` | Function 'Browse' has too many statements (109 > 50) |
 | L2566 | funlen | `internal/storage/conversation_views.go:119` | Function 'Conversations' has too many statements (72 > 50) |
 | L2567 | funlen | `internal/storage/views.go:287` | Function 'context' has too many statements (69 > 50) |
@@ -209,30 +219,36 @@ GOWORK=off golangci-lint run --config ../../.golangci.yml --timeout 10m --max-is
 | L2569 | gocognit | `internal/evalfixture/fixture.go:133` | cognitive complexity 81 of func &#96;New&#96; is high (> 20) |
 | L2570 | gocognit | `internal/evaluation/grader.go:19` | cognitive complexity 81 of func &#96;Grade&#96; is high (> 20) |
 | L2571 | gocognit | `internal/evaluation/runner.go:136` | cognitive complexity 100 of func &#96;Run&#96; is high (> 20) |
-| L2572 | gocognit | `internal/evaluation/scenarios.go:22` | cognitive complexity 105 of func &#96;RunCase&#96; is high (> 20) |
+| L2572 | gocognit | `internal/evaluation/scenarios.go:23` | cognitive complexity 105 of func &#96;RunCase&#96; is high (> 20) |
 | L2573 | gocognit | `internal/events/subscriptions.go:132` | cognitive complexity 51 of func &#96;(*SubscriptionManager).Call&#96; is high (> 20) |
 | L2574 | gocognit | `internal/mcpserver/http.go:112` | cognitive complexity 58 of func &#96;(*HTTPService).ServeHTTP&#96; is high (> 20) |
 | L2575 | gocognit | `internal/mobilebackup/retained_archive_test.go:172` | cognitive complexity 31 of func &#96;TestRetainedArchiveExpiryRemovalAndSpentIDs&#96; is high (> 20) |
+| L2607 | gocognit | `internal/mobilebackup/xz.go:53` | cognitive complexity 59 of func &#96;inspectXZ&#96; is high (> 20) |
 | L2576 | gocognit | `internal/storage/browse.go:18` | cognitive complexity 59 of func &#96;(*Store).Browse&#96; is high (> 20) |
 | L2577 | gocognit | `internal/storage/conversation_views.go:119` | cognitive complexity 42 of func &#96;(*Store).Conversations&#96; is high (> 20) |
 | L2578 | gocognit | `internal/storage/views.go:287` | cognitive complexity 48 of func &#96;(*Store).context&#96; is high (> 20) |
 | L2579 | gocyclo | `internal/evalfixture/fixture.go:133` | cyclomatic complexity 49 of func &#96;New&#96; is high (> 30) |
 | L2580 | gocyclo | `internal/evaluation/grader.go:19` | cyclomatic complexity 72 of func &#96;Grade&#96; is high (> 30) |
 | L2581 | gocyclo | `internal/evaluation/runner.go:136` | cyclomatic complexity 62 of func &#96;Run&#96; is high (> 30) |
-| L2582 | gocyclo | `internal/evaluation/scenarios.go:22` | cyclomatic complexity 73 of func &#96;RunCase&#96; is high (> 30) |
+| L2582 | gocyclo | `internal/evaluation/scenarios.go:23` | cyclomatic complexity 73 of func &#96;RunCase&#96; is high (> 30) |
 | L2583 | gocyclo | `internal/events/subscriptions.go:132` | cyclomatic complexity 40 of func &#96;(*SubscriptionManager).Call&#96; is high (> 30) |
 | L2584 | gocyclo | `internal/mcpserver/http.go:112` | cyclomatic complexity 42 of func &#96;(*HTTPService).ServeHTTP&#96; is high (> 30) |
+| L2608 | gocyclo | `internal/mobilebackup/xz.go:53` | cyclomatic complexity 43 of func &#96;inspectXZ&#96; is high (> 30) |
 | L2585 | gocyclo | `internal/storage/browse.go:18` | cyclomatic complexity 48 of func &#96;(*Store).Browse&#96; is high (> 30) |
 | L2586 | gocyclo | `internal/storage/conversation_views.go:119` | cyclomatic complexity 32 of func &#96;(*Store).Conversations&#96; is high (> 30) |
 | L2587 | golines | `internal/collector/run.go:352` | File is not properly formatted |
+| L2609 | golines | `internal/domain/sending_fingerprint_test.go:18` | File is not properly formatted |
+| L2610 | golines | `internal/service/mobile_offer_probe.go:50` | File is not properly formatted |
+| L2611 | golines | `internal/service/mobile_offer_probe_test.go:149` | File is not properly formatted |
 | L2588 | govet | `internal/storage/conversation_views.go:73` | shadow: declaration of "ok" shadows declaration at line 66 |
 | L2589 | nestif | `internal/collector/run.go:330` | &#96;if v.Method == "cli_preview" \|\| v.Method == "cli_approve"&#96; has complex nested blocks (complexity: 10) |
 | L2590 | nestif | `internal/evalfixture/fixture.go:218` | &#96;if opts.ApprovalFile != "" \|\| opts.ApprovalTokenFile != ""&#96; has complex nested blocks (complexity: 19) |
 | L2591 | nestif | `internal/events/subscriptions.go:169` | &#96;if method == "events/list"&#96; has complex nested blocks (complexity: 39) |
 | L2592 | nestif | `internal/mcpserver/http.go:271` | &#96;if request.Method == "server/discover"&#96; has complex nested blocks (complexity: 5) |
-| L2593 | perfsprint | `internal/service/bridge.go:48` | error-format: fmt.Errorf can be replaced with errors.New |
 | L2594 | revive | `internal/collector/contacts.go:98` | increment-decrement: should replace observedCount += 1 with observedCount++ |
 | L2595 | revive | `internal/collector/contacts.go:101` | increment-decrement: should replace permittedCount += 1 with permittedCount++ |
+| L2612 | gofmt | `tools/harness/internal/architecture/architecture.go:451` | File is not properly formatted |
+| L2613 | goimports | `tools/harness/internal/architecture/architecture.go:451` | File is not properly formatted |
 
 ## Полный актуальный список
 
@@ -244,8 +260,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Разбирать вместе с gocyclo/gocognit/funlen/nestif: одно изменение функции закрывает несколько diagnostics. В production выделять самостоятельные этапы с контрактами (CLI parsing, запуск, сбор результата; worker claim/reserve/commit; parser framing/records), сохраняя порядок effects и lifetime. Для линейного protocol switch и цельного AAA integration test допустим локальный nolint с объяснением, почему разделение скроет сценарий. Package-average не лечить добавлением пустых helpers; после рефакторинга оценить отдельную настройку средней сложности для тестовых пакетов.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L0001 | `cmd/zl-mcp-eval/main.go:16:1` | calculated cyclomatic complexity for function run is 38, max is 30 | OPEN |
 | L0002 | `cmd/zl-mcp-eval/main_test.go:1:1` | the average complexity for the package main is 15.600000, max is 10.000000 | OPEN |
 | L0003 | `internal/collector/run.go:55:1` | calculated cyclomatic complexity for function runSession is 40, max is 30 | OPEN |
@@ -289,7 +305,7 @@ _Заполнить._
 | L0041 | `internal/mobilebackup/snapshot_sqlite_test.go:13:1` | calculated cyclomatic complexity for function TestSnapshotSQLiteZeroIDsPagingAndImportIsolation is 42, max is 30 | OPEN |
 | L0042 | `internal/mobilebackup/snapshot_terminal.go:15:1` | calculated cyclomatic complexity for function CleanupTerminal is 41, max is 30 | OPEN |
 | L0043 | `internal/mobilebackup/sqlite.go:169:1` | calculated cyclomatic complexity for function readSQLitePageMode is 86, max is 30 | OPEN |
-| L0044 | `internal/mobilebackup/xz.go:53:1` | calculated cyclomatic complexity for function inspectXZ is 43, max is 30 | OPEN |
+| L0044 | `internal/mobilebackup/xz.go:53:1` | calculated cyclomatic complexity for function inspectXZ is 43, max is 30 | FIXED |
 | L0045 | `internal/service/account_archive_control.go:24:1` | calculated cyclomatic complexity for function accountArchiveControl is 39, max is 30 | OPEN |
 | L0046 | `internal/service/account_archive_test.go:51:1` | calculated cyclomatic complexity for function testAccountArchiveCapture is 69, max is 30 | OPEN |
 | L0047 | `internal/service/archive_catalog.go:43:1` | calculated cyclomatic complexity for function archiveConversations is 33, max is 30 | OPEN |
@@ -331,8 +347,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L0077: отделить embedded field пустой строкой. Механическое форматирование, исключение не нужно.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L0077 | `tools/harness/internal/architecture/architecture.go:71:2` | there must be an empty line separating embedded fields from regular fields | OPEN |
 
 ### errcheck (115)
@@ -343,8 +359,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Разделить по смыслу: ошибки записи/Commit/Scan/Encode и setup fixture обрабатывать; при rollback/cleanup после основной ошибки допустимо явное игнорирование с причиной (не подменять исходную ошибку). Для Assert/Marshal без возможной ошибки — только доказанный локальный nolint. L0078–L0090: unchecked assertions из map в store adapter заменить типизированной внутренней проекцией либо comma-ok с явной internal error; не превращать несоответствие типов в нулевой успешный ответ. L0112: malformed grader input должен давать явный fail, а не продолжать проверки по zero value. L0125–L0127: fallback logger не должен рекурсивно логировать ошибку собственного Write; допустим локальный nolint с причиной last-resort best effort. Ответные Encode/Write после отправки HTTP headers не повторять при ошибке: завершить handler, сохранить no-retry и privacy. Close после чтения и Close перед persistence commit имеют разные требования; не добавлять общий ignore Close.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L0078 | `internal/adapters/store/read.go:85:24` | Error return value is not checked | FIXED |
 | L0079 | `internal/adapters/store/read.go:86:24` | Error return value is not checked | FIXED |
 | L0080 | `internal/adapters/store/read.go:87:24` | Error return value is not checked | FIXED |
@@ -469,8 +485,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Переименовать локальные/test ошибки storageFailure/privateFailure/callbackFailure и workerErr в storageError/privateError/callbackError/errWorker, обновить references. Для domain.HistorySourceFailure/HistoryPageFailure сначала проверить всех потребителей: если имена часть согласованного Go-контракта, оставить nolint:errname с причиной; wire reason/state не переименовывать ради стиля.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L0193 | `internal/collector/run.go:30:6` | the error type name &#96;storageFailure&#96; should conform to the &#96;xxxError&#96; format | OPEN |
 | L0194 | `internal/domain/history.go:13:6` | the error type name &#96;HistorySourceFailure&#96; should conform to the &#96;XxxError&#96; format | OPEN |
 | L0195 | `internal/domain/history.go:57:6` | the error type name &#96;HistoryPageFailure&#96; should conform to the &#96;XxxError&#96; format | OPEN |
@@ -486,8 +502,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Добавить явные перечисленные ветви, сохранив текущий fallback для неизвестных значений. OutcomeUnknown/WorkOther/StateUnknown должны возвращать прежнюю нормализованную метку. Для L0203 явно объединить текущие нетерминальные states в прежний результат. L0204: не добавлять ThreadTypeUser в карту поддерживаемых типов автоматически — если карта намеренно содержит только поддерживаемое подмножество, локальный nolint:exhaustive с описанием этого подмножества.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L0199 | `internal/domain/observation.go:16:2` | missing cases in switch of type domain.Outcome: domain.OutcomeUnknown | OPEN |
 | L0200 | `internal/domain/observation.go:44:2` | missing cases in switch of type domain.WorkKind: domain.WorkOther | OPEN |
 | L0201 | `internal/domain/observation.go:82:2` | missing cases in switch of type domain.OperationState: domain.StateUnknown | OPEN |
@@ -503,8 +519,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Не заполнять сотни DTO литералов нулями. Для sparse response DTO, fixtures и типов options с документированными defaults — узкое исключение по конкретному типу или локальный nolint:exhaustruct_v5: omitted fields intentionally use zero/default values. Для обязательных полей resources/security options проверить реальную инициализацию и дописать только требуемые значения. Не исключать весь internal/domain или весь production; null/missing/empty и SDK MaxLineLength проверять по контракту, а не по требованию заполнить структуру.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L0205 | `cmd/zl-mcp-eval-fixture/main.go:27:10` | evalfixture.Options is missing fields Policy, Offline, StateDir, EffectsFile, SendTimeout, DenySend, KeepState, ArchiveVector, Fixtures, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile | OPEN |
 | L0206 | `cmd/zl-mcp-eval-fixture/main.go:73:34` | mcp.StdioTransport is missing field MaxLineLength | OPEN |
 | L0207 | `internal/adapters/operations/read.go:36:19` | domain.Error is missing field Retryable | OPEN |
@@ -652,7 +668,7 @@ _Заполнить._
 | L0349 | `internal/mcpserver/server.go:230:15` | domain.NextAction is missing fields Tool, Arguments | OPEN |
 | L0350 | `internal/mcpserver/server.go:237:10` | mcp.CallToolResult is missing fields Meta, StructuredContent, InputRequests, RequestState | OPEN |
 | L0351 | `internal/mcpserver/server.go:237:68` | mcp.TextContent is missing fields Meta, Annotations | OPEN |
-| L0352 | `internal/mcpserver/server.go:277:10` | domain.Error is missing fields Code, Message, Retryable, NextAction, Details | OPEN |
+| L0352 | `internal/mcpserver/server.go:277:10` | domain.Error is missing fields Code, Message, Retryable, NextAction, Details | FIXED |
 | L0353 | `internal/mcpserver/server.go:301:17` | domain.NextAction is missing fields Tool, Arguments | OPEN |
 | L0354 | `internal/mcpserver/server.go:434:29` | mcp.TextContent is missing fields Meta, Annotations | OPEN |
 | L0355 | `internal/mcpserver/server.go:440:6` | mcp.ResourceLink is missing fields Title, Description, Size, Meta, Annotations, Icons | OPEN |
@@ -821,8 +837,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L0515–L0517: CLI печатает результат пользователю — локальный nolint:forbidigo с причиной CLI output, не заменять на logger (сломает stdout/JSON). L0518: progress performance harness допустим только в диагностическом потоке; сохранить согласованный формат stdout либо перенести progress в stderr, если stdout занят machine output. Проверять ошибки записи отдельно.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L0515 | `cmd/zl-mcp-eval/main.go:186:2` | use of &#96;fmt.Printf&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | OPEN |
 | L0516 | `tools/harness/cmd/harness/main.go:52:2` | use of &#96;fmt.Println&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | OPEN |
 | L0517 | `tools/harness/cmd/harness/main.go:101:2` | use of &#96;fmt.Println&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | OPEN |
@@ -836,8 +852,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L0519–L0522: перенести constructors перед methods без изменения тел и signatures.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L0519 | `internal/mobilebackup/download.go:30:1` | constructor "NewDownloader" for struct "Downloader" should be placed before struct method "Ready" | OPEN |
 | L0520 | `internal/mobilebackup/retained_archive.go:91:1` | constructor "NewRetainedArchiveStore" for struct "RetainedArchiveStore" should be placed before struct method "String" | OPEN |
 | L0521 | `internal/mobilebackup/retained_archive.go:96:1` | constructor "NewArchiveLibraryStore" for struct "RetainedArchiveStore" should be placed before struct method "String" | OPEN |
@@ -851,8 +867,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Применить общий план complexity из cyclop. Не дробить транзакцию/cleanup scope ради числа строк. Разрешить точечный nolint:funlen для цельного сценария или declarative registry с объяснением; длинные orchestration functions разделять по этапам.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L0523 | `cmd/zl-mcp-eval/main.go:16:6` | Function 'run' has too many statements (107 > 50) | OPEN |
 | L0524 | `internal/collector/contact_profiles.go:26:6` | Function 'refreshContactProfiles' has too many statements (60 > 50) | FIXED |
 | L0525 | `internal/collector/contacts.go:30:6` | Function 'refreshContacts' has too many statements (53 > 50) | FIXED |
@@ -862,7 +878,7 @@ _Заполнить._
 | L0529 | `internal/config/config.go:47:6` | Function 'Load' has too many statements (69 > 50) | OPEN |
 | L0530 | `internal/domain/history.go:59:6` | Function 'NewHistoryPageFailure' has too many statements (93 > 50) | OPEN |
 | L0531 | `internal/evalfixture/fixture.go:133:6` | Function 'New' has too many statements (115 > 50) | FIXED |
-| L0532 | `internal/evaluation/benchmark.go:39:6` | Function 'Measure' has too many statements (64 > 50) | OPEN |
+| L0532 | `internal/evaluation/benchmark.go:39:6` | Function 'Measure' has too many statements (64 > 50) | FIXED |
 | L0533 | `internal/evaluation/checkpoints.go:149:6` | Function 'GradeCheckpoint' has too many statements (194 > 50) | OPEN |
 | L0534 | `internal/evaluation/grader.go:19:6` | Function 'Grade' has too many statements (113 > 50) | FIXED |
 | L0535 | `internal/evaluation/runner.go:135:6` | Function 'Run' has too many statements (101 > 50) | FIXED |
@@ -874,12 +890,12 @@ _Заполнить._
 | L0541 | `internal/mcpserver/conversations.go:17:19` | Function 'addConversationResources' is too long (132 > 100) | OPEN |
 | L0542 | `internal/mcpserver/http.go:110:23` | Function 'ServeHTTP' has too many statements (109 > 50) | FIXED |
 | L0543 | `internal/mcpserver/server.go:61:6` | Function 'New' is too long (163 > 100) | OPEN |
-| L0544 | `internal/mcpserver/server.go:239:19` | Function 'call' has too many statements (99 > 50) | OPEN |
+| L0544 | `internal/mcpserver/server.go:239:19` | Function 'call' has too many statements (99 > 50) | FIXED |
 | L0545 | `internal/messaging/manager.go:38:19` | Function 'Call' has too many statements (57 > 50) | OPEN |
 | L0546 | `internal/mobilebackup/account_metadata.go:68:6` | Function 'inspectAccountMetadata' has too many statements (52 > 50) | OPEN |
 | L0547 | `internal/mobilebackup/attachment.go:44:6` | Function 'ParseAttachment' has too many statements (52 > 50) | OPEN |
 | L0548 | `internal/mobilebackup/control_scan.go:30:6` | Function 'ReadOwnDirectRecallSet' is too long (126 > 100) | OPEN |
-| L0549 | `internal/mobilebackup/history_page.go:17:25` | Function 'ReadHistoryPage' has too many statements (59 > 50) | OPEN |
+| L0549 | `internal/mobilebackup/history_page.go:17:25` | Function 'ReadHistoryPage' has too many statements (59 > 50) | FIXED |
 | L0550 | `internal/mobilebackup/message_conversion.go:91:6` | Function 'convertArchiveCandidates' has too many statements (63 > 50) | OPEN |
 | L0551 | `internal/mobilebackup/prepared_page.go:44:6` | Function 'ReadPreparedArchivePage' has too many statements (51 > 50) | OPEN |
 | L0552 | `internal/mobilebackup/retained_archive.go:448:32` | Function 'decode' has too many statements (54 > 50) | OPEN |
@@ -888,7 +904,7 @@ _Заполнить._
 | L0555 | `internal/mobilebackup/snapshot_page.go:76:25` | Function 'ReadSnapshotPage' has too many statements (100 > 50) | OPEN |
 | L0556 | `internal/mobilebackup/snapshot_terminal.go:15:25` | Function 'CleanupTerminal' has too many statements (71 > 50) | OPEN |
 | L0557 | `internal/mobilebackup/sqlite.go:169:6` | Function 'readSQLitePageMode' has too many statements (200 > 50) | OPEN |
-| L0558 | `internal/mobilebackup/xz.go:53:6` | Function 'inspectXZ' has too many statements (74 > 50) | OPEN |
+| L0558 | `internal/mobilebackup/xz.go:53:6` | Function 'inspectXZ' has too many statements (74 > 50) | FIXED |
 | L0559 | `internal/service/account_archive.go:30:26` | Function 'captureAccountArchiveWithDownloader' has too many statements (55 > 50) | OPEN |
 | L0560 | `internal/service/account_archive_control.go:24:26` | Function 'accountArchiveControl' has too many statements (99 > 50) | OPEN |
 | L0561 | `internal/service/archive_catalog.go:43:26` | Function 'archiveConversations' has too many statements (52 > 50) | OPEN |
@@ -929,8 +945,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Неизменяемые package-private registries/allowlists (toolAliases, descriptions, blockedPrefixes, toolNames, readNames, cases) оставить с nolint:gochecknoglobals и причиной read-only after initialization, проверив отсутствие writers. Exported Kinds/P95Limits сделать private с accessor/copy, чтобы внешний код не менял бюджет. workerOnce/workerPath/workerErr требуют общего владельца lifetime: TestMain build+cleanup или scoped fixture; sync.Once сам по себе не обеспечивает удаление каталога.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L0590 | `docs/contracts/contracts.go:19:5` | toolAliases is a global variable | OPEN |
 | L0591 | `internal/mcpserver/sdk_identity_test.go:25:5` | sdkIdentityCases is a global variable | OPEN |
 | L0592 | `internal/mcpserver/server.go:26:5` | descriptions is a global variable | OPEN |
@@ -952,8 +968,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Production: guard clauses и функции по предметным этапам; в GradeCheckpoint/Grade разделить graders по группам assertions, сохранив полный набор и counters. Tests: table-driven subtests только для независимых случаев; shared restart/transaction scenario сохранять цельным с локальным nolint:gocognit и причиной. Не выносить assertions в helpers без t.Helper и понятного имени.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L0602 | `cmd/zl-mcp-eval/main.go:16:1` | cognitive complexity 58 of func &#96;run&#96; is high (> 20) | OPEN |
 | L0603 | `cmd/zl-mcp-eval/main_test.go:31:1` | cognitive complexity 25 of func &#96;TestCLIExitCodesAndFailedReports&#96; is high (> 20) | OPEN |
 | L0604 | `cmd/zl-mcp-eval/main_test.go:130:1` | cognitive complexity 24 of func &#96;TestOfflineCheckpointCLI&#96; is high (> 20) | OPEN |
@@ -1074,7 +1090,7 @@ _Заполнить._
 | L0719 | `internal/mobilebackup/sqlite.go:169:1` | cognitive complexity 99 of func &#96;readSQLitePageMode&#96; is high (> 20) | OPEN |
 | L0720 | `internal/mobilebackup/sqlite.go:530:1` | cognitive complexity 27 of func &#96;sqliteRowMode&#96; is high (> 20) | OPEN |
 | L0721 | `internal/mobilebackup/sqlite_test.go:180:1` | cognitive complexity 36 of func &#96;TestSQLitePaginationTiesRejectedRowsAndBoundCursor&#96; is high (> 20) | OPEN |
-| L0722 | `internal/mobilebackup/xz.go:53:1` | cognitive complexity 56 of func &#96;inspectXZ&#96; is high (> 20) | OPEN |
+| L0722 | `internal/mobilebackup/xz.go:53:1` | cognitive complexity 56 of func &#96;inspectXZ&#96; is high (> 20) | FIXED |
 | L0723 | `internal/mobilebackup/xz.go:153:1` | cognitive complexity 22 of func &#96;inspectXZBlock&#96; is high (> 20) | OPEN |
 | L0724 | `internal/observability/native_test.go:48:1` | cognitive complexity 25 of func &#96;TestNativeSendRecordsOneAmbiguousEffectWithoutRetry&#96; is high (> 20) | OPEN |
 | L0725 | `internal/observability/native_test.go:145:1` | cognitive complexity 23 of func &#96;TestNativeHistoryWorkerKeepsLedgerAndRequestLink&#96; is high (> 20) | OPEN |
@@ -1168,8 +1184,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Выделять константы для действительно общего контракта: operation states, reason codes, schema keys внутри их владельца; сначала использовать существующие domain constants. Одинаковые тексты с разным смыслом не объединять. Для независимых fixture expected values и SQL/JSON ключей, где литерал делает контракт видимым, допустим точечный nolint:goconst. Не создавать общий пакет строковых констант и новые архитектурные зависимости ради lint.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L0807 | `docs/contracts/contracts.go:20:65` | string &#96;history_import_operation&#96; has 5 occurrences, make it a constant | OPEN |
 | L0808 | `internal/app/search/read.go:185:13` | string &#96;no_collected_data&#96; has 3 occurrences, make it a constant | OPEN |
 | L0809 | `internal/collector/contact_profiles.go:34:3` | string &#96;status&#96; has 4 occurrences, make it a constant | OPEN |
@@ -1658,8 +1674,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L1286/L1287/L1290–L1294: заменить if-else цепи на condition switch с тем же порядком и short-circuit. L1288: (*counter)++ допустимо. L1289 объединить else-if только сохранив два Remove — это проверка идемпотентности, см. L2513.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L1286 | `internal/evaluation/grader.go:108:3` | ifElseChain: rewrite if-else to switch statement | OPEN |
 | L1287 | `internal/mobilebackup/account_metadata.go:102:3` | ifElseChain: rewrite if-else to switch statement | OPEN |
 | L1288 | `internal/mobilebackup/control_scan_test.go:76:4` | assignOp: replace &#96;*counter = *counter + 1&#96; with &#96;*counter++&#96; | OPEN |
@@ -1678,8 +1694,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Закрывать теми же изменениями, что cyclop, без второго независимого рефакторинга. Для оправданного исключения перечислить только реально сработавшие complexity linters в одной директиве и дать предметную причину.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L1295 | `cmd/zl-mcp-eval/main.go:16:1` | cyclomatic complexity 38 of func &#96;run&#96; is high (> 30) | OPEN |
 | L1296 | `internal/collector/run.go:55:1` | cyclomatic complexity 40 of func &#96;runSession&#96; is high (> 30) | OPEN |
 | L1297 | `internal/config/config.go:47:1` | cyclomatic complexity 34 of func &#96;Load&#96; is high (> 30) | OPEN |
@@ -1719,7 +1735,7 @@ _Заполнить._
 | L1331 | `internal/mobilebackup/snapshot_sqlite_test.go:13:1` | cyclomatic complexity 42 of func &#96;TestSnapshotSQLiteZeroIDsPagingAndImportIsolation&#96; is high (> 30) | OPEN |
 | L1332 | `internal/mobilebackup/snapshot_terminal.go:15:1` | cyclomatic complexity 41 of func &#96;(*SnapshotStore).CleanupTerminal&#96; is high (> 30) | OPEN |
 | L1333 | `internal/mobilebackup/sqlite.go:169:1` | cyclomatic complexity 86 of func &#96;readSQLitePageMode&#96; is high (> 30) | OPEN |
-| L1334 | `internal/mobilebackup/xz.go:53:1` | cyclomatic complexity 42 of func &#96;inspectXZ&#96; is high (> 30) | OPEN |
+| L1334 | `internal/mobilebackup/xz.go:53:1` | cyclomatic complexity 42 of func &#96;inspectXZ&#96; is high (> 30) | FIXED |
 | L1335 | `internal/service/account_archive_control.go:24:1` | cyclomatic complexity 39 of func &#96;(*membershipPort).accountArchiveControl&#96; is high (> 30) | OPEN |
 | L1336 | `internal/service/account_archive_test.go:51:1` | cyclomatic complexity 69 of func &#96;testAccountArchiveCapture&#96; is high (> 30) | OPEN |
 | L1337 | `internal/service/archive_catalog.go:43:1` | cyclomatic complexity 33 of func &#96;(*membershipPort).archiveConversations&#96; is high (> 30) | OPEN |
@@ -1761,8 +1777,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L1367–L1373: начать комментарий с имени объявленного символа, сохранить смысл контракта. L1374: заменить exec.Cmd.Wait на [exec.Cmd.Wait]. Без nolint.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L1367 | `internal/app/eventaccess/journal.go:8:1` | godoc should start with symbol name ("Subscription") | OPEN |
 | L1368 | `internal/app/eventaccess/journal.go:43:1` | godoc should start with symbol name ("MarshalJSON") | OPEN |
 | L1369 | `internal/app/history/command.go:10:1` | godoc should start with symbol name ("StartRequest") | OPEN |
@@ -1780,8 +1796,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Отформатировать перечисленные tools/harness файлы штатным formatter; затем проверить diff. Не менять SQL/JSON fixtures и shell literal contents ради ширины строки.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L1376 | `tools/harness/cmd/harness/main.go:52:1` | File is not properly formatted | OPEN |
 | L1377 | `tools/harness/internal/architecture/architecture.go:163:1` | File is not properly formatted | OPEN |
 | L1378 | `tools/harness/internal/architecture/architecture_test.go:195:1` | File is not properly formatted | OPEN |
@@ -1798,8 +1814,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Разбор G115 и специальных security findings приведён выше в разделе «Адресные решения». G104 обрабатывать вместе с errcheck; не подавлять весь gosec на функции. G202 допускает локальный nolint только для фиксированных SQL fragments и placeholders для всех пользовательских значений. G702/G703/G204 проверять по происхождению binary/path/args. Права synthetic evidence и реальные credentials не объединять одним исключением.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L1383 | `internal/collector/join.go:484:4` | G104: Errors unhandled | SUPPRESSED |
 | L1384 | `internal/collector/join.go:489:4` | G104: Errors unhandled | SUPPRESSED |
 | L1385 | `internal/collector/join.go:500:2` | G104: Errors unhandled | SUPPRESSED |
@@ -1812,8 +1828,8 @@ _Заполнить._
 | L1392 | `internal/collector/run.go:348:5` | G104: Errors unhandled | FIXED |
 | L1393 | `internal/collector/run.go:357:4` | G104: Errors unhandled | FIXED |
 | L1394 | `internal/collector/run.go:365:3` | G104: Errors unhandled | FIXED |
-| L1395 | `internal/config/config.go:226:30` | G115: integer overflow conversion int -> uint32 | OPEN |
-| L1396 | `internal/config/config.go:229:9` | G302: Expect file permissions to be 0600 or less | OPEN |
+| L1395 | `internal/config/config.go:226:30` | G115: integer overflow conversion int -> uint32 | SUPPRESSED |
+| L1396 | `internal/config/config.go:229:9` | G302: Expect file permissions to be 0600 or less | SUPPRESSED |
 | L1397 | `internal/evalfixture/fixture.go:158:4` | G104: Errors unhandled | SUPPRESSED |
 | L1398 | `internal/evalfixture/fixture.go:284:3` | G104: Errors unhandled | SUPPRESSED |
 | L1399 | `internal/evalfixture/offline.go:85:4` | G104: Errors unhandled | SUPPRESSED |
@@ -1822,20 +1838,20 @@ _Заполнить._
 | L1402 | `internal/evalfixture/offline.go:123:3` | G104: Errors unhandled | SUPPRESSED |
 | L1403 | `internal/evalfixture/offline.go:127:3` | G104: Errors unhandled | SUPPRESSED |
 | L1404 | `internal/evaluation/benchmark.go:89:3` | G104: Errors unhandled | SUPPRESSED |
-| L1405 | `internal/evaluation/client.go:27:3` | G104: Errors unhandled | FIXED |
-| L1406 | `internal/evaluation/client.go:32:28` | G104: Errors unhandled | OPEN |
-| L1407 | `internal/evaluation/client.go:32:47` | G104: Errors unhandled | OPEN |
+| L1405 | `internal/evaluation/client.go:27:3` | G104: Errors unhandled | SUPPRESSED |
+| L1406 | `internal/evaluation/client.go:32:28` | G104: Errors unhandled | SUPPRESSED |
+| L1407 | `internal/evaluation/client.go:32:47` | G104: Errors unhandled | SUPPRESSED |
 | L1408 | `internal/evaluation/grader.go:69:4` | G104: Errors unhandled | FIXED |
 | L1409 | `internal/evaluation/model.go:99:3` | G104: Errors unhandled | SUPPRESSED |
-| L1410 | `internal/evaluation/runner.go:280:7` | G104: Errors unhandled | OPEN |
+| L1410 | `internal/evaluation/runner.go:280:7` | G104: Errors unhandled | SUPPRESSED |
 | L1411 | `internal/evaluation/scenarios.go:50:3` | G104: Errors unhandled | SUPPRESSED |
 | L1412 | `internal/events/worker.go:132:3` | G104: Errors unhandled | SUPPRESSED |
 | L1413 | `internal/local/files.go:18:3` | G104: Errors unhandled | FIXED |
 | L1414 | `internal/local/files.go:21:18` | G104: Errors unhandled | FIXED |
 | L1415 | `internal/local/files.go:21:57` | G104: Errors unhandled | FIXED |
-| L1416 | `internal/logging/file.go:37:48` | G115: integer overflow conversion int -> uint32 | OPEN |
-| L1417 | `internal/logging/file.go:40:12` | G302: Expect file permissions to be 0600 or less | OPEN |
-| L1418 | `internal/logging/file.go:45:92` | G115: integer overflow conversion int -> uint32 | OPEN |
+| L1416 | `internal/logging/file.go:37:48` | G115: integer overflow conversion int -> uint32 | SUPPRESSED |
+| L1417 | `internal/logging/file.go:40:12` | G302: Expect file permissions to be 0600 or less | SUPPRESSED |
+| L1418 | `internal/logging/file.go:45:92` | G115: integer overflow conversion int -> uint32 | SUPPRESSED |
 | L1419 | `internal/logging/startup.go:46:3` | G104: Errors unhandled | SUPPRESSED |
 | L1420 | `internal/logging/startup.go:52:3` | G104: Errors unhandled | SUPPRESSED |
 | L1421 | `internal/logging/startup.go:63:4` | G104: Errors unhandled | SUPPRESSED |
@@ -1845,20 +1861,20 @@ _Заполнить._
 | L1425 | `internal/mobilebackup/archive_restore.go:30:4` | G104: Errors unhandled | SUPPRESSED |
 | L1426 | `internal/mobilebackup/archive_restore.go:42:3` | G104: Errors unhandled | SUPPRESSED |
 | L1427 | `internal/mobilebackup/archive_restore.go:46:2` | G104: Errors unhandled | SUPPRESSED |
-| L1428 | `internal/mobilebackup/attachment.go:98:14` | G115: integer overflow conversion uint32 -> int32 | OPEN |
-| L1429 | `internal/mobilebackup/checksum.go:32:13` | G115: integer overflow conversion int -> uint32 | OPEN |
-| L1430 | `internal/mobilebackup/download.go:138:80` | G115: integer overflow conversion uint64 -> int64 | OPEN |
-| L1431 | `internal/mobilebackup/encrypted_archive.go:44:64` | G115: integer overflow conversion uint64 -> int | OPEN |
-| L1432 | `internal/mobilebackup/header.go:56:26` | G115: integer overflow conversion uint64 -> int | OPEN |
-| L1433 | `internal/mobilebackup/mentions.go:58:13` | G115: integer overflow conversion uint32 -> int32 | OPEN |
-| L1434 | `internal/mobilebackup/quote.go:68:14` | G115: integer overflow conversion uint32 -> int32 | OPEN |
-| L1435 | `internal/mobilebackup/quote.go:76:13` | G115: integer overflow conversion uint64 -> int64 | OPEN |
+| L1428 | `internal/mobilebackup/attachment.go:98:14` | G115: integer overflow conversion uint32 -> int32 | SUPPRESSED |
+| L1429 | `internal/mobilebackup/checksum.go:32:13` | G115: integer overflow conversion int -> uint32 | SUPPRESSED |
+| L1430 | `internal/mobilebackup/download.go:138:80` | G115: integer overflow conversion uint64 -> int64 | SUPPRESSED |
+| L1431 | `internal/mobilebackup/encrypted_archive.go:44:64` | G115: integer overflow conversion uint64 -> int | SUPPRESSED |
+| L1432 | `internal/mobilebackup/header.go:56:26` | G115: integer overflow conversion uint64 -> int | SUPPRESSED |
+| L1433 | `internal/mobilebackup/mentions.go:58:13` | G115: integer overflow conversion uint32 -> int32 | SUPPRESSED |
+| L1434 | `internal/mobilebackup/quote.go:68:14` | G115: integer overflow conversion uint32 -> int32 | SUPPRESSED |
+| L1435 | `internal/mobilebackup/quote.go:76:13` | G115: integer overflow conversion uint64 -> int64 | SUPPRESSED |
 | L1436 | `internal/mobilebackup/retained_archive.go:117:3` | G104: Errors unhandled | SUPPRESSED |
 | L1437 | `internal/mobilebackup/retained_archive.go:123:3` | G104: Errors unhandled | SUPPRESSED |
 | L1438 | `internal/mobilebackup/retained_archive.go:128:3` | G104: Errors unhandled | SUPPRESSED |
 | L1439 | `internal/mobilebackup/retained_archive.go:133:3` | G104: Errors unhandled | SUPPRESSED |
 | L1440 | `internal/mobilebackup/retained_archive.go:149:3` | G104: Errors unhandled | SUPPRESSED |
-| L1441 | `internal/mobilebackup/retained_archive.go:302:42` | G115: integer overflow conversion int -> uint32 | OPEN |
+| L1441 | `internal/mobilebackup/retained_archive.go:302:42` | G115: integer overflow conversion int -> uint32 | SUPPRESSED |
 | L1442 | `internal/mobilebackup/retained_archive.go:463:3` | G104: Errors unhandled | SUPPRESSED |
 | L1443 | `internal/mobilebackup/retained_archive.go:467:2` | G104: Errors unhandled | SUPPRESSED |
 | L1444 | `internal/mobilebackup/retained_archive.go:544:2` | G104: Errors unhandled | SUPPRESSED |
@@ -1873,7 +1889,7 @@ _Заполнить._
 | L1453 | `internal/mobilebackup/snapshot.go:202:3` | G104: Errors unhandled | SUPPRESSED |
 | L1454 | `internal/mobilebackup/snapshot.go:239:3` | G104: Errors unhandled | SUPPRESSED |
 | L1455 | `internal/mobilebackup/snapshot.go:243:2` | G104: Errors unhandled | SUPPRESSED |
-| L1456 | `internal/mobilebackup/snapshot.go:343:42` | G115: integer overflow conversion int -> uint32 | OPEN |
+| L1456 | `internal/mobilebackup/snapshot.go:343:42` | G115: integer overflow conversion int -> uint32 | SUPPRESSED |
 | L1457 | `internal/mobilebackup/snapshot.go:468:3` | G104: Errors unhandled | SUPPRESSED |
 | L1458 | `internal/mobilebackup/snapshot.go:472:2` | G104: Errors unhandled | SUPPRESSED |
 | L1459 | `internal/mobilebackup/snapshot.go:512:2` | G104: Errors unhandled | SUPPRESSED |
@@ -1884,19 +1900,19 @@ _Заполнить._
 | L1464 | `internal/mobilebackup/sqlite.go:322:2` | G104: Errors unhandled | SUPPRESSED |
 | L1465 | `internal/mobilebackup/sqlite.go:361:4` | G104: Errors unhandled | SUPPRESSED |
 | L1466 | `internal/mobilebackup/sqlite.go:367:2` | G104: Errors unhandled | SUPPRESSED |
-| L1467 | `internal/mobilebackup/xz.go:93:31` | G115: integer overflow conversion uint64 -> int | OPEN |
-| L1468 | `internal/mobilebackup/xz.go:103:16` | G115: integer overflow conversion uint64 -> int | OPEN |
-| L1469 | `internal/mobilebackup/xz.go:104:37` | G115: integer overflow conversion uint64 -> int | OPEN |
-| L1470 | `internal/mobilebackup/xz.go:108:33` | G115: integer overflow conversion int -> uint64 | OPEN |
-| L1471 | `internal/mobilebackup/xz.go:117:26` | G115: integer overflow conversion int -> uint64 | OPEN |
-| L1472 | `internal/mobilebackup/xz.go:122:63` | G115: integer overflow conversion int -> uint64 | OPEN |
-| L1473 | `internal/mobilebackup/xz.go:136:15` | G115: integer overflow conversion uint64 -> int | OPEN |
-| L1474 | `internal/mobilebackup/xz.go:158:28` | G115: integer overflow conversion int -> uint64 | OPEN |
-| L1475 | `internal/mobilebackup/xz.go:166:40` | G115: integer overflow conversion int -> uint64 | OPEN |
-| L1476 | `internal/service/mobile_offer_probe.go:49:52` | G115: integer overflow conversion int64 -> uint64 | OPEN |
+| L1467 | `internal/mobilebackup/xz.go:93:31` | G115: integer overflow conversion uint64 -> int | FIXED |
+| L1468 | `internal/mobilebackup/xz.go:103:16` | G115: integer overflow conversion uint64 -> int | FIXED |
+| L1469 | `internal/mobilebackup/xz.go:104:37` | G115: integer overflow conversion uint64 -> int | FIXED |
+| L1470 | `internal/mobilebackup/xz.go:108:33` | G115: integer overflow conversion int -> uint64 | SUPPRESSED |
+| L1471 | `internal/mobilebackup/xz.go:117:26` | G115: integer overflow conversion int -> uint64 | SUPPRESSED |
+| L1472 | `internal/mobilebackup/xz.go:122:63` | G115: integer overflow conversion int -> uint64 | SUPPRESSED |
+| L1473 | `internal/mobilebackup/xz.go:136:15` | G115: integer overflow conversion uint64 -> int | FIXED |
+| L1474 | `internal/mobilebackup/xz.go:158:28` | G115: integer overflow conversion int -> uint64 | SUPPRESSED |
+| L1475 | `internal/mobilebackup/xz.go:166:40` | G115: integer overflow conversion int -> uint64 | SUPPRESSED |
+| L1476 | `internal/service/mobile_offer_probe.go:49:52` | G115: integer overflow conversion int64 -> uint64 | FIXED |
 | L1477 | `internal/service/recall_diagnostic.go:152:2` | G104: Errors unhandled | SUPPRESSED |
 | L1478 | `internal/service/recall_diagnostic.go:183:2` | G104: Errors unhandled | SUPPRESSED |
-| L1479 | `internal/storage/browse.go:92:3` | G202: SQL string concatenation | OPEN |
+| L1479 | `internal/storage/browse.go:92:3` | G202: SQL string concatenation | SUPPRESSED |
 | L1480 | `internal/storage/browse.go:107:4` | G104: Errors unhandled | SUPPRESSED |
 | L1481 | `internal/storage/browse.go:137:2` | G104: Errors unhandled | SUPPRESSED |
 | L1482 | `internal/storage/conversation_views.go:150:4` | G104: Errors unhandled | SUPPRESSED |
@@ -1921,36 +1937,36 @@ _Заполнить._
 | L1501 | `internal/storage/store.go:74:3` | G104: Errors unhandled | SUPPRESSED |
 | L1502 | `internal/storage/store.go:82:4` | G104: Errors unhandled | SUPPRESSED |
 | L1503 | `internal/storage/store.go:92:3` | G104: Errors unhandled | SUPPRESSED |
-| L1504 | `internal/storage/store.go:402:3` | G202: SQL string concatenation | OPEN |
-| L1505 | `internal/storage/store.go:407:34` | G202: SQL string concatenation | OPEN |
-| L1506 | `internal/storage/store.go:410:34` | G202: SQL string concatenation | OPEN |
-| L1507 | `internal/storage/store.go:657:3` | G202: SQL string concatenation | OPEN |
+| L1504 | `internal/storage/store.go:402:3` | G202: SQL string concatenation | SUPPRESSED |
+| L1505 | `internal/storage/store.go:407:34` | G202: SQL string concatenation | SUPPRESSED |
+| L1506 | `internal/storage/store.go:410:34` | G202: SQL string concatenation | SUPPRESSED |
+| L1507 | `internal/storage/store.go:657:3` | G202: SQL string concatenation | SUPPRESSED |
 | L1508 | `internal/storage/store.go:680:4` | G104: Errors unhandled | SUPPRESSED |
 | L1509 | `internal/storage/store.go:686:4` | G104: Errors unhandled | SUPPRESSED |
 | L1510 | `internal/storage/store.go:699:2` | G104: Errors unhandled | SUPPRESSED |
 | L1511 | `internal/storage/views.go:40:4` | G104: Errors unhandled | SUPPRESSED |
 | L1512 | `internal/storage/views.go:53:2` | G104: Errors unhandled | SUPPRESSED |
-| L1513 | `internal/storage/views.go:306:4` | G202: SQL string concatenation | OPEN |
-| L1514 | `internal/zalo/cookies.go:38:3` | G124: http.Cookie missing or has insecure Secure, HttpOnly, or SameSite attribute | OPEN |
-| L1515 | `tools/harness/internal/architecture/architecture.go:92:28` | G702: Command injection via taint analysis | OPEN |
-| L1516 | `tools/harness/internal/architecture/architecture.go:233:24` | G703: Path traversal via taint analysis | OPEN |
-| L1517 | `tools/harness/internal/architecture/architecture.go:406:3` | G104: Errors unhandled | OPEN |
-| L1518 | `tools/harness/internal/architecture/architecture.go:549:3` | G104: Errors unhandled | OPEN |
-| L1519 | `tools/harness/internal/performance/bench.go:32:17` | G306: Expect WriteFile permissions to be 0600 or less | OPEN |
-| L1520 | `tools/harness/internal/performance/bench.go:35:17` | G306: Expect WriteFile permissions to be 0600 or less | OPEN |
-| L1521 | `tools/harness/internal/performance/bench.go:95:9` | G301: Expect directory permissions to be 0750 or less | OPEN |
-| L1522 | `tools/harness/internal/performance/build.go:80:9` | G301: Expect directory permissions to be 0750 or less | OPEN |
-| L1523 | `tools/harness/internal/performance/build.go:109:13` | G306: Expect WriteFile permissions to be 0600 or less | OPEN |
-| L1524 | `tools/harness/internal/performance/json.go:57:9` | G301: Expect directory permissions to be 0750 or less | OPEN |
-| L1525 | `tools/harness/internal/performance/json.go:60:9` | G306: Expect WriteFile permissions to be 0600 or less | OPEN |
-| L1526 | `tools/harness/internal/performance/process.go:29:3` | G104: Errors unhandled | OPEN |
-| L1527 | `tools/harness/internal/performance/process.go:33:9` | G204: Subprocess launched with a potential tainted input or cmd arguments | OPEN |
-| L1528 | `tools/harness/internal/performance/process.go:41:3` | G104: Errors unhandled | OPEN |
-| L1529 | `tools/harness/internal/performance/process.go:42:3` | G104: Errors unhandled | OPEN |
-| L1530 | `tools/harness/internal/performance/process.go:45:2` | G104: Errors unhandled | OPEN |
-| L1531 | `tools/harness/internal/performance/process.go:46:2` | G104: Errors unhandled | OPEN |
-| L1532 | `tools/harness/internal/performance/process.go:98:3` | G104: Errors unhandled | OPEN |
-| L1533 | `tools/harness/internal/performance/process.go:99:3` | G104: Errors unhandled | OPEN |
+| L1513 | `internal/storage/views.go:306:4` | G202: SQL string concatenation | SUPPRESSED |
+| L1514 | `internal/zalo/cookies.go:38:3` | G124: http.Cookie missing or has insecure Secure, HttpOnly, or SameSite attribute | SUPPRESSED |
+| L1515 | `tools/harness/internal/architecture/architecture.go:92:28` | G702: Command injection via taint analysis | SUPPRESSED |
+| L1516 | `tools/harness/internal/architecture/architecture.go:233:24` | G703: Path traversal via taint analysis | SUPPRESSED |
+| L1517 | `tools/harness/internal/architecture/architecture.go:406:3` | G104: Errors unhandled | SUPPRESSED |
+| L1518 | `tools/harness/internal/architecture/architecture.go:549:3` | G104: Errors unhandled | SUPPRESSED |
+| L1519 | `tools/harness/internal/performance/bench.go:32:17` | G306: Expect WriteFile permissions to be 0600 or less | SUPPRESSED |
+| L1520 | `tools/harness/internal/performance/bench.go:35:17` | G306: Expect WriteFile permissions to be 0600 or less | SUPPRESSED |
+| L1521 | `tools/harness/internal/performance/bench.go:95:9` | G301: Expect directory permissions to be 0750 or less | SUPPRESSED |
+| L1522 | `tools/harness/internal/performance/build.go:80:9` | G301: Expect directory permissions to be 0750 or less | SUPPRESSED |
+| L1523 | `tools/harness/internal/performance/build.go:109:13` | G306: Expect WriteFile permissions to be 0600 or less | SUPPRESSED |
+| L1524 | `tools/harness/internal/performance/json.go:57:9` | G301: Expect directory permissions to be 0750 or less | SUPPRESSED |
+| L1525 | `tools/harness/internal/performance/json.go:60:9` | G306: Expect WriteFile permissions to be 0600 or less | SUPPRESSED |
+| L1526 | `tools/harness/internal/performance/process.go:29:3` | G104: Errors unhandled | SUPPRESSED |
+| L1527 | `tools/harness/internal/performance/process.go:33:9` | G204: Subprocess launched with a potential tainted input or cmd arguments | SUPPRESSED |
+| L1528 | `tools/harness/internal/performance/process.go:41:3` | G104: Errors unhandled | SUPPRESSED |
+| L1529 | `tools/harness/internal/performance/process.go:42:3` | G104: Errors unhandled | SUPPRESSED |
+| L1530 | `tools/harness/internal/performance/process.go:45:2` | G104: Errors unhandled | SUPPRESSED |
+| L1531 | `tools/harness/internal/performance/process.go:46:2` | G104: Errors unhandled | SUPPRESSED |
+| L1532 | `tools/harness/internal/performance/process.go:98:3` | G104: Errors unhandled | SUPPRESSED |
+| L1533 | `tools/harness/internal/performance/process.go:99:3` | G104: Errors unhandled | SUPPRESSED |
 
 ### govet (196)
 
@@ -1960,8 +1976,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** В snapshot замечания shadow; не заменять повсеместно := на =: это меняет scope и может повторить недавнюю регрессию. При реально перекрытом result/err/ctx использовать осмысленные имена (queryErr, buildCtx) либо сократить scope внешней переменной. Для обычного if err := operation(); err != nil с независимым внутренним err допустим локальный nolint:govet с причиной; поскольку он подавляет весь govet на строке, предпочитать переименование при одинаковой читаемости. Остальные vet diagnostics, если появятся на rerun, разбирать отдельно.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L1534 | `cmd/zl-mcp-eval/main_test.go:50:5` | shadow: declaration of "err" shadows declaration at line 40 | OPEN |
 | L1535 | `cmd/zl-mcp-eval/main_test.go:68:5` | shadow: declaration of "err" shadows declaration at line 40 | OPEN |
 | L1536 | `cmd/zl-mcp-eval/main_test.go:163:12` | shadow: declaration of "err" shadows declaration at line 139 | OPEN |
@@ -2167,8 +2183,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L1740 (= L2508/L2541): заменить err = <-done в cancellation ветке на <-done; ожидание cmd.Wait обязательно, значение намеренно заменяется ctx.Err()/ErrOutputBudget. Не удалять receive.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L1740 | `internal/evaluation/process.go:70:3` | ineffectual assignment to err | FIXED |
 
 ### makezero (1)
@@ -2179,9 +2195,9 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L1743: prefix уже содержит 14-байтовый заголовок. Оставить append(prefix, body.Bytes()...) с локальным nolint:makezero — existing length is serialized header, body must follow it. Замена на make([]byte, 0, ...) потеряет заголовок.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
-| L1743 | `internal/mobilebackup/header_test.go:79:9` | append to slice &#96;prefix&#96; with non-zero initialized length | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
+| L1743 | `internal/mobilebackup/header_test.go:79:9` | append to slice &#96;prefix&#96; with non-zero initialized length | SUPPRESSED |
 
 ### mirror (1)
 
@@ -2191,8 +2207,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L1744: использовать bytes.Contains для []byte вместо временного string, сохранив тот же needle и assertion.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L1744 | `internal/mobilebackup/attachment_test.go:76:45` | avoid allocations with strings.Contains | OPEN |
 
 ### mnd (388)
@@ -2203,8 +2219,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Timeouts, protocol limits, binary widths и budget numbers оформить предметными constants рядом с владельцем; использовать уже существующие constants. В boundary tests literals являются самим входом/ожиданием — локальный nolint:mnd либо узкое test исключение после согласования. Не создавать const three=3; не объединять разные лимиты только из-за совпадения числа. Performance thresholds сохранять буквально и без пересчёта baseline.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L1745 | `cmd/zl-mcp-eval/main.go:84:60` | Magic number: 20, in <argument> detected | OPEN |
 | L1746 | `cmd/zl-mcp-eval/main.go:103:17` | Magic number: 60, in <operation> detected | OPEN |
 | L1747 | `cmd/zl-mcp-eval/main.go:105:17` | Magic number: 180, in <operation> detected | OPEN |
@@ -2602,8 +2618,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2133–L2137: применить адресно после сверки go version tools module, проверить errors.AsType, CutPrefix, SplitSeq, maps.Copy и slices.Contains на текущих типах. Проверить nil map/empty input и порядок итерации. Новые stdlib imports согласовать с точными architecture allowlists. Не запускать очередной бесконтрольный --fix на весь root.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2133 | `tools/harness/internal/architecture/architecture.go:122:6` | errorsastype: errors.As can be simplified using AsType[*exec.ExitError] | OPEN |
 | L2134 | `tools/harness/internal/architecture/architecture.go:308:5` | stringscutprefix: HasPrefix + TrimPrefix can be simplified to CutPrefix | OPEN |
 | L2135 | `tools/harness/internal/performance/bench.go:127:26` | stringsseq: Ranging over SplitSeq is more efficient | OPEN |
@@ -2618,41 +2634,41 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Добавить явные json tags, в точности повторяющие существующие имена/omitempty и порядок полей. Критично L2139 SendRequest.Fingerprint: json:"Recipient", json:"Text", json:"Reply" (без omitempty); L2169 ReadIdentity: json:"All", json:"Selected". Lower snake_case здесь изменит hash/persistence semantics. Для внешних SDK structs/custom MarshalJSON, которые нельзя корректно разметить в этом repo, локальный nolint:musttag с указанием владельца codec. Проверить old/new exact bytes на nil/empty/Unicode.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
-| L2138 | `docs/contracts/sending_test.go:68:32` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2139 | `internal/domain/sending.go:41:23` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2140 | `internal/evalfixture/offline.go:226:31` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2141 | `internal/mcpserver/sdk_identity_test.go:144:36` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2142 | `internal/mcpserver/sdk_identity_test.go:182:53` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2143 | `internal/mcpserver/sdk_identity_test.go:197:7` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2144 | `internal/mcpserver/sdk_identity_test.go:274:5` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2145 | `internal/mcpserver/sdk_lifecycle_test.go:142:31` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2146 | `internal/mcpserver/sdk_lifecycle_test.go:171:40` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2147 | `internal/mcpserver/sdk_lifecycle_test.go:348:52` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2148 | `internal/mcpserver/sdk_stdio_identity_test.go:148:34` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2149 | `internal/mcpserver/sdk_stdio_identity_test.go:184:34` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2150 | `internal/mcpserver/sdk_stdio_identity_test.go:213:4` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2151 | `internal/mcpserver/sdk_stdio_identity_test.go:229:4` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2152 | `internal/mcpserver/sdk_stdio_identity_test.go:258:3` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2153 | `internal/mobilebackup/encrypted_archive_test.go:29:30` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2154 | `internal/mobilebackup/encrypted_archive_test.go:118:29` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2155 | `internal/mobilebackup/header_test.go:38:31` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2156 | `internal/mobilebackup/message_conversion_test.go:302:40` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2157 | `internal/mobilebackup/xz_test.go:24:30` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2158 | `internal/mobilebackup/xz_test.go:209:30` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2159 | `internal/observability/native_test.go:123:29` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2160 | `internal/observability/native_test.go:223:29` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2161 | `internal/observability/native_test.go:307:29` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2162 | `internal/observability/native_test.go:399:29` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2163 | `internal/observability/observer_test.go:169:29` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2164 | `internal/observability/observer_test.go:242:29` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2165 | `internal/service/account_archive_test.go:80:29` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2166 | `internal/service/mobile_archive_probe_test.go:35:31` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2167 | `internal/service/mobile_history_test.go:54:31` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2168 | `internal/service/mobile_page_test.go:113:31` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2169 | `internal/storage/read_authority.go:34:27` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
-| L2170 | `internal/toolruntime/command_scope_test.go:43:27` | the given struct should be annotated with the &#96;json&#96; tag | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
+| L2138 | `docs/contracts/sending_test.go:68:32` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2139 | `internal/domain/sending.go:41:23` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2140 | `internal/evalfixture/offline.go:226:31` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2141 | `internal/mcpserver/sdk_identity_test.go:144:36` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2142 | `internal/mcpserver/sdk_identity_test.go:182:53` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2143 | `internal/mcpserver/sdk_identity_test.go:197:7` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2144 | `internal/mcpserver/sdk_identity_test.go:274:5` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2145 | `internal/mcpserver/sdk_lifecycle_test.go:142:31` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2146 | `internal/mcpserver/sdk_lifecycle_test.go:171:40` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2147 | `internal/mcpserver/sdk_lifecycle_test.go:348:52` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2148 | `internal/mcpserver/sdk_stdio_identity_test.go:148:34` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2149 | `internal/mcpserver/sdk_stdio_identity_test.go:184:34` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2150 | `internal/mcpserver/sdk_stdio_identity_test.go:213:4` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2151 | `internal/mcpserver/sdk_stdio_identity_test.go:229:4` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2152 | `internal/mcpserver/sdk_stdio_identity_test.go:258:3` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2153 | `internal/mobilebackup/encrypted_archive_test.go:29:30` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2154 | `internal/mobilebackup/encrypted_archive_test.go:118:29` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2155 | `internal/mobilebackup/header_test.go:38:31` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2156 | `internal/mobilebackup/message_conversion_test.go:302:40` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2157 | `internal/mobilebackup/xz_test.go:24:30` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2158 | `internal/mobilebackup/xz_test.go:209:30` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2159 | `internal/observability/native_test.go:123:29` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2160 | `internal/observability/native_test.go:223:29` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2161 | `internal/observability/native_test.go:307:29` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2162 | `internal/observability/native_test.go:399:29` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2163 | `internal/observability/observer_test.go:169:29` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2164 | `internal/observability/observer_test.go:242:29` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2165 | `internal/service/account_archive_test.go:80:29` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2166 | `internal/service/mobile_archive_probe_test.go:35:31` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2167 | `internal/service/mobile_history_test.go:54:31` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2168 | `internal/service/mobile_page_test.go:113:31` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2169 | `internal/storage/read_authority.go:34:27` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
+| L2170 | `internal/toolruntime/command_scope_test.go:43:27` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
 
 ### nestif (39)
 
@@ -2662,8 +2678,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Guard clauses и самостоятельные этапы вместо глубоких ветвей; в transaction/worker code сохранить те же commit/rollback/cancel paths. В tests допустим локальный nolint:nestif для намеренного adversarial сценария, если table-driven вариант скрывает последовательность.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2171 | `cmd/zl-mcp-eval/main.go:58:1` | &#96;if *checkpoint != ""&#96; has complex nested blocks (complexity: 5) | OPEN |
 | L2172 | `cmd/zl-mcp-eval/main.go:98:1` | &#96;if *child != ""&#96; has complex nested blocks (complexity: 12) | OPEN |
 | L2173 | `internal/app/search/read.go:220:1` | &#96;if len(p.Hits) == 0&#96; has complex nested blocks (complexity: 10) | OPEN |
@@ -2712,21 +2728,21 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Не превращать штатное отсутствие работы/отказ в авторизации в ошибку. L2210–L2218: claim race/ErrHistoryState и cancellation означают завершение worker без retry; локальный nolint:nilerr с конкретной причиной только на этих return. L2219/L2220: shutdown collectSession по ctx.Err() — успешная остановка, оставить. L2221/L2222: malformed ID/digest означает false (cleanup не разрешён), оставить fail-closed predicate с nolint. Не подавлять реальные storage errors в соседних ветвях.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
-| L2210 | `internal/historyimport/mobile_worker.go:109:3` | error is not nil (line 108) but it returns nil | OPEN |
-| L2211 | `internal/historyimport/mobile_worker.go:132:4` | error is not nil (line 131) but it returns nil | OPEN |
-| L2212 | `internal/historyimport/mobile_worker.go:316:3` | error is not nil (line 315) but it returns nil | OPEN |
-| L2213 | `internal/historyimport/worker.go:76:3` | error is not nil (line 75) but it returns nil | OPEN |
-| L2214 | `internal/historyimport/worker.go:96:4` | error is not nil (line 95) but it returns nil | OPEN |
-| L2215 | `internal/historyimport/worker.go:102:4` | error is not nil (line 101) but it returns nil | OPEN |
-| L2216 | `internal/historyimport/worker.go:115:4` | error is not nil (line 114) but it returns nil | OPEN |
-| L2217 | `internal/historyimport/worker.go:164:4` | error is not nil (line 163) but it returns nil | OPEN |
-| L2218 | `internal/historyimport/worker.go:201:4` | error is not nil (line 200) but it returns nil | OPEN |
-| L2219 | `internal/service/run.go:515:4` | error is not nil (line 514) but it returns nil | OPEN |
-| L2220 | `internal/service/run.go:556:5` | error is not nil (line 555) but it returns nil | OPEN |
-| L2221 | `internal/storage/mobile_snapshot_cleanup.go:19:3` | error is not nil (line 18) but it returns nil | OPEN |
-| L2222 | `internal/storage/mobile_snapshot_cleanup.go:24:4` | error is not nil (line 22) but it returns nil | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
+| L2210 | `internal/historyimport/mobile_worker.go:109:3` | error is not nil (line 108) but it returns nil | SUPPRESSED |
+| L2211 | `internal/historyimport/mobile_worker.go:132:4` | error is not nil (line 131) but it returns nil | SUPPRESSED |
+| L2212 | `internal/historyimport/mobile_worker.go:316:3` | error is not nil (line 315) but it returns nil | SUPPRESSED |
+| L2213 | `internal/historyimport/worker.go:76:3` | error is not nil (line 75) but it returns nil | SUPPRESSED |
+| L2214 | `internal/historyimport/worker.go:96:4` | error is not nil (line 95) but it returns nil | SUPPRESSED |
+| L2215 | `internal/historyimport/worker.go:102:4` | error is not nil (line 101) but it returns nil | SUPPRESSED |
+| L2216 | `internal/historyimport/worker.go:115:4` | error is not nil (line 114) but it returns nil | SUPPRESSED |
+| L2217 | `internal/historyimport/worker.go:164:4` | error is not nil (line 163) but it returns nil | SUPPRESSED |
+| L2218 | `internal/historyimport/worker.go:201:4` | error is not nil (line 200) but it returns nil | SUPPRESSED |
+| L2219 | `internal/service/run.go:515:4` | error is not nil (line 514) but it returns nil | SUPPRESSED |
+| L2220 | `internal/service/run.go:556:5` | error is not nil (line 555) but it returns nil | SUPPRESSED |
+| L2221 | `internal/storage/mobile_snapshot_cleanup.go:19:3` | error is not nil (line 18) but it returns nil | SUPPRESSED |
+| L2222 | `internal/storage/mobile_snapshot_cleanup.go:24:4` | error is not nil (line 22) but it returns nil | SUPPRESSED |
 
 ### nilnil (4)
 
@@ -2736,12 +2752,12 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2223: nil provider означает disabled instrumentation; L2224: пустая delivery queue; L2225: missing/null optional value; L2226: fake моделирует пустой результат. Во всех четырёх оставить (nil,nil) с локальным nolint:nilnil, описывающим эту семантику. Новый sentinel изменил бы контракт.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
-| L2223 | `internal/observability/observer.go:65:3` | return both a &#96;nil&#96; error and an invalid value: use a sentinel error instead | OPEN |
-| L2224 | `internal/storage/deliveries.go:286:4` | return both a &#96;nil&#96; error and an invalid value: use a sentinel error instead | OPEN |
-| L2225 | `internal/zalo/history.go:146:3` | return both a &#96;nil&#96; error and an invalid value: use a sentinel error instead | OPEN |
-| L2226 | `internal/zalo/mobile_backup_test.go:220:50` | return both a &#96;nil&#96; error and an invalid value: use a sentinel error instead | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
+| L2223 | `internal/observability/observer.go:65:3` | return both a &#96;nil&#96; error and an invalid value: use a sentinel error instead | SUPPRESSED |
+| L2224 | `internal/storage/deliveries.go:286:4` | return both a &#96;nil&#96; error and an invalid value: use a sentinel error instead | SUPPRESSED |
+| L2225 | `internal/zalo/history.go:146:3` | return both a &#96;nil&#96; error and an invalid value: use a sentinel error instead | SUPPRESSED |
+| L2226 | `internal/zalo/mobile_backup_test.go:220:50` | return both a &#96;nil&#96; error and an invalid value: use a sentinel error instead | SUPPRESSED |
 
 ### noctx (6)
 
@@ -2751,14 +2767,14 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2229/L2232: оставить exec.Command с nolint:noctx — cancellation уже реализована владельцем process group с Kill/Wait/drain и output budget. Автозамена на CommandContext не гарантирует cleanup descendants. L2227/L2228/L2230/L2231: net.ListenConfig.Listen с существующим lifecycle ctx, сохранив явный Close при shutdown (ctx Listen не закрывает готовый listener). Проверить startup cancellation.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
-| L2227 | `internal/evalfixture/fixture.go:279:29` | net.Listen must not be called. use (*net.ListenConfig).Listen | OPEN |
-| L2228 | `internal/evaluation/model.go:97:29` | net.Listen must not be called. use (*net.ListenConfig).Listen | OPEN |
-| L2229 | `internal/evaluation/process.go:50:21` | os/exec.Command must not be called. use os/exec.CommandContext | OPEN |
-| L2230 | `internal/service/run.go:310:29` | net.Listen must not be called. use (*net.ListenConfig).Listen | OPEN |
-| L2231 | `internal/service/run.go:322:24` | net.Listen must not be called. use (*net.ListenConfig).Listen | OPEN |
-| L2232 | `tools/harness/internal/performance/process.go:33:21` | os/exec.Command must not be called. use os/exec.CommandContext | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
+| L2227 | `internal/evalfixture/fixture.go:279:29` | net.Listen must not be called. use (*net.ListenConfig).Listen | FIXED |
+| L2228 | `internal/evaluation/model.go:97:29` | net.Listen must not be called. use (*net.ListenConfig).Listen | FIXED |
+| L2229 | `internal/evaluation/process.go:50:21` | os/exec.Command must not be called. use os/exec.CommandContext | SUPPRESSED |
+| L2230 | `internal/service/run.go:310:29` | net.Listen must not be called. use (*net.ListenConfig).Listen | FIXED |
+| L2231 | `internal/service/run.go:322:24` | net.Listen must not be called. use (*net.ListenConfig).Listen | FIXED |
+| L2232 | `tools/harness/internal/performance/process.go:33:21` | os/exec.Command must not be called. use os/exec.CommandContext | SUPPRESSED |
 
 ### nonamedreturns (51)
 
@@ -2768,59 +2784,59 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Сохранить named results там, где defer читает err, очищает result, фиксирует telemetry или собирает финальный report: локальный nolint:nonamedreturns с конкретной обязанностью defer. У простых функций без такого использования убрать имена. В parser Clear-on-error не заменять result копией: это меняет, какой buffer очищается.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
-| L2233 | `internal/evaluation/benchmark.go:39:73` | named return "result" with type "Measurement" found | OPEN |
-| L2234 | `internal/evaluation/model.go:71:84` | named return "out" with type "Output" found | OPEN |
-| L2235 | `internal/evaluation/runner.go:135:46` | named return "report" with type "Report" found | OPEN |
-| L2236 | `internal/evaluation/runner.go:135:61` | named return "err" with type "error" found | OPEN |
-| L2237 | `internal/evaluation/scenarios.go:22:55` | named return "out" with type "Output" found | OPEN |
-| L2238 | `internal/mcpserver/server.go:239:80` | named return "response" with type "*mcp.CallToolResult" found | OPEN |
-| L2239 | `internal/mobilebackup/attachment.go:44:57` | named return "result" with type "Attachment" found | OPEN |
-| L2240 | `internal/mobilebackup/binnet.go:33:53` | named return "result" with type "BinNet" found | OPEN |
-| L2241 | `internal/mobilebackup/control_scan.go:37:4` | named return "result" with type "OwnDirectRecallSet" found | OPEN |
-| L2242 | `internal/mobilebackup/expiry.go:13:55` | named return "expiresMS" with type "int64" found | OPEN |
-| L2243 | `internal/mobilebackup/expiry.go:13:72` | named return "declared" with type "bool" found | OPEN |
-| L2244 | `internal/mobilebackup/expiry.go:13:87` | named return "err" with type "error" found | OPEN |
-| L2245 | `internal/mobilebackup/history_page.go:25:4` | named return "result" with type "domain.MobileHistoryPage" found | OPEN |
-| L2246 | `internal/mobilebackup/history_page.go:25:37` | named return "err" with type "error" found | OPEN |
-| L2247 | `internal/mobilebackup/mentions.go:26:54` | named return "result" with type "Mention" found | OPEN |
-| L2248 | `internal/mobilebackup/message_conversion.go:42:4` | named return "result" with type "ConvertedArchivePage" found | OPEN |
-| L2249 | `internal/mobilebackup/message_conversion.go:42:33` | named return "err" with type "error" found | OPEN |
-| L2250 | `internal/mobilebackup/message_conversion.go:97:4` | named return "result" with type "ConvertedArchivePage" found | OPEN |
-| L2251 | `internal/mobilebackup/message_conversion.go:251:36` | named return "text" with type "string" found | OPEN |
-| L2252 | `internal/mobilebackup/message_conversion.go:251:49` | named return "rich" with type "bool" found | OPEN |
-| L2253 | `internal/mobilebackup/message_conversion.go:251:55` | named return "supported" with type "bool" found | OPEN |
-| L2254 | `internal/mobilebackup/message_conversion.go:251:66` | named return "valid" with type "bool" found | OPEN |
-| L2255 | `internal/mobilebackup/page_expiry.go:6:53` | named return "expiredMessages" with type "int" found | OPEN |
-| L2256 | `internal/mobilebackup/page_expiry.go:6:70` | named return "expiredQuotes" with type "int" found | OPEN |
-| L2257 | `internal/mobilebackup/page_expiry.go:6:89` | named return "err" with type "error" found | OPEN |
-| L2258 | `internal/mobilebackup/page_walk.go:30:4` | named return "summary" with type "ArchiveWalkSummary" found | OPEN |
-| L2259 | `internal/mobilebackup/prepared_page.go:53:4` | named return "result" with type "PreparedArchivePage" found | OPEN |
-| L2260 | `internal/mobilebackup/quote.go:37:59` | named return "result" with type "QuoteScalars" found | OPEN |
-| L2261 | `internal/mobilebackup/quote_fields.go:37:52` | named return "result" with type "Quote" found | OPEN |
-| L2262 | `internal/mobilebackup/row_page.go:87:4` | named return "result" with type "PreparedRowPage" found | OPEN |
-| L2263 | `internal/mobilebackup/snapshot_page.go:86:4` | named return "result" with type "SnapshotPage" found | OPEN |
-| L2264 | `internal/mobilebackup/snapshot_recalls.go:39:4` | named return "targets" with type "*snapshotRecallTargets" found | OPEN |
-| L2265 | `internal/mobilebackup/sqlite.go:149:4` | named return "batch" with type "SQLiteBatch" found | OPEN |
-| L2266 | `internal/mobilebackup/sqlite.go:149:23` | named return "err" with type "error" found | OPEN |
-| L2267 | `internal/mobilebackup/sqlite.go:177:4` | named return "batch" with type "SQLiteBatch" found | OPEN |
-| L2268 | `internal/mobilebackup/time_window.go:10:49` | named return "from" with type "int64" found | OPEN |
-| L2269 | `internal/mobilebackup/time_window.go:10:55` | named return "to" with type "int64" found | OPEN |
-| L2270 | `internal/mobilebackup/time_window.go:10:65` | named return "ok" with type "bool" found | OPEN |
-| L2271 | `internal/mobilebackup/tlv.go:35:50` | named return "result" with type "TLV" found | OPEN |
-| L2272 | `internal/observability/observer.go:131:87` | named return "err" with type "error" found | OPEN |
-| L2273 | `internal/observability/observer.go:185:107` | named return "err" with type "error" found | OPEN |
-| L2274 | `internal/observability/observer.go:284:4` | named return "err" with type "error" found | OPEN |
-| L2275 | `internal/service/mobile_backup.go:146:4` | named return "result" with type "mobilebackup.PreparedArchivePage" found | OPEN |
-| L2276 | `internal/service/mobile_backup.go:146:45` | named return "err" with type "error" found | OPEN |
-| L2277 | `internal/service/mobile_backup.go:186:4` | named return "result" with type "mobilebackup.ArchiveWalkSummary" found | OPEN |
-| L2278 | `internal/service/mobile_backup.go:186:44` | named return "err" with type "error" found | OPEN |
-| L2279 | `internal/storage/contact_profiles.go:17:4` | named return "ids" with type "[]string" found | OPEN |
-| L2280 | `internal/storage/contact_profiles.go:17:18` | named return "cursor" with type "string" found | OPEN |
-| L2281 | `internal/storage/contact_profiles.go:17:33` | named return "more" with type "bool" found | OPEN |
-| L2282 | `internal/storage/contact_profiles.go:17:44` | named return "err" with type "error" found | OPEN |
-| L2283 | `tools/harness/internal/architecture/architecture.go:449:55` | named return "e" with type "Evidence" found | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
+| L2233 | `internal/evaluation/benchmark.go:39:73` | named return "result" with type "Measurement" found | SUPPRESSED |
+| L2234 | `internal/evaluation/model.go:71:84` | named return "out" with type "Output" found | SUPPRESSED |
+| L2235 | `internal/evaluation/runner.go:135:46` | named return "report" with type "Report" found | FIXED |
+| L2236 | `internal/evaluation/runner.go:135:61` | named return "err" with type "error" found | FIXED |
+| L2237 | `internal/evaluation/scenarios.go:22:55` | named return "out" with type "Output" found | SUPPRESSED |
+| L2238 | `internal/mcpserver/server.go:239:80` | named return "response" with type "*mcp.CallToolResult" found | SUPPRESSED |
+| L2239 | `internal/mobilebackup/attachment.go:44:57` | named return "result" with type "Attachment" found | SUPPRESSED |
+| L2240 | `internal/mobilebackup/binnet.go:33:53` | named return "result" with type "BinNet" found | SUPPRESSED |
+| L2241 | `internal/mobilebackup/control_scan.go:37:4` | named return "result" with type "OwnDirectRecallSet" found | FIXED |
+| L2242 | `internal/mobilebackup/expiry.go:13:55` | named return "expiresMS" with type "int64" found | FIXED |
+| L2243 | `internal/mobilebackup/expiry.go:13:72` | named return "declared" with type "bool" found | FIXED |
+| L2244 | `internal/mobilebackup/expiry.go:13:87` | named return "err" with type "error" found | FIXED |
+| L2245 | `internal/mobilebackup/history_page.go:25:4` | named return "result" with type "domain.MobileHistoryPage" found | FIXED |
+| L2246 | `internal/mobilebackup/history_page.go:25:37` | named return "err" with type "error" found | FIXED |
+| L2247 | `internal/mobilebackup/mentions.go:26:54` | named return "result" with type "Mention" found | SUPPRESSED |
+| L2248 | `internal/mobilebackup/message_conversion.go:42:4` | named return "result" with type "ConvertedArchivePage" found | FIXED |
+| L2249 | `internal/mobilebackup/message_conversion.go:42:33` | named return "err" with type "error" found | FIXED |
+| L2250 | `internal/mobilebackup/message_conversion.go:97:4` | named return "result" with type "ConvertedArchivePage" found | FIXED |
+| L2251 | `internal/mobilebackup/message_conversion.go:251:36` | named return "text" with type "string" found | FIXED |
+| L2252 | `internal/mobilebackup/message_conversion.go:251:49` | named return "rich" with type "bool" found | FIXED |
+| L2253 | `internal/mobilebackup/message_conversion.go:251:55` | named return "supported" with type "bool" found | FIXED |
+| L2254 | `internal/mobilebackup/message_conversion.go:251:66` | named return "valid" with type "bool" found | FIXED |
+| L2255 | `internal/mobilebackup/page_expiry.go:6:53` | named return "expiredMessages" with type "int" found | FIXED |
+| L2256 | `internal/mobilebackup/page_expiry.go:6:70` | named return "expiredQuotes" with type "int" found | FIXED |
+| L2257 | `internal/mobilebackup/page_expiry.go:6:89` | named return "err" with type "error" found | FIXED |
+| L2258 | `internal/mobilebackup/page_walk.go:30:4` | named return "summary" with type "ArchiveWalkSummary" found | FIXED |
+| L2259 | `internal/mobilebackup/prepared_page.go:53:4` | named return "result" with type "PreparedArchivePage" found | FIXED |
+| L2260 | `internal/mobilebackup/quote.go:37:59` | named return "result" with type "QuoteScalars" found | SUPPRESSED |
+| L2261 | `internal/mobilebackup/quote_fields.go:37:52` | named return "result" with type "Quote" found | SUPPRESSED |
+| L2262 | `internal/mobilebackup/row_page.go:87:4` | named return "result" with type "PreparedRowPage" found | FIXED |
+| L2263 | `internal/mobilebackup/snapshot_page.go:86:4` | named return "result" with type "SnapshotPage" found | FIXED |
+| L2264 | `internal/mobilebackup/snapshot_recalls.go:39:4` | named return "targets" with type "*snapshotRecallTargets" found | FIXED |
+| L2265 | `internal/mobilebackup/sqlite.go:149:4` | named return "batch" with type "SQLiteBatch" found | FIXED |
+| L2266 | `internal/mobilebackup/sqlite.go:149:23` | named return "err" with type "error" found | FIXED |
+| L2267 | `internal/mobilebackup/sqlite.go:177:4` | named return "batch" with type "SQLiteBatch" found | FIXED |
+| L2268 | `internal/mobilebackup/time_window.go:10:49` | named return "from" with type "int64" found | FIXED |
+| L2269 | `internal/mobilebackup/time_window.go:10:55` | named return "to" with type "int64" found | FIXED |
+| L2270 | `internal/mobilebackup/time_window.go:10:65` | named return "ok" with type "bool" found | FIXED |
+| L2271 | `internal/mobilebackup/tlv.go:35:50` | named return "result" with type "TLV" found | SUPPRESSED |
+| L2272 | `internal/observability/observer.go:131:87` | named return "err" with type "error" found | FIXED |
+| L2273 | `internal/observability/observer.go:185:107` | named return "err" with type "error" found | FIXED |
+| L2274 | `internal/observability/observer.go:284:4` | named return "err" with type "error" found | FIXED |
+| L2275 | `internal/service/mobile_backup.go:146:4` | named return "result" with type "mobilebackup.PreparedArchivePage" found | FIXED |
+| L2276 | `internal/service/mobile_backup.go:146:45` | named return "err" with type "error" found | FIXED |
+| L2277 | `internal/service/mobile_backup.go:186:4` | named return "result" with type "mobilebackup.ArchiveWalkSummary" found | FIXED |
+| L2278 | `internal/service/mobile_backup.go:186:44` | named return "err" with type "error" found | FIXED |
+| L2279 | `internal/storage/contact_profiles.go:17:4` | named return "ids" with type "[]string" found | FIXED |
+| L2280 | `internal/storage/contact_profiles.go:17:18` | named return "cursor" with type "string" found | FIXED |
+| L2281 | `internal/storage/contact_profiles.go:17:33` | named return "more" with type "bool" found | FIXED |
+| L2282 | `internal/storage/contact_profiles.go:17:44` | named return "err" with type "error" found | FIXED |
+| L2283 | `tools/harness/internal/architecture/architecture.go:449:55` | named return "e" with type "Evidence" found | SUPPRESSED |
 
 ### perfsprint (11)
 
@@ -2830,8 +2846,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2284–L2294: fmt.Errorf без formatting заменить errors.New, добавить errors в точный пакетный allowlist при необходимости. Текст ошибок оставить побайтно; никаких новых wrappers/sentinels.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2284 | `tools/harness/cmd/harness/main.go:71:12` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
 | L2285 | `tools/harness/cmd/harness/main.go:82:12` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
 | L2286 | `tools/harness/internal/performance/bench.go:40:8` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
@@ -2852,8 +2868,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2295–L2298: copy переименовать по содержимому (clonedRequest, copiedPage, cookieCopy); не менять значение/ownership.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2295 | `internal/mcpserver/http_test.go:32:2` | variable copy has same name as predeclared identifier | OPEN |
 | L2296 | `internal/mobilebackup/snapshot_page.go:117:3` | variable copy has same name as predeclared identifier | OPEN |
 | L2297 | `internal/service/events_restart_test.go:77:2` | variable copy has same name as predeclared identifier | OPEN |
@@ -2867,8 +2883,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2299–L2302: тест CLI использует os.Args/os.Stdout. Предпочтительно вызывать run(args, writer), если такая точка уже есть, либо subprocess. Пока тест намеренно проверяет process-global CLI entrypoint — локальный nolint:reassign с причиной, обязательный restore через t.Cleanup/defer, запрет parallel для всего конфликтующего scope.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2299 | `internal/service/cli_recall_command_test.go:50:3` | reassigning variable Args in other package os | OPEN |
 | L2300 | `internal/service/cli_recall_command_test.go:51:3` | reassigning variable Stdout in other package os | OPEN |
 | L2301 | `internal/service/cli_recall_command_test.go:57:2` | reassigning variable Args in other package os | OPEN |
@@ -2882,29 +2898,29 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Большинство указанных типов намеренно имеют value String/GoString для redaction и pointer Clear для очистки. Не переводить redaction methods на pointer: value formatting может раскрыть поля. Для таких типов локальный nolint:recvcheck с причиной «value formatting must redact; Clear mutates owned buffers». Для остальных проверить method sets и унифицировать receivers только без изменения интерфейсов/копирования mutex.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
-| L2303 | `internal/domain/mobile_history.go:68:6` | the methods of "MobileHistoryPage" use pointer receiver and non-pointer receiver. | OPEN |
-| L2304 | `internal/mobilebackup/account_fetch.go:13:6` | the methods of "AccountArchive" use pointer receiver and non-pointer receiver. | OPEN |
-| L2305 | `internal/mobilebackup/archive.go:14:6` | the methods of "PlainArchive" use pointer receiver and non-pointer receiver. | OPEN |
-| L2306 | `internal/mobilebackup/attachment.go:19:6` | the methods of "Attachment" use pointer receiver and non-pointer receiver. | OPEN |
-| L2307 | `internal/mobilebackup/binnet.go:7:6` | the methods of "BinNet" use pointer receiver and non-pointer receiver. | OPEN |
-| L2308 | `internal/mobilebackup/control_scan.go:12:6` | the methods of "OwnDirectRecallSet" use pointer receiver and non-pointer receiver. | OPEN |
-| L2309 | `internal/mobilebackup/encrypted_archive.go:11:6` | the methods of "Format1Archive" use pointer receiver and non-pointer receiver. | OPEN |
-| L2310 | `internal/mobilebackup/mentions.go:8:6` | the methods of "Mention" use pointer receiver and non-pointer receiver. | OPEN |
-| L2311 | `internal/mobilebackup/message_conversion.go:14:6` | the methods of "ConvertedArchivePage" use pointer receiver and non-pointer receiver. | OPEN |
-| L2312 | `internal/mobilebackup/prepared_page.go:20:6` | the methods of "PreparedArchivePage" use pointer receiver and non-pointer receiver. | OPEN |
-| L2313 | `internal/mobilebackup/quote.go:10:6` | the methods of "QuoteScalars" use pointer receiver and non-pointer receiver. | OPEN |
-| L2314 | `internal/mobilebackup/quote_fields.go:18:6` | the methods of "Quote" use pointer receiver and non-pointer receiver. | OPEN |
-| L2315 | `internal/mobilebackup/retained_archive.go:42:6` | the methods of "RetainedArchiveStore" use pointer receiver and non-pointer receiver. | OPEN |
-| L2316 | `internal/mobilebackup/row_page.go:22:6` | the methods of "PreparedRowPage" use pointer receiver and non-pointer receiver. | OPEN |
-| L2317 | `internal/mobilebackup/selected_fetch.go:11:6` | the methods of "SelectedArchive" use pointer receiver and non-pointer receiver. | OPEN |
-| L2318 | `internal/mobilebackup/snapshot.go:41:6` | the methods of "SnapshotStore" use pointer receiver and non-pointer receiver. | OPEN |
-| L2319 | `internal/mobilebackup/snapshot_page.go:51:6` | the methods of "SnapshotPage" use pointer receiver and non-pointer receiver. | OPEN |
-| L2320 | `internal/mobilebackup/snapshot_recalls.go:9:6` | the methods of "snapshotRecallTargets" use pointer receiver and non-pointer receiver. | OPEN |
-| L2321 | `internal/mobilebackup/sqlite.go:43:6` | the methods of "SQLiteBatch" use pointer receiver and non-pointer receiver. | OPEN |
-| L2322 | `internal/mobilebackup/tlv.go:12:6` | the methods of "TLV" use pointer receiver and non-pointer receiver. | OPEN |
-| L2323 | `internal/service/archive_messages.go:16:6` | the methods of "archivePosition" use pointer receiver and non-pointer receiver. | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
+| L2303 | `internal/domain/mobile_history.go:68:6` | the methods of "MobileHistoryPage" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2304 | `internal/mobilebackup/account_fetch.go:13:6` | the methods of "AccountArchive" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2305 | `internal/mobilebackup/archive.go:14:6` | the methods of "PlainArchive" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2306 | `internal/mobilebackup/attachment.go:19:6` | the methods of "Attachment" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2307 | `internal/mobilebackup/binnet.go:7:6` | the methods of "BinNet" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2308 | `internal/mobilebackup/control_scan.go:12:6` | the methods of "OwnDirectRecallSet" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2309 | `internal/mobilebackup/encrypted_archive.go:11:6` | the methods of "Format1Archive" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2310 | `internal/mobilebackup/mentions.go:8:6` | the methods of "Mention" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2311 | `internal/mobilebackup/message_conversion.go:14:6` | the methods of "ConvertedArchivePage" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2312 | `internal/mobilebackup/prepared_page.go:20:6` | the methods of "PreparedArchivePage" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2313 | `internal/mobilebackup/quote.go:10:6` | the methods of "QuoteScalars" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2314 | `internal/mobilebackup/quote_fields.go:18:6` | the methods of "Quote" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2315 | `internal/mobilebackup/retained_archive.go:42:6` | the methods of "RetainedArchiveStore" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2316 | `internal/mobilebackup/row_page.go:22:6` | the methods of "PreparedRowPage" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2317 | `internal/mobilebackup/selected_fetch.go:11:6` | the methods of "SelectedArchive" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2318 | `internal/mobilebackup/snapshot.go:41:6` | the methods of "SnapshotStore" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2319 | `internal/mobilebackup/snapshot_page.go:51:6` | the methods of "SnapshotPage" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2320 | `internal/mobilebackup/snapshot_recalls.go:9:6` | the methods of "snapshotRecallTargets" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2321 | `internal/mobilebackup/sqlite.go:43:6` | the methods of "SQLiteBatch" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2322 | `internal/mobilebackup/tlv.go:12:6` | the methods of "TLV" use pointer receiver and non-pointer receiver. | SUPPRESSED |
+| L2323 | `internal/service/archive_messages.go:16:6` | the methods of "archivePosition" use pointer receiver and non-pointer receiver. | SUPPRESSED |
 
 ### revive (98)
 
@@ -2914,8 +2930,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Исправить doc comments вместе с godoclint/staticcheck. Неиспользуемые параметры интерфейсных реализаций/fakes обозначить _ без изменения signature; параметры собственных private functions удалить с callers. L2332: перенести ctx первым у private функции с обновлением callers. L2337/L2338: в test helpers сохранить t первым, ctx вторым с локальным nolint:revive и причиной test helper convention. L2336: если Preview используется снаружи collector, дать возвращаемому типу имя PreviewResult и обновить callers; если метод только внутренний — сделать его private. Не вводить interface ради правила. L2390: добавить комментарий у blank import о регистрации SQLite driver. Builtin copy исправить вместе с predeclared. Не переименовывать wire keys или protocol types ради style.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2324 | `internal/app/eventaccess/journal.go:8:1` | exported: comment on exported type Subscription should be of the form "Subscription ..." (with optional leading article) | OPEN |
 | L2325 | `internal/app/eventaccess/journal.go:43:1` | exported: comment on exported method EventData.MarshalJSON should be of the form "MarshalJSON ..." | OPEN |
 | L2326 | `internal/app/history/command.go:10:1` | exported: comment on exported type StartRequest should be of the form "StartRequest ..." (with optional leading article) | OPEN |
@@ -3023,8 +3039,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Использовать уже внедрённый logger и *Context методы там, где ctx есть. Для composition root/startup и существующего глобально настроенного redacting logger допустим локальный nolint:sloglint с причиной владения logger. Не протаскивать logger через domain только ради правила. Сохранить bounded allowlist полей; raw err/payload/account IDs не добавлять в лог для обработки иных lint ошибок.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2422 | `cmd/zl-mcp-eval-fixture/main.go:71:3` | default logger should not be used | OPEN |
 | L2423 | `internal/collector/join.go:392:4` | default logger should not be used | OPEN |
 | L2424 | `internal/collector/join.go:405:4` | default logger should not be used | OPEN |
@@ -3097,14 +3113,14 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2485–L2490: End уже находится в deferred closure с recover, outcome attributes и повторным panic. Оставить локальный nolint:spancheck на диагностируемых местах, объяснив closure lifecycle; не добавлять второй span.End и не переставлять End до SetAttributes. Существующие panic/identity/span tests обязательны. Это обоснование путей next(), не обещание корректности произвольного паникующего exporter.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
-| L2485 | `internal/observability/observer.go:152:2` | span.End is not called on all paths, possible memory leak | OPEN |
-| L2486 | `internal/observability/observer.go:169:2` | return can be reached without calling span.End | OPEN |
-| L2487 | `internal/observability/observer.go:189:2` | span.End is not called on all paths, possible memory leak | OPEN |
-| L2488 | `internal/observability/observer.go:210:2` | return can be reached without calling span.End | OPEN |
-| L2489 | `internal/observability/observer.go:296:2` | span.End is not called on all paths, possible memory leak | OPEN |
-| L2490 | `internal/observability/observer.go:311:2` | return can be reached without calling span.End | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
+| L2485 | `internal/observability/observer.go:152:2` | span.End is not called on all paths, possible memory leak | SUPPRESSED |
+| L2486 | `internal/observability/observer.go:169:2` | return can be reached without calling span.End | SUPPRESSED |
+| L2487 | `internal/observability/observer.go:189:2` | span.End is not called on all paths, possible memory leak | SUPPRESSED |
+| L2488 | `internal/observability/observer.go:210:2` | return can be reached without calling span.End | SUPPRESSED |
+| L2489 | `internal/observability/observer.go:296:2` | span.End is not called on all paths, possible memory leak | SUPPRESSED |
+| L2490 | `internal/observability/observer.go:311:2` | return can be reached without calling span.End | SUPPRESSED |
 
 ### sqlclosecheck (14)
 
@@ -3114,8 +3130,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Добавить defer rows.Close сразу после успешного Query в ограниченном helper scope, а явное раннее закрытие сохранить там, где оно освобождает connection перед следующей операцией. Либо локальный nolint:sqlclosecheck для намеренного early close, если все error/return paths уже покрыты. В циклах не накапливать defer до конца всей операции. rows.Err и ошибки закрытия/commit проверять отдельно.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2491 | `internal/collector/join.go:484:14` | Close should use defer | SUPPRESSED |
 | L2492 | `internal/collector/join.go:550:14` | Close should use defer | SUPPRESSED |
 | L2493 | `internal/mobilebackup/sqlite.go:305:17` | Close should use defer | SUPPRESSED |
@@ -3139,8 +3155,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Doc diagnostics исправить. L2508 — receive из done сохранить, удалить только присваивание. L2513 — два явных последовательных Remove с отдельными assertions: второй проверяет идемпотентность, удалять нельзя. L2510/L2511: lowercase только если error text не зафиксирован wire/CLI контрактом, иначе локальный nolint:staticcheck с причиной сохранения текста. L2516/L2519 De Morgan допустим без смены short-circuit. L2517/L2518: protocol compatibility exception, см. адресные решения; не заменять RSA padding в одностороннем порядке.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2505 | `internal/app/eventaccess/journal.go:8:1` | ST1021: comment on exported type Subscription should be of the form "Subscription ..." (with optional leading article) | OPEN |
 | L2506 | `internal/app/eventaccess/journal.go:43:1` | ST1020: comment on exported method MarshalJSON should be of the form "MarshalJSON ..." | OPEN |
 | L2507 | `internal/app/history/command.go:10:1` | ST1021: comment on exported type StartRequest should be of the form "StartRequest ..." (with optional leading article) | OPEN |
@@ -3153,8 +3169,8 @@ _Заполнить._
 | L2514 | `internal/mobilebackup/sqlite.go:36:1` | ST1021: comment on exported type SQLiteCoverage should be of the form "SQLiteCoverage ..." (with optional leading article) | OPEN |
 | L2515 | `internal/storage/event_journal.go:136:1` | ST1020: comment on exported method ReadSubscriptionEvents should be of the form "ReadSubscriptionEvents ..." | OPEN |
 | L2516 | `internal/storage/subscription_scope.go:48:33` | QF1001: could apply De Morgan's law | OPEN |
-| L2517 | `internal/zalo/mobile_backup.go:270:16` | SA1019: crypto/rsa.DecryptPKCS1v15 has been deprecated since Go 1.26 because it shouldn't be used: PKCS #1 v1.5 encryption is dangerous and should not be used. Whether this function returns an error or not discloses secret information. If an attacker can cause this function to run repeatedly and learn whether each instance returned an error then they can decrypt and forge signatures as if they had the private key. See [draft-irtf-cfrg-rsa-guidance-05] for more information. Use [EncryptOAEP] and [DecryptOAEP] instead. | OPEN |
-| L2518 | `internal/zalo/mobile_backup_test.go:84:17` | SA1019: crypto/rsa.EncryptPKCS1v15 has been deprecated since Go 1.26 because it shouldn't be used: PKCS #1 v1.5 encryption is dangerous and should not be used. See [draft-irtf-cfrg-rsa-guidance-05] for more information. Use [EncryptOAEP] and [DecryptOAEP] instead. | OPEN |
+| L2517 | `internal/zalo/mobile_backup.go:270:16` | SA1019: crypto/rsa.DecryptPKCS1v15 has been deprecated since Go 1.26 because it shouldn't be used: PKCS #1 v1.5 encryption is dangerous and should not be used. Whether this function returns an error or not discloses secret information. If an attacker can cause this function to run repeatedly and learn whether each instance returned an error then they can decrypt and forge signatures as if they had the private key. See [draft-irtf-cfrg-rsa-guidance-05] for more information. Use [EncryptOAEP] and [DecryptOAEP] instead. | SUPPRESSED |
+| L2518 | `internal/zalo/mobile_backup_test.go:84:17` | SA1019: crypto/rsa.EncryptPKCS1v15 has been deprecated since Go 1.26 because it shouldn't be used: PKCS #1 v1.5 encryption is dangerous and should not be used. See [draft-irtf-cfrg-rsa-guidance-05] for more information. Use [EncryptOAEP] and [DecryptOAEP] instead. | SUPPRESSED |
 | L2519 | `tools/harness/internal/performance/json.go:98:6` | QF1001: could apply De Morgan's law | OPEN |
 
 ### unparam (1)
@@ -3165,8 +3181,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2520: убрать неиспользуемый return Store из sdkBlockingHTTP и обновить callers. Сам store и его cleanup внутри helper сохранить.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2520 | `internal/mcpserver/sdk_lifecycle_test.go:57:51` | sdkBlockingHTTP - result 1 (*github.com/skosovsky/zl-mcp/internal/storage.Store) is never used | OPEN |
 
 ### unqueryvet (2)
@@ -3177,10 +3193,10 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2521/L2522: оставить m.* в versioned view migration с локальным nolint:unqueryvet: view intentionally projects full messages schema. Замена списка полей только в старой миграции даст разное поведение свежей и существующей БД. Если понадобится сузить view — отдельная persistence migration и upgrade tests.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
-| L2521 | `internal/storage/history_expiry.go:19:31` | avoid SELECT * - explicitly specify needed columns for better performance, maintainability and stability | OPEN |
-| L2522 | `internal/storage/tombstones.go:25:3` | avoid SELECT * - explicitly specify needed columns for better performance, maintainability and stability | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
+| L2521 | `internal/storage/history_expiry.go:19:31` | avoid SELECT * - explicitly specify needed columns for better performance, maintainability and stability | SUPPRESSED |
+| L2522 | `internal/storage/tombstones.go:25:3` | avoid SELECT * - explicitly specify needed columns for better performance, maintainability and stability | SUPPRESSED |
 
 ### unused (4)
 
@@ -3190,8 +3206,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2523/L2524/L2546/L2547: удалить неиспользуемые private helpers после поиска ссылок во всех build-tag/platform файлах и compile checks. Не оставлять compatibility wrappers или nolint:unused. Тестовые assertions, которые ранее вызывали helper, должны сохраниться после inlining.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2546 | `internal/observability/observer_test.go:325:6` | func observedAge is unused | OPEN |
 | L2523 | `internal/service/mobile_archive_probe.go:16:26` | func (*membershipPort).probeMobileArchive is unused | OPEN |
 | L2524 | `internal/service/mobile_backup.go:45:26` | func (*membershipPort).fetchPreparedMobileArchive is unused | OPEN |
@@ -3205,8 +3221,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Обычные независимые каталоги заменить t.TempDir. Тесты Unix sockets с коротким /tmp пути сохранять с nolint:usetesting и явным t.Cleanup(os.RemoveAll), иначе длинное имя теста может превысить лимит socket path. L2526: TMPDIR child можно задать отдельным t.TempDir, если проверен bound socket path. L2538: shared sync.Once worker нельзя привязать к первому t.TempDir — файл исчезнет до следующих tests; TestMain владеет build+RemoveAll либо build fixture без global caching.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2525 | `internal/collector/run_test.go:36:14` | os.MkdirTemp() could be replaced by t.TempDir() in sessionStore | OPEN |
 | L2526 | `internal/mcpserver/sdk_stdio_identity_test.go:76:93` | os.TempDir() could be replaced by t.TempDir() in sdkStartRawBridge | OPEN |
 | L2527 | `internal/mobilebackup/native_binary_test.go:52:16` | os.MkdirTemp() could be replaced by t.TempDir() in TestNativeBinaryTerminalStartupAcceptance | OPEN |
@@ -3230,8 +3246,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2541 объединить с L1740. L2539/L2540/L2542: убрать только начальное значение, если оно всегда заменяется до чтения; сохранить вызовы с effects. L2543: вместо бесполезного a=... убрать assignment или явно проверить новое состояние, если это цель сценария. Не удалять operations по признаку неиспользуемого результата.
 
-| ID | Файл:строка:колонка | Замечание | Статус |
-|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус | Статус |
+|---|---|---|---|---|
 | L2539 | `internal/evaluation/benchmark.go:54:2` | assigned to name, but reassigned without using the value | FIXED |
 | L2540 | `internal/evaluation/model.go:31:3` | assigned to t, but reassigned without using the value | FIXED |
 | L2541 | `internal/evaluation/process.go:70:3` | assigned to err, but reassigned without using the value | FIXED |
@@ -3260,3 +3276,5 @@ _Заполнить._
 | L1742 | `intrange` | `internal/mobilebackup/snapshot_recalls_test.go:180:5` | for loop can be changed to use an integer range (Go 1.22+) |
 | L2545 | `typecheck` | `internal/mcpserver/catalog_diagnostics.go:1:0` | : # github.com/skosovsky/zl-mcp/internal/mcpserver [github.com/skosovsky/zl-mcp/internal/mcpserver.test]<br>internal/mcpserver/sdk_lifecycle_test.go:220:3: non-name invocations[v.message] on left side of :=<br>internal/mcpserver/sdk_stdio_identity_test.go:279:3: non-name invocations[v.message] on left side of := |
 | L2544 | `whitespace` | `internal/evaluation/process_test.go:93:57` | unnecessary leading newline |
+
+L03 RSA compatibility: входящий ciphertext обрабатывается только в существующей owned mobile-offer процедуре; нет нового decrypt API. Ошибки преобразуются в общий domain invalid outcome, ciphertext/key/plaintext не добавляются в диагностику. Это compatibility exception, не заявление о безопасности PKCS#1 v1.5.

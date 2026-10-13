@@ -4,15 +4,17 @@ package observability
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync"
 	"time"
 
 	"github.com/skosovsky/metry"
-	"github.com/skosovsky/zl-mcp/internal/app/shared"
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/skosovsky/zl-mcp/internal/app/shared"
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 // Names are a fixed allowlist: neither caller input nor native identities can
@@ -60,10 +62,16 @@ var _ shared.TelemetryPort = (*Observer)(nil)
 // A nil provider disables instrumentation without constructing ExecutorWrap.
 func New(provider *metry.Provider) (*Observer, error) {
 	if provider == nil {
+		//nolint:nilnil // A nil provider disables instrumentation without constructing a new owner.
 		return nil, nil
 	}
 	sdk := provider.SDK()
-	o := &Observer{tracer: sdk.TracerProvider.Tracer("zl-mcp/host"), executors: make(map[string]func(context.Context, shared.Invocation) (domain.Outcome, error)), references: make(map[traceKey]traceReference), now: time.Now}
+	o := &Observer{
+		tracer:     sdk.TracerProvider.Tracer("zl-mcp/host"),
+		executors:  make(map[string]func(context.Context, shared.Invocation) (domain.Outcome, error)),
+		references: make(map[traceKey]traceReference),
+		now:        time.Now,
+	}
 	meter := sdk.MeterProvider.Meter("zl-mcp/host")
 	var err error
 	if o.calls, err = meter.Int64Counter("zl_mcp_domain_calls", metric.WithUnit("calls")); err != nil {
@@ -75,7 +83,10 @@ func New(provider *metry.Provider) (*Observer, error) {
 	if o.upstream, err = meter.Int64Counter("zl_mcp_upstream_calls", metric.WithUnit("calls")); err != nil {
 		return nil, errors.New("telemetry instrument configuration failed")
 	}
-	if o.transitions, err = meter.Int64Counter("zl_mcp_operation_transitions", metric.WithUnit("transitions")); err != nil {
+	if o.transitions, err = meter.Int64Counter(
+		"zl_mcp_operation_transitions",
+		metric.WithUnit("transitions"),
+	); err != nil {
 		return nil, errors.New("telemetry instrument configuration failed")
 	}
 	if o.queue, err = meter.Int64Gauge("zl_mcp_worker_queue_depth", metric.WithUnit("operations")); err != nil {
@@ -85,17 +96,19 @@ func New(provider *metry.Provider) (*Observer, error) {
 		return nil, errors.New("telemetry instrument configuration failed")
 	}
 	for _, name := range append(append([]string(nil), toolNames...), "other") {
-		o.executors[name] = metry.ExecutorWrap(provider, name, func(ctx context.Context, next shared.Invocation) (domain.Outcome, error) { return next(ctx) })
+		o.executors[name] = metry.ExecutorWrap(
+			provider,
+			name,
+			func(ctx context.Context, next shared.Invocation) (domain.Outcome, error) { return next(ctx) },
+		)
 	}
 	return o, nil
 }
 
 func (o *Observer) tool(name string) string {
 	if o.executors == nil {
-		for _, allowed := range toolNames {
-			if name == allowed {
-				return name
-			}
+		if slices.Contains(toolNames, name) {
+			return name
 		}
 		return "other"
 	}
@@ -106,6 +119,7 @@ func (o *Observer) tool(name string) string {
 }
 func errorOutcome(err error, outcome domain.Outcome) domain.Outcome {
 	// Do not invoke arbitrary Is/Unwrap callbacks merely to observe an error.
+	//nolint:errorlint // Observe the exact sentinel without calling untrusted Is or Unwrap callbacks.
 	if err == context.Canceled {
 		return domain.OutcomeCancelled
 	}
@@ -115,7 +129,8 @@ func errorOutcome(err error, outcome domain.Outcome) domain.Outcome {
 	return outcome
 }
 
-func (o *Observer) Execute(ctx context.Context, name string, next shared.Invocation) (err error) {
+func (o *Observer) Execute(ctx context.Context, name string, next shared.Invocation) error {
+	var err error
 	if o == nil {
 		_, err = next(ctx)
 		return err
@@ -136,6 +151,7 @@ func (o *Observer) Execute(ctx context.Context, name string, next shared.Invocat
 		outcome = errorOutcome(err, outcome)
 		return err
 	}
+	//nolint:spancheck // The deferred recovery closure sets outcome and calls End before rethrowing panic.
 	ctx, span := o.tracer.Start(ctx, "zl_mcp.request", trace.WithAttributes(attribute.String("tool", name)))
 	outcome := domain.OutcomeUnknown
 	defer func() {
@@ -153,6 +169,7 @@ func (o *Observer) Execute(ctx context.Context, name string, next shared.Invocat
 	}()
 	outcome, err = o.executors[name](ctx, next)
 	outcome = errorOutcome(err, outcome)
+	//nolint:spancheck // The deferred recovery closure sets outcome and calls End before rethrowing panic.
 	return err
 }
 
@@ -160,12 +177,21 @@ func (o *Observer) ResponseBytes(ctx context.Context, tool string, transport dom
 	if o == nil || o.tracer == nil || size < 0 {
 		return
 	}
-	o.response.Record(ctx, size, metric.WithAttributes(attribute.String("tool", o.tool(tool)), attribute.String("transport", transport.String())))
+	o.response.Record(
+		ctx,
+		size,
+		metric.WithAttributes(
+			attribute.String("tool", o.tool(tool)),
+			attribute.String("transport", transport.String()),
+		),
+	)
 }
-func (o *Observer) Upstream(ctx context.Context, kind domain.WorkKind, next func(context.Context) error) (err error) {
+func (o *Observer) Upstream(ctx context.Context, kind domain.WorkKind, next func(context.Context) error) error {
+	var err error
 	if o == nil || o.tracer == nil {
 		return next(ctx)
 	}
+	//nolint:spancheck // The deferred recovery closure sets outcome and calls End before rethrowing panic.
 	ctx, span := o.tracer.Start(ctx, "zl_mcp.upstream", trace.WithAttributes(attribute.String("kind", kind.String())))
 	outcome := domain.OutcomeUnknown
 	defer func() {
@@ -174,7 +200,11 @@ func (o *Observer) Upstream(ctx context.Context, kind domain.WorkKind, next func
 			outcome = domain.OutcomePanic
 		}
 		label := outcome.String()
-		o.upstream.Add(ctx, 1, metric.WithAttributes(attribute.String("kind", kind.String()), attribute.String("outcome", label)))
+		o.upstream.Add(
+			ctx,
+			1,
+			metric.WithAttributes(attribute.String("kind", kind.String()), attribute.String("outcome", label)),
+		)
 		span.SetAttributes(attribute.String("outcome", label))
 		span.End()
 		if p != nil {
@@ -183,16 +213,35 @@ func (o *Observer) Upstream(ctx context.Context, kind domain.WorkKind, next func
 	}()
 	err = next(ctx)
 	outcome = errorOutcome(err, domain.OutcomeSuccess)
+	//nolint:spancheck // The deferred recovery closure sets outcome and calls End before rethrowing panic.
 	return err
 }
-func (o *Observer) Transition(ctx context.Context, kind domain.WorkKind, from, to domain.OperationState, age *time.Duration) {
+
+func (o *Observer) Transition(
+	ctx context.Context,
+	kind domain.WorkKind,
+	from, to domain.OperationState,
+	age *time.Duration,
+) {
 	if o == nil || o.tracer == nil {
 		return
 	}
-	o.transitions.Add(ctx, 1, metric.WithAttributes(attribute.String("kind", kind.String()), attribute.String("from", from.String()), attribute.String("to", to.String())))
+	o.transitions.Add(
+		ctx,
+		1,
+		metric.WithAttributes(
+			attribute.String("kind", kind.String()),
+			attribute.String("from", from.String()),
+			attribute.String("to", to.String()),
+		),
+	)
 	if age != nil {
 		value := max(*age, time.Duration(0))
-		o.age.Record(ctx, value.Seconds(), metric.WithAttributes(attribute.String("kind", kind.String()), attribute.String("state", to.String())))
+		o.age.Record(
+			ctx,
+			value.Seconds(),
+			metric.WithAttributes(attribute.String("kind", kind.String()), attribute.String("state", to.String())),
+		)
 	}
 }
 func (o *Observer) Queue(ctx context.Context, kind domain.WorkKind, depth int64) {
@@ -233,7 +282,14 @@ func (o *Observer) Remember(ctx context.Context, kind domain.WorkKind, id string
 	}
 	o.references[key] = traceReference{sc, now.Add(traceCacheTTL)}
 }
-func (o *Observer) Worker(ctx context.Context, kind domain.WorkKind, id string, next func(context.Context) error) (err error) {
+
+func (o *Observer) Worker(
+	ctx context.Context,
+	kind domain.WorkKind,
+	id string,
+	next func(context.Context) error,
+) error {
+	var err error
 	if o == nil || o.tracer == nil {
 		return next(ctx)
 	}
@@ -245,6 +301,7 @@ func (o *Observer) Worker(ctx context.Context, kind domain.WorkKind, id string, 
 	if ok {
 		options = append(options, trace.WithLinks(trace.Link{SpanContext: ref.span}))
 	}
+	//nolint:spancheck // The deferred recovery closure sets outcome and calls End before rethrowing panic.
 	ctx, span := o.tracer.Start(ctx, "zl_mcp.worker", options...)
 	outcome := domain.OutcomeUnknown
 	defer func() {
@@ -260,6 +317,7 @@ func (o *Observer) Worker(ctx context.Context, kind domain.WorkKind, id string, 
 	}()
 	err = next(ctx)
 	outcome = errorOutcome(err, domain.OutcomeSuccess)
+	//nolint:spancheck // The deferred recovery closure sets outcome and calls End before rethrowing panic.
 	return err
 }
 

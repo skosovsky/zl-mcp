@@ -17,6 +17,7 @@ type PreparedArchiveCursor struct {
 func (PreparedArchiveCursor) String() string   { return "mobile backup prepared cursor [redacted]" }
 func (PreparedArchiveCursor) GoString() string { return "mobile backup prepared cursor [redacted]" }
 
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type PreparedArchivePage struct {
 	Coverage                                           SQLiteCoverage `json:"-"`
 	SourceWAL                                          bool           `json:"-"`
@@ -41,24 +42,40 @@ func (p *PreparedArchivePage) Clear() {
 	}
 }
 
-func ReadPreparedArchivePage(ctx context.Context, archive SelectedArchive, r domain.MobileBackupRequest, account, scratch string, nowMS int64, size int, after *PreparedArchiveCursor, mapper domain.MobileIdentitySource) (result PreparedArchivePage, err error) {
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+func ReadPreparedArchivePage(
+	ctx context.Context,
+	archive SelectedArchive,
+	r domain.MobileBackupRequest,
+	account, scratch string,
+	nowMS int64,
+	size int,
+	after *PreparedArchiveCursor,
+	mapper domain.MobileIdentitySource,
+) (result PreparedArchivePage, err error) {
 	stage := "INPUT_BINDING"
 	defer func() {
 		if err != nil {
-			slog.Warn("mobile_archive_page_failed", "stage", stage)
+			slog.WarnContext(ctx, "mobile_archive_page_failed", "stage", stage)
 		}
 	}()
-	if ctx == nil || ctx.Err() != nil || nowMS <= 0 || size < 1 || size > 50 || !canonicalIdentity(account) || mapper == nil {
+	if ctx == nil || ctx.Err() != nil || nowMS <= 0 || size < 1 || size > 50 || !canonicalIdentity(account) ||
+		mapper == nil {
 		return result, ErrSQLite
 	}
 	normalized, e := r.Normalize()
-	if e != nil || archive.ref != normalized.Ref() || archive.requestID != normalized.RequestID || archive.requestFingerprint == "" || archive.requestFingerprint != normalized.Fingerprint() {
+	if e != nil || archive.ref != normalized.Ref() || archive.requestID != normalized.RequestID ||
+		archive.requestFingerprint == "" ||
+		archive.requestFingerprint != normalized.Fingerprint() {
 		return result, ErrSQLite
 	}
 	examined := 0
 	var sqliteAfter *SQLiteCursor
 	if after != nil {
-		if after.requestID != normalized.RequestID || after.fingerprint != normalized.Fingerprint() || after.account != account || after.examined <= 0 || after.examined >= normalized.MaxMessages {
+		if after.requestID != normalized.RequestID || after.fingerprint != normalized.Fingerprint() ||
+			after.account != account ||
+			after.examined <= 0 ||
+			after.examined >= normalized.MaxMessages {
 			return result, ErrSQLite
 		}
 		examined = after.examined
@@ -104,7 +121,13 @@ func ReadPreparedArchivePage(ctx context.Context, archive SelectedArchive, r dom
 		if batch.Next == nil || result.Examined == 0 {
 			return result, ErrSQLite
 		}
-		result.Next = &PreparedArchiveCursor{requestID: normalized.RequestID, fingerprint: normalized.Fingerprint(), account: account, examined: examined, sqlite: *batch.Next}
+		result.Next = &PreparedArchiveCursor{
+			requestID:   normalized.RequestID,
+			fingerprint: normalized.Fingerprint(),
+			account:     account,
+			examined:    examined,
+			sqlite:      *batch.Next,
+		}
 	}
 	return result, nil
 }

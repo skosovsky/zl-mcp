@@ -11,6 +11,8 @@ import (
 var ErrArchive = errors.New("invalid mobile backup plaintext archive")
 
 // PlainArchive owns opaque, unvalidated file bytes. It is never a public result.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type PlainArchive struct {
 	Files []ArchiveFile `json:"-"`
 }
@@ -42,18 +44,32 @@ func ReadPlainArchive(ctx context.Context, r io.Reader, containerLimit, outputLi
 	}
 	container, err := ReadContainer(ctx, r, containerLimit)
 	if err != nil {
-		slog.Warn("mobile_archive_format_failed", "stage", "HEADER_CHECKSUM_TABLE")
+		slog.WarnContext(ctx, "mobile_archive_format_failed", "stage", "HEADER_CHECKSUM_TABLE")
 		return PlainArchive{}, ErrArchive
 	}
 	defer clear(container.Compressed)
 	var trailing [1]byte
 	n, err := io.ReadFull(cancelReader{ctx, r}, trailing[:])
-	if n != 0 || err != io.EOF || container.Header.TotalBytes > outputLimit {
+	if n != 0 || !errors.Is(err, io.EOF) || container.Header.TotalBytes > outputLimit {
 		return PlainArchive{}, ErrArchive
 	}
-	out, err := DecompressXZ(ctx, bytes.NewReader(container.Compressed), int64(len(container.Compressed)), int64(outputLimit))
+	out, err := DecompressXZ(
+		ctx,
+		bytes.NewReader(container.Compressed),
+		int64(len(container.Compressed)),
+		int64(outputLimit),
+	)
 	if err != nil || uint64(len(out)) != container.Header.TotalBytes || ctx.Err() != nil {
-		slog.Warn("mobile_archive_format_failed", "stage", "XZ_OUTPUT", "decoder_failed", err != nil, "output_size_matches", uint64(len(out)) == container.Header.TotalBytes)
+		slog.WarnContext(
+			ctx,
+			"mobile_archive_format_failed",
+			"stage",
+			"XZ_OUTPUT",
+			"decoder_failed",
+			err != nil,
+			"output_size_matches",
+			uint64(len(out)) == container.Header.TotalBytes,
+		)
 		clear(out)
 		return PlainArchive{}, ErrArchive
 	}

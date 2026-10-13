@@ -219,7 +219,7 @@
     "id": "L0025",
     "rule": "cyclop",
     "path": "internal/mcpserver/server.go",
-    "line": 239,
+    "line": 241,
     "column": 1,
     "text": "calculated cyclomatic complexity for function call is 41, max is 30",
     "status": "OPEN"
@@ -246,7 +246,7 @@
     "id": "L0028",
     "rule": "cyclop",
     "path": "internal/mobilebackup/control_scan.go",
-    "line": 30,
+    "line": 34,
     "column": 1,
     "text": "calculated cyclomatic complexity for function ReadOwnDirectRecallSet is 57, max is 30",
     "status": "OPEN"
@@ -282,7 +282,7 @@
     "id": "L0032",
     "rule": "cyclop",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 91,
+    "line": 99,
     "column": 1,
     "text": "calculated cyclomatic complexity for function convertArchiveCandidates is 62, max is 30",
     "status": "OPEN"
@@ -300,7 +300,7 @@
     "id": "L0034",
     "rule": "cyclop",
     "path": "internal/mobilebackup/prepared_page.go",
-    "line": 44,
+    "line": 46,
     "column": 1,
     "text": "calculated cyclomatic complexity for function ReadPreparedArchivePage is 31, max is 30",
     "status": "OPEN"
@@ -318,7 +318,7 @@
     "id": "L0036",
     "rule": "cyclop",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 454,
+    "line": 457,
     "column": 1,
     "text": "calculated cyclomatic complexity for function decode is 39, max is 30",
     "status": "OPEN"
@@ -327,7 +327,7 @@
     "id": "L0037",
     "rule": "cyclop",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 81,
+    "line": 83,
     "column": 1,
     "text": "calculated cyclomatic complexity for function PrepareRowPage is 56, max is 30",
     "status": "OPEN"
@@ -336,7 +336,7 @@
     "id": "L0038",
     "rule": "cyclop",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 289,
+    "line": 291,
     "column": 1,
     "text": "calculated cyclomatic complexity for function Save is 35, max is 30",
     "status": "OPEN"
@@ -345,7 +345,7 @@
     "id": "L0039",
     "rule": "cyclop",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 76,
+    "line": 79,
     "column": 1,
     "text": "calculated cyclomatic complexity for function ReadSnapshotPage is 41, max is 30",
     "status": "OPEN"
@@ -381,7 +381,7 @@
     "id": "L0043",
     "rule": "cyclop",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 169,
+    "line": 171,
     "column": 1,
     "text": "calculated cyclomatic complexity for function readSQLitePageMode is 86, max is 30",
     "status": "OPEN"
@@ -393,7 +393,7 @@
     "line": 53,
     "column": 1,
     "text": "calculated cyclomatic complexity for function inspectXZ is 43, max is 30",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L0045",
@@ -426,7 +426,7 @@
     "id": "L0048",
     "rule": "cyclop",
     "path": "internal/service/archive_messages.go",
-    "line": 156,
+    "line": 158,
     "column": 1,
     "text": "calculated cyclomatic complexity for function archiveMessages is 31, max is 30",
     "status": "OPEN"
@@ -660,7 +660,7 @@
     "id": "L0074",
     "rule": "cyclop",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 75,
+    "line": 77,
     "column": 1,
     "text": "calculated cyclomatic complexity for function Bench is 42, max is 30",
     "status": "OPEN"
@@ -2073,7 +2073,7 @@
     "id": "L0231",
     "rule": "exhaustruct_v5",
     "path": "internal/domain/mobile_history.go",
-    "line": 86,
+    "line": 88,
     "column": 14,
     "text": "domain.MobileHistoryPosition is missing fields TimestampMS, RowID",
     "status": "OPEN"
@@ -2082,7 +2082,7 @@
     "id": "L0232",
     "rule": "exhaustruct_v5",
     "path": "internal/domain/mobile_history.go",
-    "line": 88,
+    "line": 90,
     "column": 8,
     "text": "domain.MobileHistoryPage is missing fields ControlPrelude, Snapshot, Records, Recalls, Counts, HasMore, Next",
     "status": "OPEN"
@@ -2307,7 +2307,7 @@
     "id": "L0257",
     "rule": "exhaustruct_v5",
     "path": "internal/evalfixture/offline.go",
-    "line": 255,
+    "line": 257,
     "column": 3,
     "text": "domain.MobileBackupOffer is missing fields PlainAccountID, SessionAccountID, FromSequence",
     "status": "OPEN"
@@ -2325,7 +2325,7 @@
     "id": "L0259",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/benchmark.go",
-    "line": 40,
+    "line": 42,
     "column": 11,
     "text": "evaluation.Measurement is missing fields Calls, Errors, Bytes, P95Seconds, AllocationsPerOp, AllocBytesPerOp, ElapsedSeconds, Cleanup",
     "status": "OPEN"
@@ -2334,7 +2334,7 @@
     "id": "L0260",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/benchmark.go",
-    "line": 77,
+    "line": 79,
     "column": 3,
     "text": "evalfixture.Options is missing fields Policy, SendTimeout, DenySend, KeepState, ArchiveVector, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile",
     "status": "OPEN"
@@ -2343,7 +2343,7 @@
     "id": "L0261",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/benchmark.go",
-    "line": 113,
+    "line": 115,
     "column": 43,
     "text": "mcp.CallToolParams is missing fields Meta, InputResponses, RequestState",
     "status": "OPEN"
@@ -2370,7 +2370,7 @@
     "id": "L0264",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/client.go",
-    "line": 40,
+    "line": 42,
     "column": 37,
     "text": "mcp.CallToolParams is missing fields Meta, InputResponses, RequestState",
     "status": "OPEN"
@@ -2379,7 +2379,7 @@
     "id": "L0265",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/client.go",
-    "line": 41,
+    "line": 43,
     "column": 7,
     "text": "evaluation.Trace is missing fields Result, Error",
     "status": "OPEN"
@@ -2388,7 +2388,7 @@
     "id": "L0266",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/client.go",
-    "line": 60,
+    "line": 62,
     "column": 41,
     "text": "mcp.ReadResourceParams is missing fields Meta, InputResponses, RequestState",
     "status": "OPEN"
@@ -2397,7 +2397,7 @@
     "id": "L0267",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/client.go",
-    "line": 61,
+    "line": 63,
     "column": 7,
     "text": "evaluation.Trace is missing fields Input, Result, Error",
     "status": "OPEN"
@@ -2469,7 +2469,7 @@
     "id": "L0275",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/model.go",
-    "line": 72,
+    "line": 74,
     "column": 8,
     "text": "evaluation.Output is missing fields Trace, Cleanup, Effects, Complete, Failure, ElapsedSeconds, Bytes",
     "status": "OPEN"
@@ -2478,7 +2478,7 @@
     "id": "L0276",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/model.go",
-    "line": 81,
+    "line": 83,
     "column": 3,
     "text": "evalfixture.Options is missing fields Policy, SendTimeout, DenySend, ArchiveVector, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile",
     "status": "OPEN"
@@ -2487,7 +2487,7 @@
     "id": "L0277",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/model.go",
-    "line": 92,
+    "line": 94,
     "column": 14,
     "text": "evaluation.modelCapture is missing fields mu, calls, violated, trace",
     "status": "OPEN"
@@ -2514,7 +2514,7 @@
     "id": "L0280",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/process.go",
-    "line": 55,
+    "line": 56,
     "column": 21,
     "text": "syscall.SysProcAttr is missing fields Chroot, Credential, Ptrace, Setsid, Setctty, Noctty, Ctty, Foreground, Pgid",
     "status": "OPEN"
@@ -2523,7 +2523,7 @@
     "id": "L0281",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/runner.go",
-    "line": 137,
+    "line": 139,
     "column": 11,
     "text": "evaluation.Report is missing fields Reason, Experiment, ExpectedCases, PassedCases, ExpectedAssertions, PassedAssertions, FailedCases, SkippedCases",
     "status": "OPEN"
@@ -2532,7 +2532,7 @@
     "id": "L0282",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/runner.go",
-    "line": 251,
+    "line": 253,
     "column": 11,
     "text": "evaly.DatasetDraft is missing fields Cases, ParentRevision",
     "status": "OPEN"
@@ -2541,7 +2541,7 @@
     "id": "L0283",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/runner.go",
-    "line": 254,
+    "line": 256,
     "column": 37,
     "text": "evaly.Case is missing fields Revision, Metadata, RequiredEvidence, Generation",
     "status": "OPEN"
@@ -2550,7 +2550,7 @@
     "id": "L0284",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/runner.go",
-    "line": 267,
+    "line": 269,
     "column": 10,
     "text": "evaly.RunConfig is missing field Budget",
     "status": "OPEN"
@@ -2559,7 +2559,7 @@
     "id": "L0285",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/runner.go",
-    "line": 301,
+    "line": 304,
     "column": 16,
     "text": "evaluation.Output is missing fields Trace, Facts, Cleanup, Effects, Complete, ElapsedSeconds, Bytes",
     "status": "OPEN"
@@ -2568,7 +2568,7 @@
     "id": "L0286",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/runner.go",
-    "line": 327,
+    "line": 344,
     "column": 15,
     "text": "evaly.TargetResult is missing field Usage",
     "status": "OPEN"
@@ -2577,7 +2577,7 @@
     "id": "L0287",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/runner.go",
-    "line": 333,
+    "line": 336,
     "column": 8,
     "text": "evaly.Event is missing field CorrelationID",
     "status": "OPEN"
@@ -2586,7 +2586,7 @@
     "id": "L0288",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/runner.go",
-    "line": 341,
+    "line": 330,
     "column": 15,
     "text": "evaly.TargetResult is missing field Usage",
     "status": "OPEN"
@@ -2595,7 +2595,7 @@
     "id": "L0289",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/runner.go",
-    "line": 344,
+    "line": 347,
     "column": 63,
     "text": "evaly.Usage is missing field Units",
     "status": "OPEN"
@@ -2604,7 +2604,7 @@
     "id": "L0290",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/runner.go",
-    "line": 368,
+    "line": 371,
     "column": 10,
     "text": "evaly.RunPlan is missing fields StopOnInfrastructure, DispatchUnits, GraderUnits",
     "status": "OPEN"
@@ -2613,7 +2613,7 @@
     "id": "L0291",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/runner.go",
-    "line": 377,
+    "line": 380,
     "column": 16,
     "text": "evaly.Provenance is missing fields Model, Prompt, Provider",
     "status": "OPEN"
@@ -2622,7 +2622,7 @@
     "id": "L0292",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/scenarios.go",
-    "line": 25,
+    "line": 26,
     "column": 13,
     "text": "evalfixture.Options is missing fields Policy, SendTimeout, DenySend, ArchiveVector, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile",
     "status": "OPEN"
@@ -2631,7 +2631,7 @@
     "id": "L0293",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/scenarios.go",
-    "line": 213,
+    "line": 214,
     "column": 15,
     "text": "domain.Message is missing fields Direction, FirstIncoming, QuoteMetadata, ConversationName, GroupID, SenderName, ReplyTo, AttachmentTypes, Source, TextTruncated, TextResourceURI",
     "status": "OPEN"
@@ -2640,7 +2640,7 @@
     "id": "L0294",
     "rule": "exhaustruct_v5",
     "path": "internal/evaluation/scenarios.go",
-    "line": 250,
+    "line": 251,
     "column": 12,
     "text": "domain.CollectionPolicy is missing field All",
     "status": "OPEN"
@@ -2721,7 +2721,7 @@
     "id": "L0303",
     "rule": "exhaustruct_v5",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 196,
+    "line": 198,
     "column": 27,
     "text": "domain.MobileBackupOffer is missing fields PlainAccountID, SessionAccountID, URL, KeyText, FileSize, FromSequence",
     "status": "OPEN"
@@ -2730,7 +2730,7 @@
     "id": "L0304",
     "rule": "exhaustruct_v5",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 224,
+    "line": 226,
     "column": 12,
     "text": "domain.MobileBackupOffer is missing fields PlainAccountID, SessionAccountID, URL, KeyText, FileSize, FromSequence",
     "status": "OPEN"
@@ -2739,7 +2739,7 @@
     "id": "L0305",
     "rule": "exhaustruct_v5",
     "path": "internal/logging/file.go",
-    "line": 58,
+    "line": 61,
     "column": 10,
     "text": "logging.File is missing fields mu, err",
     "status": "OPEN"
@@ -2748,7 +2748,7 @@
     "id": "L0306",
     "rule": "exhaustruct_v5",
     "path": "internal/logging/file.go",
-    "line": 59,
+    "line": 62,
     "column": 14,
     "text": "lumberjack.Logger is missing fields MaxAge, LocalTime, Compress",
     "status": "OPEN"
@@ -3165,13 +3165,13 @@
     "line": 277,
     "column": 10,
     "text": "domain.Error is missing fields Code, Message, Retryable, NextAction, Details",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L0353",
     "rule": "exhaustruct_v5",
     "path": "internal/mcpserver/server.go",
-    "line": 301,
+    "line": 303,
     "column": 17,
     "text": "domain.NextAction is missing fields Tool, Arguments",
     "status": "OPEN"
@@ -3180,7 +3180,7 @@
     "id": "L0354",
     "rule": "exhaustruct_v5",
     "path": "internal/mcpserver/server.go",
-    "line": 434,
+    "line": 436,
     "column": 29,
     "text": "mcp.TextContent is missing fields Meta, Annotations",
     "status": "OPEN"
@@ -3189,7 +3189,7 @@
     "id": "L0355",
     "rule": "exhaustruct_v5",
     "path": "internal/mcpserver/server.go",
-    "line": 443,
+    "line": 445,
     "column": 6,
     "text": "mcp.ResourceLink is missing fields Title, Description, Size, Meta, Annotations, Icons",
     "status": "OPEN"
@@ -3198,7 +3198,7 @@
     "id": "L0356",
     "rule": "exhaustruct_v5",
     "path": "internal/mcpserver/server.go",
-    "line": 447,
+    "line": 449,
     "column": 10,
     "text": "mcp.CallToolResult is missing fields Meta, IsError, InputRequests, RequestState",
     "status": "OPEN"
@@ -3225,7 +3225,7 @@
     "id": "L0359",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/account_fetch.go",
-    "line": 34,
+    "line": 36,
     "column": 7,
     "text": "mobilebackup.AccountArchive is missing fields ownerAccount, retainedSourceID, archive, pairs, ciphertextBytes, containerBytes, trailingBytes",
     "status": "OPEN"
@@ -3234,7 +3234,7 @@
     "id": "L0360",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/account_fetch.go",
-    "line": 107,
+    "line": 109,
     "column": 12,
     "text": "mobilebackup.AccountArchive is missing fields ownerAccount, retainedSourceID",
     "status": "OPEN"
@@ -3243,7 +3243,7 @@
     "id": "L0361",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/account_fetch.go",
-    "line": 114,
+    "line": 116,
     "column": 20,
     "text": "mobilebackup.PlainArchive is missing field Files",
     "status": "OPEN"
@@ -3279,7 +3279,7 @@
     "id": "L0365",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/archive.go",
-    "line": 32,
+    "line": 34,
     "column": 16,
     "text": "mobilebackup.ArchiveFile is missing fields Name, Data",
     "status": "OPEN"
@@ -3324,7 +3324,7 @@
     "id": "L0370",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 34,
+    "line": 36,
     "column": 8,
     "text": "mobilebackup.AttachmentValue is missing fields Present, Bytes",
     "status": "OPEN"
@@ -3333,7 +3333,7 @@
     "id": "L0371",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 41,
+    "line": 43,
     "column": 7,
     "text": "mobilebackup.Attachment is missing fields Type, ExtInfo, Action, Params, Title, Href, Thumb, Description, Remains, ZInstantData, ZInstantMessage, CategoryID, ID, ChildNumber, UnsupportedFields",
     "status": "OPEN"
@@ -3342,7 +3342,7 @@
     "id": "L0372",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/binnet.go",
-    "line": 31,
+    "line": 33,
     "column": 7,
     "text": "mobilebackup.BinNet is missing fields Mentions, Quote, Attachments, UnsupportedTags, UnsupportedFields",
     "status": "OPEN"
@@ -3351,7 +3351,7 @@
     "id": "L0373",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/control_scan.go",
-    "line": 23,
+    "line": 25,
     "column": 8,
     "text": "mobilebackup.OwnDirectRecallSet is missing fields requestID, fingerprint, account, filename, digest, Recalls",
     "status": "OPEN"
@@ -3360,7 +3360,7 @@
     "id": "L0374",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/control_scan.go",
-    "line": 88,
+    "line": 92,
     "column": 15,
     "text": "domain.MobileIdentityRequest is missing fields Direct, Groups",
     "status": "OPEN"
@@ -3378,7 +3378,7 @@
     "id": "L0376",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/encrypted_archive.go",
-    "line": 21,
+    "line": 22,
     "column": 8,
     "text": "mobilebackup.Format1Archive is missing fields Archive, CiphertextBytes, ContainerBytes, TrailingBytes",
     "status": "OPEN"
@@ -3387,7 +3387,7 @@
     "id": "L0377",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/header.go",
-    "line": 85,
+    "line": 86,
     "column": 12,
     "text": "mobilebackup.Header is missing field TotalBytes",
     "status": "OPEN"
@@ -3396,7 +3396,7 @@
     "id": "L0378",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/history_page.go",
-    "line": 59,
+    "line": 61,
     "column": 12,
     "text": "mobilebackup.SQLiteCursor is missing fields Descending, Snapshot",
     "status": "OPEN"
@@ -3405,7 +3405,7 @@
     "id": "L0379",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/history_page.go",
-    "line": 74,
+    "line": 76,
     "column": 12,
     "text": "domain.MobileHistorySnapshot is missing field ControlPreludeComplete",
     "status": "OPEN"
@@ -3414,7 +3414,7 @@
     "id": "L0380",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/mentions.go",
-    "line": 24,
+    "line": 25,
     "column": 7,
     "text": "mobilebackup.Mention is missing fields Type, UID, Position, Length, UnsupportedFields",
     "status": "OPEN"
@@ -3423,7 +3423,7 @@
     "id": "L0381",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 26,
+    "line": 27,
     "column": 19,
     "text": "domain.ExpiringHistoryRecord is missing fields Message, ExpiresAtMS",
     "status": "OPEN"
@@ -3432,7 +3432,7 @@
     "id": "L0382",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 31,
+    "line": 32,
     "column": 8,
     "text": "mobilebackup.ConvertedArchivePage is missing fields Records, Recalls, Expired, UnsupportedContent, UnresolvedQuotes, UnresolvedMentions, UnsupportedContentReasons, UnsupportedContentKinds",
     "status": "OPEN"
@@ -3441,7 +3441,7 @@
     "id": "L0383",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 71,
+    "line": 78,
     "column": 12,
     "text": "mobilebackup.ArchivePageInspection is missing fields OwnRecallCandidates, UnsupportedContentReasons, UnsupportedContentKinds",
     "status": "OPEN"
@@ -3450,7 +3450,7 @@
     "id": "L0384",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 195,
+    "line": 203,
     "column": 14,
     "text": "domain.Message is missing fields FirstIncoming, ConversationName, GroupID, SenderName, ReplyTo, Source, TextTruncated, TextResourceURI",
     "status": "OPEN"
@@ -3459,7 +3459,7 @@
     "id": "L0385",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/page_expiry.go",
-    "line": 27,
+    "line": 30,
     "column": 11,
     "text": "mobilebackup.PreparedRow is missing fields Row, SenderID, Direction, Kind, Metadata, ExpiresMS, ExpiryDeclared, QuoteExpired",
     "status": "OPEN"
@@ -3468,7 +3468,7 @@
     "id": "L0386",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/page_expiry.go",
-    "line": 39,
+    "line": 42,
     "column": 14,
     "text": "mobilebackup.QuoteValue is missing fields Present, Bytes",
     "status": "OPEN"
@@ -3477,7 +3477,7 @@
     "id": "L0387",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/page_expiry.go",
-    "line": 45,
+    "line": 48,
     "column": 11,
     "text": "mobilebackup.PreparedRow is missing fields Row, SenderID, Direction, Kind, Metadata, ExpiresMS, ExpiryDeclared, QuoteExpired",
     "status": "OPEN"
@@ -3486,7 +3486,7 @@
     "id": "L0388",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/page_walk.go",
-    "line": 44,
+    "line": 46,
     "column": 14,
     "text": "mobilebackup.ArchiveWalkSummary is missing fields Pages, Examined, Rejected, Candidates, ExpiredMessages, ExpiredQuotes, DeferredControls, UnsupportedTypes, MissingMetadata, InvalidMetadata, UnsupportedMetadataFields, SourceHasMore, StopReason",
     "status": "OPEN"
@@ -3495,7 +3495,7 @@
     "id": "L0389",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/page_walk.go",
-    "line": 58,
+    "line": 60,
     "column": 13,
     "text": "mobilebackup.ArchiveWalkSummary is missing field StopReason",
     "status": "OPEN"
@@ -3504,7 +3504,7 @@
     "id": "L0390",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/prepared_page.go",
-    "line": 38,
+    "line": 39,
     "column": 14,
     "text": "mobilebackup.PreparedArchiveCursor is missing fields requestID, fingerprint, account, examined, sqlite",
     "status": "OPEN"
@@ -3513,7 +3513,7 @@
     "id": "L0391",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/prepared_page.go",
-    "line": 40,
+    "line": 41,
     "column": 8,
     "text": "mobilebackup.PreparedArchivePage is missing fields Coverage, SourceWAL, SourceControls, controlsVerified, requestID, fingerprint, account, Candidates, Examined, Rejected, ExpiredMessages, ExpiredQuotes, SourceHasMore, BudgetExhausted, Next",
     "status": "OPEN"
@@ -3522,7 +3522,7 @@
     "id": "L0392",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/quote.go",
-    "line": 35,
+    "line": 37,
     "column": 7,
     "text": "mobilebackup.QuoteScalars is missing fields OwnerID, ClientMessageID, GlobalMessageID, MessageType, Timestamp, TTL",
     "status": "OPEN"
@@ -3531,7 +3531,7 @@
     "id": "L0393",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/quote_fields.go",
-    "line": 33,
+    "line": 35,
     "column": 8,
     "text": "mobilebackup.QuoteValue is missing fields Present, Bytes",
     "status": "OPEN"
@@ -3540,7 +3540,7 @@
     "id": "L0394",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/quote_fields.go",
-    "line": 35,
+    "line": 37,
     "column": 7,
     "text": "mobilebackup.Quote is missing fields Scalars, Message, Attachment, FromD, Status, UnsupportedFields",
     "status": "OPEN"
@@ -3549,7 +3549,7 @@
     "id": "L0395",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 140,
+    "line": 142,
     "column": 8,
     "text": "mobilebackup.RetainedArchiveStore is missing field backup",
     "status": "OPEN"
@@ -3558,7 +3558,7 @@
     "id": "L0396",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 142,
+    "line": 144,
     "column": 12,
     "text": "mobilebackup.SnapshotStore is missing field terminalHints",
     "status": "OPEN"
@@ -3567,7 +3567,7 @@
     "id": "L0397",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 262,
+    "line": 264,
     "column": 10,
     "text": "mobilebackup.retainedMetadata is missing fields PreservedMS, SourceStoredBytes",
     "status": "OPEN"
@@ -3576,7 +3576,7 @@
     "id": "L0398",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 358,
+    "line": 361,
     "column": 9,
     "text": "mobilebackup.RetainedArchiveManifest is missing fields HistoryComplete, ImportPerformed",
     "status": "OPEN"
@@ -3585,7 +3585,7 @@
     "id": "L0399",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 508,
+    "line": 511,
     "column": 13,
     "text": "mobilebackup.AccountArchive is missing fields ownerAccount, retainedSourceID, archive, pairs",
     "status": "OPEN"
@@ -3594,7 +3594,7 @@
     "id": "L0400",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 37,
+    "line": 38,
     "column": 15,
     "text": "mobilebackup.PreparedRow is missing fields Row, SenderID, Direction, Kind, Metadata, ExpiresMS, ExpiryDeclared, QuoteExpired",
     "status": "OPEN"
@@ -3603,7 +3603,7 @@
     "id": "L0401",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 40,
+    "line": 41,
     "column": 7,
     "text": "mobilebackup.PreparedRowPage is missing fields Rows, OwnRecalls, Examined, DeferredControls, UnsupportedTypes, MissingMetadata, InvalidMetadata, UnsupportedMetadataFields",
     "status": "OPEN"
@@ -3612,7 +3612,7 @@
     "id": "L0402",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 147,
+    "line": 149,
     "column": 13,
     "text": "mobilebackup.IdentityRequest is missing fields Direct, Groups",
     "status": "OPEN"
@@ -3621,7 +3621,7 @@
     "id": "L0403",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 188,
+    "line": 190,
     "column": 4,
     "text": "mobilebackup.PreparedRow is missing fields SenderID, Direction, QuoteExpired",
     "status": "OPEN"
@@ -3630,7 +3630,7 @@
     "id": "L0404",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/selected_fetch.go",
-    "line": 25,
+    "line": 26,
     "column": 8,
     "text": "mobilebackup.SelectedArchive is missing fields requestID, ref, requestFingerprint, snapshotCreatedMS, snapshotExpiresMS, File, CiphertextBytes, ContainerBytes, TrailingBytes",
     "status": "OPEN"
@@ -3639,7 +3639,7 @@
     "id": "L0405",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/selected_fetch.go",
-    "line": 76,
+    "line": 77,
     "column": 14,
     "text": "mobilebackup.SelectedArchive is missing fields snapshotCreatedMS, snapshotExpiresMS",
     "status": "OPEN"
@@ -3648,7 +3648,7 @@
     "id": "L0406",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/selected_fetch.go",
-    "line": 85,
+    "line": 86,
     "column": 33,
     "text": "mobilebackup.ArchiveFile is missing fields Name, Data",
     "status": "OPEN"
@@ -3657,7 +3657,7 @@
     "id": "L0407",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 111,
+    "line": 113,
     "column": 12,
     "text": "mobilebackup.SnapshotStore is missing field terminalHints",
     "status": "OPEN"
@@ -3666,7 +3666,7 @@
     "id": "L0408",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 70,
+    "line": 71,
     "column": 8,
     "text": "mobilebackup.SnapshotPage is missing fields Records, Coverage, WALMode, UnsupportedMetadataFields, UnresolvedQuotes, UnresolvedMentions, Examined, Rejected, Expired, UnresolvedSenders, SourceInformation, SourceNativeExcluded, SourceRecallRows, SuppressedSource, Unsupported, HasMore, Next",
     "status": "OPEN"
@@ -3675,7 +3675,7 @@
     "id": "L0409",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 189,
+    "line": 192,
     "column": 47,
     "text": "mobilebackup.PreparedRow is missing fields SenderID, Direction, ExpiresMS, ExpiryDeclared, QuoteExpired",
     "status": "OPEN"
@@ -3684,7 +3684,7 @@
     "id": "L0410",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 81,
+    "line": 82,
     "column": 15,
     "text": "mobilebackup.SQLiteRow is missing fields SenderID, MessageID, ClientID, Text, TimestampMS, TTL, Type, Status, SourceRowID, BinNet",
     "status": "OPEN"
@@ -3693,7 +3693,7 @@
     "id": "L0411",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/tlv.go",
-    "line": 30,
+    "line": 32,
     "column": 17,
     "text": "mobilebackup.TLVField is missing fields Tag, Value",
     "status": "OPEN"
@@ -3702,7 +3702,7 @@
     "id": "L0412",
     "rule": "exhaustruct_v5",
     "path": "internal/mobilebackup/tlv.go",
-    "line": 42,
+    "line": 45,
     "column": 13,
     "text": "mobilebackup.TLV is missing field Fields",
     "status": "OPEN"
@@ -3729,7 +3729,7 @@
     "id": "L0415",
     "rule": "exhaustruct_v5",
     "path": "internal/observability/observer.go",
-    "line": 68,
+    "line": 69,
     "column": 8,
     "text": "observability.Observer is missing fields calls, response, upstream, transitions, queue, age, mu",
     "status": "OPEN"
@@ -3738,7 +3738,7 @@
     "id": "L0416",
     "rule": "exhaustruct_v5",
     "path": "internal/observability/observer.go",
-    "line": 294,
+    "line": 302,
     "column": 45,
     "text": "trace.Link is missing field Attributes",
     "status": "OPEN"
@@ -3801,7 +3801,7 @@
     "id": "L0423",
     "rule": "exhaustruct_v5",
     "path": "internal/service/archive_messages.go",
-    "line": 109,
+    "line": 111,
     "column": 11,
     "text": "domain.Error is missing fields Retryable, NextAction",
     "status": "OPEN"
@@ -3810,7 +3810,7 @@
     "id": "L0424",
     "rule": "exhaustruct_v5",
     "path": "internal/service/archive_messages.go",
-    "line": 115,
+    "line": 117,
     "column": 10,
     "text": "domain.Error is missing fields Retryable, NextAction",
     "status": "OPEN"
@@ -3819,7 +3819,7 @@
     "id": "L0425",
     "rule": "exhaustruct_v5",
     "path": "internal/service/archive_messages.go",
-    "line": 166,
+    "line": 168,
     "column": 16,
     "text": "domain.Error is missing fields Retryable, NextAction",
     "status": "OPEN"
@@ -3828,7 +3828,7 @@
     "id": "L0426",
     "rule": "exhaustruct_v5",
     "path": "internal/service/archive_messages.go",
-    "line": 186,
+    "line": 188,
     "column": 11,
     "text": "service.archiveReadToken is missing fields Position, Target, Limit",
     "status": "OPEN"
@@ -3963,7 +3963,7 @@
     "id": "L0441",
     "rule": "exhaustruct_v5",
     "path": "internal/service/mobile_backup.go",
-    "line": 213,
+    "line": 217,
     "column": 12,
     "text": "mobilebackup.ArchiveWalkSummary is missing fields Pages, Examined, Rejected, Candidates, ExpiredMessages, ExpiredQuotes, DeferredControls, UnsupportedTypes, MissingMetadata, InvalidMetadata, UnsupportedMetadataFields, SourceHasMore, StopReason",
     "status": "OPEN"
@@ -4071,7 +4071,7 @@
     "id": "L0453",
     "rule": "exhaustruct_v5",
     "path": "internal/service/run.go",
-    "line": 555,
+    "line": 556,
     "column": 14,
     "text": "domain.Error is missing fields Retryable, NextAction, Details",
     "status": "OPEN"
@@ -4152,7 +4152,7 @@
     "id": "L0462",
     "rule": "exhaustruct_v5",
     "path": "internal/storage/history_expiry.go",
-    "line": 82,
+    "line": 83,
     "column": 12,
     "text": "storage.HistoryPageCounts is missing fields Inserted, Duplicates",
     "status": "OPEN"
@@ -4269,7 +4269,7 @@
     "id": "L0475",
     "rule": "exhaustruct_v5",
     "path": "internal/storage/store.go",
-    "line": 442,
+    "line": 445,
     "column": 29,
     "text": "domain.Error is missing field Retryable",
     "status": "OPEN"
@@ -4278,7 +4278,7 @@
     "id": "L0476",
     "rule": "exhaustruct_v5",
     "path": "internal/storage/store.go",
-    "line": 445,
+    "line": 448,
     "column": 16,
     "text": "domain.NextAction is missing fields Tool, Arguments",
     "status": "OPEN"
@@ -4287,7 +4287,7 @@
     "id": "L0477",
     "rule": "exhaustruct_v5",
     "path": "internal/storage/store.go",
-    "line": 571,
+    "line": 574,
     "column": 7,
     "text": "storage.cursor is missing fields Kind, Snapshot, At, Group, ID",
     "status": "OPEN"
@@ -4323,7 +4323,7 @@
     "id": "L0481",
     "rule": "exhaustruct_v5",
     "path": "internal/storage/views.go",
-    "line": 404,
+    "line": 405,
     "column": 27,
     "text": "domain.NextAction is missing fields Tool, Arguments",
     "status": "OPEN"
@@ -4566,7 +4566,7 @@
     "id": "L0508",
     "rule": "exhaustruct_v5",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 93,
+    "line": 94,
     "column": 21,
     "text": "syscall.SysProcAttr is missing fields Chroot, Credential, Ptrace, Setsid, Setctty, Noctty, Ctty, Foreground, Pgid",
     "status": "OPEN"
@@ -4575,7 +4575,7 @@
     "id": "L0509",
     "rule": "exhaustruct_v5",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 140,
+    "line": 141,
     "column": 7,
     "text": "architecture.Result is missing field Report",
     "status": "OPEN"
@@ -4584,7 +4584,7 @@
     "id": "L0510",
     "rule": "exhaustruct_v5",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 417,
+    "line": 420,
     "column": 22,
     "text": "architecture.Control is missing field Result",
     "status": "OPEN"
@@ -4593,7 +4593,7 @@
     "id": "L0511",
     "rule": "exhaustruct_v5",
     "path": "tools/harness/internal/performance/process.go",
-    "line": 39,
+    "line": 41,
     "column": 21,
     "text": "syscall.SysProcAttr is missing fields Chroot, Credential, Ptrace, Setsid, Setctty, Noctty, Ctty, Foreground, Pgid",
     "status": "OPEN"
@@ -4629,7 +4629,7 @@
     "id": "L0518",
     "rule": "forbidigo",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 170,
+    "line": 173,
     "column": 4,
     "text": "use of `fmt.Printf` forbidden by pattern `^(fmt\\.Print(|f|ln)|print|println)$`",
     "status": "OPEN"
@@ -4647,7 +4647,7 @@
     "id": "L0520",
     "rule": "funcorder",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 91,
+    "line": 93,
     "column": 1,
     "text": "constructor \"NewRetainedArchiveStore\" for struct \"RetainedArchiveStore\" should be placed before struct method \"String\"",
     "status": "OPEN"
@@ -4656,7 +4656,7 @@
     "id": "L0521",
     "rule": "funcorder",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 96,
+    "line": 98,
     "column": 1,
     "text": "constructor \"NewArchiveLibraryStore\" for struct \"RetainedArchiveStore\" should be placed before struct method \"String\"",
     "status": "OPEN"
@@ -4665,7 +4665,7 @@
     "id": "L0522",
     "rule": "funcorder",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 71,
+    "line": 73,
     "column": 1,
     "text": "constructor \"NewSnapshotStore\" for struct \"SnapshotStore\" should be placed before struct method \"lock\"",
     "status": "OPEN"
@@ -4758,7 +4758,7 @@
     "line": 39,
     "column": 6,
     "text": "Function 'Measure' has too many statements (64 > 50)",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L0533",
@@ -4866,7 +4866,7 @@
     "line": 239,
     "column": 19,
     "text": "Function 'call' has too many statements (99 > 50)",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L0545",
@@ -4890,7 +4890,7 @@
     "id": "L0547",
     "rule": "funlen",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 44,
+    "line": 47,
     "column": 6,
     "text": "Function 'ParseAttachment' has too many statements (52 > 50)",
     "status": "OPEN"
@@ -4899,7 +4899,7 @@
     "id": "L0548",
     "rule": "funlen",
     "path": "internal/mobilebackup/control_scan.go",
-    "line": 30,
+    "line": 34,
     "column": 6,
     "text": "Function 'ReadOwnDirectRecallSet' is too long (126 > 100)",
     "status": "OPEN"
@@ -4911,13 +4911,13 @@
     "line": 17,
     "column": 25,
     "text": "Function 'ReadHistoryPage' has too many statements (59 > 50)",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L0550",
     "rule": "funlen",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 91,
+    "line": 99,
     "column": 6,
     "text": "Function 'convertArchiveCandidates' has too many statements (63 > 50)",
     "status": "OPEN"
@@ -4926,7 +4926,7 @@
     "id": "L0551",
     "rule": "funlen",
     "path": "internal/mobilebackup/prepared_page.go",
-    "line": 44,
+    "line": 46,
     "column": 6,
     "text": "Function 'ReadPreparedArchivePage' has too many statements (51 > 50)",
     "status": "OPEN"
@@ -4935,7 +4935,7 @@
     "id": "L0552",
     "rule": "funlen",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 454,
+    "line": 457,
     "column": 32,
     "text": "Function 'decode' has too many statements (54 > 50)",
     "status": "OPEN"
@@ -4944,7 +4944,7 @@
     "id": "L0553",
     "rule": "funlen",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 81,
+    "line": 83,
     "column": 6,
     "text": "Function 'PrepareRowPage' has too many statements (107 > 50)",
     "status": "OPEN"
@@ -4953,7 +4953,7 @@
     "id": "L0554",
     "rule": "funlen",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 289,
+    "line": 291,
     "column": 25,
     "text": "Function 'Save' has too many statements (59 > 50)",
     "status": "OPEN"
@@ -4962,7 +4962,7 @@
     "id": "L0555",
     "rule": "funlen",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 76,
+    "line": 79,
     "column": 25,
     "text": "Function 'ReadSnapshotPage' has too many statements (100 > 50)",
     "status": "OPEN"
@@ -4980,7 +4980,7 @@
     "id": "L0557",
     "rule": "funlen",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 169,
+    "line": 171,
     "column": 6,
     "text": "Function 'readSQLitePageMode' has too many statements (200 > 50)",
     "status": "OPEN"
@@ -4992,7 +4992,7 @@
     "line": 53,
     "column": 6,
     "text": "Function 'inspectXZ' has too many statements (74 > 50)",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L0559",
@@ -5025,7 +5025,7 @@
     "id": "L0562",
     "rule": "funlen",
     "path": "internal/service/archive_messages.go",
-    "line": 156,
+    "line": 158,
     "column": 26,
     "text": "Function 'archiveMessages' has too many statements (68 > 50)",
     "status": "OPEN"
@@ -5169,7 +5169,7 @@
     "id": "L0578",
     "rule": "funlen",
     "path": "internal/storage/store.go",
-    "line": 602,
+    "line": 605,
     "column": 17,
     "text": "Function 'searchPage' has too many statements (82 > 50)",
     "status": "OPEN"
@@ -5232,7 +5232,7 @@
     "id": "L0585",
     "rule": "funlen",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 449,
+    "line": 453,
     "column": 6,
     "text": "Function 'Check' has too many statements (59 > 50)",
     "status": "OPEN"
@@ -5241,7 +5241,7 @@
     "id": "L0586",
     "rule": "funlen",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 75,
+    "line": 77,
     "column": 6,
     "text": "Function 'Bench' is too long (140 > 100)",
     "status": "OPEN"
@@ -5331,7 +5331,7 @@
     "id": "L0596",
     "rule": "gochecknoglobals",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 285,
+    "line": 287,
     "column": 5,
     "text": "cases is a global variable",
     "status": "OPEN"
@@ -5934,7 +5934,7 @@
     "id": "L0663",
     "rule": "gocognit",
     "path": "internal/mcpserver/sdk_identity_test.go",
-    "line": 152,
+    "line": 154,
     "column": 1,
     "text": "cognitive complexity 37 of func `TestSDK01HTTPWrappersPreserveEnvelopeIdentity` is high (> 20)",
     "status": "OPEN"
@@ -5943,7 +5943,7 @@
     "id": "L0664",
     "rule": "gocognit",
     "path": "internal/mcpserver/sdk_lifecycle_test.go",
-    "line": 273,
+    "line": 277,
     "column": 1,
     "text": "cognitive complexity 27 of func `TestSDK01LostReplyRetainsDurableUUIDAndNeverResends` is high (> 20)",
     "status": "OPEN"
@@ -5970,7 +5970,7 @@
     "id": "L0667",
     "rule": "gocognit",
     "path": "internal/mcpserver/server.go",
-    "line": 239,
+    "line": 241,
     "column": 1,
     "text": "cognitive complexity 65 of func `(*Service).call` is high (> 20)",
     "status": "OPEN"
@@ -6051,7 +6051,7 @@
     "id": "L0676",
     "rule": "gocognit",
     "path": "internal/mobilebackup/binnet.go",
-    "line": 33,
+    "line": 37,
     "column": 1,
     "text": "cognitive complexity 23 of func `ParseBinNet` is high (> 20)",
     "status": "OPEN"
@@ -6069,7 +6069,7 @@
     "id": "L0678",
     "rule": "gocognit",
     "path": "internal/mobilebackup/control_scan.go",
-    "line": 30,
+    "line": 34,
     "column": 1,
     "text": "cognitive complexity 75 of func `ReadOwnDirectRecallSet` is high (> 20)",
     "status": "OPEN"
@@ -6159,7 +6159,7 @@
     "id": "L0688",
     "rule": "gocognit",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 91,
+    "line": 99,
     "column": 1,
     "text": "cognitive complexity 43 of func `convertArchiveCandidates` is high (> 20)",
     "status": "OPEN"
@@ -6231,7 +6231,7 @@
     "id": "L0696",
     "rule": "gocognit",
     "path": "internal/mobilebackup/prepared_page.go",
-    "line": 44,
+    "line": 46,
     "column": 1,
     "text": "cognitive complexity 23 of func `ReadPreparedArchivePage` is high (> 20)",
     "status": "OPEN"
@@ -6240,7 +6240,7 @@
     "id": "L0697",
     "rule": "gocognit",
     "path": "internal/mobilebackup/quote.go",
-    "line": 37,
+    "line": 41,
     "column": 1,
     "text": "cognitive complexity 25 of func `ParseQuoteScalars` is high (> 20)",
     "status": "OPEN"
@@ -6258,7 +6258,7 @@
     "id": "L0699",
     "rule": "gocognit",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 454,
+    "line": 457,
     "column": 1,
     "text": "cognitive complexity 26 of func `(*RetainedArchiveStore).decode` is high (> 20)",
     "status": "OPEN"
@@ -6267,7 +6267,7 @@
     "id": "L0700",
     "rule": "gocognit",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 546,
+    "line": 549,
     "column": 1,
     "text": "cognitive complexity 31 of func `(*RetainedArchiveStore).inventory` is high (> 20)",
     "status": "OPEN"
@@ -6294,7 +6294,7 @@
     "id": "L0703",
     "rule": "gocognit",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 81,
+    "line": 83,
     "column": 1,
     "text": "cognitive complexity 72 of func `PrepareRowPage` is high (> 20)",
     "status": "OPEN"
@@ -6312,7 +6312,7 @@
     "id": "L0705",
     "rule": "gocognit",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 201,
+    "line": 203,
     "column": 1,
     "text": "cognitive complexity 24 of func `snapshotKey` is high (> 20)",
     "status": "OPEN"
@@ -6321,7 +6321,7 @@
     "id": "L0706",
     "rule": "gocognit",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 289,
+    "line": 291,
     "column": 1,
     "text": "cognitive complexity 25 of func `(*SnapshotStore).Save` is high (> 20)",
     "status": "OPEN"
@@ -6330,7 +6330,7 @@
     "id": "L0707",
     "rule": "gocognit",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 521,
+    "line": 524,
     "column": 1,
     "text": "cognitive complexity 29 of func `(*SnapshotStore).sweep` is high (> 20)",
     "status": "OPEN"
@@ -6348,7 +6348,7 @@
     "id": "L0709",
     "rule": "gocognit",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 76,
+    "line": 79,
     "column": 1,
     "text": "cognitive complexity 68 of func `(AccountArchive).ReadSnapshotPage` is high (> 20)",
     "status": "OPEN"
@@ -6438,7 +6438,7 @@
     "id": "L0719",
     "rule": "gocognit",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 169,
+    "line": 171,
     "column": 1,
     "text": "cognitive complexity 99 of func `readSQLitePageMode` is high (> 20)",
     "status": "OPEN"
@@ -6447,7 +6447,7 @@
     "id": "L0720",
     "rule": "gocognit",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 539,
+    "line": 541,
     "column": 1,
     "text": "cognitive complexity 27 of func `sqliteRowMode` is high (> 20)",
     "status": "OPEN"
@@ -6468,13 +6468,13 @@
     "line": 53,
     "column": 1,
     "text": "cognitive complexity 56 of func `inspectXZ` is high (> 20)",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L0723",
     "rule": "gocognit",
     "path": "internal/mobilebackup/xz.go",
-    "line": 153,
+    "line": 165,
     "column": 1,
     "text": "cognitive complexity 22 of func `inspectXZBlock` is high (> 20)",
     "status": "OPEN"
@@ -6573,7 +6573,7 @@
     "id": "L0734",
     "rule": "gocognit",
     "path": "internal/service/archive_messages.go",
-    "line": 156,
+    "line": 158,
     "column": 1,
     "text": "cognitive complexity 29 of func `(*membershipPort).archiveMessages` is high (> 20)",
     "status": "OPEN"
@@ -6672,7 +6672,7 @@
     "id": "L0745",
     "rule": "gocognit",
     "path": "internal/service/mobile_history_test.go",
-    "line": 161,
+    "line": 163,
     "column": 1,
     "text": "cognitive complexity 41 of func `TestMobileHistorySessionLifetime` is high (> 20)",
     "status": "OPEN"
@@ -7023,7 +7023,7 @@
     "id": "L0784",
     "rule": "gocognit",
     "path": "internal/storage/store.go",
-    "line": 540,
+    "line": 543,
     "column": 1,
     "text": "cognitive complexity 28 of func `(*Store).prepareSearch` is high (> 20)",
     "status": "OPEN"
@@ -7032,7 +7032,7 @@
     "id": "L0785",
     "rule": "gocognit",
     "path": "internal/storage/store.go",
-    "line": 602,
+    "line": 605,
     "column": 1,
     "text": "cognitive complexity 33 of func `(*Store).searchPage` is high (> 20)",
     "status": "OPEN"
@@ -7068,7 +7068,7 @@
     "id": "L0789",
     "rule": "gocognit",
     "path": "internal/toolruntime/command_scope_test.go",
-    "line": 47,
+    "line": 50,
     "column": 1,
     "text": "cognitive complexity 38 of func `TestCommandsRejectUntrustedScopeBeforeEffectsAndNeverRetryOwnerFailure` is high (> 20)",
     "status": "OPEN"
@@ -7149,7 +7149,7 @@
     "id": "L0798",
     "rule": "gocognit",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 165,
+    "line": 166,
     "column": 1,
     "text": "cognitive complexity 34 of func `Scan` is high (> 20)",
     "status": "OPEN"
@@ -7158,7 +7158,7 @@
     "id": "L0799",
     "rule": "gocognit",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 381,
+    "line": 383,
     "column": 1,
     "text": "cognitive complexity 22 of func `SourceControls` is high (> 20)",
     "status": "OPEN"
@@ -7167,7 +7167,7 @@
     "id": "L0800",
     "rule": "gocognit",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 449,
+    "line": 453,
     "column": 1,
     "text": "cognitive complexity 28 of func `Check` is high (> 20)",
     "status": "OPEN"
@@ -7185,7 +7185,7 @@
     "id": "L0802",
     "rule": "gocognit",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 75,
+    "line": 77,
     "column": 1,
     "text": "cognitive complexity 82 of func `Bench` is high (> 20)",
     "status": "OPEN"
@@ -7806,7 +7806,7 @@
     "id": "L0871",
     "rule": "goconst",
     "path": "internal/evaluation/benchmark.go",
-    "line": 60,
+    "line": 62,
     "column": 10,
     "text": "string `zalo_search_messages` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -7815,7 +7815,7 @@
     "id": "L0872",
     "rule": "goconst",
     "path": "internal/evaluation/benchmark.go",
-    "line": 61,
+    "line": 63,
     "column": 19,
     "text": "string `ремонт` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -7824,7 +7824,7 @@
     "id": "L0873",
     "rule": "goconst",
     "path": "internal/evaluation/benchmark.go",
-    "line": 63,
+    "line": 65,
     "column": 10,
     "text": "string `zalo_get_message_context` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -7833,7 +7833,7 @@
     "id": "L0874",
     "rule": "goconst",
     "path": "internal/evaluation/benchmark.go",
-    "line": 64,
+    "line": 66,
     "column": 22,
     "text": "string `g-1` has 5 occurrences, make it a constant",
     "status": "OPEN"
@@ -8022,7 +8022,7 @@
     "id": "L0895",
     "rule": "goconst",
     "path": "internal/evaluation/client.go",
-    "line": 41,
+    "line": 43,
     "column": 19,
     "text": "string `tool` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -8031,7 +8031,7 @@
     "id": "L0896",
     "rule": "goconst",
     "path": "internal/evaluation/client.go",
-    "line": 61,
+    "line": 63,
     "column": 19,
     "text": "string `resource` has 5 occurrences, make it a constant",
     "status": "OPEN"
@@ -8166,7 +8166,7 @@
     "id": "L0911",
     "rule": "goconst",
     "path": "internal/evaluation/runner.go",
-    "line": 140,
+    "line": 142,
     "column": 15,
     "text": "string `NOT_RUN` has 10 occurrences, make it a constant",
     "status": "OPEN"
@@ -8175,7 +8175,7 @@
     "id": "L0912",
     "rule": "goconst",
     "path": "internal/evaluation/runner.go",
-    "line": 147,
+    "line": 149,
     "column": 50,
     "text": "string `model` has 5 occurrences, make it a constant",
     "status": "OPEN"
@@ -8184,7 +8184,7 @@
     "id": "L0913",
     "rule": "goconst",
     "path": "internal/evaluation/runner.go",
-    "line": 152,
+    "line": 154,
     "column": 4,
     "text": "string `profile` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8193,7 +8193,7 @@
     "id": "L0914",
     "rule": "goconst",
     "path": "internal/evaluation/runner.go",
-    "line": 153,
+    "line": 155,
     "column": 4,
     "text": "string `case_budget_seconds` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8202,7 +8202,7 @@
     "id": "L0915",
     "rule": "goconst",
     "path": "internal/evaluation/runner.go",
-    "line": 155,
+    "line": 157,
     "column": 4,
     "text": "string `run_budget_seconds` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8211,7 +8211,7 @@
     "id": "L0916",
     "rule": "goconst",
     "path": "internal/evaluation/runner.go",
-    "line": 156,
+    "line": 158,
     "column": 4,
     "text": "string `model_gate` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8220,7 +8220,7 @@
     "id": "L0917",
     "rule": "goconst",
     "path": "internal/evaluation/runner.go",
-    "line": 330,
+    "line": 333,
     "column": 36,
     "text": "string `operation` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -8229,7 +8229,7 @@
     "id": "L0918",
     "rule": "goconst",
     "path": "internal/evaluation/runner.go",
-    "line": 330,
+    "line": 333,
     "column": 49,
     "text": "string `effects` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -8238,7 +8238,7 @@
     "id": "L0919",
     "rule": "goconst",
     "path": "internal/evaluation/runner.go",
-    "line": 330,
+    "line": 333,
     "column": 60,
     "text": "string `lifecycle` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -8247,7 +8247,7 @@
     "id": "L0920",
     "rule": "goconst",
     "path": "internal/evaluation/runner.go",
-    "line": 337,
+    "line": 340,
     "column": 46,
     "text": "string `case` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -8256,7 +8256,7 @@
     "id": "L0921",
     "rule": "goconst",
     "path": "internal/evaluation/runner.go",
-    "line": 337,
+    "line": 340,
     "column": 61,
     "text": "string `complete` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -8265,7 +8265,7 @@
     "id": "L0922",
     "rule": "goconst",
     "path": "internal/evaluation/runner.go",
-    "line": 444,
+    "line": 447,
     "column": 18,
     "text": "string `FAIL` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8274,7 +8274,7 @@
     "id": "L0923",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 41,
+    "line": 42,
     "column": 20,
     "text": "string `archive-dates` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8283,7 +8283,7 @@
     "id": "L0924",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 41,
+    "line": 42,
     "column": 54,
     "text": "string `archive-empty-page` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8292,7 +8292,7 @@
     "id": "L0925",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 94,
+    "line": 95,
     "column": 65,
     "text": "string `query` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -8301,7 +8301,7 @@
     "id": "L0926",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 94,
+    "line": 95,
     "column": 74,
     "text": "string `ремонт` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -8310,7 +8310,7 @@
     "id": "L0927",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 94,
+    "line": 95,
     "column": 90,
     "text": "string `limit` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -8319,7 +8319,7 @@
     "id": "L0928",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 96,
+    "line": 97,
     "column": 42,
     "text": "string `peer` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8328,7 +8328,7 @@
     "id": "L0929",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 96,
+    "line": 97,
     "column": 50,
     "text": "string `text` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8337,7 +8337,7 @@
     "id": "L0930",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 96,
+    "line": 97,
     "column": 64,
     "text": "string `request_id` has 7 occurrences, make it a constant",
     "status": "OPEN"
@@ -8346,7 +8346,7 @@
     "id": "L0931",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 123,
+    "line": 124,
     "column": 33,
     "text": "string `direct` has 9 occurrences, make it a constant",
     "status": "OPEN"
@@ -8355,7 +8355,7 @@
     "id": "L0932",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 123,
+    "line": 124,
     "column": 43,
     "text": "string `group` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -8364,7 +8364,7 @@
     "id": "L0933",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 126,
+    "line": 127,
     "column": 20,
     "text": "string `conversation_type` has 9 occurrences, make it a constant",
     "status": "OPEN"
@@ -8373,7 +8373,7 @@
     "id": "L0934",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 126,
+    "line": 127,
     "column": 47,
     "text": "string `conversation_id` has 9 occurrences, make it a constant",
     "status": "OPEN"
@@ -8382,7 +8382,7 @@
     "id": "L0935",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 134,
+    "line": 135,
     "column": 31,
     "text": "string `g-1` has 5 occurrences, make it a constant",
     "status": "OPEN"
@@ -8391,7 +8391,7 @@
     "id": "L0936",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 160,
+    "line": 161,
     "column": 4,
     "text": "string `since` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -8400,7 +8400,7 @@
     "id": "L0937",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 161,
+    "line": 162,
     "column": 4,
     "text": "string `until` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8409,7 +8409,7 @@
     "id": "L0938",
     "rule": "goconst",
     "path": "internal/evaluation/scenarios.go",
-    "line": 288,
+    "line": 289,
     "column": 52,
     "text": "string `operation_id` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8472,7 +8472,7 @@
     "id": "L0945",
     "rule": "goconst",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 111,
+    "line": 112,
     "column": 38,
     "text": "string `running` has 8 occurrences, make it a constant",
     "status": "OPEN"
@@ -8481,7 +8481,7 @@
     "id": "L0946",
     "rule": "goconst",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 293,
+    "line": 295,
     "column": 50,
     "text": "string `INVALID_ARGUMENT` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8490,7 +8490,7 @@
     "id": "L0947",
     "rule": "goconst",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 342,
+    "line": 345,
     "column": 34,
     "text": "string `source_unsupported` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8499,7 +8499,7 @@
     "id": "L0948",
     "rule": "goconst",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 344,
+    "line": 347,
     "column": 29,
     "text": "string `invalid_source_page` has 5 occurrences, make it a constant",
     "status": "OPEN"
@@ -8508,7 +8508,7 @@
     "id": "L0949",
     "rule": "goconst",
     "path": "internal/historyimport/worker.go",
-    "line": 100,
+    "line": 102,
     "column": 25,
     "text": "string `running` has 8 occurrences, make it a constant",
     "status": "OPEN"
@@ -8517,7 +8517,7 @@
     "id": "L0950",
     "rule": "goconst",
     "path": "internal/historyimport/worker.go",
-    "line": 177,
+    "line": 182,
     "column": 36,
     "text": "string `source_unsupported` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8526,7 +8526,7 @@
     "id": "L0951",
     "rule": "goconst",
     "path": "internal/historyimport/worker.go",
-    "line": 180,
+    "line": 185,
     "column": 53,
     "text": "string `INVALID_ARGUMENT` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8535,7 +8535,7 @@
     "id": "L0952",
     "rule": "goconst",
     "path": "internal/historyimport/worker.go",
-    "line": 181,
+    "line": 186,
     "column": 14,
     "text": "string `invalid_source_page` has 5 occurrences, make it a constant",
     "status": "OPEN"
@@ -8706,7 +8706,7 @@
     "id": "L0971",
     "rule": "goconst",
     "path": "internal/mcpserver/server.go",
-    "line": 246,
+    "line": 248,
     "column": 20,
     "text": "string `TOOL_ERROR` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8769,7 +8769,7 @@
     "id": "L0978",
     "rule": "goconst",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 146,
+    "line": 154,
     "column": 16,
     "text": "string `incoming` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8778,7 +8778,7 @@
     "id": "L0979",
     "rule": "goconst",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 148,
+    "line": 156,
     "column": 16,
     "text": "string `outgoing` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8787,7 +8787,7 @@
     "id": "L0980",
     "rule": "goconst",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 205,
+    "line": 213,
     "column": 22,
     "text": "string `webchat` has 5 occurrences, make it a constant",
     "status": "OPEN"
@@ -8796,7 +8796,7 @@
     "id": "L0981",
     "rule": "goconst",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 211,
+    "line": 219,
     "column": 39,
     "text": "string `rtf` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8805,7 +8805,7 @@
     "id": "L0982",
     "rule": "goconst",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 45,
+    "line": 46,
     "column": 10,
     "text": "string `webchat` has 5 occurrences, make it a constant",
     "status": "OPEN"
@@ -8814,7 +8814,7 @@
     "id": "L0983",
     "rule": "goconst",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 227,
+    "line": 229,
     "column": 19,
     "text": "string `incoming` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8823,7 +8823,7 @@
     "id": "L0984",
     "rule": "goconst",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 229,
+    "line": 231,
     "column": 20,
     "text": "string `outgoing` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8850,7 +8850,7 @@
     "id": "L0987",
     "rule": "goconst",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 215,
+    "line": 218,
     "column": 16,
     "text": "string `incoming` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8859,7 +8859,7 @@
     "id": "L0988",
     "rule": "goconst",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 217,
+    "line": 220,
     "column": 17,
     "text": "string `outgoing` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8868,7 +8868,7 @@
     "id": "L0989",
     "rule": "goconst",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 222,
+    "line": 225,
     "column": 15,
     "text": "string `plain` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8877,7 +8877,7 @@
     "id": "L0990",
     "rule": "goconst",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 297,
+    "line": 299,
     "column": 3,
     "text": "string `timestamp` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -8886,7 +8886,7 @@
     "id": "L0991",
     "rule": "goconst",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 570,
+    "line": 572,
     "column": 15,
     "text": "string `text` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -8895,7 +8895,7 @@
     "id": "L0992",
     "rule": "goconst",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 592,
+    "line": 594,
     "column": 16,
     "text": "string `metadata` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9057,7 +9057,7 @@
     "id": "L1010",
     "rule": "goconst",
     "path": "internal/service/archive_messages.go",
-    "line": 283,
+    "line": 285,
     "column": 3,
     "text": "string `history_complete` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -9066,7 +9066,7 @@
     "id": "L1011",
     "rule": "goconst",
     "path": "internal/service/archive_messages.go",
-    "line": 284,
+    "line": 286,
     "column": 3,
     "text": "string `examined` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9075,7 +9075,7 @@
     "id": "L1012",
     "rule": "goconst",
     "path": "internal/service/archive_messages.go",
-    "line": 285,
+    "line": 287,
     "column": 3,
     "text": "string `rejected` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9084,7 +9084,7 @@
     "id": "L1013",
     "rule": "goconst",
     "path": "internal/service/archive_messages.go",
-    "line": 301,
+    "line": 303,
     "column": 3,
     "text": "string `has_more` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9615,7 +9615,7 @@
     "id": "L1072",
     "rule": "goconst",
     "path": "internal/service/mobile_offer_probe.go",
-    "line": 50,
+    "line": 51,
     "column": 3,
     "text": "string `download_performed` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9624,7 +9624,7 @@
     "id": "L1073",
     "rule": "goconst",
     "path": "internal/service/mobile_offer_probe.go",
-    "line": 51,
+    "line": 52,
     "column": 3,
     "text": "string `import_performed` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -9714,7 +9714,7 @@
     "id": "L1083",
     "rule": "goconst",
     "path": "internal/service/run.go",
-    "line": 555,
+    "line": 556,
     "column": 33,
     "text": "string `STORAGE_ERROR` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9723,7 +9723,7 @@
     "id": "L1084",
     "rule": "goconst",
     "path": "internal/service/run.go",
-    "line": 584,
+    "line": 586,
     "column": 7,
     "text": "string `code` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9732,7 +9732,7 @@
     "id": "L1085",
     "rule": "goconst",
     "path": "internal/service/run.go",
-    "line": 585,
+    "line": 587,
     "column": 7,
     "text": "string `message` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9750,7 +9750,7 @@
     "id": "L1087",
     "rule": "goconst",
     "path": "internal/storage/browse.go",
-    "line": 121,
+    "line": 122,
     "column": 5,
     "text": "string `conversation_type` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -9759,7 +9759,7 @@
     "id": "L1088",
     "rule": "goconst",
     "path": "internal/storage/browse.go",
-    "line": 122,
+    "line": 123,
     "column": 5,
     "text": "string `conversation_id` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -9768,7 +9768,7 @@
     "id": "L1089",
     "rule": "goconst",
     "path": "internal/storage/browse.go",
-    "line": 131,
+    "line": 132,
     "column": 26,
     "text": "string `unknown` has 7 occurrences, make it a constant",
     "status": "OPEN"
@@ -9777,7 +9777,7 @@
     "id": "L1090",
     "rule": "goconst",
     "path": "internal/storage/browse.go",
-    "line": 151,
+    "line": 152,
     "column": 21,
     "text": "string `outgoing` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -9786,7 +9786,7 @@
     "id": "L1091",
     "rule": "goconst",
     "path": "internal/storage/browse.go",
-    "line": 153,
+    "line": 154,
     "column": 21,
     "text": "string `incoming` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -9795,7 +9795,7 @@
     "id": "L1092",
     "rule": "goconst",
     "path": "internal/storage/browse.go",
-    "line": 199,
+    "line": 200,
     "column": 3,
     "text": "string `has_more` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -9804,7 +9804,7 @@
     "id": "L1093",
     "rule": "goconst",
     "path": "internal/storage/browse.go",
-    "line": 200,
+    "line": 201,
     "column": 3,
     "text": "string `next_cursor` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9813,7 +9813,7 @@
     "id": "L1094",
     "rule": "goconst",
     "path": "internal/storage/browse.go",
-    "line": 201,
+    "line": 202,
     "column": 3,
     "text": "string `empty_reason` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9822,7 +9822,7 @@
     "id": "L1095",
     "rule": "goconst",
     "path": "internal/storage/browse.go",
-    "line": 202,
+    "line": 203,
     "column": 3,
     "text": "string `coverage` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9831,7 +9831,7 @@
     "id": "L1096",
     "rule": "goconst",
     "path": "internal/storage/contact_profiles.go",
-    "line": 76,
+    "line": 80,
     "column": 4,
     "text": "string `status` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9840,7 +9840,7 @@
     "id": "L1097",
     "rule": "goconst",
     "path": "internal/storage/contact_profiles.go",
-    "line": 76,
+    "line": 80,
     "column": 23,
     "text": "string `not_attempted` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9849,7 +9849,7 @@
     "id": "L1098",
     "rule": "goconst",
     "path": "internal/storage/contact_profiles.go",
-    "line": 77,
+    "line": 81,
     "column": 4,
     "text": "string `last_attempt_at` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9858,7 +9858,7 @@
     "id": "L1099",
     "rule": "goconst",
     "path": "internal/storage/contact_profiles.go",
-    "line": 78,
+    "line": 82,
     "column": 4,
     "text": "string `last_success_at` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -9867,7 +9867,7 @@
     "id": "L1100",
     "rule": "goconst",
     "path": "internal/storage/contact_profiles.go",
-    "line": 82,
+    "line": 86,
     "column": 4,
     "text": "string `stop_reason` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -10101,7 +10101,7 @@
     "id": "L1126",
     "rule": "goconst",
     "path": "internal/storage/deliveries.go",
-    "line": 345,
+    "line": 346,
     "column": 22,
     "text": "string `delivered` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -10569,7 +10569,7 @@
     "id": "L1178",
     "rule": "goconst",
     "path": "internal/storage/store.go",
-    "line": 443,
+    "line": 446,
     "column": 16,
     "text": "string `PERMISSION_DENIED` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -10578,7 +10578,7 @@
     "id": "L1179",
     "rule": "goconst",
     "path": "internal/storage/store.go",
-    "line": 585,
+    "line": 588,
     "column": 55,
     "text": "string `group` has 9 occurrences, make it a constant",
     "status": "OPEN"
@@ -10587,7 +10587,7 @@
     "id": "L1180",
     "rule": "goconst",
     "path": "internal/storage/store.go",
-    "line": 585,
+    "line": 588,
     "column": 88,
     "text": "string `direct` has 10 occurrences, make it a constant",
     "status": "OPEN"
@@ -10704,7 +10704,7 @@
     "id": "L1193",
     "rule": "goconst",
     "path": "internal/storage/views.go",
-    "line": 369,
+    "line": 370,
     "column": 3,
     "text": "string `coverage` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -10839,7 +10839,7 @@
     "id": "L1208",
     "rule": "goconst",
     "path": "internal/zalo/history.go",
-    "line": 178,
+    "line": 179,
     "column": 31,
     "text": "string `actionId` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -10848,7 +10848,7 @@
     "id": "L1209",
     "rule": "goconst",
     "path": "internal/zalo/history.go",
-    "line": 178,
+    "line": 179,
     "column": 52,
     "text": "string `cliMsgId` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -10857,7 +10857,7 @@
     "id": "L1210",
     "rule": "goconst",
     "path": "internal/zalo/history.go",
-    "line": 178,
+    "line": 179,
     "column": 89,
     "text": "string `userId` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -10866,7 +10866,7 @@
     "id": "L1211",
     "rule": "goconst",
     "path": "internal/zalo/history.go",
-    "line": 178,
+    "line": 179,
     "column": 99,
     "text": "string `realMsgId` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -10875,7 +10875,7 @@
     "id": "L1212",
     "rule": "goconst",
     "path": "internal/zalo/history.go",
-    "line": 207,
+    "line": 208,
     "column": 19,
     "text": "string `outgoing` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -10947,7 +10947,7 @@
     "id": "L1220",
     "rule": "goconst",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 152,
+    "line": 153,
     "column": 54,
     "text": "string `coverage` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -10956,7 +10956,7 @@
     "id": "L1221",
     "rule": "goconst",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 286,
+    "line": 288,
     "column": 36,
     "text": "string `database/sql` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -10965,7 +10965,7 @@
     "id": "L1222",
     "rule": "goconst",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 286,
+    "line": 288,
     "column": 52,
     "text": "string `dependency` has 9 occurrences, make it a constant",
     "status": "OPEN"
@@ -10974,7 +10974,7 @@
     "id": "L1223",
     "rule": "goconst",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 287,
+    "line": 289,
     "column": 37,
     "text": "string `github.com/modelcontextprotocol/go-sdk/mcp` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -10983,7 +10983,7 @@
     "id": "L1224",
     "rule": "goconst",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 294,
+    "line": 296,
     "column": 76,
     "text": "string `positive` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -10992,7 +10992,7 @@
     "id": "L1225",
     "rule": "goconst",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 297,
+    "line": 299,
     "column": 27,
     "text": "string `internal/mobilebackup/archiveport` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -11001,7 +11001,7 @@
     "id": "L1226",
     "rule": "goconst",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 377,
+    "line": 379,
     "column": 61,
     "text": "string `PASS` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -11010,7 +11010,7 @@
     "id": "L1227",
     "rule": "goconst",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 383,
+    "line": 385,
     "column": 109,
     "text": "string `security` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -11037,7 +11037,7 @@
     "id": "L1230",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 53,
+    "line": 55,
     "column": 22,
     "text": "string `PASS` has 10 occurrences, make it a constant",
     "status": "OPEN"
@@ -11046,7 +11046,7 @@
     "id": "L1231",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 65,
+    "line": 67,
     "column": 45,
     "text": "string `system` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -11055,7 +11055,7 @@
     "id": "L1232",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 65,
+    "line": 67,
     "column": 61,
     "text": "string `release` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -11064,7 +11064,7 @@
     "id": "L1233",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 65,
+    "line": 67,
     "column": 78,
     "text": "string `machine` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -11073,7 +11073,7 @@
     "id": "L1234",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 98,
+    "line": 101,
     "column": 80,
     "text": "string `model` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -11082,7 +11082,7 @@
     "id": "L1235",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 98,
+    "line": 101,
     "column": 89,
     "text": "string `NOT_RUN` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -11091,7 +11091,7 @@
     "id": "L1236",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 98,
+    "line": 101,
     "column": 100,
     "text": "string `live` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -11100,7 +11100,7 @@
     "id": "L1237",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 112,
+    "line": 115,
     "column": 75,
     "text": "string `candidate` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -11109,7 +11109,7 @@
     "id": "L1238",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 112,
+    "line": 115,
     "column": 105,
     "text": "string `./cmd/zl-mcp-eval` has 5 occurrences, make it a constant",
     "status": "OPEN"
@@ -11118,7 +11118,7 @@
     "id": "L1239",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 267,
     "text": "string `fixture_sha256` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -11127,7 +11127,7 @@
     "id": "L1240",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 294,
     "text": "string `runs` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -11136,7 +11136,7 @@
     "id": "L1241",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 337,
     "text": "string `warmup_calls` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -11145,7 +11145,7 @@
     "id": "L1242",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 357,
     "text": "string `concurrency_per_kind` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -11154,7 +11154,7 @@
     "id": "L1243",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 384,
     "text": "string `parallel_kinds` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -11163,7 +11163,7 @@
     "id": "L1244",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 405,
     "text": "string `admission_enabled` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -11172,7 +11172,7 @@
     "id": "L1245",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 432,
     "text": "string `exporters_enabled` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -11181,7 +11181,7 @@
     "id": "L1246",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 460,
     "text": "string `pacing_millis` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -11190,7 +11190,7 @@
     "id": "L1247",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 194,
+    "line": 197,
     "column": 32,
     "text": "string `p95_seconds` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -11199,7 +11199,7 @@
     "id": "L1248",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 194,
+    "line": 197,
     "column": 47,
     "text": "string `allocations_per_op` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -11208,7 +11208,7 @@
     "id": "L1249",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 194,
+    "line": 197,
     "column": 69,
     "text": "string `alloc_bytes_per_op` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -11217,7 +11217,7 @@
     "id": "L1250",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 204,
+    "line": 207,
     "column": 240,
     "text": "string `errors` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -11244,7 +11244,7 @@
     "id": "L1253",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 83,
+    "line": 84,
     "column": 21,
     "text": "string `status` has 4 occurrences, make it a constant",
     "status": "OPEN"
@@ -11253,7 +11253,7 @@
     "id": "L1254",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 83,
+    "line": 84,
     "column": 31,
     "text": "string `FAIL` has 5 occurrences, make it a constant",
     "status": "OPEN"
@@ -11262,7 +11262,7 @@
     "id": "L1255",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 83,
+    "line": 84,
     "column": 58,
     "text": "string `model` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -11271,7 +11271,7 @@
     "id": "L1256",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 83,
+    "line": 84,
     "column": 67,
     "text": "string `NOT_RUN` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -11280,7 +11280,7 @@
     "id": "L1257",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 83,
+    "line": 84,
     "column": 78,
     "text": "string `live` has 3 occurrences, make it a constant",
     "status": "OPEN"
@@ -11289,7 +11289,7 @@
     "id": "L1258",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 106,
+    "line": 107,
     "column": 62,
     "text": "string `./cmd/zl-mcp-eval` has 5 occurrences, make it a constant",
     "status": "OPEN"
@@ -11298,7 +11298,7 @@
     "id": "L1259",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 110,
+    "line": 112,
     "column": 28,
     "text": "string `candidate` has 6 occurrences, make it a constant",
     "status": "OPEN"
@@ -11307,7 +11307,7 @@
     "id": "L1260",
     "rule": "goconst",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 135,
+    "line": 137,
     "column": 24,
     "text": "string `PASS` has 10 occurrences, make it a constant",
     "status": "OPEN"
@@ -11613,7 +11613,7 @@
     "id": "L1294",
     "rule": "gocritic",
     "path": "internal/storage/views.go",
-    "line": 442,
+    "line": 443,
     "column": 2,
     "text": "ifElseChain: rewrite if-else to switch statement",
     "status": "OPEN"
@@ -11811,7 +11811,7 @@
     "id": "L1316",
     "rule": "gocyclo",
     "path": "internal/mcpserver/server.go",
-    "line": 239,
+    "line": 241,
     "column": 1,
     "text": "cyclomatic complexity 39 of func `(*Service).call` is high (> 30)",
     "status": "OPEN"
@@ -11829,7 +11829,7 @@
     "id": "L1318",
     "rule": "gocyclo",
     "path": "internal/mobilebackup/control_scan.go",
-    "line": 30,
+    "line": 34,
     "column": 1,
     "text": "cyclomatic complexity 57 of func `ReadOwnDirectRecallSet` is high (> 30)",
     "status": "OPEN"
@@ -11865,7 +11865,7 @@
     "id": "L1322",
     "rule": "gocyclo",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 91,
+    "line": 99,
     "column": 1,
     "text": "cyclomatic complexity 62 of func `convertArchiveCandidates` is high (> 30)",
     "status": "OPEN"
@@ -11883,7 +11883,7 @@
     "id": "L1324",
     "rule": "gocyclo",
     "path": "internal/mobilebackup/prepared_page.go",
-    "line": 44,
+    "line": 46,
     "column": 1,
     "text": "cyclomatic complexity 31 of func `ReadPreparedArchivePage` is high (> 30)",
     "status": "OPEN"
@@ -11901,7 +11901,7 @@
     "id": "L1326",
     "rule": "gocyclo",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 454,
+    "line": 457,
     "column": 1,
     "text": "cyclomatic complexity 39 of func `(*RetainedArchiveStore).decode` is high (> 30)",
     "status": "OPEN"
@@ -11910,7 +11910,7 @@
     "id": "L1327",
     "rule": "gocyclo",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 81,
+    "line": 83,
     "column": 1,
     "text": "cyclomatic complexity 56 of func `PrepareRowPage` is high (> 30)",
     "status": "OPEN"
@@ -11919,7 +11919,7 @@
     "id": "L1328",
     "rule": "gocyclo",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 289,
+    "line": 291,
     "column": 1,
     "text": "cyclomatic complexity 35 of func `(*SnapshotStore).Save` is high (> 30)",
     "status": "OPEN"
@@ -11928,7 +11928,7 @@
     "id": "L1329",
     "rule": "gocyclo",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 76,
+    "line": 79,
     "column": 1,
     "text": "cyclomatic complexity 41 of func `(AccountArchive).ReadSnapshotPage` is high (> 30)",
     "status": "OPEN"
@@ -11964,7 +11964,7 @@
     "id": "L1333",
     "rule": "gocyclo",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 169,
+    "line": 171,
     "column": 1,
     "text": "cyclomatic complexity 86 of func `readSQLitePageMode` is high (> 30)",
     "status": "OPEN"
@@ -11976,7 +11976,7 @@
     "line": 53,
     "column": 1,
     "text": "cyclomatic complexity 42 of func `inspectXZ` is high (> 30)",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L1335",
@@ -12009,7 +12009,7 @@
     "id": "L1338",
     "rule": "gocyclo",
     "path": "internal/service/archive_messages.go",
-    "line": 156,
+    "line": 158,
     "column": 1,
     "text": "cyclomatic complexity 31 of func `(*membershipPort).archiveMessages` is high (> 30)",
     "status": "OPEN"
@@ -12243,7 +12243,7 @@
     "id": "L1364",
     "rule": "gocyclo",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 75,
+    "line": 77,
     "column": 1,
     "text": "cyclomatic complexity 42 of func `Bench` is high (> 30)",
     "status": "OPEN"
@@ -12297,7 +12297,7 @@
     "id": "L1370",
     "rule": "godoclint",
     "path": "internal/evaluation/scenarios.go",
-    "line": 371,
+    "line": 372,
     "column": 1,
     "text": "godoc should start with symbol name (\"DefaultChildOptions\")",
     "status": "OPEN"
@@ -12351,7 +12351,7 @@
     "id": "L1377",
     "rule": "golines",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 163,
+    "line": 164,
     "column": 1,
     "text": "File is not properly formatted",
     "status": "OPEN"
@@ -12369,7 +12369,7 @@
     "id": "L1379",
     "rule": "golines",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 32,
+    "line": 33,
     "column": 1,
     "text": "File is not properly formatted",
     "status": "OPEN"
@@ -12516,7 +12516,7 @@
     "line": 226,
     "column": 30,
     "text": "G115: integer overflow conversion int -> uint32",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1396",
@@ -12525,7 +12525,7 @@
     "line": 229,
     "column": 9,
     "text": "G302: Expect file permissions to be 0600 or less",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1397",
@@ -12606,25 +12606,25 @@
     "line": 27,
     "column": 3,
     "text": "G104: Errors unhandled",
-    "status": "FIXED"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1406",
     "rule": "gosec",
     "path": "internal/evaluation/client.go",
-    "line": 33,
+    "line": 32,
     "column": 28,
     "text": "G104: Errors unhandled",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1407",
     "rule": "gosec",
     "path": "internal/evaluation/client.go",
-    "line": 33,
+    "line": 32,
     "column": 47,
     "text": "G104: Errors unhandled",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1408",
@@ -12648,10 +12648,10 @@
     "id": "L1410",
     "rule": "gosec",
     "path": "internal/evaluation/runner.go",
-    "line": 285,
+    "line": 280,
     "column": 7,
     "text": "G104: Errors unhandled",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1411",
@@ -12705,7 +12705,7 @@
     "line": 37,
     "column": 48,
     "text": "G115: integer overflow conversion int -> uint32",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1417",
@@ -12714,7 +12714,7 @@
     "line": 40,
     "column": 12,
     "text": "G302: Expect file permissions to be 0600 or less",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1418",
@@ -12723,7 +12723,7 @@
     "line": 45,
     "column": 92,
     "text": "G115: integer overflow conversion int -> uint32",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1419",
@@ -12813,7 +12813,7 @@
     "line": 98,
     "column": 14,
     "text": "G115: integer overflow conversion uint32 -> int32",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1429",
@@ -12822,7 +12822,7 @@
     "line": 32,
     "column": 13,
     "text": "G115: integer overflow conversion int -> uint32",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1430",
@@ -12831,7 +12831,7 @@
     "line": 138,
     "column": 80,
     "text": "G115: integer overflow conversion uint64 -> int64",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1431",
@@ -12840,7 +12840,7 @@
     "line": 44,
     "column": 64,
     "text": "G115: integer overflow conversion uint64 -> int",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1432",
@@ -12849,7 +12849,7 @@
     "line": 56,
     "column": 26,
     "text": "G115: integer overflow conversion uint64 -> int",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1433",
@@ -12858,7 +12858,7 @@
     "line": 58,
     "column": 13,
     "text": "G115: integer overflow conversion uint32 -> int32",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1434",
@@ -12867,7 +12867,7 @@
     "line": 68,
     "column": 14,
     "text": "G115: integer overflow conversion uint32 -> int32",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1435",
@@ -12876,7 +12876,7 @@
     "line": 76,
     "column": 13,
     "text": "G115: integer overflow conversion uint64 -> int64",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1436",
@@ -12927,10 +12927,10 @@
     "id": "L1441",
     "rule": "gosec",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 307,
+    "line": 302,
     "column": 42,
     "text": "G115: integer overflow conversion int -> uint32",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1442",
@@ -13062,10 +13062,10 @@
     "id": "L1456",
     "rule": "gosec",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 354,
+    "line": 343,
     "column": 42,
     "text": "G115: integer overflow conversion int -> uint32",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1457",
@@ -13164,7 +13164,7 @@
     "line": 93,
     "column": 31,
     "text": "G115: integer overflow conversion uint64 -> int",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L1468",
@@ -13173,7 +13173,7 @@
     "line": 103,
     "column": 16,
     "text": "G115: integer overflow conversion uint64 -> int",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L1469",
@@ -13182,7 +13182,7 @@
     "line": 104,
     "column": 37,
     "text": "G115: integer overflow conversion uint64 -> int",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L1470",
@@ -13191,7 +13191,7 @@
     "line": 108,
     "column": 33,
     "text": "G115: integer overflow conversion int -> uint64",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1471",
@@ -13200,7 +13200,7 @@
     "line": 117,
     "column": 26,
     "text": "G115: integer overflow conversion int -> uint64",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1472",
@@ -13209,7 +13209,7 @@
     "line": 122,
     "column": 63,
     "text": "G115: integer overflow conversion int -> uint64",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1473",
@@ -13218,7 +13218,7 @@
     "line": 136,
     "column": 15,
     "text": "G115: integer overflow conversion uint64 -> int",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L1474",
@@ -13227,7 +13227,7 @@
     "line": 158,
     "column": 28,
     "text": "G115: integer overflow conversion int -> uint64",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1475",
@@ -13236,7 +13236,7 @@
     "line": 166,
     "column": 40,
     "text": "G115: integer overflow conversion int -> uint64",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1476",
@@ -13245,7 +13245,7 @@
     "line": 49,
     "column": 52,
     "text": "G115: integer overflow conversion int64 -> uint64",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L1477",
@@ -13272,7 +13272,7 @@
     "line": 92,
     "column": 3,
     "text": "G202: SQL string concatenation",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1480",
@@ -13494,37 +13494,37 @@
     "id": "L1504",
     "rule": "gosec",
     "path": "internal/storage/store.go",
-    "line": 418,
-    "column": 34,
+    "line": 402,
+    "column": 3,
     "text": "G202: SQL string concatenation",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1505",
     "rule": "gosec",
     "path": "internal/storage/store.go",
-    "line": 415,
+    "line": 407,
     "column": 34,
     "text": "G202: SQL string concatenation",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1506",
     "rule": "gosec",
     "path": "internal/storage/store.go",
     "line": 410,
-    "column": 3,
+    "column": 34,
     "text": "G202: SQL string concatenation",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1507",
     "rule": "gosec",
     "path": "internal/storage/store.go",
-    "line": 665,
+    "line": 657,
     "column": 3,
     "text": "G202: SQL string concatenation",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1508",
@@ -13575,10 +13575,10 @@
     "id": "L1513",
     "rule": "gosec",
     "path": "internal/storage/views.go",
-    "line": 310,
+    "line": 306,
     "column": 4,
     "text": "G202: SQL string concatenation",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1514",
@@ -13587,7 +13587,7 @@
     "line": 38,
     "column": 3,
     "text": "G124: http.Cookie missing or has insecure Secure, HttpOnly, or SameSite attribute",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1515",
@@ -13596,7 +13596,7 @@
     "line": 92,
     "column": 28,
     "text": "G702: Command injection via taint analysis",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1516",
@@ -13605,7 +13605,7 @@
     "line": 233,
     "column": 24,
     "text": "G703: Path traversal via taint analysis",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1517",
@@ -13614,7 +13614,7 @@
     "line": 406,
     "column": 3,
     "text": "G104: Errors unhandled",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1518",
@@ -13623,7 +13623,7 @@
     "line": 549,
     "column": 3,
     "text": "G104: Errors unhandled",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1519",
@@ -13632,7 +13632,7 @@
     "line": 32,
     "column": 17,
     "text": "G306: Expect WriteFile permissions to be 0600 or less",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1520",
@@ -13641,7 +13641,7 @@
     "line": 35,
     "column": 17,
     "text": "G306: Expect WriteFile permissions to be 0600 or less",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1521",
@@ -13650,7 +13650,7 @@
     "line": 95,
     "column": 9,
     "text": "G301: Expect directory permissions to be 0750 or less",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1522",
@@ -13659,7 +13659,7 @@
     "line": 80,
     "column": 9,
     "text": "G301: Expect directory permissions to be 0750 or less",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1523",
@@ -13668,7 +13668,7 @@
     "line": 109,
     "column": 13,
     "text": "G306: Expect WriteFile permissions to be 0600 or less",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1524",
@@ -13677,7 +13677,7 @@
     "line": 57,
     "column": 9,
     "text": "G301: Expect directory permissions to be 0750 or less",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1525",
@@ -13686,7 +13686,7 @@
     "line": 60,
     "column": 9,
     "text": "G306: Expect WriteFile permissions to be 0600 or less",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1526",
@@ -13695,7 +13695,7 @@
     "line": 29,
     "column": 3,
     "text": "G104: Errors unhandled",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1527",
@@ -13704,7 +13704,7 @@
     "line": 33,
     "column": 9,
     "text": "G204: Subprocess launched with a potential tainted input or cmd arguments",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1528",
@@ -13713,7 +13713,7 @@
     "line": 41,
     "column": 3,
     "text": "G104: Errors unhandled",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1529",
@@ -13722,7 +13722,7 @@
     "line": 42,
     "column": 3,
     "text": "G104: Errors unhandled",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1530",
@@ -13731,7 +13731,7 @@
     "line": 45,
     "column": 2,
     "text": "G104: Errors unhandled",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1531",
@@ -13740,7 +13740,7 @@
     "line": 46,
     "column": 2,
     "text": "G104: Errors unhandled",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1532",
@@ -13749,7 +13749,7 @@
     "line": 98,
     "column": 3,
     "text": "G104: Errors unhandled",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1533",
@@ -13758,7 +13758,7 @@
     "line": 99,
     "column": 3,
     "text": "G104: Errors unhandled",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1534",
@@ -14070,7 +14070,7 @@
     "id": "L1568",
     "rule": "govet",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 177,
+    "line": 179,
     "column": 12,
     "text": "shadow: declaration of \"e\" shadows declaration at line 175",
     "status": "OPEN"
@@ -14079,7 +14079,7 @@
     "id": "L1569",
     "rule": "govet",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 214,
+    "line": 216,
     "column": 8,
     "text": "shadow: declaration of \"err\" shadows declaration at line 107",
     "status": "OPEN"
@@ -14088,7 +14088,7 @@
     "id": "L1570",
     "rule": "govet",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 247,
+    "line": 249,
     "column": 17,
     "text": "shadow: declaration of \"e\" shadows declaration at line 240",
     "status": "OPEN"
@@ -14097,7 +14097,7 @@
     "id": "L1571",
     "rule": "govet",
     "path": "internal/historyimport/worker.go",
-    "line": 84,
+    "line": 85,
     "column": 6,
     "text": "shadow: declaration of \"err\" shadows declaration at line 74",
     "status": "OPEN"
@@ -14106,8 +14106,8 @@
     "id": "L1572",
     "rule": "govet",
     "path": "internal/logging/file.go",
-    "line": 40,
-    "column": 5,
+    "line": 45,
+    "column": 11,
     "text": "shadow: declaration of \"err\" shadows declaration at line 32",
     "status": "OPEN"
   },
@@ -14115,8 +14115,8 @@
     "id": "L1573",
     "rule": "govet",
     "path": "internal/logging/file.go",
-    "line": 43,
-    "column": 11,
+    "line": 42,
+    "column": 5,
     "text": "shadow: declaration of \"err\" shadows declaration at line 32",
     "status": "OPEN"
   },
@@ -14439,7 +14439,7 @@
     "id": "L1609",
     "rule": "govet",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 176,
+    "line": 178,
     "column": 13,
     "text": "shadow: declaration of \"e\" shadows declaration at line 91",
     "status": "OPEN"
@@ -14484,7 +14484,7 @@
     "id": "L1614",
     "rule": "govet",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 400,
+    "line": 402,
     "column": 13,
     "text": "shadow: declaration of \"err\" shadows declaration at line 177",
     "status": "OPEN"
@@ -14493,7 +14493,7 @@
     "id": "L1615",
     "rule": "govet",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 390,
+    "line": 392,
     "column": 16,
     "text": "shadow: declaration of \"err\" shadows declaration at line 177",
     "status": "OPEN"
@@ -14520,7 +14520,7 @@
     "id": "L1622",
     "rule": "govet",
     "path": "internal/service/account_archive_test.go",
-    "line": 131,
+    "line": 133,
     "column": 9,
     "text": "shadow: declaration of \"err\" shadows declaration at line 59",
     "status": "OPEN"
@@ -14529,7 +14529,7 @@
     "id": "L1623",
     "rule": "govet",
     "path": "internal/service/account_archive_test.go",
-    "line": 210,
+    "line": 212,
     "column": 11,
     "text": "shadow: declaration of \"e\" shadows declaration at line 69",
     "status": "OPEN"
@@ -14547,7 +14547,7 @@
     "id": "L1625",
     "rule": "govet",
     "path": "internal/service/archive_messages.go",
-    "line": 203,
+    "line": 205,
     "column": 10,
     "text": "shadow: declaration of \"err\" shadows declaration at line 173",
     "status": "OPEN"
@@ -14619,7 +14619,7 @@
     "id": "L1633",
     "rule": "govet",
     "path": "internal/service/mobile_history_test.go",
-    "line": 118,
+    "line": 120,
     "column": 8,
     "text": "shadow: declaration of \"err\" shadows declaration at line 49",
     "status": "OPEN"
@@ -14646,7 +14646,7 @@
     "id": "L1636",
     "rule": "govet",
     "path": "internal/service/mobile_page_test.go",
-    "line": 150,
+    "line": 152,
     "column": 8,
     "text": "shadow: declaration of \"e\" shadows declaration at line 108",
     "status": "OPEN"
@@ -14655,7 +14655,7 @@
     "id": "L1637",
     "rule": "govet",
     "path": "internal/service/mobile_page_test.go",
-    "line": 180,
+    "line": 182,
     "column": 14,
     "text": "shadow: declaration of \"e\" shadows declaration at line 108",
     "status": "OPEN"
@@ -15024,7 +15024,7 @@
     "id": "L1678",
     "rule": "govet",
     "path": "internal/storage/deliveries.go",
-    "line": 300,
+    "line": 301,
     "column": 10,
     "text": "shadow: declaration of \"err\" shadows declaration at line 280",
     "status": "OPEN"
@@ -15429,7 +15429,7 @@
     "id": "L1723",
     "rule": "govet",
     "path": "internal/storage/views.go",
-    "line": 352,
+    "line": 353,
     "column": 6,
     "text": "shadow: declaration of \"e\" shadows declaration at line 299",
     "status": "OPEN"
@@ -15483,7 +15483,7 @@
     "id": "L1735",
     "rule": "govet",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 101,
+    "line": 104,
     "column": 15,
     "text": "shadow: declaration of \"e\" shadows declaration at line 78",
     "status": "OPEN"
@@ -15492,7 +15492,7 @@
     "id": "L1736",
     "rule": "govet",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 121,
+    "line": 124,
     "column": 8,
     "text": "shadow: declaration of \"e\" shadows declaration at line 101",
     "status": "OPEN"
@@ -15510,7 +15510,7 @@
     "id": "L1738",
     "rule": "govet",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 85,
+    "line": 86,
     "column": 3,
     "text": "shadow: declaration of \"ctx\" shadows declaration at line 71",
     "status": "OPEN"
@@ -15519,7 +15519,7 @@
     "id": "L1739",
     "rule": "govet",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 87,
+    "line": 88,
     "column": 9,
     "text": "shadow: declaration of \"e\" shadows declaration at line 72",
     "status": "OPEN"
@@ -15540,7 +15540,7 @@
     "line": 79,
     "column": 9,
     "text": "append to slice `prefix` with non-zero initialized length",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L1744",
@@ -16005,7 +16005,7 @@
     "id": "L1795",
     "rule": "mnd",
     "path": "internal/evalfixture/offline.go",
-    "line": 257,
+    "line": 259,
     "column": 49,
     "text": "Magic number: 4, in <argument> detected",
     "status": "OPEN"
@@ -16014,7 +16014,7 @@
     "id": "L1796",
     "rule": "mnd",
     "path": "internal/evalfixture/offline.go",
-    "line": 267,
+    "line": 269,
     "column": 96,
     "text": "Magic number: 8, in <argument> detected",
     "status": "OPEN"
@@ -16023,7 +16023,7 @@
     "id": "L1797",
     "rule": "mnd",
     "path": "internal/evalfixture/offline.go",
-    "line": 267,
+    "line": 269,
     "column": 99,
     "text": "Magic number: 20, in <argument> detected",
     "status": "OPEN"
@@ -16032,7 +16032,7 @@
     "id": "L1798",
     "rule": "mnd",
     "path": "internal/evalfixture/offline.go",
-    "line": 260,
+    "line": 262,
     "column": 3,
     "text": "Magic number: 8, in <argument> detected",
     "status": "OPEN"
@@ -16041,7 +16041,7 @@
     "id": "L1799",
     "rule": "mnd",
     "path": "internal/evalfixture/offline.go",
-    "line": 260,
+    "line": 262,
     "column": 6,
     "text": "Magic number: 20, in <argument> detected",
     "status": "OPEN"
@@ -16050,7 +16050,7 @@
     "id": "L1800",
     "rule": "mnd",
     "path": "internal/evaluation/benchmark.go",
-    "line": 42,
+    "line": 44,
     "column": 17,
     "text": "Magic number: 50, in <assign> detected",
     "status": "OPEN"
@@ -16059,7 +16059,7 @@
     "id": "L1801",
     "rule": "mnd",
     "path": "internal/evaluation/benchmark.go",
-    "line": 47,
+    "line": 49,
     "column": 17,
     "text": "Magic number: 110, in <assign> detected",
     "status": "OPEN"
@@ -16068,7 +16068,7 @@
     "id": "L1802",
     "rule": "mnd",
     "path": "internal/evaluation/benchmark.go",
-    "line": 51,
+    "line": 53,
     "column": 13,
     "text": "Magic number: 1000, in <condition> detected",
     "status": "OPEN"
@@ -16077,7 +16077,7 @@
     "id": "L1803",
     "rule": "mnd",
     "path": "internal/evaluation/benchmark.go",
-    "line": 108,
+    "line": 110,
     "column": 21,
     "text": "Magic number: 110, in <argument> detected",
     "status": "OPEN"
@@ -16086,7 +16086,7 @@
     "id": "L1804",
     "rule": "mnd",
     "path": "internal/evaluation/benchmark.go",
-    "line": 130,
+    "line": 135,
     "column": 40,
     "text": "Magic number: 99, in <operation> detected",
     "status": "OPEN"
@@ -16095,7 +16095,7 @@
     "id": "L1805",
     "rule": "mnd",
     "path": "internal/evaluation/client.go",
-    "line": 38,
+    "line": 40,
     "column": 20,
     "text": "Magic number: 110, in <argument> detected",
     "status": "OPEN"
@@ -16113,7 +16113,7 @@
     "id": "L1807",
     "rule": "mnd",
     "path": "internal/evaluation/model.go",
-    "line": 105,
+    "line": 107,
     "column": 22,
     "text": "Magic number: 5, in <assign> detected",
     "status": "OPEN"
@@ -16122,7 +16122,7 @@
     "id": "L1808",
     "rule": "mnd",
     "path": "internal/evaluation/model.go",
-    "line": 137,
+    "line": 139,
     "column": 3,
     "text": "Magic number: 4, in <argument> detected",
     "status": "OPEN"
@@ -16131,7 +16131,7 @@
     "id": "L1809",
     "rule": "mnd",
     "path": "internal/evaluation/model.go",
-    "line": 137,
+    "line": 139,
     "column": 6,
     "text": "Magic number: 20, in <argument> detected",
     "status": "OPEN"
@@ -16158,7 +16158,7 @@
     "id": "L1812",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 153,
+    "line": 155,
     "column": 27,
     "text": "Magic number: 180, in <assign> detected",
     "status": "OPEN"
@@ -16167,7 +16167,7 @@
     "id": "L1813",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 154,
+    "line": 156,
     "column": 27,
     "text": "Magic number: 30, in <assign> detected",
     "status": "OPEN"
@@ -16176,7 +16176,7 @@
     "id": "L1814",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 169,
+    "line": 171,
     "column": 27,
     "text": "Magic number: 180, in <assign> detected",
     "status": "OPEN"
@@ -16185,7 +16185,7 @@
     "id": "L1815",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 170,
+    "line": 172,
     "column": 27,
     "text": "Magic number: 30, in <assign> detected",
     "status": "OPEN"
@@ -16194,7 +16194,7 @@
     "id": "L1816",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 198,
+    "line": 200,
     "column": 50,
     "text": "Magic number: 6, in <operation> detected",
     "status": "OPEN"
@@ -16203,7 +16203,7 @@
     "id": "L1817",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 218,
+    "line": 220,
     "column": 32,
     "text": "Magic number: 60, in <assign> detected",
     "status": "OPEN"
@@ -16212,7 +16212,7 @@
     "id": "L1818",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 220,
+    "line": 222,
     "column": 32,
     "text": "Magic number: 4, in <assign> detected",
     "status": "OPEN"
@@ -16221,7 +16221,7 @@
     "id": "L1819",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 220,
+    "line": 222,
     "column": 37,
     "text": "Magic number: 20, in <assign> detected",
     "status": "OPEN"
@@ -16230,7 +16230,7 @@
     "id": "L1820",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 219,
+    "line": 221,
     "column": 32,
     "text": "Magic number: 4, in <assign> detected",
     "status": "OPEN"
@@ -16239,7 +16239,7 @@
     "id": "L1821",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 219,
+    "line": 221,
     "column": 37,
     "text": "Magic number: 20, in <assign> detected",
     "status": "OPEN"
@@ -16248,7 +16248,7 @@
     "id": "L1822",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 249,
+    "line": 251,
     "column": 16,
     "text": "Magic number: 60, in <operation> detected",
     "status": "OPEN"
@@ -16257,7 +16257,7 @@
     "id": "L1823",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 300,
+    "line": 303,
     "column": 63,
     "text": "Magic number: 4, in <argument> detected",
     "status": "OPEN"
@@ -16266,7 +16266,7 @@
     "id": "L1824",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 300,
+    "line": 303,
     "column": 66,
     "text": "Magic number: 20, in <argument> detected",
     "status": "OPEN"
@@ -16275,7 +16275,7 @@
     "id": "L1825",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 359,
+    "line": 362,
     "column": 20,
     "text": "Magic number: 3, in <assign> detected",
     "status": "OPEN"
@@ -16284,7 +16284,7 @@
     "id": "L1826",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 360,
+    "line": 363,
     "column": 20,
     "text": "Magic number: 8192, in <assign> detected",
     "status": "OPEN"
@@ -16293,7 +16293,7 @@
     "id": "L1827",
     "rule": "mnd",
     "path": "internal/evaluation/runner.go",
-    "line": 373,
+    "line": 376,
     "column": 22,
     "text": "Magic number: 5, in <assign> detected",
     "status": "OPEN"
@@ -16302,7 +16302,7 @@
     "id": "L1828",
     "rule": "mnd",
     "path": "internal/evaluation/scenarios.go",
-    "line": 94,
+    "line": 95,
     "column": 99,
     "text": "Magic number: 10, in <assign> detected",
     "status": "OPEN"
@@ -16311,7 +16311,7 @@
     "id": "L1829",
     "rule": "mnd",
     "path": "internal/evaluation/scenarios.go",
-    "line": 352,
+    "line": 353,
     "column": 71,
     "text": "Magic number: 20, in <assign> detected",
     "status": "OPEN"
@@ -16491,7 +16491,7 @@
     "id": "L1849",
     "rule": "mnd",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 177,
+    "line": 179,
     "column": 37,
     "text": "Magic number: 180, in <argument> detected",
     "status": "OPEN"
@@ -16500,7 +16500,7 @@
     "id": "L1850",
     "rule": "mnd",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 207,
+    "line": 209,
     "column": 36,
     "text": "Magic number: 120, in <argument> detected",
     "status": "OPEN"
@@ -16509,7 +16509,7 @@
     "id": "L1851",
     "rule": "mnd",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 240,
+    "line": 242,
     "column": 37,
     "text": "Magic number: 30, in <argument> detected",
     "status": "OPEN"
@@ -16536,7 +16536,7 @@
     "id": "L1854",
     "rule": "mnd",
     "path": "internal/historyimport/worker.go",
-    "line": 112,
+    "line": 115,
     "column": 35,
     "text": "Magic number: 30, in <argument> detected",
     "status": "OPEN"
@@ -16608,7 +16608,7 @@
     "id": "L1862",
     "rule": "mnd",
     "path": "internal/mcpserver/server.go",
-    "line": 302,
+    "line": 304,
     "column": 50,
     "text": "Magic number: 1000, in <assign> detected",
     "status": "OPEN"
@@ -16662,7 +16662,7 @@
     "id": "L1868",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 62,
+    "line": 65,
     "column": 8,
     "text": "Magic number: 40, in <case> detected",
     "status": "OPEN"
@@ -16671,7 +16671,7 @@
     "id": "L1869",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 64,
+    "line": 67,
     "column": 8,
     "text": "Magic number: 41, in <case> detected",
     "status": "OPEN"
@@ -16680,7 +16680,7 @@
     "id": "L1870",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 66,
+    "line": 69,
     "column": 8,
     "text": "Magic number: 42, in <case> detected",
     "status": "OPEN"
@@ -16689,7 +16689,7 @@
     "id": "L1871",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 68,
+    "line": 71,
     "column": 8,
     "text": "Magic number: 43, in <case> detected",
     "status": "OPEN"
@@ -16698,7 +16698,7 @@
     "id": "L1872",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 70,
+    "line": 73,
     "column": 8,
     "text": "Magic number: 44, in <case> detected",
     "status": "OPEN"
@@ -16707,7 +16707,7 @@
     "id": "L1873",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 72,
+    "line": 75,
     "column": 8,
     "text": "Magic number: 45, in <case> detected",
     "status": "OPEN"
@@ -16716,7 +16716,7 @@
     "id": "L1874",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 74,
+    "line": 77,
     "column": 8,
     "text": "Magic number: 46, in <case> detected",
     "status": "OPEN"
@@ -16725,7 +16725,7 @@
     "id": "L1875",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 76,
+    "line": 79,
     "column": 8,
     "text": "Magic number: 47, in <case> detected",
     "status": "OPEN"
@@ -16734,7 +16734,7 @@
     "id": "L1876",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 78,
+    "line": 81,
     "column": 8,
     "text": "Magic number: 48, in <case> detected",
     "status": "OPEN"
@@ -16743,7 +16743,7 @@
     "id": "L1877",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 80,
+    "line": 83,
     "column": 8,
     "text": "Magic number: 49, in <case> detected",
     "status": "OPEN"
@@ -16752,7 +16752,7 @@
     "id": "L1878",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 82,
+    "line": 85,
     "column": 8,
     "text": "Magic number: 50, in <case> detected",
     "status": "OPEN"
@@ -16761,7 +16761,7 @@
     "id": "L1879",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 84,
+    "line": 87,
     "column": 8,
     "text": "Magic number: 66, in <case> detected",
     "status": "OPEN"
@@ -16770,7 +16770,7 @@
     "id": "L1880",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 86,
+    "line": 89,
     "column": 8,
     "text": "Magic number: 67, in <case> detected",
     "status": "OPEN"
@@ -16779,7 +16779,7 @@
     "id": "L1881",
     "rule": "mnd",
     "path": "internal/mobilebackup/attachment.go",
-    "line": 88,
+    "line": 91,
     "column": 8,
     "text": "Magic number: 68, in <case> detected",
     "status": "OPEN"
@@ -16788,7 +16788,7 @@
     "id": "L1882",
     "rule": "mnd",
     "path": "internal/mobilebackup/binnet.go",
-    "line": 48,
+    "line": 52,
     "column": 15,
     "text": "Magic number: 6, in <condition> detected",
     "status": "OPEN"
@@ -16797,7 +16797,7 @@
     "id": "L1883",
     "rule": "mnd",
     "path": "internal/mobilebackup/binnet.go",
-    "line": 57,
+    "line": 61,
     "column": 15,
     "text": "Magic number: 8, in <condition> detected",
     "status": "OPEN"
@@ -16806,7 +16806,7 @@
     "id": "L1884",
     "rule": "mnd",
     "path": "internal/mobilebackup/binnet.go",
-    "line": 66,
+    "line": 70,
     "column": 15,
     "text": "Magic number: 7, in <condition> detected",
     "status": "OPEN"
@@ -16878,7 +16878,7 @@
     "id": "L1892",
     "rule": "mnd",
     "path": "internal/mobilebackup/checksum.go",
-    "line": 34,
+    "line": 35,
     "column": 69,
     "text": "Magic number: 17, in <argument> detected",
     "status": "OPEN"
@@ -16887,7 +16887,7 @@
     "id": "L1893",
     "rule": "mnd",
     "path": "internal/mobilebackup/checksum.go",
-    "line": 38,
+    "line": 39,
     "column": 41,
     "text": "Magic number: 11, in <argument> detected",
     "status": "OPEN"
@@ -16896,7 +16896,7 @@
     "id": "L1894",
     "rule": "mnd",
     "path": "internal/mobilebackup/checksum.go",
-    "line": 40,
+    "line": 41,
     "column": 12,
     "text": "Magic number: 15, in <operation> detected",
     "status": "OPEN"
@@ -16905,7 +16905,7 @@
     "id": "L1895",
     "rule": "mnd",
     "path": "internal/mobilebackup/checksum.go",
-    "line": 42,
+    "line": 43,
     "column": 12,
     "text": "Magic number: 13, in <operation> detected",
     "status": "OPEN"
@@ -16914,7 +16914,7 @@
     "id": "L1896",
     "rule": "mnd",
     "path": "internal/mobilebackup/checksum.go",
-    "line": 44,
+    "line": 45,
     "column": 12,
     "text": "Magic number: 16, in <operation> detected",
     "status": "OPEN"
@@ -16923,7 +16923,7 @@
     "id": "L1897",
     "rule": "mnd",
     "path": "internal/mobilebackup/control_scan.go",
-    "line": 50,
+    "line": 54,
     "column": 45,
     "text": "Magic number: 30, in <argument> detected",
     "status": "OPEN"
@@ -16932,7 +16932,7 @@
     "id": "L1898",
     "rule": "mnd",
     "path": "internal/mobilebackup/control_scan.go",
-    "line": 57,
+    "line": 61,
     "column": 52,
     "text": "Magic number: 253402300800000, in <argument> detected",
     "status": "OPEN"
@@ -16941,7 +16941,7 @@
     "id": "L1899",
     "rule": "mnd",
     "path": "internal/mobilebackup/control_scan.go",
-    "line": 70,
+    "line": 74,
     "column": 8,
     "text": "Magic number: 50, in <argument> detected",
     "status": "OPEN"
@@ -16959,7 +16959,7 @@
     "id": "L1901",
     "rule": "mnd",
     "path": "internal/mobilebackup/header.go",
-    "line": 76,
+    "line": 77,
     "column": 17,
     "text": "Magic number: 4, in <condition> detected",
     "status": "OPEN"
@@ -16968,7 +16968,7 @@
     "id": "L1902",
     "rule": "mnd",
     "path": "internal/mobilebackup/header.go",
-    "line": 88,
+    "line": 89,
     "column": 18,
     "text": "Magic number: 4, in <condition> detected",
     "status": "OPEN"
@@ -16977,7 +16977,7 @@
     "id": "L1903",
     "rule": "mnd",
     "path": "internal/mobilebackup/history_page.go",
-    "line": 89,
+    "line": 91,
     "column": 83,
     "text": "Magic number: 5000, in <argument> detected",
     "status": "OPEN"
@@ -17004,7 +17004,7 @@
     "id": "L1906",
     "rule": "mnd",
     "path": "internal/mobilebackup/mentions.go",
-    "line": 43,
+    "line": 46,
     "column": 8,
     "text": "Magic number: 100, in <case> detected",
     "status": "OPEN"
@@ -17013,7 +17013,7 @@
     "id": "L1907",
     "rule": "mnd",
     "path": "internal/mobilebackup/mentions.go",
-    "line": 45,
+    "line": 48,
     "column": 8,
     "text": "Magic number: 101, in <case> detected",
     "status": "OPEN"
@@ -17022,7 +17022,7 @@
     "id": "L1908",
     "rule": "mnd",
     "path": "internal/mobilebackup/mentions.go",
-    "line": 47,
+    "line": 50,
     "column": 8,
     "text": "Magic number: 102, in <case> detected",
     "status": "OPEN"
@@ -17031,7 +17031,7 @@
     "id": "L1909",
     "rule": "mnd",
     "path": "internal/mobilebackup/mentions.go",
-    "line": 49,
+    "line": 52,
     "column": 8,
     "text": "Magic number: 103, in <case> detected",
     "status": "OPEN"
@@ -17040,7 +17040,7 @@
     "id": "L1910",
     "rule": "mnd",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 118,
+    "line": 126,
     "column": 41,
     "text": "Magic number: 50, in <argument> detected",
     "status": "OPEN"
@@ -17049,7 +17049,7 @@
     "id": "L1911",
     "rule": "mnd",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 234,
+    "line": 242,
     "column": 51,
     "text": "Magic number: 6, in <argument> detected",
     "status": "OPEN"
@@ -17058,7 +17058,7 @@
     "id": "L1912",
     "rule": "mnd",
     "path": "internal/mobilebackup/message_conversion.go",
-    "line": 256,
+    "line": 268,
     "column": 51,
     "text": "Magic number: 6, in <argument> detected",
     "status": "OPEN"
@@ -17076,7 +17076,7 @@
     "id": "L1914",
     "rule": "mnd",
     "path": "internal/mobilebackup/page_walk.go",
-    "line": 40,
+    "line": 42,
     "column": 45,
     "text": "Magic number: 120, in <argument> detected",
     "status": "OPEN"
@@ -17085,7 +17085,7 @@
     "id": "L1915",
     "rule": "mnd",
     "path": "internal/mobilebackup/quote.go",
-    "line": 48,
+    "line": 52,
     "column": 32,
     "text": "Magic number: 6, in <argument> detected",
     "status": "OPEN"
@@ -17094,7 +17094,7 @@
     "id": "L1916",
     "rule": "mnd",
     "path": "internal/mobilebackup/quote.go",
-    "line": 67,
+    "line": 71,
     "column": 15,
     "text": "Magic number: 4, in <condition> detected",
     "status": "OPEN"
@@ -17103,7 +17103,7 @@
     "id": "L1917",
     "rule": "mnd",
     "path": "internal/mobilebackup/quote.go",
-    "line": 69,
+    "line": 74,
     "column": 16,
     "text": "Magic number: 80, in <condition> detected",
     "status": "OPEN"
@@ -17112,7 +17112,7 @@
     "id": "L1918",
     "rule": "mnd",
     "path": "internal/mobilebackup/quote.go",
-    "line": 78,
+    "line": 84,
     "column": 8,
     "text": "Magic number: 81, in <case> detected",
     "status": "OPEN"
@@ -17121,7 +17121,7 @@
     "id": "L1919",
     "rule": "mnd",
     "path": "internal/mobilebackup/quote.go",
-    "line": 80,
+    "line": 86,
     "column": 8,
     "text": "Magic number: 82, in <case> detected",
     "status": "OPEN"
@@ -17130,7 +17130,7 @@
     "id": "L1920",
     "rule": "mnd",
     "path": "internal/mobilebackup/quote.go",
-    "line": 82,
+    "line": 88,
     "column": 8,
     "text": "Magic number: 84, in <case> detected",
     "status": "OPEN"
@@ -17139,7 +17139,7 @@
     "id": "L1921",
     "rule": "mnd",
     "path": "internal/mobilebackup/quote.go",
-    "line": 84,
+    "line": 90,
     "column": 8,
     "text": "Magic number: 85, in <case> detected",
     "status": "OPEN"
@@ -17148,7 +17148,7 @@
     "id": "L1922",
     "rule": "mnd",
     "path": "internal/mobilebackup/quote_fields.go",
-    "line": 61,
+    "line": 65,
     "column": 8,
     "text": "Magic number: 86, in <case> detected",
     "status": "OPEN"
@@ -17157,7 +17157,7 @@
     "id": "L1923",
     "rule": "mnd",
     "path": "internal/mobilebackup/quote_fields.go",
-    "line": 63,
+    "line": 67,
     "column": 8,
     "text": "Magic number: 87, in <case> detected",
     "status": "OPEN"
@@ -17166,7 +17166,7 @@
     "id": "L1924",
     "rule": "mnd",
     "path": "internal/mobilebackup/quote_fields.go",
-    "line": 65,
+    "line": 69,
     "column": 8,
     "text": "Magic number: 88, in <case> detected",
     "status": "OPEN"
@@ -17175,7 +17175,7 @@
     "id": "L1925",
     "rule": "mnd",
     "path": "internal/mobilebackup/quote_fields.go",
-    "line": 67,
+    "line": 71,
     "column": 8,
     "text": "Magic number: 90, in <case> detected",
     "status": "OPEN"
@@ -17184,7 +17184,7 @@
     "id": "L1926",
     "rule": "mnd",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 297,
+    "line": 299,
     "column": 17,
     "text": "Magic number: 4, in <argument> detected",
     "status": "OPEN"
@@ -17193,7 +17193,7 @@
     "id": "L1927",
     "rule": "mnd",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 309,
+    "line": 312,
     "column": 12,
     "text": "Magic number: 4, in <operation> detected",
     "status": "OPEN"
@@ -17202,7 +17202,7 @@
     "id": "L1928",
     "rule": "mnd",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 328,
+    "line": 331,
     "column": 75,
     "text": "Magic number: 0600, in <argument> detected",
     "status": "OPEN"
@@ -17211,7 +17211,7 @@
     "id": "L1929",
     "rule": "mnd",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 460,
+    "line": 463,
     "column": 95,
     "text": "Magic number: 4, in <argument> detected",
     "status": "OPEN"
@@ -17220,7 +17220,7 @@
     "id": "L1930",
     "rule": "mnd",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 513,
+    "line": 516,
     "column": 11,
     "text": "Magic number: 4, in <operation> detected",
     "status": "OPEN"
@@ -17229,7 +17229,7 @@
     "id": "L1931",
     "rule": "mnd",
     "path": "internal/mobilebackup/retained_archive.go",
-    "line": 551,
+    "line": 554,
     "column": 28,
     "text": "Magic number: 32, in <argument> detected",
     "status": "OPEN"
@@ -17238,7 +17238,7 @@
     "id": "L1932",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 48,
+    "line": 49,
     "column": 7,
     "text": "Magic number: 3, in <case> detected",
     "status": "OPEN"
@@ -17247,7 +17247,7 @@
     "id": "L1933",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 48,
+    "line": 49,
     "column": 10,
     "text": "Magic number: 4, in <case> detected",
     "status": "OPEN"
@@ -17256,7 +17256,7 @@
     "id": "L1934",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 48,
+    "line": 49,
     "column": 13,
     "text": "Magic number: 31, in <case> detected",
     "status": "OPEN"
@@ -17265,7 +17265,7 @@
     "id": "L1935",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 50,
+    "line": 51,
     "column": 7,
     "text": "Magic number: 6, in <case> detected",
     "status": "OPEN"
@@ -17274,7 +17274,7 @@
     "id": "L1936",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 52,
+    "line": 53,
     "column": 7,
     "text": "Magic number: 10, in <case> detected",
     "status": "OPEN"
@@ -17283,7 +17283,7 @@
     "id": "L1937",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 54,
+    "line": 55,
     "column": 7,
     "text": "Magic number: 12, in <case> detected",
     "status": "OPEN"
@@ -17292,7 +17292,7 @@
     "id": "L1938",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 56,
+    "line": 57,
     "column": 7,
     "text": "Magic number: 15, in <case> detected",
     "status": "OPEN"
@@ -17301,7 +17301,7 @@
     "id": "L1939",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 58,
+    "line": 59,
     "column": 7,
     "text": "Magic number: 18, in <case> detected",
     "status": "OPEN"
@@ -17310,7 +17310,7 @@
     "id": "L1940",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 60,
+    "line": 61,
     "column": 7,
     "text": "Magic number: 19, in <case> detected",
     "status": "OPEN"
@@ -17319,7 +17319,7 @@
     "id": "L1941",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 62,
+    "line": 63,
     "column": 7,
     "text": "Magic number: 22, in <case> detected",
     "status": "OPEN"
@@ -17328,7 +17328,7 @@
     "id": "L1942",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 64,
+    "line": 65,
     "column": 7,
     "text": "Magic number: 23, in <case> detected",
     "status": "OPEN"
@@ -17337,7 +17337,7 @@
     "id": "L1943",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 66,
+    "line": 67,
     "column": 7,
     "text": "Magic number: 24, in <case> detected",
     "status": "OPEN"
@@ -17346,7 +17346,7 @@
     "id": "L1944",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 68,
+    "line": 69,
     "column": 7,
     "text": "Magic number: 53, in <case> detected",
     "status": "OPEN"
@@ -17355,7 +17355,7 @@
     "id": "L1945",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 7,
     "text": "Magic number: 20, in <case> detected",
     "status": "OPEN"
@@ -17364,7 +17364,7 @@
     "id": "L1946",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 11,
     "text": "Magic number: 21, in <case> detected",
     "status": "OPEN"
@@ -17373,7 +17373,7 @@
     "id": "L1947",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 15,
     "text": "Magic number: 25, in <case> detected",
     "status": "OPEN"
@@ -17382,7 +17382,7 @@
     "id": "L1948",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 19,
     "text": "Magic number: 26, in <case> detected",
     "status": "OPEN"
@@ -17391,7 +17391,7 @@
     "id": "L1949",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 23,
     "text": "Magic number: 29, in <case> detected",
     "status": "OPEN"
@@ -17400,7 +17400,7 @@
     "id": "L1950",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 27,
     "text": "Magic number: 32, in <case> detected",
     "status": "OPEN"
@@ -17409,7 +17409,7 @@
     "id": "L1951",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 31,
     "text": "Magic number: 33, in <case> detected",
     "status": "OPEN"
@@ -17418,7 +17418,7 @@
     "id": "L1952",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 35,
     "text": "Magic number: 34, in <case> detected",
     "status": "OPEN"
@@ -17427,7 +17427,7 @@
     "id": "L1953",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 39,
     "text": "Magic number: 35, in <case> detected",
     "status": "OPEN"
@@ -17436,7 +17436,7 @@
     "id": "L1954",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 43,
     "text": "Magic number: 36, in <case> detected",
     "status": "OPEN"
@@ -17445,7 +17445,7 @@
     "id": "L1955",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 47,
     "text": "Magic number: 45, in <case> detected",
     "status": "OPEN"
@@ -17454,7 +17454,7 @@
     "id": "L1956",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 51,
     "text": "Magic number: 51, in <case> detected",
     "status": "OPEN"
@@ -17463,7 +17463,7 @@
     "id": "L1957",
     "rule": "mnd",
     "path": "internal/mobilebackup/row_page.go",
-    "line": 75,
+    "line": 76,
     "column": 55,
     "text": "Magic number: 52, in <case> detected",
     "status": "OPEN"
@@ -17472,7 +17472,7 @@
     "id": "L1958",
     "rule": "mnd",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 179,
+    "line": 181,
     "column": 85,
     "text": "Magic number: 0600, in <argument> detected",
     "status": "OPEN"
@@ -17481,7 +17481,7 @@
     "id": "L1959",
     "rule": "mnd",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 209,
+    "line": 211,
     "column": 29,
     "text": "Magic number: 64, in <argument> detected",
     "status": "OPEN"
@@ -17490,7 +17490,7 @@
     "id": "L1960",
     "rule": "mnd",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 215,
+    "line": 217,
     "column": 23,
     "text": "Magic number: 32, in <argument> detected",
     "status": "OPEN"
@@ -17499,7 +17499,7 @@
     "id": "L1961",
     "rule": "mnd",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 220,
+    "line": 222,
     "column": 77,
     "text": "Magic number: 0600, in <argument> detected",
     "status": "OPEN"
@@ -17508,7 +17508,7 @@
     "id": "L1962",
     "rule": "mnd",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 252,
+    "line": 254,
     "column": 43,
     "text": "Magic number: 33, in <argument> detected",
     "status": "OPEN"
@@ -17517,7 +17517,7 @@
     "id": "L1963",
     "rule": "mnd",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 375,
+    "line": 378,
     "column": 68,
     "text": "Magic number: 0600, in <argument> detected",
     "status": "OPEN"
@@ -17526,7 +17526,7 @@
     "id": "L1964",
     "rule": "mnd",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 470,
+    "line": 473,
     "column": 60,
     "text": "Magic number: 64, in <operation> detected",
     "status": "OPEN"
@@ -17535,7 +17535,7 @@
     "id": "L1965",
     "rule": "mnd",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 472,
+    "line": 475,
     "column": 79,
     "text": "Magic number: 4, in <argument> detected",
     "status": "OPEN"
@@ -17544,7 +17544,7 @@
     "id": "L1966",
     "rule": "mnd",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 526,
+    "line": 529,
     "column": 43,
     "text": "Magic number: 4, in <argument> detected",
     "status": "OPEN"
@@ -17553,7 +17553,7 @@
     "id": "L1967",
     "rule": "mnd",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 135,
+    "line": 138,
     "column": 18,
     "text": "Magic number: 20, in <condition> detected",
     "status": "OPEN"
@@ -17562,7 +17562,7 @@
     "id": "L1968",
     "rule": "mnd",
     "path": "internal/mobilebackup/snapshot_recalls.go",
-    "line": 74,
+    "line": 78,
     "column": 43,
     "text": "Magic number: 253402300800000, in <argument> detected",
     "status": "OPEN"
@@ -17589,7 +17589,7 @@
     "id": "L1971",
     "rule": "mnd",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 109,
+    "line": 110,
     "column": 42,
     "text": "Magic number: 20, in <argument> detected",
     "status": "OPEN"
@@ -17598,7 +17598,7 @@
     "id": "L1972",
     "rule": "mnd",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 203,
+    "line": 205,
     "column": 24,
     "text": "Magic number: 20, in <condition> detected",
     "status": "OPEN"
@@ -17607,7 +17607,7 @@
     "id": "L1973",
     "rule": "mnd",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 226,
+    "line": 228,
     "column": 45,
     "text": "Magic number: 30, in <argument> detected",
     "status": "OPEN"
@@ -17616,7 +17616,7 @@
     "id": "L1974",
     "rule": "mnd",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 385,
+    "line": 387,
     "column": 29,
     "text": "Magic number: 5000, in <condition> detected",
     "status": "OPEN"
@@ -17670,7 +17670,7 @@
     "id": "L1980",
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
-    "line": 93,
+    "line": 94,
     "column": 23,
     "text": "Magic number: 12, in <operation> detected",
     "status": "OPEN"
@@ -17679,7 +17679,7 @@
     "id": "L1981",
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
-    "line": 116,
+    "line": 120,
     "column": 23,
     "text": "Magic number: 3, in <operation> detected",
     "status": "OPEN"
@@ -17688,7 +17688,7 @@
     "id": "L1982",
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
-    "line": 116,
+    "line": 120,
     "column": 36,
     "text": "Magic number: 3, in <argument> detected",
     "status": "OPEN"
@@ -17697,8 +17697,8 @@
     "id": "L1983",
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
-    "line": 125,
-    "column": 43,
+    "line": 137,
+    "column": 18,
     "text": "Magic number: 12, in <operation> detected",
     "status": "OPEN"
   },
@@ -17707,7 +17707,7 @@
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
     "line": 131,
-    "column": 18,
+    "column": 43,
     "text": "Magic number: 12, in <operation> detected",
     "status": "OPEN"
   },
@@ -17715,8 +17715,8 @@
     "id": "L1985",
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
-    "line": 136,
-    "column": 35,
+    "line": 142,
+    "column": 33,
     "text": "Magic number: 3, in <operation> detected",
     "status": "OPEN"
   },
@@ -17724,8 +17724,8 @@
     "id": "L1986",
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
-    "line": 136,
-    "column": 48,
+    "line": 142,
+    "column": 46,
     "text": "Magic number: 3, in <argument> detected",
     "status": "OPEN"
   },
@@ -17733,7 +17733,7 @@
     "id": "L1987",
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
-    "line": 157,
+    "line": 169,
     "column": 37,
     "text": "Magic number: 4, in <operation> detected",
     "status": "OPEN"
@@ -17742,8 +17742,8 @@
     "id": "L1988",
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
-    "line": 188,
-    "column": 16,
+    "line": 206,
+    "column": 17,
     "text": "Magic number: 40, in <condition> detected",
     "status": "OPEN"
   },
@@ -17751,8 +17751,8 @@
     "id": "L1989",
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
-    "line": 192,
-    "column": 17,
+    "line": 202,
+    "column": 16,
     "text": "Magic number: 40, in <condition> detected",
     "status": "OPEN"
   },
@@ -17760,7 +17760,7 @@
     "id": "L1990",
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
-    "line": 195,
+    "line": 209,
     "column": 56,
     "text": "Magic number: 11, in <operation> detected",
     "status": "OPEN"
@@ -17769,7 +17769,7 @@
     "id": "L1991",
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
-    "line": 205,
+    "line": 219,
     "column": 21,
     "text": "Magic number: 0x7f, in <argument> detected",
     "status": "OPEN"
@@ -17778,7 +17778,7 @@
     "id": "L1992",
     "rule": "mnd",
     "path": "internal/mobilebackup/xz.go",
-    "line": 205,
+    "line": 219,
     "column": 31,
     "text": "Magic number: 7, in <operation> detected",
     "status": "OPEN"
@@ -17877,7 +17877,7 @@
     "id": "L2003",
     "rule": "mnd",
     "path": "internal/service/archive_messages.go",
-    "line": 321,
+    "line": 323,
     "column": 28,
     "text": "Magic number: 2048, in <operation> detected",
     "status": "OPEN"
@@ -18309,7 +18309,7 @@
     "id": "L2051",
     "rule": "mnd",
     "path": "internal/service/run.go",
-    "line": 642,
+    "line": 644,
     "column": 24,
     "text": "Magic number: 40, in <argument> detected",
     "status": "OPEN"
@@ -18336,7 +18336,7 @@
     "id": "L2054",
     "rule": "mnd",
     "path": "internal/storage/browse.go",
-    "line": 112,
+    "line": 113,
     "column": 29,
     "text": "Magic number: 150, in <operation> detected",
     "status": "OPEN"
@@ -18408,7 +18408,7 @@
     "id": "L2062",
     "rule": "mnd",
     "path": "internal/storage/history_expiry.go",
-    "line": 63,
+    "line": 64,
     "column": 20,
     "text": "Magic number: 50, in <condition> detected",
     "status": "OPEN"
@@ -18471,7 +18471,7 @@
     "id": "L2069",
     "rule": "mnd",
     "path": "internal/storage/store.go",
-    "line": 700,
+    "line": 704,
     "column": 30,
     "text": "Magic number: 150, in <operation> detected",
     "status": "OPEN"
@@ -18489,7 +18489,7 @@
     "id": "L2071",
     "rule": "mnd",
     "path": "internal/storage/views.go",
-    "line": 388,
+    "line": 389,
     "column": 50,
     "text": "Magic number: 1000, in <condition> detected",
     "status": "OPEN"
@@ -18498,7 +18498,7 @@
     "id": "L2072",
     "rule": "mnd",
     "path": "internal/storage/views.go",
-    "line": 393,
+    "line": 394,
     "column": 27,
     "text": "Magic number: 1000, in <argument> detected",
     "status": "OPEN"
@@ -18507,7 +18507,7 @@
     "id": "L2073",
     "rule": "mnd",
     "path": "internal/storage/views.go",
-    "line": 389,
+    "line": 390,
     "column": 46,
     "text": "Magic number: 1000, in <argument> detected",
     "status": "OPEN"
@@ -18714,7 +18714,7 @@
     "id": "L2096",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 46,
+    "line": 48,
     "column": 68,
     "text": "Magic number: 1000, in <argument> detected",
     "status": "OPEN"
@@ -18723,7 +18723,7 @@
     "id": "L2097",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 46,
+    "line": 48,
     "column": 107,
     "text": "Magic number: 50, in <argument> detected",
     "status": "OPEN"
@@ -18732,7 +18732,7 @@
     "id": "L2098",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 46,
+    "line": 48,
     "column": 262,
     "text": "Magic number: 110, in <argument> detected",
     "status": "OPEN"
@@ -18741,7 +18741,7 @@
     "id": "L2099",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 76,
+    "line": 78,
     "column": 42,
     "text": "Magic number: 1200, in <argument> detected",
     "status": "OPEN"
@@ -18750,7 +18750,7 @@
     "id": "L2100",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 302,
     "text": "Magic number: 5, in <assign> detected",
     "status": "OPEN"
@@ -18759,7 +18759,7 @@
     "id": "L2101",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 331,
     "text": "Magic number: 1000, in <assign> detected",
     "status": "OPEN"
@@ -18768,7 +18768,7 @@
     "id": "L2102",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 353,
     "text": "Magic number: 50, in <assign> detected",
     "status": "OPEN"
@@ -18777,7 +18777,7 @@
     "id": "L2103",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 402,
     "text": "Magic number: 3, in <assign> detected",
     "status": "OPEN"
@@ -18786,7 +18786,7 @@
     "id": "L2104",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 477,
     "text": "Magic number: 110, in <assign> detected",
     "status": "OPEN"
@@ -18795,7 +18795,7 @@
     "id": "L2105",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 504,
     "text": "Magic number: 1200, in <assign> detected",
     "status": "OPEN"
@@ -18804,7 +18804,7 @@
     "id": "L2106",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 534,
     "text": "Magic number: 900, in <assign> detected",
     "status": "OPEN"
@@ -18813,7 +18813,7 @@
     "id": "L2107",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 562,
     "text": "Magic number: 1.15, in <assign> detected",
     "status": "OPEN"
@@ -18822,7 +18822,7 @@
     "id": "L2108",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 599,
     "text": "Magic number: 2.0, in <assign> detected",
     "status": "OPEN"
@@ -18831,7 +18831,7 @@
     "id": "L2109",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 147,
+    "line": 150,
     "column": 635,
     "text": "Magic number: 1.20, in <assign> detected",
     "status": "OPEN"
@@ -18840,7 +18840,7 @@
     "id": "L2110",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 151,
+    "line": 154,
     "column": 27,
     "text": "Magic number: 3, in <argument> detected",
     "status": "OPEN"
@@ -18876,7 +18876,7 @@
     "id": "L2114",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 85,
+    "line": 86,
     "column": 43,
     "text": "Magic number: 180, in <argument> detected",
     "status": "OPEN"
@@ -18885,7 +18885,7 @@
     "id": "L2115",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 108,
+    "line": 109,
     "column": 57,
     "text": "Magic number: 4, in <argument> detected",
     "status": "OPEN"
@@ -18894,7 +18894,7 @@
     "id": "L2116",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 108,
+    "line": 109,
     "column": 60,
     "text": "Magic number: 20, in <argument> detected",
     "status": "OPEN"
@@ -19029,7 +19029,7 @@
     "id": "L2131",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/json.go",
-    "line": 94,
+    "line": 96,
     "column": 15,
     "text": "Magic number: 64, in <condition> detected",
     "status": "OPEN"
@@ -19038,7 +19038,7 @@
     "id": "L2132",
     "rule": "mnd",
     "path": "tools/harness/internal/performance/process.go",
-    "line": 54,
+    "line": 60,
     "column": 23,
     "text": "Magic number: 8192, in <argument> detected",
     "status": "OPEN"
@@ -19047,7 +19047,7 @@
     "id": "L2133",
     "rule": "modernize",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 122,
+    "line": 123,
     "column": 6,
     "text": "errorsastype: errors.As can be simplified using AsType[*exec.ExitError]",
     "status": "OPEN"
@@ -19056,7 +19056,7 @@
     "id": "L2134",
     "rule": "modernize",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 308,
+    "line": 310,
     "column": 5,
     "text": "stringscutprefix: HasPrefix + TrimPrefix can be simplified to CutPrefix",
     "status": "OPEN"
@@ -19065,7 +19065,7 @@
     "id": "L2135",
     "rule": "modernize",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 127,
+    "line": 130,
     "column": 26,
     "text": "stringsseq: Ranging over SplitSeq is more efficient",
     "status": "OPEN"
@@ -19074,7 +19074,7 @@
     "id": "L2136",
     "rule": "modernize",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 148,
+    "line": 151,
     "column": 4,
     "text": "mapsloop: Replace m[k]=v loop with maps.Copy",
     "status": "OPEN"
@@ -19095,7 +19095,7 @@
     "line": 68,
     "column": 32,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2139",
@@ -19104,16 +19104,16 @@
     "line": 41,
     "column": 23,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2140",
     "rule": "musttag",
     "path": "internal/evalfixture/offline.go",
-    "line": 236,
+    "line": 226,
     "column": 31,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2141",
@@ -19122,7 +19122,7 @@
     "line": 144,
     "column": 36,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2142",
@@ -19131,7 +19131,7 @@
     "line": 182,
     "column": 53,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2143",
@@ -19140,7 +19140,7 @@
     "line": 197,
     "column": 7,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2144",
@@ -19149,7 +19149,7 @@
     "line": 274,
     "column": 5,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2145",
@@ -19158,7 +19158,7 @@
     "line": 142,
     "column": 31,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2146",
@@ -19167,7 +19167,7 @@
     "line": 171,
     "column": 40,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2147",
@@ -19176,7 +19176,7 @@
     "line": 348,
     "column": 52,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2148",
@@ -19185,7 +19185,7 @@
     "line": 148,
     "column": 34,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2149",
@@ -19194,7 +19194,7 @@
     "line": 184,
     "column": 34,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2150",
@@ -19203,7 +19203,7 @@
     "line": 213,
     "column": 4,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2151",
@@ -19212,7 +19212,7 @@
     "line": 229,
     "column": 4,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2152",
@@ -19221,7 +19221,7 @@
     "line": 258,
     "column": 3,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2153",
@@ -19230,7 +19230,7 @@
     "line": 29,
     "column": 30,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2154",
@@ -19239,7 +19239,7 @@
     "line": 118,
     "column": 29,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2155",
@@ -19248,7 +19248,7 @@
     "line": 38,
     "column": 31,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2156",
@@ -19257,7 +19257,7 @@
     "line": 302,
     "column": 40,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2157",
@@ -19266,7 +19266,7 @@
     "line": 24,
     "column": 30,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2158",
@@ -19275,7 +19275,7 @@
     "line": 209,
     "column": 30,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2159",
@@ -19284,7 +19284,7 @@
     "line": 123,
     "column": 29,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2160",
@@ -19293,7 +19293,7 @@
     "line": 223,
     "column": 29,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2161",
@@ -19302,7 +19302,7 @@
     "line": 307,
     "column": 29,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2162",
@@ -19311,7 +19311,7 @@
     "line": 399,
     "column": 29,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2163",
@@ -19320,7 +19320,7 @@
     "line": 169,
     "column": 29,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2164",
@@ -19329,7 +19329,7 @@
     "line": 242,
     "column": 29,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2165",
@@ -19338,7 +19338,7 @@
     "line": 80,
     "column": 29,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2166",
@@ -19347,7 +19347,7 @@
     "line": 35,
     "column": 31,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2167",
@@ -19356,7 +19356,7 @@
     "line": 54,
     "column": 31,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2168",
@@ -19365,7 +19365,7 @@
     "line": 113,
     "column": 31,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2169",
@@ -19374,7 +19374,7 @@
     "line": 34,
     "column": 27,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2170",
@@ -19383,7 +19383,7 @@
     "line": 43,
     "column": 27,
     "text": "the given struct should be annotated with the `json` tag",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2171",
@@ -19479,7 +19479,7 @@
     "id": "L2181",
     "rule": "nestif",
     "path": "internal/evaluation/runner.go",
-    "line": 229,
+    "line": 231,
     "column": 1,
     "text": "`if e == nil` has complex nested blocks (complexity: 6)",
     "status": "OPEN"
@@ -19506,7 +19506,7 @@
     "id": "L2184",
     "rule": "nestif",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 176,
+    "line": 178,
     "column": 1,
     "text": "`if errors.Is(e, sql.ErrNoRows)` has complex nested blocks (complexity: 10)",
     "status": "OPEN"
@@ -19515,7 +19515,7 @@
     "id": "L2185",
     "rule": "nestif",
     "path": "internal/historyimport/mobile_worker.go",
-    "line": 291,
+    "line": 293,
     "column": 1,
     "text": "`if e != nil` has complex nested blocks (complexity: 5)",
     "status": "OPEN"
@@ -19524,7 +19524,7 @@
     "id": "L2186",
     "rule": "nestif",
     "path": "internal/historyimport/worker.go",
-    "line": 126,
+    "line": 130,
     "column": 1,
     "text": "`if op.Status.Source == \"conversation_preload\"` has complex nested blocks (complexity: 6)",
     "status": "OPEN"
@@ -19560,7 +19560,7 @@
     "id": "L2190",
     "rule": "nestif",
     "path": "internal/mobilebackup/snapshot.go",
-    "line": 203,
+    "line": 205,
     "column": 1,
     "text": "`if errors.Is(err, os.ErrNotExist)` has complex nested blocks (complexity: 7)",
     "status": "OPEN"
@@ -19569,7 +19569,7 @@
     "id": "L2191",
     "rule": "nestif",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 135,
+    "line": 138,
     "column": 1,
     "text": "`if row.Type == 20` has complex nested blocks (complexity: 8)",
     "status": "OPEN"
@@ -19578,7 +19578,7 @@
     "id": "L2192",
     "rule": "nestif",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 379,
+    "line": 381,
     "column": 1,
     "text": "`if snapshot` has complex nested blocks (complexity: 9)",
     "status": "OPEN"
@@ -19623,7 +19623,7 @@
     "id": "L2197",
     "rule": "nestif",
     "path": "internal/service/run.go",
-    "line": 523,
+    "line": 524,
     "column": 1,
     "text": "`if err == nil` has complex nested blocks (complexity: 16)",
     "status": "OPEN"
@@ -19677,7 +19677,7 @@
     "id": "L2203",
     "rule": "nestif",
     "path": "internal/storage/views.go",
-    "line": 442,
+    "line": 443,
     "column": 1,
     "text": "`if e == nil` has complex nested blocks (complexity: 5)",
     "status": "OPEN"
@@ -19713,7 +19713,7 @@
     "id": "L2207",
     "rule": "nestif",
     "path": "tools/harness/internal/architecture/architecture.go",
-    "line": 172,
+    "line": 173,
     "column": 1,
     "text": "`if d.IsDir()` has complex nested blocks (complexity: 5)",
     "status": "OPEN"
@@ -19722,7 +19722,7 @@
     "id": "L2208",
     "rule": "nestif",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 38,
+    "line": 40,
     "column": 1,
     "text": "`if e == nil` has complex nested blocks (complexity: 7)",
     "status": "OPEN"
@@ -19731,7 +19731,7 @@
     "id": "L2209",
     "rule": "nestif",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 119,
+    "line": 122,
     "column": 1,
     "text": "`if cpuModel == \"\"` has complex nested blocks (complexity: 6)",
     "status": "OPEN"
@@ -19743,7 +19743,7 @@
     "line": 109,
     "column": 3,
     "text": "error is not nil (line 108) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2211",
@@ -19752,7 +19752,7 @@
     "line": 132,
     "column": 4,
     "text": "error is not nil (line 131) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2212",
@@ -19761,7 +19761,7 @@
     "line": 316,
     "column": 3,
     "text": "error is not nil (line 315) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2213",
@@ -19770,7 +19770,7 @@
     "line": 76,
     "column": 3,
     "text": "error is not nil (line 75) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2214",
@@ -19779,7 +19779,7 @@
     "line": 96,
     "column": 4,
     "text": "error is not nil (line 95) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2215",
@@ -19788,7 +19788,7 @@
     "line": 102,
     "column": 4,
     "text": "error is not nil (line 101) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2216",
@@ -19797,7 +19797,7 @@
     "line": 115,
     "column": 4,
     "text": "error is not nil (line 114) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2217",
@@ -19806,7 +19806,7 @@
     "line": 164,
     "column": 4,
     "text": "error is not nil (line 163) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2218",
@@ -19815,25 +19815,25 @@
     "line": 201,
     "column": 4,
     "text": "error is not nil (line 200) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2219",
     "rule": "nilerr",
     "path": "internal/service/run.go",
-    "line": 521,
+    "line": 515,
     "column": 4,
     "text": "error is not nil (line 514) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2220",
     "rule": "nilerr",
     "path": "internal/service/run.go",
-    "line": 562,
+    "line": 556,
     "column": 5,
     "text": "error is not nil (line 555) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2221",
@@ -19842,7 +19842,7 @@
     "line": 19,
     "column": 3,
     "text": "error is not nil (line 18) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2222",
@@ -19851,7 +19851,7 @@
     "line": 24,
     "column": 4,
     "text": "error is not nil (line 22) but it returns nil",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2223",
@@ -19860,16 +19860,16 @@
     "line": 65,
     "column": 3,
     "text": "return both a `nil` error and an invalid value: use a sentinel error instead",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2224",
     "rule": "nilnil",
     "path": "internal/storage/deliveries.go",
-    "line": 294,
+    "line": 286,
     "column": 4,
     "text": "return both a `nil` error and an invalid value: use a sentinel error instead",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2225",
@@ -19878,7 +19878,7 @@
     "line": 146,
     "column": 3,
     "text": "return both a `nil` error and an invalid value: use a sentinel error instead",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2226",
@@ -19887,16 +19887,16 @@
     "line": 220,
     "column": 50,
     "text": "return both a `nil` error and an invalid value: use a sentinel error instead",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2227",
     "rule": "noctx",
     "path": "internal/evalfixture/fixture.go",
-    "line": 284,
+    "line": 279,
     "column": 29,
     "text": "net.Listen must not be called. use (*net.ListenConfig).Listen",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2228",
@@ -19905,7 +19905,7 @@
     "line": 97,
     "column": 29,
     "text": "net.Listen must not be called. use (*net.ListenConfig).Listen",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2229",
@@ -19914,25 +19914,25 @@
     "line": 50,
     "column": 21,
     "text": "os/exec.Command must not be called. use os/exec.CommandContext",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2230",
     "rule": "noctx",
     "path": "internal/service/run.go",
-    "line": 316,
+    "line": 310,
     "column": 29,
     "text": "net.Listen must not be called. use (*net.ListenConfig).Listen",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2231",
     "rule": "noctx",
     "path": "internal/service/run.go",
-    "line": 328,
+    "line": 322,
     "column": 24,
     "text": "net.Listen must not be called. use (*net.ListenConfig).Listen",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2232",
@@ -19941,7 +19941,7 @@
     "line": 33,
     "column": 21,
     "text": "os/exec.Command must not be called. use os/exec.CommandContext",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2233",
@@ -19950,7 +19950,7 @@
     "line": 39,
     "column": 73,
     "text": "named return \"result\" with type \"Measurement\" found",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2234",
@@ -19959,25 +19959,25 @@
     "line": 71,
     "column": 84,
     "text": "named return \"out\" with type \"Output\" found",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2235",
     "rule": "nonamedreturns",
     "path": "internal/evaluation/runner.go",
-    "line": 136,
+    "line": 135,
     "column": 46,
     "text": "named return \"report\" with type \"Report\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2236",
     "rule": "nonamedreturns",
     "path": "internal/evaluation/runner.go",
-    "line": 136,
+    "line": 135,
     "column": 61,
     "text": "named return \"err\" with type \"error\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2237",
@@ -19986,7 +19986,7 @@
     "line": 22,
     "column": 55,
     "text": "named return \"out\" with type \"Output\" found",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2238",
@@ -19995,7 +19995,7 @@
     "line": 239,
     "column": 80,
     "text": "named return \"response\" with type \"*mcp.CallToolResult\" found",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2239",
@@ -20004,7 +20004,7 @@
     "line": 44,
     "column": 57,
     "text": "named return \"result\" with type \"Attachment\" found",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2240",
@@ -20013,7 +20013,7 @@
     "line": 33,
     "column": 53,
     "text": "named return \"result\" with type \"BinNet\" found",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2241",
@@ -20022,7 +20022,7 @@
     "line": 37,
     "column": 4,
     "text": "named return \"result\" with type \"OwnDirectRecallSet\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2242",
@@ -20031,7 +20031,7 @@
     "line": 13,
     "column": 55,
     "text": "named return \"expiresMS\" with type \"int64\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2243",
@@ -20040,7 +20040,7 @@
     "line": 13,
     "column": 72,
     "text": "named return \"declared\" with type \"bool\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2244",
@@ -20049,7 +20049,7 @@
     "line": 13,
     "column": 87,
     "text": "named return \"err\" with type \"error\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2245",
@@ -20058,7 +20058,7 @@
     "line": 25,
     "column": 4,
     "text": "named return \"result\" with type \"domain.MobileHistoryPage\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2246",
@@ -20067,7 +20067,7 @@
     "line": 25,
     "column": 37,
     "text": "named return \"err\" with type \"error\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2247",
@@ -20076,7 +20076,7 @@
     "line": 26,
     "column": 54,
     "text": "named return \"result\" with type \"Mention\" found",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2248",
@@ -20085,7 +20085,7 @@
     "line": 42,
     "column": 4,
     "text": "named return \"result\" with type \"ConvertedArchivePage\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2249",
@@ -20094,7 +20094,7 @@
     "line": 42,
     "column": 33,
     "text": "named return \"err\" with type \"error\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2250",
@@ -20103,7 +20103,7 @@
     "line": 97,
     "column": 4,
     "text": "named return \"result\" with type \"ConvertedArchivePage\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2251",
@@ -20112,7 +20112,7 @@
     "line": 251,
     "column": 36,
     "text": "named return \"text\" with type \"string\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2252",
@@ -20121,7 +20121,7 @@
     "line": 251,
     "column": 49,
     "text": "named return \"rich\" with type \"bool\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2253",
@@ -20130,7 +20130,7 @@
     "line": 251,
     "column": 55,
     "text": "named return \"supported\" with type \"bool\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2254",
@@ -20139,7 +20139,7 @@
     "line": 251,
     "column": 66,
     "text": "named return \"valid\" with type \"bool\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2255",
@@ -20148,7 +20148,7 @@
     "line": 6,
     "column": 53,
     "text": "named return \"expiredMessages\" with type \"int\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2256",
@@ -20157,7 +20157,7 @@
     "line": 6,
     "column": 70,
     "text": "named return \"expiredQuotes\" with type \"int\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2257",
@@ -20166,7 +20166,7 @@
     "line": 6,
     "column": 89,
     "text": "named return \"err\" with type \"error\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2258",
@@ -20175,7 +20175,7 @@
     "line": 30,
     "column": 4,
     "text": "named return \"summary\" with type \"ArchiveWalkSummary\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2259",
@@ -20184,7 +20184,7 @@
     "line": 53,
     "column": 4,
     "text": "named return \"result\" with type \"PreparedArchivePage\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2260",
@@ -20193,7 +20193,7 @@
     "line": 37,
     "column": 59,
     "text": "named return \"result\" with type \"QuoteScalars\" found",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2261",
@@ -20202,7 +20202,7 @@
     "line": 37,
     "column": 52,
     "text": "named return \"result\" with type \"Quote\" found",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2262",
@@ -20211,7 +20211,7 @@
     "line": 87,
     "column": 4,
     "text": "named return \"result\" with type \"PreparedRowPage\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2263",
@@ -20220,7 +20220,7 @@
     "line": 86,
     "column": 4,
     "text": "named return \"result\" with type \"SnapshotPage\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2264",
@@ -20229,7 +20229,7 @@
     "line": 39,
     "column": 4,
     "text": "named return \"targets\" with type \"*snapshotRecallTargets\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2265",
@@ -20238,7 +20238,7 @@
     "line": 149,
     "column": 4,
     "text": "named return \"batch\" with type \"SQLiteBatch\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2266",
@@ -20247,7 +20247,7 @@
     "line": 149,
     "column": 23,
     "text": "named return \"err\" with type \"error\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2267",
@@ -20256,7 +20256,7 @@
     "line": 177,
     "column": 4,
     "text": "named return \"batch\" with type \"SQLiteBatch\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2268",
@@ -20265,7 +20265,7 @@
     "line": 10,
     "column": 49,
     "text": "named return \"from\" with type \"int64\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2269",
@@ -20274,7 +20274,7 @@
     "line": 10,
     "column": 55,
     "text": "named return \"to\" with type \"int64\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2270",
@@ -20283,7 +20283,7 @@
     "line": 10,
     "column": 65,
     "text": "named return \"ok\" with type \"bool\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2271",
@@ -20292,7 +20292,7 @@
     "line": 35,
     "column": 50,
     "text": "named return \"result\" with type \"TLV\" found",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2272",
@@ -20301,7 +20301,7 @@
     "line": 131,
     "column": 87,
     "text": "named return \"err\" with type \"error\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2273",
@@ -20310,7 +20310,7 @@
     "line": 185,
     "column": 107,
     "text": "named return \"err\" with type \"error\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2274",
@@ -20319,7 +20319,7 @@
     "line": 284,
     "column": 4,
     "text": "named return \"err\" with type \"error\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2275",
@@ -20328,7 +20328,7 @@
     "line": 146,
     "column": 4,
     "text": "named return \"result\" with type \"mobilebackup.PreparedArchivePage\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2276",
@@ -20337,7 +20337,7 @@
     "line": 146,
     "column": 45,
     "text": "named return \"err\" with type \"error\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2277",
@@ -20346,7 +20346,7 @@
     "line": 186,
     "column": 4,
     "text": "named return \"result\" with type \"mobilebackup.ArchiveWalkSummary\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2278",
@@ -20355,7 +20355,7 @@
     "line": 186,
     "column": 44,
     "text": "named return \"err\" with type \"error\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2279",
@@ -20364,7 +20364,7 @@
     "line": 17,
     "column": 4,
     "text": "named return \"ids\" with type \"[]string\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2280",
@@ -20373,7 +20373,7 @@
     "line": 17,
     "column": 18,
     "text": "named return \"cursor\" with type \"string\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2281",
@@ -20382,7 +20382,7 @@
     "line": 17,
     "column": 33,
     "text": "named return \"more\" with type \"bool\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2282",
@@ -20391,7 +20391,7 @@
     "line": 17,
     "column": 44,
     "text": "named return \"err\" with type \"error\" found",
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2283",
@@ -20400,7 +20400,7 @@
     "line": 449,
     "column": 55,
     "text": "named return \"e\" with type \"Evidence\" found",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2284",
@@ -20424,7 +20424,7 @@
     "id": "L2286",
     "rule": "perfsprint",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 40,
+    "line": 42,
     "column": 8,
     "text": "error-format: fmt.Errorf can be replaced with errors.New",
     "status": "OPEN"
@@ -20433,7 +20433,7 @@
     "id": "L2287",
     "rule": "perfsprint",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 47,
+    "line": 49,
     "column": 10,
     "text": "error-format: fmt.Errorf can be replaced with errors.New",
     "status": "OPEN"
@@ -20442,7 +20442,7 @@
     "id": "L2288",
     "rule": "perfsprint",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 117,
+    "line": 120,
     "column": 11,
     "text": "error-format: fmt.Errorf can be replaced with errors.New",
     "status": "OPEN"
@@ -20451,7 +20451,7 @@
     "id": "L2289",
     "rule": "perfsprint",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 137,
+    "line": 140,
     "column": 11,
     "text": "error-format: fmt.Errorf can be replaced with errors.New",
     "status": "OPEN"
@@ -20460,7 +20460,7 @@
     "id": "L2290",
     "rule": "perfsprint",
     "path": "tools/harness/internal/performance/bench.go",
-    "line": 172,
+    "line": 175,
     "column": 12,
     "text": "error-format: fmt.Errorf can be replaced with errors.New",
     "status": "OPEN"
@@ -20469,7 +20469,7 @@
     "id": "L2291",
     "rule": "perfsprint",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 96,
+    "line": 97,
     "column": 11,
     "text": "error-format: fmt.Errorf can be replaced with errors.New",
     "status": "OPEN"
@@ -20478,7 +20478,7 @@
     "id": "L2292",
     "rule": "perfsprint",
     "path": "tools/harness/internal/performance/build.go",
-    "line": 133,
+    "line": 135,
     "column": 11,
     "text": "error-format: fmt.Errorf can be replaced with errors.New",
     "status": "OPEN"
@@ -20514,7 +20514,7 @@
     "id": "L2296",
     "rule": "predeclared",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 117,
+    "line": 120,
     "column": 3,
     "text": "variable copy has same name as predeclared identifier",
     "status": "OPEN"
@@ -20532,7 +20532,7 @@
     "id": "L2298",
     "rule": "predeclared",
     "path": "internal/zalo/cookies.go",
-    "line": 38,
+    "line": 39,
     "column": 3,
     "text": "variable copy has same name as predeclared identifier",
     "status": "OPEN"
@@ -20580,7 +20580,7 @@
     "line": 68,
     "column": 6,
     "text": "the methods of \"MobileHistoryPage\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2304",
@@ -20589,7 +20589,7 @@
     "line": 13,
     "column": 6,
     "text": "the methods of \"AccountArchive\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2305",
@@ -20598,7 +20598,7 @@
     "line": 14,
     "column": 6,
     "text": "the methods of \"PlainArchive\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2306",
@@ -20607,7 +20607,7 @@
     "line": 19,
     "column": 6,
     "text": "the methods of \"Attachment\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2307",
@@ -20616,7 +20616,7 @@
     "line": 7,
     "column": 6,
     "text": "the methods of \"BinNet\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2308",
@@ -20625,7 +20625,7 @@
     "line": 12,
     "column": 6,
     "text": "the methods of \"OwnDirectRecallSet\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2309",
@@ -20634,7 +20634,7 @@
     "line": 11,
     "column": 6,
     "text": "the methods of \"Format1Archive\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2310",
@@ -20643,7 +20643,7 @@
     "line": 8,
     "column": 6,
     "text": "the methods of \"Mention\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2311",
@@ -20652,7 +20652,7 @@
     "line": 14,
     "column": 6,
     "text": "the methods of \"ConvertedArchivePage\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2312",
@@ -20661,7 +20661,7 @@
     "line": 20,
     "column": 6,
     "text": "the methods of \"PreparedArchivePage\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2313",
@@ -20670,7 +20670,7 @@
     "line": 10,
     "column": 6,
     "text": "the methods of \"QuoteScalars\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2314",
@@ -20679,7 +20679,7 @@
     "line": 18,
     "column": 6,
     "text": "the methods of \"Quote\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2315",
@@ -20688,7 +20688,7 @@
     "line": 42,
     "column": 6,
     "text": "the methods of \"RetainedArchiveStore\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2316",
@@ -20697,7 +20697,7 @@
     "line": 22,
     "column": 6,
     "text": "the methods of \"PreparedRowPage\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2317",
@@ -20706,7 +20706,7 @@
     "line": 11,
     "column": 6,
     "text": "the methods of \"SelectedArchive\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2318",
@@ -20715,7 +20715,7 @@
     "line": 41,
     "column": 6,
     "text": "the methods of \"SnapshotStore\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2319",
@@ -20724,7 +20724,7 @@
     "line": 51,
     "column": 6,
     "text": "the methods of \"SnapshotPage\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2320",
@@ -20733,7 +20733,7 @@
     "line": 9,
     "column": 6,
     "text": "the methods of \"snapshotRecallTargets\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2321",
@@ -20742,7 +20742,7 @@
     "line": 43,
     "column": 6,
     "text": "the methods of \"SQLiteBatch\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2322",
@@ -20751,7 +20751,7 @@
     "line": 12,
     "column": 6,
     "text": "the methods of \"TLV\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2323",
@@ -20760,7 +20760,7 @@
     "line": 16,
     "column": 6,
     "text": "the methods of \"archivePosition\" use pointer receiver and non-pointer receiver.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2324",
@@ -20910,7 +20910,7 @@
     "id": "L2340",
     "rule": "revive",
     "path": "internal/evaluation/scenarios.go",
-    "line": 371,
+    "line": 372,
     "column": 1,
     "text": "exported: comment on exported function DefaultChildOptions should be of the form \"DefaultChildOptions ...\"",
     "status": "OPEN"
@@ -21216,7 +21216,7 @@
     "id": "L2374",
     "rule": "revive",
     "path": "internal/mobilebackup/snapshot_page.go",
-    "line": 117,
+    "line": 120,
     "column": 3,
     "text": "redefines-builtin-id: redefinition of the built-in function copy",
     "status": "OPEN"
@@ -21378,7 +21378,7 @@
     "id": "L2392",
     "rule": "revive",
     "path": "internal/zalo/cookies.go",
-    "line": 38,
+    "line": 39,
     "column": 3,
     "text": "redefines-builtin-id: redefinition of the built-in function copy",
     "status": "OPEN"
@@ -21459,7 +21459,7 @@
     "id": "L2401",
     "rule": "revive",
     "path": "internal/zalo/mobile_backup_test.go",
-    "line": 161,
+    "line": 162,
     "column": 51,
     "text": "unused-parameter: parameter 'p' seems to be unused, consider removing or renaming it as _",
     "status": "OPEN"
@@ -21684,7 +21684,7 @@
     "id": "L2426",
     "rule": "sloglint",
     "path": "internal/historyimport/worker.go",
-    "line": 249,
+    "line": 255,
     "column": 2,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -21702,7 +21702,7 @@
     "id": "L2428",
     "rule": "sloglint",
     "path": "internal/mcpserver/server.go",
-    "line": 257,
+    "line": 259,
     "column": 3,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -21711,7 +21711,7 @@
     "id": "L2429",
     "rule": "sloglint",
     "path": "internal/mobilebackup/account_fetch.go",
-    "line": 81,
+    "line": 83,
     "column": 2,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -21720,7 +21720,7 @@
     "id": "L2430",
     "rule": "sloglint",
     "path": "internal/mobilebackup/archive.go",
-    "line": 45,
+    "line": 47,
     "column": 3,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -21729,7 +21729,7 @@
     "id": "L2431",
     "rule": "sloglint",
     "path": "internal/mobilebackup/archive.go",
-    "line": 61,
+    "line": 63,
     "column": 3,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -21792,7 +21792,7 @@
     "id": "L2438",
     "rule": "sloglint",
     "path": "internal/mobilebackup/download.go",
-    "line": 140,
+    "line": 141,
     "column": 3,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -21801,7 +21801,7 @@
     "id": "L2439",
     "rule": "sloglint",
     "path": "internal/mobilebackup/encrypted_archive.go",
-    "line": 41,
+    "line": 42,
     "column": 3,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -21810,7 +21810,7 @@
     "id": "L2440",
     "rule": "sloglint",
     "path": "internal/mobilebackup/encrypted_archive.go",
-    "line": 46,
+    "line": 48,
     "column": 3,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -21873,7 +21873,7 @@
     "id": "L2447",
     "rule": "sloglint",
     "path": "internal/mobilebackup/prepared_page.go",
-    "line": 57,
+    "line": 59,
     "column": 4,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -21882,7 +21882,7 @@
     "id": "L2448",
     "rule": "sloglint",
     "path": "internal/mobilebackup/selected_fetch.go",
-    "line": 49,
+    "line": 50,
     "column": 2,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -21891,7 +21891,7 @@
     "id": "L2449",
     "rule": "sloglint",
     "path": "internal/mobilebackup/selected_fetch.go",
-    "line": 59,
+    "line": 60,
     "column": 3,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -21900,7 +21900,7 @@
     "id": "L2450",
     "rule": "sloglint",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 182,
+    "line": 184,
     "column": 4,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -21909,7 +21909,7 @@
     "id": "L2451",
     "rule": "sloglint",
     "path": "internal/mobilebackup/sqlite.go",
-    "line": 207,
+    "line": 209,
     "column": 3,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -22008,7 +22008,7 @@
     "id": "L2462",
     "rule": "sloglint",
     "path": "internal/service/run.go",
-    "line": 591,
+    "line": 593,
     "column": 4,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -22017,7 +22017,7 @@
     "id": "L2463",
     "rule": "sloglint",
     "path": "internal/service/run.go",
-    "line": 634,
+    "line": 636,
     "column": 3,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -22170,7 +22170,7 @@
     "id": "L2480",
     "rule": "sloglint",
     "path": "internal/zalo/mobile_backup.go",
-    "line": 289,
+    "line": 290,
     "column": 2,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -22179,7 +22179,7 @@
     "id": "L2481",
     "rule": "sloglint",
     "path": "internal/zalo/mobile_backup.go",
-    "line": 325,
+    "line": 326,
     "column": 2,
     "text": "default logger should not be used",
     "status": "OPEN"
@@ -22218,7 +22218,7 @@
     "line": 152,
     "column": 2,
     "text": "span.End is not called on all paths, possible memory leak",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2486",
@@ -22227,7 +22227,7 @@
     "line": 169,
     "column": 2,
     "text": "return can be reached without calling span.End",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2487",
@@ -22236,7 +22236,7 @@
     "line": 189,
     "column": 2,
     "text": "span.End is not called on all paths, possible memory leak",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2488",
@@ -22245,7 +22245,7 @@
     "line": 210,
     "column": 2,
     "text": "return can be reached without calling span.End",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2489",
@@ -22254,7 +22254,7 @@
     "line": 296,
     "column": 2,
     "text": "span.End is not called on all paths, possible memory leak",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2490",
@@ -22263,7 +22263,7 @@
     "line": 311,
     "column": 2,
     "text": "return can be reached without calling span.End",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2491",
@@ -22431,7 +22431,7 @@
     "id": "L2509",
     "rule": "staticcheck",
     "path": "internal/evaluation/scenarios.go",
-    "line": 371,
+    "line": 372,
     "column": 1,
     "text": "ST1020: comment on exported function DefaultChildOptions should be of the form \"DefaultChildOptions ...\"",
     "status": "OPEN"
@@ -22506,7 +22506,7 @@
     "line": 270,
     "column": 16,
     "text": "SA1019: crypto/rsa.DecryptPKCS1v15 has been deprecated since Go 1.26 because it shouldn't be used: PKCS #1 v1.5 encryption is dangerous and should not be used. Whether this function returns an error or not discloses secret information. If an attacker can cause this function to run repeatedly and learn whether each instance returned an error then they can decrypt and forge signatures as if they had the private key. See [draft-irtf-cfrg-rsa-guidance-05] for more information. Use [EncryptOAEP] and [DecryptOAEP] instead.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2518",
@@ -22515,13 +22515,13 @@
     "line": 84,
     "column": 17,
     "text": "SA1019: crypto/rsa.EncryptPKCS1v15 has been deprecated since Go 1.26 because it shouldn't be used: PKCS #1 v1.5 encryption is dangerous and should not be used. See [draft-irtf-cfrg-rsa-guidance-05] for more information. Use [EncryptOAEP] and [DecryptOAEP] instead.",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2519",
     "rule": "staticcheck",
     "path": "tools/harness/internal/performance/json.go",
-    "line": 98,
+    "line": 100,
     "column": 6,
     "text": "QF1001: could apply De Morgan's law",
     "status": "OPEN"
@@ -22539,19 +22539,19 @@
     "id": "L2521",
     "rule": "unqueryvet",
     "path": "internal/storage/history_expiry.go",
-    "line": 20,
+    "line": 19,
     "column": 31,
     "text": "avoid SELECT * - explicitly specify needed columns for better performance, maintainability and stability",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2522",
     "rule": "unqueryvet",
     "path": "internal/storage/tombstones.go",
-    "line": 26,
+    "line": 25,
     "column": 3,
     "text": "avoid SELECT * - explicitly specify needed columns for better performance, maintainability and stability",
-    "status": "OPEN"
+    "status": "SUPPRESSED"
   },
   {
     "id": "L2546",
@@ -22785,7 +22785,7 @@
     "text": "the average complexity for the package evaluation is 11.241935, max is 10.000000",
     "line": 1,
     "column": 1,
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2551",
@@ -22801,7 +22801,7 @@
     "rule": "cyclop",
     "path": "internal/evaluation/scenarios.go",
     "text": "calculated cyclomatic complexity for function RunCase is 74, max is 30",
-    "line": 22,
+    "line": 23,
     "column": 1,
     "status": "OPEN"
   },
@@ -22884,14 +22884,14 @@
     "text": "Function 'Run' has too many statements (104 > 50)",
     "line": 136,
     "column": 6,
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2562",
     "rule": "funlen",
     "path": "internal/evaluation/scenarios.go",
     "text": "Function 'RunCase' has too many statements (227 > 50)",
-    "line": 22,
+    "line": 23,
     "column": 6,
     "status": "OPEN"
   },
@@ -22981,7 +22981,7 @@
     "rule": "gocognit",
     "path": "internal/evaluation/scenarios.go",
     "text": "cognitive complexity 105 of func `RunCase` is high (> 20)",
-    "line": 22,
+    "line": 23,
     "column": 1,
     "status": "OPEN"
   },
@@ -23071,7 +23071,7 @@
     "rule": "gocyclo",
     "path": "internal/evaluation/scenarios.go",
     "text": "cyclomatic complexity 73 of func `RunCase` is high (> 30)",
-    "line": 22,
+    "line": 23,
     "column": 1,
     "status": "OPEN"
   },
@@ -23172,7 +23172,7 @@
     "text": "error-format: fmt.Errorf can be replaced with errors.New",
     "line": 48,
     "column": 10,
-    "status": "OPEN"
+    "status": "FIXED"
   },
   {
     "id": "L2594",
@@ -23190,6 +23190,168 @@
     "text": "increment-decrement: should replace permittedCount += 1 with permittedCount++",
     "line": 101,
     "column": 5,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2596",
+    "rule": "cyclop",
+    "path": "internal/evaluation/process_test.go",
+    "text": "the average complexity for the package evaluation is 11.258065, max is 10.000000",
+    "line": 1,
+    "column": 1,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2597",
+    "rule": "cyclop",
+    "path": "internal/mobilebackup/xz.go",
+    "text": "calculated cyclomatic complexity for function inspectXZ is 44, max is 30",
+    "line": 53,
+    "column": 1,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2598",
+    "rule": "exhaustruct_v5",
+    "path": "internal/evalfixture/fixture.go",
+    "text": "net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig",
+    "line": 284,
+    "column": 21,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2599",
+    "rule": "exhaustruct_v5",
+    "path": "internal/evaluation/model.go",
+    "text": "net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig",
+    "line": 99,
+    "column": 21,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2600",
+    "rule": "exhaustruct_v5",
+    "path": "internal/service/run.go",
+    "text": "net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig",
+    "line": 316,
+    "column": 21,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2601",
+    "rule": "exhaustruct_v5",
+    "path": "internal/service/run.go",
+    "text": "net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig",
+    "line": 328,
+    "column": 16,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2602",
+    "rule": "funlen",
+    "path": "internal/evaluation/benchmark.go",
+    "text": "Function 'Measure' has too many statements (66 > 50)",
+    "line": 41,
+    "column": 6,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2603",
+    "rule": "funlen",
+    "path": "internal/evaluation/runner.go",
+    "text": "Function 'Run' has too many statements (106 > 50)",
+    "line": 136,
+    "column": 6,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2604",
+    "rule": "funlen",
+    "path": "internal/mcpserver/server.go",
+    "text": "Function 'call' has too many statements (98 > 50)",
+    "line": 241,
+    "column": 19,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2605",
+    "rule": "funlen",
+    "path": "internal/mobilebackup/history_page.go",
+    "text": "Function 'ReadHistoryPage' has too many statements (61 > 50)",
+    "line": 17,
+    "column": 25,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2606",
+    "rule": "funlen",
+    "path": "internal/mobilebackup/xz.go",
+    "text": "Function 'inspectXZ' has too many statements (77 > 50)",
+    "line": 53,
+    "column": 6,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2607",
+    "rule": "gocognit",
+    "path": "internal/mobilebackup/xz.go",
+    "text": "cognitive complexity 59 of func `inspectXZ` is high (> 20)",
+    "line": 53,
+    "column": 1,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2608",
+    "rule": "gocyclo",
+    "path": "internal/mobilebackup/xz.go",
+    "text": "cyclomatic complexity 43 of func `inspectXZ` is high (> 30)",
+    "line": 53,
+    "column": 1,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2609",
+    "rule": "golines",
+    "path": "internal/domain/sending_fingerprint_test.go",
+    "text": "File is not properly formatted",
+    "line": 18,
+    "column": 1,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2610",
+    "rule": "golines",
+    "path": "internal/service/mobile_offer_probe.go",
+    "text": "File is not properly formatted",
+    "line": 50,
+    "column": 1,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2611",
+    "rule": "golines",
+    "path": "internal/service/mobile_offer_probe_test.go",
+    "text": "File is not properly formatted",
+    "line": 149,
+    "column": 1,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2612",
+    "rule": "gofmt",
+    "path": "tools/harness/internal/architecture/architecture.go",
+    "text": "File is not properly formatted",
+    "line": 451,
+    "column": 1,
+    "status": "OPEN"
+  },
+  {
+    "id": "L2613",
+    "rule": "goimports",
+    "path": "tools/harness/internal/architecture/architecture.go",
+    "text": "File is not properly formatted",
+    "line": 451,
+    "column": 1,
     "status": "OPEN"
   }
 ]

@@ -17,6 +17,7 @@ import (
 	"github.com/amrakk/zcago/errs"
 	"github.com/amrakk/zcago/listener"
 	"github.com/amrakk/zcago/model"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -34,7 +35,10 @@ type mobileOfferFake struct {
 func (f *mobileOfferFake) SubscribeMobileSync(public, host string) (listener.MobileSyncSubscription, func(), error) {
 	f.public = public
 	f.registered = true
-	return listener.MobileSyncSubscription{Events: f.events, Errors: f.failures}, func() { f.registered = false; f.releases++ }, nil
+	return listener.MobileSyncSubscription{
+		Events: f.events,
+		Errors: f.failures,
+	}, func() { f.registered = false; f.releases++ }, nil
 }
 func (f *mobileOfferFake) RequestMobileBackup(ctx context.Context, public string) error {
 	if !f.registered || public != f.public {
@@ -77,11 +81,21 @@ func syntheticOffer(t *testing.T, public string) model.MobileSyncEvent {
 	if err != nil {
 		t.Fatal("synthetic public key")
 	}
+	//nolint:staticcheck // SA1019: the upstream offer protocol requires PKCS#1 v1.5; OAEP would reject compatible offers.
 	cipher, err := rsa.EncryptPKCS1v15(rand.Reader, k.(*rsa.PublicKey), []byte(strings.Repeat("a", 32)))
 	if err != nil {
 		t.Fatal("synthetic encryption")
 	}
-	return model.MobileSyncEvent{Action: "syncmsg_info", PublicKey: public, UID: "123", URL: "https://synthetic.invalid/backup", EncryptedKey: base64.StdEncoding.EncodeToString(cipher), FileSize: 16, FromSequence: "9007199254740995", DatabaseInfo: `{"db_format":1}`}
+	return model.MobileSyncEvent{
+		Action:       "syncmsg_info",
+		PublicKey:    public,
+		UID:          "123",
+		URL:          "https://synthetic.invalid/backup",
+		EncryptedKey: base64.StdEncoding.EncodeToString(cipher),
+		FileSize:     16,
+		FromSequence: "9007199254740995",
+		DatabaseInfo: `{"db_format":1}`,
+	}
 }
 
 func TestMobileBackupOfferPreregistrationAndUnknownAcknowledgement(t *testing.T) {
@@ -92,16 +106,29 @@ func TestMobileBackupOfferPreregistrationAndUnknownAcknowledgement(t *testing.T)
 		key := mobileOfferKey(t)
 		f.dispatch = func(public string) {
 			for _, n := range []int{2, 1} {
-				n := n
 				f.events <- model.MobileSyncEvent{Action: "user_confirm", PublicKey: public, PCName: "Web", UserAction: &n}
 			}
 			f.events <- syntheticOffer(t, public)
 		}
 		var states []string
 		// Act.
-		offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, &domain.MobileBackupObserver{BeforeDispatch: func(string) error { states = append(states, "dispatching"); return nil }, Progress: func(s string) error { states = append(states, s); return nil }}, func() (*rsa.PrivateKey, error) { return key, nil })
+		offer, err := receiveMobileBackupOffer(
+			context.Background(),
+			"9007199254740993",
+			f,
+			f,
+			&domain.MobileBackupObserver{
+				BeforeDispatch: func(string) error { states = append(states, "dispatching"); return nil },
+				Progress:       func(s string) error { states = append(states, s); return nil },
+			},
+			func() (*rsa.PrivateKey, error) { return key, nil },
+		)
 		// Assert: request never repeated, receiver released and key rendered as observed format-1 hex.
-		if err != nil || f.requests != 1 || f.releases != 1 || f.registered || offer.KeyText != strings.Repeat("61", 32) || offer.FromSequence != "9007199254740995" || offer.PlainAccountID != "123" || offer.SessionAccountID != "9007199254740993" {
+		if err != nil || f.requests != 1 || f.releases != 1 || f.registered ||
+			offer.KeyText != strings.Repeat("61", 32) ||
+			offer.FromSequence != "9007199254740995" ||
+			offer.PlainAccountID != "123" ||
+			offer.SessionAccountID != "9007199254740993" {
 			t.Fatalf("offer operation: %v", err)
 		}
 		want := "dispatching,waiting_for_confirmation,mobile_restoring,waiting_for_backup,offer_ready"
@@ -159,7 +186,14 @@ func TestMobileBackupOfferTermination(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 			defer cancel()
 			// Act.
-			offer, err := receiveMobileBackupOffer(ctx, "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+			offer, err := receiveMobileBackupOffer(
+				ctx,
+				"9007199254740993",
+				f,
+				f,
+				nil,
+				func() (*rsa.PrivateKey, error) { return key, nil },
+			)
 			// Assert.
 			if !errors.Is(err, tc.want) || offer.KeyText != "" || f.requests != 1 || f.releases != 1 || f.registered {
 				t.Fatalf("termination: %v", err)
@@ -178,7 +212,15 @@ func TestMobileBackupPrecancelDoesNotGenerateOrDispatch(t *testing.T) {
 	cancel()
 	generated := 0
 	// Act.
-	_, err := receiveMobileBackupOffer(ctx, "owner", f, f, nil, func() (*rsa.PrivateKey, error) { generated++; return nil, nil })
+	_, err := receiveMobileBackupOffer(
+		ctx,
+		"owner",
+		f,
+		f,
+		nil,
+		//nolint:nilnil // The synthetic source intentionally returns no offer without an upstream failure.
+		func() (*rsa.PrivateKey, error) { generated++; return nil, nil },
+	)
 	// Assert.
 	if !errors.Is(err, context.Canceled) || generated != 0 || f.requests != 0 || f.registered {
 		t.Fatal("precancelled operation started")
@@ -208,13 +250,22 @@ func TestMobileBackupOfferPersistenceFailureStopsWork(t *testing.T) {
 				},
 			}
 			// Act.
-			offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, observer, func() (*rsa.PrivateKey, error) { return key, nil })
+			offer, err := receiveMobileBackupOffer(
+				context.Background(),
+				"9007199254740993",
+				f,
+				f,
+				observer,
+				func() (*rsa.PrivateKey, error) { return key, nil },
+			)
 			// Assert: no successful offer escapes; a failed predispatch commit makes zero requests.
 			want := 1
 			if stage == "dispatch" {
 				want = 0
 			}
-			if !errors.Is(err, sentinel) || offer != (domain.MobileBackupOffer{}) || f.requests != want || f.releases != 1 || f.registered {
+			if !errors.Is(err, sentinel) || offer != (domain.MobileBackupOffer{}) || f.requests != want ||
+				f.releases != 1 ||
+				f.registered {
 				t.Fatal("journal failure did not stop work")
 			}
 		})
@@ -229,9 +280,17 @@ func TestMobileBackupOfferCancellationAfterDispatchCommit(t *testing.T) {
 	f := newMobileOfferFake()
 	observer := &domain.MobileBackupObserver{BeforeDispatch: func(string) error { cancel(); return nil }}
 	// Act.
-	offer, err := receiveMobileBackupOffer(ctx, "9007199254740993", f, f, observer, func() (*rsa.PrivateKey, error) { return key, nil })
+	offer, err := receiveMobileBackupOffer(
+		ctx,
+		"9007199254740993",
+		f,
+		f,
+		observer,
+		func() (*rsa.PrivateKey, error) { return key, nil },
+	)
 	// Assert: durable dispatch intent does not force a network request after cancellation.
-	if !errors.Is(err, context.Canceled) || offer != (domain.MobileBackupOffer{}) || f.requests != 0 || f.releases != 1 {
+	if !errors.Is(err, context.Canceled) || offer != (domain.MobileBackupOffer{}) || f.requests != 0 ||
+		f.releases != 1 {
 		t.Fatal("cancelled request dispatched")
 	}
 }
@@ -245,13 +304,19 @@ func TestMobileBackupTransferStatusesDoNotRejectOffer(t *testing.T) {
 			confirm := 1
 			f.events <- model.MobileSyncEvent{Action: "user_confirm", PublicKey: public, PCName: "Web", UserAction: &confirm}
 			for _, status := range []int{1, 2} {
-				status := status
 				f.events <- model.MobileSyncEvent{Action: "transfer_error", PublicKey: public, PCName: "Web", Status: &status, ErrorCode: &code}
 			}
 			f.events <- syntheticOffer(t, public)
 		}
 		// Act.
-		offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+		offer, err := receiveMobileBackupOffer(
+			context.Background(),
+			"9007199254740993",
+			f,
+			f,
+			nil,
+			func() (*rsa.PrivateKey, error) { return key, nil },
+		)
 		// Assert: progress does not terminate or resend the original request.
 		if err != nil || offer.FileSize != 16 || f.requests != 1 || f.releases != 1 {
 			t.Fatal("phone status rejected valid offer", err)
@@ -268,7 +333,14 @@ func TestMobileBackupTransferFailureIsNotProgress(t *testing.T) {
 		f.events <- model.MobileSyncEvent{Action: "transfer_error", PublicKey: public, PCName: "Web", ErrorCode: &code}
 	}
 	// Act.
-	offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+	offer, err := receiveMobileBackupOffer(
+		context.Background(),
+		"9007199254740993",
+		f,
+		f,
+		nil,
+		func() (*rsa.PrivateKey, error) { return key, nil },
+	)
 	// Assert: failure never yields an archive or retries.
 	if !errors.Is(err, domain.ErrMobileBackupRejected) || offer.FileSize != 0 || f.requests != 1 {
 		t.Fatal("invalid transfer outcome", err)
@@ -286,7 +358,14 @@ func TestMobileBackupZeroErrorControlContinuesToOffer(t *testing.T) {
 		f.events <- syntheticOffer(t, public)
 	}
 	// Act.
-	offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+	offer, err := receiveMobileBackupOffer(
+		context.Background(),
+		"9007199254740993",
+		f,
+		f,
+		nil,
+		func() (*rsa.PrivateKey, error) { return key, nil },
+	)
 	// Assert: only the subsequent validated offer counts as success.
 	if err != nil || offer.FileSize != 16 || f.requests != 1 || f.releases != 1 {
 		t.Fatal("zero code terminated offer wait", err)
@@ -304,7 +383,14 @@ func TestMobileBackupZeroErrorControlDoesNotInventSuccess(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 	// Act.
-	offer, err := receiveMobileBackupOffer(ctx, "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+	offer, err := receiveMobileBackupOffer(
+		ctx,
+		"9007199254740993",
+		f,
+		f,
+		nil,
+		func() (*rsa.PrivateKey, error) { return key, nil },
+	)
 	// Assert: the original bounded wait expires, with no retry or claimed archive.
 	if !errors.Is(err, context.DeadlineExceeded) || offer.FileSize != 0 || f.requests != 1 || f.releases != 1 {
 		t.Fatal("zero control lost bounded wait", err)
@@ -333,9 +419,18 @@ func TestMobileBackupAccountMappingFailsClosed(t *testing.T) {
 			}
 			key := mobileOfferKey(t)
 			// Act.
-			offer, err := receiveMobileBackupOffer(context.Background(), "9007199254740993", f, f, nil, func() (*rsa.PrivateKey, error) { return key, nil })
+			offer, err := receiveMobileBackupOffer(
+				context.Background(),
+				"9007199254740993",
+				f,
+				f,
+				nil,
+				func() (*rsa.PrivateKey, error) { return key, nil },
+			)
 			// Assert: no usable offer or private upstream error escapes.
-			if !errors.Is(err, domain.ErrMobileBackupInvalid) || offer != (domain.MobileBackupOffer{}) || f.requests != 1 || f.releases != 1 {
+			if !errors.Is(err, domain.ErrMobileBackupInvalid) || offer != (domain.MobileBackupOffer{}) ||
+				f.requests != 1 ||
+				f.releases != 1 {
 				t.Fatal("account binding failed open")
 			}
 			if strings.Contains(err.Error(), "private-mapping-detail") {

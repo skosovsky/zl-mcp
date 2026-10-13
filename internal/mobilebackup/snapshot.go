@@ -38,6 +38,8 @@ const maxSnapshotClaims = 100000
 
 // SnapshotStore belongs to the single service owning its state lock. No path,
 // key or archive data from this internal port is an MCP argument or result.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type SnapshotStore struct {
 	mu            chan struct{}
 	root          *os.Root
@@ -351,6 +353,7 @@ func (s *SnapshotStore) Save(
 	}
 	plain := make([]byte, 4+len(metadata)+len(selected.File.Data))
 	defer clear(plain)
+	//nolint:gosec // G115: metadata length is checked against snapshotMetadataLimit (4096) above.
 	binary.BigEndian.PutUint32(plain, uint32(len(metadata)))
 	copy(plain[4:], metadata)
 	copy(plain[4+len(metadata):], selected.File.Data)

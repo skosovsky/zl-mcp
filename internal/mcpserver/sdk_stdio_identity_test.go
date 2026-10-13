@@ -61,7 +61,12 @@ func sdkStartRawBridge(t *testing.T, endpoint, token string) *sdkRawChild {
 	}
 	config := filepath.Join(dir, "config.toml")
 	state := filepath.Join(dir, "never-open-state")
-	contents := fmt.Sprintf("state_dir = %q\n[collection]\ngroup_ids = []\n[mcp]\nlisten = %q\ntoken_file = %q\n", state, strings.TrimPrefix(endpoint, "http://"), tokenPath)
+	contents := fmt.Sprintf(
+		"state_dir = %q\n[collection]\ngroup_ids = []\n[mcp]\nlisten = %q\ntoken_file = %q\n",
+		state,
+		strings.TrimPrefix(endpoint, "http://"),
+		tokenPath,
+	)
 	if err := os.WriteFile(config, []byte(contents), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -128,12 +133,17 @@ func sdkStartRawBridge(t *testing.T, endpoint, token string) *sdkRawChild {
 		}
 	})
 	bridge := &sdkRawChild{input: input, frames: frames, stderr: stderr, ctx: ctx}
-	bridge.send(t, []byte(`{"jsonrpc":"2.0","id":"init","method":"initialize","params":{"protocolVersion":"2026-07-28","capabilities":{},"clientInfo":{"name":"synthetic-sdk-identity","version":"test"}}}`))
+	bridge.send(
+		t,
+		[]byte(
+			`{"jsonrpc":"2.0","id":"init","method":"initialize","params":{"protocolVersion":"2026-07-28","capabilities":{},"clientInfo":{"name":"synthetic-sdk-identity","version":"test"}}}`,
+		),
+	)
 	frame := bridge.next(t)
 	var response struct {
-		ID     json.RawMessage
-		Result json.RawMessage
-		Error  json.RawMessage
+		ID     json.RawMessage `json:"ID"`
+		Result json.RawMessage `json:"Result"`
+		Error  json.RawMessage `json:"Error"`
 	}
 	if err := json.Unmarshal(frame, &response); err != nil || len(response.Error) > 0 || len(response.Result) == 0 {
 		t.Fatalf("initialize %s error%v", frame, err)
@@ -170,7 +180,9 @@ func (c *sdkRawChild) next(t *testing.T) []byte {
 }
 func sdkReadFrameResult(t *testing.T, frame []byte) sdkHTTPResult {
 	t.Helper()
-	var envelope struct{ ID json.RawMessage }
+	var envelope struct {
+		ID json.RawMessage `json:"ID"`
+	}
 	if err := json.Unmarshal(frame, &envelope); err != nil {
 		t.Fatal(err)
 	}
@@ -184,14 +196,25 @@ func TestSDK01ActualSTDIOIdentityBoundsAndOutOfOrder(t *testing.T) {
 	child := sdkStartRawBridge(t, endpoint.URL, token)
 	// Act/Assert: boundary and notation IDs traverse both transports without float64.
 	for _, tc := range sdkIdentityCases {
-		child.send(t, sdkRawBody("tools/call", tc.input, map[string]any{"name": "zalo_get_status", "arguments": map[string]any{}}))
+		child.send(
+			t,
+			sdkRawBody(
+				"tools/call",
+				tc.input,
+				map[string]any{"name": "zalo_get_status", "arguments": map[string]any{}},
+			),
+		)
 		reply := sdkReadFrameResult(t, child.next(t))
 		assertSDKIdentity(t, reply.id, tc.want)
 		var envelope struct {
-			Result json.RawMessage
-			Error  json.RawMessage
+			Result json.RawMessage `json:"Result"`
+			Error  json.RawMessage `json:"Error"`
 		}
-		if err := json.Unmarshal(reply.body, &envelope); err != nil || len(envelope.Error) > 0 || len(envelope.Result) == 0 {
+		if err := json.Unmarshal(
+			reply.body,
+			&envelope,
+		); err != nil || len(envelope.Error) > 0 ||
+			len(envelope.Result) == 0 {
 			t.Fatalf("roundtrip %s error%v", reply.body, err)
 		}
 	}
@@ -200,10 +223,14 @@ func TestSDK01ActualSTDIOIdentityBoundsAndOutOfOrder(t *testing.T) {
 		child.send(t, sdkRawBody("tools/call", id, sdkContextArgs("first")))
 		frame := child.next(t)
 		var envelope struct {
-			ID    json.RawMessage
-			Error *protocolError
+			ID    json.RawMessage `json:"ID"`
+			Error *protocolError  `json:"Error"`
 		}
-		if err := json.Unmarshal(frame, &envelope); err != nil || string(envelope.ID) != "null" || envelope.Error == nil || envelope.Error.Code != -32600 {
+		if err := json.Unmarshal(
+			frame,
+			&envelope,
+		); err != nil || string(envelope.ID) != "null" || envelope.Error == nil ||
+			envelope.Error.Code != -32600 {
 			t.Fatalf("invalid length%d frame%s error%v", len(id), frame, err)
 		}
 	}
@@ -227,8 +254,14 @@ func TestSDK01ActualSTDIOIdentityBoundsAndOutOfOrder(t *testing.T) {
 	child.send(t, sdkRawBody("unknown/synthetic", "-9223372036854775808", nil))
 	reply := sdkReadFrameResult(t, child.next(t))
 	assertSDKIdentity(t, reply.id, "-9223372036854775808")
-	var errorReply struct{ Error *protocolError }
-	if err := json.Unmarshal(reply.body, &errorReply); err != nil || errorReply.Error == nil || errorReply.Error.Code != -32601 {
+	var errorReply struct {
+		Error *protocolError `json:"Error"`
+	}
+	if err := json.Unmarshal(
+		reply.body,
+		&errorReply,
+	); err != nil || errorReply.Error == nil ||
+		errorReply.Error.Code != -32601 {
 		t.Fatalf("protocol error %s", reply.body)
 	}
 }
@@ -244,20 +277,25 @@ func TestSDK01ActualSTDIOCancellationAndIDReusePrivacy(t *testing.T) {
 	child := sdkStartRawBridge(t, endpoint.URL, token)
 	child.send(t, sdkRawBody("tools/call", "9007199254740993", sdkContextArgs("first")))
 	child.send(t, sdkRawBody("tools/call", "9007199254740992", sdkContextArgs("second")))
-	invocations := map[string]context.Context{}
+	invocations := map[string]sdkInvocation{}
 	for range 2 {
 		v := sdkNextInvocation(t, reader)
-		invocations[v.message] = v.ctx
+		invocations[v.message] = v
 	}
 	// Act: numeric requestId dynamic type must remain exact across SDK notification decoding.
-	child.send(t, []byte(`{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":9007199254740993,"reason":"SDK_PRIVATE_CANCEL_REASON_界🍀"}}`))
+	child.send(
+		t,
+		[]byte(
+			`{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":9007199254740993,"reason":"SDK_PRIVATE_CANCEL_REASON_界🍀"}}`,
+		),
+	)
 	// Assert: only selected invocation is cancelled, response correlation remains exact.
 	select {
-	case <-invocations["first"].Done():
+	case <-invocations["first"].ctx.Done():
 	case <-time.After(5 * time.Second):
 		t.Fatal("STDIO cancellation did not reach application")
 	}
-	if invocations["second"].Err() != nil {
+	if invocations["second"].ctx.Err() != nil {
 		t.Fatal("neighbor cancelled")
 	}
 	cancelled := sdkReadFrameResult(t, child.next(t))
@@ -271,7 +309,8 @@ func TestSDK01ActualSTDIOCancellationAndIDReusePrivacy(t *testing.T) {
 	sdkAssertContextReply(t, sdkReadFrameResult(t, child.next(t)), "9007199254740993", "reused")
 	close(reader.release["second"])
 	sdkAssertContextReply(t, sdkReadFrameResult(t, child.next(t)), "9007199254740992", "second")
-	if strings.Contains(logs.String(), "SDK_PRIVATE_CANCEL_REASON") || strings.Contains(child.stderr.String(), "SDK_PRIVATE_CANCEL_REASON") {
+	if strings.Contains(logs.String(), "SDK_PRIVATE_CANCEL_REASON") ||
+		strings.Contains(child.stderr.String(), "SDK_PRIVATE_CANCEL_REASON") {
 		t.Fatal("SDK cancellation text leaked")
 	}
 }

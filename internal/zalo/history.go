@@ -9,6 +9,7 @@ import (
 	"github.com/amrakk/zcago/api"
 	"github.com/amrakk/zcago/errs"
 	"github.com/amrakk/zcago/model"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -24,11 +25,21 @@ func (c *Client) HistoryPhaseRequired() bool { return true }
 
 type groupHistoryReadFunc func(context.Context, string, string, int) (*api.GroupHistoryPage, error)
 
-func (f groupHistoryReadFunc) GetGroupHistoryPage(ctx context.Context, id, cursor string, limit int) (*api.GroupHistoryPage, error) {
+func (f groupHistoryReadFunc) GetGroupHistoryPage(
+	ctx context.Context,
+	id, cursor string,
+	limit int,
+) (*api.GroupHistoryPage, error) {
 	return f(ctx, id, cursor, limit)
 }
 
-func (c *Client) HistoryPageWithPhase(ctx context.Context, ref domain.ConversationRef, cursor string, old *bool, limit int) (domain.HistoryPage, error) {
+func (c *Client) HistoryPageWithPhase(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	cursor string,
+	old *bool,
+	limit int,
+) (domain.HistoryPage, error) {
 	if !ref.Valid() || len(ref.ID) > 256 || limit < 1 || limit > 50 || !historyNumber(cursor) {
 		return domain.HistoryPage{}, domain.Invalid("Invalid history page request.")
 	}
@@ -39,14 +50,26 @@ func (c *Client) HistoryPageWithPhase(ctx context.Context, ref domain.Conversati
 	if !ok {
 		return domain.HistoryPage{}, domain.ErrHistoryUnsupported
 	}
-	page, err := readGroupHistoryPage(ctx, groupHistoryReadFunc(func(ctx context.Context, id, cursor string, count int) (*api.GroupHistoryPage, error) {
-		return reader.GetGroupHistoryPageWithPhase(ctx, id, cursor, old != nil && *old, count)
-	}), c.AccountID(), ref, cursor, limit)
+	page, err := readGroupHistoryPage(
+		ctx,
+		groupHistoryReadFunc(func(ctx context.Context, id, cursor string, count int) (*api.GroupHistoryPage, error) {
+			return reader.GetGroupHistoryPageWithPhase(ctx, id, cursor, old != nil && *old, count)
+		}),
+		c.AccountID(),
+		ref,
+		cursor,
+		limit,
+	)
 	page.PhaseRequired = true
 	return page, err
 }
 
-func (c *Client) HistoryPage(ctx context.Context, ref domain.ConversationRef, cursor string, limit int) (domain.HistoryPage, error) {
+func (c *Client) HistoryPage(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	cursor string,
+	limit int,
+) (domain.HistoryPage, error) {
 	if !ref.Valid() || len(ref.ID) > 256 || limit < 1 || limit > 50 || !historyNumber(cursor) {
 		return domain.HistoryPage{}, domain.Invalid("Invalid history page request.")
 	}
@@ -60,11 +83,17 @@ func (c *Client) HistoryPage(ctx context.Context, ref domain.ConversationRef, cu
 	return readGroupHistoryPage(ctx, reader, c.AccountID(), ref, cursor, limit)
 }
 
-func readGroupHistoryPage(ctx context.Context, reader groupHistoryReader, own string, ref domain.ConversationRef, cursor string, limit int) (domain.HistoryPage, error) {
+func readGroupHistoryPage(
+	ctx context.Context,
+	reader groupHistoryReader,
+	own string,
+	ref domain.ConversationRef,
+	cursor string,
+	limit int,
+) (domain.HistoryPage, error) {
 	raw, err := reader.GetGroupHistoryPage(ctx, ref.ID, cursor, limit)
 	if err != nil {
-		var malformed *api.GroupHistoryPageDecodeError
-		if errors.As(err, &malformed) {
+		if malformed, ok := errors.AsType[*api.GroupHistoryPageDecodeError](err); ok {
 			return domain.HistoryPage{}, invalidHistoryPage("invalid group history " + malformed.Field)
 		}
 		if errors.Is(err, api.ErrGroupHistorySourceUnavailable) {
@@ -86,7 +115,15 @@ func readGroupHistoryPage(ctx context.Context, reader groupHistoryReader, own st
 	if err != nil {
 		return domain.HistoryPage{}, invalidHistoryPage("invalid history join timestamp")
 	}
-	page := domain.HistoryPage{Messages: []domain.Message{}, HasMore: raw.HasMore, Cursor: raw.LastMessageID, IsFiltered: raw.IsFiltered, IsFilteredByPhase: raw.IsFilteredByPhase, IsFilteredByTimeJoin: raw.IsFilteredByTimeJoin, IsOld: raw.IsOld}
+	page := domain.HistoryPage{
+		Messages:             []domain.Message{},
+		HasMore:              raw.HasMore,
+		Cursor:               raw.LastMessageID,
+		IsFiltered:           raw.IsFiltered,
+		IsFilteredByPhase:    raw.IsFilteredByPhase,
+		IsFilteredByTimeJoin: raw.IsFilteredByTimeJoin,
+		IsOld:                raw.IsOld,
+	}
 	page.JoinTimestampMillis = joined
 	total := 0
 	for _, record := range raw.Records {
@@ -106,6 +143,7 @@ func readGroupHistoryPage(ctx context.Context, reader groupHistoryReader, own st
 func optionalHistoryDecimal(raw json.RawMessage) (*string, error) {
 	raw = bytes.TrimSpace(raw)
 	if len(raw) == 0 || bytes.Equal(raw, []byte("null")) {
+		//nolint:nilnil // Missing or JSON null represents an absent optional decimal value.
 		return nil, nil
 	}
 	value := string(raw)
@@ -177,10 +215,9 @@ func invalidHistoryPage(message string) error {
 }
 
 func safeHistorySourceFailure(err error) error {
-	var value errs.ZaloAPIError
 	var pointer *errs.ZaloAPIError
 	var code *errs.ZaloErrorCode
-	if errors.As(err, &value) {
+	if value, ok := errors.AsType[errs.ZaloAPIError](err); ok {
 		code = value.Code
 	} else if errors.As(err, &pointer) && pointer != nil {
 		code = pointer.Code

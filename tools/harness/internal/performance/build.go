@@ -77,6 +77,7 @@ func Build(ctx context.Context, root, output string) error {
 	if e != nil {
 		return e
 	}
+	//nolint:gosec // G301: this directory holds shareable synthetic evidence/executables, never account state.
 	if e = os.Mkdir(output, 0755); e != nil {
 		return e
 	}
@@ -106,6 +107,7 @@ func Build(ctx context.Context, root, output string) error {
 		args := []string{"go", "build", "-trimpath", "-o", binary, "./cmd/zl-mcp-eval"}
 		env := append(os.Environ(), "GOWORK=off")
 		out, stderr, code, e := process(ctx, root, env, args, 4<<20)
+		//nolint:gosec // G306: this synthetic evidence contains build/host provenance, never account credentials.
 		logErr := os.WriteFile(filepath.Join(output, "candidate.build.log"), append(out, stderr...), 0644)
 		record := Object{"kind": "candidate", "target": "./cmd/zl-mcp-eval", "command": args, "exit_status": code, "binary": binary}
 		manifest["builds"] = []any{record}

@@ -5,18 +5,24 @@ import (
 	"encoding/hex"
 
 	"github.com/google/uuid"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 // MobileHistorySnapshotTerminal authorizes local removal only. Collection
 // revocation does not prevent cleanup, and no request/session authority is granted.
-func (s *Store) MobileHistorySnapshotTerminal(ctx context.Context, requestID, fingerprint, accountDigest string) (bool, error) {
+func (s *Store) MobileHistorySnapshotTerminal(
+	ctx context.Context,
+	requestID, fingerprint, accountDigest string,
+) (bool, error) {
 	if _, err := uuid.Parse(requestID); err != nil {
+		//nolint:nilerr // Malformed identifiers deny cleanup with false; this predicate must fail closed without granting access.
 		return false, nil
 	}
 	for _, value := range []string{fingerprint, accountDigest} {
 		decoded, err := hex.DecodeString(value)
 		if err != nil || len(decoded) != 32 {
+			//nolint:nilerr // Malformed identifiers deny cleanup with false; this predicate must fail closed without granting access.
 			return false, nil
 		}
 	}

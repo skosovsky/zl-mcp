@@ -291,6 +291,7 @@ func (s *Store) ClaimDelivery(ctx context.Context, at time.Time, p DeliveryPolic
 			if err := tx.Commit(); err != nil {
 				return nil, err
 			}
+			//nolint:nilnil // An empty delivery queue returns no job and no failure.
 			return nil, nil
 		}
 		if err != nil {

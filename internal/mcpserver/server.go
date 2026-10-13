@@ -236,6 +236,8 @@ func failure(err error) *mcp.CallToolResult {
 	b, _ := json.Marshal(de)
 	return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: string(b)}}}
 }
+
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
 func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (response *mcp.CallToolResult) {
 	started := time.Now()
 	code := "OK"

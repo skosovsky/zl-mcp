@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 )
 
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type Mention struct {
 	Type, UID, Position, Length *int32 `json:"-"`
 	UnsupportedFields           int    `json:"-"`
@@ -23,6 +24,8 @@ func (m *Mention) Clear() {
 	}
 	*m = Mention{}
 }
+
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
 func ParseMention(ctx context.Context, data []byte) (result Mention, err error) {
 	fields, err := ParseTLV(ctx, data)
 	if err != nil {
@@ -55,6 +58,7 @@ func ParseMention(ctx context.Context, data []byte) (result Mention, err error) 
 		if *target != nil || len(f.Value) != 4 {
 			return result, ErrTLV
 		}
+		//nolint:gosec // G115: reconstruct the signed two's-complement int32 wire value without changing bits.
 		v := int32(binary.BigEndian.Uint32(f.Value))
 		*target = &v
 	}

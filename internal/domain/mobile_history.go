@@ -44,6 +44,7 @@ type MobileHistoryCounts struct {
 
 type MobileHistoryCoverage struct {
 	MobileHistoryCounts
+
 	SourceRows             int64 `json:"source_rows"`
 	PeriodRows             int64 `json:"period_rows"`
 	InvalidTimestampRows   int64 `json:"invalid_timestamp_rows"`
@@ -64,6 +65,8 @@ func (MobileHistoryRecall) String() string   { return "historical recall [redact
 func (MobileHistoryRecall) GoString() string { return "historical recall [redacted]" }
 
 // MobileHistoryPage carries one exact source page; persistence is always silent.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type MobileHistoryPage struct {
 	ControlPrelude bool                    `json:"-"`
 	Snapshot       MobileHistorySnapshot   `json:"-"`

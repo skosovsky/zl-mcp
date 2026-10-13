@@ -13,10 +13,13 @@ import (
 )
 
 type format1Vector struct {
-	Name, Ciphertext, Plaintext, Filename string
-	ContainerBytes                        uint64 `json:"container_bytes"`
-	TrailingBytes                         uint64 `json:"trailing_bytes"`
-	SHA                                   string `json:"ciphertext_sha256"`
+	Name           string `json:"Name"`
+	Ciphertext     string `json:"Ciphertext"`
+	Plaintext      string `json:"Plaintext"`
+	Filename       string `json:"Filename"`
+	ContainerBytes uint64 `json:"container_bytes"`
+	TrailingBytes  uint64 `json:"trailing_bytes"`
+	SHA            string `json:"ciphertext_sha256"`
 }
 
 func archiveVectors(t *testing.T) []format1Vector {
@@ -42,9 +45,19 @@ func TestFormat1ArchiveIndependentFullVectors(t *testing.T) {
 				t.Fatal("fixture digest changed")
 			}
 			// Act.
-			got, e := ReadFormat1Archive(context.Background(), bytes.NewReader(encrypted), strings.Repeat("0123456789abcdef", 4), uint64(len(encrypted)), uint64(len(want)))
+			got, e := ReadFormat1Archive(
+				context.Background(),
+				bytes.NewReader(encrypted),
+				strings.Repeat("0123456789abcdef", 4),
+				uint64(len(encrypted)),
+				uint64(len(want)),
+			)
 			// Assert: declared region is exact; zero/nonzero tail is counted, not unpadded.
-			if e != nil || len(got.Archive.Files) != 1 || got.Archive.Files[0].Name != v.Filename || !bytes.Equal(got.Archive.Files[0].Data, want) || got.CiphertextBytes != uint64(len(encrypted)) || got.ContainerBytes != v.ContainerBytes || got.TrailingBytes != v.TrailingBytes {
+			if e != nil || len(got.Archive.Files) != 1 || got.Archive.Files[0].Name != v.Filename ||
+				!bytes.Equal(got.Archive.Files[0].Data, want) ||
+				got.CiphertextBytes != uint64(len(encrypted)) ||
+				got.ContainerBytes != v.ContainerBytes ||
+				got.TrailingBytes != v.TrailingBytes {
 				t.Fatal("full archive mismatch", e)
 			}
 			b, _ := json.Marshal(got)
@@ -76,13 +89,21 @@ func TestFormat1ArchiveFailsWithoutPartialFilesOrCounts(t *testing.T) {
 		// Act.
 		got, e := ReadFormat1Archive(context.Background(), bytes.NewReader(tc.data), tc.key, tc.limit, tc.output)
 		// Assert.
-		if e == nil || got.Archive.Files != nil || got.ContainerBytes != 0 || got.CiphertextBytes != 0 || got.TrailingBytes != 0 {
+		if e == nil || got.Archive.Files != nil || got.ContainerBytes != 0 || got.CiphertextBytes != 0 ||
+			got.TrailingBytes != 0 {
 			t.Fatal("invalid archive retained prefix")
 		}
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if got, e := ReadFormat1Archive(ctx, bytes.NewReader(encrypted), strings.Repeat("0123456789abcdef", 4), MaxTotalBytes, MaxTotalBytes); e == nil || got.Archive.Files != nil {
+	if got, e := ReadFormat1Archive(
+		ctx,
+		bytes.NewReader(encrypted),
+		strings.Repeat("0123456789abcdef", 4),
+		MaxTotalBytes,
+		MaxTotalBytes,
+	); e == nil ||
+		got.Archive.Files != nil {
 		t.Fatal("cancelled archive accepted")
 	}
 }
@@ -94,8 +115,9 @@ func TestFormat1SQLiteIndependentVector(t *testing.T) {
 		t.Fatal(e)
 	}
 	var v struct {
-		Ciphertext, Filename string
-		SHA                  string `json:"plaintext_sha256"`
+		Ciphertext string `json:"Ciphertext"`
+		Filename   string `json:"Filename"`
+		SHA        string `json:"plaintext_sha256"`
 	}
 	if e = json.Unmarshal(raw, &v); e != nil {
 		t.Fatal(e)
@@ -105,7 +127,13 @@ func TestFormat1SQLiteIndependentVector(t *testing.T) {
 		t.Fatal(e)
 	}
 	// Act.
-	archive, e := ReadFormat1Archive(context.Background(), bytes.NewReader(data), strings.Repeat("0123456789abcdef", 4), MaxTotalBytes, MaxTotalBytes)
+	archive, e := ReadFormat1Archive(
+		context.Background(),
+		bytes.NewReader(data),
+		strings.Repeat("0123456789abcdef", 4),
+		MaxTotalBytes,
+		MaxTotalBytes,
+	)
 	defer archive.Clear()
 	// Assert: SQLite payload exact, not merely a compatible encrypt/decrypt roundtrip.
 	if e != nil || len(archive.Archive.Files) != 1 {
@@ -127,16 +155,30 @@ func TestFormat1ArchivePartialTailOutsideVerifiedContainer(t *testing.T) {
 	for tail := 1; tail < 16; tail++ {
 		input := append(append([]byte(nil), encrypted...), bytes.Repeat([]byte{0x93}, tail)...)
 		// Act.
-		got, err := ReadFormat1Archive(context.Background(), bytes.NewReader(input), strings.Repeat("0123456789abcdef", 4), uint64(len(input)), uint64(len(want)))
+		got, err := ReadFormat1Archive(
+			context.Background(),
+			bytes.NewReader(input),
+			strings.Repeat("0123456789abcdef", 4),
+			uint64(len(input)),
+			uint64(len(want)),
+		)
 		// Assert: exact contents/checksum remain required, physical count includes tail.
-		if err != nil || len(got.Archive.Files) != 1 || !bytes.Equal(got.Archive.Files[0].Data, want) || got.CiphertextBytes != uint64(len(input)) || got.TrailingBytes != uint64(len(input))-v.ContainerBytes {
+		if err != nil || len(got.Archive.Files) != 1 || !bytes.Equal(got.Archive.Files[0].Data, want) ||
+			got.CiphertextBytes != uint64(len(input)) ||
+			got.TrailingBytes != uint64(len(input))-v.ContainerBytes {
 			t.Fatal("bounded physical tail rejected", tail, err)
 		}
 		got.Clear()
 	}
 	// Arrange/Act/Assert: an incomplete AES block needed by the container is rejected.
 	incomplete := encrypted[:int(v.ContainerBytes)-1]
-	got, err := ReadFormat1Archive(context.Background(), bytes.NewReader(incomplete), strings.Repeat("0123456789abcdef", 4), uint64(len(incomplete)), uint64(len(want)))
+	got, err := ReadFormat1Archive(
+		context.Background(),
+		bytes.NewReader(incomplete),
+		strings.Repeat("0123456789abcdef", 4),
+		uint64(len(incomplete)),
+		uint64(len(want)),
+	)
 	if err == nil || len(got.Archive.Files) != 0 {
 		t.Fatal("missing container ciphertext accepted")
 	}

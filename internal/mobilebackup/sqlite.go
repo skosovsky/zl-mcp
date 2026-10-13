@@ -40,6 +40,7 @@ type SQLiteCoverage struct {
 	HasRange                                  bool
 }
 
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type SQLiteBatch struct {
 	Coverage                 SQLiteCoverage `json:"-"`
 	SourceControls           int
@@ -146,7 +147,7 @@ func readSQLitePage(
 	maxRows int,
 	after *SQLiteCursor,
 	controlsOnly bool,
-) (batch SQLiteBatch, err error) {
+) (SQLiteBatch, error) {
 	return readSQLitePageMode(parent, file, scratch, since, until, maxRows, after, controlsOnly, false, false)
 }
 
@@ -166,6 +167,7 @@ func ReadSnapshotSQLitePage(
 	return readSQLitePageMode(parent, file, scratch, since, until, maxRows, after, false, true, order == "desc")
 }
 
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
 func readSQLitePageMode(
 	parent context.Context,
 	file ArchiveFile,

@@ -30,7 +30,12 @@ func (f nativeSender) SendDirect(ctx context.Context, peer, text string, quote *
 }
 func nativeStore(t *testing.T) *storage.Store {
 	t.Helper()
-	s, err := storage.OpenWithPolicy(context.Background(), filepath.Join(t.TempDir(), "native.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	s, err := storage.OpenWithPolicy(
+		context.Background(),
+		filepath.Join(t.TempDir(), "native.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,11 +52,19 @@ func TestNativeSendRecordsOneAmbiguousEffectWithoutRetry(t *testing.T) {
 	cause := &privateFailure{}
 	ctx := shared.WithTelemetry(context.Background(), o)
 	var sends atomic.Int64
-	manager := messaging.Manager{Store: s, Enabled: true, Sender: nativeSender(func(context.Context, string, string, *domain.SendQuote) (string, error) {
-		sends.Add(1)
-		return "", cause
-	})}
-	args := map[string]any{"request_id": "80000000-0000-4000-8000-000000000008", "recipient_id": "PRIVATE_SENTINEL_PEER", "text": "PRIVATE_SENTINEL_TEXT"}
+	manager := messaging.Manager{
+		Store:   s,
+		Enabled: true,
+		Sender: nativeSender(func(context.Context, string, string, *domain.SendQuote) (string, error) {
+			sends.Add(1)
+			return "", cause
+		}),
+	}
+	args := map[string]any{
+		"request_id":   "80000000-0000-4000-8000-000000000008",
+		"recipient_id": "PRIVATE_SENTINEL_PEER",
+		"text":         "PRIVATE_SENTINEL_TEXT",
+	}
 	// Act: duplicate UUID observes the same native terminal ledger.
 	for range 2 {
 		if err := o.Execute(ctx, "zalo_send_direct_message", func(ctx context.Context) (domain.Outcome, error) {
@@ -77,11 +90,21 @@ func TestNativeSendRecordsOneAmbiguousEffectWithoutRetry(t *testing.T) {
 		t.Fatal("native upstream observation missing")
 	}
 	for _, states := range [][2]string{{"pending", "sending"}, {"sending", "unknown"}} {
-		if count(t, data, "zl_mcp_operation_transitions", map[string]string{"kind": "send", "from": states[0], "to": states[1]}) != 1 {
+		if count(
+			t,
+			data,
+			"zl_mcp_operation_transitions",
+			map[string]string{"kind": "send", "from": states[0], "to": states[1]},
+		) != 1 {
 			t.Fatal("native send transition missing/repeated")
 		}
 	}
-	if count(t, data, "zl_mcp_domain_calls", map[string]string{"tool": "zalo_send_direct_message", "outcome": "unknown"}) != 2 {
+	if count(
+		t,
+		data,
+		"zl_mcp_domain_calls",
+		map[string]string{"tool": "zalo_send_direct_message", "outcome": "unknown"},
+	) != 2 {
 		t.Fatal("domain unknown changed")
 	}
 	spans := exporter.GetSpans()
@@ -98,17 +121,23 @@ func TestNativeSendRecordsOneAmbiguousEffectWithoutRetry(t *testing.T) {
 		t.Fatal("terminal replay started a worker")
 	}
 	payload, _ := json.Marshal(struct {
-		Metrics any
-		Spans   any
+		Metrics any `json:"Metrics"`
+		Spans   any `json:"Spans"`
 	}{data, spans})
-	if strings.Contains(string(payload), "PRIVATE_SENTINEL") || strings.Contains(string(payload), args["request_id"].(string)) {
+	if strings.Contains(string(payload), "PRIVATE_SENTINEL") ||
+		strings.Contains(string(payload), args["request_id"].(string)) {
 		t.Fatal("native identity/content reached telemetry")
 	}
 }
 
 type nativeHistorySource struct{ calls atomic.Int64 }
 
-func (s *nativeHistorySource) HistoryPage(context.Context, domain.ConversationRef, string, int) (domain.HistoryPage, error) {
+func (s *nativeHistorySource) HistoryPage(
+	context.Context,
+	domain.ConversationRef,
+	string,
+	int,
+) (domain.HistoryPage, error) {
 	s.calls.Add(1)
 	more := false
 	return domain.HistoryPage{HasMore: &more}, nil
@@ -119,7 +148,13 @@ func TestNativeHistoryWorkerKeepsLedgerAndRequestLink(t *testing.T) {
 	s := nativeStore(t)
 	base := shared.WithTelemetry(context.Background(), o)
 	manager := historyimport.Manager{Store: s}
-	args := map[string]any{"request_id": "90000000-0000-4000-8000-000000000009", "conversation_type": "group", "conversation_id": "PRIVATE_SENTINEL_GROUP", "since": "2026-09-01T00:00:00Z", "until": "2026-11-01T00:00:00Z"}
+	args := map[string]any{
+		"request_id":        "90000000-0000-4000-8000-000000000009",
+		"conversation_type": "group",
+		"conversation_id":   "PRIVATE_SENTINEL_GROUP",
+		"since":             "2026-09-01T00:00:00Z",
+		"until":             "2026-11-01T00:00:00Z",
+	}
 	var id string
 	if err := o.Execute(base, "zalo_import_conversation_history", func(ctx context.Context) (domain.Outcome, error) {
 		result, err := manager.Call(ctx, "zalo_import_conversation_history", args)
@@ -164,7 +199,12 @@ func TestNativeHistoryWorkerKeepsLedgerAndRequestLink(t *testing.T) {
 		t.Fatal("native history source repeated")
 	}
 	for _, states := range [][2]string{{"queued", "running"}, {"running", "completed"}} {
-		if count(t, data, "zl_mcp_operation_transitions", map[string]string{"kind": "history", "from": states[0], "to": states[1]}) != 1 {
+		if count(
+			t,
+			data,
+			"zl_mcp_operation_transitions",
+			map[string]string{"kind": "history", "from": states[0], "to": states[1]},
+		) != 1 {
 			t.Fatal("native history transition missing")
 		}
 	}
@@ -181,8 +221,8 @@ func TestNativeHistoryWorkerKeepsLedgerAndRequestLink(t *testing.T) {
 		t.Fatal("native history worker lost request reference")
 	}
 	payload, _ := json.Marshal(struct {
-		Metrics any
-		Spans   any
+		Metrics any `json:"Metrics"`
+		Spans   any `json:"Spans"`
 	}{data, spans})
 	if strings.Contains(string(payload), "PRIVATE_SENTINEL") || strings.Contains(string(payload), id) {
 		t.Fatal("native history identity/content leaked")
@@ -247,7 +287,12 @@ func TestNativeJoinLinksWorkerBeforeCommandReturns(t *testing.T) {
 	if err != nil || result["status"] != "joined" || api.calls.Load() != 1 {
 		t.Fatal("native join behavior changed")
 	}
-	if count(t, data, "zl_mcp_operation_transitions", map[string]string{"kind": "join", "from": "running", "to": "joined"}) != 1 {
+	if count(
+		t,
+		data,
+		"zl_mcp_operation_transitions",
+		map[string]string{"kind": "join", "from": "running", "to": "joined"},
+	) != 1 {
 		t.Fatal("native join transition missing")
 	}
 	linked := false
@@ -260,10 +305,11 @@ func TestNativeJoinLinksWorkerBeforeCommandReturns(t *testing.T) {
 		t.Fatal("join worker started without command reference")
 	}
 	payload, _ := json.Marshal(struct {
-		Metrics any
-		Spans   any
+		Metrics any `json:"Metrics"`
+		Spans   any `json:"Spans"`
 	}{data, spans})
-	if strings.Contains(string(payload), "PRIVATE_SENTINEL") || strings.Contains(string(payload), id) || strings.Contains(string(payload), token) {
+	if strings.Contains(string(payload), "PRIVATE_SENTINEL") || strings.Contains(string(payload), id) ||
+		strings.Contains(string(payload), token) {
 		t.Fatal("native join identity/token leaked")
 	}
 }
@@ -272,7 +318,11 @@ type nativeCallbackTransport struct{ calls atomic.Int64 }
 
 func (s *nativeCallbackTransport) RoundTrip(*http.Request) (*http.Response, error) {
 	s.calls.Add(1)
-	return &http.Response{StatusCode: 204, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(""))}, nil
+	return &http.Response{
+		StatusCode: http.StatusNoContent,
+		Header:     http.Header{},
+		Body:       io.NopCloser(strings.NewReader("")),
+	}, nil
 }
 func TestNativeEventsObservesExistingDeliveryReceipt(t *testing.T) {
 	// Arrange: real event/subscription/delivery owners, callback is entirely synthetic.
@@ -284,11 +334,32 @@ func TestNativeEventsObservesExistingDeliveryReceipt(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = s.ActivateSubscription(base, storage.EventSubscription{ID: "PRIVATE_SENTINEL_SUB", Principal: "owner", GroupID: "PRIVATE_SENTINEL_GROUP", Callback: "https://callback.example/private", Secret: "whsec_" + base64.StdEncoding.EncodeToString([]byte("synthetic-key-for-webhook-32bytes!"))}, revision, at)
+	_, err = s.ActivateSubscription(
+		base,
+		storage.EventSubscription{
+			ID:        "PRIVATE_SENTINEL_SUB",
+			Principal: "owner",
+			GroupID:   "PRIVATE_SENTINEL_GROUP",
+			Callback:  "https://callback.example/private",
+			Secret:    "whsec_" + base64.StdEncoding.EncodeToString([]byte("synthetic-key-for-webhook-32bytes!")),
+		},
+		revision,
+		at,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = s.Put(base, domain.Message{GroupID: "PRIVATE_SENTINEL_GROUP", ID: "PRIVATE_SENTINEL_MESSAGE", SenderID: "private", Text: "PRIVATE_SENTINEL_TEXT", SentAt: at, Source: "live"}); err != nil {
+	if err = s.Put(
+		base,
+		domain.Message{
+			GroupID:  "PRIVATE_SENTINEL_GROUP",
+			ID:       "PRIVATE_SENTINEL_MESSAGE",
+			SenderID: "private",
+			Text:     "PRIVATE_SENTINEL_TEXT",
+			SentAt:   at,
+			Source:   "live",
+		},
+	); err != nil {
 		t.Fatal(err)
 	}
 	worker, err := events.NewWorker(s)
@@ -313,7 +384,12 @@ func TestNativeEventsObservesExistingDeliveryReceipt(t *testing.T) {
 		t.Fatal("event callback/receipt behavior changed")
 	}
 	for _, states := range [][2]string{{"pending", "sending"}, {"sending", "delivered"}} {
-		if count(t, data, "zl_mcp_operation_transitions", map[string]string{"kind": "events", "from": states[0], "to": states[1]}) != 1 {
+		if count(
+			t,
+			data,
+			"zl_mcp_operation_transitions",
+			map[string]string{"kind": "events", "from": states[0], "to": states[1]},
+		) != 1 {
 			t.Fatal("native Events transition missing")
 		}
 	}
@@ -321,8 +397,8 @@ func TestNativeEventsObservesExistingDeliveryReceipt(t *testing.T) {
 		t.Fatal("native Events upstream signal missing")
 	}
 	payload, _ := json.Marshal(struct {
-		Metrics any
-		Spans   any
+		Metrics any `json:"Metrics"`
+		Spans   any `json:"Spans"`
 	}{data, spans})
 	if strings.Contains(string(payload)+diagnosticLogs.String(), "PRIVATE_SENTINEL") {
 		t.Fatal("native Events identity/content leaked")

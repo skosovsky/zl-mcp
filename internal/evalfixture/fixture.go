@@ -281,7 +281,7 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	if err != nil {
 		return nil, err
 	}
-	listener, err := net.Listen("unix", sock)
+	listener, err := (&net.ListenConfig{}).Listen(runCtx, "unix", sock)
 	if err != nil {
 		return nil, err
 	}

@@ -53,8 +53,13 @@ func ReadContainer(ctx context.Context, r io.Reader, limit uint64) (Container, e
 	if length < 18 || length > limit {
 		return Container{}, ErrHeader
 	}
+	//nolint:gosec // G115: length is bounded by limit <= MaxTotalBytes (512 MiB), also on 32-bit targets.
 	body := make([]byte, int(length)-len(prefix))
-	if _, err := io.ReadFull(reader, body); err != nil || ctx.Err() != nil || checksum32(body) != binary.BigEndian.Uint32(prefix[10:14]) {
+	if _, err := io.ReadFull(
+		reader,
+		body,
+	); err != nil || ctx.Err() != nil ||
+		checksum32(body) != binary.BigEndian.Uint32(prefix[10:14]) {
 		clear(body)
 		return Container{}, ErrHeader
 	}
@@ -80,7 +85,7 @@ func readFileTable(body []byte) (Header, int, error) {
 	body = body[4:]
 	result := Header{Files: make([]File, 0, int(count))}
 	seen := make(map[string]bool, int(count))
-	for i := uint32(0); i < count; i++ {
+	for range count {
 		if len(body) < 4 {
 			return Header{}, 0, ErrHeader
 		}
@@ -93,7 +98,9 @@ func readFileTable(body []byte) (Header, int, error) {
 		body = body[n:]
 		size := binary.BigEndian.Uint32(body[:4])
 		body = body[4:]
-		if original-len(body)+14 > MaxHeaderBytes || !validName(name) || seen[name] || size == 0 || uint64(size) > MaxFileBytes || result.TotalBytes+uint64(size) > MaxTotalBytes {
+		if original-len(body)+14 > MaxHeaderBytes || !validName(name) || seen[name] || size == 0 ||
+			uint64(size) > MaxFileBytes ||
+			result.TotalBytes+uint64(size) > MaxTotalBytes {
 			return Header{}, 0, ErrHeader
 		}
 		seen[name] = true

@@ -89,6 +89,7 @@ func (b *boundedBuffer) Write(p []byte) (int, error) {
 func command(ctx context.Context, root, binary string, args ...string) (int, string, string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
+	//nolint:gosec // G702: the CLI selects a local executable and passes argv directly, never through a shell.
 	cmd := exec.CommandContext(ctx, binary, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error {
@@ -230,6 +231,7 @@ func writeModule(root string, config []byte, files []File) error {
 	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module "+module+"\n\ngo 1.27.1\n"), 0600); err != nil {
 		return err
 	}
+	//nolint:gosec // G703: root is a harness-owned synthetic workspace; files come from the local AST scanner, not a manifest.
 	if err := os.WriteFile(filepath.Join(root, "arch-go.yml"), config, 0600); err != nil {
 		return err
 	}
@@ -403,6 +405,7 @@ func SourceControls(ctx context.Context, binary string, config []byte) ([]Contro
 			err = os.WriteFile(path, []byte(src), 0600)
 		}
 		files, e := Scan(root)
+		//nolint:gosec // G104: process/temporary-workspace cleanup cannot replace the original failure or watchdog outcome.
 		os.RemoveAll(root)
 		if err != nil {
 			return out, err
@@ -446,6 +449,7 @@ func validateConfig(config []byte) error {
 	}
 	return nil
 }
+//nolint:nonamedreturns // Deferred failure handling annotates the returned Evidence without losing the original error.
 func Check(ctx context.Context, root, binary string) (e Evidence, err error) {
 	e.Status = "FAIL"
 	defer func() {
@@ -546,6 +550,7 @@ func WriteEvidence(path string, e Evidence) error {
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
 	if err = enc.Encode(e); err != nil {
+		//nolint:gosec // G104: process/temporary-workspace cleanup cannot replace the original failure or watchdog outcome.
 		f.Close()
 		return err
 	}

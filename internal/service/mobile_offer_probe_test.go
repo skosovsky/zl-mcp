@@ -19,7 +19,10 @@ import (
 
 type probeOfferSource struct{ mobileServiceSource }
 
-func (s *probeOfferSource) ReceiveMobileBackupOffer(ctx context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+func (s *probeOfferSource) ReceiveMobileBackupOffer(
+	ctx context.Context,
+	o *domain.MobileBackupObserver,
+) (domain.MobileBackupOffer, error) {
 	offer, err := s.mobileServiceSource.ReceiveMobileBackupOffer(ctx, o)
 	if err != nil {
 		return offer, err
@@ -29,9 +32,14 @@ func (s *probeOfferSource) ReceiveMobileBackupOffer(ctx context.Context, o *doma
 }
 func probeControl(t *testing.T, p *membershipPort, id string, revision int64) *httptest.ResponseRecorder {
 	t.Helper()
-	body, _ := json.Marshal(map[string]any{"method": "cli_probe_mobile_backup_offer", "arguments": map[string]any{"operation_id": id, "revision": revision}})
+	body, _ := json.Marshal(
+		map[string]any{
+			"method":    "cli_probe_mobile_backup_offer",
+			"arguments": map[string]any{"operation_id": id, "revision": revision},
+		},
+	)
 	response := httptest.NewRecorder()
-	p.cliHandler().ServeHTTP(response, httptest.NewRequest("POST", "/rpc", strings.NewReader(string(body))))
+	p.cliHandler().ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/rpc", strings.NewReader(string(body))))
 	return response
 }
 func TestMobileOfferProbeOneShotRedactedAndNotMCP(t *testing.T) {
@@ -40,9 +48,16 @@ func TestMobileOfferProbeOneShotRedactedAndNotMCP(t *testing.T) {
 	n := new(big.Int).Lsh(big.NewInt(1), 2047)
 	n.Add(n, big.NewInt(1))
 	der, _ := x509.MarshalPKIXPublicKey(&rsa.PublicKey{N: n, E: 65537})
-	source := &probeOfferSource{mobileServiceSource: mobileServiceSource{public: base64.StdEncoding.EncodeToString(der)}}
+	source := &probeOfferSource{public: base64.StdEncoding.EncodeToString(der)}
 	p.current = &collector.JoinManager{API: source}
-	request := domain.MobileBackupRequest{RequestID: "00000000-0000-4000-8000-000000000001", ConversationType: "direct", ConversationID: "12", Since: "2026-09-01T00:00:00Z", Until: "2026-10-01T00:00:00Z", MaxArchiveBytes: 8}
+	request := domain.MobileBackupRequest{
+		RequestID:        "00000000-0000-4000-8000-000000000001",
+		ConversationType: "direct",
+		ConversationID:   "12",
+		Since:            "2026-09-01T00:00:00Z",
+		Until:            "2026-10-01T00:00:00Z",
+		MaxArchiveBytes:  8,
+	}
 	attempt, err := p.store.PrepareMobileBackup(context.Background(), request)
 	if err != nil {
 		t.Fatal(err)
@@ -66,7 +81,10 @@ func TestMobileOfferProbeOneShotRedactedAndNotMCP(t *testing.T) {
 	if err != nil || schema.Validate(value) != nil {
 		t.Fatal("invalid probe contract", err)
 	}
-	if value["download_host"] != "archive.example.com" || value["archive_bytes"] != "16" || value["within_archive_budget"] != false || value["download_performed"] != false || value["import_performed"] != false {
+	if value["download_host"] != "archive.example.com" || value["archive_bytes"] != "16" ||
+		value["within_archive_budget"] != false ||
+		value["download_performed"] != false ||
+		value["import_performed"] != false {
 		t.Fatal(value)
 	}
 	for _, private := range []string{"private-marker", "private-query-marker", "synthetic-private-key", source.public} {
@@ -89,7 +107,13 @@ func TestMobileOfferProbeOneShotRedactedAndNotMCP(t *testing.T) {
 func TestMobileOfferProbeMissingSessionPreservesPreparedAttempt(t *testing.T) {
 	// Arrange.
 	p := mobileLedgerPort(t)
-	request := domain.MobileBackupRequest{RequestID: "00000000-0000-4000-8000-000000000001", ConversationType: "direct", ConversationID: "12", Since: "2026-09-01T00:00:00Z", Until: "2026-10-01T00:00:00Z"}
+	request := domain.MobileBackupRequest{
+		RequestID:        "00000000-0000-4000-8000-000000000001",
+		ConversationType: "direct",
+		ConversationID:   "12",
+		Since:            "2026-09-01T00:00:00Z",
+		Until:            "2026-10-01T00:00:00Z",
+	}
 	attempt, err := p.store.PrepareMobileBackup(context.Background(), request)
 	if err != nil {
 		t.Fatal(err)
@@ -100,5 +124,35 @@ func TestMobileOfferProbeMissingSessionPreservesPreparedAttempt(t *testing.T) {
 	saved, err := p.store.MobileBackupAttempt(context.Background(), attempt.OperationID)
 	if response.Code == 200 || err != nil || saved.State != "prepared" || saved.Revision != attempt.Revision {
 		t.Fatal("session-less probe changed attempt", err)
+	}
+}
+
+func TestMobileOfferProbeRejectsNegativePersistedBudget(t *testing.T) {
+	// Arrange: a synthetic source and an intentionally corrupted persisted budget.
+	p := mobileLedgerPort(t)
+	n := new(big.Int).Lsh(big.NewInt(1), 2047)
+	n.Add(n, big.NewInt(1))
+	der, err := x509.MarshalPKIXPublicKey(&rsa.PublicKey{N: n, E: 65537})
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := &probeOfferSource{public: base64.StdEncoding.EncodeToString(der)}
+	p.current = &collector.JoinManager{API: source}
+	ctx := context.Background()
+	attempt, err := p.store.PrepareMobileBackup(ctx, domain.MobileBackupRequest{
+		RequestID: "00000000-0000-4000-8000-000000000001", ConversationType: "direct", ConversationID: "12",
+		Since: "2026-09-01T00:00:00Z", Until: "2026-10-01T00:00:00Z", MaxArchiveBytes: 8,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = p.store.DB.ExecContext(ctx, `UPDATE mobile_backup_attempts SET request=json_set(request,'$.max_archive_bytes',-1) WHERE operation_id=?`, attempt.OperationID); err != nil {
+		t.Fatal(err)
+	}
+	// Act: exercise the diagnostic comparison with the corrupted signed value.
+	result, err := p.probeMobileOffer(ctx, attempt.OperationID, attempt.Revision)
+	// Assert: a negative limit cannot become a large unsigned allocation budget.
+	if err != nil || result["within_archive_budget"] != false {
+		t.Fatalf("negative budget accepted: %v, %v", result, err)
 	}
 }

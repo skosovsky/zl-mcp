@@ -42,18 +42,19 @@ func NewDownloader(hosts []string) (*Downloader, error) {
 }
 
 func downloadHost(host string) bool {
-	if len(host) == 0 || len(host) > 253 || host != strings.ToLower(host) || strings.HasSuffix(host, ".") || !strings.Contains(host, ".") {
+	if len(host) == 0 || len(host) > 253 || host != strings.ToLower(host) || strings.HasSuffix(host, ".") ||
+		!strings.Contains(host, ".") {
 		return false
 	}
 	if _, err := netip.ParseAddr(host); err == nil {
 		return false
 	}
-	for _, label := range strings.Split(host, ".") {
+	for label := range strings.SplitSeq(host, ".") {
 		if len(label) == 0 || len(label) > 63 || label[0] == '-' || label[len(label)-1] == '-' {
 			return false
 		}
 		for _, c := range label {
-			if !(c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '-') {
+			if (c < 'a' || c > 'z') && (c < '0' || c > '9') && c != '-' {
 				return false
 			}
 		}
@@ -62,11 +63,15 @@ func downloadHost(host string) bool {
 }
 
 func (d *Downloader) Fetch(ctx context.Context, rawURL string, expected, limit uint64) ([]byte, error) {
-	if ctx == nil || ctx.Err() != nil || d == nil || d.client == nil || expected == 0 || expected > limit || limit > MaxTotalBytes || len(rawURL) > 4096 {
+	if ctx == nil || ctx.Err() != nil || d == nil || d.client == nil || expected == 0 || expected > limit ||
+		limit > MaxTotalBytes ||
+		len(rawURL) > 4096 {
 		return nil, ErrDownload
 	}
 	u, err := url.Parse(rawURL)
-	if err != nil || u.Scheme != "https" || u.User != nil || u.Fragment != "" || !downloadHost(u.Hostname()) || !d.hosts[u.Hostname()] || u.Port() != "" && u.Port() != "443" {
+	if err != nil || u.Scheme != "https" || u.User != nil || u.Fragment != "" || !downloadHost(u.Hostname()) ||
+		!d.hosts[u.Hostname()] ||
+		u.Port() != "" && u.Port() != "443" {
 		return nil, ErrDownload
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
@@ -75,9 +80,14 @@ func (d *Downloader) Fetch(ctx context.Context, rawURL string, expected, limit u
 	}
 	req.Header.Set("Accept-Encoding", "identity")
 	if d.session != nil {
-		data, e := d.session.ConsumeMobileArchive(ctx, req, d.client, func(active context.Context, response *http.Response) ([]byte, error) {
-			return readDownload(active, response, expected)
-		})
+		data, e := d.session.ConsumeMobileArchive(
+			ctx,
+			req,
+			d.client,
+			func(active context.Context, response *http.Response) ([]byte, error) {
+				return readDownload(active, response, expected)
+			},
+		)
 		if e != nil || ctx.Err() != nil || uint64(len(data)) != expected {
 			clear(data)
 			return nil, ErrDownload
@@ -94,24 +104,54 @@ func (d *Downloader) Fetch(ctx context.Context, rawURL string, expected, limit u
 
 func readDownload(ctx context.Context, response *http.Response, expected uint64) ([]byte, error) {
 	if ctx == nil || response == nil || response.Body == nil || ctx.Err() != nil {
-		slog.Warn("mobile_archive_download_failed", "stage", "RESPONSE_CONTEXT")
+		slog.WarnContext(ctx, "mobile_archive_download_failed", "stage", "RESPONSE_CONTEXT")
 		return nil, ErrDownload
 	}
 	if response.StatusCode != http.StatusOK {
-		slog.Warn("mobile_archive_download_failed", "stage", "HTTP_STATUS", "http_status", response.StatusCode)
+		slog.WarnContext(
+			ctx,
+			"mobile_archive_download_failed",
+			"stage",
+			"HTTP_STATUS",
+			"http_status",
+			response.StatusCode,
+		)
 		return nil, ErrDownload
 	}
 	if response.Header.Get("Content-Encoding") != "" && response.Header.Get("Content-Encoding") != "identity" {
-		slog.Warn("mobile_archive_download_failed", "stage", "CONTENT_ENCODING")
+		slog.WarnContext(ctx, "mobile_archive_download_failed", "stage", "CONTENT_ENCODING")
 		return nil, ErrDownload
 	}
 	if response.ContentLength >= 0 && uint64(response.ContentLength) != expected {
-		slog.Warn("mobile_archive_download_failed", "stage", "CONTENT_LENGTH", "expected_bytes", expected, "response_bytes", response.ContentLength)
+		slog.WarnContext(
+			ctx,
+			"mobile_archive_download_failed",
+			"stage",
+			"CONTENT_LENGTH",
+			"expected_bytes",
+			expected,
+			"response_bytes",
+			response.ContentLength,
+		)
 		return nil, ErrDownload
 	}
+	//nolint:gosec // G115: Fetch bounds expected by MaxTotalBytes (512 MiB) before calling readDownload.
 	data, err := io.ReadAll(io.LimitReader(cancelReader{ctx, response.Body}, int64(expected)+1))
 	if err != nil || ctx.Err() != nil || uint64(len(data)) != expected {
-		slog.Warn("mobile_archive_download_failed", "stage", "BODY_LENGTH", "expected_bytes", expected, "received_bytes", len(data), "read_failed", err != nil, "cancelled", ctx.Err() != nil)
+		slog.WarnContext(
+			ctx,
+			"mobile_archive_download_failed",
+			"stage",
+			"BODY_LENGTH",
+			"expected_bytes",
+			expected,
+			"received_bytes",
+			len(data),
+			"read_failed",
+			err != nil,
+			"cancelled",
+			ctx.Err() != nil,
+		)
 		clear(data)
 		return nil, ErrDownload
 	}

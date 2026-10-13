@@ -6,6 +6,8 @@ import (
 )
 
 // Targets belong to one immutable SQLite image. They are never corpus tombstones.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type snapshotRecallTargets struct {
 	global map[string]struct{}
 	client map[[2]string]struct{}
@@ -32,7 +34,13 @@ func (t *snapshotRecallTargets) suppresses(row SQLiteRow) bool {
 }
 
 // Read only scalar target identity and state, never recalled content or metadata.
-func classifySnapshotRecalls(ctx context.Context, conn *sql.Conn, expected int) (targets *snapshotRecallTargets, err error) {
+//
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+func classifySnapshotRecalls(
+	ctx context.Context,
+	conn *sql.Conn,
+	expected int,
+) (targets *snapshotRecallTargets, err error) {
 	if expected < 1 || expected > 5000 {
 		return nil, ErrSnapshotControls
 	}
@@ -43,7 +51,10 @@ func classifySnapshotRecalls(ctx context.Context, conn *sql.Conn, expected int) 
 			targets = nil
 		}
 	}()
-	rows, e := conn.QueryContext(ctx, "SELECT SenderId,GlbMsgId,CliMsgId,'',TimeStamp,TTL,MsgType,MsgStatus,NULL FROM ChatContent WHERE MsgType=36 LIMIT 5001")
+	rows, e := conn.QueryContext(
+		ctx,
+		"SELECT SenderId,GlbMsgId,CliMsgId,'',TimeStamp,TTL,MsgType,MsgStatus,NULL FROM ChatContent WHERE MsgType=36 LIMIT 5001",
+	)
 	if e != nil {
 		return targets, ErrSnapshotControls
 	}
@@ -51,7 +62,17 @@ func classifySnapshotRecalls(ctx context.Context, conn *sql.Conn, expected int) 
 	count := 0
 	for rows.Next() {
 		var values [9]any
-		if rows.Scan(&values[0], &values[1], &values[2], &values[3], &values[4], &values[5], &values[6], &values[7], &values[8]) != nil {
+		if rows.Scan(
+			&values[0],
+			&values[1],
+			&values[2],
+			&values[3],
+			&values[4],
+			&values[5],
+			&values[6],
+			&values[7],
+			&values[8],
+		) != nil {
 			return targets, ErrSnapshotControls
 		}
 		row, reason := sqliteRowMode(values, 0, 253402300800000, false)
@@ -60,7 +81,9 @@ func classifySnapshotRecalls(ctx context.Context, conn *sql.Conn, expected int) 
 		key := [2]string{row.SenderID, row.ClientID}
 		_, globalDuplicate := targets.global[row.MessageID]
 		_, clientDuplicate := targets.client[key]
-		if reason != "" || row.Type != 36 || row.Status != 3 || globalDuplicate || clientDuplicate || count > expected || ctx.Err() != nil {
+		if reason != "" || row.Type != 36 || row.Status != 3 || globalDuplicate || clientDuplicate ||
+			count > expected ||
+			ctx.Err() != nil {
 			return targets, ErrSnapshotControls
 		}
 		targets.global[row.MessageID] = struct{}{}

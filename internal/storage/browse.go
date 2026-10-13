@@ -89,6 +89,7 @@ func (s *Store) Browse(
 	args = append(args, limit+1)
 	rows, err := s.DB.QueryContext(
 		ctx,
+		//nolint:gosec // G202: SQL fragments are fixed internal predicates/operators; all client values use placeholders.
 		`SELECT m.message_id,m.sender_id,m.sender_name,g.name,m.sent_at,m.text FROM visible_messages m LEFT JOIN conversations g ON g.conversation_type=m.conversation_type AND g.conversation_id=m.group_id WHERE `+strings.Join(
 			clauses,
 			" AND ",

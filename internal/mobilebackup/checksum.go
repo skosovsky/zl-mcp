@@ -29,6 +29,7 @@ func checksum32(input []byte) uint32 {
 	} else {
 		h = p5
 	}
+	//nolint:gosec // G115: xxHash32 deliberately truncates length modulo 2^32.
 	h += uint32(length)
 	for len(input) >= 4 {
 		h = bits.RotateLeft32(h+binary.LittleEndian.Uint32(input[:4])*p3, 17) * p4

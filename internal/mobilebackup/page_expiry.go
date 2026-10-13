@@ -3,7 +3,10 @@ package mobilebackup
 // ApplyExpiry applies an explicit import eligibility clock to privately owned
 // candidates. It is not the durable expiry scheduler. Validation is whole-page
 // and precedes any clearing or removal.
-func (p *PreparedRowPage) ApplyExpiry(nowMS int64) (expiredMessages, expiredQuotes int, err error) {
+func (p *PreparedRowPage) ApplyExpiry(nowMS int64) (int, int, error) {
+	var expiredMessages int
+	var expiredQuotes int
+	var err error
 	if p == nil || nowMS <= 0 {
 		return 0, 0, ErrExpiry
 	}

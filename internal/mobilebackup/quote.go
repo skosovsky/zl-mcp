@@ -7,6 +7,8 @@ import (
 
 // QuoteScalars preserves native signed values and absent fields without float conversion.
 // It does not validate identities or convert them into a corpus quote.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type QuoteScalars struct {
 	OwnerID         *int32 `json:"-"`
 	ClientMessageID *int64 `json:"-"`
@@ -34,6 +36,8 @@ func (q *QuoteScalars) Clear() {
 	}
 	*q = QuoteScalars{}
 }
+
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
 func ParseQuoteScalars(ctx context.Context, data []byte) (result QuoteScalars, err error) {
 	fields, err := ParseTLV(ctx, data)
 	if err != nil {
@@ -65,6 +69,7 @@ func ParseQuoteScalars(ctx context.Context, data []byte) (result QuoteScalars, e
 			return result, ErrTLV
 		}
 		if width == 4 {
+			//nolint:gosec // G115: reconstruct signed two's-complement wire scalars without changing their bits.
 			v := int32(binary.BigEndian.Uint32(f.Value))
 			if f.Tag == 80 {
 				result.OwnerID = &v
@@ -73,6 +78,7 @@ func ParseQuoteScalars(ctx context.Context, data []byte) (result QuoteScalars, e
 			}
 			continue
 		}
+		//nolint:gosec // G115: reconstruct signed two's-complement wire scalars without changing their bits.
 		v := int64(binary.BigEndian.Uint64(f.Value))
 		switch f.Tag {
 		case 81:

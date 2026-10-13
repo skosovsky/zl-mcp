@@ -307,6 +307,7 @@ func (s *Store) context(
 	get := func(operator, direction string, limit int) ([]domain.Message, error) {
 		rows, e := s.DB.QueryContext(
 			ctx,
+			//nolint:gosec // G202: SQL fragments are fixed internal predicates/operators; all client values use placeholders.
 			"SELECT "+messageColumns+" FROM visible_messages WHERE conversation_type=? AND group_id=? AND (sent_at "+operator+" ? OR (sent_at=? AND message_id "+operator+" ?)) ORDER BY sent_at "+direction+",message_id "+direction+" LIMIT ?",
 			ref.Type,
 			ref.ID,

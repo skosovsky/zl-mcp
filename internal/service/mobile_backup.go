@@ -42,11 +42,20 @@ func (p *membershipPort) runPreparedMobileOffer(parent context.Context, id strin
 
 // fetchPreparedMobileArchive keeps session ownership across the entire staged fetch.
 // There is deliberately no public/trusted CLI route until live acceptance.
-func (p *membershipPort) fetchPreparedMobileArchive(parent context.Context, id string, downloader *mobilebackup.Downloader) (mobilebackup.SelectedArchive, error) {
+func (p *membershipPort) fetchPreparedMobileArchive(
+	parent context.Context,
+	id string,
+	downloader *mobilebackup.Downloader,
+) (mobilebackup.SelectedArchive, error) {
 	return p.consumePreparedMobileArchive(parent, id, downloader, nil)
 }
 
-func (p *membershipPort) consumePreparedMobileArchive(parent context.Context, id string, downloader *mobilebackup.Downloader, consume func(context.Context, mobilebackup.SelectedArchive, domain.MobileBackupRequest, domain.MobileIdentitySource, string) error) (mobilebackup.SelectedArchive, error) {
+func (p *membershipPort) consumePreparedMobileArchive(
+	parent context.Context,
+	id string,
+	downloader *mobilebackup.Downloader,
+	consume func(context.Context, mobilebackup.SelectedArchive, domain.MobileBackupRequest, domain.MobileIdentitySource, string) error,
+) (mobilebackup.SelectedArchive, error) {
 	if parent == nil || !downloader.Ready() {
 		return mobilebackup.SelectedArchive{}, mobilebackup.ErrArchive
 	}
@@ -84,7 +93,9 @@ func (p *membershipPort) consumePreparedMobileArchive(parent context.Context, id
 	if e != nil || attempt.Request.ArchiveScope != "" || attempt.State != "prepared" {
 		return mobilebackup.SelectedArchive{}, mobilebackup.ErrArchive
 	}
-	identityCheck, e := mobilebackup.IdentityPayload(domain.MobileIdentityRequest{Direct: []string{attempt.Request.ConversationID}})
+	identityCheck, e := mobilebackup.IdentityPayload(
+		domain.MobileIdentityRequest{Direct: []string{attempt.Request.ConversationID}},
+	)
 	if e != nil {
 		return mobilebackup.SelectedArchive{}, mobilebackup.ErrArchive
 	}
@@ -99,13 +110,25 @@ func (p *membershipPort) consumePreparedMobileArchive(parent context.Context, id
 	}
 	selected, e := mobilebackup.FetchSelectedArchive(operation, boundDownloader, offer, attempt.Request, mapper)
 	if e != nil || operation.Err() != nil || p.current.API.AccountID() != account {
-		slog.Warn("mobile_archive_scope_failed", "stage", "FETCH_COMPLETE", "fetch_failed", e != nil, "cancelled", operation.Err() != nil, "owner_changed", p.current.API.AccountID() != account)
+		slog.WarnContext(
+			parent,
+			"mobile_archive_scope_failed",
+			"stage",
+			"FETCH_COMPLETE",
+			"fetch_failed",
+			e != nil,
+			"cancelled",
+			operation.Err() != nil,
+			"owner_changed",
+			p.current.API.AccountID() != account,
+		)
 		selected.Clear()
 		return mobilebackup.SelectedArchive{}, mobilebackup.ErrArchive
 	}
 	if consume != nil {
 		defer selected.Clear()
-		if consume(operation, selected, attempt.Request, mapper, account) != nil || operation.Err() != nil || p.current.API.AccountID() != account {
+		if consume(operation, selected, attempt.Request, mapper, account) != nil || operation.Err() != nil ||
+			p.current.API.AccountID() != account {
 			return mobilebackup.SelectedArchive{}, mobilebackup.ErrArchive
 		}
 		return mobilebackup.SelectedArchive{}, nil
@@ -113,15 +136,39 @@ func (p *membershipPort) consumePreparedMobileArchive(parent context.Context, id
 	return selected, nil
 }
 
-func (p *membershipPort) prepareFirstMobilePage(parent context.Context, id string, downloader *mobilebackup.Downloader, scratch string, nowMS int64, size int) (result mobilebackup.PreparedArchivePage, err error) {
+func (p *membershipPort) prepareFirstMobilePage(
+	parent context.Context,
+	id string,
+	downloader *mobilebackup.Downloader,
+	scratch string,
+	nowMS int64,
+	size int,
+) (mobilebackup.PreparedArchivePage, error) {
+	var result mobilebackup.PreparedArchivePage
+	var err error
 	if !filepath.IsAbs(scratch) || nowMS <= 0 || size < 1 || size > 50 {
 		return result, mobilebackup.ErrArchive
 	}
-	_, err = p.consumePreparedMobileArchive(parent, id, downloader, func(ctx context.Context, selected mobilebackup.SelectedArchive, request domain.MobileBackupRequest, mapper domain.MobileIdentitySource, account string) error {
-		var e error
-		result, e = mobilebackup.ReadPreparedArchivePage(ctx, selected, request, account, scratch, nowMS, size, nil, mapper)
-		return e
-	})
+	_, err = p.consumePreparedMobileArchive(
+		parent,
+		id,
+		downloader,
+		func(ctx context.Context, selected mobilebackup.SelectedArchive, request domain.MobileBackupRequest, mapper domain.MobileIdentitySource, account string) error {
+			var e error
+			result, e = mobilebackup.ReadPreparedArchivePage(
+				ctx,
+				selected,
+				request,
+				account,
+				scratch,
+				nowMS,
+				size,
+				nil,
+				mapper,
+			)
+			return e
+		},
+	)
 	if err != nil {
 		result.Clear()
 	}
@@ -130,15 +177,42 @@ func (p *membershipPort) prepareFirstMobilePage(parent context.Context, id strin
 
 // walkPreparedMobilePages retains the same archive/session for all bounded pages.
 // There is no public route; a future importer must atomically persist page/checkpoint.
-func (p *membershipPort) walkPreparedMobilePages(parent context.Context, id string, downloader *mobilebackup.Downloader, scratch string, nowMS int64, size, maxPages int, visit func(context.Context, mobilebackup.PreparedArchivePage) error) (result mobilebackup.ArchiveWalkSummary, err error) {
-	if !filepath.IsAbs(scratch) || nowMS <= 0 || size < 1 || size > 50 || maxPages < 1 || maxPages > 100 || visit == nil {
+func (p *membershipPort) walkPreparedMobilePages(
+	parent context.Context,
+	id string,
+	downloader *mobilebackup.Downloader,
+	scratch string,
+	nowMS int64,
+	size, maxPages int,
+	visit func(context.Context, mobilebackup.PreparedArchivePage) error,
+) (mobilebackup.ArchiveWalkSummary, error) {
+	var result mobilebackup.ArchiveWalkSummary
+	var err error
+	if !filepath.IsAbs(scratch) || nowMS <= 0 || size < 1 || size > 50 || maxPages < 1 || maxPages > 100 ||
+		visit == nil {
 		return result, mobilebackup.ErrArchive
 	}
-	_, err = p.consumePreparedMobileArchive(parent, id, downloader, func(ctx context.Context, selected mobilebackup.SelectedArchive, request domain.MobileBackupRequest, mapper domain.MobileIdentitySource, account string) error {
-		var e error
-		result, e = mobilebackup.WalkPreparedArchive(ctx, selected, request, account, scratch, nowMS, size, maxPages, mapper, visit)
-		return e
-	})
+	_, err = p.consumePreparedMobileArchive(
+		parent,
+		id,
+		downloader,
+		func(ctx context.Context, selected mobilebackup.SelectedArchive, request domain.MobileBackupRequest, mapper domain.MobileIdentitySource, account string) error {
+			var e error
+			result, e = mobilebackup.WalkPreparedArchive(
+				ctx,
+				selected,
+				request,
+				account,
+				scratch,
+				nowMS,
+				size,
+				maxPages,
+				mapper,
+				visit,
+			)
+			return e
+		},
+	)
 	if err != nil {
 		result = mobilebackup.ArchiveWalkSummary{}
 	}

@@ -32,8 +32,8 @@ func (s *Store) ReadIdentity(ctx context.Context) (string, string, error) {
 		return refs[i].ID < refs[j].ID
 	})
 	raw, err := json.Marshal(struct {
-		All      bool
-		Selected []domain.ConversationRef
+		All      bool                     `json:"All"`
+		Selected []domain.ConversationRef `json:"Selected"`
 	}{s.policy.All, refs})
 	if err != nil {
 		return "", "", err
@@ -54,7 +54,12 @@ func (s *Store) CheckContextAccess(ref domain.ConversationRef, id string, before
 			return subscriptionPermission("Conversation is outside the collection policy.")
 		}
 	} else if !s.Allowed(ref.ID) {
-		return &domain.Error{Code: "PERMISSION_DENIED", Message: "Group is outside the configured collection allowlist.", NextAction: domain.NextAction{Instruction: "Update the local collection allowlist if access is intended."}, Details: map[string]any{}}
+		return &domain.Error{
+			Code:       "PERMISSION_DENIED",
+			Message:    "Group is outside the configured collection allowlist.",
+			NextAction: domain.NextAction{Instruction: "Update the local collection allowlist if access is intended."},
+			Details:    map[string]any{},
+		}
 	}
 	return nil
 }

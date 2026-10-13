@@ -9,6 +9,8 @@ import (
 )
 
 // OwnDirectRecallSet is private whole-source evidence, not a live recall request.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type OwnDirectRecallSet struct {
 	requestID, fingerprint, account, filename string
 	digest                                    [32]byte
@@ -27,9 +29,25 @@ func (p *OwnDirectRecallSet) Clear() {
 // ReadOwnDirectRecallSet classifies all controls before returning any proof. It
 // borrows a selected immutable image and the existing session mapper; it never
 // writes the corpus, requests the phone or changes persistence eligibility.
-func ReadOwnDirectRecallSet(parent context.Context, archive SelectedArchive, request domain.MobileBackupRequest, account, scratch string, maxControls int, mapper domain.MobileIdentitySource) (result OwnDirectRecallSet, err error) {
+//
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+func ReadOwnDirectRecallSet(
+	parent context.Context,
+	archive SelectedArchive,
+	request domain.MobileBackupRequest,
+	account, scratch string,
+	maxControls int,
+	mapper domain.MobileIdentitySource,
+) (result OwnDirectRecallSet, err error) {
 	r, e := request.Normalize()
-	if parent == nil || parent.Err() != nil || e != nil || r.ConversationType != domain.ConversationDirect || !canonicalIdentity(account) || mapper == nil || maxControls < 1 || maxControls > 5000 || archive.ref != r.Ref() || archive.requestID != r.RequestID || archive.requestFingerprint != r.Fingerprint() {
+	if parent == nil || parent.Err() != nil || e != nil || r.ConversationType != domain.ConversationDirect ||
+		!canonicalIdentity(account) ||
+		mapper == nil ||
+		maxControls < 1 ||
+		maxControls > 5000 ||
+		archive.ref != r.Ref() ||
+		archive.requestID != r.RequestID ||
+		archive.requestFingerprint != r.Fingerprint() {
 		return result, ErrSQLite
 	}
 	digest := sha256.Sum256(archive.File.Data)
@@ -47,7 +65,16 @@ func ReadOwnDirectRecallSet(parent context.Context, archive SelectedArchive, req
 	mapped := map[string]string{}
 	plainOwner := ""
 	for {
-		batch, readErr := readSQLitePage(ctx, archive.File, scratch, since, until, min(50, maxControls-examined), after, true)
+		batch, readErr := readSQLitePage(
+			ctx,
+			archive.File,
+			scratch,
+			since,
+			until,
+			min(50, maxControls-examined),
+			after,
+			true,
+		)
 		if readErr != nil {
 			return result, ErrSQLite
 		}
@@ -81,7 +108,9 @@ func ReadOwnDirectRecallSet(parent context.Context, archive SelectedArchive, req
 					return ErrSQLite
 				}
 				for _, pair := range pairs {
-					if pair.Group || !requested[pair.Plain] || mapped[pair.Plain] != "" || pair.Session != account || !canonicalIdentity(pair.Plain) || (plainOwner != "" && plainOwner != pair.Plain) {
+					if pair.Group || !requested[pair.Plain] || mapped[pair.Plain] != "" || pair.Session != account ||
+						!canonicalIdentity(pair.Plain) ||
+						(plainOwner != "" && plainOwner != pair.Plain) {
 						return ErrSnapshotSourceUnsupported
 					}
 					mapped[pair.Plain] = pair.Session
@@ -92,11 +121,20 @@ func ReadOwnDirectRecallSet(parent context.Context, archive SelectedArchive, req
 				if mapped[row.SenderID] != account {
 					return ErrSnapshotSourceUnsupported
 				}
-				result.Recalls = append(result.Recalls, domain.MobileHistoryRecall{Conversation: r.Ref(), MessageID: row.MessageID, SenderID: account, RecordAtMS: row.TimestampMS})
+				result.Recalls = append(
+					result.Recalls,
+					domain.MobileHistoryRecall{
+						Conversation: r.Ref(),
+						MessageID:    row.MessageID,
+						SenderID:     account,
+						RecordAtMS:   row.TimestampMS,
+					},
+				)
 			}
 			examined += batch.Examined
 			if batch.HasMore {
-				if batch.Next == nil || batch.Examined == 0 || examined >= maxControls || (after != nil && (batch.Next.TimestampMS < after.TimestampMS || batch.Next.TimestampMS == after.TimestampMS && batch.Next.RowID <= after.RowID)) {
+				if batch.Next == nil || batch.Examined == 0 || examined >= maxControls ||
+					(after != nil && (batch.Next.TimestampMS < after.TimestampMS || batch.Next.TimestampMS == after.TimestampMS && batch.Next.RowID <= after.RowID)) {
 					return ErrSQLite
 				}
 				next := *batch.Next
@@ -113,7 +151,8 @@ func ReadOwnDirectRecallSet(parent context.Context, archive SelectedArchive, req
 			break
 		}
 	}
-	if ctx.Err() != nil || examined != count || len(result.Recalls) != count || sha256.Sum256(archive.File.Data) != digest {
+	if ctx.Err() != nil || examined != count || len(result.Recalls) != count ||
+		sha256.Sum256(archive.File.Data) != digest {
 		return result, ErrSQLite
 	}
 	result.requestID, result.fingerprint, result.account, result.filename = r.RequestID, r.Fingerprint(), account, archive.File.Name

@@ -5,21 +5,22 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/skosovsky/metry"
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 // Borrowed SDK is confined to the synchronous test fixture. Production chooses
@@ -30,7 +31,9 @@ func memoryObserver(t *testing.T) (*Observer, *sdkmetric.ManualReader, *tracetes
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
 	reader := sdkmetric.NewManualReader()
 	mp := sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader))
-	p, err := metry.FromSDK(metry.SDKDependencies{TracerProvider: tp, MeterProvider: mp, Propagator: propagation.TraceContext{}})
+	p, err := metry.FromSDK(
+		metry.SDKDependencies{TracerProvider: tp, MeterProvider: mp, Propagator: propagation.TraceContext{}},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,15 +96,30 @@ func TestTechnicalAndDomainOutcomesRemainIndependentAndPrivate(t *testing.T) {
 	secret := &privateFailure{}
 	ctx := context.Background()
 	tool := "zalo_send_direct_message"
-	outcomes := []domain.Outcome{domain.OutcomeSuccess, domain.OutcomeError, domain.OutcomePartial, domain.OutcomeUnknown, domain.OutcomeCancelled}
+	outcomes := []domain.Outcome{
+		domain.OutcomeSuccess,
+		domain.OutcomeError,
+		domain.OutcomePartial,
+		domain.OutcomeUnknown,
+		domain.OutcomeCancelled,
+	}
 	var calls int
 	// Act: domain outcomes accompany nil Go errors; original error/panic survive.
 	for _, outcome := range outcomes {
-		if err := o.Execute(ctx, tool, func(context.Context) (domain.Outcome, error) { calls++; return outcome, nil }); err != nil {
+		if err := o.Execute(
+			ctx,
+			tool,
+			func(context.Context) (domain.Outcome, error) { calls++; return outcome, nil },
+		); err != nil {
 			t.Fatal("domain observation manufactured a Go error")
 		}
 	}
-	got := o.Execute(ctx, tool, func(context.Context) (domain.Outcome, error) { calls++; return domain.OutcomeSuccess, secret })
+	got := o.Execute(
+		ctx,
+		tool,
+		func(context.Context) (domain.Outcome, error) { calls++; return domain.OutcomeSuccess, secret },
+	)
+	//nolint:errorlint // Require exact passthrough identity; wrapped errors must fail this assertion.
 	if got != secret {
 		t.Fatal("original error identity changed")
 	}
@@ -113,19 +131,34 @@ func TestTechnicalAndDomainOutcomesRemainIndependentAndPrivate(t *testing.T) {
 		}()
 		_ = o.Execute(ctx, tool, func(context.Context) (domain.Outcome, error) { calls++; panic(secret) })
 	}()
-	cancelled := o.Execute(ctx, tool, func(context.Context) (domain.Outcome, error) { calls++; return domain.OutcomeSuccess, context.Canceled })
+	cancelled := o.Execute(
+		ctx,
+		tool,
+		func(context.Context) (domain.Outcome, error) { calls++; return domain.OutcomeSuccess, context.Canceled },
+	)
 	data := metrics(t, reader)
 	// Assert: technical success includes the five nil-error business outcomes.
+	//nolint:errorlint // Require exact passthrough identity; wrapped errors must fail this assertion.
 	if calls != 8 || cancelled != context.Canceled {
 		t.Fatal("observation changed invocation count/result")
 	}
 	for status, want := range map[string]int64{"success": 5, "error": 2, "panic": 1} {
-		if got := count(t, data, "executor_operation_calls", map[string]string{"operation": tool, "status": status}); got != want {
+		if got := count(
+			t,
+			data,
+			"executor_operation_calls",
+			map[string]string{"operation": tool, "status": status},
+		); got != want {
 			t.Errorf("technical %s: got %d want %d", status, got, want)
 		}
 	}
 	for outcome, want := range map[string]int64{"success": 1, "error": 2, "partial": 1, "unknown": 1, "cancelled": 2, "panic": 1} {
-		if got := count(t, data, "zl_mcp_domain_calls", map[string]string{"tool": tool, "outcome": outcome}); got != want {
+		if got := count(
+			t,
+			data,
+			"zl_mcp_domain_calls",
+			map[string]string{"tool": tool, "outcome": outcome},
+		); got != want {
 			t.Errorf("domain %s: got %d want %d", outcome, got, want)
 		}
 	}
@@ -134,8 +167,8 @@ func TestTechnicalAndDomainOutcomesRemainIndependentAndPrivate(t *testing.T) {
 		t.Errorf("got %d spans for8calls; want8hosts+8executors", len(spans))
 	}
 	payload, _ := json.Marshal(struct {
-		Metrics metricdata.ResourceMetrics
-		Spans   tracetest.SpanStubs
+		Metrics metricdata.ResourceMetrics `json:"Metrics"`
+		Spans   tracetest.SpanStubs        `json:"Spans"`
 	}{data, spans})
 	if strings.Contains(string(payload)+logs.String(), "PRIVATE_SENTINEL") || secret.formatted.Load() != 0 {
 		t.Fatal("private formatter/content reached telemetry")
@@ -158,12 +191,18 @@ func TestSignalsAndOpaqueWorkerCorrelation(t *testing.T) {
 		return o.Upstream(ctx, domain.WorkJoin, func(context.Context) error { upstreamCalls++; return nil })
 	})
 	o.ResponseBytes(ctx, "zalo_join_group", domain.TransportHTTP, 1234)
-	o.Transition(ctx, domain.WorkJoin, domain.StateRunning, domain.StateJoined, observedAge(2*time.Second))
+	o.Transition(ctx, domain.WorkJoin, domain.StateRunning, domain.StateJoined, new(2*time.Second))
 	o.Queue(ctx, domain.WorkJoin, 3)
 	// Unknown tool/state/kind/transport input creates only bounded other/unknown.
 	_ = o.Execute(ctx, secret, func(context.Context) (domain.Outcome, error) { return domain.Outcome(255), nil })
 	o.ResponseBytes(ctx, secret, domain.Transport(255), 100)
-	o.Transition(ctx, domain.WorkKind(255), domain.OperationState(255), domain.OperationState(254), observedAge(-time.Second))
+	o.Transition(
+		ctx,
+		domain.WorkKind(255),
+		domain.OperationState(255),
+		domain.OperationState(254),
+		new(-time.Second),
+	)
 	o.Queue(ctx, domain.WorkKind(255), 100)
 	data := metrics(t, reader)
 	spans := exporter.GetSpans()
@@ -189,7 +228,9 @@ func TestSignalsAndOpaqueWorkerCorrelation(t *testing.T) {
 				t.Fatal("worker must link retained execution without reusing operation ID as trace ID")
 			}
 			for _, parent := range spans {
-				if parent.Name == "zalo_join_group" && parent.SpanContext.TraceID() == s.Links[0].SpanContext.TraceID() && parent.SpanContext.SpanID() == s.Links[0].SpanContext.SpanID() {
+				if parent.Name == "zalo_join_group" &&
+					parent.SpanContext.TraceID() == s.Links[0].SpanContext.TraceID() &&
+					parent.SpanContext.SpanID() == s.Links[0].SpanContext.SpanID() {
 					linked = true
 				}
 			}
@@ -199,13 +240,18 @@ func TestSignalsAndOpaqueWorkerCorrelation(t *testing.T) {
 		t.Fatal("worker execution link missing")
 	}
 	payload, _ := json.Marshal(struct {
-		Metrics metricdata.ResourceMetrics
-		Spans   tracetest.SpanStubs
+		Metrics metricdata.ResourceMetrics `json:"Metrics"`
+		Spans   tracetest.SpanStubs        `json:"Spans"`
 	}{data, spans})
 	if strings.Contains(string(payload), secret) {
 		t.Fatal("opaque operation identity leaked")
 	}
-	if got := count(t, data, "zl_mcp_domain_calls", map[string]string{"tool": "other", "outcome": "unknown"}); got != 1 {
+	if got := count(
+		t,
+		data,
+		"zl_mcp_domain_calls",
+		map[string]string{"tool": "other", "outcome": "unknown"},
+	); got != 1 {
 		t.Fatal("unknown input not collapsed")
 	}
 }
@@ -215,12 +261,13 @@ func TestTraceCacheBoundAndExpiry(t *testing.T) {
 	o, _, _ := memoryObserver(t)
 	now := time.Now()
 	o.now = func() time.Time { return now }
-	var remembered context.Context
-	// Act.
-	_ = o.Execute(context.Background(), "zalo_send_direct_message", func(ctx context.Context) (domain.Outcome, error) { remembered = ctx; return domain.OutcomeSuccess, nil })
-	for i := 0; i < traceCacheLimit+10; i++ {
-		o.Remember(remembered, domain.WorkSend, fmt.Sprint(i))
-	}
+	// Act: populate the cache within the invocation that owns the trace context.
+	_ = o.Execute(context.Background(), "zalo_send_direct_message", func(ctx context.Context) (domain.Outcome, error) {
+		for i := range traceCacheLimit + 10 {
+			o.Remember(ctx, domain.WorkSend, strconv.Itoa(i))
+		}
+		return domain.OutcomeSuccess, nil
+	})
 	// Assert: bounded without modifying durable operation state.
 	if len(o.references) != traceCacheLimit {
 		t.Fatalf("cache size %d", len(o.references))
@@ -241,20 +288,41 @@ func TestNilObserverPreservesOriginalCallsAndErrors(t *testing.T) {
 	original := errors.New("private business failure")
 	calls := 0
 	// Act.
-	err = o.Execute(context.Background(), "anything", func(context.Context) (domain.Outcome, error) { calls++; return domain.OutcomeUnknown, original })
-	upstreamErr := o.Upstream(context.Background(), domain.WorkSend, func(context.Context) error { calls++; return original })
-	workerErr := o.Worker(context.Background(), domain.WorkSend, "opaque", func(context.Context) error { calls++; return original })
+	err = o.Execute(
+		context.Background(),
+		"anything",
+		func(context.Context) (domain.Outcome, error) { calls++; return domain.OutcomeUnknown, original },
+	)
+	upstreamErr := o.Upstream(
+		context.Background(),
+		domain.WorkSend,
+		func(context.Context) error { calls++; return original },
+	)
+	workerErr := o.Worker(
+		context.Background(),
+		domain.WorkSend,
+		"opaque",
+		func(context.Context) error { calls++; return original },
+	)
 	o.ResponseBytes(context.Background(), "anything", domain.TransportResource, 3)
 	o.Queue(context.Background(), domain.WorkHistory, 2)
-	o.Transition(context.Background(), domain.WorkHistory, domain.StateQueued, domain.StateRunning, observedAge(time.Second))
+	o.Transition(
+		context.Background(),
+		domain.WorkHistory,
+		domain.StateQueued,
+		domain.StateRunning,
+		new(time.Second),
+	)
 	o.Remember(context.Background(), domain.WorkHistory, "opaque")
 	// Assert.
+	//nolint:errorlint // Require exact passthrough identity; wrapped errors must fail this assertion.
 	if calls != 3 || err != original || upstreamErr != original || workerErr != original {
 		t.Fatal("disabled observer changed business behavior")
 	}
 }
 
-func observedAge(value time.Duration) *time.Duration { return &value }
+//go:fix inline
+func observedAge(value time.Duration) *time.Duration { return new(value) }
 
 func TestUnavailableNativeCreationOmitsAgeWithoutInventingZero(t *testing.T) {
 	// Arrange: native state remains observable even when no creation timestamp survived.
@@ -263,7 +331,12 @@ func TestUnavailableNativeCreationOmitsAgeWithoutInventingZero(t *testing.T) {
 	o.Transition(context.Background(), domain.WorkEvents, domain.StatePending, domain.StateSending, nil)
 	data := metrics(t, reader)
 	// Assert: the transition is counted; an absent timestamp cannot become a zero age sample.
-	if count(t, data, "zl_mcp_operation_transitions", map[string]string{"kind": "events", "from": "pending", "to": "sending"}) != 1 {
+	if count(
+		t,
+		data,
+		"zl_mcp_operation_transitions",
+		map[string]string{"kind": "events", "from": "pending", "to": "sending"},
+	) != 1 {
 		t.Fatal("native transition was dropped")
 	}
 	for _, scope := range data.ScopeMetrics {
@@ -284,8 +357,13 @@ func TestObservationDoesNotInvokeArbitraryErrorClassificationCallbacks(t *testin
 	o, _, _ := memoryObserver(t)
 	original := &callbackFailure{}
 	// Act.
-	err := o.Execute(context.Background(), "zalo_get_status", func(context.Context) (domain.Outcome, error) { return domain.OutcomeSuccess, original })
+	err := o.Execute(
+		context.Background(),
+		"zalo_get_status",
+		func(context.Context) (domain.Outcome, error) { return domain.OutcomeSuccess, original },
+	)
 	// Assert: the original business error survives without callback execution.
+	//nolint:errorlint // Require exact passthrough identity; wrapped errors must fail this assertion.
 	if err != original || original.calls.Load() != 0 {
 		t.Fatal("telemetry ran arbitrary error classification code")
 	}

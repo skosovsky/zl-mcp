@@ -15,6 +15,8 @@ func (QuoteValue) String() string   { return "mobile backup quote value [redacte
 func (QuoteValue) GoString() string { return "mobile backup quote value [redacted]" }
 
 // Quote is a partial native metadata decode, never a validated corpus quote.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type Quote struct {
 	Scalars                            QuoteScalars `json:"-"`
 	Message, Attachment, FromD, Status QuoteValue   `json:"-"`
@@ -34,6 +36,8 @@ func (q *Quote) Clear() {
 	}
 	*q = Quote{}
 }
+
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
 func ParseQuote(ctx context.Context, data []byte) (result Quote, err error) {
 	result.Scalars, err = ParseQuoteScalars(ctx, data)
 	if err != nil {

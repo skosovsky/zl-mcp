@@ -36,6 +36,8 @@ type Measurement struct {
 }
 
 // Measure times complete real SDK calls; admission pacing is outside each sample.
+//
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
 func Measure(ctx context.Context, root, state, kind string, count int) (result Measurement, err error) {
 	result = Measurement{
 		Kind:         kind,

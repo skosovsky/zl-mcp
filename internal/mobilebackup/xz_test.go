@@ -6,12 +6,17 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"hash/crc32"
 	"os"
 	"testing"
 )
 
-type xzVector struct{ Name, Plaintext, Compressed string }
+type xzVector struct {
+	Name       string `json:"Name"`
+	Plaintext  string `json:"Plaintext"`
+	Compressed string `json:"Compressed"`
+}
 
 func xzVectors(t *testing.T) []xzVector {
 	t.Helper()
@@ -40,7 +45,12 @@ func TestDecompressXZIndependentVectors(t *testing.T) {
 			// Arrange: Python/liblzma fixtures, not encoded by the Go decoder.
 			compressed, plain := xzHex(t, v.Compressed), xzHex(t, v.Plaintext)
 			// Act.
-			out, err := DecompressXZ(context.Background(), bytes.NewReader(compressed), int64(len(compressed)), int64(len(plain)+1))
+			out, err := DecompressXZ(
+				context.Background(),
+				bytes.NewReader(compressed),
+				int64(len(compressed)),
+				int64(len(plain)+1),
+			)
 			// Assert.
 			if err != nil || !bytes.Equal(out, plain) {
 				t.Fatalf("decode: %v, length %d", err, len(out))
@@ -56,7 +66,12 @@ func TestDecompressXZConcatenation(t *testing.T) {
 	compressed := append(append(append(append([]byte{}, a...), make([]byte, 4)...), b...), make([]byte, 8)...)
 	expected := append(xzHex(t, v[1].Plaintext), xzHex(t, v[2].Plaintext)...)
 	// Act.
-	out, err := DecompressXZ(context.Background(), bytes.NewReader(compressed), int64(len(compressed)), int64(len(expected)))
+	out, err := DecompressXZ(
+		context.Background(),
+		bytes.NewReader(compressed),
+		int64(len(compressed)),
+		int64(len(expected)),
+	)
 	// Assert.
 	if err != nil || !bytes.Equal(out, expected) {
 		t.Fatalf("concat: %v", err)
@@ -83,7 +98,7 @@ func TestXZAllocationDeclarationsRejectedBeforeDecode(t *testing.T) {
 			// Act: preflight only; dictionary allocation must never run.
 			_, err := inspectXZ(context.Background(), b, 1<<20)
 			// Assert.
-			if err != ErrXZ {
+			if !errors.Is(err, ErrXZ) {
 				t.Fatalf("unexpected preflight result: %v", err)
 			}
 		})
@@ -106,13 +121,13 @@ func TestDecompressXZCorruptionAndTruncation(t *testing.T) {
 			if !bytes.Equal(out, expected) {
 				t.Fatalf("changed content at %d escaped", i)
 			}
-		} else if err != ErrXZ || out != nil {
+		} else if !errors.Is(err, ErrXZ) || out != nil {
 			t.Fatalf("partial output at %d escaped", i)
 		}
 	}
-	for i := 0; i < len(base); i++ {
+	for i := range base {
 		out, err := DecompressXZ(context.Background(), bytes.NewReader(base[:i]), int64(len(base)), 1<<20)
-		if err != ErrXZ || out != nil {
+		if !errors.Is(err, ErrXZ) || out != nil {
 			t.Fatalf("truncation at %d escaped", i)
 		}
 	}
@@ -141,7 +156,7 @@ func TestDecompressXZLimitsAndCancellation(t *testing.T) {
 			// Act.
 			out, err := DecompressXZ(tc.ctx, bytes.NewReader(b), tc.in, tc.out)
 			// Assert.
-			if err != ErrXZ || out != nil {
+			if !errors.Is(err, ErrXZ) || out != nil {
 				t.Fatalf("budget escaped: %v", err)
 			}
 		})
@@ -155,7 +170,7 @@ func TestXZStreamAndBlockCountLimits(t *testing.T) {
 	// Act.
 	_, err := inspectXZ(context.Background(), many, MaxTotalBytes)
 	// Assert.
-	if err != ErrXZ {
+	if !errors.Is(err, ErrXZ) {
 		t.Fatal("stream count accepted")
 	}
 	// Arrange: a checksummed index declaring 1001 records, with no block body.
@@ -171,7 +186,7 @@ func TestXZStreamAndBlockCountLimits(t *testing.T) {
 	// Act.
 	_, err = inspectXZ(context.Background(), bad, MaxTotalBytes)
 	// Assert.
-	if err != ErrXZ {
+	if !errors.Is(err, ErrXZ) {
 		t.Fatal("block count accepted")
 	}
 }
@@ -214,7 +229,7 @@ func FuzzInspectXZ(f *testing.F) {
 		// Act.
 		declared, err := inspectXZ(context.Background(), b, 1<<20)
 		// Assert: no panic, nonclosed error or budget escape.
-		if err != nil && err != ErrXZ {
+		if err != nil && !errors.Is(err, ErrXZ) {
 			t.Fatal("nonclosed error")
 		}
 		if err == nil && declared > 1<<20 {

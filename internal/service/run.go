@@ -313,7 +313,7 @@ func runConfigured(
 	if configure != nil {
 		configure(handler, worker)
 	}
-	listener, err := net.Listen("tcp", c.MCP.Listen)
+	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", c.MCP.Listen)
 	if err != nil {
 		return err
 	}
@@ -325,7 +325,7 @@ func runConfigured(
 	if err = os.Remove(socket); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	ipc, err := net.Listen("unix", socket)
+	ipc, err := (&net.ListenConfig{}).Listen(ctx, "unix", socket)
 	if err != nil {
 		return err
 	}
@@ -518,6 +518,7 @@ func collectSession(
 		client, err := restore(restoreCtx, c.StateDir)
 		stop()
 		if ctx.Err() != nil {
+			//nolint:nilerr // Owner context cancellation is normal service shutdown, not a session failure requiring retry.
 			return nil
 		}
 		if err == nil {
@@ -559,6 +560,7 @@ func collectSession(
 			port.setSender(nil)
 			port.set(nil)
 			if ctx.Err() != nil {
+				//nolint:nilerr // Owner context cancellation is normal service shutdown, not a session failure requiring retry.
 				return nil
 			}
 			if err == nil {

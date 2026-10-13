@@ -68,6 +68,8 @@ func (c *modelCapture) middleware(next mcp.MethodHandler) mcp.MethodHandler {
 
 // RunModelCase is only selected by an explicitly supplied, authorized host driver.
 // The outer case watchdog owns this process and all driver descendants.
+//
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
 func RunModelCase(ctx context.Context, opts ChildOptions, cs Case, driver string) (out Output, err error) {
 	out = Output{CaseID: cs.ID, Facts: map[string]any{}}
 	if !modelScenarioSupported(cs.ID) {
@@ -94,7 +96,7 @@ func RunModelCase(ctx context.Context, opts ChildOptions, cs Case, driver string
 		capture.allowed[name] = true
 	}
 	f.Server.AddReceivingMiddleware(capture.middleware)
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "127.0.0.1:0")
 	if err != nil {
 		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		f.Close()

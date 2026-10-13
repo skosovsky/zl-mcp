@@ -26,10 +26,12 @@ func process(ctx context.Context, dir string, env []string, args []string, limit
 	defer outR.Close()
 	errR, errW, err := os.Pipe()
 	if err != nil {
+		//nolint:gosec // G104: process/temporary-workspace cleanup cannot replace the original failure or watchdog outcome.
 		outW.Close()
 		return nil, nil, -1, err
 	}
 	defer errR.Close()
+	//nolint:gosec,noctx // The group watchdog owns cancellation, Kill and Wait. G204: explicitly selected executable/argv are invoked without shell interpolation under the group watchdog.
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = dir
 	cmd.Env = env
@@ -38,11 +40,15 @@ func process(ctx context.Context, dir string, env []string, args []string, limit
 	cmd.Stdin = nil
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err = cmd.Start(); err != nil {
+		//nolint:gosec // G104: process/temporary-workspace cleanup cannot replace the original failure or watchdog outcome.
 		outW.Close()
+		//nolint:gosec // G104: process/temporary-workspace cleanup cannot replace the original failure or watchdog outcome.
 		errW.Close()
 		return nil, nil, -1, err
 	}
+	//nolint:gosec // G104: process/temporary-workspace cleanup cannot replace the original failure or watchdog outcome.
 	outW.Close()
+	//nolint:gosec // G104: process/temporary-workspace cleanup cannot replace the original failure or watchdog outcome.
 	errW.Close()
 	var mu sync.Mutex
 	var stdout, stderr bytes.Buffer
@@ -95,7 +101,9 @@ func process(ctx context.Context, dir string, env []string, args []string, limit
 	select {
 	case <-drained:
 	case <-time.After(2 * time.Second):
+		//nolint:gosec // G104: process/temporary-workspace cleanup cannot replace the original failure or watchdog outcome.
 		outR.Close()
+		//nolint:gosec // G104: process/temporary-workspace cleanup cannot replace the original failure or watchdog outcome.
 		errR.Close()
 		<-drained
 		runErr = errors.New("inherited output descriptors did not close")

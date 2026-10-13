@@ -4,6 +4,8 @@ import "context"
 
 // BinNet retains partial quote/mention/attachment decoding and unsupported field coverage.
 // Recognition of all encountered tags does not validate message semantics.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type BinNet struct {
 	Mentions          []Mention    `json:"-"`
 	Quote             *Quote       `json:"-"`
@@ -30,6 +32,8 @@ func (b *BinNet) Clear() {
 	clear(b.UnsupportedTags)
 	*b = BinNet{}
 }
+
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
 func ParseBinNet(ctx context.Context, data []byte) (result BinNet, err error) {
 	fields, err := ParseTLV(ctx, data)
 	if err != nil {

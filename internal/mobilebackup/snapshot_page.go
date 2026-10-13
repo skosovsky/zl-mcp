@@ -33,9 +33,22 @@ func (r SnapshotRecord) TransportRecord() map[string]any {
 		sender = r.SenderID
 		mapping = "verified"
 	}
-	return map[string]any{"archive_row_id": r.ArchiveRowID, "zalo_message_id": global, "conversation_type": r.Conversation.Type, "conversation_id": r.Conversation.ID, "sender_id": sender, "sender_mapping": mapping, "direction": r.Direction, "timestamp": time.UnixMilli(r.TimestampMS).UTC().Format(time.RFC3339Nano), "text": r.Text, "text_kind": r.TextKind, "quote_anchor_eligible": false}
+	return map[string]any{
+		"archive_row_id":        r.ArchiveRowID,
+		"zalo_message_id":       global,
+		"conversation_type":     r.Conversation.Type,
+		"conversation_id":       r.Conversation.ID,
+		"sender_id":             sender,
+		"sender_mapping":        mapping,
+		"direction":             r.Direction,
+		"timestamp":             time.UnixMilli(r.TimestampMS).UTC().Format(time.RFC3339Nano),
+		"text":                  r.Text,
+		"text_kind":             r.TextKind,
+		"quote_anchor_eligible": false,
+	}
 }
 
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type SnapshotPage struct {
 	Records                                                         []SnapshotRecord `json:"-"`
 	Coverage                                                        SQLiteCoverage   `json:"-"`
@@ -61,8 +74,21 @@ func (p *SnapshotPage) Clear() {
 
 // ReadSnapshotPage performs only local projection of an authenticated retained
 // source. It neither remaps senders on the network nor produces import records.
-func (a AccountArchive) ReadSnapshotPage(ctx context.Context, sourceID string, ref domain.ConversationRef, scratch string, since, until time.Time, size int, after *SQLiteCursor, order string, nowMS int64) (result SnapshotPage, err error) {
-	if ctx == nil || ctx.Err() != nil || sourceID != a.retainedSourceID || !canonicalIdentity(a.ownerAccount) || nowMS <= 0 {
+//
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+func (a AccountArchive) ReadSnapshotPage(
+	ctx context.Context,
+	sourceID string,
+	ref domain.ConversationRef,
+	scratch string,
+	since, until time.Time,
+	size int,
+	after *SQLiteCursor,
+	order string,
+	nowMS int64,
+) (result SnapshotPage, err error) {
+	if ctx == nil || ctx.Err() != nil || sourceID != a.retainedSourceID || !canonicalIdentity(a.ownerAccount) ||
+		nowMS <= 0 {
 		return result, ErrArchive
 	}
 	if _, valid := retainedName(sourceID); !valid {
@@ -201,7 +227,19 @@ func (a AccountArchive) ReadSnapshotPage(ctx context.Context, sourceID string, r
 			textKind = "rich"
 		}
 		identity := "ar:" + sourceID + ":" + strconv.Itoa(index) + ":" + strconv.FormatInt(row.SourceRowID, 10)
-		result.Records = append(result.Records, SnapshotRecord{ArchiveRowID: identity, GlobalID: row.MessageID, SenderID: sender, Conversation: ref, Direction: direction, TextKind: textKind, Text: text, TimestampMS: row.TimestampMS})
+		result.Records = append(
+			result.Records,
+			SnapshotRecord{
+				ArchiveRowID: identity,
+				GlobalID:     row.MessageID,
+				SenderID:     sender,
+				Conversation: ref,
+				Direction:    direction,
+				TextKind:     textKind,
+				Text:         text,
+				TimestampMS:  row.TimestampMS,
+			},
+		)
 	}
 	if ctx.Err() != nil {
 		return result, ErrArchive

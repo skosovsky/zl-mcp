@@ -133,7 +133,9 @@ func readEffects(path string) (map[string]int, error) {
 	}
 	return counts, nil
 }
-func Run(ctx context.Context, opts Options) (report Report, err error) {
+func Run(ctx context.Context, opts Options) (Report, error) {
+	var report Report
+	var err error
 	report = Report{
 		Status:     "INCOMPLETE",
 		ExitStatus: 2,
@@ -282,6 +284,7 @@ func Run(ctx context.Context, opts Options) (report Report, err error) {
 					sum := sha256.Sum256([]byte(id))
 					trace := filepath.Join(opts.ReportDir, hex.EncodeToString(sum[:8]))
 					if e = os.Mkdir(trace, 0700); e != nil {
+						//nolint:gosec // G104: synthetic fixture/session cleanup preserves the primary evaluation error.
 						os.RemoveAll(dir)
 						return nil, e
 					}

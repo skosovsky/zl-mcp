@@ -51,12 +51,29 @@ func RunRecovered(ctx context.Context, store *storage.Store, source domain.Histo
 	}
 }
 
-func runOperation(ctx context.Context, store *storage.Store, source domain.HistorySource, pending storage.HistoryOperation) error {
-	return shared.ObserveWorker(ctx, domain.WorkHistory, pending.Status.OperationID, func(ctx context.Context) error { return runOperationObserved(ctx, store, source, pending) })
+func runOperation(
+	ctx context.Context,
+	store *storage.Store,
+	source domain.HistorySource,
+	pending storage.HistoryOperation,
+) error {
+	return shared.ObserveWorker(
+		ctx,
+		domain.WorkHistory,
+		pending.Status.OperationID,
+		func(ctx context.Context) error { return runOperationObserved(ctx, store, source, pending) },
+	)
 }
-func runOperationObserved(ctx context.Context, store *storage.Store, source domain.HistorySource, pending storage.HistoryOperation) error {
+
+func runOperationObserved(
+	ctx context.Context,
+	store *storage.Store,
+	source domain.HistorySource,
+	pending storage.HistoryOperation,
+) error {
 	op, err := store.ClaimHistoryOperation(ctx, pending.Status.OperationID, pending.Revision)
 	if errors.Is(err, storage.ErrHistoryState) || ctx.Err() != nil {
+		//nolint:nilerr // Claim races and cancellation stop this worker successfully; storage failures are returned separately.
 		return nil
 	}
 	if err != nil {
@@ -65,17 +82,26 @@ func runOperationObserved(ctx context.Context, store *storage.Store, source doma
 	created, _ := time.Parse(time.RFC3339Nano, op.Status.CreatedAt)
 	shared.ObserveTransition(ctx, domain.WorkHistory, pending.Status.State, op.Status.State, created)
 	stop := func(state, reason string, elapsed time.Duration) error {
-		_, err := store.StopHistoryOperation(ctx, op.Status.OperationID, op.Revision, state, reason, min(elapsed, storage.HistoryWorkBudget))
+		_, err := store.StopHistoryOperation(
+			ctx,
+			op.Status.OperationID,
+			op.Revision,
+			state,
+			reason,
+			min(elapsed, storage.HistoryWorkBudget),
+		)
 		if err == nil {
 			shared.ObserveTransition(ctx, domain.WorkHistory, op.Status.State, state, created)
 		}
 		if errors.Is(err, storage.ErrHistoryState) || ctx.Err() != nil {
+			//nolint:nilerr // Claim races and cancellation stop this worker successfully; storage failures are returned separately.
 			return nil
 		}
 		return err
 	}
 	for op.Status.State == "running" {
 		if ctx.Err() != nil {
+			//nolint:nilerr // Claim races and cancellation stop this worker successfully; storage failures are returned separately.
 			return nil
 		}
 		remaining := storage.HistoryWorkBudget - op.WorkDuration
@@ -89,6 +115,7 @@ func runOperationObserved(ctx context.Context, store *storage.Store, source doma
 		requestBudget := min(remaining, 30*time.Second)
 		op, err = store.ReserveHistoryPage(ctx, op.Status.OperationID, op.Revision, requestBudget)
 		if errors.Is(err, storage.ErrHistoryState) || ctx.Err() != nil {
+			//nolint:nilerr // Claim races and cancellation stop this worker successfully; storage failures are returned separately.
 			return nil
 		}
 		if err != nil {
@@ -102,9 +129,13 @@ func runOperationObserved(ctx context.Context, store *storage.Store, source doma
 		var page domain.HistoryPage
 		if op.Status.Source == "conversation_preload" {
 			if snapshot, ok := source.(domain.PreloadHistorySource); ok {
-				page, err = shared.ObserveUpstream(request, domain.WorkHistory, func(ctx context.Context) (domain.HistoryPage, error) {
-					return snapshot.PreloadHistoryPage(ctx, op.Status.Ref(), limit)
-				})
+				page, err = shared.ObserveUpstream(
+					request,
+					domain.WorkHistory,
+					func(ctx context.Context) (domain.HistoryPage, error) {
+						return snapshot.PreloadHistoryPage(ctx, op.Status.Ref(), limit)
+					},
+				)
 			} else {
 				err = domain.ErrHistoryUnsupported
 			}
@@ -115,17 +146,26 @@ func runOperationObserved(ctx context.Context, store *storage.Store, source doma
 				cancel()
 				return stop("partial", "missing_continuation", 0)
 			}
-			page, err = shared.ObserveUpstream(request, domain.WorkHistory, func(ctx context.Context) (domain.HistoryPage, error) {
-				return phased.HistoryPageWithPhase(ctx, op.Status.Ref(), op.Cursor, op.Status.IsOld, limit)
-			})
+			page, err = shared.ObserveUpstream(
+				request,
+				domain.WorkHistory,
+				func(ctx context.Context) (domain.HistoryPage, error) {
+					return phased.HistoryPageWithPhase(ctx, op.Status.Ref(), op.Cursor, op.Status.IsOld, limit)
+				},
+			)
 		} else {
-			page, err = shared.ObserveUpstream(request, domain.WorkHistory, func(ctx context.Context) (domain.HistoryPage, error) {
-				return source.HistoryPage(ctx, op.Status.Ref(), op.Cursor, limit)
-			})
+			page, err = shared.ObserveUpstream(
+				request,
+				domain.WorkHistory,
+				func(ctx context.Context) (domain.HistoryPage, error) {
+					return source.HistoryPage(ctx, op.Status.Ref(), op.Cursor, limit)
+				},
+			)
 		}
 		elapsed := time.Since(started)
 		cancel()
 		if ctx.Err() != nil {
+			//nolint:nilerr // Claim races and cancellation stop this worker successfully; storage failures are returned separately.
 			return nil // running checkpoint is recoverable; never fabricate success.
 		}
 		if err != nil {
@@ -154,9 +194,16 @@ func runOperationObserved(ctx context.Context, store *storage.Store, source doma
 			return stop("partial", "time_limit", elapsed)
 		}
 		commit, commitCancel := context.WithTimeout(ctx, commitBudget)
-		updated, commitErr := store.CommitHistoryOperationPage(commit, op.Status.OperationID, op.Revision, page, min(elapsed, storage.HistoryWorkBudget))
+		updated, commitErr := store.CommitHistoryOperationPage(
+			commit,
+			op.Status.OperationID,
+			op.Revision,
+			page,
+			min(elapsed, storage.HistoryWorkBudget),
+		)
 		commitCancel()
 		if errors.Is(commitErr, storage.ErrHistoryState) || ctx.Err() != nil {
+			//nolint:nilerr // Claim races and cancellation stop this worker successfully; storage failures are returned separately.
 			return nil
 		}
 		if commitErr != nil {
@@ -190,8 +237,7 @@ func logSourceFailure(operationID string, err error) {
 		category = "source_unsupported"
 	case errors.Is(err, domain.ErrHistoryInvalidPage):
 		category = "invalid_source_page"
-		var malformed *domain.HistoryPageFailure
-		if errors.As(err, &malformed) {
+		if malformed, ok := errors.AsType[*domain.HistoryPageFailure](err); ok {
 			attributes = append(attributes, "reason", malformed.Reason())
 		}
 	case errors.Is(err, context.DeadlineExceeded):

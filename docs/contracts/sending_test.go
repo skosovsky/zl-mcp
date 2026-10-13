@@ -13,7 +13,11 @@ func TestSendContractsRejectInvalidRequestsAndUnconfirmedIDs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r := map[string]any{"recipient_id": "peer", "request_id": "10000000-0000-4000-8000-000000000001", "text": strings.Repeat("界", 2048)}
+	r := map[string]any{
+		"recipient_id": "peer",
+		"request_id":   "10000000-0000-4000-8000-000000000001",
+		"text":         strings.Repeat("界", 2048),
+	}
 	// Act / Assert.
 	if err = s.Validate(r); err != nil {
 		t.Fatal(err)
@@ -28,7 +32,15 @@ func TestSendContractsRejectInvalidRequestsAndUnconfirmedIDs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	op := map[string]any{"request_id": r["request_id"], "recipient_id": "peer", "status": "unknown", "message_id": nil, "reason": "interrupted", "updated_at": "2026-10-03T12:00:00Z", "retry_safe": false}
+	op := map[string]any{
+		"request_id":   r["request_id"],
+		"recipient_id": "peer",
+		"status":       "unknown",
+		"message_id":   nil,
+		"reason":       "interrupted",
+		"updated_at":   "2026-10-03T12:00:00Z",
+		"retry_safe":   false,
+	}
 	if err = o.Validate(op); err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +63,9 @@ func TestSendTextPatternSupportsFullMatchConnectorValidation(t *testing.T) {
 			t.Fatal(err)
 		}
 		var document struct {
-			Properties map[string]struct{ Pattern string }
+			Properties map[string]struct {
+				Pattern string `json:"Pattern"`
+			} `json:"Properties"`
 		}
 		if err = json.Unmarshal(raw, &document); err != nil {
 			t.Fatal(err)
@@ -67,7 +81,13 @@ func TestSendTextPatternSupportsFullMatchConnectorValidation(t *testing.T) {
 		for _, text := range []string{"hello there", " Тест сообщения. ", "line one\nline two", "\n界\n"} {
 			// Act.
 			span := pattern.FindStringIndex(text)
-			validation := schema.Validate(map[string]any{"recipient_id": "12", "request_id": "00000000-0000-4000-8000-000000000031", "text": text})
+			validation := schema.Validate(
+				map[string]any{
+					"recipient_id": "12",
+					"request_id":   "00000000-0000-4000-8000-000000000031",
+					"text":         text,
+				},
+			)
 			// Assert: accepted text spans the whole string, including whitespace/newlines.
 			if span == nil || span[0] != 0 || span[1] != len(text) || validation != nil {
 				t.Fatal("valid text rejected", name, validation)

@@ -18,8 +18,25 @@ type ArchiveWalkSummary struct {
 
 // WalkPreparedArchive borrows archive bytes and lends each page until visit returns.
 // It performs no persistence and never downloads or dispatches another offer.
-func WalkPreparedArchive(parent context.Context, archive SelectedArchive, request domain.MobileBackupRequest, account, scratch string, nowMS int64, size, maxPages int, mapper domain.MobileIdentitySource, visit func(context.Context, PreparedArchivePage) error) (summary ArchiveWalkSummary, err error) {
-	if parent == nil || parent.Err() != nil || !filepath.IsAbs(scratch) || !canonicalIdentity(account) || nowMS <= 0 || size < 1 || size > 50 || maxPages < 1 || maxPages > 100 || mapper == nil || visit == nil {
+//
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+func WalkPreparedArchive(
+	parent context.Context,
+	archive SelectedArchive,
+	request domain.MobileBackupRequest,
+	account, scratch string,
+	nowMS int64,
+	size, maxPages int,
+	mapper domain.MobileIdentitySource,
+	visit func(context.Context, PreparedArchivePage) error,
+) (summary ArchiveWalkSummary, err error) {
+	if parent == nil || parent.Err() != nil || !filepath.IsAbs(scratch) || !canonicalIdentity(account) || nowMS <= 0 ||
+		size < 1 ||
+		size > 50 ||
+		maxPages < 1 ||
+		maxPages > 100 ||
+		mapper == nil ||
+		visit == nil {
 		return summary, ErrSQLite
 	}
 	ctx, cancel := context.WithTimeout(parent, 120*time.Second)
@@ -40,7 +57,20 @@ func WalkPreparedArchive(parent context.Context, archive SelectedArchive, reques
 			copied := *page.Next
 			next = &copied
 		}
-		counts := ArchiveWalkSummary{Pages: 1, Examined: page.Examined, Rejected: page.Rejected, Candidates: len(page.Candidates.Rows), ExpiredMessages: page.ExpiredMessages, ExpiredQuotes: page.ExpiredQuotes, DeferredControls: page.Candidates.DeferredControls, UnsupportedTypes: page.Candidates.UnsupportedTypes, MissingMetadata: page.Candidates.MissingMetadata, InvalidMetadata: page.Candidates.InvalidMetadata, UnsupportedMetadataFields: page.Candidates.UnsupportedMetadataFields, SourceHasMore: page.SourceHasMore}
+		counts := ArchiveWalkSummary{
+			Pages:                     1,
+			Examined:                  page.Examined,
+			Rejected:                  page.Rejected,
+			Candidates:                len(page.Candidates.Rows),
+			ExpiredMessages:           page.ExpiredMessages,
+			ExpiredQuotes:             page.ExpiredQuotes,
+			DeferredControls:          page.Candidates.DeferredControls,
+			UnsupportedTypes:          page.Candidates.UnsupportedTypes,
+			MissingMetadata:           page.Candidates.MissingMetadata,
+			InvalidMetadata:           page.Candidates.InvalidMetadata,
+			UnsupportedMetadataFields: page.Candidates.UnsupportedMetadataFields,
+			SourceHasMore:             page.SourceHasMore,
+		}
 		exhausted := page.BudgetExhausted
 		e = visit(ctx, page)
 		page.Clear()

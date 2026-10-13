@@ -232,7 +232,9 @@ func (c *offlineControl) prepareArchive(ctx context.Context, path string) error 
 	if err != nil {
 		return err
 	}
-	var vector struct{ Ciphertext string }
+	var vector struct {
+		Ciphertext string `json:"Ciphertext"`
+	}
 	if err = json.Unmarshal(raw, &vector); err != nil {
 		return err
 	}

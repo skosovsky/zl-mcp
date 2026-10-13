@@ -17,6 +17,7 @@ func (s *Store) migrateHistoryExpiry(ctx context.Context) error {
 	}
 	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
+	//nolint:unqueryvet // The versioned visible_messages view intentionally projects the full messages schema.
 	_, err = tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS history_message_expiry(
  conversation_type TEXT NOT NULL,conversation_id TEXT NOT NULL,message_id TEXT NOT NULL,
  expires_ms INTEGER NOT NULL CHECK(expires_ms>0),expired INTEGER NOT NULL DEFAULT 0 CHECK(expired IN (0,1)),PRIMARY KEY(conversation_type,conversation_id,message_id));

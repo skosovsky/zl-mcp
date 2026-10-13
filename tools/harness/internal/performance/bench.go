@@ -29,9 +29,11 @@ func trial(ctx context.Context, root, binary, output string, index int, kind str
 	defer cancel()
 	out, stderr, code, e := process(ctx, root, workerEnv(), command, 4<<20)
 	record["exit_status"] = code
+	//nolint:gosec // G306: this synthetic evidence contains build/host provenance, never account credentials.
 	if writeErr := os.WriteFile(filepath.Join(output, fmt.Sprintf("run-%d-%s.stderr", index, kind)), stderr, 0644); writeErr != nil {
 		e = writeErr
 	}
+	//nolint:gosec // G306: this synthetic evidence contains build/host provenance, never account credentials.
 	if writeErr := os.WriteFile(filepath.Join(output, fmt.Sprintf("run-%d-%s.stdout", index, kind)), out, 0644); writeErr != nil {
 		e = writeErr
 	}
@@ -92,6 +94,7 @@ func Bench(ctx context.Context, root, binary, buildPath, output, cpuModel string
 	if e != nil {
 		return e
 	}
+	//nolint:gosec // G301: this directory holds shareable synthetic evidence/executables, never account state.
 	if e = os.Mkdir(output, 0755); e != nil {
 		return e
 	}

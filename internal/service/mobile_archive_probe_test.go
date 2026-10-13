@@ -31,7 +31,9 @@ func TestMobileArchiveProbeBoundedOneShotWithoutPersistence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var vector struct{ Ciphertext string }
+	var vector struct {
+		Ciphertext string `json:"Ciphertext"`
+	}
 	if err = json.Unmarshal(raw, &vector); err != nil {
 		t.Fatal(err)
 	}
@@ -43,9 +45,15 @@ func TestMobileArchiveProbeBoundedOneShotWithoutPersistence(t *testing.T) {
 	n := new(big.Int).Lsh(big.NewInt(1), 2047)
 	n.Add(n, big.NewInt(1))
 	der, _ := x509.MarshalPKIXPublicKey(&rsa.PublicKey{N: n, E: 65537})
-	source := &archiveProbeSource{mobilePageSource: mobilePageSource{data: data, mobileServiceSource: mobileServiceSource{public: base64.StdEncoding.EncodeToString(der)}}}
+	source := &archiveProbeSource{data: data, public: base64.StdEncoding.EncodeToString(der)}
 	p.current = &collector.JoinManager{API: source}
-	request := domain.MobileBackupRequest{RequestID: "00000000-0000-4000-8000-000000000001", ConversationType: "direct", ConversationID: "12", Since: "2026-09-01T00:00:00Z", Until: "2026-10-01T00:00:00Z"}
+	request := domain.MobileBackupRequest{
+		RequestID:        "00000000-0000-4000-8000-000000000001",
+		ConversationType: "direct",
+		ConversationID:   "12",
+		Since:            "2026-09-01T00:00:00Z",
+		Until:            "2026-10-01T00:00:00Z",
+	}
 	attempt, err := p.store.PrepareMobileBackup(context.Background(), request)
 	if err != nil {
 		t.Fatal(err)
@@ -55,14 +63,29 @@ func TestMobileArchiveProbeBoundedOneShotWithoutPersistence(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Act: reject stale revisions before dispatch, then consume exactly once.
-	if _, err = p.probeMobileArchiveWithDownloader(context.Background(), attempt.OperationID, attempt.Revision+1, downloader); err == nil {
+	if _, err = p.probeMobileArchiveWithDownloader(
+		context.Background(),
+		attempt.OperationID,
+		attempt.Revision+1,
+		downloader,
+	); err == nil {
 		t.Fatal("stale revision accepted")
 	}
-	result, err := p.probeMobileArchiveWithDownloader(context.Background(), attempt.OperationID, attempt.Revision, downloader)
+	result, err := p.probeMobileArchiveWithDownloader(
+		context.Background(),
+		attempt.OperationID,
+		attempt.Revision,
+		downloader,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, retry := p.probeMobileArchiveWithDownloader(context.Background(), attempt.OperationID, attempt.Revision, downloader)
+	_, retry := p.probeMobileArchiveWithDownloader(
+		context.Background(),
+		attempt.OperationID,
+		attempt.Revision,
+		downloader,
+	)
 	// Assert: schema counts only, no second phone request or writes to corpus/journal.
 	encoded, _ := json.Marshal(result)
 	var value any
@@ -117,7 +140,12 @@ func TestArchiveTargetComparisonPreservesGapsAndRedactsRecords(t *testing.T) {
 	absent := archiveTargetComparison(batch, "456")
 	encoded, err := json.Marshal(got)
 	// Assert: control counts apply only to the target; gaps remain explicit even when absent.
-	if err != nil || got["matching_records"] != 2 || got["matching_controls"] != 1 || got["examined"] != 5 || got["rejected"] != 2 || got["has_more"] != true || absent["matching_records"] != 0 || absent["has_more"] != true || absent["rejected"] != 2 {
+	if err != nil || got["matching_records"] != 2 || got["matching_controls"] != 1 || got["examined"] != 5 ||
+		got["rejected"] != 2 ||
+		got["has_more"] != true ||
+		absent["matching_records"] != 0 ||
+		absent["has_more"] != true ||
+		absent["rejected"] != 2 {
 		t.Fatal("bounded comparison lost target or coverage")
 	}
 	for _, private := range []string{"18446744073709551615", "private-sender", "private-body"} {
@@ -135,12 +163,27 @@ func TestArchiveComparisonRejectsDifferentConversationBeforePhoneDispatch(t *tes
 	p, _, sendID := recallTestPort(t, recallDiagnosticText, "10")
 	source := &archiveProbeSource{}
 	p.current = &collector.JoinManager{API: source}
-	attempt, err := p.store.PrepareMobileBackup(context.Background(), domain.MobileBackupRequest{RequestID: "00000000-0000-4000-8000-000000000041", ConversationType: "direct", ConversationID: "13", Since: "2026-09-01T00:00:00Z", Until: "2026-10-01T00:00:00Z"})
+	attempt, err := p.store.PrepareMobileBackup(
+		context.Background(),
+		domain.MobileBackupRequest{
+			RequestID:        "00000000-0000-4000-8000-000000000041",
+			ConversationType: "direct",
+			ConversationID:   "13",
+			Since:            "2026-09-01T00:00:00Z",
+			Until:            "2026-10-01T00:00:00Z",
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	// Act: no downloader is needed because target binding must reject before networking.
-	_, err = p.probeMobileArchiveComparisonWithDownloader(context.Background(), attempt.OperationID, attempt.Revision, nil, sendID)
+	_, err = p.probeMobileArchiveComparisonWithDownloader(
+		context.Background(),
+		attempt.OperationID,
+		attempt.Revision,
+		nil,
+		sendID,
+	)
 	// Assert: attempt stays prepared and no phone request occurs.
 	current, statusErr := p.store.MobileBackupAttempt(context.Background(), attempt.OperationID)
 	if err == nil || statusErr != nil || current.State != "prepared" || source.offers.Load() != 0 {

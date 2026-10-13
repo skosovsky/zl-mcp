@@ -19,6 +19,7 @@ import (
 	"github.com/amrakk/zcago/errs"
 	"github.com/amrakk/zcago/listener"
 	"github.com/amrakk/zcago/model"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -29,7 +30,10 @@ type mobileBackupReceiver interface {
 	SubscribeMobileSync(string, string) (listener.MobileSyncSubscription, func(), error)
 }
 
-func (c *Client) ReceiveMobileBackupOffer(ctx context.Context, progress *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+func (c *Client) ReceiveMobileBackupOffer(
+	ctx context.Context,
+	progress *domain.MobileBackupObserver,
+) (domain.MobileBackupOffer, error) {
 	r, ok := c.api.(mobileBackupRequester)
 	if !ok {
 		return domain.MobileBackupOffer{}, domain.ErrHistoryUnsupported
@@ -39,14 +43,28 @@ func (c *Client) ReceiveMobileBackupOffer(ctx context.Context, progress *domain.
 		return domain.MobileBackupOffer{}, domain.ErrHistoryUnsupported
 	}
 	owner := c.AccountID()
-	offer, err := receiveMobileBackupOffer(ctx, owner, r, l, progress, func() (*rsa.PrivateKey, error) { return rsa.GenerateKey(rand.Reader, 2048) })
+	offer, err := receiveMobileBackupOffer(
+		ctx,
+		owner,
+		r,
+		l,
+		progress,
+		func() (*rsa.PrivateKey, error) { return rsa.GenerateKey(rand.Reader, 2048) },
+	)
 	if c.AccountID() != owner {
 		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 	}
 	return offer, err
 }
 
-func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBackupRequester, l mobileBackupReceiver, progress *domain.MobileBackupObserver, generate func() (*rsa.PrivateKey, error)) (domain.MobileBackupOffer, error) {
+func receiveMobileBackupOffer(
+	parent context.Context,
+	owner string,
+	r mobileBackupRequester,
+	l mobileBackupReceiver,
+	progress *domain.MobileBackupObserver,
+	generate func() (*rsa.PrivateKey, error),
+) (domain.MobileBackupOffer, error) {
 	if parent == nil || owner == "" {
 		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 	}
@@ -113,7 +131,7 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 	for {
 		select {
 		case <-sub.Errors:
-			slog.Warn("mobile_backup_control_invalid", "stage", "receiver")
+			slog.WarnContext(parent, "mobile_backup_control_invalid", "stage", "receiver")
 			return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 		default:
 		}
@@ -124,7 +142,7 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 			}
 			return domain.MobileBackupOffer{}, ctx.Err()
 		case <-sub.Errors:
-			slog.Warn("mobile_backup_control_invalid", "stage", "receiver")
+			slog.WarnContext(parent, "mobile_backup_control_invalid", "stage", "receiver")
 			return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 		case event := <-sub.Events:
 			logMobileControl(event, public)
@@ -161,17 +179,17 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 					if *event.Status == 2 {
 						kind = "mobile_idle"
 					}
-					slog.Info("mobile_backup_phone_status", "status", kind)
+					slog.InfoContext(parent, "mobile_backup_phone_status", "status", kind)
 					continue
 				}
 				if event.ErrorCode != nil && *event.ErrorCode != 0 {
-					slog.Warn("mobile_backup_transfer_rejected", "upstream_error_code", *event.ErrorCode)
+					slog.WarnContext(parent, "mobile_backup_transfer_rejected", "upstream_error_code", *event.ErrorCode)
 					return domain.MobileBackupOffer{}, domain.ErrMobileBackupRejected
 				}
 				if event.ErrorCode != nil && *event.ErrorCode == 0 {
 					// Native handling does not classify a zero-code control as failure.
 					// Retain the original deadline and wait for an explicit offer.
-					slog.Info("mobile_backup_phone_status", "status", "transfer_no_error")
+					slog.InfoContext(parent, "mobile_backup_phone_status", "status", "transfer_no_error")
 					continue
 				}
 				return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
@@ -180,19 +198,23 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 				if err != nil {
 					return domain.MobileBackupOffer{}, err
 				}
-				pairs, err := mapMobileIdentities(ctx, domain.MobileIdentityRequest{Direct: []string{event.UID}}, mapper)
+				pairs, err := mapMobileIdentities(
+					ctx,
+					domain.MobileIdentityRequest{Direct: []string{event.UID}},
+					mapper,
+				)
 				if err != nil {
-					slog.Warn("mobile_backup_account_invalid", "reason", "MAPPING_FAILED")
+					slog.WarnContext(parent, "mobile_backup_account_invalid", "reason", "MAPPING_FAILED")
 					return domain.MobileBackupOffer{}, err
 				}
 				if len(pairs) != 1 || pairs[0].Group || pairs[0].Plain != event.UID || pairs[0].Session != owner {
-					slog.Warn("mobile_backup_account_invalid", "reason", "MAPPED_OWNER_MISMATCH")
+					slog.WarnContext(parent, "mobile_backup_account_invalid", "reason", "MAPPED_OWNER_MISMATCH")
 					return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 				}
-				slog.Info("mobile_backup_account_verified")
+				slog.InfoContext(parent, "mobile_backup_account_verified")
 				select {
 				case <-sub.Errors:
-					slog.Warn("mobile_backup_control_invalid", "stage", "receiver")
+					slog.WarnContext(parent, "mobile_backup_control_invalid", "stage", "receiver")
 					return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
 				default:
 				}
@@ -202,7 +224,12 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 				if err := state("offer_ready"); err != nil {
 					return domain.MobileBackupOffer{}, err
 				}
-				slog.Info("mobile_backup_producer_counts", "claims", inspectMobileProducerCounts(event.DatabaseInfo))
+				slog.InfoContext(
+					parent,
+					"mobile_backup_producer_counts",
+					"claims",
+					inspectMobileProducerCounts(event.DatabaseInfo),
+				)
 				return offer, nil
 			default:
 				return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
@@ -213,7 +240,12 @@ func receiveMobileBackupOffer(parent context.Context, owner string, r mobileBack
 
 func mobileBackupOffer(e model.MobileSyncEvent, owner string, key *rsa.PrivateKey) (domain.MobileBackupOffer, error) {
 	u, err := url.Parse(e.URL)
-	if err != nil || len(e.URL) > 4096 || u.Scheme != "https" || u.Hostname() == "" || u.User != nil || u.Fragment != "" || len(e.EncryptedKey) > 4096 || !historyNumber(e.FromSequence) || len(e.FromSequence) > 20 || len(e.FromSequence) > 1 && e.FromSequence[0] == '0' {
+	if err != nil || len(e.URL) > 4096 || u.Scheme != "https" || u.Hostname() == "" || u.User != nil ||
+		u.Fragment != "" ||
+		len(e.EncryptedKey) > 4096 ||
+		!historyNumber(e.FromSequence) ||
+		len(e.FromSequence) > 20 ||
+		len(e.FromSequence) > 1 && e.FromSequence[0] == '0' {
 		return invalidMobileOffer("OFFER_ENVELOPE")
 	}
 	if _, err := strconv.ParseUint(e.FromSequence, 10, 64); err != nil {
@@ -223,7 +255,9 @@ func mobileBackupOffer(e model.MobileSyncEvent, owner string, key *rsa.PrivateKe
 		Format *int `json:"db_format"`
 	}
 	uid, uidErr := strconv.ParseUint(e.UID, 10, 64)
-	if uidErr != nil || uid == 0 || strconv.FormatUint(uid, 10) != e.UID || e.FileSize == 0 || e.FileSize > 512<<20 || json.Unmarshal([]byte(e.DatabaseInfo), &info) != nil || info.Format == nil {
+	if uidErr != nil || uid == 0 || strconv.FormatUint(uid, 10) != e.UID || e.FileSize == 0 || e.FileSize > 512<<20 ||
+		json.Unmarshal([]byte(e.DatabaseInfo), &info) != nil ||
+		info.Format == nil {
 		return invalidMobileOffer("OFFER_ACCOUNT_OR_DATABASE")
 	}
 	if *info.Format != 1 {
@@ -233,6 +267,7 @@ func mobileBackupOffer(e model.MobileSyncEvent, owner string, key *rsa.PrivateKe
 	if err != nil || len(ciphertext) != key.Size() {
 		return invalidMobileOffer("OFFER_CIPHER_ENCODING")
 	}
+	//nolint:staticcheck // SA1019: the upstream offer protocol requires PKCS#1 v1.5; OAEP would reject compatible offers.
 	plain, err := rsa.DecryptPKCS1v15(rand.Reader, key, ciphertext)
 	if err != nil {
 		return invalidMobileOffer("OFFER_RSA_DECRYPTION")
@@ -241,7 +276,14 @@ func mobileBackupOffer(e model.MobileSyncEvent, owner string, key *rsa.PrivateKe
 	if len(plain) < 16 || len(plain) > 128 {
 		return invalidMobileOffer("OFFER_KEY_LENGTH")
 	}
-	return domain.MobileBackupOffer{PlainAccountID: e.UID, SessionAccountID: owner, URL: e.URL, KeyText: strings.ToUpper(hex.EncodeToString(plain)), FileSize: e.FileSize, FromSequence: e.FromSequence}, nil
+	return domain.MobileBackupOffer{
+		PlainAccountID:   e.UID,
+		SessionAccountID: owner,
+		URL:              e.URL,
+		KeyText:          strings.ToUpper(hex.EncodeToString(plain)),
+		FileSize:         e.FileSize,
+		FromSequence:     e.FromSequence,
+	}, nil
 }
 
 func invalidMobileOffer(reason string) (domain.MobileBackupOffer, error) {
@@ -256,7 +298,22 @@ func logMobileControl(event model.MobileSyncEvent, public string) {
 	case "user_confirm", "transfer_error", "syncmsg_info":
 		action = event.Action
 	}
-	args := []any{"action", action, "key_match", event.PublicKey == public, "pc_match", event.PCName == "Web", "has_url", event.URL != "", "has_encrypted_key", event.EncryptedKey != "", "archive_bytes", event.FileSize, "has_db_info", event.DatabaseInfo != ""}
+	args := []any{
+		"action",
+		action,
+		"key_match",
+		event.PublicKey == public,
+		"pc_match",
+		event.PCName == "Web",
+		"has_url",
+		event.URL != "",
+		"has_encrypted_key",
+		event.EncryptedKey != "",
+		"archive_bytes",
+		event.FileSize,
+		"has_db_info",
+		event.DatabaseInfo != "",
+	}
 	if event.Status != nil {
 		args = append(args, "status", *event.Status)
 	}

@@ -47,6 +47,7 @@ func process(ctx context.Context, binary string, args []string, limit int, ownGr
 	defer cancel()
 	stdout := &boundedBuffer{limit: limit, cancel: cancel}
 	stderr := &boundedBuffer{limit: limit, cancel: cancel}
+	//nolint:noctx // The explicit watchdog owns process-group Kill, Wait and bounded output cleanup.
 	cmd := exec.Command(binary, args...)
 	cmd.Env = []string{"PATH=" + os.Getenv("PATH"), "TMPDIR=" + os.TempDir(), "TZ=UTC"}
 	cmd.Stdout = stdout

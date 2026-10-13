@@ -34,14 +34,17 @@ func Open(path string, maxSizeMB, backups int, fallback io.Writer) (*File, error
 		return nil, err
 	}
 	owner, ok := info.Sys().(*syscall.Stat_t)
+	//nolint:gosec // G115: supported Unix targets use the same 32-bit uid_t for Getuid and Stat_t.Uid.
 	if !info.IsDir() || !ok || owner.Uid != uint32(os.Getuid()) {
 		return nil, errors.New("log directory must belong to current user and be a real directory")
 	}
+	//nolint:gosec // G302: 0700 is a private directory; owner execute is required for traversal.
 	if err := os.Chmod(dir, 0700); err != nil {
 		return nil, err
 	}
 	if info, err := os.Lstat(path); err == nil {
 		owner, ok := info.Sys().(*syscall.Stat_t)
+		//nolint:gosec // G115: supported Unix targets use the same 32-bit uid_t for Getuid and Stat_t.Uid.
 		if !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 || !ok || owner.Uid != uint32(os.Getuid()) {
 			return nil, errors.New("log file must be regular, private and owned by current user")
 		}
@@ -55,7 +58,11 @@ func Open(path string, maxSizeMB, backups int, fallback io.Writer) (*File, error
 	if err = f.Close(); err != nil {
 		return nil, err
 	}
-	return &File{writer: &lumberjack.Logger{Filename: path, MaxSize: maxSizeMB, MaxBackups: backups}, fallback: fallback, failed: make(chan struct{})}, nil
+	return &File{
+		writer:   &lumberjack.Logger{Filename: path, MaxSize: maxSizeMB, MaxBackups: backups},
+		fallback: fallback,
+		failed:   make(chan struct{}),
+	}, nil
 }
 func (f *File) Write(p []byte) (int, error) {
 	n, err := f.writer.Write(p)
@@ -67,7 +74,10 @@ func (f *File) Write(p []byte) (int, error) {
 		if f.err == nil {
 			f.err = fmt.Errorf("file logging failed: %w", err)
 			// The diagnostic is fixed: it contains neither failed content nor credentials.
-			_, _ = io.WriteString(f.fallback, "{\"level\":\"ERROR\",\"msg\":\"file logging failed; stopping service\"}\n")
+			_, _ = io.WriteString(
+				f.fallback,
+				"{\"level\":\"ERROR\",\"msg\":\"file logging failed; stopping service\"}\n",
+			)
 			close(f.failed)
 		}
 		f.mu.Unlock()

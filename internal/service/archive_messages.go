@@ -13,6 +13,8 @@ import (
 )
 
 // Positions and read claims are private plaintext only inside an AEAD token.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type archivePosition struct {
 	Digest      [32]byte `json:"digest"`
 	Name        string   `json:"name"`
@@ -47,13 +49,31 @@ func archivePagePosition(value *mobilebackup.SQLiteCursor) *archivePosition {
 	if value == nil {
 		return nil
 	}
-	return &archivePosition{value.Digest, value.Name, value.SinceMS, value.UntilMS, value.TimestampMS, value.RowID, value.Descending, value.Snapshot}
+	return &archivePosition{
+		value.Digest,
+		value.Name,
+		value.SinceMS,
+		value.UntilMS,
+		value.TimestampMS,
+		value.RowID,
+		value.Descending,
+		value.Snapshot,
+	}
 }
 func (value *archivePosition) cursor() *mobilebackup.SQLiteCursor {
 	if value == nil {
 		return nil
 	}
-	return &mobilebackup.SQLiteCursor{Digest: value.Digest, Name: value.Name, SinceMS: value.SinceMS, UntilMS: value.UntilMS, TimestampMS: value.TimestampMS, RowID: value.RowID, Descending: value.Descending, Snapshot: value.Snapshot}
+	return &mobilebackup.SQLiteCursor{
+		Digest:      value.Digest,
+		Name:        value.Name,
+		SinceMS:     value.SinceMS,
+		UntilMS:     value.UntilMS,
+		TimestampMS: value.TimestampMS,
+		RowID:       value.RowID,
+		Descending:  value.Descending,
+		Snapshot:    value.Snapshot,
+	}
 }
 func (p *membershipPort) sealArchiveRead(ctx context.Context, purpose string, token archiveReadToken) (string, error) {
 	body, err := json.Marshal(token)
@@ -80,17 +100,33 @@ func archiveWindow(token archiveReadToken) (time.Time, time.Time, error) {
 	since, e1 := time.Parse(time.RFC3339Nano, token.Since)
 	until, e2 := time.Parse(time.RFC3339Nano, token.Until)
 	if e1 != nil || e2 != nil || !since.Before(until) {
-		return time.Time{}, time.Time{}, domain.Invalid("Archive interval must be an explicit RFC3339 [since, until) window.")
+		return time.Time{}, time.Time{}, domain.Invalid(
+			"Archive interval must be an explicit RFC3339 [since, until) window.",
+		)
 	}
 	return since, until, nil
 }
 func archiveProjectionError(err error) error {
 	if errors.Is(err, mobilebackup.ErrSnapshotControls) {
-		return &domain.Error{Code: "SOURCE_CONTROLS_UNCLASSIFIED", Message: "This archived conversation contains controls whose visibility semantics are not verified; no message prefix was returned.", Details: map[string]any{}}
+		return &domain.Error{
+			Code:    "SOURCE_CONTROLS_UNCLASSIFIED",
+			Message: "This archived conversation contains controls whose visibility semantics are not verified; no message prefix was returned.",
+			Details: map[string]any{},
+		}
 	}
-	return &domain.Error{Code: "SOURCE_UNSUPPORTED", Message: "The selected archived conversation cannot be safely projected.", Details: map[string]any{}}
+	return &domain.Error{
+		Code:    "SOURCE_UNSUPPORTED",
+		Message: "The selected archived conversation cannot be safely projected.",
+		Details: map[string]any{},
+	}
 }
-func (p *membershipPort) snapshotPage(ctx context.Context, source mobilebackup.AccountArchive, token archiveReadToken, limit int) (mobilebackup.SnapshotPage, error) {
+
+func (p *membershipPort) snapshotPage(
+	ctx context.Context,
+	source mobilebackup.AccountArchive,
+	token archiveReadToken,
+	limit int,
+) (mobilebackup.SnapshotPage, error) {
 	since, until, err := archiveWindow(token)
 	if err != nil {
 		return mobilebackup.SnapshotPage{}, err
@@ -100,17 +136,40 @@ func (p *membershipPort) snapshotPage(ctx context.Context, source mobilebackup.A
 		return mobilebackup.SnapshotPage{}, archiveReadUnavailable()
 	}
 	defer os.RemoveAll(scratch)
-	page, err := source.ReadSnapshotPage(ctx, token.Source, token.Ref, scratch, since, until, limit, token.Position.cursor(), token.Order, time.Now().UnixMilli())
+	page, err := source.ReadSnapshotPage(
+		ctx,
+		token.Source,
+		token.Ref,
+		scratch,
+		since,
+		until,
+		limit,
+		token.Position.cursor(),
+		token.Order,
+		time.Now().UnixMilli(),
+	)
 	if err != nil {
 		page.Clear()
 		return mobilebackup.SnapshotPage{}, archiveProjectionError(err)
 	}
 	return page, nil
 }
-func (p *membershipPort) archiveMessages(ctx context.Context, args map[string]any, binding string) (map[string]any, error) {
-	ref := domain.ConversationRef{Type: archiveString(args, "conversation_type"), ID: archiveString(args, "conversation_id")}
+
+func (p *membershipPort) archiveMessages(
+	ctx context.Context,
+	args map[string]any,
+	binding string,
+) (map[string]any, error) {
+	ref := domain.ConversationRef{
+		Type: archiveString(args, "conversation_type"),
+		ID:   archiveString(args, "conversation_id"),
+	}
 	if !p.store.AllowsConversation(ref) {
-		return nil, &domain.Error{Code: "PERMISSION_DENIED", Message: "Conversation is outside collection policy.", Details: map[string]any{}}
+		return nil, &domain.Error{
+			Code:    "PERMISSION_DENIED",
+			Message: "Conversation is outside collection policy.",
+			Details: map[string]any{},
+		}
 	}
 	sourceID := archiveString(args, "source_id")
 	source, manifest, err := p.library.ReadBound(ctx, sourceID, binding)
@@ -126,7 +185,17 @@ func (p *membershipPort) archiveMessages(ctx context.Context, args map[string]an
 	if order == "" {
 		order = "desc"
 	}
-	token := archiveReadToken{Version: 1, Kind: "cursor", Account: binding, Source: sourceID, Digest: manifest.Digest, Ref: ref, Since: archiveString(args, "since"), Until: archiveString(args, "until"), Order: order}
+	token := archiveReadToken{
+		Version: 1,
+		Kind:    "cursor",
+		Account: binding,
+		Source:  sourceID,
+		Digest:  manifest.Digest,
+		Ref:     ref,
+		Since:   archiveString(args, "since"),
+		Until:   archiveString(args, "until"),
+		Order:   order,
+	}
 	since, until, err := archiveWindow(token)
 	if err != nil {
 		return nil, err
@@ -134,7 +203,15 @@ func (p *membershipPort) archiveMessages(ctx context.Context, args map[string]an
 	token.Since, token.Until = since.UTC().Format(time.RFC3339Nano), until.UTC().Format(time.RFC3339Nano)
 	if sealed := archiveString(args, "cursor"); sealed != "" {
 		saved, err := p.openArchiveRead(ctx, "cursor", sealed)
-		if err != nil || saved.Account != token.Account || saved.Source != token.Source || saved.Digest != token.Digest || saved.Ref != token.Ref || saved.Since != token.Since || saved.Until != token.Until || saved.Order != token.Order || saved.Position == nil || saved.Target != "" || saved.Limit != 0 {
+		if err != nil || saved.Account != token.Account || saved.Source != token.Source ||
+			saved.Digest != token.Digest ||
+			saved.Ref != token.Ref ||
+			saved.Since != token.Since ||
+			saved.Until != token.Until ||
+			saved.Order != token.Order ||
+			saved.Position == nil ||
+			saved.Target != "" ||
+			saved.Limit != 0 {
 			return nil, archiveInvalidCursor()
 		}
 		token = saved
@@ -192,14 +269,55 @@ func (p *membershipPort) archiveMessages(ctx context.Context, args map[string]an
 		}
 	}
 	// The transport owns these counters; clearing the private page must not erase coverage.
-	coverage := map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "source_rows": page.Coverage.SourceRows, "source_information_rows": page.SourceInformation, "source_native_excluded_rows": page.SourceNativeExcluded, "source_recall_rows": page.SourceRecallRows, "suppressed_source": page.SuppressedSource, "period_rows": page.Coverage.PeriodRows, "invalid_timestamp_rows": page.Coverage.InvalidTimestamps, "source_earliest_at": earliest, "source_latest_at": latest, "wal_mode": page.WALMode, "history_complete": false, "examined": page.Examined, "rejected": page.Rejected, "expired": page.Expired, "suppressed_live": suppressed, "unresolved_senders": page.UnresolvedSenders, "unsupported_metadata_fields": page.UnsupportedMetadataFields, "unresolved_quotes": page.UnresolvedQuotes, "unresolved_mentions": page.UnresolvedMentions, "unsupported_content": maps.Clone(page.Unsupported), "coverage_scope": "examined_page", "live_visibility": "global_ids_only"}
+	coverage := map[string]any{
+		"conversation_type":           ref.Type,
+		"conversation_id":             ref.ID,
+		"source_rows":                 page.Coverage.SourceRows,
+		"source_information_rows":     page.SourceInformation,
+		"source_native_excluded_rows": page.SourceNativeExcluded,
+		"source_recall_rows":          page.SourceRecallRows,
+		"suppressed_source":           page.SuppressedSource,
+		"period_rows":                 page.Coverage.PeriodRows,
+		"invalid_timestamp_rows":      page.Coverage.InvalidTimestamps,
+		"source_earliest_at":          earliest,
+		"source_latest_at":            latest,
+		"wal_mode":                    page.WALMode,
+		"history_complete":            false,
+		"examined":                    page.Examined,
+		"rejected":                    page.Rejected,
+		"expired":                     page.Expired,
+		"suppressed_live":             suppressed,
+		"unresolved_senders":          page.UnresolvedSenders,
+		"unsupported_metadata_fields": page.UnsupportedMetadataFields,
+		"unresolved_quotes":           page.UnresolvedQuotes,
+		"unresolved_mentions":         page.UnresolvedMentions,
+		"unsupported_content":         maps.Clone(page.Unsupported),
+		"coverage_scope":              "examined_page",
+		"live_visibility":             "global_ids_only",
+	}
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
-	return map[string]any{"messages": values, "has_more": page.HasMore, "next_cursor": next, "empty_reason": empty, "coverage": coverage, "snapshot_at": manifest.CapturedAt, "coverage_observed_at": now.UTC().Format(time.RFC3339Nano), "requested_since": token.Since, "requested_until": token.Until, "source": archiveDescriptor(receipt)}, nil
+	return map[string]any{
+		"messages":             values,
+		"has_more":             page.HasMore,
+		"next_cursor":          next,
+		"empty_reason":         empty,
+		"coverage":             coverage,
+		"snapshot_at":          manifest.CapturedAt,
+		"coverage_observed_at": now.UTC().Format(time.RFC3339Nano),
+		"requested_since":      token.Since,
+		"requested_until":      token.Until,
+		"source":               archiveDescriptor(receipt),
+	}, nil
 }
 
-func (p *membershipPort) archiveExcerpt(ctx context.Context, record mobilebackup.SnapshotRecord, token archiveReadToken, limit int) (map[string]any, error) {
+func (p *membershipPort) archiveExcerpt(
+	ctx context.Context,
+	record mobilebackup.SnapshotRecord,
+	token archiveReadToken,
+	limit int,
+) (map[string]any, error) {
 	value := record.TransportRecord()
 	runes := []rune(record.Text)
 	truncated := len(runes) > 2048

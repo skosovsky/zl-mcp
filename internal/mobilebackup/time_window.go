@@ -7,15 +7,15 @@ import (
 
 // millisecondWindow maps exact [since,until) onto integer source timestamps.
 // Both bounds round upward; a nonempty time interval may contain no integer ticks.
-func millisecondWindow(since, until time.Time) (from, to int64, ok bool) {
+func millisecondWindow(since, until time.Time) (int64, int64, bool) {
 	if since.IsZero() || !until.After(since) {
 		return 0, 0, false
 	}
-	from, ok = ceilMilliseconds(since)
+	from, ok := ceilMilliseconds(since)
 	if !ok {
 		return 0, 0, false
 	}
-	to, ok = ceilMilliseconds(until)
+	to, ok := ceilMilliseconds(until)
 	if !ok || from > to {
 		return 0, 0, false
 	}

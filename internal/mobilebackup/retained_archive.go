@@ -39,6 +39,8 @@ const retainedMaxFileBytes = int64(MaxTotalBytes) + retainedMetadataLimit + 128
 
 // RetainedArchiveStore uses the existing confined key/claim/publication primitives
 // in a separate directory. It never applies staging snapshot cleanup or lifetime.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type RetainedArchiveStore struct {
 	ledger    *SnapshotStore
 	permanent bool
@@ -304,6 +306,7 @@ func (s *RetainedArchiveStore) publish(
 	}
 	plain := make([]byte, int(total))
 	defer clear(plain)
+	//nolint:gosec // G115: header length is checked against retainedMetadataLimit (1 MiB) before encoding.
 	binary.BigEndian.PutUint32(plain, uint32(len(header)))
 	copy(plain[4:], header)
 	offset := 4 + len(header)

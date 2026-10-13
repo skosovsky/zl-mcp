@@ -10,6 +10,8 @@ import (
 
 // AccountArchive owns all decoded files. It is private acquisition evidence,
 // not a complete history claim or a serializable tool result.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type AccountArchive struct {
 	ownerAccount                                   string
 	retainedSourceID                               string
@@ -45,7 +47,13 @@ func (a AccountArchive) groupFiles() int {
 func (a AccountArchive) directFiles() int { return len(a.pairs) - a.groupFiles() }
 
 // FetchAccountArchive never selects a conversation or filters by a date.
-func FetchAccountArchive(ctx context.Context, d *Downloader, offer domain.MobileBackupOffer, byteLimit int64, mapper domain.MobileIdentitySource) (AccountArchive, error) {
+func FetchAccountArchive(
+	ctx context.Context,
+	d *Downloader,
+	offer domain.MobileBackupOffer,
+	byteLimit int64,
+	mapper domain.MobileIdentitySource,
+) (AccountArchive, error) {
 	if ctx == nil || ctx.Err() != nil || d == nil || mapper == nil || byteLimit < 1 || byteLimit > 512<<20 {
 		return AccountArchive{}, ErrArchive
 	}
@@ -72,7 +80,16 @@ func FetchAccountArchive(ctx context.Context, d *Downloader, offer domain.Mobile
 	if err != nil {
 		return AccountArchive{}, ErrArchive
 	}
-	slog.Info("mobile_account_archive_acquired", "files", len(result.pairs), "direct_files", result.directFiles(), "group_files", result.groupFiles())
+	slog.InfoContext(
+		ctx,
+		"mobile_account_archive_acquired",
+		"files",
+		len(result.pairs),
+		"direct_files",
+		result.directFiles(),
+		"group_files",
+		result.groupFiles(),
+	)
 	return result, nil
 }
 
@@ -89,7 +106,13 @@ func ownAccountArchive(ctx context.Context, decoded *Format1Archive, pairs []Ide
 	if _, err := SelectArchiveIndex(ctx, decoded.Archive, pairs, ref); err != nil {
 		return AccountArchive{}, ErrArchive
 	}
-	result := AccountArchive{archive: decoded.Archive, pairs: append([]IdentityPair(nil), pairs...), ciphertextBytes: decoded.CiphertextBytes, containerBytes: decoded.ContainerBytes, trailingBytes: decoded.TrailingBytes}
+	result := AccountArchive{
+		archive:         decoded.Archive,
+		pairs:           append([]IdentityPair(nil), pairs...),
+		ciphertextBytes: decoded.CiphertextBytes,
+		containerBytes:  decoded.ContainerBytes,
+		trailingBytes:   decoded.TrailingBytes,
+	}
 	decoded.Archive = PlainArchive{}
 
 	if ctx.Err() != nil {

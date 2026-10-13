@@ -32,8 +32,8 @@ func TestChecksumIndependentReferenceVectors(t *testing.T) {
 		t.Fatal(err)
 	}
 	var vectors []struct {
-		Length   int
-		Checksum uint32
+		Length   int    `json:"Length"`
+		Checksum uint32 `json:"Checksum"`
 	}
 	if err = json.Unmarshal(raw, &vectors); err != nil {
 		t.Fatal(err)
@@ -56,7 +56,10 @@ func TestTableGoldenPreservesExactNames(t *testing.T) {
 	// Act.
 	h, consumed, err := readFileTable(body)
 	// Assert.
-	if err != nil || len(h.Files) != 2 || h.Files[0].Name != "9007199254740993.db" || h.Files[1].Name != "group_9007199254740995.db" || h.TotalBytes != 1536 || consumed != len(body) {
+	if err != nil || len(h.Files) != 2 || h.Files[0].Name != "9007199254740993.db" ||
+		h.Files[1].Name != "group_9007199254740995.db" ||
+		h.TotalBytes != 1536 ||
+		consumed != len(body) {
 		t.Fatal("table precision incorrect", err)
 	}
 }
@@ -73,6 +76,7 @@ func syntheticHeader(files []File) []byte {
 	copy(prefix, "ZDB4.0")
 	binary.BigEndian.PutUint32(prefix[6:10], uint32(14+body.Len()))
 	binary.BigEndian.PutUint32(prefix[10:14], checksum32(body.Bytes()))
+	//nolint:makezero // The populated prefix is the serialized 14-byte header; append must retain it.
 	return append(prefix, body.Bytes()...)
 }
 
@@ -87,7 +91,8 @@ func TestHeaderRejectsMalformedWholeTable(t *testing.T) {
 		// Arrange / Act
 		h, _, err := readFileTable(syntheticHeader(files)[14:])
 		// Assert: no successful prefix or private input retained in errors.
-		if !errors.Is(err, ErrHeader) || h.Files != nil || h.TotalBytes != 0 || strings.Contains(err.Error(), "private-marker") {
+		if !errors.Is(err, ErrHeader) || h.Files != nil || h.TotalBytes != 0 ||
+			strings.Contains(err.Error(), "private-marker") {
 			t.Fatal("invalid table accepted or error leaked")
 		}
 	}
@@ -99,21 +104,40 @@ func TestContainerRejectsTruncationCorruptionAndBudgetOverflow(t *testing.T) {
 	golden = append(golden, []byte("synthetic compressed payload")...)
 	binary.BigEndian.PutUint32(golden[6:10], uint32(len(golden)))
 	binary.BigEndian.PutUint32(golden[10:14], checksum32(golden[14:]))
-	for n := 0; n < len(golden); n++ {
+	for n := range golden {
 		// Act / Assert.
-		if _, err := ReadContainer(context.Background(), bytes.NewReader(golden[:n]), uint64(len(golden))); !errors.Is(err, ErrHeader) {
+		if _, err := ReadContainer(
+			context.Background(),
+			bytes.NewReader(golden[:n]),
+			uint64(len(golden)),
+		); !errors.Is(
+			err,
+			ErrHeader,
+		) {
 			t.Fatalf("truncation %d accepted", n)
 		}
 	}
 	for _, offset := range []int{18, len(golden) - 1} {
 		corrupt := append([]byte(nil), golden...)
 		corrupt[offset] ^= 1
-		if _, err := ReadContainer(context.Background(), bytes.NewReader(corrupt), uint64(len(corrupt))); !errors.Is(err, ErrHeader) {
+		if _, err := ReadContainer(
+			context.Background(),
+			bytes.NewReader(corrupt),
+			uint64(len(corrupt)),
+		); !errors.Is(
+			err,
+			ErrHeader,
+		) {
 			t.Fatal("table/payload corruption accepted")
 		}
 	}
 	reader := bytes.NewReader(golden)
-	if _, err := ReadContainer(context.Background(), reader, uint64(len(golden)-1)); !errors.Is(err, ErrHeader) || reader.Len() != len(golden)-14 {
+	if _, err := ReadContainer(
+		context.Background(),
+		reader,
+		uint64(len(golden)-1),
+	); !errors.Is(err, ErrHeader) ||
+		reader.Len() != len(golden)-14 {
 		t.Fatal("budget read beyond prefix")
 	}
 	extra := []byte("outer framing")
@@ -124,7 +148,14 @@ func TestContainerRejectsTruncationCorruptionAndBudgetOverflow(t *testing.T) {
 	}
 	clear(got.Compressed)
 	// A historical table-only fixture is not accepted as a complete container.
-	if _, err := ReadContainer(context.Background(), bytes.NewReader(goldenHeader(t)), MaxTotalBytes); !errors.Is(err, ErrHeader) {
+	if _, err := ReadContainer(
+		context.Background(),
+		bytes.NewReader(goldenHeader(t)),
+		MaxTotalBytes,
+	); !errors.Is(
+		err,
+		ErrHeader,
+	) {
 		t.Fatal("table-only fixture accepted as complete container")
 	}
 }

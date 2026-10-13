@@ -27,13 +27,17 @@ import (
 
 type historyLeaseSource struct {
 	archiveProbeSource
+
 	leaseCancel    context.CancelFunc
 	opened, closed int
 }
 
 type productionHistorySource struct{ archiveProbeSource }
 
-func (s *productionHistorySource) ReceiveMobileBackupOffer(ctx context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+func (s *productionHistorySource) ReceiveMobileBackupOffer(
+	ctx context.Context,
+	o *domain.MobileBackupObserver,
+) (domain.MobileBackupOffer, error) {
 	offer, err := s.mobilePageSource.ReceiveMobileBackupOffer(ctx, o)
 	offer.URL = "https://trans-bin.zaloapp.com/synthetic"
 	offer.SessionAccountID = "10"
@@ -46,7 +50,9 @@ func TestMobileHistoryWorkerUsesExistingCollector(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var vector struct{ Ciphertext string }
+	var vector struct {
+		Ciphertext string `json:"Ciphertext"`
+	}
 	if err = json.Unmarshal(raw, &vector); err != nil {
 		t.Fatal(err)
 	}
@@ -60,10 +66,19 @@ func TestMobileHistoryWorkerUsesExistingCollector(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	source := &productionHistorySource{archiveProbeSource{mobilePageSource{data: data, mobileServiceSource: mobileServiceSource{public: base64.StdEncoding.EncodeToString(der), historyServiceSource: historyServiceSource{started: make(chan struct{})}}}}}
+	source := &productionHistorySource{
+		archiveProbeSource{
+			mobilePageSource{data: data, public: base64.StdEncoding.EncodeToString(der), started: make(chan struct{})},
+		},
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	store, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	store, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(t.TempDir(), "messages.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +86,17 @@ func TestMobileHistoryWorkerUsesExistingCollector(t *testing.T) {
 	if err = store.BindAccount(ctx, "10"); err != nil {
 		t.Fatal(err)
 	}
-	op, err := store.PrepareMobileHistoryOperation(ctx, domain.HistoryImportRequest{RequestID: "00000000-0000-4000-8000-000000000001", ConversationType: "direct", ConversationID: "12", Since: "2026-09-01T00:00:00Z", Until: "2026-10-01T00:00:00Z", PageSize: 1})
+	op, err := store.PrepareMobileHistoryOperation(
+		ctx,
+		domain.HistoryImportRequest{
+			RequestID:        "00000000-0000-4000-8000-000000000001",
+			ConversationType: "direct",
+			ConversationID:   "12",
+			Since:            "2026-09-01T00:00:00Z",
+			Until:            "2026-10-01T00:00:00Z",
+			PageSize:         1,
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +140,9 @@ func TestMobileHistoryWorkerUsesExistingCollector(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	// Assert: a snapshot-backed page was committed silently without another restore/offer.
-	if restores.Load() != 1 || source.offers.Load() != 1 || source.downloads.Load() != 1 || op.Status.PagesObserved == 0 || op.Status.HistoryComplete {
+	if restores.Load() != 1 || source.offers.Load() != 1 || source.downloads.Load() != 1 ||
+		op.Status.PagesObserved == 0 ||
+		op.Status.HistoryComplete {
 		t.Fatal("production mobile integration failed", op.Status)
 	}
 	for _, table := range []string{"message_events", "event_deliveries"} {
@@ -158,37 +185,51 @@ func TestMobileHistorySessionLifetime(t *testing.T) {
 			callbackErr := errors.New("synthetic callback failure")
 			var scratch string
 			// Act: hold the same session through cancellation or callback completion.
-			err = p.withHistorySession(parent, downloader, func(ctx context.Context, borrowed historyimport.MobileHistorySession) error {
-				s := borrowed.(*mobileHistorySession)
-				scratch = s.scratch
-				if info, e := os.Stat(scratch); e != nil || info.Mode().Perm() != 0700 {
-					t.Fatal("scratch is not private")
-				}
-				if strings.Contains(fmt.Sprintf("%#v", s), scratch) {
-					t.Fatal("session formatting exposes private state")
-				}
-				switch mode {
-				case "parent-stop":
-					stopParent()
-				case "service-stop":
-					stopService()
-				case "session-loss":
-					source.leaseCancel()
-				case "callback-error":
-					return callbackErr
-				default:
+			err = p.withHistorySession(
+				parent,
+				downloader,
+				func(ctx context.Context, borrowed historyimport.MobileHistorySession) error {
+					s := borrowed.(*mobileHistorySession)
+					scratch = s.scratch
+					if info, e := os.Stat(scratch); e != nil || info.Mode().Perm() != 0700 {
+						t.Fatal("scratch is not private")
+					}
+					if strings.Contains(fmt.Sprintf("%#v", s), scratch) {
+						t.Fatal("session formatting exposes private state")
+					}
+					switch mode {
+					case "parent-stop":
+						stopParent()
+					case "service-stop":
+						stopService()
+					case "session-loss":
+						source.leaseCancel()
+					case "callback-error":
+						return callbackErr
+					default:
+						return nil
+					}
+					select {
+					case <-ctx.Done():
+					case <-time.After(time.Second):
+						t.Fatal("borrowed session did not stop")
+					}
+					if _, e := s.ReadHistoryPage(
+						ctx,
+						domain.MobileBackupRequest{},
+						1,
+						0,
+						nil,
+						nil,
+					); !errors.Is(
+						e,
+						domain.ErrAuthenticationRequired,
+					) {
+						t.Fatal("cancelled session remained usable", e)
+					}
 					return nil
-				}
-				select {
-				case <-ctx.Done():
-				case <-time.After(time.Second):
-					t.Fatal("borrowed session did not stop")
-				}
-				if _, e := s.ReadHistoryPage(ctx, domain.MobileBackupRequest{}, 1, 0, nil, nil); !errors.Is(e, domain.ErrAuthenticationRequired) {
-					t.Fatal("cancelled session remained usable", e)
-				}
-				return nil
-			})
+				},
+			)
 			// Assert: exactly one scope, correct failure boundary and no scratch remains.
 			var want error
 			switch mode {
@@ -217,7 +258,10 @@ func TestMobileHistorySessionRequiresAuthenticatedSource(t *testing.T) {
 	p := mobileLedgerPort(t)
 	called := false
 	// Act.
-	err := p.WithHistorySession(context.Background(), func(context.Context, historyimport.MobileHistorySession) error { called = true; return nil })
+	err := p.WithHistorySession(
+		context.Background(),
+		func(context.Context, historyimport.MobileHistorySession) error { called = true; return nil },
+	)
 	// Assert.
 	if !errors.Is(err, domain.ErrAuthenticationRequired) || called {
 		t.Fatal("missing session accepted", err)

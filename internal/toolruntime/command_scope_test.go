@@ -3,14 +3,16 @@ package toolruntime
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"testing"
+	"time"
+
 	adapter "github.com/skosovsky/zl-mcp/internal/adapters/operations"
 	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
 	"github.com/skosovsky/zl-mcp/internal/app/history"
 	"github.com/skosovsky/zl-mcp/internal/app/membership"
 	"github.com/skosovsky/zl-mcp/internal/app/messaging"
 	"github.com/skosovsky/zl-mcp/internal/domain"
-	"testing"
-	"time"
 )
 
 type commandRecorder struct {
@@ -30,11 +32,18 @@ func (c *commandRecorder) Call(ctx context.Context, name string, args any) (map[
 	}
 	return nil, c.err
 }
-func (c *commandRecorder) Acknowledge(_ context.Context, principal, id, receipt string) (eventaccess.Acknowledgement, error) {
+
+func (c *commandRecorder) Acknowledge(
+	_ context.Context,
+	principal, id, receipt string,
+) (eventaccess.Acknowledgement, error) {
 	c.calls++
 	c.name = "zalo_ack_subscription_events"
 	c.principal = principal
-	c.args, _ = json.Marshal(struct{ ID, Receipt string }{id, receipt})
+	c.args, _ = json.Marshal(struct {
+		ID      string `json:"ID"`
+		Receipt string `json:"Receipt"`
+	}{id, receipt})
 	return eventaccess.Acknowledgement{Acknowledged: true}, nil
 }
 
@@ -58,7 +67,13 @@ func TestCommandsRejectUntrustedScopeBeforeEffectsAndNeverRetryOwnerFailure(t *t
 			recorder := &commandRecorder{err: failure}
 			operations := adapter.NewReader(recorder)
 			r, err := New(base.search, base.conversations, authority, Capabilities{
-				Messaging: &messaging.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}, Events: &eventaccess.Handler{Journal: reader, Commands: recorder},
+				Messaging: &messaging.Handler{
+					Reads:    operations,
+					Commands: operations,
+				},
+				History:    &history.Handler{Reads: operations, Commands: operations},
+				Membership: &membership.Handler{Reads: operations, Commands: operations},
+				Events:     &eventaccess.Handler{Journal: reader, Commands: recorder},
 			})
 			if err != nil {
 				t.Fatal(err)
@@ -72,7 +87,10 @@ func TestCommandsRejectUntrustedScopeBeforeEffectsAndNeverRetryOwnerFailure(t *t
 			_, stale := r.Execute(context.Background(), binding, test.name, []byte(test.raw))
 			authority.shifted.Store(false)
 			// Assert: no command/ACK reached the native owner before all gates.
-			if domainCode(zero) != "PERMISSION_DENIED" || domainCode(foreign) != "PERMISSION_DENIED" || domainCode(invalid) != "INVALID_ARGUMENT" || domainCode(stale) != "PERMISSION_DENIED" || recorder.calls != 0 {
+			if domainCode(zero) != "PERMISSION_DENIED" || domainCode(foreign) != "PERMISSION_DENIED" ||
+				domainCode(invalid) != "INVALID_ARGUMENT" ||
+				domainCode(stale) != "PERMISSION_DENIED" ||
+				recorder.calls != 0 {
 				t.Fatal(zero, foreign, invalid, stale, recorder.calls)
 			}
 			// Act: one authorized invocation; the native owner remains the final authority.
@@ -82,7 +100,8 @@ func TestCommandsRejectUntrustedScopeBeforeEffectsAndNeverRetryOwnerFailure(t *t
 				t.Fatal(recorder.calls, recorder.name)
 			}
 			if test.seconds > 0 {
-				if err != failure || recorder.remaining <= time.Duration(test.seconds-1)*time.Second || recorder.remaining > time.Duration(test.seconds)*time.Second {
+				if !errors.Is(err, failure) || recorder.remaining <= time.Duration(test.seconds-1)*time.Second ||
+					recorder.remaining > time.Duration(test.seconds)*time.Second {
 					t.Fatal(err, recorder.remaining)
 				}
 			} else if err != nil || result.Acknowledgement == nil || !result.Acknowledgement.Acknowledged || recorder.principal == "" {

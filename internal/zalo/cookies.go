@@ -17,6 +17,7 @@ type savedCookie struct {
 }
 type persistentJar struct {
 	http.CookieJar
+
 	mu    sync.Mutex
 	saved map[string]savedCookie
 }
@@ -34,6 +35,7 @@ func (j *persistentJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
 		return
 	}
 	for _, c := range cookies {
+		//nolint:gosec // G124: persist the upstream cookie attributes unchanged; this is not issuing a server cookie.
 		copy := *c
 		if copy.Path == "" || copy.Path[0] != '/' {
 			path := u.Path

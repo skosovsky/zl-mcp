@@ -21,6 +21,7 @@ func (s *Store) migrateTombstones(ctx context.Context) error {
 	if done > 0 {
 		return tx.Commit()
 	}
+	//nolint:unqueryvet // The versioned visible_messages view intentionally projects the full messages schema.
 	_, e = tx.ExecContext(
 		ctx,
 		`CREATE TABLE message_tombstones(conversation_type TEXT NOT NULL,conversation_id TEXT NOT NULL,message_id TEXT NOT NULL,deleted_at TEXT NOT NULL,PRIMARY KEY(conversation_type,conversation_id,message_id));

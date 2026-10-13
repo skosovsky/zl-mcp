@@ -16,6 +16,8 @@ func (AttachmentValue) String() string   { return "mobile backup attachment valu
 func (AttachmentValue) GoString() string { return "mobile backup attachment value [redacted]" }
 
 // Attachment is private metadata, not a rendered message or permission to fetch a URL.
+//
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type Attachment struct {
 	Type, ExtInfo, Action, Params, Title, Href, Thumb, Description AttachmentValue `json:"-"`
 	Remains, ZInstantData, ZInstantMessage                         AttachmentValue `json:"-"`
@@ -41,6 +43,7 @@ func (a *Attachment) Clear() {
 	*a = Attachment{}
 }
 
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
 func ParseAttachment(ctx context.Context, data []byte) (result Attachment, err error) {
 	fields, err := ParseTLV(ctx, data)
 	if err != nil {
@@ -95,6 +98,7 @@ func ParseAttachment(ctx context.Context, data []byte) (result Attachment, err e
 			if *scalar != nil || len(f.Value) != 4 {
 				return result, ErrTLV
 			}
+			//nolint:gosec // G115: reconstruct the signed two's-complement int32 wire value without changing bits.
 			v := int32(binary.BigEndian.Uint32(f.Value))
 			*scalar = &v
 		} else {

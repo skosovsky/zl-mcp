@@ -19,6 +19,7 @@ type PreparedRow struct {
 func (PreparedRow) String() string   { return "mobile backup prepared row [redacted]" }
 func (PreparedRow) GoString() string { return "mobile backup prepared row [redacted]" }
 
+//nolint:recvcheck // Value String/GoString must redact formatted values; pointer methods mutate or clear owned state.
 type PreparedRowPage struct {
 	Rows                                                                                                      []PreparedRow                `json:"-"`
 	OwnRecalls                                                                                                []domain.MobileHistoryRecall `json:"-"`
@@ -77,7 +78,15 @@ func deferredMobileControl(t int64) bool {
 	}
 	return false
 }
-func PrepareRowPage(ctx context.Context, rows []SQLiteRow, r domain.MobileBackupRequest, account string, mapper domain.MobileIdentitySource) (result PreparedRowPage, err error) {
+
+//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+func PrepareRowPage(
+	ctx context.Context,
+	rows []SQLiteRow,
+	r domain.MobileBackupRequest,
+	account string,
+	mapper domain.MobileIdentitySource,
+) (result PreparedRowPage, err error) {
 	if ctx == nil || ctx.Err() != nil || len(rows) > 50 || !canonicalIdentity(account) || mapper == nil {
 		return result, ErrSQLite
 	}
@@ -112,7 +121,21 @@ func PrepareRowPage(ctx context.Context, rows []SQLiteRow, r domain.MobileBackup
 		if ctx.Err() != nil {
 			return result, ErrSQLite
 		}
-		verified, ok := sqliteRow([9]any{row.SenderID, row.MessageID, row.ClientID, row.Text, row.TimestampMS, row.TTL, row.Type, row.Status, row.BinNet}, from, to)
+		verified, ok := sqliteRow(
+			[9]any{
+				row.SenderID,
+				row.MessageID,
+				row.ClientID,
+				row.Text,
+				row.TimestampMS,
+				row.TTL,
+				row.Type,
+				row.Status,
+				row.BinNet,
+			},
+			from,
+			to,
+		)
 		if !ok {
 			return result, ErrSQLite
 		}
@@ -162,7 +185,10 @@ func PrepareRowPage(ctx context.Context, rows []SQLiteRow, r domain.MobileBackup
 		}
 		result.UnsupportedMetadataFields += metadata.UnsupportedFields
 		expiresMS, expiryDeclared, _ := MessageExpiryMS(row.TimestampMS, row.TTL) // Whole page checked above.
-		result.Rows = append(result.Rows, PreparedRow{Row: row, Kind: kind, Metadata: metadata, ExpiresMS: expiresMS, ExpiryDeclared: expiryDeclared})
+		result.Rows = append(
+			result.Rows,
+			PreparedRow{Row: row, Kind: kind, Metadata: metadata, ExpiresMS: expiresMS, ExpiryDeclared: expiryDeclared},
+		)
 		owned[i].BinNet = nil // Ownership transferred to the returned candidate.
 		if !seen[row.SenderID] {
 			seen[row.SenderID] = true
@@ -183,7 +209,10 @@ func PrepareRowPage(ctx context.Context, rows []SQLiteRow, r domain.MobileBackup
 	mapped := map[string]string{}
 	targets := map[string]bool{}
 	for _, pair := range pairs {
-		if ctx.Err() != nil || pair.Group || !canonicalIdentity(pair.Plain) || !canonicalIdentity(pair.Session) || !seen[pair.Plain] || mapped[pair.Plain] != "" || targets[pair.Session] {
+		if ctx.Err() != nil || pair.Group || !canonicalIdentity(pair.Plain) || !canonicalIdentity(pair.Session) ||
+			!seen[pair.Plain] ||
+			mapped[pair.Plain] != "" ||
+			targets[pair.Session] {
 			return result, ErrSQLite
 		}
 		mapped[pair.Plain] = pair.Session
@@ -192,7 +221,9 @@ func PrepareRowPage(ctx context.Context, rows []SQLiteRow, r domain.MobileBackup
 	for i := range result.Rows {
 		row := &result.Rows[i]
 		row.SenderID = mapped[row.Row.SenderID]
-		if row.SenderID == "" || normalized.ConversationType == domain.ConversationDirect && row.SenderID != account && row.SenderID != normalized.ConversationID {
+		if row.SenderID == "" ||
+			normalized.ConversationType == domain.ConversationDirect && row.SenderID != account &&
+				row.SenderID != normalized.ConversationID {
 			return result, ErrSQLite
 		}
 		row.Direction = "incoming"
@@ -219,7 +250,15 @@ func PrepareRowPage(ctx context.Context, rows []SQLiteRow, r domain.MobileBackup
 				return result, ErrSQLite
 			}
 			seenTargets[id] = true
-			result.OwnRecalls = append(result.OwnRecalls, domain.MobileHistoryRecall{Conversation: normalized.Ref(), MessageID: id, SenderID: sender, RecordAtMS: control.TimestampMS})
+			result.OwnRecalls = append(
+				result.OwnRecalls,
+				domain.MobileHistoryRecall{
+					Conversation: normalized.Ref(),
+					MessageID:    id,
+					SenderID:     sender,
+					RecordAtMS:   control.TimestampMS,
+				},
+			)
 		}
 	}
 	if ctx.Err() != nil {

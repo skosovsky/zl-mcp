@@ -29,12 +29,16 @@ type sdkInvocation struct {
 }
 type sdkBlockingRead struct {
 	*storeadapter.Reader
+
 	entered chan sdkInvocation
 	release map[string]chan struct{}
 	calls   atomic.Int64
 }
 
-func (p *sdkBlockingRead) GroupContext(ctx context.Context, input conversations.ContextRequest) (conversations.GroupContext, error) {
+func (p *sdkBlockingRead) GroupContext(
+	ctx context.Context,
+	input conversations.ContextRequest,
+) (conversations.GroupContext, error) {
 	p.calls.Add(1)
 	if gate := p.release[input.MessageID]; gate != nil {
 		select {
@@ -54,11 +58,29 @@ func sdkBlockingHTTP(t *testing.T) (*HTTPService, *storage.Store, string, *sdkBl
 	t.Helper()
 	_, owner, token := sdkIdentityService(t)
 	for _, id := range []string{"first", "second", "reused"} {
-		if err := owner.Put(context.Background(), domain.Message{GroupID: "g", ID: id, SenderID: "synthetic-peer", Text: "synthetic " + id, SentAt: time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC), Source: "live"}); err != nil {
+		if err := owner.Put(
+			context.Background(),
+			domain.Message{
+				GroupID:  "g",
+				ID:       id,
+				SenderID: "synthetic-peer",
+				Text:     "synthetic " + id,
+				SentAt:   time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
+				Source:   "live",
+			},
+		); err != nil {
 			t.Fatal(err)
 		}
 	}
-	reader := &sdkBlockingRead{Reader: storeadapter.New(owner), entered: make(chan sdkInvocation, 8), release: map[string]chan struct{}{"first": make(chan struct{}), "second": make(chan struct{}), "reused": make(chan struct{})}}
+	reader := &sdkBlockingRead{
+		Reader:  storeadapter.New(owner),
+		entered: make(chan sdkInvocation, 8),
+		release: map[string]chan struct{}{
+			"first":  make(chan struct{}),
+			"second": make(chan struct{}),
+			"reused": make(chan struct{}),
+		},
+	}
 	ports := migrationReadPorts(owner)
 	ports.Conversations.Reads = reader
 	protocol, err := events.NewSubscriptionManager(owner, t.TempDir())
@@ -82,7 +104,10 @@ func sdkNextInvocation(t *testing.T, reader *sdkBlockingRead) sdkInvocation {
 	}
 }
 func sdkContextArgs(message string) map[string]any {
-	return map[string]any{"name": "zalo_get_message_context", "arguments": map[string]any{"group_id": "g", "message_id": message, "before": 0, "after": 0}}
+	return map[string]any{
+		"name":      "zalo_get_message_context",
+		"arguments": map[string]any{"group_id": "g", "message_id": message, "before": 0, "after": 0},
+	}
 }
 
 type sdkHTTPResult struct {
@@ -94,7 +119,12 @@ func sdkHTTPCall(ctx context.Context, endpoint, token, id, message string) <-cha
 	done := make(chan sdkHTTPResult, 1)
 	go func() {
 		params := sdkContextArgs(message)
-		request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint+"/mcp", bytes.NewReader(sdkRawBody("tools/call", id, params)))
+		request, err := http.NewRequestWithContext(
+			ctx,
+			http.MethodPost,
+			endpoint+"/mcp",
+			bytes.NewReader(sdkRawBody("tools/call", id, params)),
+		)
 		if err != nil {
 			done <- sdkHTTPResult{err: err}
 			return
@@ -107,7 +137,9 @@ func sdkHTTPCall(ctx context.Context, endpoint, token, id, message string) <-cha
 		}
 		defer response.Body.Close()
 		body, err := io.ReadAll(io.LimitReader(response.Body, 256<<10))
-		var envelope struct{ ID json.RawMessage }
+		var envelope struct {
+			ID json.RawMessage `json:"ID"`
+		}
 		if err == nil {
 			err = json.Unmarshal(body, &envelope)
 		}
@@ -133,15 +165,18 @@ func sdkAssertContextReply(t *testing.T, result sdkHTTPResult, id, message strin
 	assertSDKIdentity(t, result.id, id)
 	var envelope struct {
 		Result struct {
-			IsError           bool
-			StructuredContent struct{ Anchor domain.Message }
-		}
-		Error json.RawMessage
+			IsError           bool `json:"IsError"`
+			StructuredContent struct {
+				Anchor domain.Message `json:"Anchor"`
+			} `json:"StructuredContent"`
+		} `json:"Result"`
+		Error json.RawMessage `json:"Error"`
 	}
 	if err := json.Unmarshal(result.body, &envelope); err != nil {
 		t.Fatal(err)
 	}
-	if envelope.Result.IsError || len(envelope.Error) != 0 || envelope.Result.StructuredContent.Anchor.ID != message || envelope.Result.StructuredContent.Anchor.Text != "synthetic "+message {
+	if envelope.Result.IsError || len(envelope.Error) != 0 || envelope.Result.StructuredContent.Anchor.ID != message ||
+		envelope.Result.StructuredContent.Anchor.Text != "synthetic "+message {
 		t.Fatalf("wrong correlation: %s", result.body)
 	}
 }
@@ -183,10 +218,10 @@ func TestSDK01HTTPDisconnectCancelsOnlySelectedInvocation(t *testing.T) {
 	defer selectedCancel()
 	first := sdkHTTPCall(selectedCtx, endpoint.URL, token, "9007199254740992", "first")
 	neighbor := sdkHTTPCall(ctx, endpoint.URL, token, "9007199254740993", "second")
-	invocations := map[string]context.Context{}
+	invocations := map[string]sdkInvocation{}
 	for range 2 {
 		v := sdkNextInvocation(t, reader)
-		invocations[v.message] = v.ctx
+		invocations[v.message] = v
 	}
 	// Act.
 	selectedCancel()
@@ -196,11 +231,11 @@ func TestSDK01HTTPDisconnectCancelsOnlySelectedInvocation(t *testing.T) {
 		t.Fatal("selected carrier not cancelled", failed.err)
 	}
 	select {
-	case <-invocations["first"].Done():
+	case <-invocations["first"].ctx.Done():
 	case <-time.After(5 * time.Second):
 		t.Fatal("application context survived disconnect")
 	}
-	if invocations["second"].Err() != nil {
+	if invocations["second"].ctx.Err() != nil {
 		t.Fatal("adjacent invocation cancelled")
 	}
 	close(reader.release["second"])
@@ -230,6 +265,7 @@ func (s *sdkSyntheticSender) SendDirect(context.Context, string, string, *domain
 
 type sdkLostResponse struct {
 	*httptest.ResponseRecorder
+
 	attempted atomic.Int64
 }
 
@@ -244,7 +280,12 @@ func TestSDK01LostReplyRetainsDurableUUIDAndNeverResends(t *testing.T) {
 			// Arrange: real native ledger owner; only the upstream sender is synthetic.
 			_, owner, token := sdkIdentityService(t)
 			sender := &sdkSyntheticSender{ambiguous: ambiguous}
-			manager := &nativeMessaging.Manager{Store: owner, Sender: sender, Enabled: true, Recipients: map[string]bool{"synthetic-peer": true}}
+			manager := &nativeMessaging.Manager{
+				Store:      owner,
+				Sender:     sender,
+				Enabled:    true,
+				Recipients: map[string]bool{"synthetic-peer": true},
+			}
 			ports := migrationReadPorts(owner)
 			adapter := operationsadapter.NewReader(manager)
 			ports.Operations.Messaging = &messagingapp.Handler{Reads: adapter, Commands: adapter}
@@ -257,8 +298,19 @@ func TestSDK01LostReplyRetainsDurableUUIDAndNeverResends(t *testing.T) {
 				t.Fatal(err)
 			}
 			uuid := "00000000-0000-4000-8000-000000000071"
-			params := map[string]any{"name": "zalo_send_direct_message", "arguments": map[string]any{"recipient_id": "synthetic-peer", "text": "synthetic effect only", "request_id": uuid}}
-			request := httptest.NewRequest(http.MethodPost, "http://localhost/mcp", bytes.NewReader(sdkRawBody("tools/call", "9007199254740992", params)))
+			params := map[string]any{
+				"name": "zalo_send_direct_message",
+				"arguments": map[string]any{
+					"recipient_id": "synthetic-peer",
+					"text":         "synthetic effect only",
+					"request_id":   uuid,
+				},
+			}
+			request := httptest.NewRequest(
+				http.MethodPost,
+				"http://localhost/mcp",
+				bytes.NewReader(sdkRawBody("tools/call", "9007199254740992", params)),
+			)
 			sdkHTTPHeaders(request, token, "tools/call", params)
 			lost := &sdkLostResponse{ResponseRecorder: httptest.NewRecorder()}
 			// Act: effect/ledger completion occurs, but the actual transport write fails.
@@ -272,31 +324,39 @@ func TestSDK01LostReplyRetainsDurableUUIDAndNeverResends(t *testing.T) {
 			if ambiguous {
 				wantState = "unknown"
 			}
-			if sender.calls.Load() != 1 || state.Status != wantState || lost.attempted.Load() == 0 || lost.Body.Len() != 0 {
+			if sender.calls.Load() != 1 || state.Status != wantState || lost.attempted.Load() == 0 ||
+				lost.Body.Len() != 0 {
 				t.Fatalf("effect%d state%+v attempted%d", sender.calls.Load(), state, lost.attempted.Load())
 			}
 			// Act: retry with the same domain UUID and a different envelope ID.
-			retry := httptest.NewRequest(http.MethodPost, "http://localhost/mcp", bytes.NewReader(sdkRawBody("tools/call", `"new-envelope"`, params)))
+			retry := httptest.NewRequest(
+				http.MethodPost,
+				"http://localhost/mcp",
+				bytes.NewReader(sdkRawBody("tools/call", `"new-envelope"`, params)),
+			)
 			sdkHTTPHeaders(retry, token, "tools/call", params)
 			response := httptest.NewRecorder()
 			handler.ServeHTTP(response, retry)
 			// Assert: correlation changes, domain identity/state and single effect do not.
 			var envelope struct {
-				ID     json.RawMessage
+				ID     json.RawMessage `json:"ID"`
 				Result struct {
-					IsError           bool
+					IsError           bool `json:"IsError"`
 					StructuredContent struct {
 						RequestID string `json:"request_id"`
-						Status    string
-						RetrySafe bool `json:"retry_safe"`
-					}
-				}
+						Status    string `json:"Status"`
+						RetrySafe bool   `json:"retry_safe"`
+					} `json:"StructuredContent"`
+				} `json:"Result"`
 			}
 			if err := json.Unmarshal(response.Body.Bytes(), &envelope); err != nil {
 				t.Fatal(err)
 			}
 			assertSDKIdentity(t, envelope.ID, `"new-envelope"`)
-			if sender.calls.Load() != 1 || envelope.Result.IsError || envelope.Result.StructuredContent.RequestID != uuid || envelope.Result.StructuredContent.Status != wantState || envelope.Result.StructuredContent.RetrySafe {
+			if sender.calls.Load() != 1 || envelope.Result.IsError ||
+				envelope.Result.StructuredContent.RequestID != uuid ||
+				envelope.Result.StructuredContent.Status != wantState ||
+				envelope.Result.StructuredContent.RetrySafe {
 				t.Fatalf("resend/identity/regression: %s calls%d", response.Body, sender.calls.Load())
 			}
 			if !strings.Contains(response.Body.String(), wantState) {
