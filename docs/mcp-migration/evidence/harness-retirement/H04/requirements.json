@@ -1,0 +1,17 @@
+{
+  "leaves": [
+    "current-only Go build with source/binary/buildinfo provenance",
+    "five runs three parallel kinds1000calls50warmup110ms nooldbinary",
+    "allrawrecords/stderr/manifest preserved evenfailure",
+    "bounded worker output deadlines and ownedgroup cleanup",
+    "strict15runmanifestvalidation/provenance/host/settings/finite metrics",
+    "mediansrecomputed no claimedsummary trust",
+    "fixedobjects2xbytes1.20xp95limitszero baseline0",
+    "retainedrawruncomparisoncompatibility",
+    "oldPythonperf/watchdog/tests removed",
+    "Make/docscurrentGo targets outsideCI"
+  ],
+  "validation": "tools unit/race/vet, retainedraw replay, current-only realbuild; finalreal15k endtoend gate at H06 after last source change",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

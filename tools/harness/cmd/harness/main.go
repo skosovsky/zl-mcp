@@ -8,9 +8,13 @@ import (
 	"path/filepath"
 
 	"github.com/skosovsky/zl-mcp/tools/harness/internal/architecture"
+	"github.com/skosovsky/zl-mcp/tools/harness/internal/performance"
 )
 
 func run(args []string) int {
+	if len(args) > 0 && args[0] != "architecture" {
+		return performanceCommand(args)
+	}
 	if len(args) == 0 || args[0] != "architecture" {
 		fmt.Fprintln(os.Stderr, "usage: harness architecture --root PATH --binary PATH [--evidence PATH]")
 		return 2
@@ -49,3 +53,51 @@ func run(args []string) int {
 	return 0
 }
 func main() { os.Exit(run(os.Args[1:])) }
+
+func performanceCommand(args []string) int {
+	flags := flag.NewFlagSet(args[0], flag.ContinueOnError)
+	root := flags.String("root", ".", "repository root")
+	output := flags.String("output", "", "artifact output path")
+	var execute func() error
+	switch args[0] {
+	case "current-build":
+		execute = func() error { return performance.Build(context.Background(), *root, *output) }
+	case "bench-mcp":
+		binary := flags.String("binary", "", "current evaluation executable")
+		build := flags.String("build-manifest", "", "successful build manifest")
+		cpu := flags.String("cpu-model", "", "verified host CPU model")
+		execute = func() error {
+			if *binary == "" || *build == "" {
+				return fmt.Errorf("--binary and --build-manifest required")
+			}
+			return performance.Bench(context.Background(), *root, *binary, *build, *output, *cpu)
+		}
+	case "compare-performance":
+		baseline := flags.String("baseline", "", "fixed raw baseline manifest")
+		candidate := flags.String("candidate", "", "current raw manifest")
+		bb := flags.String("baseline-build", "", "relocated archived build manifest")
+		cb := flags.String("candidate-build", "", "relocated current build manifest")
+		execute = func() error {
+			if *baseline == "" || *candidate == "" {
+				return fmt.Errorf("--baseline and --candidate required")
+			}
+			return performance.CompareFiles(*baseline, *candidate, *bb, *cb, *output)
+		}
+	default:
+		fmt.Fprintln(os.Stderr, "unknown harness command:", args[0])
+		return 2
+	}
+	if err := flags.Parse(args[1:]); err != nil {
+		return 2
+	}
+	if *output == "" || flags.NArg() != 0 {
+		fmt.Fprintln(os.Stderr, "--output required; positional arguments forbidden")
+		return 2
+	}
+	if err := execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	fmt.Println(args[0], "PASS")
+	return 0
+}

@@ -1,0 +1,23 @@
+{
+  "sha256": "5952eb9f976042843cf68b2821e953596d0e95af500140cd3e864e44a4f7874f",
+  "checks": "full tools test/race/vet PASS; boundedmetadata testsPASS; trackedSDK01 rawreplayPASS; current-onlybuildPASS",
+  "source_hashes": {
+    "Makefile": "ddfbae4f114aa6ca418cb9dcfc4395a231695bea8a608bc371307f2d9e71873d",
+    "docs/development.md": "37ad668555c21aab088164e14e8f78fbaa9d4cb439ad0c8baec6b5f424816676",
+    "docs/harness-maintenance.md": "e3d275a9a245f5b96afb970a174a944669ebcd45ae7f05edef13cd76ebc1f0e1",
+    "tools/harness/cmd/harness/main.go": "20b5cc318f984cbdcafbf067c9a9ce64ebaa8f4c7c49b22ba21f8c92aaa4a1fb",
+    "tools/harness/cmd/harness/main_test.go": "9592c6ef5224143cc804bf15a7d37b93b22ac8fb663148bf7cf5cfe761c27e16",
+    "tools/harness/go.mod": "0dd32117bebf9de6629c5223d24467ec96da25d8f98b41d0de99b0a744264415",
+    "tools/harness/go.sum": "e42794fa9b56301ad073de55cac1dea683b320ed951454d8709ffc7156088dd2",
+    "tools/harness/internal/architecture/architecture.go": "a4af4106a4c9aea37795ccda3c627eeef318b0548ec001ff533e73de6393b69e",
+    "tools/harness/internal/architecture/architecture_test.go": "6c3ab1c886550e414c5ad217deb934da0625e5a3b9148512b03b27ac189c7b32",
+    "tools/harness/internal/architecture/testdata/original-config.json": "7f593cdce444539ff4d2e518e7ffe0c3715a6feb6d45ce8d90c8f3f42c5de32b",
+    "tools/harness/internal/performance/bench.go": "6ad152137a87f93e88abf4f4b7824ab6a9d9ff9c9ea655c3fd4d2a7a6889a7df",
+    "tools/harness/internal/performance/build.go": "8b38aebc7e0a78c1fc2f76294120ee088c02ea47b5ab9d5bfc325afe23b3ad32",
+    "tools/harness/internal/performance/compare.go": "44ae0179d65512bdcc548f5bd1c697a4fae37cd449e38844e024fc3b2ef47de3",
+    "tools/harness/internal/performance/json.go": "b182f70cc08fa0fdafa1817dcee167d89845136342f785f7a3cdcd70277d4d72",
+    "tools/harness/internal/performance/performance_test.go": "00c86559a9be03722f6cf397fc112723ee55be551a08e5f8d7a58d3ba05d0781",
+    "tools/harness/internal/performance/process.go": "7cb51be949c46c2ef3931b006752ab58872caf6bc0103fbb92fac308c091bdb6",
+    "tools/harness/internal/performance/testdata/worker/main.go": "ef83bdad84914202f13734067a6cd98705c405873c31fe935588d99192173db1"
+  }
+}

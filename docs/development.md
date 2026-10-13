@@ -162,10 +162,24 @@ commit in [harness maintenance](harness-maintenance.md), not current source.
 The current service preserves all 22 tool contracts and existing native owners.
 Standalone offline scenarios and SDK identity/lifecycle tests remain mandatory.
 
-Performance is a separate host-bound gate. The transitional current-only build
-and benchmark scripts are replaced by Go tooling in H04; their fixed allocation,
-byte and absolute p95 budgets are not recalibrated. No old executable is rebuilt
-for current performance acceptance.
+Performance is a separate host-bound gate implemented by the Go tools/harness module.
+Run `make bench-mcp BENCH_CPU_MODEL="Apple M1 Max"` on the verified baseline host:
+it builds only current `./cmd/zl-mcp-eval`, then performs five runs of three parallel
+kinds with 1000 measured calls each, 50 warmup calls and 110 ms pacing. Workers
+receive only PATH/TMPDIR/TZ; each owns a bounded-output process group with a 900 s
+trial deadline and a 1200 s total deadline.
+Host metadata/toolchain commands have a separate 30 s limit; the total benchmark
+deadline includes preflight discovery. Raw stdout/stderr, all trial records,
+binary/build hashes and a current source fingerprint are retained on failure.
+Run `make performance-acceptance PERFORMANCE_CANDIDATE=/path/results/manifest.json`
+to compare the raw runs with fixed T03 evidence. The archived build manifest is
+explicitly relocated using `PERFORMANCE_BASELINE_BUILD`; no old executable is
+rebuilt or executed. The limits remain allocations ≤2× baseline, B/op ≤1.20×,
+and absolute p95 Read 7.8683 ms, Search 7.0726337 ms, Context 6.9967799 ms.
+These p95 budgets reflect the authorized candidate +10% revision, not original
+baseline latency parity. The gate recomputes medians and rejects incomplete runs,
+changed protocol, incompatible machine metadata or unverifiable provenance.
+This host-bound measurement stays outside mandatory CI; model/live are NOT_RUN.
 
 SDK identity and cancellation contract: [sdk-id-contract](mcp-migration/sdk-id-contract.md).
 Run `go test ./internal/mcpserver -run TestSDK01 -count=1` for wire identity,

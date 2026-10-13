@@ -1,0 +1,23 @@
+{
+  "candidate": "5952eb9f976042843cf68b2821e953596d0e95af500140cd3e864e44a4f7874f",
+  "completeness": {
+    "agent": "arch_go_architecture_review",
+    "passed": 10,
+    "total": 10,
+    "percent": 100
+  },
+  "correctness": {
+    "agent": "cleanup_correctness",
+    "status": "PASS"
+  },
+  "checks": "tools unit/race/vet,current-only build,trackedSDK01 replay PASS",
+  "initial_findings": [
+    "replay relied on untrackedinitialfixtures",
+    "metadata commands unbounded beforewatchdog",
+    "Make abspath spaces bug fromH03"
+  ],
+  "findings_status": "FIXED",
+  "real15k_gate": "DEFERRED_TO_H06_FINAL_SOURCE",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}
