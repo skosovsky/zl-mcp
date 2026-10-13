@@ -39,17 +39,17 @@ func Open(path string, maxSizeMB, backups int, fallback io.Writer) (*File, error
 		return nil, errors.New("log directory must belong to current user and be a real directory")
 	}
 	//nolint:gosec // G302: 0700 is a private directory; owner execute is required for traversal.
-	if err := os.Chmod(dir, 0700); err != nil {
-		return nil, err
+	if chmodErr := os.Chmod(dir, 0700); chmodErr != nil {
+		return nil, chmodErr
 	}
-	if info, err := os.Lstat(path); err == nil {
+	if info, lstatErr := os.Lstat(path); lstatErr == nil {
 		owner, ok := info.Sys().(*syscall.Stat_t)
 		//nolint:gosec // G115: supported Unix targets use the same 32-bit uid_t for Getuid and Stat_t.Uid.
 		if !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 || !ok || owner.Uid != uint32(os.Getuid()) {
 			return nil, errors.New("log file must be regular, private and owned by current user")
 		}
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return nil, err
+	} else if !errors.Is(lstatErr, os.ErrNotExist) {
+		return nil, lstatErr
 	}
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {

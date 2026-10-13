@@ -87,18 +87,9 @@ func PrepareRowPage(
 	account string,
 	mapper domain.MobileIdentitySource,
 ) (result PreparedRowPage, err error) {
-	if ctx == nil || ctx.Err() != nil || len(rows) > 50 || !canonicalIdentity(account) || mapper == nil {
-		return result, ErrSQLite
-	}
-	normalized, e := r.Normalize()
-	if e != nil || !canonicalIdentity(normalized.ConversationID) || len(rows) > normalized.MaxMessages {
-		return result, ErrSQLite
-	}
-	since, _ := time.Parse(time.RFC3339Nano, normalized.Since)
-	until, _ := time.Parse(time.RFC3339Nano, normalized.Until)
-	from, to, validWindow := millisecondWindow(since, until)
-	if !validWindow {
-		return result, ErrSQLite
+	normalized, from, to, bindingErr := bindPreparedRowRequest(ctx, rows, r, account, mapper)
+	if bindingErr != nil {
+		return result, bindingErr
 	}
 	defer func() {
 		if err != nil {
@@ -107,19 +98,55 @@ func PrepareRowPage(
 	}()
 	// Whole-page validation comes before source mapping or row classification.
 	owned := make([]SQLiteRow, 0, len(rows))
-	retained := 0
 	defer func() {
 		for i := range owned {
 			clear(owned[i].BinNet)
 		}
 	}()
+	if validationErr := validateOwnedPageRows(ctx, rows, &owned, from, to); validationErr != nil {
+		return result, validationErr
+	}
+	result.Examined = len(rows)
+	request, seen, controls, classificationErr := classifyOwnedPageRows(ctx, owned, normalized, &result)
+	if classificationErr != nil {
+		return result, classificationErr
+	}
+	if len(request.Direct) == 0 {
+		if ctx.Err() != nil {
+			return result, ErrSQLite
+		}
+		return result, nil
+	}
+	pairs, e := mapper.MapMobileBackupIdentities(ctx, request)
+	defer clear(pairs)
+	if e != nil || ctx.Err() != nil || len(pairs) != len(request.Direct) {
+		return result, ErrSQLite
+	}
+	mapped, mappingErr := validatePageIdentities(ctx, pairs, seen)
+	if mappingErr != nil {
+		return result, mappingErr
+	}
+	if senderErr := assignPageSenders(&result, mapped, normalized, account); senderErr != nil {
+		return result, senderErr
+	}
+	if recallErr := appendOwnPageRecalls(&result, request, controls, mapped, normalized, account); recallErr != nil {
+		return result, recallErr
+	}
+	if ctx.Err() != nil {
+		return result, ErrSQLite
+	}
+	return result, nil
+}
+
+func validateOwnedPageRows(ctx context.Context, rows []SQLiteRow, owned *[]SQLiteRow, from, to int64) error {
+	retained := 0
 	for _, row := range rows {
 		retained += len(row.Text) + len(row.BinNet)
 		if retained > 8<<20 {
-			return result, ErrSQLite
+			return ErrSQLite
 		}
 		if ctx.Err() != nil {
-			return result, ErrSQLite
+			return ErrSQLite
 		}
 		verified, ok := sqliteRow(
 			[9]any{
@@ -137,15 +164,18 @@ func PrepareRowPage(
 			to,
 		)
 		if !ok {
-			return result, ErrSQLite
+			return ErrSQLite
 		}
 		if _, _, expiryErr := MessageExpiryMS(verified.TimestampMS, verified.TTL); expiryErr != nil {
 			clear(verified.BinNet)
-			return result, ErrSQLite
+			return ErrSQLite
 		}
-		owned = append(owned, verified)
+		*owned = append(*owned, verified)
 	}
-	result.Examined = len(rows)
+	return nil
+}
+
+func classifyOwnedPageRows(ctx context.Context, owned []SQLiteRow, normalized domain.MobileBackupRequest, result *PreparedRowPage) (IdentityRequest, map[string]bool, map[string][]SQLiteRow, error) {
 	request := IdentityRequest{}
 	seen := map[string]bool{}
 	// Only the own/direct/status-3 transition has paired live archive evidence.
@@ -153,17 +183,11 @@ func PrepareRowPage(
 	controls := map[string][]SQLiteRow{}
 	for i, row := range owned {
 		if ctx.Err() != nil {
-			return result, ErrSQLite
+			return request, seen, controls, ErrSQLite
 		}
 		if deferredMobileControl(row.Type) {
 			result.DeferredControls++
-			if normalized.ConversationType == domain.ConversationDirect && row.Type == 36 && row.Status == 3 {
-				controls[row.SenderID] = append(controls[row.SenderID], row)
-				if !seen[row.SenderID] {
-					seen[row.SenderID] = true
-					request.Direct = append(request.Direct, row.SenderID)
-				}
-			}
+			appendPageControl(row, normalized, &request, seen, controls)
 			continue
 		}
 		kind, known := mobilePayloadKind(row.Type)
@@ -175,10 +199,10 @@ func PrepareRowPage(
 			result.MissingMetadata++
 			continue
 		}
-		metadata, e := ParseBinNet(ctx, row.BinNet)
-		if e != nil {
+		metadata, parseBinNetErr := ParseBinNet(ctx, row.BinNet)
+		if parseBinNetErr != nil {
 			if ctx.Err() != nil {
-				return result, ErrSQLite
+				return request, seen, controls, ErrSQLite
 			}
 			result.InvalidMetadata++
 			continue
@@ -195,17 +219,10 @@ func PrepareRowPage(
 			request.Direct = append(request.Direct, row.SenderID)
 		}
 	}
-	if len(request.Direct) == 0 {
-		if ctx.Err() != nil {
-			return result, ErrSQLite
-		}
-		return result, nil
-	}
-	pairs, e := mapper.MapMobileBackupIdentities(ctx, request)
-	defer clear(pairs)
-	if e != nil || ctx.Err() != nil || len(pairs) != len(request.Direct) {
-		return result, ErrSQLite
-	}
+	return request, seen, controls, nil
+}
+
+func validatePageIdentities(ctx context.Context, pairs []IdentityPair, seen map[string]bool) (map[string]string, error) {
 	mapped := map[string]string{}
 	targets := map[string]bool{}
 	for _, pair := range pairs {
@@ -213,24 +230,32 @@ func PrepareRowPage(
 			!seen[pair.Plain] ||
 			mapped[pair.Plain] != "" ||
 			targets[pair.Session] {
-			return result, ErrSQLite
+			return nil, ErrSQLite
 		}
 		mapped[pair.Plain] = pair.Session
 		targets[pair.Session] = true
 	}
+	return mapped, nil
+}
+
+func assignPageSenders(result *PreparedRowPage, mapped map[string]string, normalized domain.MobileBackupRequest, account string) error {
 	for i := range result.Rows {
 		row := &result.Rows[i]
 		row.SenderID = mapped[row.Row.SenderID]
 		if row.SenderID == "" ||
 			normalized.ConversationType == domain.ConversationDirect && row.SenderID != account &&
 				row.SenderID != normalized.ConversationID {
-			return result, ErrSQLite
+			return ErrSQLite
 		}
 		row.Direction = "incoming"
 		if row.SenderID == account {
 			row.Direction = "outgoing"
 		}
 	}
+	return nil
+}
+
+func appendOwnPageRecalls(result *PreparedRowPage, request IdentityRequest, controls map[string][]SQLiteRow, mapped map[string]string, normalized domain.MobileBackupRequest, account string) error {
 	seenTargets := map[string]bool{}
 	// Preserve encounter order; maps are only used for ownership/membership tests.
 	for _, source := range request.Direct {
@@ -239,7 +264,7 @@ func PrepareRowPage(
 		}
 		sender := mapped[source]
 		if sender != account && sender != normalized.ConversationID {
-			return result, ErrSQLite
+			return ErrSQLite
 		}
 		if sender != account {
 			continue // Received-message recall semantics are not yet verified.
@@ -247,7 +272,7 @@ func PrepareRowPage(
 		for _, control := range controls[source] {
 			id := control.MessageID
 			if seenTargets[id] {
-				return result, ErrSQLite
+				return ErrSQLite
 			}
 			seenTargets[id] = true
 			result.OwnRecalls = append(
@@ -261,8 +286,32 @@ func PrepareRowPage(
 			)
 		}
 	}
-	if ctx.Err() != nil {
-		return result, ErrSQLite
+	return nil
+}
+
+func bindPreparedRowRequest(ctx context.Context, rows []SQLiteRow, r domain.MobileBackupRequest, account string, mapper domain.MobileIdentitySource) (domain.MobileBackupRequest, int64, int64, error) {
+	if ctx == nil || ctx.Err() != nil || len(rows) > 50 || !canonicalIdentity(account) || mapper == nil {
+		return domain.MobileBackupRequest{}, 0, 0, ErrSQLite
 	}
-	return result, nil
+	normalized, e := r.Normalize()
+	if e != nil || !canonicalIdentity(normalized.ConversationID) || len(rows) > normalized.MaxMessages {
+		return domain.MobileBackupRequest{}, 0, 0, ErrSQLite
+	}
+	since, _ := time.Parse(time.RFC3339Nano, normalized.Since)
+	until, _ := time.Parse(time.RFC3339Nano, normalized.Until)
+	from, to, validWindow := millisecondWindow(since, until)
+	if !validWindow {
+		return domain.MobileBackupRequest{}, 0, 0, ErrSQLite
+	}
+	return normalized, from, to, nil
+}
+
+func appendPageControl(row SQLiteRow, normalized domain.MobileBackupRequest, request *IdentityRequest, seen map[string]bool, controls map[string][]SQLiteRow) {
+	if normalized.ConversationType == domain.ConversationDirect && row.Type == 36 && row.Status == 3 {
+		controls[row.SenderID] = append(controls[row.SenderID], row)
+		if !seen[row.SenderID] {
+			seen[row.SenderID] = true
+			request.Direct = append(request.Direct, row.SenderID)
+		}
+	}
 }

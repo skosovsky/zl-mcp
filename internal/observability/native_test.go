@@ -45,11 +45,12 @@ func nativeStore(t *testing.T) *storage.Store {
 	}
 	return s
 }
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestNativeSendRecordsOneAmbiguousEffectWithoutRetry(t *testing.T) {
 	// Arrange: real durable owner and in-memory telemetry, with a hostile upstream cause.
 	o, reader, exporter := memoryObserver(t)
 	s := nativeStore(t)
-	cause := &privateFailure{}
+	cause := &privateError{}
 	ctx := shared.WithTelemetry(context.Background(), o)
 	var sends atomic.Int64
 	manager := messaging.Manager{
@@ -142,6 +143,7 @@ func (s *nativeHistorySource) HistoryPage(
 	more := false
 	return domain.HistoryPage{HasMore: &more}, nil
 }
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestNativeHistoryWorkerKeepsLedgerAndRequestLink(t *testing.T) {
 	// Arrange: the command prepares the real native ledger under an executor span.
 	o, reader, exporter := memoryObserver(t)
@@ -270,11 +272,11 @@ func TestNativeJoinLinksWorkerBeforeCommandReturns(t *testing.T) {
 	var id string
 	// Act: start from an executor, wait for the existing worker, then read its ledger.
 	err = o.Execute(base, "zalo_join_group", func(ctx context.Context) (domain.Outcome, error) {
-		result, err := manager.Start(ctx, token, "10000000-0000-4000-8000-000000000001")
-		if err == nil {
+		result, startErr := manager.Start(ctx, token, "10000000-0000-4000-8000-000000000001")
+		if startErr == nil {
 			id = result["operation_id"].(string)
 		}
-		return domain.OutcomeUnknown, err
+		return domain.OutcomeUnknown, startErr
 	})
 	if err != nil {
 		t.Fatal(err)

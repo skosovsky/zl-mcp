@@ -19,7 +19,18 @@ func TestSnapshotInformationWholeSourceClassificationAndPaging(t *testing.T) {
 			kind, stamp int64
 			meta        []byte
 		}{{20, from.UnixMilli(), info}, {0, from.UnixMilli() + 1, attachmentField(6, attachmentField(999, []byte("opaque")))}, {20, from.Add(-time.Hour).UnixMilli(), info}} {
-			if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", "2", "3", "PRIVATE-SYNTHETIC-TEXT", row.stamp, 0, row.kind, 1, row.meta); err != nil {
+			if _, err := db.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				"901",
+				"2",
+				"3",
+				"PRIVATE-SYNTHETIC-TEXT",
+				row.stamp,
+				0,
+				row.kind,
+				1,
+				row.meta,
+			); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -28,28 +39,77 @@ func TestSnapshotInformationWholeSourceClassificationAndPaging(t *testing.T) {
 	a.archive.Files[0].Data = data
 	ref := domain.ConversationRef{Type: domain.ConversationDirect, ID: "12"}
 	// Act: read past an empty informational page using its genuine examined-row cursor.
-	first, err := a.ReadSnapshotPage(context.Background(), retainedTestID, ref, t.TempDir(), from, from.Add(time.Hour), 1, nil, "asc", from.Add(time.Hour).UnixMilli())
+	first, err := a.ReadSnapshotPage(
+		context.Background(),
+		retainedTestID,
+		ref,
+		t.TempDir(),
+		from,
+		from.Add(time.Hour),
+		1,
+		nil,
+		"asc",
+		from.Add(time.Hour).UnixMilli(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer first.Clear()
-	second, err := a.ReadSnapshotPage(context.Background(), retainedTestID, ref, t.TempDir(), from, from.Add(time.Hour), 1, first.Next, "asc", from.Add(time.Hour).UnixMilli())
+	second, err := a.ReadSnapshotPage(
+		context.Background(),
+		retainedTestID,
+		ref,
+		t.TempDir(),
+		from,
+		from.Add(time.Hour),
+		1,
+		first.Next,
+		"asc",
+		from.Add(time.Hour).UnixMilli(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer second.Clear()
-	strict, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "901.db", Data: data}, t.TempDir(), from, from.Add(time.Hour), 50)
+	strict, err := ReadSQLiteRows(
+		context.Background(),
+		ArchiveFile{Name: "901.db", Data: data},
+		t.TempDir(),
+		from,
+		from.Add(time.Hour),
+		50,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer strict.Clear()
 	// Assert: content omission is explicit, outside-window classification is counted,
 	// pagination loses no ordinary record, and the strict reader is unchanged.
-	if len(first.Records) != 0 || first.Unsupported["native_information"] != 1 || first.SourceInformation != 2 || !first.HasMore || first.Next == nil || len(second.Records) != 1 || second.HasMore || second.SourceInformation != 2 || len(strict.Rows) != 2 || strict.DeferredControls["20"] != 2 {
-		t.Fatalf("information classification mismatch: first=%d unsupported=%v source=%d more=%v cursor=%v second=%d second_more=%v second_source=%d strict_rows=%d strict_types=%v", len(first.Records), first.Unsupported, first.SourceInformation, first.HasMore, first.Next != nil, len(second.Records), second.HasMore, second.SourceInformation, len(strict.Rows), strict.DeferredControls)
+	if len(first.Records) != 0 || first.Unsupported["native_information"] != 1 || first.SourceInformation != 2 ||
+		!first.HasMore ||
+		first.Next == nil ||
+		len(second.Records) != 1 ||
+		second.HasMore ||
+		second.SourceInformation != 2 ||
+		len(strict.Rows) != 2 ||
+		strict.DeferredControls["20"] != 2 {
+		t.Fatalf(
+			"information classification mismatch: first=%d unsupported=%v source=%d more=%v cursor=%v second=%d second_more=%v second_source=%d strict_rows=%d strict_types=%v",
+			len(first.Records),
+			first.Unsupported,
+			first.SourceInformation,
+			first.HasMore,
+			first.Next != nil,
+			len(second.Records),
+			second.HasMore,
+			second.SourceInformation,
+			len(strict.Rows),
+			strict.DeferredControls,
+		)
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSnapshotNativeExclusionAndUnclassifiedControlGuard(t *testing.T) {
 	from := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC)
 	known := attachmentField(6, attachmentField(45, []byte("msginfo.actionlist")))
@@ -71,17 +131,38 @@ func TestSnapshotNativeExclusionAndUnclassifiedControlGuard(t *testing.T) {
 					kind, stamp int64
 					metadata    []byte
 				}{{0, from.UnixMilli(), nil}, {tc.kind, from.Add(-time.Hour).UnixMilli(), tc.metadata}} {
-					if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "12", "2", "3", "PRIVATE-TEXT", row.stamp, 0, row.kind, 1, row.metadata); err != nil {
+					if _, err := db.Exec(
+						"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+						"12",
+						"2",
+						"3",
+						"PRIVATE-TEXT",
+						row.stamp,
+						0,
+						row.kind,
+						1,
+						row.metadata,
+					); err != nil {
 						t.Fatal(err)
 					}
 				}
 			})
 			// Act.
-			page, err := ReadSnapshotSQLitePage(context.Background(), ArchiveFile{Name: "901.db", Data: data}, t.TempDir(), from, from.Add(time.Hour), 1, nil, "asc")
+			page, err := ReadSnapshotSQLitePage(
+				context.Background(),
+				ArchiveFile{Name: "901.db", Data: data},
+				t.TempDir(),
+				from,
+				from.Add(time.Hour),
+				1,
+				nil,
+				"asc",
+			)
 			defer page.Clear()
 			// Assert: no prefix or cursor escapes; action naming does not waive real controls.
 			if tc.kind == 20 {
-				if err != nil || page.SourceNativeExcluded != 1 || page.SourceInformation != 0 || len(page.Rows) != 1 || page.Rows[0].Type != 0 {
+				if err != nil || page.SourceNativeExcluded != 1 || page.SourceInformation != 0 || len(page.Rows) != 1 ||
+					page.Rows[0].Type != 0 {
 					t.Fatal("native exclusion did not match the pinned query", err)
 				}
 			} else if !errors.Is(err, ErrSnapshotControls) || len(page.Rows) != 0 || page.Next != nil {
@@ -107,12 +188,34 @@ func TestSnapshotInformationWholeSourceBudgetRejectsBeforePrefix(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer tx.Rollback()
-		for i := 0; i < 5001; i++ {
-			if _, err := tx.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "12", "2", "3", "PRIVATE-TEXT", from.Add(-time.Hour).UnixMilli(), 0, 20, 1, metadata); err != nil {
+		for range 5001 {
+			if _, err := tx.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				"12",
+				"2",
+				"3",
+				"PRIVATE-TEXT",
+				from.Add(-time.Hour).UnixMilli(),
+				0,
+				20,
+				1,
+				metadata,
+			); err != nil {
 				t.Fatal(err)
 			}
 		}
-		if _, err := tx.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "12", "4", "5", "PRIVATE-TEXT", from.UnixMilli(), 0, 0, 1, nil); err != nil {
+		if _, err := tx.Exec(
+			"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+			"12",
+			"4",
+			"5",
+			"PRIVATE-TEXT",
+			from.UnixMilli(),
+			0,
+			0,
+			1,
+			nil,
+		); err != nil {
 			t.Fatal(err)
 		}
 		if err := tx.Commit(); err != nil {
@@ -120,7 +223,16 @@ func TestSnapshotInformationWholeSourceBudgetRejectsBeforePrefix(t *testing.T) {
 		}
 	})
 	// Act.
-	page, err := ReadSnapshotSQLitePage(context.Background(), ArchiveFile{Name: "901.db", Data: data}, t.TempDir(), from, from.Add(time.Hour), 1, nil, "asc")
+	page, err := ReadSnapshotSQLitePage(
+		context.Background(),
+		ArchiveFile{Name: "901.db", Data: data},
+		t.TempDir(),
+		from,
+		from.Add(time.Hour),
+		1,
+		nil,
+		"asc",
+	)
 	defer page.Clear()
 	// Assert: the ordinary prefix is withheld rather than partially classifying the file.
 	if !errors.Is(err, ErrSnapshotControls) || len(page.Rows) != 0 || page.Next != nil {

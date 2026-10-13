@@ -21,6 +21,7 @@ func (f profileFunction) ContactProfiles(ctx context.Context, ids []string) ([]d
 
 type profileListener struct {
 	*scriptedListener
+
 	profiles profileFunction
 }
 
@@ -32,16 +33,25 @@ func (p *profileListener) ContactProfiles(ctx context.Context, ids []string) ([]
 	return p.profiles(ctx, ids)
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestDirectoryWorkerProfileAuthenticationBoundary(t *testing.T) {
 	// Arrange
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	s, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	s, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(t.TempDir(), "messages.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	if _, err = s.DB.ExecContext(ctx, `INSERT INTO conversations VALUES('direct','synthetic-peer',NULL,'stored_message','observed','2026-10-03T00:00:00Z','2026-10-03T00:00:00Z')`); err != nil {
+	if _, err = s.DB.ExecContext(
+		ctx,
+		`INSERT INTO conversations VALUES('direct','synthetic-peer',NULL,'stored_message','observed','2026-10-03T00:00:00Z','2026-10-03T00:00:00Z')`,
+	); err != nil {
 		t.Fatal(err)
 	}
 	started := make(chan struct{})
@@ -110,12 +120,20 @@ func TestProfileRefreshCancellationBeforePersistence(t *testing.T) {
 	// Arrange
 	parent, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	s, err := storage.OpenWithPolicy(parent, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	s, err := storage.OpenWithPolicy(
+		parent,
+		filepath.Join(t.TempDir(), "messages.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	if _, err = s.DB.ExecContext(parent, `INSERT INTO conversations VALUES('direct','synthetic-peer',NULL,'stored_message','observed','2026-10-03T00:00:00Z','2026-10-03T00:00:00Z')`); err != nil {
+	if _, err = s.DB.ExecContext(
+		parent,
+		`INSERT INTO conversations VALUES('direct','synthetic-peer',NULL,'stored_message','observed','2026-10-03T00:00:00Z','2026-10-03T00:00:00Z')`,
+	); err != nil {
 		t.Fatal(err)
 	}
 	source := profileFunction(func(context.Context, []string) ([]domain.Contact, error) {
@@ -128,7 +146,8 @@ func TestProfileRefreshCancellationBeforePersistence(t *testing.T) {
 	status, statusErr := s.ProfileStatus(context.Background())
 
 	// Assert
-	if !errors.Is(err, context.Canceled) || statusErr != nil || status["status"] != "partial" || status["stop_reason"] != "cancelled_or_deadline" {
+	if !errors.Is(err, context.Canceled) || statusErr != nil || status["status"] != "partial" ||
+		status["stop_reason"] != "cancelled_or_deadline" {
 		t.Fatalf("cancellation result: %v, status error: %v, status: %#v", err, statusErr, status)
 	}
 	var n int
@@ -137,6 +156,7 @@ func TestProfileRefreshCancellationBeforePersistence(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestProfileRefreshMissingForeignAndBatchLimits(t *testing.T) {
 	for _, test := range []struct {
 		name, mode                  string
@@ -152,7 +172,12 @@ func TestProfileRefreshMissingForeignAndBatchLimits(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// Arrange
 			ctx := context.Background()
-			s, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+			s, err := storage.OpenWithPolicy(
+				ctx,
+				filepath.Join(t.TempDir(), "messages.sqlite"),
+				domain.CollectionPolicy{All: true},
+				90,
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -161,8 +186,12 @@ func TestProfileRefreshMissingForeignAndBatchLimits(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			for i := 0; i < test.n; i++ {
-				if _, err = tx.ExecContext(ctx, `INSERT INTO conversations VALUES('direct',?,NULL,'stored_message','observed','2026-10-03T00:00:00Z','2026-10-03T00:00:00Z')`, fmt.Sprintf("peer-%04d", i)); err != nil {
+			for i := range test.n {
+				if _, err = tx.ExecContext(
+					ctx,
+					`INSERT INTO conversations VALUES('direct',?,NULL,'stored_message','observed','2026-10-03T00:00:00Z','2026-10-03T00:00:00Z')`,
+					fmt.Sprintf("peer-%04d", i),
+				); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -194,7 +223,10 @@ func TestProfileRefreshMissingForeignAndBatchLimits(t *testing.T) {
 				t.Fatal(e)
 			}
 			// Assert
-			if (err != nil) != test.wantErr || calls != test.calls || status["status"] != test.state || status["stop_reason"] != test.reason || status["returned_count"] != float64(test.returned) || status["missing_count"] != float64(test.missing) {
+			if (err != nil) != test.wantErr || calls != test.calls || status["status"] != test.state ||
+				status["stop_reason"] != test.reason ||
+				status["returned_count"] != float64(test.returned) ||
+				status["missing_count"] != float64(test.missing) {
 				t.Fatalf("wrong source result: %v %#v calls=%d", err, status, calls)
 			}
 			for _, table := range []string{"messages", "message_events", "peer_first_incoming"} {

@@ -135,10 +135,7 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	if err != nil {
 		return nil, err
 	}
-	var corpus struct {
-		Groups   []domain.Group   `json:"groups"`
-		Messages []domain.Message `json:"messages"`
-	}
+	var corpus fixtureCorpus
 	if err = json.Unmarshal(data, &corpus); err != nil {
 		return nil, err
 	}
@@ -159,19 +156,7 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 			f.Close()
 		}
 	}()
-	allowed := []string{"g-join"}
-	for _, group := range corpus.Groups {
-		allowed = append(allowed, group.ID)
-	}
-	if opts.Offline {
-		policy := domain.CollectionPolicy{All: true}
-		if opts.Policy != nil {
-			policy = *opts.Policy
-		}
-		f.Store, err = storage.OpenWithPolicy(runCtx, filepath.Join(dir, "messages.sqlite"), policy, 90)
-	} else {
-		f.Store, err = storage.Open(runCtx, filepath.Join(dir, "messages.sqlite"), allowed, 90)
-	}
+	f.Store, err = openFixtureStore(runCtx, dir, opts, corpus.Groups)
 	if err != nil {
 		return nil, err
 	}
@@ -179,119 +164,18 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	if opts.Offline {
 		account = "10"
 	}
-	if err = f.Store.BindAccount(runCtx, account); err != nil {
-		return nil, err
-	}
-	if err = f.Store.ReplaceCatalog(runCtx, corpus.Groups); err != nil {
-		return nil, err
-	}
-	if !opts.Empty {
-		for _, message := range corpus.Messages {
-			message.Source = "live"
-			if err = f.Store.Put(runCtx, message); err != nil {
-				return nil, err
-			}
-		}
-	}
-	if err = f.Store.BeginGap(runCtx, "synthetic_missing_history"); err != nil {
-		return nil, err
-	}
-	state := map[string]any{
-		"authenticated":     true,
-		"collector_state":   "connected",
-		"last_connected_at": time.Now().UTC().Format(time.RFC3339Nano),
-		"last_event_at":     nil,
-		"last_persisted_at": nil,
-		"last_error":        nil,
-	}
-	if opts.Stopped {
-		state["collector_state"] = "stopped"
-	}
-	if err = f.Store.SetState(runCtx, state); err != nil {
-		return nil, err
+	state, seedErr := seedFixtureStore(runCtx, f.Store, account, corpus, opts)
+	if seedErr != nil {
+		return nil, seedErr
 	}
 	f.Upstream = &Upstream{groups: corpus.Groups, timeout: opts.JoinTimeout, accountID: account}
 	f.joins = collector.NewJoin(runCtx, f.Store, f.Upstream, true)
-	if opts.ApprovalFile != "" && opts.ApprovalTokenFile != "" {
-		return nil, errors.New("use only one synthetic approval mode")
-	}
-	if opts.ApprovalFile != "" || opts.ApprovalTokenFile != "" {
-		preview, e := f.joins.Inspect(runCtx, InviteURL)
-		if e != nil {
-			return nil, e
-		}
-		previewID, ok := preview["preview_id"].(*string)
-		if !ok || previewID == nil {
-			return nil, errors.New("invalid synthetic approval preview")
-		}
-		token, e := f.joins.Approve(runCtx, *previewID)
-		if e != nil {
-			return nil, e
-		}
-		if opts.ApprovalTokenFile != "" {
-			provided, readErr := os.ReadFile(opts.ApprovalTokenFile)
-			if readErr != nil {
-				return nil, readErr
-			}
-			seed := strings.TrimSpace(string(provided))
-			if _, decodeErr := hex.DecodeString(seed); decodeErr != nil || len(seed) != 64 {
-				return nil, errors.New("synthetic token must be 64 hex characters")
-			}
-			oldHash, newHash := sha256.Sum256([]byte(token)), sha256.Sum256([]byte(seed))
-			// Replace only this fixture's fresh approval hash. This keeps the
-			// real approval/preview ledger and lets harness supply the token
-			// as trusted user input before Codex starts its MCP subprocess.
-			if _, e = f.Store.DB.ExecContext(
-				runCtx,
-				"UPDATE join_approvals SET token_hash=? WHERE token_hash=?",
-				hex.EncodeToString(newHash[:]),
-				hex.EncodeToString(oldHash[:]),
-			); e != nil {
-				return nil, e
-			}
-		}
-		if opts.ApprovalFile != "" {
-			approval, e := json.Marshal(
-				map[string]any{
-					"synthetic_only": true,
-					"invite_url":     InviteURL,
-					"preview":        preview,
-					"plan_token":     token,
-				},
-			)
-			if e != nil {
-				return nil, e
-			}
-			// Never overwrite an existing file (including a symlink).
-			file, e := os.OpenFile(opts.ApprovalFile, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-			if e != nil {
-				return nil, e
-			}
-			_, writeErr := file.Write(approval)
-			closeErr := file.Close()
-			if writeErr != nil {
-				return nil, writeErr
-			}
-			if closeErr != nil {
-				return nil, closeErr
-			}
-		}
-	}
-	sock, err := local.SocketPath(dir)
-	if err != nil {
+	if err = f.prepareApproval(runCtx, opts); err != nil {
 		return nil, err
 	}
-	listener, err := (&net.ListenConfig{}).Listen(runCtx, "unix", sock)
-	if err != nil {
+	if err = f.startControl(runCtx); err != nil {
 		return nil, err
 	}
-	if err = os.Chmod(sock, 0600); err != nil {
-		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
-		listener.Close()
-		return nil, err
-	}
-	f.http = &http.Server{Handler: collector.ControlHandler(f.joins), ReadHeaderTimeout: 5 * time.Second}
-	go func() { f.done <- f.http.Serve(listener) }()
 	if opts.Offline {
 		f.offline, err = newOffline(runCtx, f, opts)
 		if err == nil {
@@ -304,41 +188,12 @@ func New(ctx context.Context, opts Options) (_ *Fixture, err error) {
 	if err != nil {
 		return nil, err
 	}
-	// Expose only the three fixed skill documents so evaluations can record
-	// actual reference reads without giving the model filesystem access.
-	if opts.SkillDir != "" {
-		for _, name := range []string{"SKILL.md", "reference/report-format.md", "reference/eval-cases.md"} {
-			contents, readErr := os.ReadFile(filepath.Join(opts.SkillDir, name))
-			if readErr != nil {
-				return nil, readErr
-			}
-			uri := "eval://skills/researching-zalo-groups/" + name
-			body := string(contents)
-			f.Server.AddResource(
-				&mcp.Resource{URI: uri, Name: name, MIMEType: "text/markdown"},
-				func(_ context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-					return &mcp.ReadResourceResult{
-						Contents: []*mcp.ResourceContents{{URI: uri, MIMEType: "text/markdown", Text: body}},
-					}, nil
-				},
-			)
-		}
+	if err = f.addSkillResources(opts.SkillDir); err != nil {
+		return nil, err
 	}
 	// Keep synthetic connected status current throughout long model turns.
 	f.heartbeatDone = make(chan struct{})
-	go func() {
-		defer close(f.heartbeatDone)
-		ticker := time.NewTicker(10 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-runCtx.Done():
-				return
-			case <-ticker.C:
-				_ = f.Store.SetState(runCtx, state)
-			}
-		}
-	}()
+	go f.keepConnected(runCtx, state)
 	return f, nil
 }
 
@@ -374,4 +229,205 @@ func (f *Fixture) Close() error {
 		return errors.Join(result, fmt.Errorf("remove synthetic state: %w", err))
 	}
 	return result
+}
+
+func (f *Fixture) prepareApproval(runCtx context.Context, opts Options) error {
+	if opts.ApprovalFile != "" && opts.ApprovalTokenFile != "" {
+		return errors.New("use only one synthetic approval mode")
+	}
+	if opts.ApprovalFile == "" && opts.ApprovalTokenFile == "" {
+		return nil
+	}
+	preview, e := f.joins.Inspect(runCtx, InviteURL)
+	if e != nil {
+		return e
+	}
+	previewID, ok := preview["preview_id"].(*string)
+	if !ok || previewID == nil {
+		return errors.New("invalid synthetic approval preview")
+	}
+	token, e := f.joins.Approve(runCtx, *previewID)
+	if e != nil {
+		return e
+	}
+	if opts.ApprovalTokenFile != "" {
+		if seedErr := f.seedApprovalToken(runCtx, opts.ApprovalTokenFile, token); seedErr != nil {
+			return seedErr
+		}
+	}
+	if opts.ApprovalFile != "" {
+		return writeSyntheticApproval(opts.ApprovalFile, preview, token)
+	}
+	return nil
+}
+
+func (f *Fixture) addSkillResources(skillDir string) error {
+	// Expose only the three fixed skill documents so evaluations can record
+	// actual reference reads without giving the model filesystem access.
+	if skillDir != "" {
+		for _, name := range []string{"SKILL.md", "reference/report-format.md", "reference/eval-cases.md"} {
+			contents, readErr := os.ReadFile(filepath.Join(skillDir, name))
+			if readErr != nil {
+				return readErr
+			}
+			uri := "eval://skills/researching-zalo-groups/" + name
+			body := string(contents)
+			f.Server.AddResource(
+				&mcp.Resource{URI: uri, Name: name, MIMEType: "text/markdown"},
+				func(_ context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+					return &mcp.ReadResourceResult{
+						Contents: []*mcp.ResourceContents{{URI: uri, MIMEType: "text/markdown", Text: body}},
+					}, nil
+				},
+			)
+		}
+	}
+	return nil
+}
+
+func (f *Fixture) keepConnected(ctx context.Context, state map[string]any) {
+	defer close(f.heartbeatDone)
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			_ = f.Store.SetState(ctx, state)
+		}
+	}
+}
+
+func (f *Fixture) seedApprovalToken(runCtx context.Context, path, token string) error {
+	provided, readErr := os.ReadFile(path)
+	if readErr != nil {
+		return readErr
+	}
+	seed := strings.TrimSpace(string(provided))
+	if _, decodeErr := hex.DecodeString(seed); decodeErr != nil || len(seed) != 64 {
+		return errors.New("synthetic token must be 64 hex characters")
+	}
+	oldHash, newHash := sha256.Sum256([]byte(token)), sha256.Sum256([]byte(seed))
+	// Replace only this fixture's fresh approval hash. This keeps the
+	// real approval/preview ledger and lets harness supply the token
+	// as trusted user input before Codex starts its MCP subprocess.
+	if _, e := f.Store.DB.ExecContext(
+		runCtx,
+		"UPDATE join_approvals SET token_hash=? WHERE token_hash=?",
+		hex.EncodeToString(newHash[:]),
+		hex.EncodeToString(oldHash[:]),
+	); e != nil {
+		return e
+	}
+
+	return nil
+}
+
+func writeSyntheticApproval(path string, preview map[string]any, token string) error {
+	approval, e := json.Marshal(
+		map[string]any{
+			"synthetic_only": true,
+			"invite_url":     InviteURL,
+			"preview":        preview,
+			"plan_token":     token,
+		},
+	)
+	if e != nil {
+		return e
+	}
+	// Never overwrite an existing file (including a symlink).
+	file, e := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if e != nil {
+		return e
+	}
+	_, writeErr := file.Write(approval)
+	closeErr := file.Close()
+	if writeErr != nil {
+		return writeErr
+	}
+	if closeErr != nil {
+		return closeErr
+	}
+
+	return nil
+}
+
+type fixtureCorpus struct {
+	Groups   []domain.Group   `json:"groups"`
+	Messages []domain.Message `json:"messages"`
+}
+
+func openFixtureStore(ctx context.Context, dir string, opts Options, groups []domain.Group) (*storage.Store, error) {
+	var store *storage.Store
+	var err error
+	allowed := []string{"g-join"}
+	for _, group := range groups {
+		allowed = append(allowed, group.ID)
+	}
+	if opts.Offline {
+		policy := domain.CollectionPolicy{All: true}
+		if opts.Policy != nil {
+			policy = *opts.Policy
+		}
+		store, err = storage.OpenWithPolicy(ctx, filepath.Join(dir, "messages.sqlite"), policy, 90)
+	} else {
+		store, err = storage.Open(ctx, filepath.Join(dir, "messages.sqlite"), allowed, 90)
+	}
+	return store, err
+}
+
+func seedFixtureStore(ctx context.Context, store *storage.Store, account string, corpus fixtureCorpus, opts Options) (map[string]any, error) {
+	var err error
+	if err = store.BindAccount(ctx, account); err != nil {
+		return nil, err
+	}
+	if err = store.ReplaceCatalog(ctx, corpus.Groups); err != nil {
+		return nil, err
+	}
+	if !opts.Empty {
+		for _, message := range corpus.Messages {
+			message.Source = "live"
+			if err = store.Put(ctx, message); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if err = store.BeginGap(ctx, "synthetic_missing_history"); err != nil {
+		return nil, err
+	}
+	state := map[string]any{
+		"authenticated":     true,
+		"collector_state":   "connected",
+		"last_connected_at": time.Now().UTC().Format(time.RFC3339Nano),
+		"last_event_at":     nil,
+		"last_persisted_at": nil,
+		"last_error":        nil,
+	}
+	if opts.Stopped {
+		state["collector_state"] = "stopped"
+	}
+	if err = store.SetState(ctx, state); err != nil {
+		return nil, err
+	}
+	return state, nil
+}
+
+func (f *Fixture) startControl(ctx context.Context) error {
+	sock, err := local.SocketPath(f.Dir)
+	if err != nil {
+		return err
+	}
+	listener, err := (&net.ListenConfig{}).Listen(ctx, "unix", sock)
+	if err != nil {
+		return err
+	}
+	if err = os.Chmod(sock, 0600); err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
+		listener.Close()
+		return err
+	}
+	f.http = &http.Server{Handler: collector.ControlHandler(f.joins), ReadHeaderTimeout: 5 * time.Second}
+	go func() { f.done <- f.http.Serve(listener) }()
+	return nil
 }

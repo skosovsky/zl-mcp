@@ -18,7 +18,10 @@ func (p *membershipPort) CleanupHistorySnapshots(ctx context.Context) error {
 	return p.snapshots.CleanupTerminal(ctx, p.store.MobileHistorySnapshotTerminal)
 }
 
-func (p *membershipPort) WithHistorySession(parent context.Context, visit func(context.Context, historyimport.MobileHistorySession) error) error {
+func (p *membershipPort) WithHistorySession(
+	parent context.Context,
+	visit func(context.Context, historyimport.MobileHistorySession) error,
+) error {
 	downloader, err := mobilebackup.NewDownloader([]string{"trans-bin.zaloapp.com"})
 	if err != nil {
 		return historyimport.ErrMobileHistorySourceUnavailable
@@ -26,7 +29,12 @@ func (p *membershipPort) WithHistorySession(parent context.Context, visit func(c
 	return p.withHistorySession(parent, downloader, visit)
 }
 
-func (p *membershipPort) withHistorySession(parent context.Context, downloader *mobilebackup.Downloader, visit func(context.Context, historyimport.MobileHistorySession) error) error {
+//nolint:funlen // The borrower keeps the authenticated session read lock, operation scope and transport alive for the complete consumer callback; cleanup must precede releasing the session lock.
+func (p *membershipPort) withHistorySession(
+	parent context.Context,
+	downloader *mobilebackup.Downloader,
+	visit func(context.Context, historyimport.MobileHistorySession) error,
+) error {
 	if parent == nil || visit == nil {
 		return domain.ErrHistoryUnsupported
 	}
@@ -81,7 +89,15 @@ func (p *membershipPort) withHistorySession(parent context.Context, downloader *
 	if err = p.snapshots.Cleanup(operation); err != nil {
 		return historyimport.ErrMobileHistorySourceUnavailable
 	}
-	session := &mobileHistorySession{port: p, source: source, mapper: mapper, downloader: bound, account: account, scratch: scratch, valid: func() bool { return operation.Err() == nil && api.AccountID() == account }}
+	session := &mobileHistorySession{
+		port:       p,
+		source:     source,
+		mapper:     mapper,
+		downloader: bound,
+		account:    account,
+		scratch:    scratch,
+		valid:      func() bool { return operation.Err() == nil && api.AccountID() == account },
+	}
 	err = visit(operation, session)
 	if parent.Err() != nil {
 		return parent.Err()
@@ -118,7 +134,11 @@ func (s *mobileHistorySession) ReceiveOffer(ctx context.Context, id string) (dom
 	return offer, err
 }
 
-func (s *mobileHistorySession) SaveOffer(ctx context.Context, request domain.MobileBackupRequest, offer domain.MobileBackupOffer) error {
+func (s *mobileHistorySession) SaveOffer(
+	ctx context.Context,
+	request domain.MobileBackupRequest,
+	offer domain.MobileBackupOffer,
+) error {
 	if !s.valid() || offer.SessionAccountID != "" && offer.SessionAccountID != s.account {
 		return domain.ErrAuthenticationRequired
 	}
@@ -139,11 +159,27 @@ func (s *mobileHistorySession) SaveOffer(ctx context.Context, request domain.Mob
 	return nil
 }
 
-func (s *mobileHistorySession) ReadHistoryPage(ctx context.Context, request domain.MobileBackupRequest, size, examined int, previous *domain.MobileHistorySnapshot, after *domain.MobileHistoryPosition) (domain.MobileHistoryPage, error) {
+func (s *mobileHistorySession) ReadHistoryPage(
+	ctx context.Context,
+	request domain.MobileBackupRequest,
+	size, examined int,
+	previous *domain.MobileHistorySnapshot,
+	after *domain.MobileHistoryPosition,
+) (domain.MobileHistoryPage, error) {
 	if !s.valid() {
 		return domain.MobileHistoryPage{}, domain.ErrAuthenticationRequired
 	}
-	page, err := s.port.snapshots.ReadHistoryPage(ctx, request, s.account, s.scratch, size, examined, previous, after, s.mapper)
+	page, err := s.port.snapshots.ReadHistoryPage(
+		ctx,
+		request,
+		s.account,
+		s.scratch,
+		size,
+		examined,
+		previous,
+		after,
+		s.mapper,
+	)
 	if !s.valid() {
 		page.Clear()
 		return domain.MobileHistoryPage{}, domain.ErrAuthenticationRequired

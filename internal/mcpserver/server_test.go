@@ -9,10 +9,12 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMCPDiscoverySearchContextAndResourceAuthorization(t *testing.T) {
 	// Arrange
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -26,7 +28,17 @@ func TestMCPDiscoverySearchContextAndResourceAuthorization(t *testing.T) {
 	if e = store.ReplaceCatalog(ctx, []domain.Group{{ID: "g", Name: "Test group"}}); e != nil {
 		t.Fatal(e)
 	}
-	if e = store.Put(ctx, domain.Message{GroupID: "g", ID: "m", SenderID: "s", SentAt: time.Now(), Text: "Ремонт. " + strings.Repeat("a", 9000), Source: "live"}); e != nil {
+	if e = store.Put(
+		ctx,
+		domain.Message{
+			GroupID:  "g",
+			ID:       "m",
+			SenderID: "s",
+			SentAt:   time.Now(),
+			Text:     "Ремонт. " + strings.Repeat("a", 9000),
+			Source:   "live",
+		},
+	); e != nil {
 		t.Fatal(e)
 	}
 	server, e := New(migrationReadPorts(store))
@@ -50,7 +62,10 @@ func TestMCPDiscoverySearchContextAndResourceAuthorization(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	result, e := cs.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_search_messages", Arguments: map[string]any{"query": "РЕМОНТ", "limit": "10"}})
+	result, e := cs.CallTool(
+		ctx,
+		&mcp.CallToolParams{Name: "zalo_search_messages", Arguments: map[string]any{"query": "РЕМОНТ", "limit": "10"}},
+	)
 	// Assert
 	if len(tools.Tools) != 22 {
 		t.Fatalf("tools=%d", len(tools.Tools))
@@ -64,7 +79,13 @@ func TestMCPDiscoverySearchContextAndResourceAuthorization(t *testing.T) {
 		}
 	}
 	// Act
-	result, e = cs.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_get_message_context", Arguments: map[string]any{"group_id": "g", "message_id": "m"}})
+	result, e = cs.CallTool(
+		ctx,
+		&mcp.CallToolParams{
+			Name:      "zalo_get_message_context",
+			Arguments: map[string]any{"group_id": "g", "message_id": "m"},
+		},
+	)
 	// Assert
 	if e != nil || result.IsError {
 		t.Fatalf("context failed: %+v %v", result, e)
@@ -89,7 +110,10 @@ func TestMCPDiscoverySearchContextAndResourceAuthorization(t *testing.T) {
 		t.Fatal("resource bypassed allowlist")
 	}
 	// Act
-	bad, e := cs.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_get_status", Arguments: map[string]any{"extra": "secret"}})
+	bad, e := cs.CallTool(
+		ctx,
+		&mcp.CallToolParams{Name: "zalo_get_status", Arguments: map[string]any{"extra": "secret"}},
+	)
 	// Assert
 	if e != nil || !bad.IsError {
 		t.Fatal("invalid tool input did not produce a tool error")

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
@@ -23,12 +24,28 @@ func snapshotFixture(t *testing.T) (SelectedArchive, domain.MobileBackupRequest)
 		t.Fatal(err)
 	}
 	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
-		_, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", "13", "14", "private-synthetic-snapshot-message-marker", time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC).UnixMilli(), 0, 0, 1, nil)
+		_, err := db.Exec(
+			"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+			"901",
+			"13",
+			"14",
+			"private-synthetic-snapshot-message-marker",
+			time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC).UnixMilli(),
+			0,
+			0,
+			1,
+			nil,
+		)
 		if err != nil {
 			t.Fatal(err)
 		}
 	})
-	return SelectedArchive{requestID: r.RequestID, requestFingerprint: r.Fingerprint(), ref: r.Ref(), File: ArchiveFile{Name: "902.db", Data: data}}, r
+	return SelectedArchive{
+		requestID:          r.RequestID,
+		requestFingerprint: r.Fingerprint(),
+		ref:                r.Ref(),
+		File:               ArchiveFile{Name: "902.db", Data: data},
+	}, r
 }
 
 func openSnapshotStore(t *testing.T, dir string, budget int64) *SnapshotStore {
@@ -68,10 +85,14 @@ func TestSnapshotRestartBindingPrivacyAndIdempotency(t *testing.T) {
 	got, err := s.Read(ctx, r, "10")
 	defer got.Clear()
 	// Assert: source bytes/binding survive, ciphertext and TTL remain unchanged.
-	if err != nil || !bytes.Equal(got.File.Data, selected.File.Data) || got.File.Name != selected.File.Name || got.ref != r.Ref() || got.requestFingerprint != r.Fingerprint() || !bytes.Equal(sealed, retry) {
+	if err != nil || !bytes.Equal(got.File.Data, selected.File.Data) || got.File.Name != selected.File.Name ||
+		got.ref != r.Ref() ||
+		got.requestFingerprint != r.Fingerprint() ||
+		!bytes.Equal(sealed, retry) {
 		t.Fatal("snapshot restart or repeat changed source", err)
 	}
-	if bytes.Contains(sealed, []byte("private-synthetic-snapshot-message-marker")) || bytes.Contains(sealed, []byte("SQLite format 3")) {
+	if bytes.Contains(sealed, []byte("private-synthetic-snapshot-message-marker")) ||
+		bytes.Contains(sealed, []byte("SQLite format 3")) {
 		t.Fatal("plaintext source persisted")
 	}
 	for _, value := range []any{s, *s} {
@@ -172,6 +193,7 @@ func TestSnapshotExpiryRemovalAndSpentUUIDSurviveRestart(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSnapshotCorruptionAndMissingKeyFailWithoutRotation(t *testing.T) {
 	for _, mode := range []string{"ciphertext", "key", "missing-key", "symlink"} {
 		t.Run(mode, func(t *testing.T) {
@@ -291,7 +313,7 @@ func TestSnapshotCountLimitAndIncompleteReservationSurviveRestart(t *testing.T) 
 	selected, r := snapshotFixture(t)
 	defer selected.Clear()
 	ctx := context.Background()
-	for i := 0; i < maxSnapshots; i++ {
+	for range maxSnapshots {
 		r.RequestID = uuid.NewString()
 		selected.requestID = r.RequestID
 		if err := s.Save(ctx, selected, r, "10"); err != nil {
@@ -325,6 +347,7 @@ func TestSnapshotCountLimitAndIncompleteReservationSurviveRestart(t *testing.T) 
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSnapshotRejectsTruncatedClaimsAndUnownedArtifacts(t *testing.T) {
 	for _, mode := range []string{"truncated-claims", "duplicate-claims", "unknown-file", "key-permissions"} {
 		t.Run(mode, func(t *testing.T) {
@@ -345,7 +368,11 @@ func TestSnapshotRejectsTruncatedClaimsAndUnownedArtifacts(t *testing.T) {
 			case "truncated-claims":
 				err = os.WriteFile(filepath.Join(dir, snapshotClaimsName), []byte(r.RequestID), 0600)
 			case "duplicate-claims":
-				err = os.WriteFile(filepath.Join(dir, snapshotClaimsName), []byte(r.RequestID+"\n"+r.RequestID+"\n"), 0600)
+				err = os.WriteFile(
+					filepath.Join(dir, snapshotClaimsName),
+					[]byte(r.RequestID+"\n"+r.RequestID+"\n"),
+					0600,
+				)
 			case "unknown-file":
 				err = os.WriteFile(filepath.Join(dir, "unrelated-data"), []byte("preserve me"), 0600)
 			case "key-permissions":

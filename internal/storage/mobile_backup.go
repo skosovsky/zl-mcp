@@ -124,9 +124,9 @@ func (s *Store) prepareMobileBackupTx(
 		if rejectExisting {
 			return MobileBackupAttempt{}, ErrMobileBackupConflict
 		}
-		original, err := s.loadMobileBackup(ctx, tx, id)
-		if err != nil {
-			return MobileBackupAttempt{}, err
+		original, loadMobileBackupErr := s.loadMobileBackup(ctx, tx, id)
+		if loadMobileBackupErr != nil {
+			return MobileBackupAttempt{}, loadMobileBackupErr
 		}
 		if fingerprint != r.Fingerprint() {
 			return MobileBackupAttempt{}, ErrMobileBackupConflict

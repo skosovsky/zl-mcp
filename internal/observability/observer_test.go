@@ -45,10 +45,10 @@ func memoryObserver(t *testing.T) (*Observer, *sdkmetric.ManualReader, *tracetes
 	return o, reader, exporter
 }
 
-type privateFailure struct{ formatted atomic.Int64 }
+type privateError struct{ formatted atomic.Int64 }
 
-func (e *privateFailure) Error() string  { e.formatted.Add(1); return "PRIVATE_SENTINEL_ERROR" }
-func (e *privateFailure) String() string { e.formatted.Add(1); return "PRIVATE_SENTINEL_PANIC" }
+func (e *privateError) Error() string  { e.formatted.Add(1); return "PRIVATE_SENTINEL_ERROR" }
+func (e *privateError) String() string { e.formatted.Add(1); return "PRIVATE_SENTINEL_PANIC" }
 
 func metrics(t *testing.T, reader *sdkmetric.ManualReader) metricdata.ResourceMetrics {
 	t.Helper()
@@ -58,6 +58,7 @@ func metrics(t *testing.T, reader *sdkmetric.ManualReader) metricdata.ResourceMe
 	}
 	return result
 }
+//nolint:gocognit // This test helper checks the complete fixture/metric shape without dropping nested boundary assertions.
 func count(t *testing.T, data metricdata.ResourceMetrics, name string, attributes map[string]string) int64 {
 	t.Helper()
 	for _, scope := range data.ScopeMetrics {
@@ -93,7 +94,7 @@ func TestTechnicalAndDomainOutcomesRemainIndependentAndPrivate(t *testing.T) {
 	previous := slog.Default()
 	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
 	defer slog.SetDefault(previous)
-	secret := &privateFailure{}
+	secret := &privateError{}
 	ctx := context.Background()
 	tool := "zalo_send_direct_message"
 	outcomes := []domain.Outcome{
@@ -175,6 +176,7 @@ func TestTechnicalAndDomainOutcomesRemainIndependentAndPrivate(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSignalsAndOpaqueWorkerCorrelation(t *testing.T) {
 	// Arrange.
 	o, reader, exporter := memoryObserver(t)
@@ -321,9 +323,6 @@ func TestNilObserverPreservesOriginalCallsAndErrors(t *testing.T) {
 	}
 }
 
-//go:fix inline
-func observedAge(value time.Duration) *time.Duration { return new(value) }
-
 func TestUnavailableNativeCreationOmitsAgeWithoutInventingZero(t *testing.T) {
 	// Arrange: native state remains observable even when no creation timestamp survived.
 	o, reader, _ := memoryObserver(t)
@@ -348,14 +347,14 @@ func TestUnavailableNativeCreationOmitsAgeWithoutInventingZero(t *testing.T) {
 	}
 }
 
-type callbackFailure struct{ calls atomic.Int64 }
+type callbackError struct{ calls atomic.Int64 }
 
-func (*callbackFailure) Error() string   { panic("PRIVATE_SENTINEL_FORMATTER") }
-func (e *callbackFailure) Is(error) bool { e.calls.Add(1); panic("PRIVATE_SENTINEL_IS_CALLBACK") }
+func (*callbackError) Error() string   { panic("PRIVATE_SENTINEL_FORMATTER") }
+func (e *callbackError) Is(error) bool { e.calls.Add(1); panic("PRIVATE_SENTINEL_IS_CALLBACK") }
 func TestObservationDoesNotInvokeArbitraryErrorClassificationCallbacks(t *testing.T) {
 	// Arrange: classification hooks are user code, not trusted diagnostic fields.
 	o, _, _ := memoryObserver(t)
-	original := &callbackFailure{}
+	original := &callbackError{}
 	// Act.
 	err := o.Execute(
 		context.Background(),

@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestDeliveryStopsAtExpiryDeadlineAttemptsAndAccessRevocation(t *testing.T) {
 	for _, scenario := range []string{"expiration", "deadline", "attempts", "access_revoked"} {
 		t.Run(scenario, func(t *testing.T) {
@@ -24,14 +25,14 @@ func TestDeliveryStopsAtExpiryDeadlineAttemptsAndAccessRevocation(t *testing.T) 
 				expiry := at.Add(time.Minute)
 				sub.ExpiresAt = &expiry
 				rev, _ := s.SubscriptionRevision(ctx, sub.ID)
-				if _, err := s.ActivateSubscription(ctx, sub, rev, at); err != nil {
-					t.Fatal(err)
+				if _, activateSubscriptionErr := s.ActivateSubscription(ctx, sub, rev, at); activateSubscriptionErr != nil {
+					t.Fatal(activateSubscriptionErr)
 				}
 			}
 			putTest(t, s, "message", "g1", "bounded-policy", at)
 			policy := DefaultDeliveryPolicy()
-			if _, err := s.FanoutEvents(ctx, at, policy, queueEncoder); err != nil {
-				t.Fatal(err)
+			if _, fanoutEventsErr := s.FanoutEvents(ctx, at, policy, queueEncoder); fanoutEventsErr != nil {
+				t.Fatal(fanoutEventsErr)
 			}
 			claimAt := at.Add(time.Second)
 			wantState, wantReason := "cancelled", "subscription_inactive"
@@ -42,13 +43,13 @@ func TestDeliveryStopsAtExpiryDeadlineAttemptsAndAccessRevocation(t *testing.T) 
 				claimAt = at.Add(policy.MaxAge + time.Second)
 				wantState, wantReason = "failed", "deadline"
 			case "attempts":
-				if _, err := s.DB.Exec("UPDATE event_deliveries SET attempts=?", policy.MaxAttempts); err != nil {
-					t.Fatal(err)
+				if _, execErr := s.DB.Exec("UPDATE event_deliveries SET attempts=?", policy.MaxAttempts); execErr != nil {
+					t.Fatal(execErr)
 				}
 				wantState, wantReason = "failed", "attempts"
 			case "access_revoked":
-				if err := s.Close(); err != nil {
-					t.Fatal(err)
+				if closeErr := s.Close(); closeErr != nil {
+					t.Fatal(closeErr)
 				}
 				s, err = Open(ctx, path, nil, 90)
 				if err != nil {
@@ -60,7 +61,8 @@ func TestDeliveryStopsAtExpiryDeadlineAttemptsAndAccessRevocation(t *testing.T) 
 			job, err := s.ClaimDelivery(ctx, claimAt, policy)
 			var state, reason string
 			var payloadBytes int
-			scanErr := s.DB.QueryRow("SELECT state,last_reason,length(payload) FROM event_deliveries").Scan(&state, &reason, &payloadBytes)
+			scanErr := s.DB.QueryRow("SELECT state,last_reason,length(payload) FROM event_deliveries").
+				Scan(&state, &reason, &payloadBytes)
 			// Assert: each stop condition is explicit and durable.
 			if err != nil || scanErr != nil || job != nil || state != wantState || reason != wantReason {
 				t.Fatalf("job=%v state=%s reason=%s err=%v scan=%v", job, state, reason, err, scanErr)
@@ -85,7 +87,9 @@ func TestQueueByteCapacityDoesNotDiscardTheCollectedMessage(t *testing.T) {
 	message, readErr := s.Message(ctx, "g1", "large")
 	diagnostics, diagErr := s.DeliveryDiagnostics(ctx, at)
 	// Assert: corpus is retained, and failed delivery is observable without payload.
-	if err != nil || readErr != nil || diagErr != nil || message.Text == "" || diagnostics.ReasonCounts["queue_capacity"] != 1 || diagnostics.PendingPayloadBytes != 0 {
+	if err != nil || readErr != nil || diagErr != nil || message.Text == "" ||
+		diagnostics.ReasonCounts["queue_capacity"] != 1 ||
+		diagnostics.PendingPayloadBytes != 0 {
 		t.Fatalf("fanout=%v read=%v diag=%v", err, readErr, diagErr)
 	}
 }
@@ -94,7 +98,13 @@ func TestConcurrentActivationHasOneDurableInsertionBoundary(t *testing.T) {
 	s := openTest(t)
 	ctx := context.Background()
 	at := time.Now().UTC()
-	sub := EventSubscription{ID: "sub", Principal: "owner", GroupID: "g1", Callback: "https://receiver.example", Secret: "synthetic"}
+	sub := EventSubscription{
+		ID:        "sub",
+		Principal: "owner",
+		GroupID:   "g1",
+		Callback:  "https://receiver.example",
+		Secret:    "synthetic",
+	}
 	rev, err := s.SubscriptionRevision(ctx, sub.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -106,17 +116,17 @@ func TestConcurrentActivationHasOneDurableInsertionBoundary(t *testing.T) {
 	go func() { <-start; inserted <- s.Put(ctx, testEventMessage("concurrent", at)) }()
 	go func() {
 		<-start
-		result, err := s.ActivateSubscription(ctx, sub, rev, at)
+		result, activateErr := s.ActivateSubscription(ctx, sub, rev, at)
 		boundary = result.StartSeq
-		activated <- err
+		activated <- activateErr
 	}()
 	// Act
 	close(start)
-	if err := <-inserted; err != nil {
-		t.Fatal(err)
+	if operationErr := <-inserted; operationErr != nil {
+		t.Fatal(operationErr)
 	}
-	if err := <-activated; err != nil {
-		t.Fatal(err)
+	if activationErr := <-activated; activationErr != nil {
+		t.Fatal(activationErr)
 	}
 	_, err = s.FanoutEvents(ctx, at, DefaultDeliveryPolicy(), queueEncoder)
 	if err != nil {

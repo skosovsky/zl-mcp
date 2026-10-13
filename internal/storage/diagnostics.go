@@ -49,16 +49,16 @@ func (s *Store) DeliveryDiagnostics(ctx context.Context, at time.Time) (Delivery
 		return d, err
 	}
 	counts := func(query string, dest map[string]int64) error {
-		rows, err := tx.QueryContext(ctx, query)
-		if err != nil {
-			return err
+		rows, queryContextErr := tx.QueryContext(ctx, query)
+		if queryContextErr != nil {
+			return queryContextErr
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var category string
 			var count int64
-			if err := rows.Scan(&category, &count); err != nil {
-				return err
+			if scanErr := rows.Scan(&category, &count); scanErr != nil {
+				return scanErr
 			}
 			dest[category] = count
 		}

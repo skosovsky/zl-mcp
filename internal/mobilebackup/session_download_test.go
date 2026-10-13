@@ -11,9 +11,15 @@ import (
 
 type sessionArchiveFunc func(context.Context, *http.Request, *http.Client, func(context.Context, *http.Response) ([]byte, error)) ([]byte, error)
 
-func (f sessionArchiveFunc) ConsumeMobileArchive(c context.Context, r *http.Request, h *http.Client, k func(context.Context, *http.Response) ([]byte, error)) ([]byte, error) {
+func (f sessionArchiveFunc) ConsumeMobileArchive(
+	c context.Context,
+	r *http.Request,
+	h *http.Client,
+	k func(context.Context, *http.Response) ([]byte, error),
+) ([]byte, error) {
 	return f(c, r, h, k)
 }
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSessionDownloaderPreservesValidationAndBodyBounds(t *testing.T) {
 	for _, mode := range []string{"exact", "overflow", "encoding", "unauthorized", "host"} {
 		t.Run(mode, func(t *testing.T) {
@@ -30,20 +36,28 @@ func TestSessionDownloaderPreservesValidationAndBodyBounds(t *testing.T) {
 				case "unauthorized":
 					status = 401
 				}
-				return &http.Response{StatusCode: status, Header: http.Header{"Content-Encoding": []string{encoding}}, Body: io.NopCloser(strings.NewReader(payload)), ContentLength: -1, Request: r}, nil
+				return &http.Response{
+					StatusCode:    status,
+					Header:        http.Header{"Content-Encoding": []string{encoding}},
+					Body:          io.NopCloser(strings.NewReader(payload)),
+					ContentLength: -1,
+					Request:       r,
+				}, nil
 			})
-			source := sessionArchiveFunc(func(ctx context.Context, req *http.Request, client *http.Client, consume func(context.Context, *http.Response) ([]byte, error)) ([]byte, error) {
-				calls++
-				if client != d.client {
-					t.Fatal("validated client replaced")
-				}
-				response, e := client.Do(req)
-				if e != nil {
-					return nil, e
-				}
-				defer response.Body.Close()
-				return consume(ctx, response)
-			})
+			source := sessionArchiveFunc(
+				func(ctx context.Context, req *http.Request, client *http.Client, consume func(context.Context, *http.Response) ([]byte, error)) ([]byte, error) {
+					calls++
+					if client != d.client {
+						t.Fatal("validated client replaced")
+					}
+					response, e := client.Do(req)
+					if e != nil {
+						return nil, e
+					}
+					defer response.Body.Close()
+					return consume(ctx, response)
+				},
+			)
 			bound, e := d.WithSession(source)
 			if e != nil {
 				t.Fatal(e)

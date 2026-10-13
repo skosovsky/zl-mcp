@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
@@ -21,6 +22,7 @@ func (b *unavailableCatalogRefresh) Call(_ context.Context, name string, args an
 	return nil, errors.New("synthetic live refresh unavailable")
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestCatalogToolsAndStaticResourcesShareSingleNativeAdmission(t *testing.T) {
 	// Arrange: real MCP, complete synthetic catalogue, fixed trusted account and
 	// test-only DB triggers which observe the actual shared bucket writes.
@@ -56,7 +58,8 @@ func TestCatalogToolsAndStaticResourcesShareSingleNativeAdmission(t *testing.T) 
 		t.Fatal(err)
 	}
 	defer ss.Close()
-	cs, err := mcp.NewClient(&mcp.Implementation{Name: "synthetic-catalog-ports", Version: "1"}, nil).Connect(ctx, ct, nil)
+	cs, err := mcp.NewClient(&mcp.Implementation{Name: "synthetic-catalog-ports", Version: "1"}, nil).
+		Connect(ctx, ct, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,18 +73,18 @@ func TestCatalogToolsAndStaticResourcesShareSingleNativeAdmission(t *testing.T) 
 		{"zalo_list_groups", map[string]any{"query": "Cà phê"}},
 		{"zalo_get_group", map[string]any{"group_id": "9007199254740993"}},
 	} {
-		result, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: call.name, Arguments: call.args})
-		if err != nil || result.IsError {
-			t.Fatalf("catalog tool %s failed: %v %+v", call.name, err, result)
+		result, callToolErr := cs.CallTool(ctx, &mcp.CallToolParams{Name: call.name, Arguments: call.args})
+		if callToolErr != nil || result.IsError {
+			t.Fatalf("catalog tool %s failed: %v %+v", call.name, callToolErr, result)
 		}
 		if call.name == "zalo_get_group" && result.StructuredContent.(map[string]any)["stale"] != true {
 			t.Fatal("native fallback lost stale=true")
 		}
 	}
 	for _, uri := range []string{"zalo://capabilities", "zalo://catalog/diagnostics", "zalo://collection", "zalo://events/diagnostics"} {
-		result, err := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: uri})
-		if err != nil || len(result.Contents) != 1 || result.Contents[0].URI != uri {
-			t.Fatalf("diagnostics resource %s failed: %v", uri, err)
+		result, readResourceErr := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: uri})
+		if readResourceErr != nil || len(result.Contents) != 1 || result.Contents[0].URI != uri {
+			t.Fatalf("diagnostics resource %s failed: %v", uri, readResourceErr)
 		}
 	}
 	// Assert: no extra admission or command from the live-read fallback.

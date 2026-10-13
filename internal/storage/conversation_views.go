@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -70,8 +71,8 @@ func (s *Store) ConversationContext(
 	result["anchor"] = ConversationMessageView(anchor)
 	for _, key := range []string{"before", "after"} {
 		values := []map[string]any{}
-		messages, ok := result[key].([]domain.Message)
-		if !ok {
+		messages, operationOK := result[key].([]domain.Message)
+		if !operationOK {
 			return nil, errors.New("invalid context messages projection")
 		}
 		for _, m := range messages {
@@ -130,93 +131,19 @@ func (s *Store) Conversations(
 	}
 	h := sha256.Sum256([]byte(kind + "\x00" + query))
 	fingerprint := hex.EncodeToString(h[:])
-	c := struct{ Fingerprint, Kind, ID string }{Fingerprint: fingerprint}
-	if token != "" {
-		if err := s.DecodeCursor(token, &c); err != nil {
-			return nil, err
-		}
-		if c.Fingerprint != fingerprint {
-			return nil, domain.Invalid("Cursor filters differ from the original query.")
-		}
+	c, cursorErr := s.directoryCursor(fingerprint, token)
+	if cursorErr != nil {
+		return nil, cursorErr
 	}
 	rows, err := s.DB.QueryContext(ctx, directorySelect+" ORDER BY c.conversation_type,c.conversation_id")
 	if err != nil {
 		return nil, err
 	}
-	values := []map[string]any{}
-	sources := map[string]bool{}
-	discovered := 0
-	for rows.Next() {
-		var ref domain.ConversationRef
-		var name *string
-		var source, availability, first, updated string
-		var aliasesJSON, friendship string
-		var hasMessages bool
-		if err = rows.Scan(
-			&ref.Type,
-			&ref.ID,
-			&name,
-			&source,
-			&availability,
-			&first,
-			&updated,
-			&aliasesJSON,
-			&friendship,
-			&hasMessages,
-		); err != nil {
-			//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
-			rows.Close()
-			return nil, err
-		}
-		if !s.AllowsConversation(ref) {
-			continue
-		}
-		discovered++
-		sources[source] = true
-		aliases, metadataSources, err := directoryMetadata(aliasesJSON, source)
-		if err != nil {
-			//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
-			rows.Close()
-			return nil, err
-		}
-		for _, metadataSource := range metadataSources {
-			sources[metadataSource] = true
-		}
-		if kind != "" && kind != ref.Type {
-			continue
-		}
-		if query != "" && !directoryNameMatches(name, aliases, query) {
-			continue
-		}
-		if ref.Type < c.Kind || (ref.Type == c.Kind && ref.ID <= c.ID) {
-			continue
-		}
-		if len(values) <= limit {
-			values = append(
-				values,
-				map[string]any{
-					"conversation_type":   ref.Type,
-					"conversation_id":     ref.ID,
-					"name":                name,
-					"metadata_source":     source,
-					"availability":        availability,
-					"first_discovered_at": first,
-					"updated_at":          updated,
-					"collection_enabled":  true,
-					"aliases":             aliases,
-					"friendship":          friendship,
-					"has_stored_messages": hasMessages,
-					"metadata_sources":    metadataSources,
-				},
-			)
-		}
+	page, scanErr := s.scanDirectoryRows(rows, kind, query, c, limit)
+	if scanErr != nil {
+		return nil, scanErr
 	}
-	err = rows.Err()
-	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
-	rows.Close()
-	if err != nil {
-		return nil, err
-	}
+	values, sources, discovered := page.values, page.sources, page.discovered
 	var next, reason any
 	more := len(values) > limit
 	if more {
@@ -322,4 +249,110 @@ func (s *Store) CollectionStatus(ctx context.Context) (map[string]any, error) {
 		"catalog_complete":    false,
 		"history_complete":    false,
 	}, nil
+}
+
+type conversationCursor struct {
+	Fingerprint string `json:"Fingerprint"`
+	Kind        string `json:"Kind"`
+	ID          string `json:"ID"`
+}
+
+type directoryPage struct {
+	values     []map[string]any
+	sources    map[string]bool
+	discovered int
+}
+
+func (s *Store) scanDirectoryRows(rows *sql.Rows, kind, query string, c conversationCursor, limit int) (directoryPage, error) {
+	values := []map[string]any{}
+	sources := map[string]bool{}
+	discovered := 0
+	for rows.Next() {
+		record, recordErr := scanDirectoryRecord(rows)
+		if recordErr != nil {
+			//nolint:gosec // Read-only query cleanup preserves the scan error and precedes connection reuse.
+			rows.Close()
+			return directoryPage{}, recordErr
+		}
+		ref := record.ref
+		if !s.AllowsConversation(ref) {
+			continue
+		}
+		discovered++
+		sources[record.source] = true
+		aliases, metadataSources, directoryMetadataErr := directoryMetadata(record.aliasesJSON, record.source)
+		if directoryMetadataErr != nil {
+			//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
+			rows.Close()
+			return directoryPage{}, directoryMetadataErr
+		}
+		for _, metadataSource := range metadataSources {
+			sources[metadataSource] = true
+		}
+		if !record.matches(kind, query, c, aliases) {
+			continue
+		}
+		if len(values) <= limit {
+			values = append(
+				values,
+				map[string]any{
+					"conversation_type":   ref.Type,
+					"conversation_id":     ref.ID,
+					"name":                record.name,
+					"metadata_source":     record.source,
+					"availability":        record.availability,
+					"first_discovered_at": record.first,
+					"updated_at":          record.updated,
+					"collection_enabled":  true,
+					"aliases":             aliases,
+					"friendship":          record.friendship,
+					"has_stored_messages": record.hasMessages,
+					"metadata_sources":    metadataSources,
+				},
+			)
+		}
+	}
+	err := rows.Err()
+	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
+	rows.Close()
+	if err != nil {
+		return directoryPage{}, err
+	}
+	return directoryPage{values: values, sources: sources, discovered: discovered}, nil
+}
+
+type directoryRecord struct {
+	ref                                                           domain.ConversationRef
+	name                                                          *string
+	source, availability, first, updated, aliasesJSON, friendship string
+	hasMessages                                                   bool
+}
+
+func scanDirectoryRecord(rows *sql.Rows) (directoryRecord, error) {
+	var record directoryRecord
+	err := rows.Scan(&record.ref.Type, &record.ref.ID, &record.name, &record.source, &record.availability, &record.first, &record.updated, &record.aliasesJSON, &record.friendship, &record.hasMessages)
+	return record, err
+}
+
+func (s *Store) directoryCursor(fingerprint, token string) (conversationCursor, error) {
+	c := conversationCursor{Fingerprint: fingerprint}
+	if token != "" {
+		if err := s.DecodeCursor(token, &c); err != nil {
+			return c, err
+		}
+		if c.Fingerprint != fingerprint {
+			return c, domain.Invalid("Cursor filters differ from the original query.")
+		}
+	}
+	return c, nil
+}
+
+func (record directoryRecord) matches(kind, query string, c conversationCursor, aliases []string) bool {
+	if kind != "" && kind != record.ref.Type {
+		return false
+	}
+	if query != "" && !directoryNameMatches(record.name, aliases, query) {
+		return false
+	}
+	return record.ref.Type > c.Kind || (record.ref.Type == c.Kind && record.ref.ID > c.ID)
 }

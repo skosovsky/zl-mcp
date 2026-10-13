@@ -160,6 +160,7 @@ func (s *Store) SubscriptionRevision(ctx context.Context, id string) (int64, err
 
 // ActivateSubscription is called only after identity, callback and key checks.
 // Its transaction orders the activation boundary with the collector's Put.
+//nolint:cyclop,gocognit,gocyclo,nestif // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) ActivateSubscription(
 	ctx context.Context,
 	sub EventSubscription,
@@ -208,9 +209,9 @@ func (s *Store) ActivateSubscription(
 	}
 	reuse := err == nil && active == 1
 	if reuse && expiry.Valid {
-		expires, err := time.Parse(time.RFC3339Nano, expiry.String)
-		if err != nil {
-			return sub, err
+		expires, parseErr := time.Parse(time.RFC3339Nano, expiry.String)
+		if parseErr != nil {
+			return sub, parseErr
 		}
 		reuse = at.Before(expires)
 	}

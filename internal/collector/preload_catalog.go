@@ -11,14 +11,27 @@ import (
 
 // refreshPreloadCatalog merges only metadata from one bounded source snapshot.
 // Messages stay on explicit silent imports or the ordinary live/replay path.
-func refreshPreloadCatalog(parent context.Context, store *storage.Store, source domain.ConversationPreloadSource) error {
+func refreshPreloadCatalog(
+	parent context.Context,
+	store *storage.Store,
+	source domain.ConversationPreloadSource,
+) error {
 	ctx, cancel := context.WithTimeout(parent, 30*time.Second)
 	defer cancel()
 	previous, err := store.PreloadStatus(ctx)
 	if err != nil {
 		return err
 	}
-	status := map[string]any{"status": "running", "last_attempt_at": time.Now().UTC().Format(time.RFC3339Nano), "last_success_at": previous["last_success_at"], "observed_count": 0, "permitted_count": 0, "catalog_complete": false, "messages_imported": false, "stop_reason": nil}
+	status := map[string]any{
+		"status":            "running",
+		"last_attempt_at":   time.Now().UTC().Format(time.RFC3339Nano),
+		"last_success_at":   previous["last_success_at"],
+		"observed_count":    0,
+		"permitted_count":   0,
+		"catalog_complete":  false,
+		"messages_imported": false,
+		"stop_reason":       nil,
+	}
 	if err = store.SetPreloadStatus(ctx, status); err != nil {
 		return err
 	}
@@ -29,8 +42,8 @@ func refreshPreloadCatalog(parent context.Context, store *storage.Store, source 
 		}
 		save, stop := context.WithTimeout(context.WithoutCancel(parent), time.Second)
 		defer stop()
-		if err := store.SetPreloadStatus(save, status); err != nil {
-			return err
+		if setPreloadStatusErr := store.SetPreloadStatus(save, status); setPreloadStatusErr != nil {
+			return setPreloadStatusErr
 		}
 		return cause
 	}

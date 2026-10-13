@@ -2,20 +2,27 @@ package collector
 
 import (
 	"context"
-	"github.com/skosovsky/zl-mcp/internal/config"
-	"github.com/skosovsky/zl-mcp/internal/domain"
-	"github.com/skosovsky/zl-mcp/internal/storage"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/skosovsky/zl-mcp/internal/config"
+	"github.com/skosovsky/zl-mcp/internal/domain"
+	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
 type typedScriptedListener struct {
 	*scriptedListener
+
 	typed func(context.Context, func(domain.Message) error, func(domain.ConversationRef, string) error, func() error) error
 }
 
-func (c *typedScriptedListener) ListenConversations(ctx context.Context, m func(domain.Message) error, d func(domain.ConversationRef, string) error, ready func() error) error {
+func (c *typedScriptedListener) ListenConversations(
+	ctx context.Context,
+	m func(domain.Message) error,
+	d func(domain.ConversationRef, string) error,
+	ready func() error,
+) error {
 	return c.typed(ctx, m, d, ready)
 }
 
@@ -31,21 +38,44 @@ func TestTypedCollectorPersistsBothKindsAndDeletesOnlyTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	client := &typedScriptedListener{scriptedListener: &scriptedListener{fakeZalo: &fakeZalo{name: "Synthetic group", joined: true}}}
+	client := &typedScriptedListener{
+		scriptedListener: &scriptedListener{fakeZalo: &fakeZalo{name: "Synthetic group", joined: true}},
+	}
 	client.typed = func(ctx context.Context, message func(domain.Message) error, deletion func(domain.ConversationRef, string) error, ready func() error) error {
-		if err := ready(); err != nil {
-			return err
+		if readyErr := ready(); readyErr != nil {
+			return readyErr
 		}
 		for _, kind := range []string{domain.ConversationDirect, domain.ConversationGroup} {
-			if err := message(domain.Message{Conversation: domain.ConversationRef{Type: kind, ID: "same"}, ID: "same-message", SenderID: "peer", SentAt: time.Now(), Text: kind + " synthetic", Source: "replay"}); err != nil {
-				return err
+			if messageErr := message(
+				domain.Message{
+					Conversation: domain.ConversationRef{Type: kind, ID: "same"},
+					ID:           "same-message",
+					SenderID:     "peer",
+					SentAt:       time.Now(),
+					Text:         kind + " synthetic",
+					Source:       "replay",
+				},
+			); messageErr != nil {
+				return messageErr
 			}
 		}
-		if err := deletion(domain.ConversationRef{Type: domain.ConversationGroup, ID: "same"}, "same-message"); err != nil {
-			return err
+		if deletionErr := deletion(
+			domain.ConversationRef{Type: domain.ConversationGroup, ID: "same"},
+			"same-message",
+		); deletionErr != nil {
+			return deletionErr
 		}
-		if err := message(domain.Message{Conversation: domain.ConversationRef{Type: domain.ConversationDirect, ID: "new-peer"}, ID: "self", SenderID: "owner", SentAt: time.Now(), Text: "outgoing synthetic", Source: "live"}); err != nil {
-			return err
+		if nestedMessageErr := message(
+			domain.Message{
+				Conversation: domain.ConversationRef{Type: domain.ConversationDirect, ID: "new-peer"},
+				ID:           "self",
+				SenderID:     "owner",
+				SentAt:       time.Now(),
+				Text:         "outgoing synthetic",
+				Source:       "live",
+			},
+		); nestedMessageErr != nil {
+			return nestedMessageErr
 		}
 		cancel()
 		return ctx.Err()
@@ -57,13 +87,21 @@ func TestTypedCollectorPersistsBothKindsAndDeletesOnlyTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 	read := context.Background()
-	if _, err = s.ConversationMessage(read, domain.ConversationRef{Type: domain.ConversationDirect, ID: "same"}, "same-message"); err != nil {
+	if _, err = s.ConversationMessage(
+		read,
+		domain.ConversationRef{Type: domain.ConversationDirect, ID: "same"},
+		"same-message",
+	); err != nil {
 		t.Fatal("typed guard dropped direct replay")
 	}
 	if _, err = s.Message(read, "same", "same-message"); err == nil {
 		t.Fatal("group deletion failed")
 	}
-	m, err := s.ConversationMessage(read, domain.ConversationRef{Type: domain.ConversationDirect, ID: "new-peer"}, "self")
+	m, err := s.ConversationMessage(
+		read,
+		domain.ConversationRef{Type: domain.ConversationDirect, ID: "new-peer"},
+		"self",
+	)
 	if err != nil || m.SenderID != "owner" {
 		t.Fatal("new peer/self message lost")
 	}

@@ -62,83 +62,17 @@ func Load(path string) (Config, error) {
 	if err = c.Telemetry.Validate(); err != nil {
 		return c, err
 	}
-	if c.StateDir == "" {
-		return c, errors.New("state_dir is required")
-	}
-	if !filepath.IsAbs(c.StateDir) {
-		c.StateDir = filepath.Join(filepath.Dir(path), c.StateDir)
-	}
-	c.StateDir, err = filepath.Abs(c.StateDir)
-	if err != nil {
+	if err = resolveMCPPaths(&c, path); err != nil {
 		return c, err
 	}
-	if c.MCP.TokenFile == "" {
-		c.MCP.TokenFile = filepath.Join(c.StateDir, "mcp-token")
-	}
-	if !filepath.IsAbs(c.MCP.TokenFile) {
-		c.MCP.TokenFile, err = filepath.Abs(filepath.Join(filepath.Dir(path), c.MCP.TokenFile))
-		if err != nil {
-			return c, err
-		}
-	}
-	schema, err := contracts.Compile("service_config", "input")
-	if err != nil {
+	if err = validateMCP(c); err != nil {
 		return c, err
 	}
-	if err = schema.Validate(map[string]any{"listen": c.MCP.Listen, "token_file": c.MCP.TokenFile}); err != nil {
-		return c, fmt.Errorf("invalid MCP service configuration: %w", err)
-	}
-	host, port, err := net.SplitHostPort(c.MCP.Listen)
-	ip := net.ParseIP(host)
-	n, portErr := strconv.Atoi(port)
-	if err != nil || ip == nil || !ip.IsLoopback() || portErr != nil || n < 1 || n > 65535 {
-		return c, errors.New("mcp.listen requires a literal loopback IP and port 1..65535")
-	}
-	if c.Logging.File == "" {
-		home, homeErr := os.UserHomeDir()
-		if homeErr != nil {
-			return c, homeErr
-		}
-		c.Logging.File = filepath.Join(home, "Library", "Logs", "zl-mcp", "service.log")
-	}
-	if !filepath.IsAbs(c.Logging.File) {
-		c.Logging.File, err = filepath.Abs(filepath.Join(filepath.Dir(path), c.Logging.File))
-		if err != nil {
-			return c, err
-		}
-	}
-	logSchema, err := contracts.Compile("service_logging", "input")
-	if err != nil {
+	if err = configureLogging(&c, path); err != nil {
 		return c, err
 	}
-	if err = logSchema.Validate(
-		map[string]any{
-			"file":             c.Logging.File,
-			"max_size_mb":      c.Logging.MaxSizeMB,
-			"max_backups":      c.Logging.MaxBackups,
-			"event_trace_file": c.Logging.EventTraceFile,
-		},
-	); err != nil {
-		return c, fmt.Errorf("invalid service logging configuration: %w", err)
-	}
-	if c.Logging.EventTraceFile != "" &&
-		(!filepath.IsAbs(c.Logging.EventTraceFile) || filepath.Clean(c.Logging.EventTraceFile) == filepath.Clean(c.Logging.File)) {
-		return c, errors.New("event_trace_file must be absolute and separate from the service log")
-	}
-	if c.Storage.RetentionDays < 0 {
-		return c, errors.New("retention_days must be nonnegative")
-	}
-	switch c.Logging.Level {
-	case "debug", "info", "warn", "error":
-	default:
-		return c, errors.New("invalid logging.level")
-	}
-	seen := map[string]bool{}
-	for _, id := range c.Collection.GroupIDs {
-		if id == "" || seen[id] {
-			return c, errors.New("group_ids must contain unique nonempty strings")
-		}
-		seen[id] = true
+	if err = validateRuntimeOptions(c); err != nil {
+		return c, err
 	}
 	if err := c.validateCollection(); err != nil {
 		return c, err
@@ -229,4 +163,100 @@ func (c Config) Prepare() error {
 	}
 	//nolint:gosec // G302: 0700 is a private directory; owner execute is required for traversal.
 	return os.Chmod(c.StateDir, 0700)
+}
+
+func resolveMCPPaths(c *Config, path string) error {
+	var err error
+	if c.StateDir == "" {
+		return errors.New("state_dir is required")
+	}
+	if !filepath.IsAbs(c.StateDir) {
+		c.StateDir = filepath.Join(filepath.Dir(path), c.StateDir)
+	}
+	c.StateDir, err = filepath.Abs(c.StateDir)
+	if err != nil {
+		return err
+	}
+	if c.MCP.TokenFile == "" {
+		c.MCP.TokenFile = filepath.Join(c.StateDir, "mcp-token")
+	}
+	if !filepath.IsAbs(c.MCP.TokenFile) {
+		c.MCP.TokenFile, err = filepath.Abs(filepath.Join(filepath.Dir(path), c.MCP.TokenFile))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateMCP(c Config) error {
+	schema, err := contracts.Compile("service_config", "input")
+	if err != nil {
+		return err
+	}
+	if err = schema.Validate(map[string]any{"listen": c.MCP.Listen, "token_file": c.MCP.TokenFile}); err != nil {
+		return fmt.Errorf("invalid MCP service configuration: %w", err)
+	}
+	host, port, err := net.SplitHostPort(c.MCP.Listen)
+	ip := net.ParseIP(host)
+	n, portErr := strconv.Atoi(port)
+	if err != nil || ip == nil || !ip.IsLoopback() || portErr != nil || n < 1 || n > 65535 {
+		return errors.New("mcp.listen requires a literal loopback IP and port 1..65535")
+	}
+	return nil
+}
+
+func configureLogging(c *Config, path string) error {
+	var err error
+	if c.Logging.File == "" {
+		home, homeErr := os.UserHomeDir()
+		if homeErr != nil {
+			return homeErr
+		}
+		c.Logging.File = filepath.Join(home, "Library", "Logs", "zl-mcp", "service.log")
+	}
+	if !filepath.IsAbs(c.Logging.File) {
+		c.Logging.File, err = filepath.Abs(filepath.Join(filepath.Dir(path), c.Logging.File))
+		if err != nil {
+			return err
+		}
+	}
+	logSchema, err := contracts.Compile("service_logging", "input")
+	if err != nil {
+		return err
+	}
+	if err = logSchema.Validate(
+		map[string]any{
+			"file":             c.Logging.File,
+			"max_size_mb":      c.Logging.MaxSizeMB,
+			"max_backups":      c.Logging.MaxBackups,
+			"event_trace_file": c.Logging.EventTraceFile,
+		},
+	); err != nil {
+		return fmt.Errorf("invalid service logging configuration: %w", err)
+	}
+	if c.Logging.EventTraceFile != "" &&
+		(!filepath.IsAbs(c.Logging.EventTraceFile) || filepath.Clean(c.Logging.EventTraceFile) == filepath.Clean(c.Logging.File)) {
+		return errors.New("event_trace_file must be absolute and separate from the service log")
+	}
+	return nil
+}
+
+func validateRuntimeOptions(c Config) error {
+	if c.Storage.RetentionDays < 0 {
+		return errors.New("retention_days must be nonnegative")
+	}
+	switch c.Logging.Level {
+	case "debug", "info", "warn", "error":
+	default:
+		return errors.New("invalid logging.level")
+	}
+	seen := map[string]bool{}
+	for _, id := range c.Collection.GroupIDs {
+		if id == "" || seen[id] {
+			return errors.New("group_ids must contain unique nonempty strings")
+		}
+		seen[id] = true
+	}
+	return nil
 }

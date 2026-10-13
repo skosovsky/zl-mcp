@@ -12,21 +12,27 @@ import (
 	"testing"
 	"time"
 
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 func ownedOptions() Options {
-	return Options{Enabled: true, Exporter: "none", ExportTimeout: 100 * time.Millisecond, ShutdownTimeout: 100 * time.Millisecond}
+	return Options{
+		Enabled:         true,
+		Exporter:        "none",
+		ExportTimeout:   100 * time.Millisecond,
+		ShutdownTimeout: 100 * time.Millisecond,
+	}
 }
 
 type failingTraceExporter struct {
 	mu        sync.Mutex
 	resources []string
-	cause     *privateFailure
+	cause     *privateError
 	stall     bool
 	shutdowns int
 }
@@ -52,7 +58,7 @@ func (e *failingTraceExporter) Shutdown(context.Context) error {
 type failingMetricExporter struct {
 	mu        sync.Mutex
 	resources []string
-	cause     *privateFailure
+	cause     *privateError
 }
 
 func (e *failingMetricExporter) Temporality(sdkmetric.InstrumentKind) metricdata.Temporality {
@@ -72,7 +78,7 @@ func (e *failingMetricExporter) Shutdown(context.Context) error   { return e.cau
 
 func TestExporterFailureKeepsOutcomeAndShutdownBounded(t *testing.T) {
 	// Arrange: an unavailable exporter stalls until its deadline, with a hostile error.
-	cause := &privateFailure{}
+	cause := &privateError{}
 	exporter := &failingTraceExporter{cause: cause, stall: true}
 	owner, observer, err := newOwned(context.Background(), ownedOptions(), exporter, nil)
 	if err != nil {
@@ -81,7 +87,11 @@ func TestExporterFailureKeepsOutcomeAndShutdownBounded(t *testing.T) {
 	calls := 0
 	// Act: a send finishes once before export. Flushing and shutdown use bounded contexts.
 	started := time.Now()
-	err = observer.Execute(context.Background(), "zalo_send_direct_message", func(context.Context) (domain.Outcome, error) { calls++; return domain.OutcomeUnknown, nil })
+	err = observer.Execute(
+		context.Background(),
+		"zalo_send_direct_message",
+		func(context.Context) (domain.Outcome, error) { calls++; return domain.OutcomeUnknown, nil },
+	)
 	elapsed := time.Since(started)
 	flush, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	flushErr := owner.ForceFlush(flush)
@@ -99,7 +109,8 @@ func TestExporterFailureKeepsOutcomeAndShutdownBounded(t *testing.T) {
 	if flushErr == nil || shutdownErr == nil || repeatErr == nil || shutdownElapsed > 500*time.Millisecond {
 		t.Fatal("export/shutdown failure not bounded/observable")
 	}
-	if cause.formatted.Load() != 0 || strings.Contains(flushErr.Error()+shutdownErr.Error()+repeatErr.Error(), "PRIVATE_SENTINEL") {
+	if cause.formatted.Load() != 0 ||
+		strings.Contains(flushErr.Error()+shutdownErr.Error()+repeatErr.Error(), "PRIVATE_SENTINEL") {
 		t.Fatal("export error leaked")
 	}
 	select {
@@ -124,18 +135,27 @@ func TestDisabledPipelineDoesNotDuplicateFinalAuditOrConstructSDK(t *testing.T) 
 	previous := slog.Default()
 	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
 	defer slog.SetDefault(previous)
-	cause := &privateFailure{}
+	cause := &privateError{}
 	calls := 0
 	// Act.
-	result := o.Execute(context.Background(), "PRIVATE_SENTINEL_TOOL", func(context.Context) (domain.Outcome, error) { calls++; return domain.OutcomeUnknown, cause })
-	_ = o.Worker(context.Background(), domain.WorkSend, "PRIVATE_SENTINEL_OPERATION", func(context.Context) error { return nil })
+	result := o.Execute(
+		context.Background(),
+		"PRIVATE_SENTINEL_TOOL",
+		func(context.Context) (domain.Outcome, error) { calls++; return domain.OutcomeUnknown, cause },
+	)
+	_ = o.Worker(
+		context.Background(),
+		domain.WorkSend,
+		"PRIVATE_SENTINEL_OPERATION",
+		func(context.Context) error { return nil },
+	)
 	o.Remember(context.Background(), domain.WorkSend, "PRIVATE_SENTINEL_OPERATION")
 	o.Queue(context.Background(), domain.WorkSend, 1)
-	o.Transition(context.Background(), domain.WorkSend, domain.StatePending, domain.StateSent, observedAge(time.Second))
+	o.Transition(context.Background(), domain.WorkSend, domain.StatePending, domain.StateSent, new(time.Second))
 	o.ResponseBytes(context.Background(), "PRIVATE_SENTINEL_TOOL", domain.TransportHTTP, 1)
 	_ = owner.Shutdown(context.Background())
 	// Assert.
-	if calls != 1 || result != cause || cause.formatted.Load() != 0 {
+	if calls != 1 || !errors.Is(result, cause) || cause.formatted.Load() != 0 {
 		t.Fatal("disabled audit altered business/formatting")
 	}
 	if strings.Contains(logs.String(), "PRIVATE_SENTINEL") {
@@ -151,7 +171,11 @@ func TestOwnedExportFiltersResourceEnvironment(t *testing.T) {
 	if os.Getenv("ZL_TEST_TELEMETRY_RESOURCE_CHILD") != "1" {
 		// Arrange/Act: only this synthetic test runs in a subprocess with private env fields.
 		cmd := exec.Command(os.Args[0], "-test.run=^TestOwnedExportFiltersResourceEnvironment$")
-		cmd.Env = append(os.Environ(), "ZL_TEST_TELEMETRY_RESOURCE_CHILD=1", "OTEL_RESOURCE_ATTRIBUTES=host.private=PRIVATE_SENTINEL_ENV,service.name=PRIVATE_SENTINEL_SERVICE")
+		cmd.Env = append(
+			os.Environ(),
+			"ZL_TEST_TELEMETRY_RESOURCE_CHILD=1",
+			"OTEL_RESOURCE_ATTRIBUTES=host.private=PRIVATE_SENTINEL_ENV,service.name=PRIVATE_SENTINEL_SERVICE",
+		)
 		output, err := cmd.CombinedOutput()
 		// Assert.
 		if err != nil {
@@ -163,7 +187,7 @@ func TestOwnedExportFiltersResourceEnvironment(t *testing.T) {
 		return
 	}
 	// Arrange.
-	cause := &privateFailure{}
+	cause := &privateError{}
 	te := &failingTraceExporter{cause: cause}
 	me := &failingMetricExporter{cause: cause}
 	owner, o, err := newOwned(context.Background(), ownedOptions(), te, me)
@@ -171,7 +195,11 @@ func TestOwnedExportFiltersResourceEnvironment(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Act.
-	_ = o.Execute(context.Background(), "zalo_join_group", func(context.Context) (domain.Outcome, error) { return domain.OutcomePartial, nil })
+	_ = o.Execute(
+		context.Background(),
+		"zalo_join_group",
+		func(context.Context) (domain.Outcome, error) { return domain.OutcomePartial, nil },
+	)
 	flush, cancel := context.WithTimeout(context.Background(), time.Second)
 	_ = owner.ForceFlush(flush)
 	cancel()
@@ -187,7 +215,8 @@ func TestOwnedExportFiltersResourceEnvironment(t *testing.T) {
 		t.Fatal("owned exporters did not receive telemetry")
 	}
 	for _, r := range append(traceResources, metricResources...) {
-		if strings.Contains(r, "PRIVATE_SENTINEL") || strings.Contains(r, "host.private") || !strings.Contains(r, "service.name=zl-mcp") {
+		if strings.Contains(r, "PRIVATE_SENTINEL") || strings.Contains(r, "host.private") ||
+			!strings.Contains(r, "service.name=zl-mcp") {
 			t.Fatal("resource environment not filtered")
 		}
 	}
@@ -198,12 +227,13 @@ func TestOwnedExportFiltersResourceEnvironment(t *testing.T) {
 
 func TestSafeExporterPreservesFailureCategoryWithoutOriginalCause(t *testing.T) {
 	// Arrange.
-	original := &privateFailure{}
+	original := &privateError{}
 	e := safeTraceExporter{&failingTraceExporter{cause: original}}
 	// Act.
 	err := e.ExportSpans(context.Background(), tracetest.SpanStubs{}.Snapshots())
 	// Assert.
-	if err == nil || errors.Is(err, original) || err.Error() != "telemetry export failed" || original.formatted.Load() != 0 {
+	if err == nil || errors.Is(err, original) || err.Error() != "telemetry export failed" ||
+		original.formatted.Load() != 0 {
 		t.Fatal("private export cause escaped safe boundary")
 	}
 }

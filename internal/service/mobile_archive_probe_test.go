@@ -25,6 +25,7 @@ func (s *archiveProbeSource) MobileBackupContext(ctx context.Context) (context.C
 	return child, cancel, nil
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileArchiveProbeBoundedOneShotWithoutPersistence(t *testing.T) {
 	// Arrange: independent encrypted SQLite vector and the existing session port.
 	raw, err := os.ReadFile("../mobilebackup/testdata/format1-sqlite-vector.json")

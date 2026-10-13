@@ -9,9 +9,11 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestControlWorkflowContracts(t *testing.T) {
 	for _, outcome := range []string{"joined", "pending_approval"} {
 		t.Run(outcome, func(t *testing.T) {
@@ -52,7 +54,12 @@ func TestControlWorkflowContracts(t *testing.T) {
 				return result
 			}
 			call("zalo_get_group", map[string]any{"group_id": "g"}, http.StatusOK, "zalo_get_group")
-			preview := call("zalo_inspect_invite", map[string]any{"invite_url": "https://zalo.me/g/abc"}, http.StatusOK, "zalo_inspect_invite")
+			preview := call(
+				"zalo_inspect_invite",
+				map[string]any{"invite_url": "https://zalo.me/g/abc"},
+				http.StatusOK,
+				"zalo_inspect_invite",
+			)
 			id := preview["preview_id"].(string)
 			call("cli_preview", map[string]any{"preview_id": id}, http.StatusOK, "cli_preview")
 			approval := call("cli_approve", map[string]any{"preview_id": id}, http.StatusOK, "cli_approve")
@@ -60,9 +67,16 @@ func TestControlWorkflowContracts(t *testing.T) {
 			args := map[string]any{"plan_token": approval["plan_token"], "request_id": requestID}
 			started := call("zalo_join_group", args, http.StatusOK, "zalo_join_group")
 			j.Wait()
-			final := call("zalo_get_join_status", map[string]any{"operation_id": started["operation_id"]}, http.StatusOK, "zalo_get_join_status")
+			final := call(
+				"zalo_get_join_status",
+				map[string]any{"operation_id": started["operation_id"]},
+				http.StatusOK,
+				"zalo_get_join_status",
+			)
 			repeated := call("zalo_join_group", args, http.StatusOK, "zalo_join_group")
-			if final["status"] != outcome || repeated["status"] != outcome || final["error"] != nil || repeated["operation_id"] != started["operation_id"] || api.calls != 1 {
+			if final["status"] != outcome || repeated["status"] != outcome || final["error"] != nil ||
+				repeated["operation_id"] != started["operation_id"] ||
+				api.calls != 1 {
 				t.Fatalf("unsafe workflow: final=%+v repeat=%+v mutations=%d", final, repeated, api.calls)
 			}
 

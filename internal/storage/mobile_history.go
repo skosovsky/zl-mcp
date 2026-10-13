@@ -156,6 +156,7 @@ func mobilePositionAfter(a, b domain.MobileHistoryPosition) bool {
 
 // CommitMobileHistoryPage commits one source page and its exact binding/checkpoint.
 // No phone, Events or public source selection is performed by this internal port.
+//nolint:cyclop,funlen,gocognit,gocyclo // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) CommitMobileHistoryPage(
 	ctx context.Context,
 	id string,

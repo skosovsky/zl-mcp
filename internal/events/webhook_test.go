@@ -19,6 +19,7 @@ type callbackRoundTrip func(*http.Request) (*http.Response, error)
 
 func (f callbackRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestVerificationSignatureAndChallenge(t *testing.T) {
 	for _, mismatch := range []bool{false, true} {
 		t.Run(map[bool]string{false: "valid", true: "wrong-challenge"}[mismatch], func(t *testing.T) {
@@ -33,28 +34,46 @@ func TestVerificationSignatureAndChallenge(t *testing.T) {
 					t.Fatal(err)
 				}
 				mac := hmac.New(sha256.New, key)
-				mac.Write([]byte(r.Header.Get("webhook-id") + "." + r.Header.Get("webhook-timestamp") + "."))
+				mac.Write([]byte(r.Header.Get("Webhook-Id") + "." + r.Header.Get("Webhook-Timestamp") + "."))
 				mac.Write(body)
-				decoded, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("webhook-signature"), "v1,"))
+				decoded, err := base64.StdEncoding.DecodeString(
+					strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"),
+				)
 				if err != nil || !hmac.Equal(decoded, mac.Sum(nil)) {
 					t.Fatal("Standard Webhooks signature mismatch")
 				}
-				if r.Header.Get("X-MCP-Subscription-Id") != "synthetic-subscription" || r.Header.Get("Content-Type") != "application/json" || r.Method != "POST" {
+				if r.Header.Get("X-Mcp-Subscription-Id") != "synthetic-subscription" ||
+					r.Header.Get("Content-Type") != "application/json" ||
+					r.Method != http.MethodPost {
 					t.Fatal("missing required headers")
 				}
 				var payload map[string]string
-				if err := json.Unmarshal(body, &payload); err != nil || payload["type"] != "verification" || len(payload["challenge"]) < 32 {
+				if err := json.Unmarshal(
+					body,
+					&payload,
+				); err != nil || payload["type"] != "verification" ||
+					len(payload["challenge"]) < 32 {
 					t.Fatal("invalid verification payload")
 				}
 				if mismatch {
 					payload["challenge"] = "not-the-challenge"
 				}
 				responseBody, _ := json.Marshal(map[string]string{"challenge": payload["challenge"]})
-				return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(string(responseBody))), Header: http.Header{}}, nil
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader(string(responseBody))),
+					Header:     http.Header{},
+				}, nil
 			})}
 
 			// Act.
-			err := verifyCallback(context.Background(), client, "https://callback.example/events", secret, "synthetic-subscription")
+			err := verifyCallback(
+				context.Background(),
+				client,
+				"https://callback.example/events",
+				secret,
+				"synthetic-subscription",
+			)
 
 			// Assert.
 			if calls != 1 || (err != nil) != mismatch {
@@ -66,7 +85,18 @@ func TestVerificationSignatureAndChallenge(t *testing.T) {
 
 func TestCallbackBlocksNonPublicAndRedirect(t *testing.T) {
 	// Arrange.
-	unsafe := []string{"http://example.com", "https://user:secret@example.com", "https://127.0.0.1", "https://[::1]", "https://169.254.169.254", "https://192.168.1.1", "https://100.64.0.1", "https://203.0.113.1", "https://[::ffff:127.0.0.1]", "https://example.com/#fragment"}
+	unsafe := []string{
+		"http://example.com",
+		"https://user:secret@example.com",
+		"https://127.0.0.1",
+		"https://[::1]",
+		"https://169.254.169.254",
+		"https://192.168.1.1",
+		"https://100.64.0.1",
+		"https://203.0.113.1",
+		"https://[::ffff:127.0.0.1]",
+		"https://example.com/#fragment",
+	}
 	for _, raw := range unsafe {
 		// Act.
 		_, err := callbackURL(raw)
@@ -119,9 +149,33 @@ func TestCallbackBoundsAndRedactsErrors(t *testing.T) {
 	secret := "whsec_" + base64.StdEncoding.EncodeToString([]byte(strings.Repeat("x", 32)))
 
 	// Act.
-	_, oversizedErr := postCallback(context.Background(), client, "https://example.com", secret, "s", "e", []byte(strings.Repeat("x", 262145)))
-	_, invalidKeyErr := postCallback(context.Background(), client, "https://example.com", "secret-marker", "s", "e", []byte("{}"))
-	_, requestErr := postCallback(context.Background(), client, "https://example.com/private-url-marker", secret, "s", "e", []byte("{}"))
+	_, oversizedErr := postCallback(
+		context.Background(),
+		client,
+		"https://example.com",
+		secret,
+		"s",
+		"e",
+		[]byte(strings.Repeat("x", 262145)),
+	)
+	_, invalidKeyErr := postCallback(
+		context.Background(),
+		client,
+		"https://example.com",
+		"secret-marker",
+		"s",
+		"e",
+		[]byte("{}"),
+	)
+	_, requestErr := postCallback(
+		context.Background(),
+		client,
+		"https://example.com/private-url-marker",
+		secret,
+		"s",
+		"e",
+		[]byte("{}"),
+	)
 
 	// Assert.
 	if calls != 1 || oversizedErr == nil || invalidKeyErr == nil || requestErr == nil {

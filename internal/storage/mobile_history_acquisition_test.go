@@ -34,7 +34,9 @@ func TestMobileHistoryAcquisitionBindingIsAtomicAndIdempotent(t *testing.T) {
 	ctx := context.Background()
 	s, op, _ := acquisitionOperation(t)
 	defer s.Close()
-	if _, err := s.DB.Exec(`CREATE TRIGGER reject_acquisition_link BEFORE INSERT ON history_mobile_attempts BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`); err != nil {
+	if _, err := s.DB.Exec(
+		`CREATE TRIGGER reject_acquisition_link BEFORE INSERT ON history_mobile_attempts BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`,
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act: the failed link must not leave a dispatchable orphan attempt.
@@ -55,10 +57,24 @@ func TestMobileHistoryAcquisitionBindingIsAtomicAndIdempotent(t *testing.T) {
 		t.Fatal(err)
 	}
 	repeat, err := s.PrepareMobileHistoryAcquisition(ctx, op.Status.OperationID, op.Revision, 64<<20)
-	if err != nil || repeat.OperationID != attempt.OperationID || repeat.Revision != attempt.Revision || repeat.State != "prepared" || repeat.Request.RequestID != op.Status.RequestID || repeat.Request.Ref() != op.Status.Ref() || repeat.Request.Since != op.Status.Since || repeat.Request.Until != op.Status.Until || repeat.Request.MaxMessages != op.Status.MaxMessages {
+	if err != nil || repeat.OperationID != attempt.OperationID || repeat.Revision != attempt.Revision ||
+		repeat.State != "prepared" ||
+		repeat.Request.RequestID != op.Status.RequestID ||
+		repeat.Request.Ref() != op.Status.Ref() ||
+		repeat.Request.Since != op.Status.Since ||
+		repeat.Request.Until != op.Status.Until ||
+		repeat.Request.MaxMessages != op.Status.MaxMessages {
 		t.Fatal("retry changed acquisition identity", err)
 	}
-	if _, err = s.PrepareMobileHistoryAcquisition(ctx, op.Status.OperationID, op.Revision, 32<<20); !errors.Is(err, ErrMobileBackupConflict) {
+	if _, err = s.PrepareMobileHistoryAcquisition(
+		ctx,
+		op.Status.OperationID,
+		op.Revision,
+		32<<20,
+	); !errors.Is(
+		err,
+		ErrMobileBackupConflict,
+	) {
 		t.Fatal("archive budget changed", err)
 	}
 	countAcquisitionRows(t, s, 1, 1)
@@ -66,11 +82,20 @@ func TestMobileHistoryAcquisitionBindingIsAtomicAndIdempotent(t *testing.T) {
 	if err != nil || attempt.State != "dispatching" {
 		t.Fatal("valid binding cannot dispatch", err)
 	}
-	if _, err = s.DispatchMobileBackup(ctx, attempt.OperationID, 0, mobileJournalPublic(t)); !errors.Is(err, ErrMobileBackupState) {
+	if _, err = s.DispatchMobileBackup(
+		ctx,
+		attempt.OperationID,
+		0,
+		mobileJournalPublic(t),
+	); !errors.Is(
+		err,
+		ErrMobileBackupState,
+	) {
 		t.Fatal("same attempt dispatched twice", err)
 	}
 }
 
+//nolint:gocognit,nestif // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileHistoryAcquisitionRejectsStaleCancelledAndUnreservedDispatch(t *testing.T) {
 	for _, mode := range []string{"unreserved", "stale-prepare", "cancel-before-bind", "cancel-before-dispatch", "recover-before-dispatch", "terminal-before-dispatch"} {
 		t.Run(mode, func(t *testing.T) {
@@ -96,7 +121,15 @@ func TestMobileHistoryAcquisitionRejectsStaleCancelledAndUnreservedDispatch(t *t
 					}
 				}
 				// Act / Assert: invalid authority creates no attempt or link.
-				if _, err := s.PrepareMobileHistoryAcquisition(ctx, op.Status.OperationID, revision, 0); !errors.Is(err, ErrHistoryState) {
+				if _, err := s.PrepareMobileHistoryAcquisition(
+					ctx,
+					op.Status.OperationID,
+					revision,
+					0,
+				); !errors.Is(
+					err,
+					ErrHistoryState,
+				) {
 					t.Fatal("invalid history authority bound an attempt", err)
 				}
 				countAcquisitionRows(t, s, 0, 0)
@@ -126,7 +159,14 @@ func TestMobileHistoryAcquisitionRejectsStaleCancelledAndUnreservedDispatch(t *t
 					}
 				}
 			case "terminal-before-dispatch":
-				_, err = s.StopHistoryOperation(ctx, op.Status.OperationID, op.Revision, "partial", "source_unavailable", 0)
+				_, err = s.StopHistoryOperation(
+					ctx,
+					op.Status.OperationID,
+					op.Revision,
+					"partial",
+					"source_unavailable",
+					0,
+				)
 			}
 			if err != nil {
 				t.Fatal(err)
@@ -155,7 +195,6 @@ func TestMobileHistoryAcquisitionRejectsStaleCancelledAndUnreservedDispatch(t *t
 					t.Fatal("cleanup lost its ability to cancel acquisition", err)
 				}
 			}
-
 		})
 	}
 }
@@ -187,28 +226,57 @@ func TestMobileHistoryAcquisitionRestartCannotRedispatchOrAdoptUnlinkedAttempt(t
 	}
 	got, err := s.PrepareMobileHistoryAcquisition(ctx, op.Status.OperationID, op.Revision, 0)
 	// Assert: return the original interrupted attempt, without requiring a new reservation.
-	if err != nil || got.OperationID != attempt.OperationID || got.State != "interrupted" || op.WorkDuration != 180*time.Second {
+	if err != nil || got.OperationID != attempt.OperationID || got.State != "interrupted" ||
+		op.WorkDuration != 180*time.Second {
 		t.Fatal("restart replaced or redispatched attempt", err)
 	}
 	countAcquisitionRows(t, s, 1, 1)
-	if _, err = s.DispatchMobileBackup(ctx, got.OperationID, got.Revision, mobileJournalPublic(t)); !errors.Is(err, ErrMobileBackupState) {
+	if _, err = s.DispatchMobileBackup(
+		ctx,
+		got.OperationID,
+		got.Revision,
+		mobileJournalPublic(t),
+	); !errors.Is(
+		err,
+		ErrMobileBackupState,
+	) {
 		t.Fatal("interrupted acquisition dispatched", err)
 	}
 
 	// Arrange: a different store already has an unlinked owner-diagnostic UUID.
 	other, pending, _ := acquisitionOperation(t)
 	defer other.Close()
-	r := domain.MobileBackupRequest{RequestID: pending.Status.RequestID, ConversationType: pending.Status.ConversationType, ConversationID: pending.Status.ConversationID, Since: pending.Status.Since, Until: pending.Status.Until, MaxMessages: pending.Status.MaxMessages}
+	r := domain.MobileBackupRequest{
+		RequestID:        pending.Status.RequestID,
+		ConversationType: pending.Status.ConversationType,
+		ConversationID:   pending.Status.ConversationID,
+		Since:            pending.Status.Since,
+		Until:            pending.Status.Until,
+		MaxMessages:      pending.Status.MaxMessages,
+	}
 	standalone, err := other.PrepareMobileBackup(ctx, r)
 	if err != nil {
 		t.Fatal(err)
 	}
 	// Act / Assert: ownership must not be adopted implicitly, even with matching arguments.
-	if _, err = other.PrepareMobileHistoryAcquisition(ctx, pending.Status.OperationID, pending.Revision, 0); !errors.Is(err, ErrMobileBackupConflict) {
+	if _, err = other.PrepareMobileHistoryAcquisition(
+		ctx,
+		pending.Status.OperationID,
+		pending.Revision,
+		0,
+	); !errors.Is(
+		err,
+		ErrMobileBackupConflict,
+	) {
 		t.Fatal("unlinked attempt adopted", err)
 	}
 	countAcquisitionRows(t, other, 1, 0)
-	if _, err = other.DispatchMobileBackup(ctx, standalone.OperationID, standalone.Revision, mobileJournalPublic(t)); err != nil {
+	if _, err = other.DispatchMobileBackup(
+		ctx,
+		standalone.OperationID,
+		standalone.Revision,
+		mobileJournalPublic(t),
+	); err != nil {
 		t.Fatal("unlinked diagnostic behavior changed", err)
 	}
 }
@@ -217,7 +285,9 @@ func TestMobileHistoryAcquisitionMigrationIsAtomic(t *testing.T) {
 	// Arrange: schema 13 exists, and recording schema 14 fails.
 	s, _, _, _ := mobileOperation(t)
 	defer s.Close()
-	if _, err := s.DB.Exec(`DROP TABLE history_mobile_attempts;DELETE FROM schema_migrations WHERE version=14;CREATE TRIGGER reject_acquisition_migration BEFORE INSERT ON schema_migrations WHEN new.version=14 BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`); err != nil {
+	if _, err := s.DB.Exec(
+		`DROP TABLE history_mobile_attempts;DELETE FROM schema_migrations WHERE version=14;CREATE TRIGGER reject_acquisition_migration BEFORE INSERT ON schema_migrations WHEN new.version=14 BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`,
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act: execute the isolated acquisition migration.
@@ -226,14 +296,18 @@ func TestMobileHistoryAcquisitionMigrationIsAtomic(t *testing.T) {
 	}
 	// Assert: neither table nor version was partially published.
 	var tables, versions int
-	if err := s.DB.QueryRow("SELECT count(*) FROM sqlite_master WHERE name='history_mobile_attempts'").Scan(&tables); err != nil {
+	if err := s.DB.QueryRow("SELECT count(*) FROM sqlite_master WHERE name='history_mobile_attempts'").
+		Scan(&tables); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.DB.QueryRow("SELECT count(*) FROM schema_migrations WHERE version=14").Scan(&versions); err != nil || tables != 0 || versions != 0 {
+	if err := s.DB.QueryRow("SELECT count(*) FROM schema_migrations WHERE version=14").
+		Scan(&versions); err != nil || tables != 0 ||
+		versions != 0 {
 		t.Fatal("partial acquisition migration", err)
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileHistoryAcquisitionScopeAndInputFailuresHaveNoSideEffects(t *testing.T) {
 	for _, mode := range []string{"foreign-account", "revoked", "invalid-budget", "cancelled-context", "legacy-source"} {
 		t.Run(mode, func(t *testing.T) {
@@ -244,7 +318,9 @@ func TestMobileHistoryAcquisitionScopeAndInputFailuresHaveNoSideEffects(t *testi
 			budget := int64(0)
 			switch mode {
 			case "foreign-account":
-				if _, err := s.DB.Exec("UPDATE metadata SET value='foreign-account-binding' WHERE key='account'"); err != nil {
+				if _, err := s.DB.Exec(
+					"UPDATE metadata SET value='foreign-account-binding' WHERE key='account'",
+				); err != nil {
 					t.Fatal(err)
 				}
 			case "revoked":
@@ -291,7 +367,9 @@ func TestMobileHistoryAcquisitionScopeAndInputFailuresHaveNoSideEffects(t *testi
 				t.Fatal(err)
 			}
 			if mode == "foreign-account" {
-				if _, err = s.DB.Exec("UPDATE metadata SET value='foreign-account-binding' WHERE key='account'"); err != nil {
+				if _, err = s.DB.Exec(
+					"UPDATE metadata SET value='foreign-account-binding' WHERE key='account'",
+				); err != nil {
 					t.Fatal(err)
 				}
 			} else {
@@ -306,7 +384,11 @@ func TestMobileHistoryAcquisitionScopeAndInputFailuresHaveNoSideEffects(t *testi
 			}
 			var state, public string
 			var revision int64
-			if err = s.DB.QueryRow("SELECT state,public_key,revision FROM mobile_backup_attempts WHERE operation_id=?", attempt.OperationID).Scan(&state, &public, &revision); err != nil || state != "prepared" || public != "" || revision != attempt.Revision {
+			if err = s.DB.QueryRow("SELECT state,public_key,revision FROM mobile_backup_attempts WHERE operation_id=?", attempt.OperationID).
+				Scan(&state, &public, &revision); err != nil ||
+				state != "prepared" ||
+				public != "" ||
+				revision != attempt.Revision {
 				t.Fatal("denied dispatch changed acquisition", err)
 			}
 			countAcquisitionRows(t, s, 1, 1)
@@ -319,7 +401,9 @@ func TestMobileHistoryStageWorkRollbackAndBounds(t *testing.T) {
 	ctx := context.Background()
 	s, op, _ := acquisitionOperation(t)
 	defer s.Close()
-	if _, err := s.DB.Exec(`CREATE TRIGGER reject_stage_work BEFORE UPDATE ON history_operations BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`); err != nil {
+	if _, err := s.DB.Exec(
+		`CREATE TRIGGER reject_stage_work BEFORE UPDATE ON history_operations BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`,
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act: reconcile a finished phone stage without page counters or message writes.
@@ -328,20 +412,40 @@ func TestMobileHistoryStageWorkRollbackAndBounds(t *testing.T) {
 	}
 	// Assert: the entire original revision/reservation survives the rollback.
 	got, err := s.HistoryOperation(ctx, op.Status.OperationID)
-	if err != nil || got.Revision != op.Revision || got.WorkDuration != op.WorkDuration || got.ReservedDuration != 180*time.Second {
+	if err != nil || got.Revision != op.Revision || got.WorkDuration != op.WorkDuration ||
+		got.ReservedDuration != 180*time.Second {
 		t.Fatal("partial stage completion", err)
 	}
 	if _, err = s.DB.Exec("DROP TRIGGER reject_stage_work"); err != nil {
 		t.Fatal(err)
 	}
 	next, err := s.CompleteMobileHistoryWork(ctx, op.Status.OperationID, op.Revision, time.Second)
-	if err != nil || next.Revision != op.Revision+1 || next.ReservedDuration != 0 || next.WorkDuration < time.Second || next.WorkDuration >= 2*time.Second || next.Status.PagesObserved != 0 || next.Status.RecordsObserved != 0 {
+	if err != nil || next.Revision != op.Revision+1 || next.ReservedDuration != 0 || next.WorkDuration < time.Second ||
+		next.WorkDuration >= 2*time.Second ||
+		next.Status.PagesObserved != 0 ||
+		next.Status.RecordsObserved != 0 {
 		t.Fatal("stage work changed page progress", err)
 	}
-	if _, err = s.CompleteMobileHistoryWork(ctx, op.Status.OperationID, op.Revision, time.Second); !errors.Is(err, ErrHistoryState) {
+	if _, err = s.CompleteMobileHistoryWork(
+		ctx,
+		op.Status.OperationID,
+		op.Revision,
+		time.Second,
+	); !errors.Is(
+		err,
+		ErrHistoryState,
+	) {
 		t.Fatal("stale stage completed twice", err)
 	}
-	if _, err = s.CompleteMobileHistoryWork(ctx, op.Status.OperationID, next.Revision, time.Second); !errors.Is(err, ErrHistoryState) {
+	if _, err = s.CompleteMobileHistoryWork(
+		ctx,
+		op.Status.OperationID,
+		next.Revision,
+		time.Second,
+	); !errors.Is(
+		err,
+		ErrHistoryState,
+	) {
 		t.Fatal("unreserved work completed", err)
 	}
 	next, err = s.ReserveMobileHistoryWork(ctx, next.Status.OperationID, next.Revision, 120*time.Second)
@@ -353,12 +457,18 @@ func TestMobileHistoryStageWorkRollbackAndBounds(t *testing.T) {
 	}
 	// Act / Assert: exceeding the remaining allowance stops at the exact bounded ceiling.
 	finished, err := s.CompleteMobileHistoryWork(ctx, next.Status.OperationID, next.Revision, MobileHistoryWorkBudget)
-	if err != nil || finished.Status.State != "partial" || finished.Status.StopReason == nil || *finished.Status.StopReason != "time_limit" || finished.WorkDuration != MobileHistoryWorkBudget || finished.ReservedDuration != 0 || finished.Status.PagesObserved != 0 || finished.Status.RecordsObserved != 0 {
+	if err != nil || finished.Status.State != "partial" || finished.Status.StopReason == nil ||
+		*finished.Status.StopReason != "time_limit" ||
+		finished.WorkDuration != MobileHistoryWorkBudget ||
+		finished.ReservedDuration != 0 ||
+		finished.Status.PagesObserved != 0 ||
+		finished.Status.RecordsObserved != 0 {
 		t.Fatal("stage exceeded remaining work budget", err)
 	}
 	assertMobileEmpty(t, s, finished)
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileHistoryInactiveAcquisitionCleanupPreservesOwnershipAndEvidence(t *testing.T) {
 	for _, mode := range []string{"normal", "revoked", "foreign-account", "rollback"} {
 		t.Run(mode, func(t *testing.T) {
@@ -378,7 +488,11 @@ func TestMobileHistoryInactiveAcquisitionCleanupPreservesOwnershipAndEvidence(t 
 			}
 			// Model pre-upgrade inactive evidence for the denied/rollback recovery cases.
 			if mode == "foreign-account" || mode == "rollback" {
-				if _, err = s.DB.Exec("UPDATE mobile_backup_attempts SET state='prepared',revision=? WHERE operation_id=?", attempt.Revision, attempt.OperationID); err != nil {
+				if _, err = s.DB.Exec(
+					"UPDATE mobile_backup_attempts SET state='prepared',revision=? WHERE operation_id=?",
+					attempt.Revision,
+					attempt.OperationID,
+				); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -387,12 +501,16 @@ func TestMobileHistoryInactiveAcquisitionCleanupPreservesOwnershipAndEvidence(t 
 				s = historyOperationStore(t, path, domain.CollectionPolicy{})
 			}
 			if mode == "foreign-account" {
-				if _, err = s.DB.Exec("UPDATE metadata SET value='foreign-account-binding' WHERE key='account'"); err != nil {
+				if _, err = s.DB.Exec(
+					"UPDATE metadata SET value='foreign-account-binding' WHERE key='account'",
+				); err != nil {
 					t.Fatal(err)
 				}
 			}
 			if mode == "rollback" {
-				if _, err = s.DB.Exec(`CREATE TRIGGER reject_acquisition_cleanup BEFORE UPDATE ON mobile_backup_attempts BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`); err != nil {
+				if _, err = s.DB.Exec(
+					`CREATE TRIGGER reject_acquisition_cleanup BEFORE UPDATE ON mobile_backup_attempts BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`,
+				); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -408,7 +526,8 @@ func TestMobileHistoryInactiveAcquisitionCleanupPreservesOwnershipAndEvidence(t 
 			}
 			var state string
 			var revision int64
-			if readErr := s.DB.QueryRow("SELECT state,revision FROM mobile_backup_attempts WHERE operation_id=?", attempt.OperationID).Scan(&state, &revision); readErr != nil {
+			if readErr := s.DB.QueryRow("SELECT state,revision FROM mobile_backup_attempts WHERE operation_id=?", attempt.OperationID).
+				Scan(&state, &revision); readErr != nil {
 				t.Fatal(readErr)
 			}
 			if mode == "foreign-account" || mode == "rollback" {
@@ -424,13 +543,16 @@ func TestMobileHistoryInactiveAcquisitionCleanupPreservesOwnershipAndEvidence(t 
 				t.Fatal(err)
 			}
 			var repeatedRevision int64
-			if err = s.DB.QueryRow("SELECT revision FROM mobile_backup_attempts WHERE operation_id=?", attempt.OperationID).Scan(&repeatedRevision); err != nil || repeatedRevision != revision {
+			if err = s.DB.QueryRow("SELECT revision FROM mobile_backup_attempts WHERE operation_id=?", attempt.OperationID).
+				Scan(&repeatedRevision); err != nil ||
+				repeatedRevision != revision {
 				t.Fatal("repeat cleanup changed terminal evidence", err)
 			}
 		})
 	}
 }
 
+//nolint:gocognit,nestif // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileHistoryTerminalPublicationReleasesAttemptAtomically(t *testing.T) {
 	for _, state := range []string{"partial", "paused", "cancelled", "unsupported", "failed"} {
 		for _, rollback := range []bool{false, true} {
@@ -444,7 +566,9 @@ func TestMobileHistoryTerminalPublicationReleasesAttemptAtomically(t *testing.T)
 					t.Fatal(err)
 				}
 				if rollback {
-					if _, err = s.DB.Exec(`CREATE TRIGGER fail_terminal_release BEFORE UPDATE ON mobile_backup_attempts BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`); err != nil {
+					if _, err = s.DB.Exec(
+						`CREATE TRIGGER fail_terminal_release BEFORE UPDATE ON mobile_backup_attempts BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`,
+					); err != nil {
 						t.Fatal(err)
 					}
 				}
@@ -468,7 +592,9 @@ func TestMobileHistoryTerminalPublicationReleasesAttemptAtomically(t *testing.T)
 					t.Fatal(readErr)
 				}
 				if rollback {
-					if current.Status.State != "running" || current.Revision != op.Revision || linked.State != "prepared" || linked.Revision != attempt.Revision {
+					if current.Status.State != "running" || current.Revision != op.Revision ||
+						linked.State != "prepared" ||
+						linked.Revision != attempt.Revision {
 						t.Fatal("terminal release escaped rollback")
 					}
 				} else {

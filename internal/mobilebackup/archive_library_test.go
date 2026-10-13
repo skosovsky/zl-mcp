@@ -53,8 +53,8 @@ func TestArchiveLibrarySurvivesCacheExpiryAndRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 	cache.ledger.now = time.Now
-	if _, _, err := cache.Read(ctx, retainedTestID, "123"); !errors.Is(err, ErrRetainedExpired) {
-		t.Fatal("cache retention changed", err)
+	if _, _, readErr := cache.Read(ctx, retainedTestID, "123"); !errors.Is(readErr, ErrRetainedExpired) {
+		t.Fatal("cache retention changed", readErr)
 	}
 	library.Close()
 	library, err = NewArchiveLibraryStore(path, 8<<20)
@@ -73,7 +73,13 @@ func TestArchiveLibrarySurvivesCacheExpiryAndRestart(t *testing.T) {
 	}
 	after, _ := os.ReadFile(filepath.Join(path, name))
 	// Assert: original provenance/mapping survived; no renewal or rewriting occurred.
-	if !reflect.DeepEqual(first, retry) || !reflect.DeepEqual(first, status) || !reflect.DeepEqual(original, manifest) || !bytes.Equal(before, after) || len(read.archive.Files) != 3 || read.pairs[1].Session != "12" || !read.pairs[1].Group || string(read.archive.Files[2].Data) != "synthetic-c" {
+	if !reflect.DeepEqual(first, retry) || !reflect.DeepEqual(first, status) ||
+		!reflect.DeepEqual(original, manifest) ||
+		!bytes.Equal(before, after) ||
+		len(read.archive.Files) != 3 ||
+		read.pairs[1].Session != "12" ||
+		!read.pairs[1].Group ||
+		string(read.archive.Files[2].Data) != "synthetic-c" {
 		t.Fatal("durable source or provenance changed")
 	}
 	encoded, _ := json.Marshal(status)
@@ -87,7 +93,14 @@ func TestArchiveLibrarySurvivesCacheExpiryAndRestart(t *testing.T) {
 		t.Fatal("library admitted direct acquisition")
 	}
 	foreign := sha256.Sum256([]byte("124"))
-	if _, _, err := library.ReadBound(ctx, retainedTestID, hex.EncodeToString(foreign[:])); !errors.Is(err, ErrRetainedConflict) {
+	if _, _, err := library.ReadBound(
+		ctx,
+		retainedTestID,
+		hex.EncodeToString(foreign[:]),
+	); !errors.Is(
+		err,
+		ErrRetainedConflict,
+	) {
 		t.Fatal("foreign owner accepted", err)
 	}
 	if err := library.RemoveBound(ctx, retainedTestID, binding); err != nil {
@@ -120,7 +133,13 @@ func TestArchiveLibraryRejectsTamperingAndCancelledPromotion(t *testing.T) {
 	cancelled, cancel := context.WithCancel(ctx)
 	cancel()
 	// Act / Assert: cancellation publishes nothing; later ciphertext corruption fails closed.
-	if _, err = library.PreserveFrom(cancelled, cache, retainedTestID, binding); err == nil || library.ledger.claims[retainedTestID] {
+	if _, err = library.PreserveFrom(
+		cancelled,
+		cache,
+		retainedTestID,
+		binding,
+	); err == nil ||
+		library.ledger.claims[retainedTestID] {
 		t.Fatal("cancelled promotion published")
 	}
 	if _, err = library.PreserveFrom(ctx, cache, retainedTestID, binding); err != nil {

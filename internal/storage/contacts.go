@@ -43,6 +43,7 @@ func ContactNameKey(value string) string {
 }
 
 // PutContacts atomically merges a bounded page without messages/events/novelty.
+//nolint:gocognit // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) PutContacts(ctx context.Context, contacts []domain.Contact) (int, error) {
 	if len(contacts) > 200 {
 		return 0, domain.Invalid("Contact page exceeds 200 records.")
@@ -75,11 +76,11 @@ func (s *Store) PutContacts(ctx context.Context, contacts []domain.Contact) (int
 				seen[name] = true
 			}
 		}
-		body, err := json.Marshal(aliases)
-		if err != nil {
-			return 0, err
+		body, marshalErr := json.Marshal(aliases)
+		if marshalErr != nil {
+			return 0, marshalErr
 		}
-		if _, err = tx.ExecContext(
+		if _, marshalErr = tx.ExecContext(
 			ctx,
 			`INSERT INTO directory_contacts VALUES(?,?,?,?,?) ON CONFLICT(peer_id) DO UPDATE SET name=excluded.name,aliases=excluded.aliases,friendship=excluded.friendship,updated_at=excluded.updated_at`,
 			c.ID,
@@ -87,22 +88,22 @@ func (s *Store) PutContacts(ctx context.Context, contacts []domain.Contact) (int
 			string(body),
 			c.Friendship,
 			stamp,
-		); err != nil {
-			return 0, err
+		); marshalErr != nil {
+			return 0, marshalErr
 		}
 		var name any
 		if c.Name != "" {
 			name = c.Name
 		}
-		if _, err = tx.ExecContext(
+		if _, marshalErr = tx.ExecContext(
 			ctx,
 			`INSERT INTO conversations VALUES('direct',?,?,'contacts_catalog','unknown',?,?) ON CONFLICT(conversation_type,conversation_id) DO UPDATE SET name=COALESCE(excluded.name,conversations.name),updated_at=excluded.updated_at`,
 			c.ID,
 			name,
 			stamp,
 			stamp,
-		); err != nil {
-			return 0, err
+		); marshalErr != nil {
+			return 0, marshalErr
 		}
 		count++
 	}

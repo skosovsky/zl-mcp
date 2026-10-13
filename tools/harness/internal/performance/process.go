@@ -15,6 +15,8 @@ import (
 
 // Process owns one process group. Even successful workers cannot leave descendants.
 // Explicit pipes keep inherited descendant descriptors out of exec.Cmd.Wait.
+//
+//nolint:gocognit,funlen // The watchdog owns process-group cancellation, bounded output, Kill, Wait and drain in one ordered lifetime.
 func process(ctx context.Context, dir string, env []string, args []string, limit int) ([]byte, []byte, int, error) {
 	if len(args) == 0 {
 		return nil, nil, -1, errors.New("empty command")

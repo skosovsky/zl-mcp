@@ -118,16 +118,7 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
-	auth := r.Header.Get("Authorization")
-	if !strings.HasPrefix(auth, "Bearer ") {
-		w.Header().Set("WWW-Authenticate", "Bearer")
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-	digest := sha256.Sum256([]byte(strings.TrimPrefix(auth, "Bearer ")))
-	if subtle.ConstantTimeCompare(digest[:], s.tokenHash[:]) != 1 {
-		w.Header().Set("WWW-Authenticate", "Bearer")
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	if !s.authorizeHTTP(w, r) {
 		return
 	}
 	if r.Method != http.MethodPost {
@@ -171,121 +162,11 @@ func (s *HTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		defer logDiscovery(request.Method, r.Header.Get("Mcp-Protocol-Version"), observed, time.Now())
 	}
 	if strings.HasPrefix(request.Method, "events/") {
-		media, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
-		if err != nil || media != "application/json" {
-			http.Error(w, "Content-Type must be 'application/json'", http.StatusUnsupportedMediaType)
-			return
-		}
-		if !acceptsMCP(r.Header.Values("Accept")) {
-			http.Error(w, "Accept must contain both 'application/json' and 'text/event-stream'", http.StatusBadRequest)
-			return
-		}
-		var id any
-		decoder := json.NewDecoder(bytes.NewReader(request.ID))
-		decoder.UseNumber()
-		idDecodeErr := decoder.Decode(&id)
-		validated, idError := jsonrpc.MakeID(id)
-		// Invalid numeric IDs cannot be echoed by any subsequent admission error.
-		// Other malformed/missing IDs retain the established metadata-error order.
-		if _, numeric := id.(json.Number); numeric && idError != nil {
-			writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Invalid request ID."})
-			return
-		}
-		if r.Header.Get("Mcp-Method") != request.Method {
-			writeRPCStatus(
-				w,
-				http.StatusBadRequest,
-				request.ID,
-				&protocolError{Code: mcp.CodeHeaderMismatch, Message: "Missing or mismatched Mcp-Method header."},
-			)
-			return
-		}
-		var params struct {
-			Meta map[string]any `json:"_meta"`
-		}
-		if len(request.Params) != 0 && json.Unmarshal(request.Params, &params) != nil {
-			writeRPC(w, request.ID, nil, &protocolError{Code: -32602, Message: "Invalid parameters."})
-			return
-		}
-		if _, ok := params.Meta["io.modelcontextprotocol/clientCapabilities"].(map[string]any); !ok {
-			writeRPC(
-				w,
-				request.ID,
-				nil,
-				&protocolError{Code: -32602, Message: "Missing or invalid client capabilities."},
-			)
-			return
-		}
-		version, _ := params.Meta["io.modelcontextprotocol/protocolVersion"].(string)
-		header := r.Header.Get("Mcp-Protocol-Version")
-		if header == "" || (version != "" && header != version) {
-			writeRPCStatus(
-				w,
-				http.StatusBadRequest,
-				request.ID,
-				&protocolError{
-					Code:    mcp.CodeHeaderMismatch,
-					Message: "Missing or mismatched MCP-Protocol-Version header.",
-				},
-			)
-			return
-		}
-		if version == "" {
-			writeRPCStatus(
-				w,
-				http.StatusBadRequest,
-				request.ID,
-				&protocolError{Code: -32602, Message: "Missing or invalid protocol version metadata."},
-			)
-			return
-		}
-		if version != "2026-07-28" {
-			writeRPCStatus(
-				w,
-				http.StatusBadRequest,
-				request.ID,
-				&protocolError{
-					Code:    mcp.CodeUnsupportedProtocolVersion,
-					Message: "Unsupported protocol version.",
-					Data:    map[string]any{"supported": []string{"2026-07-28"}, "requested": version},
-				},
-			)
-			return
-		}
-		if len(request.ID) == 0 || idDecodeErr != nil || id == nil {
-			writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Events require a request ID."})
-			return
-		}
-		if idError != nil || !validated.IsValid() {
-			writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Invalid request ID."})
-			return
-		}
-		result, err := s.Events.Call(r.Context(), request.Method, s.principal, request.Params)
-		if projectProtocolError(err).Code == -32601 {
-			writeRPCStatus(w, http.StatusNotFound, request.ID, err)
-			return
-		}
-		writeRPC(w, request.ID, result, err)
+		s.serveEvents(w, r, request)
 		return
 	}
 	if request.Method == "server/discover" {
-		capture := &jsonResponseCapture{header: http.Header{}}
-		s.sdk.ServeHTTP(capture, r)
-		if capture.status == http.StatusOK {
-			if wire, err := addEventsCapability(capture.body.Bytes()); err == nil {
-				capture.body.Reset()
-				capture.body.Write(wire)
-				capture.header.Del("Content-Length")
-			}
-		}
-		maps.Copy(w.Header(), capture.header)
-		if capture.status == 0 {
-			capture.status = http.StatusOK
-		}
-		w.WriteHeader(capture.status)
-		if _, err := w.Write(capture.body.Bytes()); err != nil {
-			return // Do not replay a partially delivered response.
-		}
+		s.serveDiscovery(w, r)
 		return
 	}
 	s.sdk.ServeHTTP(w, r)
@@ -357,3 +238,137 @@ func (w *telemetryResponse) Write(body []byte) (int, error) {
 }
 func (w *telemetryResponse) Unwrap() http.ResponseWriter { return w.ResponseWriter }
 func (w *telemetryResponse) Flush()                      { _ = http.NewResponseController(w.ResponseWriter).Flush() }
+
+func (s *HTTPService) serveEvents(w http.ResponseWriter, r *http.Request, request rpcRequest) {
+	media, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil || media != "application/json" {
+		http.Error(w, "Content-Type must be 'application/json'", http.StatusUnsupportedMediaType)
+		return
+	}
+	if !acceptsMCP(r.Header.Values("Accept")) {
+		http.Error(w, "Accept must contain both 'application/json' and 'text/event-stream'", http.StatusBadRequest)
+		return
+	}
+	var id any
+	decoder := json.NewDecoder(bytes.NewReader(request.ID))
+	decoder.UseNumber()
+	idDecodeErr := decoder.Decode(&id)
+	validated, idError := jsonrpc.MakeID(id)
+	// Invalid numeric IDs cannot be echoed by any subsequent admission error.
+	// Other malformed/missing IDs retain the established metadata-error order.
+	if _, numeric := id.(json.Number); numeric && idError != nil {
+		writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Invalid request ID."})
+		return
+	}
+	if r.Header.Get("Mcp-Method") != request.Method {
+		writeRPCStatus(
+			w,
+			http.StatusBadRequest,
+			request.ID,
+			&protocolError{Code: mcp.CodeHeaderMismatch, Message: "Missing or mismatched Mcp-Method header."},
+		)
+		return
+	}
+	var params struct {
+		Meta map[string]any `json:"_meta"`
+	}
+	if len(request.Params) != 0 && json.Unmarshal(request.Params, &params) != nil {
+		writeRPC(w, request.ID, nil, &protocolError{Code: -32602, Message: "Invalid parameters."})
+		return
+	}
+	if _, ok := params.Meta["io.modelcontextprotocol/clientCapabilities"].(map[string]any); !ok {
+		writeRPC(
+			w,
+			request.ID,
+			nil,
+			&protocolError{Code: -32602, Message: "Missing or invalid client capabilities."},
+		)
+		return
+	}
+	version, _ := params.Meta["io.modelcontextprotocol/protocolVersion"].(string)
+	header := r.Header.Get("Mcp-Protocol-Version")
+	if header == "" || (version != "" && header != version) {
+		writeRPCStatus(
+			w,
+			http.StatusBadRequest,
+			request.ID,
+			&protocolError{
+				Code:    mcp.CodeHeaderMismatch,
+				Message: "Missing or mismatched MCP-Protocol-Version header.",
+			},
+		)
+		return
+	}
+	if version == "" {
+		writeRPCStatus(
+			w,
+			http.StatusBadRequest,
+			request.ID,
+			&protocolError{Code: -32602, Message: "Missing or invalid protocol version metadata."},
+		)
+		return
+	}
+	if version != "2026-07-28" {
+		writeRPCStatus(
+			w,
+			http.StatusBadRequest,
+			request.ID,
+			&protocolError{
+				Code:    mcp.CodeUnsupportedProtocolVersion,
+				Message: "Unsupported protocol version.",
+				Data:    map[string]any{"supported": []string{"2026-07-28"}, "requested": version},
+			},
+		)
+		return
+	}
+	if len(request.ID) == 0 || idDecodeErr != nil || id == nil {
+		writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Events require a request ID."})
+		return
+	}
+	if idError != nil || !validated.IsValid() {
+		writeRPC(w, nil, nil, &protocolError{Code: -32600, Message: "Invalid request ID."})
+		return
+	}
+	result, err := s.Events.Call(r.Context(), request.Method, s.principal, request.Params)
+	if projectProtocolError(err).Code == -32601 {
+		writeRPCStatus(w, http.StatusNotFound, request.ID, err)
+		return
+	}
+	writeRPC(w, request.ID, result, err)
+}
+
+func (s *HTTPService) serveDiscovery(w http.ResponseWriter, r *http.Request) {
+	capture := &jsonResponseCapture{header: http.Header{}}
+	s.sdk.ServeHTTP(capture, r)
+	if capture.status == http.StatusOK {
+		if wire, err := addEventsCapability(capture.body.Bytes()); err == nil {
+			capture.body.Reset()
+			capture.body.Write(wire)
+			capture.header.Del("Content-Length")
+		}
+	}
+	maps.Copy(w.Header(), capture.header)
+	if capture.status == 0 {
+		capture.status = http.StatusOK
+	}
+	w.WriteHeader(capture.status)
+	if _, err := w.Write(capture.body.Bytes()); err != nil {
+		return // Do not replay a partially delivered response.
+	}
+}
+
+func (s *HTTPService) authorizeHTTP(w http.ResponseWriter, r *http.Request) bool {
+	auth := r.Header.Get("Authorization")
+	if !strings.HasPrefix(auth, "Bearer ") {
+		w.Header().Set("WWW-Authenticate", "Bearer")
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return false
+	}
+	digest := sha256.Sum256([]byte(strings.TrimPrefix(auth, "Bearer ")))
+	if subtle.ConstantTimeCompare(digest[:], s.tokenHash[:]) != 1 {
+		w.Header().Set("WWW-Authenticate", "Bearer")
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return false
+	}
+	return true
+}

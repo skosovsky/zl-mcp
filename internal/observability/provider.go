@@ -46,7 +46,9 @@ func NewOwned(ctx context.Context, options Options) (*Owner, *Observer, error) {
 	if err := validateResourceEnvironment(); err != nil {
 		return nil, nil, err
 	}
-	if options.ExportTimeout < 100*time.Millisecond || options.ExportTimeout > 5*time.Second || options.ShutdownTimeout < 100*time.Millisecond || options.ShutdownTimeout > 5*time.Second {
+	if options.ExportTimeout < 100*time.Millisecond || options.ExportTimeout > 5*time.Second ||
+		options.ShutdownTimeout < 100*time.Millisecond ||
+		options.ShutdownTimeout > 5*time.Second {
 		return nil, nil, errors.New("invalid telemetry deadlines")
 	}
 	switch options.Exporter {
@@ -56,23 +58,26 @@ func NewOwned(ctx context.Context, options Options) (*Owner, *Observer, error) {
 		}
 		return newOwned(ctx, options, nil, nil)
 	case "otlp_http":
-		endpoint, err := url.Parse(options.Endpoint)
-		if err != nil || endpoint.Hostname() == "" || endpoint.User != nil || endpoint.RawQuery != "" || endpoint.Fragment != "" {
-			return nil, nil, errors.New("invalid telemetry endpoint")
+		if endpointErr := validateOTLPOptions(options); endpointErr != nil {
+			return nil, nil, endpointErr
 		}
-		if endpoint.Scheme != "https" && (endpoint.Scheme != "http" || net.ParseIP(endpoint.Hostname()) == nil || !net.ParseIP(endpoint.Hostname()).IsLoopback()) {
-			return nil, nil, errors.New("invalid telemetry endpoint")
-		}
-		for key, value := range options.Headers {
-			if strings.ContainsAny(key+value, "\r\n\x00") {
-				return nil, nil, errors.New("invalid telemetry headers")
-			}
-		}
-		traceExporter, err := otlptracehttp.New(ctx, otlptracehttp.WithEndpointURL(options.Endpoint), otlptracehttp.WithHeaders(options.Headers), otlptracehttp.WithTimeout(options.ExportTimeout), otlptracehttp.WithRetry(otlptracehttp.RetryConfig{Enabled: false}))
+		traceExporter, err := otlptracehttp.New(
+			ctx,
+			otlptracehttp.WithEndpointURL(options.Endpoint),
+			otlptracehttp.WithHeaders(options.Headers),
+			otlptracehttp.WithTimeout(options.ExportTimeout),
+			otlptracehttp.WithRetry(otlptracehttp.RetryConfig{Enabled: false}),
+		)
 		if err != nil {
 			return nil, nil, errors.New("telemetry exporter initialization failed")
 		}
-		metricExporter, err := otlpmetrichttp.New(ctx, otlpmetrichttp.WithEndpointURL(options.Endpoint), otlpmetrichttp.WithHeaders(options.Headers), otlpmetrichttp.WithTimeout(options.ExportTimeout), otlpmetrichttp.WithRetry(otlpmetrichttp.RetryConfig{Enabled: false}))
+		metricExporter, err := otlpmetrichttp.New(
+			ctx,
+			otlpmetrichttp.WithEndpointURL(options.Endpoint),
+			otlpmetrichttp.WithHeaders(options.Headers),
+			otlpmetrichttp.WithTimeout(options.ExportTimeout),
+			otlpmetrichttp.WithRetry(otlpmetrichttp.RetryConfig{Enabled: false}),
+		)
 		if err != nil {
 			cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), options.ShutdownTimeout)
 			defer cancel()
@@ -84,7 +89,13 @@ func NewOwned(ctx context.Context, options Options) (*Owner, *Observer, error) {
 		return nil, nil, errors.New("invalid telemetry exporter")
 	}
 }
-func newOwned(ctx context.Context, options Options, traceExporter sdktrace.SpanExporter, metricExporter sdkmetric.Exporter) (*Owner, *Observer, error) {
+
+func newOwned(
+	ctx context.Context,
+	options Options,
+	traceExporter sdktrace.SpanExporter,
+	metricExporter sdkmetric.Exporter,
+) (*Owner, *Observer, error) {
 	if err := validateResourceEnvironment(); err != nil {
 		return nil, nil, err
 	}
@@ -140,7 +151,10 @@ func neutral(err error) error {
 	return nil
 }
 func safeResource() *resource.Resource {
-	return resource.NewSchemaless(attribute.String("service.name", "zl-mcp"), attribute.String("telemetry.sdk.language", "go"))
+	return resource.NewSchemaless(
+		attribute.String("service.name", "zl-mcp"),
+		attribute.String("telemetry.sdk.language", "go"),
+	)
 }
 
 type safeSpan struct{ sdktrace.ReadOnlySpan }
@@ -216,13 +230,31 @@ func validateResourceEnvironment() error {
 	if raw == "" {
 		return nil
 	}
-	for _, pair := range strings.Split(raw, ",") {
+	for pair := range strings.SplitSeq(raw, ",") {
 		_, value, found := strings.Cut(pair, "=")
 		if !found {
 			return errors.New("invalid telemetry resource environment")
 		}
 		if _, err := url.PathUnescape(strings.TrimSpace(value)); err != nil {
 			return errors.New("invalid telemetry resource environment")
+		}
+	}
+	return nil
+}
+
+func validateOTLPOptions(options Options) error {
+	endpoint, err := url.Parse(options.Endpoint)
+	if err != nil || endpoint.Hostname() == "" || endpoint.User != nil || endpoint.RawQuery != "" ||
+		endpoint.Fragment != "" {
+		return errors.New("invalid telemetry endpoint")
+	}
+	if endpoint.Scheme != "https" &&
+		(endpoint.Scheme != "http" || net.ParseIP(endpoint.Hostname()) == nil || !net.ParseIP(endpoint.Hostname()).IsLoopback()) {
+		return errors.New("invalid telemetry endpoint")
+	}
+	for key, value := range options.Headers {
+		if strings.ContainsAny(key+value, "\r\n\x00") {
+			return errors.New("invalid telemetry headers")
 		}
 	}
 	return nil

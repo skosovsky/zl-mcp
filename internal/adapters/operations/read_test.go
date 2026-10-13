@@ -50,11 +50,27 @@ func canonical(t *testing.T, value any) any {
 	return result
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestReadCapabilitiesPreserveNativeProjectionAndCannotDispatchCommands(t *testing.T) {
 	id := "00000000-0000-4000-8000-000000000001"
 	at := "2026-10-01T00:00:00Z"
 	messageID := "9007199254740993"
-	nativeHistory := domain.HistoryImportStatus{HistoryImportRequest: domain.HistoryImportRequest{ConversationType: "group", ConversationID: messageID, RequestID: id, Since: at, Until: "2026-10-02T00:00:00Z", PageSize: 50, MaxPages: 20, MaxMessages: 1000}, OperationID: id, NotificationPolicy: "none", SourceKind: "group_cloud", State: "paused", CreatedAt: at, UpdatedAt: at}
+	nativeHistory := domain.HistoryImportStatus{
+		ConversationType:   "group",
+		ConversationID:     messageID,
+		RequestID:          id,
+		Since:              at,
+		Until:              "2026-10-02T00:00:00Z",
+		PageSize:           50,
+		MaxPages:           20,
+		MaxMessages:        1000,
+		OperationID:        id,
+		NotificationPolicy: "none",
+		SourceKind:         "group_cloud",
+		State:              "paused",
+		CreatedAt:          at,
+		UpdatedAt:          at,
+	}
 	for _, test := range []struct {
 		name     string
 		key, arg string
@@ -81,10 +97,12 @@ func TestReadCapabilitiesPreserveNativeProjectionAndCannotDispatchCommands(t *te
 			if err != nil {
 				t.Fatal(err)
 			}
-			if backend.calls != 1 || backend.method != test.name || !reflect.DeepEqual(backend.args, map[string]any{test.key: test.arg}) {
+			if backend.calls != 1 || backend.method != test.name ||
+				!reflect.DeepEqual(backend.args, map[string]any{test.key: test.arg}) {
 				t.Fatalf("unexpected dispatch: %+v", backend)
 			}
-			if backend.deadline.Before(started.Add(time.Duration(test.seconds)*time.Second)) || backend.deadline.After(time.Now().Add(time.Duration(test.seconds)*time.Second)) {
+			if backend.deadline.Before(started.Add(time.Duration(test.seconds)*time.Second)) ||
+				backend.deadline.After(time.Now().Add(time.Duration(test.seconds)*time.Second)) {
 				t.Fatalf("changed read deadline: %s", backend.deadline)
 			}
 			if !reflect.DeepEqual(canonical(t, result), value) {
@@ -105,7 +123,7 @@ func TestReadCapabilitiesPreserveNativeProjectionAndCannotDispatchCommands(t *te
 			}
 			backend.err = &domain.Error{Code: "PERMISSION_DENIED", Message: "Synthetic revoked operation."}
 			_, err = test.call(reader)
-			if err != backend.err || backend.calls != 2 || backend.method != test.name {
+			if !errors.Is(err, backend.err) || backend.calls != 2 || backend.method != test.name {
 				t.Fatalf("status failure dispatched replacement work: %v %+v", err, backend)
 			}
 		})
@@ -127,7 +145,7 @@ func TestReadCapabilitiesKeepCancellationAndPrivateCauses(t *testing.T) {
 	private := errors.New("private owner cause")
 	backend.err = private
 	_, err = handler.Status(context.Background(), "opaque")
-	if err != private || backend.calls != 2 {
+	if !errors.Is(err, private) || backend.calls != 2 {
 		t.Fatalf("cause replaced: %v", err)
 	}
 }

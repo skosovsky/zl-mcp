@@ -1,3 +1,4 @@
+//nolint:cyclop // Package-average includes complete integration timelines; keep the independently checked product code thresholds.
 package main
 
 import (
@@ -16,7 +17,11 @@ import (
 func TestMain(m *testing.M) {
 	// This copied Go test executable is a sentinel, never an authorized model.
 	if filepath.Base(os.Args[0]) == "sentinel-driver" {
-		if err := os.WriteFile(filepath.Join(filepath.Dir(os.Args[0]), "model-was-launched"), []byte("unexpected execution"), 0600); err != nil {
+		if err := os.WriteFile(
+			filepath.Join(filepath.Dir(os.Args[0]), "model-was-launched"),
+			[]byte("unexpected execution"),
+			0600,
+		); err != nil {
 			os.Exit(1)
 		}
 		os.Exit(0)
@@ -24,6 +29,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestCLIExitCodesAndFailedReports(t *testing.T) {
 	// Arrange: build the real CLI once; use only local synthetic assets.
 	dir := t.TempDir()
@@ -43,17 +49,26 @@ func TestCLIExitCodesAndFailedReports(t *testing.T) {
 		t.Fatal(err)
 	}
 	var dataset evaluation.Dataset
-	if err := json.Unmarshal(raw, &dataset); err != nil {
-		t.Fatal(err)
+	if unmarshalErr := json.Unmarshal(raw, &dataset); unmarshalErr != nil {
+		t.Fatal(unmarshalErr)
 	}
-	dataset.Cases[0].Checks = append(dataset.Cases[0].Checks, evaluation.Check{Name: "deliberate-failure", Step: 0, Path: "structuredContent.messages.0.message_id", Op: "equal", Value: "impossible"})
+	dataset.Cases[0].Checks = append(
+		dataset.Cases[0].Checks,
+		evaluation.Check{
+			Name:  "deliberate-failure",
+			Step:  0,
+			Path:  "structuredContent.messages.0.message_id",
+			Op:    "equal",
+			Value: "impossible",
+		},
+	)
 	failingDataset := filepath.Join(dir, "failing-dataset.json")
 	raw, err = json.Marshal(dataset)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(failingDataset, raw, 0600); err != nil {
-		t.Fatal(err)
+	if writeFileErr := os.WriteFile(failingDataset, raw, 0600); writeFileErr != nil {
+		t.Fatal(writeFileErr)
 	}
 	testBinary, err := os.Executable()
 	if err != nil {
@@ -103,7 +118,8 @@ func TestCLIExitCodesAndFailedReports(t *testing.T) {
 			if err := json.Unmarshal(raw, &report); err != nil {
 				t.Fatal(err)
 			}
-			if report.ExitStatus != control.exit || report.Status != control.status || report.ModelGate != "NOT_RUN" || report.LiveGate != "NOT_RUN" {
+			if report.ExitStatus != control.exit || report.Status != control.status || report.ModelGate != "NOT_RUN" ||
+				report.LiveGate != "NOT_RUN" {
 				t.Fatalf("invalid failure report: %+v", report)
 			}
 		})
@@ -113,6 +129,7 @@ func TestCLIExitCodesAndFailedReports(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestOfflineCheckpointCLI(t *testing.T) {
 	// Arrange: real CLI, synthetic observation and a sentinel executable only.
 	dir := t.TempDir()
@@ -146,12 +163,12 @@ func TestOfflineCheckpointCLI(t *testing.T) {
 		t.Run(control.name, func(t *testing.T) {
 			// Act.
 			args := append([]string{"--root", root, "--grade-checkpoints", observation}, control.extra...)
-			output, err := exec.Command(binary, args...).CombinedOutput()
+			output, combinedOutputErr := exec.Command(binary, args...).CombinedOutput()
 			exit := 0
-			if err != nil {
+			if combinedOutputErr != nil {
 				var e *exec.ExitError
-				if !errors.As(err, &e) {
-					t.Fatal(err)
+				if !errors.As(combinedOutputErr, &e) {
+					t.Fatal(combinedOutputErr)
 				}
 				exit = e.ExitCode()
 			}
@@ -161,8 +178,12 @@ func TestOfflineCheckpointCLI(t *testing.T) {
 			}
 			if exit == 0 {
 				var r evaluation.CheckpointReport
-				if err = json.Unmarshal(output, &r); err != nil || r.Scope != "CHECKPOINTS_ONLY" || r.ModelGate != "NOT_RUN" || r.HumanAnswerReview != "NOT_PERFORMED" {
-					t.Fatalf("%s %v", output, err)
+				if combinedOutputErr = json.Unmarshal(
+					output,
+					&r,
+				); combinedOutputErr != nil || r.Scope != "CHECKPOINTS_ONLY" || r.ModelGate != "NOT_RUN" ||
+					r.HumanAnswerReview != "NOT_PERFORMED" {
+					t.Fatalf("%s %v", output, combinedOutputErr)
 				}
 			}
 		})

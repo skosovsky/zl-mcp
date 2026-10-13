@@ -150,6 +150,7 @@ func (s *Store) PrepareMobileHistoryOperation(
 	return s.prepareHistoryOperation(ctx, request, true)
 }
 
+//nolint:gocognit // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) prepareHistoryOperation(
 	ctx context.Context,
 	request domain.HistoryImportRequest,
@@ -363,6 +364,7 @@ func (s *Store) CommitExpiringHistoryOperationPage(
 	return s.commitHistoryOperationPage(ctx, id, revision, page, records, elapsed)
 }
 
+//nolint:gocognit,nestif // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) commitHistoryOperationPage(
 	ctx context.Context,
 	id string,
@@ -432,6 +434,7 @@ func (s *Store) commitHistoryOperationPage(
 	return commitHistoryResult(tx, op)
 }
 
+//nolint:cyclop,funlen,gocognit,gocyclo // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) commitHistoryRecords(
 	ctx context.Context,
 	tx *sql.Tx,

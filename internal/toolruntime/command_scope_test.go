@@ -47,6 +47,7 @@ func (c *commandRecorder) Acknowledge(
 	return eventaccess.Acknowledgement{Acknowledged: true}, nil
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestCommandsRejectUntrustedScopeBeforeEffectsAndNeverRetryOwnerFailure(t *testing.T) {
 	id := "00000000-0000-4000-8000-000000000001"
 	for _, test := range []struct {

@@ -30,6 +30,7 @@ func canonicalCatalog(t *testing.T, value any) any {
 	return result
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestCatalogPortsPreserveNativeNullableDiagnosticsAndIdentity(t *testing.T) {
 	// Arrange: one borrowed owner, synthetic names/IDs and an auth-required state.
 	ctx := context.Background()
@@ -41,7 +42,17 @@ func TestCatalogPortsPreserveNativeNullableDiagnosticsAndIdentity(t *testing.T) 
 	if err = owner.ReplaceCatalog(ctx, []domain.Group{{ID: "9007199254740993", Name: "Cà phê 🍀"}}); err != nil {
 		t.Fatal(err)
 	}
-	if err = owner.SetState(ctx, map[string]any{"authenticated": false, "collector_state": "auth_required", "last_connected_at": nil, "last_event_at": nil, "last_persisted_at": nil, "last_error": map[string]any{"code": "NOT_AUTHENTICATED", "message": "Run local login."}}); err != nil {
+	if err = owner.SetState(
+		ctx,
+		map[string]any{
+			"authenticated":     false,
+			"collector_state":   "auth_required",
+			"last_connected_at": nil,
+			"last_event_at":     nil,
+			"last_persisted_at": nil,
+			"last_error":        map[string]any{"code": "NOT_AUTHENTICATED", "message": "Run local login."},
+		},
+	); err != nil {
 		t.Fatal(err)
 	}
 	reader := New(owner)

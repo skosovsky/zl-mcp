@@ -4,23 +4,38 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestDirectMessagingMigrationsRollbackDDLAndPreserveCorpus(t *testing.T) {
 	for _, version := range []int{5, 6} {
-		t.Run(fmt.Sprint(version), func(t *testing.T) {
+		t.Run(strconv.Itoa(version), func(t *testing.T) {
 			// Arrange: a retained record and a late failure inside the migration.
 			ctx := context.Background()
-			s, err := OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "state.sqlite"), domain.CollectionPolicy{All: true}, 90)
+			s, err := OpenWithPolicy(
+				ctx,
+				filepath.Join(t.TempDir(), "state.sqlite"),
+				domain.CollectionPolicy{All: true},
+				90,
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
 			defer s.Close()
-			m := domain.Message{Conversation: domain.ConversationRef{Type: "direct", ID: "peer"}, ID: "retained", SenderID: "peer", SentAt: time.Now(), Text: "synthetic retained", Source: "live", Direction: "incoming"}
+			m := domain.Message{
+				Conversation: domain.ConversationRef{Type: "direct", ID: "peer"},
+				ID:           "retained",
+				SenderID:     "peer",
+				SentAt:       time.Now(),
+				Text:         "synthetic retained",
+				Source:       "live",
+				Direction:    "incoming",
+			}
 			if err = s.Put(ctx, m); err != nil {
 				t.Fatal(err)
 			}
@@ -38,7 +53,12 @@ DELETE FROM schema_migrations WHERE version=6;`
 			if _, err = s.DB.Exec(reset); err != nil {
 				t.Fatal(err)
 			}
-			if _, err = s.DB.Exec(fmt.Sprintf(`CREATE TRIGGER reject_migration BEFORE INSERT ON schema_migrations WHEN NEW.version=%d BEGIN SELECT RAISE(ABORT,'synthetic migration failure'); END`, version)); err != nil {
+			if _, err = s.DB.Exec(
+				fmt.Sprintf(
+					`CREATE TRIGGER reject_migration BEFORE INSERT ON schema_migrations WHEN NEW.version=%d BEGIN SELECT RAISE(ABORT,'synthetic migration failure'); END`,
+					version,
+				),
+			); err != nil {
 				t.Fatal(err)
 			}
 			// Act.
@@ -48,7 +68,8 @@ DELETE FROM schema_migrations WHERE version=6;`
 				t.Fatal("injected failure did not abort migration")
 			}
 			var versions, artifacts int
-			if err = s.DB.QueryRow("SELECT count(*) FROM schema_migrations WHERE version=?", version).Scan(&versions); err != nil {
+			if err = s.DB.QueryRow("SELECT count(*) FROM schema_migrations WHERE version=?", version).
+				Scan(&versions); err != nil {
 				t.Fatal(err)
 			}
 			query := "SELECT count(*) FROM sqlite_master WHERE name IN ('send_operations','message_quote_metadata')"

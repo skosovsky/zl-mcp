@@ -15,7 +15,12 @@ var ErrOfferExecution = errors.New("mobile backup offer execution failed")
 
 // RunPreparedOffer executes only a trusted prepared attempt using the current guarded session.
 // No caller retry reconstructs an offer or redispatches a terminal attempt.
-func RunPreparedOffer(ctx context.Context, store *storage.Store, source domain.MobileBackupSource, id string) (domain.MobileBackupOffer, error) {
+func RunPreparedOffer(
+	ctx context.Context,
+	store *storage.Store,
+	source domain.MobileBackupSource,
+	id string,
+) (domain.MobileBackupOffer, error) {
 	if ctx == nil || store == nil || source == nil {
 		return domain.MobileBackupOffer{}, ErrOfferExecution
 	}
@@ -29,7 +34,7 @@ func RunPreparedOffer(ctx context.Context, store *storage.Store, source domain.M
 		e := before(public)
 		if e == nil {
 			claimed.Store(true)
-			slog.Info("mobile_backup_progress", "operation_id", id, "state", "dispatching")
+			slog.InfoContext(ctx, "mobile_backup_progress", "operation_id", id, "state", "dispatching")
 		}
 		return e
 	}
@@ -37,7 +42,7 @@ func RunPreparedOffer(ctx context.Context, store *storage.Store, source domain.M
 	observer.Progress = func(state string) error {
 		e := progress(state)
 		if e == nil {
-			slog.Info("mobile_backup_progress", "operation_id", id, "state", state)
+			slog.InfoContext(ctx, "mobile_backup_progress", "operation_id", id, "state", state)
 		}
 		return e
 	}
@@ -57,34 +62,22 @@ func RunPreparedOffer(ctx context.Context, store *storage.Store, source domain.M
 		}
 		err = ErrOfferExecution
 	}
-	slog.Warn("mobile_backup_failed", "operation_id", id, "failure_code", offerFailureCode(err), "dispatch_claimed", claimed.Load())
+	slog.WarnContext(
+		ctx,
+		"mobile_backup_failed",
+		"operation_id",
+		id,
+		"failure_code",
+		offerFailureCode(err),
+		"dispatch_claimed",
+		claimed.Load(),
+	)
 	// Only the invocation that committed dispatch owns finalization. A pre-dispatch
 	// source failure may race with another observer; leave its journal unchanged.
 	if !claimed.Load() {
 		return domain.MobileBackupOffer{}, ErrOfferExecution
 	}
-	// Request lifetime may be over; finish evidence independently before returning.
-	finish, stop := context.WithTimeout(context.Background(), 15*time.Second)
-	defer stop()
-	attempt, e := store.MobileBackupAttempt(finish, id)
-	if e != nil {
-		slog.Warn("mobile_backup_finalization_failed", "operation_id", id, "stage", "READ_STATE", "timeout", finish.Err() != nil)
-		return domain.MobileBackupOffer{}, ErrOfferExecution
-	}
-	switch attempt.State {
-	case "dispatching", "waiting_for_confirmation", "request_result_unknown", "mobile_restoring", "waiting_for_backup":
-		state := "failed"
-		cancelled := ctx.Err() != nil || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
-		if cancelled || errors.Is(err, domain.ErrMobileBackupUnknown) || errors.Is(err, domain.ErrAuthenticationRequired) {
-			state = "interrupted"
-		}
-		if _, e = store.ProgressMobileBackup(finish, id, attempt.Revision, state); e != nil {
-			slog.Warn("mobile_backup_finalization_failed", "operation_id", id, "stage", "WRITE_STATE", "timeout", finish.Err() != nil)
-			return domain.MobileBackupOffer{}, ErrOfferExecution
-		}
-		slog.Info("mobile_backup_finalized", "operation_id", id, "state", state)
-	}
-	return domain.MobileBackupOffer{}, ErrOfferExecution
+	return finalizePreparedOffer(ctx, store, id, err)
 }
 
 // Fixed categories retain useful failure evidence without exposing source errors.
@@ -107,4 +100,48 @@ func offerFailureCode(err error) string {
 	default:
 		return "EXECUTION_FAILED"
 	}
+}
+
+func finalizePreparedOffer(ctx context.Context, store *storage.Store, id string, sourceErr error) (domain.MobileBackupOffer, error) {
+	// Request lifetime may be over; finish evidence independently before returning.
+	finish, stop := context.WithTimeout(context.Background(), 15*time.Second)
+	defer stop()
+	attempt, e := store.MobileBackupAttempt(finish, id)
+	if e != nil {
+		slog.WarnContext(
+			ctx,
+			"mobile_backup_finalization_failed",
+			"operation_id",
+			id,
+			"stage",
+			"READ_STATE",
+			"timeout",
+			finish.Err() != nil,
+		)
+		return domain.MobileBackupOffer{}, ErrOfferExecution
+	}
+	switch attempt.State {
+	case "dispatching", "waiting_for_confirmation", "request_result_unknown", "mobile_restoring", "waiting_for_backup":
+		state := "failed"
+		cancelled := ctx.Err() != nil || errors.Is(sourceErr, context.Canceled) || errors.Is(sourceErr, context.DeadlineExceeded)
+		if cancelled || errors.Is(sourceErr, domain.ErrMobileBackupUnknown) ||
+			errors.Is(sourceErr, domain.ErrAuthenticationRequired) {
+			state = "interrupted"
+		}
+		if _, e = store.ProgressMobileBackup(finish, id, attempt.Revision, state); e != nil {
+			slog.WarnContext(
+				ctx,
+				"mobile_backup_finalization_failed",
+				"operation_id",
+				id,
+				"stage",
+				"WRITE_STATE",
+				"timeout",
+				finish.Err() != nil,
+			)
+			return domain.MobileBackupOffer{}, ErrOfferExecution
+		}
+		slog.InfoContext(ctx, "mobile_backup_finalized", "operation_id", id, "state", state)
+	}
+	return domain.MobileBackupOffer{}, ErrOfferExecution
 }

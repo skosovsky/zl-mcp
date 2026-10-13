@@ -10,6 +10,8 @@ var ErrHistoryInvalidPage = errors.New("invalid history source page")
 
 // HistorySourceFailure carries only a numeric protocol code across the adapter
 // boundary. Error deliberately omits upstream text, URLs and response bodies.
+//
+//nolint:errname // Preserve the established domain failure type name and consumer contract.
 type HistorySourceFailure struct {
 	APICode *int
 	cause   error
@@ -54,8 +56,11 @@ type PhasedHistorySource interface {
 }
 
 // HistoryPageFailure exposes only a closed set of normalization reasons.
+//
+//nolint:errname // Preserve the established domain failure type name and consumer contract.
 type HistoryPageFailure struct{ reason string }
 
+//nolint:cyclop,funlen,gocyclo // This is a closed protocol-error translation table; each literal maps to one bounded public reason.
 func NewHistoryPageFailure(message string) *HistoryPageFailure {
 	reason := "unknown"
 	switch message {

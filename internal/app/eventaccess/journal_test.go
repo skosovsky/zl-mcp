@@ -2,11 +2,13 @@ package eventaccess
 
 import (
 	"encoding/json"
-	"github.com/skosovsky/zl-mcp/docs/contracts"
 	"reflect"
 	"testing"
+
+	"github.com/skosovsky/zl-mcp/docs/contracts"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestJournalProfileProjectionPreservesNullsAndOpaqueValues(t *testing.T) {
 	for _, data := range []string{
 		`{"group_id":"g","message_id":"9007199254740993","sender_id":"p","sender_name":null,"sent_at":"2026-10-01T00:00:00.000000000Z","text":"Cà phê 🍀","text_truncated":false,"text_resource_uri":null}`,

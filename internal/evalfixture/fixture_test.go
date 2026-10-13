@@ -35,7 +35,13 @@ func TestSyntheticMCPResearchAndJoinGuard(t *testing.T) {
 	}
 	defer session.Close()
 	// Act
-	search, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_search_messages", Arguments: map[string]any{"query": "ca phe", "group_id": "g-1"}})
+	search, err := session.CallTool(
+		ctx,
+		&mcp.CallToolParams{
+			Name:      "zalo_search_messages",
+			Arguments: map[string]any{"query": "ca phe", "group_id": "g-1"},
+		},
+	)
 	// Assert
 	if err != nil || search.IsError {
 		t.Fatalf("search: %+v %v", search, err)
@@ -48,7 +54,13 @@ func TestSyntheticMCPResearchAndJoinGuard(t *testing.T) {
 		t.Fatalf("diacritic result: %s", encoded)
 	}
 	// Act
-	result, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_get_message_context", Arguments: map[string]any{"group_id": "g-1", "message_id": "m-long"}})
+	result, err := session.CallTool(
+		ctx,
+		&mcp.CallToolParams{
+			Name:      "zalo_get_message_context",
+			Arguments: map[string]any{"group_id": "g-1", "message_id": "m-long"},
+		},
+	)
 	// Assert: full evidence is accessed through the real resource path.
 	if err != nil || result.IsError {
 		t.Fatalf("context: %+v %v", result, err)
@@ -61,11 +73,18 @@ func TestSyntheticMCPResearchAndJoinGuard(t *testing.T) {
 		t.Fatal("fixture does not exercise long messages")
 	}
 	resource, err := session.ReadResource(ctx, &mcp.ReadResourceParams{URI: anchor["text_resource_uri"].(string)})
-	if err != nil || len(resource.Contents) == 0 || !strings.HasSuffix(resource.Contents[0].Text, "Итог: услуга не выполнена.") {
+	if err != nil || len(resource.Contents) == 0 ||
+		!strings.HasSuffix(resource.Contents[0].Text, "Итог: услуга не выполнена.") {
 		t.Fatalf("resource: %v", err)
 	}
 	// Act
-	denied, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_join_group", Arguments: map[string]any{"plan_token": "fabricated", "request_id": uuid.NewString()}})
+	denied, err := session.CallTool(
+		ctx,
+		&mcp.CallToolParams{
+			Name:      "zalo_join_group",
+			Arguments: map[string]any{"plan_token": "fabricated", "request_id": uuid.NewString()},
+		},
+	)
 	// Assert
 	if err != nil || !denied.IsError || fixture.Upstream.JoinCalls() != 0 {
 		t.Fatalf("join approval bypass: %+v %v", denied, err)
@@ -92,7 +111,13 @@ func connectFixture(t *testing.T, ctx context.Context, fixture *Fixture) *mcp.Cl
 	return cs
 }
 
-func callFixture(t *testing.T, ctx context.Context, session *mcp.ClientSession, name string, args map[string]any) map[string]any {
+func callFixture(
+	t *testing.T,
+	ctx context.Context,
+	session *mcp.ClientSession,
+	name string,
+	args map[string]any,
+) map[string]any {
 	t.Helper()
 	result, err := session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
 	if err != nil || result.IsError {
@@ -109,6 +134,7 @@ func callFixture(t *testing.T, ctx context.Context, session *mcp.ClientSession, 
 	return decoded
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSyntheticMCPApprovedJoinKeepsOneMutation(t *testing.T) {
 	for _, timeout := range []bool{false, true} {
 		name := "joined"
@@ -120,7 +146,10 @@ func TestSyntheticMCPApprovedJoinKeepsOneMutation(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			approvalPath := filepath.Join(t.TempDir(), "approval.json")
-			fixture, err := New(ctx, Options{Fixtures: "../../docs/evals/fixtures.json", JoinTimeout: timeout, ApprovalFile: approvalPath})
+			fixture, err := New(
+				ctx,
+				Options{Fixtures: "../../docs/evals/fixtures.json", JoinTimeout: timeout, ApprovalFile: approvalPath},
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -142,15 +171,28 @@ func TestSyntheticMCPApprovedJoinKeepsOneMutation(t *testing.T) {
 			// Act: MCP -> production control handler -> production JoinManager.
 			first := callFixture(t, ctx, session, "zalo_join_group", args)
 			fixture.joins.Wait()
-			operation := callFixture(t, ctx, session, "zalo_get_join_status", map[string]any{"operation_id": first["operation_id"]})
+			operation := callFixture(
+				t,
+				ctx,
+				session,
+				"zalo_get_join_status",
+				map[string]any{"operation_id": first["operation_id"]},
+			)
 			repeated := callFixture(t, ctx, session, "zalo_join_group", args)
 			// Assert: status polling and retry never create another upstream mutation.
 			expected := "joined"
 			if timeout {
 				expected = "unknown"
 			}
-			if operation["status"] != expected || repeated["status"] != expected || first["operation_id"] != repeated["operation_id"] || fixture.Upstream.JoinCalls() != 1 {
-				t.Fatalf("unsafe join result: operation=%+v repeated=%+v calls=%d", operation, repeated, fixture.Upstream.JoinCalls())
+			if operation["status"] != expected || repeated["status"] != expected ||
+				first["operation_id"] != repeated["operation_id"] ||
+				fixture.Upstream.JoinCalls() != 1 {
+				t.Fatalf(
+					"unsafe join result: operation=%+v repeated=%+v calls=%d",
+					operation,
+					repeated,
+					fixture.Upstream.JoinCalls(),
+				)
 			}
 		})
 	}
@@ -170,7 +212,8 @@ func TestSyntheticMCPEmptyStoppedCoverage(t *testing.T) {
 	status := callFixture(t, ctx, session, "zalo_get_status", map[string]any{})
 	search := callFixture(t, ctx, session, "zalo_search_messages", map[string]any{"query": "ремонт", "group_id": "g-1"})
 	// Assert: empty data is distinguishable from a complete history with no matches.
-	if status["collector_state"] != "stopped" || status["stored_message_count"] != float64(0) || search["empty_reason"] != "no_collected_data" {
+	if status["collector_state"] != "stopped" || status["stored_message_count"] != float64(0) ||
+		search["empty_reason"] != "no_collected_data" {
 		t.Fatalf("incorrect empty/stopped response: %+v %+v", status, search)
 	}
 	coverage := search["coverage"].([]any)
@@ -192,7 +235,14 @@ func TestHarnessSeedApprovalAndSkillResources(t *testing.T) {
 	if err := os.WriteFile(path, []byte(token), 0600); err != nil {
 		t.Fatal(err)
 	}
-	fixture, err := New(ctx, Options{Fixtures: "../../docs/evals/fixtures.json", SkillDir: "../../skills/researching-zalo-groups", ApprovalTokenFile: path})
+	fixture, err := New(
+		ctx,
+		Options{
+			Fixtures:          "../../docs/evals/fixtures.json",
+			SkillDir:          "../../skills/researching-zalo-groups",
+			ApprovalTokenFile: path,
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,7 +267,10 @@ func TestHarnessSeedApprovalAndSkillResources(t *testing.T) {
 	if skillCount != 3 {
 		t.Fatalf("skill resources=%d", skillCount)
 	}
-	if _, err = session.ReadResource(ctx, &mcp.ReadResourceParams{URI: "eval://skills/researching-zalo-groups/../../session.json"}); err == nil {
+	if _, err = session.ReadResource(
+		ctx,
+		&mcp.ReadResourceParams{URI: "eval://skills/researching-zalo-groups/../../session.json"},
+	); err == nil {
 		t.Fatal("unexpected arbitrary resource access")
 	}
 	// Act
@@ -225,9 +278,21 @@ func TestHarnessSeedApprovalAndSkillResources(t *testing.T) {
 	if _, exists := preview["plan_token"]; exists {
 		t.Fatal("MCP exposed approval token")
 	}
-	started := callFixture(t, ctx, session, "zalo_join_group", map[string]any{"plan_token": token, "request_id": uuid.NewString()})
+	started := callFixture(
+		t,
+		ctx,
+		session,
+		"zalo_join_group",
+		map[string]any{"plan_token": token, "request_id": uuid.NewString()},
+	)
 	fixture.joins.Wait()
-	status := callFixture(t, ctx, session, "zalo_get_join_status", map[string]any{"operation_id": started["operation_id"]})
+	status := callFixture(
+		t,
+		ctx,
+		session,
+		"zalo_get_join_status",
+		map[string]any{"operation_id": started["operation_id"]},
+	)
 	// Assert
 	if status["status"] != "joined" || fixture.Upstream.JoinCalls() != 1 {
 		t.Fatalf("seeded approval failed: %+v", status)

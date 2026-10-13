@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	adapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
 	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
@@ -18,6 +19,7 @@ import (
 
 type invocationReader struct {
 	*adapter.Reader
+
 	group, conversation, context, typedContext atomic.Int32
 }
 
@@ -29,11 +31,19 @@ func (r *invocationReader) ConversationPage(ctx context.Context, in search.Conve
 	r.conversation.Add(1)
 	return r.Reader.ConversationPage(ctx, in)
 }
-func (r *invocationReader) GroupContext(ctx context.Context, in conversations.ContextRequest) (conversations.GroupContext, error) {
+
+func (r *invocationReader) GroupContext(
+	ctx context.Context,
+	in conversations.ContextRequest,
+) (conversations.GroupContext, error) {
 	r.context.Add(1)
 	return r.Reader.GroupContext(ctx, in)
 }
-func (r *invocationReader) ConversationContext(ctx context.Context, in conversations.ContextRequest) (conversations.ConversationContext, error) {
+
+func (r *invocationReader) ConversationContext(
+	ctx context.Context,
+	in conversations.ContextRequest,
+) (conversations.ConversationContext, error) {
 	r.typedContext.Add(1)
 	return r.Reader.ConversationContext(ctx, in)
 }
@@ -56,7 +66,17 @@ func TestRuntimeSDKDispatchAndSingleAdmission(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if err = owner.Put(ctx, domain.Message{GroupID: "g", ID: "9007199254740993", SenderID: "p", Text: "synthetic Cà phê 🍀", SentAt: time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC), Source: "live"}); err != nil {
+	if err = owner.Put(
+		ctx,
+		domain.Message{
+			GroupID:  "g",
+			ID:       "9007199254740993",
+			SenderID: "p",
+			Text:     "synthetic Cà phê 🍀",
+			SentAt:   time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
+			Source:   "live",
+		},
+	); err != nil {
 		t.Fatal(err)
 	}
 	reader := &invocationReader{Reader: adapter.New(owner)}
@@ -87,17 +107,35 @@ func TestRuntimeSDKDispatchAndSingleAdmission(t *testing.T) {
 		denied bool
 	}{
 		{"zalo_search_messages", map[string]any{"query": "synthetic", "group_id": "g", "limit": "1"}, false},
-		{"zalo_search_conversation_messages", map[string]any{"query": "synthetic", "conversation_type": "group", "conversation_id": "g"}, false},
-		{"zalo_get_message_context", map[string]any{"group_id": "g", "message_id": "9007199254740993", "before": "0", "after": 0}, false},
-		{"zalo_get_conversation_message_context", map[string]any{"conversation_type": "group", "conversation_id": "g", "message_id": "9007199254740993", "before": 0, "after": 0}, false},
+		{
+			"zalo_search_conversation_messages",
+			map[string]any{"query": "synthetic", "conversation_type": "group", "conversation_id": "g"},
+			false,
+		},
+		{
+			"zalo_get_message_context",
+			map[string]any{"group_id": "g", "message_id": "9007199254740993", "before": "0", "after": 0},
+			false,
+		},
+		{
+			"zalo_get_conversation_message_context",
+			map[string]any{
+				"conversation_type": "group",
+				"conversation_id":   "g",
+				"message_id":        "9007199254740993",
+				"before":            0,
+				"after":             0,
+			},
+			false,
+		},
 		{"zalo_search_messages", map[string]any{"query": "synthetic", "since": "invalid-format"}, true},
 		{"zalo_search_messages", map[string]any{"query": "synthetic", "group_id": "forbidden"}, true},
 	}
 	// Act.
 	for _, call := range calls {
-		result, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: call.name, Arguments: call.args})
-		if err != nil {
-			t.Fatal(err)
+		result, callToolErr := cs.CallTool(ctx, &mcp.CallToolParams{Name: call.name, Arguments: call.args})
+		if callToolErr != nil {
+			t.Fatal(callToolErr)
 		}
 		if result.IsError != call.denied {
 			t.Fatal(call.name, result)
@@ -109,11 +147,14 @@ func TestRuntimeSDKDispatchAndSingleAdmission(t *testing.T) {
 	if err != nil || len(resource.Contents) != 1 || resource.Contents[0].Text != "synthetic Cà phê 🍀" {
 		t.Fatal(resource, err)
 	}
-	if reader.group.Load() != 1 || reader.conversation.Load() != 1 || reader.context.Load() != 1 || reader.typedContext.Load() != 1 {
+	if reader.group.Load() != 1 || reader.conversation.Load() != 1 || reader.context.Load() != 1 ||
+		reader.typedContext.Load() != 1 {
 		t.Fatal(reader.group.Load(), reader.conversation.Load(), reader.context.Load(), reader.typedContext.Load())
 	}
 	var admissions int
-	if err = owner.DB.QueryRowContext(ctx, "SELECT count(*) FROM test_admissions").Scan(&admissions); err != nil || admissions != len(calls)+1 {
+	if err = owner.DB.QueryRowContext(ctx, "SELECT count(*) FROM test_admissions").
+		Scan(&admissions); err != nil ||
+		admissions != len(calls)+1 {
 		t.Fatal(admissions, err)
 	}
 }

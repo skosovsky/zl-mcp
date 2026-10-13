@@ -9,11 +9,13 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestOversizedRecordAndCoverageReturnActionableErrors(t *testing.T) {
 	// Arrange: legitimate data too large even for a single result page.
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -27,7 +29,10 @@ func TestOversizedRecordAndCoverageReturnActionableErrors(t *testing.T) {
 	if err = store.ReplaceCatalog(ctx, []domain.Group{{ID: "g", Name: strings.Repeat("名", 20000)}}); err != nil {
 		t.Fatal(err)
 	}
-	if err = store.Put(ctx, domain.Message{GroupID: "g", ID: "m", SenderID: "sender", SentAt: time.Now(), Text: "Ремонт", Source: "live"}); err != nil {
+	if err = store.Put(
+		ctx,
+		domain.Message{GroupID: "g", ID: "m", SenderID: "sender", SentAt: time.Now(), Text: "Ремонт", Source: "live"},
+	); err != nil {
 		t.Fatal(err)
 	}
 	server, err := New(migrationReadPorts(store))
@@ -53,25 +58,25 @@ func TestOversizedRecordAndCoverageReturnActionableErrors(t *testing.T) {
 	assertError := func(name string, args map[string]any) {
 		t.Helper()
 		// Act
-		result, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
+		result, callToolErr := cs.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
 		// Assert: safe bounded error, not invalid argument or false storage failure.
-		if err != nil || !result.IsError || len(result.Content) != 1 {
-			t.Fatalf("%s result=%+v error=%v", name, result, err)
+		if callToolErr != nil || !result.IsError || len(result.Content) != 1 {
+			t.Fatalf("%s result=%+v error=%v", name, result, callToolErr)
 		}
 		content := result.Content[0].(*mcp.TextContent)
 		var body map[string]any
-		if err = json.Unmarshal([]byte(content.Text), &body); err != nil {
-			t.Fatal(err)
+		if callToolErr = json.Unmarshal([]byte(content.Text), &body); callToolErr != nil {
+			t.Fatal(callToolErr)
 		}
-		if err = schema.Validate(body); err != nil {
-			t.Fatal(err)
+		if callToolErr = schema.Validate(body); callToolErr != nil {
+			t.Fatal(callToolErr)
 		}
 		if body["code"] != "RESPONSE_TOO_LARGE" || body["next_action"].(map[string]any)["instruction"] == "" {
 			t.Fatalf("%s error=%+v", name, body)
 		}
-		wire, err := json.Marshal(result)
-		if err != nil || len(wire) > 64<<10 {
-			t.Fatalf("oversized error response: %d %v", len(wire), err)
+		wire, callToolErr := json.Marshal(result)
+		if callToolErr != nil || len(wire) > 64<<10 {
+			t.Fatalf("oversized error response: %d %v", len(wire), callToolErr)
 		}
 	}
 	assertError("zalo_list_groups", map[string]any{})
@@ -85,8 +90,15 @@ func TestOversizedRecordAndCoverageReturnActionableErrors(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	for i := 0; i < 800; i++ {
-		if _, err = tx.ExecContext(ctx, "INSERT INTO collection_gaps(group_id,started_at,ended_at,reason) VALUES(?,?,?,?)", "g", "2026-10-01T00:00:00Z", "2026-10-01T00:01:00Z", "listener_disconnected"); err != nil {
+	for range 800 {
+		if _, err = tx.ExecContext(
+			ctx,
+			"INSERT INTO collection_gaps(group_id,started_at,ended_at,reason) VALUES(?,?,?,?)",
+			"g",
+			"2026-10-01T00:00:00Z",
+			"2026-10-01T00:01:00Z",
+			"listener_disconnected",
+		); err != nil {
 			t.Fatal(err)
 		}
 	}

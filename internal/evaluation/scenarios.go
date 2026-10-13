@@ -19,7 +19,7 @@ const collisionID = "9007199254740993"
 // ChildOptions contains only synthetic paths allocated by the parent.
 type ChildOptions struct{ CaseID, StateDir, EffectsFile, Corpus, ArchiveVector string }
 
-//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+//nolint:cyclop,funlen,gocognit,gocyclo,nonamedreturns // The closed synthetic scenario switch keeps each ordered AAA/restart trace and its shared cleanup owner together; assertions grade the complete scenario. Deferred cleanup retains the returned result/error.
 func RunCase(ctx context.Context, opts ChildOptions) (out Output, err error) {
 	out.CaseID = opts.CaseID
 	out.Facts = map[string]any{}

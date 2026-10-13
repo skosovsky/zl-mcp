@@ -11,22 +11,33 @@ import (
 
 	"github.com/amrakk/zcago"
 	"github.com/amrakk/zcago/errs"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/local"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestRestoreDistinguishesLoginRejectionFromNetworkFailure(t *testing.T) {
 	for _, authFailure := range []bool{false, true} {
 		t.Run(map[bool]string{false: "network", true: "authentication"}[authFailure], func(t *testing.T) {
 			// Arrange: valid private session, actual cookie restoration, controlled login boundary.
 			dir := t.TempDir()
-			session := savedSession{Version: 2, Credentials: zcago.Credentials{IMEI: "synthetic", UserAgent: "test"}, Cookies: []savedCookie{{Origin: "https://zalo.me", Cookie: http.Cookie{Name: "synthetic", Value: "private", Domain: ".zalo.me", Path: "/"}}}}
+			session := savedSession{
+				Version:     2,
+				Credentials: zcago.Credentials{IMEI: "synthetic", UserAgent: "test"},
+				Cookies: []savedCookie{
+					{
+						Origin: "https://zalo.me",
+						Cookie: http.Cookie{Name: "synthetic", Value: "private", Domain: ".zalo.me", Path: "/"},
+					},
+				},
+			}
 			data, err := json.Marshal(session)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := local.WritePrivate(filepath.Join(dir, "session.json"), data); err != nil {
-				t.Fatal(err)
+			if writePrivateErr := local.WritePrivate(filepath.Join(dir, "session.json"), data); writePrivateErr != nil {
+				t.Fatal(writePrivateErr)
 			}
 			var calls int
 			login := func(_ context.Context, _ *persistentJar, c zcago.Credentials) (zcago.API, error) {
@@ -59,6 +70,7 @@ func TestRestoreDistinguishesLoginRejectionFromNetworkFailure(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestRestoreRejectsMissingLegacyAndInsecureSessionBeforeLogin(t *testing.T) {
 	for _, tc := range []struct {
 		name, content string

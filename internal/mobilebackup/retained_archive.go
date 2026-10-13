@@ -454,6 +454,7 @@ func (s *RetainedArchiveStore) readBound(
 	return m, a, stored, nil
 }
 
+//nolint:funlen,gocognit // AES plaintext is borrowed by the returned archive slices; every failure clears the whole plaintext and success clears only the header before transferring ownership.
 func (s *RetainedArchiveStore) decode(id string) (retainedMetadata, AccountArchive, int64, error) {
 	name, ok := retainedName(id)
 	if !ok {
@@ -497,15 +498,7 @@ func (s *RetainedArchiveStore) decode(id string) (retainedMetadata, AccountArchi
 	var meta retainedMetadata
 	d := json.NewDecoder(bytes.NewReader(plain[4 : 4+headerSize]))
 	d.DisallowUnknownFields()
-	if d.Decode(&meta) != nil || d.Decode(new(any)) != io.EOF || meta.SourceID != id ||
-		!canonicalIdentity(meta.Account) ||
-		meta.CreatedMS <= 0 ||
-		meta.ExpiresMS-meta.CreatedMS < time.Hour.Milliseconds() ||
-		meta.ExpiresMS-meta.CreatedMS > retainedMaxLifetime.Milliseconds() ||
-		len(meta.Files) < 1 ||
-		len(meta.Files) > MaxFiles ||
-		(s.permanent && (meta.PreservedMS <= 0 || meta.SourceStoredBytes <= 0)) ||
-		(!s.permanent && (meta.PreservedMS != 0 || meta.SourceStoredBytes != 0)) {
+	if d.Decode(&meta) != nil || d.Decode(new(any)) != io.EOF || !s.validRetainedMetadata(meta, id) {
 		return fail()
 	}
 	archive := AccountArchive{
@@ -560,41 +553,12 @@ func (s *RetainedArchiveStore) inventory() (int, int64, error) {
 	count := 0
 	var used int64
 	for _, entry := range entries {
-		name := entry.Name()
-		info, err := s.ledger.root.Lstat(name)
-		if err != nil || !privateRegular(info) {
-			return 0, 0, ErrRetainedArchive
+		entryCount, entryBytes, entryErr := s.inventoryEntry(entry)
+		if entryErr != nil {
+			return 0, 0, entryErr
 		}
-		if name == snapshotKeyName || name == snapshotClaimsName {
-			continue
-		}
-		if before, ok := strings.CutSuffix(name, ".tmp"); ok {
-			if _, ok := retainedName(
-				before,
-			); !ok || s.ledger.root.Remove(name) != nil ||
-				snapshotSyncDirectory(s.ledger.root) != nil {
-				return 0, 0, ErrRetainedArchive
-			}
-			continue
-		}
-		id := strings.TrimSuffix(name, ".archive")
-		expected, ok := retainedName(id)
-		if !ok || expected != name || !s.ledger.claims[id] {
-			return 0, 0, ErrRetainedArchive
-		}
-		m, a, stored, err := s.decode(id)
-		a.Clear()
-		if err != nil {
-			return 0, 0, err
-		}
-		if !s.permanent && s.ledger.now().UnixMilli() >= m.ExpiresMS {
-			if s.ledger.root.Remove(name) != nil || snapshotSyncDirectory(s.ledger.root) != nil {
-				return 0, 0, ErrRetainedArchive
-			}
-			continue
-		}
-		count++
-		used += stored
+		count += entryCount
+		used += entryBytes
 	}
 	if count > retainedMaxSources || used > s.ledger.budget {
 		return 0, 0, ErrRetainedCapacity
@@ -643,4 +607,53 @@ func (s *RetainedArchiveStore) RemoveBound(ctx context.Context, id, accountKey s
 		return ErrRetainedArchive
 	}
 	return nil
+}
+
+func (s *RetainedArchiveStore) validRetainedMetadata(meta retainedMetadata, id string) bool {
+	return !(meta.SourceID != id ||
+		!canonicalIdentity(meta.Account) ||
+		meta.CreatedMS <= 0 ||
+		meta.ExpiresMS-meta.CreatedMS < time.Hour.Milliseconds() ||
+		meta.ExpiresMS-meta.CreatedMS > retainedMaxLifetime.Milliseconds() ||
+		len(meta.Files) < 1 ||
+		len(meta.Files) > MaxFiles ||
+		(s.permanent && (meta.PreservedMS <= 0 || meta.SourceStoredBytes <= 0)) ||
+		(!s.permanent && (meta.PreservedMS != 0 || meta.SourceStoredBytes != 0)))
+}
+
+func (s *RetainedArchiveStore) inventoryEntry(entry os.DirEntry) (int, int64, error) {
+	name := entry.Name()
+	info, err := s.ledger.root.Lstat(name)
+	if err != nil || !privateRegular(info) {
+		return 0, 0, ErrRetainedArchive
+	}
+	if name == snapshotKeyName || name == snapshotClaimsName {
+		return 0, 0, nil
+	}
+	if before, ok := strings.CutSuffix(name, ".tmp"); ok {
+		if _, ok := retainedName(
+			before,
+		); !ok || s.ledger.root.Remove(name) != nil ||
+			snapshotSyncDirectory(s.ledger.root) != nil {
+			return 0, 0, ErrRetainedArchive
+		}
+		return 0, 0, nil
+	}
+	id := strings.TrimSuffix(name, ".archive")
+	expected, ok := retainedName(id)
+	if !ok || expected != name || !s.ledger.claims[id] {
+		return 0, 0, ErrRetainedArchive
+	}
+	m, a, stored, err := s.decode(id)
+	a.Clear()
+	if err != nil {
+		return 0, 0, err
+	}
+	if !s.permanent && s.ledger.now().UnixMilli() >= m.ExpiresMS {
+		if s.ledger.root.Remove(name) != nil || snapshotSyncDirectory(s.ledger.root) != nil {
+			return 0, 0, ErrRetainedArchive
+		}
+		return 0, 0, nil
+	}
+	return 1, stored, nil
 }

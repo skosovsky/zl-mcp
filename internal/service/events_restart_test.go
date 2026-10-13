@@ -33,10 +33,16 @@ type messageCommand struct {
 }
 type replayListener struct {
 	authListener
+
 	messages chan messageCommand
 }
 
-func (a *replayListener) Listen(ctx context.Context, message func(domain.Message) error, _ func(string, string) error, connected func() error) error {
+func (a *replayListener) Listen(
+	ctx context.Context,
+	message func(domain.Message) error,
+	_ func(string, string) error,
+	connected func() error,
+) error {
 	a.calls.Add(1)
 	if err := connected(); err != nil {
 		return err
@@ -76,19 +82,22 @@ func (r receiverRoute) RoundTrip(request *http.Request) (*http.Response, error) 
 }
 func serviceRPC(t *testing.T, endpoint, token, method string, params map[string]any) map[string]any {
 	t.Helper()
-	params["_meta"] = map[string]any{"io.modelcontextprotocol/protocolVersion": "2026-07-28", "io.modelcontextprotocol/clientCapabilities": map[string]any{}}
+	params["_meta"] = map[string]any{
+		"io.modelcontextprotocol/protocolVersion":    "2026-07-28",
+		"io.modelcontextprotocol/clientCapabilities": map[string]any{},
+	}
 	body, err := json.Marshal(map[string]any{"jsonrpc": "2.0", "id": 1, "method": method, "params": params})
 	if err != nil {
 		t.Fatal(err)
 	}
-	request, err := http.NewRequest("POST", endpoint, bytes.NewReader(body))
+	request, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		t.Fatal(err)
 	}
 	request.Header.Set("Authorization", "Bearer "+token)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json, text/event-stream")
-	request.Header.Set("MCP-Protocol-Version", "2026-07-28")
+	request.Header.Set("Mcp-Protocol-Version", "2026-07-28")
 	request.Header.Set("Mcp-Method", method)
 	if name, ok := params["name"].(string); ok {
 		request.Header.Set("Mcp-Name", name)
@@ -105,12 +114,13 @@ func serviceRPC(t *testing.T, endpoint, token, method string, params map[string]
 	if err := json.NewDecoder(response.Body).Decode(&reply); err != nil {
 		t.Fatal(err)
 	}
-	if response.StatusCode != 200 || reply["error"] != nil {
+	if response.StatusCode != http.StatusOK || reply["error"] != nil {
 		t.Fatalf("%s failed: %d %v", method, response.StatusCode, reply)
 	}
 	return reply["result"].(map[string]any)
 }
 
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) {
 	// Arrange: real service lifecycle, SQLite, MCP HTTP and signed TLS callbacks.
 	// Only the Zalo source and callback authority routing are synthetic.
@@ -126,8 +136,8 @@ func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) 
 	c.MCP.Listen = "127.0.0.1:0"
 	c.MCP.TokenFile = filepath.Join(dir, "token")
 	token := strings.Repeat("t", 64)
-	if err := os.WriteFile(c.MCP.TokenFile, []byte(token), 0600); err != nil {
-		t.Fatal(err)
+	if writeFileErr := os.WriteFile(c.MCP.TokenFile, []byte(token), 0600); writeFileErr != nil {
+		t.Fatal(writeFileErr)
 	}
 	key := []byte("independent-synthetic-signing-key!")
 	secret := "whsec_" + base64.StdEncoding.EncodeToString(key)
@@ -139,24 +149,24 @@ func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) 
 	var rejectFirst atomic.Bool
 	rejectFirst.Store(true)
 	receiver := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			t.Error(err)
-			http.Error(w, "body", 400)
+		body, readAllErr := io.ReadAll(r.Body)
+		if readAllErr != nil {
+			t.Error(readAllErr)
+			http.Error(w, "body", http.StatusBadRequest)
 			return
 		}
 		mac := hmac.New(sha256.New, key)
-		mac.Write([]byte(r.Header.Get("webhook-id") + "." + r.Header.Get("webhook-timestamp") + "."))
+		mac.Write([]byte(r.Header.Get("Webhook-Id") + "." + r.Header.Get("Webhook-Timestamp") + "."))
 		mac.Write(body)
-		signature, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("webhook-signature"), "v1,"))
-		if err != nil || !hmac.Equal(signature, mac.Sum(nil)) {
+		signature, readAllErr := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"))
+		if readAllErr != nil || !hmac.Equal(signature, mac.Sum(nil)) {
 			t.Error("invalid independent HMAC verification")
-			http.Error(w, "signature", 400)
+			http.Error(w, "signature", http.StatusBadRequest)
 			return
 		}
 		var verification map[string]any
-		if err := json.Unmarshal(body, &verification); err != nil {
-			t.Error(err)
+		if unmarshalErr := json.Unmarshal(body, &verification); unmarshalErr != nil {
+			t.Error(unmarshalErr)
 			return
 		}
 		if verification["type"] == "verification" {
@@ -164,24 +174,27 @@ func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) 
 			return
 		}
 		var event events.MessageEvent
-		if err := json.Unmarshal(body, &event); err != nil {
-			t.Error(err)
+		if nestedUnmarshalErr := json.Unmarshal(body, &event); nestedUnmarshalErr != nil {
+			t.Error(nestedUnmarshalErr)
 			return
 		}
-		if event.EventID != r.Header.Get("webhook-id") {
+		if event.EventID != r.Header.Get("Webhook-Id") {
 			t.Error("event ID differs from signed ID")
 		}
 		if rejectFirst.Swap(false) {
 			w.Header().Set("Retry-After", "2")
-			w.WriteHeader(503)
+			w.WriteHeader(http.StatusServiceUnavailable)
 		} else {
-			w.WriteHeader(204)
+			w.WriteHeader(http.StatusNoContent)
 		}
 		receipts <- receipt{event: event, body: body}
 	}))
 	t.Cleanup(receiver.Close)
 	target, _ := url.Parse(receiver.URL)
-	callback := &http.Client{Transport: receiverRoute{target: target, transport: receiver.Client().Transport}, Timeout: 3 * time.Second}
+	callback := &http.Client{
+		Transport: receiverRoute{target: target, transport: receiver.Client().Transport},
+		Timeout:   3 * time.Second,
+	}
 	var runningCancel context.CancelFunc
 	var runningDone chan error
 	t.Cleanup(func() {
@@ -210,8 +223,8 @@ func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) 
 		select {
 		case addr := <-bound:
 			return "http://" + addr.String() + "/mcp", client
-		case err := <-runningDone:
-			t.Fatalf("startup: %v", err)
+		case operationErr := <-runningDone:
+			t.Fatalf("startup: %v", operationErr)
 		case <-time.After(5 * time.Second):
 			t.Fatal("startup timed out")
 		}
@@ -221,9 +234,9 @@ func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) 
 		t.Helper()
 		runningCancel()
 		select {
-		case err := <-runningDone:
-			if err != nil {
-				t.Fatal(err)
+		case shutdownErr := <-runningDone:
+			if shutdownErr != nil {
+				t.Fatal(shutdownErr)
 			}
 		case <-time.After(5 * time.Second):
 			t.Fatal("shutdown timed out")
@@ -233,16 +246,26 @@ func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) 
 	send := func(client *replayListener, id, group, text string) {
 		t.Helper()
 		ack := make(chan error, 1)
-		command := messageCommand{message: domain.Message{ID: id, GroupID: group, SenderID: "author", SentAt: time.Now().Add(-time.Hour), Text: text, Source: "replay"}, done: ack}
+		command := messageCommand{
+			message: domain.Message{
+				ID:       id,
+				GroupID:  group,
+				SenderID: "author",
+				SentAt:   time.Now().Add(-time.Hour),
+				Text:     text,
+				Source:   "replay",
+			},
+			done: ack,
+		}
 		select {
 		case client.messages <- command:
 		case <-time.After(3 * time.Second):
 			t.Fatal("listener not ready")
 		}
 		select {
-		case err := <-ack:
-			if err != nil {
-				t.Fatal(err)
+		case persistMessageErr := <-ack:
+			if persistMessageErr != nil {
+				t.Fatal(persistMessageErr)
 			}
 		case <-time.After(3 * time.Second):
 			t.Fatal("message not persisted")
@@ -265,7 +288,12 @@ func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) 
 		t.Fatal("Events capability absent")
 	}
 	params := func() map[string]any {
-		return map[string]any{"name": events.MessageCreated, "arguments": map[string]any{"group_id": "g"}, "delivery": map[string]any{"mode": "webhook", "url": "https://receiver.example/events", "secret": secret}, "ttlMs": nil}
+		return map[string]any{
+			"name":      events.MessageCreated,
+			"arguments": map[string]any{"group_id": "g"},
+			"delivery":  map[string]any{"mode": "webhook", "url": "https://receiver.example/events", "secret": secret},
+			"ttlMs":     nil,
+		}
 	}
 	sub := serviceRPC(t, endpoint, token, "events/subscribe", params())
 	fullText := "restart " + strings.Repeat("界я", 1500)
@@ -289,10 +317,14 @@ func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) 
 	}
 	wait(func() bool {
 		var state string
-		return db.QueryRow("SELECT state FROM event_deliveries WHERE event_id=?", first.event.EventID).Scan(&state) == nil && state == "pending"
+		return db.QueryRow("SELECT state FROM event_deliveries WHERE event_id=?", first.event.EventID).
+			Scan(&state) ==
+			nil &&
+			state == "pending"
 	})
 	var boundary int64
-	if err := db.QueryRow("SELECT start_seq FROM event_subscriptions WHERE id=?", sub["id"]).Scan(&boundary); err != nil {
+	if err := db.QueryRow("SELECT start_seq FROM event_subscriptions WHERE id=?", sub["id"]).
+		Scan(&boundary); err != nil {
 		t.Fatal(err)
 	}
 	stop()
@@ -312,18 +344,38 @@ func TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary(t *testing.T) 
 	if err := db.QueryRow("SELECT start_seq FROM event_subscriptions WHERE id=?", sub["id"]).Scan(&after); err != nil {
 		t.Fatal(err)
 	}
-	if refreshed["id"] != sub["id"] || refreshed["refreshBefore"] != nil || boundary != after || !bytes.Equal(first.body, seen["first"].body) || first.event.EventID != seen["first"].event.EventID || seen["late"].event.Data.MessageID != "late" {
+	if refreshed["id"] != sub["id"] || refreshed["refreshBefore"] != nil || boundary != after ||
+		!bytes.Equal(first.body, seen["first"].body) ||
+		first.event.EventID != seen["first"].event.EventID ||
+		seen["late"].event.Data.MessageID != "late" {
 		t.Fatal("restart lost boundary, stable payload, or late replay")
 	}
-	if !first.event.Data.TextTruncated || len([]rune(first.event.Data.Text)) != 2048 || first.event.Data.TextResourceURI == nil {
+	if !first.event.Data.TextTruncated || len([]rune(first.event.Data.Text)) != 2048 ||
+		first.event.Data.TextResourceURI == nil {
 		t.Fatal("invalid bounded text contract")
 	}
-	resource := serviceRPC(t, endpoint, token, "resources/read", map[string]any{"uri": *first.event.Data.TextResourceURI})
+	resource := serviceRPC(
+		t,
+		endpoint,
+		token,
+		"resources/read",
+		map[string]any{"uri": *first.event.Data.TextResourceURI},
+	)
 	if resource["contents"].([]any)[0].(map[string]any)["text"] != fullText {
 		t.Fatal("resource lost full text across restart")
 	}
 	// Act: cancel via MCP, persist another record and wait until fanout consumes it.
-	serviceRPC(t, endpoint, token, "events/unsubscribe", map[string]any{"name": events.MessageCreated, "arguments": map[string]any{"group_id": "g"}, "delivery": map[string]any{"mode": "webhook", "url": "https://receiver.example/events"}})
+	serviceRPC(
+		t,
+		endpoint,
+		token,
+		"events/unsubscribe",
+		map[string]any{
+			"name":      events.MessageCreated,
+			"arguments": map[string]any{"group_id": "g"},
+			"delivery":  map[string]any{"mode": "webhook", "url": "https://receiver.example/events"},
+		},
+	)
 	send(client, "cancelled", "g", "after cancellation")
 	wait(func() bool {
 		var remaining int

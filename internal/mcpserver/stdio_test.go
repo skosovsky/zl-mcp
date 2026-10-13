@@ -3,7 +3,6 @@ package mcpserver
 import (
 	"context"
 	"fmt"
-	"github.com/skosovsky/zl-mcp/internal/storage"
 	"net/http/httptest"
 	"os"
 	"os/exec"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/skosovsky/zl-mcp/internal/storage"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -42,8 +43,19 @@ func TestActualBinaryStdioLifecycle(t *testing.T) {
 	}
 	endpoint := httptest.NewServer(httpService)
 	defer endpoint.Close()
-	if err := os.WriteFile(config, []byte(fmt.Sprintf("state_dir = %q\n[collection]\ngroup_ids = []\n[mcp]\nlisten = %q\ntoken_file = %q\n", state, strings.TrimPrefix(endpoint.URL, "http://"), tokenPath)), 0600); err != nil {
-		t.Fatal(err)
+	if writeFileErr := os.WriteFile(
+		config,
+		[]byte(
+			fmt.Sprintf(
+				"state_dir = %q\n[collection]\ngroup_ids = []\n[mcp]\nlisten = %q\ntoken_file = %q\n",
+				state,
+				strings.TrimPrefix(endpoint.URL, "http://"),
+				tokenPath,
+			),
+		),
+		0600,
+	); writeFileErr != nil {
+		t.Fatal(writeFileErr)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -66,11 +78,12 @@ func TestActualBinaryStdioLifecycle(t *testing.T) {
 		t.Fatalf("stdio failed: %+v %v", status, err)
 	}
 	resource, err := session.ReadResource(ctx, &mcp.ReadResourceParams{URI: "zalo://capabilities"})
-	if err != nil || len(resource.Contents) != 1 || !strings.Contains(resource.Contents[0].Text, "Single personal account") {
+	if err != nil || len(resource.Contents) != 1 ||
+		!strings.Contains(resource.Contents[0].Text, "Single personal account") {
 		t.Fatalf("STDIO resource forwarding failed: %v %v", resource, err)
 	}
-	if _, err := os.Stat(state); !os.IsNotExist(err) {
-		t.Fatal("STDIO bridge created its own state directory", err)
+	if _, statErr := os.Stat(state); !os.IsNotExist(statErr) {
+		t.Fatal("STDIO bridge created its own state directory", statErr)
 	}
 	if err = session.Close(); err != nil {
 		t.Fatal(err)

@@ -12,11 +12,15 @@ import (
 
 type blockedMobileSource struct {
 	*scriptedListener
+
 	started chan struct{}
 	calls   atomic.Int32
 }
 
-func (s *blockedMobileSource) ReceiveMobileBackupOffer(ctx context.Context, _ *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+func (s *blockedMobileSource) ReceiveMobileBackupOffer(
+	ctx context.Context,
+	_ *domain.MobileBackupObserver,
+) (domain.MobileBackupOffer, error) {
 	s.calls.Add(1)
 	close(s.started)
 	<-ctx.Done()
@@ -25,7 +29,10 @@ func (s *blockedMobileSource) ReceiveMobileBackupOffer(ctx context.Context, _ *d
 
 func TestMobileBackupGuardCancelsOnSharedAuthenticationFailure(t *testing.T) {
 	// Arrange: an in-flight mobile wait uses the same session as collection.
-	upstream := &blockedMobileSource{scriptedListener: &scriptedListener{fakeZalo: &fakeZalo{}}, started: make(chan struct{})}
+	upstream := &blockedMobileSource{
+		scriptedListener: &scriptedListener{fakeZalo: &fakeZalo{}},
+		started:          make(chan struct{}),
+	}
 	upstream.listen = func(context.Context, func(domain.Message) error, func(string, string) error, func() error) error {
 		return domain.ErrAuthenticationRequired
 	}
@@ -45,8 +52,8 @@ func TestMobileBackupGuardCancelsOnSharedAuthenticationFailure(t *testing.T) {
 		t.Fatal("auth failure missing")
 	}
 	select {
-	case err := <-done:
-		if !errors.Is(err, domain.ErrAuthenticationRequired) {
+	case operationErr := <-done:
+		if !errors.Is(operationErr, domain.ErrAuthenticationRequired) {
 			t.Fatal("wait auth failure missing")
 		}
 	case <-time.After(time.Second):
@@ -60,10 +67,14 @@ func TestMobileBackupGuardCancelsOnSharedAuthenticationFailure(t *testing.T) {
 
 type completedMobileSource struct {
 	*scriptedListener
+
 	revoke func()
 }
 
-func (s *completedMobileSource) ReceiveMobileBackupOffer(context.Context, *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+func (s *completedMobileSource) ReceiveMobileBackupOffer(
+	context.Context,
+	*domain.MobileBackupObserver,
+) (domain.MobileBackupOffer, error) {
 	s.revoke()
 	return domain.MobileBackupOffer{URL: "https://synthetic.invalid/backup", KeyText: "synthetic"}, nil
 }

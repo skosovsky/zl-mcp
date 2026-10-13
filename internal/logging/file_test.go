@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestRotationPreservesSizeArchiveCountAndPrivacy(t *testing.T) {
 	// Arrange: use the production 5 MiB / three archives policy.
 	dir := filepath.Join(t.TempDir(), "logs")
@@ -22,13 +23,13 @@ func TestRotationPreservesSizeArchiveCountAndPrivacy(t *testing.T) {
 	record := []byte(strings.Repeat("a", 1<<20) + "\n")
 	// Act: cross five rotation boundaries, ensuring distinct millisecond names.
 	for range 24 {
-		if _, err := sink.Write(record); err != nil {
-			t.Fatal(err)
+		if _, writeErr := sink.Write(record); writeErr != nil {
+			t.Fatal(writeErr)
 		}
 		time.Sleep(2 * time.Millisecond)
 	}
-	if err := sink.Close(); err != nil {
-		t.Fatal(err)
+	if closeErr := sink.Close(); closeErr != nil {
+		t.Fatal(closeErr)
 	}
 	deadline := time.Now().Add(3 * time.Second)
 	var files []string
@@ -47,9 +48,9 @@ func TestRotationPreservesSizeArchiveCountAndPrivacy(t *testing.T) {
 	}
 	// Assert: archives are bounded and every file remains private.
 	for _, file := range files {
-		info, err := os.Stat(file)
-		if err != nil {
-			t.Fatal(err)
+		info, statErr := os.Stat(file)
+		if statErr != nil {
+			t.Fatal(statErr)
 		}
 		if info.Size() > 5<<20 || info.Mode().Perm() != 0600 {
 			t.Fatalf("unsafe file: %s size=%d mode=%v", file, info.Size(), info.Mode())
@@ -79,7 +80,8 @@ func TestOversizedRecordProducesObservableFailure(t *testing.T) {
 	default:
 		t.Fatal("failure not signaled")
 	}
-	if err == nil || sink.Err() == nil || !strings.Contains(fallback.String(), "stopping service") || strings.Contains(fallback.String(), "private-message") {
+	if err == nil || sink.Err() == nil || !strings.Contains(fallback.String(), "stopping service") ||
+		strings.Contains(fallback.String(), "private-message") {
 		t.Fatal("missing or unsafe failure diagnostic")
 	}
 }
@@ -89,17 +91,18 @@ func TestUnsafeLogPathFailsBeforeWriting(t *testing.T) {
 			// Arrange
 			dir := t.TempDir()
 			path := filepath.Join(dir, "service.log")
-			if kind == "public-file" {
+			switch kind {
+			case "public-file":
 				if err := os.WriteFile(path, []byte("existing"), 0644); err != nil {
 					t.Fatal(err)
 				}
-			} else if kind == "symlink-file" {
+			case "symlink-file":
 				target := filepath.Join(dir, "target")
 				os.WriteFile(target, []byte("existing"), 0600)
 				if err := os.Symlink(target, path); err != nil {
 					t.Fatal(err)
 				}
-			} else {
+			default:
 				target := filepath.Join(dir, "real")
 				os.Mkdir(target, 0700)
 				link := filepath.Join(dir, "link")

@@ -17,7 +17,6 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/app/archives"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
 	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
-	"github.com/skosovsky/zl-mcp/internal/app/search"
 	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/toolruntime"
@@ -58,6 +57,7 @@ type Service struct {
 	conversations *conversations.Handler
 }
 
+//nolint:cyclop,funlen,gocognit,gocyclo // This declarative SDK registry exposes the fixed contract set; callbacks remain independently tested consumer boundaries.
 func New(reads Ports) (*mcp.Server, error) {
 	if reads.Search == nil || reads.Conversations == nil || reads.Search.Reads == nil ||
 		reads.Conversations.Reads == nil ||
@@ -282,66 +282,17 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 		}
 		return failure(err)
 	}
-	var binding toolruntime.Binding
-	if s.runtime.Supports(name) {
-		var bindErr error
-		binding, bindErr = s.runtime.Bind(ctx)
-		if bindErr != nil {
-			return fail(bindErr)
-		}
-	}
-	allowed, budgetErr := s.admission.AllowRead(ctx)
-	if budgetErr != nil {
-		return fail(budgetErr)
-	}
-	if !allowed {
-		return fail(
-			&domain.Error{
-				Code:       "RATE_LIMITED",
-				Message:    "Too many local calls.",
-				Retryable:  true,
-				NextAction: domain.NextAction{Instruction: "Wait one second before retrying."},
-				Details:    map[string]any{"retry_after_ms": 1000},
-			},
-		)
-	}
-	args, bindErr := toolruntime.BindArguments(raw)
-	if bindErr != nil {
-		return fail(bindErr)
-	}
-	if e := s.input[name].Validate(args); e != nil {
-		return fail(
-			domain.Invalid(
-				"Arguments do not match the tool schema; check types, required fields, ranges and RFC3339 dates.",
-			),
-		)
+	binding, prepareErr := s.prepareReadCall(ctx, name, raw)
+	if prepareErr != nil {
+		return fail(prepareErr)
 	}
 	var result map[string]any
-	var groupPage *search.GroupExecution
-	var conversationPage *search.ConversationExecution
-	var groupList *conversations.GroupExecution
-	var directory *conversations.DirectoryExecution
-	var archiveDirectory *archives.DirectoryExecution
-	var archiveBrowse *archives.BrowseExecution
+	var execution *toolruntime.Result
 	var e error
 	if s.runtime.Supports(name) {
-		var execution *toolruntime.Result
 		execution, e = s.runtime.Execute(ctx, binding, name, raw)
 		if e == nil {
-			groupPage, conversationPage, groupList = execution.GroupSearch, execution.ConversationSearch, execution.GroupList
-			directory, archiveDirectory, archiveBrowse = execution.Directory, execution.ArchiveDirectory, execution.ArchiveBrowse
-			switch {
-			case groupPage != nil:
-				result = groupSearchResult(groupPage.Result)
-			case conversationPage != nil:
-				result, e = conversationReadResult(conversationPage.Result)
-			case execution.GroupContext != nil:
-				result = groupContextResult(*execution.GroupContext)
-			case execution.ConversationContext != nil:
-				result, e = conversationReadResult(*execution.ConversationContext)
-			default:
-				result, e = conversationReadResult(execution.Value())
-			}
+			result, e = projectReadExecution(execution)
 		}
 	} else {
 		e = errors.New("required capability is unavailable")
@@ -351,75 +302,11 @@ func (s *Service) call(ctx context.Context, name string, raw json.RawMessage) (r
 		return fail(e)
 	}
 
-	for {
-		response, e = s.encode(name, result)
-		if e != nil {
-			return fail(e)
-		}
-		encoded, err := json.Marshal(response)
-		if err != nil {
-			return fail(err)
-		}
-		if len(encoded) <= 64<<10 {
-			return response
-		}
-		switch name {
-		case "zalo_list_conversation_messages":
-			if archiveBrowse == nil {
-				return fail(
-					domain.ResponseTooLarge(
-						"One message page exceeds the response budget.",
-						"Use a smaller page or report the coverage size limitation.",
-					),
-				)
-			}
-			e = archiveBrowse.Shorten(ctx)
-			if e == nil {
-				result, e = conversationReadResult(archiveBrowse.Result)
-			}
-		case "zalo_list_conversations":
-			if archiveDirectory != nil {
-				e = archiveDirectory.Shorten(ctx)
-				if e == nil {
-					result, e = conversationReadResult(archiveDirectory.Result)
-				}
-			} else {
-				e = directory.Shorten(ctx)
-				if e == nil {
-					result, e = conversationReadResult(directory.Result)
-				}
-			}
-
-		case "zalo_search_conversation_messages":
-			e = conversationPage.Shorten(ctx)
-			if e == nil {
-				result, e = conversationReadResult(conversationPage.Result)
-			}
-
-		case "zalo_list_groups":
-			e = groupList.Shorten(ctx)
-			if e == nil {
-				result, e = conversationReadResult(groupList.Result)
-			}
-
-		case "zalo_search_messages":
-			e = groupPage.Shorten(ctx)
-			if e == nil {
-				result = groupSearchResult(groupPage.Result)
-			}
-
-		default:
-			return fail(
-				domain.ResponseTooLarge(
-					"Result exceeds the response budget.",
-					"Report that this result cannot fit within the response limit; do not repeat the same request blindly.",
-				),
-			)
-		}
-		if e != nil {
-			return fail(e)
-		}
+	response, e = s.encodeReadExecution(ctx, name, result, execution)
+	if e != nil {
+		return fail(e)
 	}
+	return response
 }
 func (s *Service) encode(name string, result map[string]any) (*mcp.CallToolResult, error) {
 	b, e := json.Marshal(result)
@@ -468,5 +355,99 @@ func safeAuditCode(code string) string {
 		return code
 	default:
 		return "TOOL_ERROR"
+	}
+}
+
+func projectReadExecution(execution *toolruntime.Result) (map[string]any, error) {
+	switch {
+	case execution.GroupSearch != nil:
+		return groupSearchResult(execution.GroupSearch.Result), nil
+	case execution.ConversationSearch != nil:
+		return conversationReadResult(execution.ConversationSearch.Result)
+	case execution.GroupContext != nil:
+		return groupContextResult(*execution.GroupContext), nil
+	case execution.ConversationContext != nil:
+		return conversationReadResult(*execution.ConversationContext)
+	default:
+		return conversationReadResult(execution.Value())
+	}
+}
+func shortenReadExecution(ctx context.Context, name string, execution *toolruntime.Result) error {
+	switch name {
+	case "zalo_list_conversation_messages":
+		if execution.ArchiveBrowse == nil {
+			return domain.ResponseTooLarge("One message page exceeds the response budget.", "Use a smaller page or report the coverage size limitation.")
+		}
+		return execution.ArchiveBrowse.Shorten(ctx)
+	case "zalo_list_conversations":
+		if execution.ArchiveDirectory != nil {
+			return execution.ArchiveDirectory.Shorten(ctx)
+		}
+		return execution.Directory.Shorten(ctx)
+	case "zalo_search_conversation_messages":
+		return execution.ConversationSearch.Shorten(ctx)
+	case "zalo_list_groups":
+		return execution.GroupList.Shorten(ctx)
+	case "zalo_search_messages":
+		return execution.GroupSearch.Shorten(ctx)
+	default:
+		return domain.ResponseTooLarge("Result exceeds the response budget.", "Report that this result cannot fit within the response limit; do not repeat the same request blindly.")
+	}
+}
+
+func (s *Service) prepareReadCall(ctx context.Context, name string, raw json.RawMessage) (toolruntime.Binding, error) {
+	var binding toolruntime.Binding
+	if s.runtime.Supports(name) {
+		var bindErr error
+		binding, bindErr = s.runtime.Bind(ctx)
+		if bindErr != nil {
+			return binding, bindErr
+		}
+	}
+	allowed, budgetErr := s.admission.AllowRead(ctx)
+	if budgetErr != nil {
+		return binding, budgetErr
+	}
+	if !allowed {
+		return binding, &domain.Error{
+			Code:       "RATE_LIMITED",
+			Message:    "Too many local calls.",
+			Retryable:  true,
+			NextAction: domain.NextAction{Instruction: "Wait one second before retrying."},
+			Details:    map[string]any{"retry_after_ms": 1000},
+		}
+	}
+	args, bindErr := toolruntime.BindArguments(raw)
+	if bindErr != nil {
+		return binding, bindErr
+	}
+	if e := s.input[name].Validate(args); e != nil {
+		return binding, domain.Invalid(
+			"Arguments do not match the tool schema; check types, required fields, ranges and RFC3339 dates.",
+		)
+	}
+	return binding, nil
+}
+
+func (s *Service) encodeReadExecution(ctx context.Context, name string, result map[string]any, execution *toolruntime.Result) (*mcp.CallToolResult, error) {
+	for {
+		response, e := s.encode(name, result)
+		if e != nil {
+			return nil, e
+		}
+		encoded, err := json.Marshal(response)
+		if err != nil {
+			return nil, err
+		}
+		if len(encoded) <= 64<<10 {
+			return response, nil
+		}
+		e = shortenReadExecution(ctx, name, execution)
+		if e == nil {
+			result, e = projectReadExecution(execution)
+		}
+		if e != nil {
+			return nil, e
+		}
 	}
 }

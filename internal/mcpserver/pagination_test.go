@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestLargeWirePagesKeepAllResultsAndSearchSnapshot(t *testing.T) {
 	// Arrange
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -26,15 +28,25 @@ func TestLargeWirePagesKeepAllResultsAndSearchSnapshot(t *testing.T) {
 	defer store.Close()
 	groups := []domain.Group{}
 	at := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
-	for i := 0; i < 12; i++ {
+	for i := range 12 {
 		groups = append(groups, domain.Group{ID: fmt.Sprintf("g%02d", i), Name: strings.Repeat("名", 3000)})
 	}
 	groups = append(groups, domain.Group{ID: "g", Name: strings.Repeat("名", 3000)})
 	if err = store.ReplaceCatalog(ctx, groups); err != nil {
 		t.Fatal(err)
 	}
-	for i := 0; i < 12; i++ {
-		if err = store.Put(ctx, domain.Message{GroupID: "g", ID: fmt.Sprintf("m%02d", i), SenderID: "sender", SentAt: at.Add(time.Duration(i) * time.Minute), Text: "Ремонт", Source: "live"}); err != nil {
+	for i := range 12 {
+		if err = store.Put(
+			ctx,
+			domain.Message{
+				GroupID:  "g",
+				ID:       fmt.Sprintf("m%02d", i),
+				SenderID: "sender",
+				SentAt:   at.Add(time.Duration(i) * time.Minute),
+				Text:     "Ремонт",
+				Source:   "live",
+			},
+		); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -119,7 +131,17 @@ func TestLargeWirePagesKeepAllResultsAndSearchSnapshot(t *testing.T) {
 			messageIDs[id] = true
 		}
 		if pages == 1 {
-			if err = store.Put(ctx, domain.Message{GroupID: "g", ID: "late", SenderID: "sender", SentAt: at, Text: "Ремонт", Source: "live"}); err != nil {
+			if err = store.Put(
+				ctx,
+				domain.Message{
+					GroupID:  "g",
+					ID:       "late",
+					SenderID: "sender",
+					SentAt:   at,
+					Text:     "Ремонт",
+					Source:   "live",
+				},
+			); err != nil {
 				t.Fatal(err)
 			}
 		}

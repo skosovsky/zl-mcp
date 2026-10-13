@@ -166,130 +166,14 @@ func (m *SubscriptionManager) Call(ctx context.Context, method, principal string
 		return nil, eventRPCError(-32602, "Invalid event parameters.", "invalid_params")
 	}
 	var result any
+	var err error
 	if method == "events/list" {
-		arguments, err := eventArguments("events_subscribe")
-		if err != nil {
-			return nil, err
-		}
-		payload, err := contracts.Document("zalo_message_created", "payload")
-		if err != nil {
-			return nil, err
-		}
-		v2Arguments, err := eventArguments("conversation_v2_events_subscribe")
-		if err != nil {
-			return nil, err
-		}
-		v2Payload, err := contracts.Document("conversation_v2_message_created", "payload")
-		if err != nil {
-			return nil, err
-		}
-		result = map[string]any{
-			"events": []any{
-				map[string]any{
-					"name":          MessageCreated,
-					"description":   "Newly collected messages from one explicitly enabled group. Text is limited to 2048 Unicode characters; truncated text includes a resource URI for the full record. Subscriptions survive restart; prior corpus is not replayed.",
-					"delivery":      []string{"webhook"},
-					"inputSchema":   arguments,
-					"payloadSchema": payload,
-				},
-				map[string]any{
-					"name":          domain.ConversationMessageCreatedV2,
-					"description":   "New locally collected messages with explicit direction and first locally known incoming evidence. Supports incoming/outgoing filters and first_incoming_only for direct incoming chats. First known is not first ever in Zalo history.",
-					"delivery":      []string{"webhook"},
-					"inputSchema":   v2Arguments,
-					"payloadSchema": v2Payload,
-				},
-			},
-		}
+		result, err = listEventContracts()
 	} else {
-		var p subscriptionRequest
-		if json.Unmarshal(raw, &p) != nil {
-			return nil, eventRPCError(-32602, "Invalid event parameters.", "invalid_params")
-		}
-		permitted := m.Store.Allowed(p.Arguments.GroupID)
-		if p.Name == domain.ConversationMessageCreatedV2 {
-			permitted = true
-			if p.Arguments.Scope == "conversation" {
-				port, ok := m.Store.(interface {
-					AllowsConversation(domain.ConversationRef) bool
-				})
-				permitted = ok &&
-					port.AllowsConversation(
-						domain.ConversationRef{Type: p.Arguments.ConversationType, ID: p.Arguments.ConversationID},
-					)
-			}
-		}
-		if !permitted && method == "events/subscribe" {
-			return nil, eventRPCError(-32000, "Group is not enabled.", "access_denied")
-		}
-		if _, err := ValidateCallbackURL(p.Delivery.URL); err != nil {
-			return nil, eventRPCError(-32602, "Invalid callback URL.", "invalid_callback")
-		}
-		id := m.subscriptionID(principal, p)
-		if method == "events/unsubscribe" {
-			if err := m.Store.CancelSubscription(ctx, id, principal, time.Now().UTC()); err != nil {
-				return nil, eventRPCError(-32603, "Cannot cancel subscription.", "storage")
-			}
-			result = map[string]any{}
-		} else {
-			if _, err := DecodeSigningKey(p.Delivery.Secret); err != nil {
-				return nil, eventRPCError(-32602, "Invalid signing key.", "invalid_secret")
-			}
-			revision, err := m.Store.SubscriptionRevision(ctx, id)
-			if err != nil {
-				return nil, eventRPCError(-32603, "Cannot prepare subscription.", "storage")
-			}
-			key := sha256.Sum256([]byte(id + ":" + p.Delivery.Secret))
-			cacheKey := hex.EncodeToString(key[:])
-			m.mu.Lock()
-			verifiedAt, verified := m.verified[cacheKey]
-			m.mu.Unlock()
-			if !verified || time.Since(verifiedAt) > time.Minute {
-				verifyCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-				err := VerifyCallback(verifyCtx, m.Client, p.Delivery.URL, p.Delivery.Secret, id)
-				cancel()
-				if err != nil {
-					return nil, eventRPCError(-32015, "Callback verification failed.", "challenge_failed")
-				}
-				m.mu.Lock()
-				if len(m.verified) >= 512 {
-					clear(m.verified)
-				}
-				m.verified[cacheKey] = time.Now()
-				m.mu.Unlock()
-			}
-			at := time.Now().UTC()
-			sub := storage.EventSubscription{
-				ID:        id,
-				Principal: principal,
-				GroupID:   p.Arguments.GroupID,
-				Callback:  p.Delivery.URL,
-				Secret:    p.Delivery.Secret,
-			}
-			if p.Name == domain.ConversationMessageCreatedV2 {
-				sub.Direction = p.Arguments.Direction
-				sub.FirstIncomingOnly = p.Arguments.FirstIncomingOnly
-				sub.Profile = p.Name
-				sub.Scope = p.Arguments.Scope
-				sub.ConversationType = p.Arguments.ConversationType
-				sub.GroupID = p.Arguments.ConversationID
-				if sub.Scope == "direct" || sub.Scope == "group" {
-					sub.ConversationType = sub.Scope
-				}
-			}
-			if p.TTL != nil {
-				expires := at.Add(time.Duration(*p.TTL) * time.Millisecond)
-				sub.ExpiresAt = &expires
-			}
-			sub, err = m.Store.ActivateSubscription(ctx, sub, revision, at)
-			if err != nil {
-				if errors.Is(err, storage.ErrSubscriptionCancelled) {
-					return nil, eventRPCError(-32000, "Subscription cancelled during verification.", "cancelled")
-				}
-				return nil, eventRPCError(-32603, "Cannot activate subscription.", "storage")
-			}
-			result = map[string]any{"id": sub.ID, "refreshBefore": sub.ExpiresAt, "cursor": nil, "truncated": false}
-		}
+		result, err = m.changeSubscription(ctx, method, principal, raw)
+	}
+	if err != nil {
+		return nil, err
 	}
 	wire, err := json.Marshal(result)
 	if err != nil {
@@ -315,4 +199,147 @@ func eventArguments(name string) (any, error) {
 		return nil, errors.New("missing event arguments")
 	}
 	return arguments, nil
+}
+
+func listEventContracts() (any, error) {
+	arguments, err := eventArguments("events_subscribe")
+	if err != nil {
+		return nil, err
+	}
+	payload, err := contracts.Document("zalo_message_created", "payload")
+	if err != nil {
+		return nil, err
+	}
+	v2Arguments, err := eventArguments("conversation_v2_events_subscribe")
+	if err != nil {
+		return nil, err
+	}
+	v2Payload, err := contracts.Document("conversation_v2_message_created", "payload")
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"events": []any{
+			map[string]any{
+				"name":          MessageCreated,
+				"description":   "Newly collected messages from one explicitly enabled group. Text is limited to 2048 Unicode characters; truncated text includes a resource URI for the full record. Subscriptions survive restart; prior corpus is not replayed.",
+				"delivery":      []string{"webhook"},
+				"inputSchema":   arguments,
+				"payloadSchema": payload,
+			},
+			map[string]any{
+				"name":          domain.ConversationMessageCreatedV2,
+				"description":   "New locally collected messages with explicit direction and first locally known incoming evidence. Supports incoming/outgoing filters and first_incoming_only for direct incoming chats. First known is not first ever in Zalo history.",
+				"delivery":      []string{"webhook"},
+				"inputSchema":   v2Arguments,
+				"payloadSchema": v2Payload,
+			},
+		},
+	}, nil
+}
+
+func (m *SubscriptionManager) changeSubscription(ctx context.Context, method, principal string, raw json.RawMessage) (any, error) {
+	var p subscriptionRequest
+	if json.Unmarshal(raw, &p) != nil {
+		return nil, eventRPCError(-32602, "Invalid event parameters.", "invalid_params")
+	}
+	permitted := m.subscriptionPermitted(p)
+	if !permitted && method == "events/subscribe" {
+		return nil, eventRPCError(-32000, "Group is not enabled.", "access_denied")
+	}
+	if _, err := ValidateCallbackURL(p.Delivery.URL); err != nil {
+		return nil, eventRPCError(-32602, "Invalid callback URL.", "invalid_callback")
+	}
+	id := m.subscriptionID(principal, p)
+	if method == "events/unsubscribe" {
+		if err := m.Store.CancelSubscription(ctx, id, principal, time.Now().UTC()); err != nil {
+			return nil, eventRPCError(-32603, "Cannot cancel subscription.", "storage")
+		}
+		return map[string]any{}, nil
+	}
+	return m.activateRequestedSubscription(ctx, p, id, principal)
+}
+
+func (m *SubscriptionManager) subscriptionPermitted(p subscriptionRequest) bool {
+	permitted := m.Store.Allowed(p.Arguments.GroupID)
+	if p.Name == domain.ConversationMessageCreatedV2 {
+		permitted = true
+		if p.Arguments.Scope == "conversation" {
+			port, ok := m.Store.(interface {
+				AllowsConversation(domain.ConversationRef) bool
+			})
+			permitted = ok &&
+				port.AllowsConversation(
+					domain.ConversationRef{Type: p.Arguments.ConversationType, ID: p.Arguments.ConversationID},
+				)
+		}
+	}
+	return permitted
+}
+
+func (m *SubscriptionManager) verifySubscriptionCallback(ctx context.Context, p subscriptionRequest, id string) error {
+	key := sha256.Sum256([]byte(id + ":" + p.Delivery.Secret))
+	cacheKey := hex.EncodeToString(key[:])
+	m.mu.Lock()
+	verifiedAt, verified := m.verified[cacheKey]
+	m.mu.Unlock()
+	if !verified || time.Since(verifiedAt) > time.Minute {
+		verifyCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		verifyCallbackErr := VerifyCallback(verifyCtx, m.Client, p.Delivery.URL, p.Delivery.Secret, id)
+		cancel()
+		if verifyCallbackErr != nil {
+			return eventRPCError(-32015, "Callback verification failed.", "challenge_failed")
+		}
+		m.mu.Lock()
+		if len(m.verified) >= 512 {
+			clear(m.verified)
+		}
+		m.verified[cacheKey] = time.Now()
+		m.mu.Unlock()
+	}
+	return nil
+}
+
+func (m *SubscriptionManager) activateRequestedSubscription(ctx context.Context, p subscriptionRequest, id, principal string) (any, error) {
+	if _, err := DecodeSigningKey(p.Delivery.Secret); err != nil {
+		return nil, eventRPCError(-32602, "Invalid signing key.", "invalid_secret")
+	}
+	revision, err := m.Store.SubscriptionRevision(ctx, id)
+	if err != nil {
+		return nil, eventRPCError(-32603, "Cannot prepare subscription.", "storage")
+	}
+	if verifyErr := m.verifySubscriptionCallback(ctx, p, id); verifyErr != nil {
+		return nil, verifyErr
+	}
+	at := time.Now().UTC()
+	sub := storage.EventSubscription{
+		ID:        id,
+		Principal: principal,
+		GroupID:   p.Arguments.GroupID,
+		Callback:  p.Delivery.URL,
+		Secret:    p.Delivery.Secret,
+	}
+	if p.Name == domain.ConversationMessageCreatedV2 {
+		sub.Direction = p.Arguments.Direction
+		sub.FirstIncomingOnly = p.Arguments.FirstIncomingOnly
+		sub.Profile = p.Name
+		sub.Scope = p.Arguments.Scope
+		sub.ConversationType = p.Arguments.ConversationType
+		sub.GroupID = p.Arguments.ConversationID
+		if sub.Scope == "direct" || sub.Scope == "group" {
+			sub.ConversationType = sub.Scope
+		}
+	}
+	if p.TTL != nil {
+		expires := at.Add(time.Duration(*p.TTL) * time.Millisecond)
+		sub.ExpiresAt = &expires
+	}
+	sub, err = m.Store.ActivateSubscription(ctx, sub, revision, at)
+	if err != nil {
+		if errors.Is(err, storage.ErrSubscriptionCancelled) {
+			return nil, eventRPCError(-32000, "Subscription cancelled during verification.", "cancelled")
+		}
+		return nil, eventRPCError(-32603, "Cannot activate subscription.", "storage")
+	}
+	return map[string]any{"id": sub.ID, "refreshBefore": sub.ExpiresAt, "cursor": nil, "truncated": false}, nil
 }

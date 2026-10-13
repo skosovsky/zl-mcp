@@ -48,6 +48,7 @@ func TestAccountArchiveCaptureRestartOfflineInspectionAndRemoval(t *testing.T) {
 	}
 }
 
+//nolint:cyclop,gocognit,gocyclo // This test helper checks the complete fixture/metric shape without dropping nested boundary assertions.
 func testAccountArchiveCapture(t *testing.T, fixture string) {
 	t.Helper()
 	// Arrange: independently encrypted synthetic SQLite, bound store and one owner-only capture.
@@ -130,12 +131,12 @@ func testAccountArchiveCapture(t *testing.T, fixture string) {
 		t.Fatal(e)
 	}
 	for _, name := range []string{first.SourceID + ".archive", ".snapshot-key", ".snapshot-claims"} {
-		data, err := os.ReadFile(filepath.Join(path, name))
-		if err != nil {
-			t.Fatal(err)
+		data, readFileErr := os.ReadFile(filepath.Join(path, name))
+		if readFileErr != nil {
+			t.Fatal(readFileErr)
 		}
-		if err = os.WriteFile(filepath.Join(backup, name), data, 0600); err != nil {
-			t.Fatal(err)
+		if readFileErr = os.WriteFile(filepath.Join(backup, name), data, 0600); readFileErr != nil {
+			t.Fatal(readFileErr)
 		}
 	}
 	restored, _ := ledgerRequest(
@@ -209,9 +210,9 @@ func testAccountArchiveCapture(t *testing.T, fixture string) {
 		}
 		var value any
 		_ = json.Unmarshal(inspect.Body.Bytes(), &value)
-		schema, e := contracts.Compile("cli_inspect_account_archive", "output")
-		if e != nil || schema.Validate(value) != nil {
-			t.Fatal("invalid diagnostic contract", e)
+		schema, compileErr := contracts.Compile("cli_inspect_account_archive", "output")
+		if compileErr != nil || schema.Validate(value) != nil {
+			t.Fatal("invalid diagnostic contract", compileErr)
 		}
 		if strings.Contains(inspect.Body.String(), "synthetic text") ||
 			strings.Contains(inspect.Body.String(), "SenderId") {

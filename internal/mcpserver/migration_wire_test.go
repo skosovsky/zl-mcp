@@ -13,6 +13,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMigrationJSONRPCIdentityBaseline(t *testing.T) {
 	for _, tc := range []struct{ name, id string }{
 		{"string-large", `"9007199254740993123"`},
@@ -42,7 +43,7 @@ func TestMigrationJSONRPCIdentityBaseline(t *testing.T) {
 			request.Header.Set("Authorization", "Bearer "+token)
 			request.Header.Set("Content-Type", "application/json")
 			request.Header.Set("Accept", "application/json, text/event-stream")
-			request.Header.Set("MCP-Protocol-Version", "2026-07-28")
+			request.Header.Set("Mcp-Protocol-Version", "2026-07-28")
 			request.Header.Set("Mcp-Method", "tools/list")
 			recorder := httptest.NewRecorder()
 			// Act
@@ -62,7 +63,18 @@ func TestMigrationJSONRPCIdentityBaseline(t *testing.T) {
 			}
 			_, hasID := response["id"]
 			_, hasResult := response["result"]
-			baselineJSON(t, "rpc-id-"+tc.name, map[string]any{"status": recorder.Code, "id": response["id"], "has_id": hasID, "has_result": hasResult, "error": response["error"], "non_json_body": nonJSON})
+			baselineJSON(
+				t,
+				"rpc-id-"+tc.name,
+				map[string]any{
+					"status":        recorder.Code,
+					"id":            response["id"],
+					"has_id":        hasID,
+					"has_result":    hasResult,
+					"error":         response["error"],
+					"non_json_body": nonJSON,
+				},
+			)
 		})
 	}
 }

@@ -103,74 +103,15 @@ func convertArchiveCandidates(
 	account string,
 	nowMS int64,
 ) (result ConvertedArchivePage, err error) {
-	if ctx == nil || ctx.Err() != nil || !canonicalIdentity(account) || nowMS <= 0 || len(page.Candidates.Rows) > 50 ||
-		page.SourceControls < 0 {
-		return result, ErrSQLite
+	r, from, to, bindingErr := bindArchiveCandidates(ctx, page, request, account, nowMS)
+	if bindingErr != nil {
+		return result, bindingErr
 	}
-	r, e := request.Normalize()
-	if e != nil || !canonicalIdentity(r.ConversationID) || len(page.Candidates.Rows) > r.MaxMessages ||
-		page.requestID != r.RequestID ||
-		page.fingerprint != r.Fingerprint() ||
-		page.account != account {
-		return result, ErrSQLite
+	if recallErr := validateCandidateRecalls(ctx, page, r, account, from, to); recallErr != nil {
+		return result, recallErr
 	}
-	since, _ := time.Parse(time.RFC3339Nano, r.Since)
-	until, _ := time.Parse(time.RFC3339Nano, r.Until)
-	from, to, validWindow := millisecondWindow(since, until)
-	if !validWindow {
-		return result, ErrSQLite
-	}
-	if len(page.Candidates.OwnRecalls) > page.Candidates.DeferredControls ||
-		len(page.Candidates.OwnRecalls) > page.Candidates.Examined ||
-		len(page.Candidates.OwnRecalls) > page.SourceControls ||
-		len(page.Candidates.OwnRecalls) > min(50, r.MaxMessages) {
-		return result, ErrSQLite
-	}
-	seenRecalls := map[string]bool{}
-	for _, recall := range page.Candidates.OwnRecalls {
-		if ctx.Err() != nil || !canonicalIdentity(recall.MessageID) || seenRecalls[recall.MessageID] ||
-			recall.Conversation != r.Ref() ||
-			recall.Conversation.Type != domain.ConversationDirect ||
-			recall.SenderID != account ||
-			recall.RecordAtMS < from ||
-			recall.RecordAtMS >= to {
-			return result, ErrSQLite
-		}
-		seenRecalls[recall.MessageID] = true
-	}
-	total := 0
-	// Whole-page validation precedes classification and output construction.
-	for _, row := range page.Candidates.Rows {
-		total += len(row.Row.Text) + len(row.Row.BinNet)
-		projected, _, _, valid := archiveText(row)
-		if !valid {
-			return result, ErrSQLite
-		}
-		if projected != row.Row.Text {
-			total += len(projected)
-		}
-		kind, known := mobilePayloadKind(row.Row.Type)
-		expiry, declared, e := MessageExpiryMS(row.Row.TimestampMS, row.Row.TTL)
-		direction := "incoming"
-		if row.SenderID == account {
-			direction = "outgoing"
-		}
-		if ctx.Err() != nil || total > 8<<20 || !known || kind != row.Kind || !canonicalIdentity(row.Row.MessageID) ||
-			!canonicalIdentity(row.Row.ClientID) ||
-			!canonicalIdentity(row.SenderID) ||
-			row.Direction != direction ||
-			row.Row.Status <= 0 ||
-			row.Row.TimestampMS < from ||
-			row.Row.TimestampMS >= to ||
-			!utf8.ValidString(row.Row.Text) ||
-			len(row.Row.Text) > 1<<20 ||
-			e != nil ||
-			expiry != row.ExpiresMS ||
-			declared != row.ExpiryDeclared ||
-			r.ConversationType == domain.ConversationDirect && row.SenderID != account &&
-				row.SenderID != r.ConversationID {
-			return result, ErrSQLite
-		}
+	if validationErr := validateCandidateRows(ctx, page, r, account, from, to); validationErr != nil {
+		return result, validationErr
 	}
 	defer func() {
 		if err != nil {
@@ -187,39 +128,16 @@ func convertArchiveCandidates(
 		}
 		text, rich, supported, _ := archiveText(row)
 		if !supported {
-			result.UnsupportedContent++
-			if result.UnsupportedContentReasons == nil {
-				result.UnsupportedContentReasons = map[string]int{}
-				result.UnsupportedContentKinds = map[string]int{}
-			}
-			result.UnsupportedContentReasons[unsupportedArchiveContentReason(row)]++
-			result.UnsupportedContentKinds[row.Kind]++
+			recordUnsupportedCandidate(&result, row)
 			continue
 		}
 		if row.Metadata.Quote != nil && !row.QuoteExpired {
 			result.UnresolvedQuotes++
 		}
 		result.UnresolvedMentions += len(row.Metadata.Mentions)
-		message := domain.Message{
-			Conversation:    r.Ref(),
-			ID:              row.Row.MessageID,
-			SenderID:        row.SenderID,
-			SentAt:          time.UnixMilli(row.Row.TimestampMS).UTC(),
-			Text:            text,
-			Direction:       row.Direction,
-			AttachmentTypes: []string{},
-			QuoteMetadata: &domain.QuoteMetadata{
-				ClientMessageID: row.Row.ClientID,
-				MessageType:     "webchat",
-				Timestamp:       strconv.FormatInt(row.Row.TimestampMS, 10),
-				TTL:             int(row.Row.TTL),
-			},
-		}
-		if rich {
-			message.AttachmentTypes = []string{"rtf"}
-		}
-		if int64(message.QuoteMetadata.TTL) != row.Row.TTL {
-			return result, ErrSQLite
+		message, messageErr := candidateMessage(row, r, text, rich)
+		if messageErr != nil {
+			return result, messageErr
 		}
 		result.Records = append(
 			result.Records,
@@ -292,4 +210,120 @@ func archiveText(row PreparedRow) (string, bool, bool, bool) {
 	}
 	rich, supported = true, true
 	return text, rich, supported, valid
+}
+
+func bindArchiveCandidates(ctx context.Context, page PreparedArchivePage, request domain.MobileBackupRequest, account string, nowMS int64) (domain.MobileBackupRequest, int64, int64, error) {
+	if ctx == nil || ctx.Err() != nil || !canonicalIdentity(account) || nowMS <= 0 || len(page.Candidates.Rows) > 50 ||
+		page.SourceControls < 0 {
+		return domain.MobileBackupRequest{}, 0, 0, ErrSQLite
+	}
+	r, e := request.Normalize()
+	if e != nil || !canonicalIdentity(r.ConversationID) || len(page.Candidates.Rows) > r.MaxMessages ||
+		page.requestID != r.RequestID ||
+		page.fingerprint != r.Fingerprint() ||
+		page.account != account {
+		return domain.MobileBackupRequest{}, 0, 0, ErrSQLite
+	}
+	since, _ := time.Parse(time.RFC3339Nano, r.Since)
+	until, _ := time.Parse(time.RFC3339Nano, r.Until)
+	from, to, validWindow := millisecondWindow(since, until)
+	if !validWindow {
+		return domain.MobileBackupRequest{}, 0, 0, ErrSQLite
+	}
+	return r, from, to, nil
+}
+
+func validateCandidateRecalls(ctx context.Context, page PreparedArchivePage, r domain.MobileBackupRequest, account string, from, to int64) error {
+	if len(page.Candidates.OwnRecalls) > page.Candidates.DeferredControls ||
+		len(page.Candidates.OwnRecalls) > page.Candidates.Examined ||
+		len(page.Candidates.OwnRecalls) > page.SourceControls ||
+		len(page.Candidates.OwnRecalls) > min(50, r.MaxMessages) {
+		return ErrSQLite
+	}
+	seenRecalls := map[string]bool{}
+	for _, recall := range page.Candidates.OwnRecalls {
+		if ctx.Err() != nil || !canonicalIdentity(recall.MessageID) || seenRecalls[recall.MessageID] ||
+			recall.Conversation != r.Ref() ||
+			recall.Conversation.Type != domain.ConversationDirect ||
+			recall.SenderID != account ||
+			recall.RecordAtMS < from ||
+			recall.RecordAtMS >= to {
+			return ErrSQLite
+		}
+		seenRecalls[recall.MessageID] = true
+	}
+	return nil
+}
+
+func validateCandidateRows(ctx context.Context, page PreparedArchivePage, r domain.MobileBackupRequest, account string, from, to int64) error {
+	total := 0
+	// Whole-page validation precedes classification and output construction.
+	for _, row := range page.Candidates.Rows {
+		total += len(row.Row.Text) + len(row.Row.BinNet)
+		projected, _, _, valid := archiveText(row)
+		if !valid {
+			return ErrSQLite
+		}
+		if projected != row.Row.Text {
+			total += len(projected)
+		}
+		kind, known := mobilePayloadKind(row.Row.Type)
+		expiry, declared, e := MessageExpiryMS(row.Row.TimestampMS, row.Row.TTL)
+		direction := "incoming"
+		if row.SenderID == account {
+			direction = "outgoing"
+		}
+		if ctx.Err() != nil || total > 8<<20 || !known || kind != row.Kind || !canonicalIdentity(row.Row.MessageID) ||
+			!canonicalIdentity(row.Row.ClientID) ||
+			!canonicalIdentity(row.SenderID) ||
+			row.Direction != direction ||
+			row.Row.Status <= 0 ||
+			row.Row.TimestampMS < from ||
+			row.Row.TimestampMS >= to ||
+			!utf8.ValidString(row.Row.Text) ||
+			len(row.Row.Text) > 1<<20 ||
+			e != nil ||
+			expiry != row.ExpiresMS ||
+			declared != row.ExpiryDeclared ||
+			r.ConversationType == domain.ConversationDirect && row.SenderID != account &&
+				row.SenderID != r.ConversationID {
+			return ErrSQLite
+		}
+	}
+	return nil
+}
+
+func recordUnsupportedCandidate(result *ConvertedArchivePage, row PreparedRow) {
+	result.UnsupportedContent++
+	if result.UnsupportedContentReasons == nil {
+		result.UnsupportedContentReasons = map[string]int{}
+		result.UnsupportedContentKinds = map[string]int{}
+	}
+	result.UnsupportedContentReasons[unsupportedArchiveContentReason(row)]++
+	result.UnsupportedContentKinds[row.Kind]++
+}
+
+func candidateMessage(row PreparedRow, r domain.MobileBackupRequest, text string, rich bool) (domain.Message, error) {
+	message := domain.Message{
+		Conversation:    r.Ref(),
+		ID:              row.Row.MessageID,
+		SenderID:        row.SenderID,
+		SentAt:          time.UnixMilli(row.Row.TimestampMS).UTC(),
+		Text:            text,
+		Direction:       row.Direction,
+		AttachmentTypes: []string{},
+		QuoteMetadata: &domain.QuoteMetadata{
+			ClientMessageID: row.Row.ClientID,
+			MessageType:     "webchat",
+			Timestamp:       strconv.FormatInt(row.Row.TimestampMS, 10),
+			TTL:             int(row.Row.TTL),
+		},
+	}
+	if rich {
+		message.AttachmentTypes = []string{"rtf"}
+	}
+	if int64(message.QuoteMetadata.TTL) != row.Row.TTL {
+		return domain.Message{}, ErrSQLite
+	}
+	return message, nil
 }

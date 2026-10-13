@@ -19,11 +19,17 @@ func (f preloadPage) ConversationPreload(ctx context.Context) (domain.PreloadSna
 	return f(ctx)
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestPreloadRefreshOnlyMergesPermittedMetadataAndKeepsFailureEvidenceSafe(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
 	ref := domain.ConversationRef{Type: "direct", ID: "allowed"}
-	store, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{Selected: map[domain.ConversationRef]bool{ref: true}}, 90)
+	store, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(t.TempDir(), "messages.sqlite"),
+		domain.CollectionPolicy{Selected: map[domain.ConversationRef]bool{ref: true}},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,7 +38,13 @@ func TestPreloadRefreshOnlyMergesPermittedMetadataAndKeepsFailureEvidenceSafe(t 
 		t.Fatal(err)
 	}
 	source := preloadPage(func(context.Context) (domain.PreloadSnapshot, error) {
-		return domain.PreloadSnapshot{Entries: []domain.PreloadEntry{{Conversation: ref}, {Conversation: domain.ConversationRef{Type: "direct", ID: "excluded"}}}, Messages: []domain.Message{{Conversation: ref, ID: "source-message", Text: "private-source-body"}}}, nil
+		return domain.PreloadSnapshot{
+			Entries: []domain.PreloadEntry{
+				{Conversation: ref},
+				{Conversation: domain.ConversationRef{Type: "direct", ID: "excluded"}},
+			},
+			Messages: []domain.Message{{Conversation: ref, ID: "source-message", Text: "private-source-body"}},
+		}, nil
 	})
 	// Act
 	err = refreshPreloadCatalog(ctx, store, source)
@@ -44,7 +56,10 @@ func TestPreloadRefreshOnlyMergesPermittedMetadataAndKeepsFailureEvidenceSafe(t 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if status["status"] != "observed" || status["observed_count"] != float64(2) || status["permitted_count"] != float64(1) || status["catalog_complete"] != false || status["messages_imported"] != false {
+	if status["status"] != "observed" || status["observed_count"] != float64(2) ||
+		status["permitted_count"] != float64(1) ||
+		status["catalog_complete"] != false ||
+		status["messages_imported"] != false {
 		t.Fatal("false catalogue evidence")
 	}
 	var count int
@@ -69,7 +84,8 @@ func TestPreloadRefreshOnlyMergesPermittedMetadataAndKeepsFailureEvidenceSafe(t 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if status["status"] != "partial" || status["stop_reason"] != "upstream_unavailable" || status["last_success_at"] != success {
+	if status["status"] != "partial" || status["stop_reason"] != "upstream_unavailable" ||
+		status["last_success_at"] != success {
 		t.Fatal("failure overwrote previous evidence")
 	}
 	body, _ := json.Marshal(status)
@@ -100,12 +116,23 @@ func TestPreloadRefreshRecordsTypedAuthAndUnsupportedStates(t *testing.T) {
 	}{{domain.ErrAuthenticationRequired, "partial", "auth_required"}, {domain.ErrConversationPreloadUnsupported, "unsupported", "source_unsupported"}, {domain.NewHistoryPageFailure("invalid preload metadata"), "partial", "invalid_source_page"}} {
 		// Arrange
 		ctx := context.Background()
-		store, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+		store, err := storage.OpenWithPolicy(
+			ctx,
+			filepath.Join(t.TempDir(), "messages.sqlite"),
+			domain.CollectionPolicy{All: true},
+			90,
+		)
 		if err != nil {
 			t.Fatal(err)
 		}
 		// Act
-		err = refreshPreloadCatalog(ctx, store, preloadPage(func(context.Context) (domain.PreloadSnapshot, error) { return domain.PreloadSnapshot{}, tc.source }))
+		err = refreshPreloadCatalog(
+			ctx,
+			store,
+			preloadPage(
+				func(context.Context) (domain.PreloadSnapshot, error) { return domain.PreloadSnapshot{}, tc.source },
+			),
+		)
 		// Assert
 		if !errors.Is(err, tc.source) {
 			t.Fatal("typed failure lost")

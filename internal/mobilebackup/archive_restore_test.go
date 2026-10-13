@@ -34,12 +34,12 @@ func expiredBackupFixture(t *testing.T) (string, RetainedArchiveManifest, map[st
 	name, _ := retainedName(retainedTestID)
 	original := map[string][]byte{}
 	for _, file := range []string{name, snapshotKeyName, snapshotClaimsName} {
-		data, err := os.ReadFile(filepath.Join(cachePath, file))
-		if err != nil {
-			t.Fatal(err)
+		data, readFileErr := os.ReadFile(filepath.Join(cachePath, file))
+		if readFileErr != nil {
+			t.Fatal(readFileErr)
 		}
-		if err = os.WriteFile(filepath.Join(backup, file), data, 0600); err != nil {
-			t.Fatal(err)
+		if readFileErr = os.WriteFile(filepath.Join(backup, file), data, 0600); readFileErr != nil {
+			t.Fatal(readFileErr)
 		}
 		original[file] = data
 	}
@@ -82,12 +82,13 @@ func TestRestoreExpiredBackupWithoutChangingOriginal(t *testing.T) {
 	}
 	defer read.Clear()
 	// Assert: full source and historical expiry survive; backup artifacts never change.
-	if !reflect.DeepEqual(first, retry) || !reflect.DeepEqual(manifest, original) || len(read.archive.Files) != 3 || string(read.archive.Files[0].Data) != "synthetic-a" {
+	if !reflect.DeepEqual(first, retry) || !reflect.DeepEqual(manifest, original) || len(read.archive.Files) != 3 ||
+		string(read.archive.Files[0].Data) != "synthetic-a" {
 		t.Fatal("restore changed provenance or lost content")
 	}
 	for name, before := range files {
-		after, err := os.ReadFile(filepath.Join(backup, name))
-		if err != nil || !bytes.Equal(before, after) {
+		after, nestedReadFileErr := os.ReadFile(filepath.Join(backup, name))
+		if nestedReadFileErr != nil || !bytes.Equal(before, after) {
 			t.Fatal("restore changed recovery copy")
 		}
 	}
@@ -99,6 +100,7 @@ func TestRestoreExpiredBackupWithoutChangingOriginal(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestRestoreBackupRejectsUnsafeInputsWithoutPublishing(t *testing.T) {
 	for _, mode := range []string{"foreign-owner", "digest", "ciphertext", "missing-key", "symlink", "permissions", "cancelled"} {
 		t.Run(mode, func(t *testing.T) {
@@ -149,7 +151,14 @@ func TestRestoreBackupRejectsUnsafeInputsWithoutPublishing(t *testing.T) {
 				cancel()
 			}
 			// Act / Assert: no durable claim/source, no repair or key creation.
-			if _, err = library.RestoreBackup(ctx, backup, retainedTestID, binding, digest); err == nil || library.ledger.claims[retainedTestID] {
+			if _, err = library.RestoreBackup(
+				ctx,
+				backup,
+				retainedTestID,
+				binding,
+				digest,
+			); err == nil ||
+				library.ledger.claims[retainedTestID] {
 				t.Fatal("unsafe recovery published")
 			}
 			if mode == "missing-key" {
@@ -171,7 +180,13 @@ func TestRestoreBackupCapacityFailureDoesNotSpendSource(t *testing.T) {
 	defer library.Close()
 	h := sha256.Sum256([]byte("123"))
 	// Act: admission checks the complete source before applying the capacity limit.
-	_, err = library.RestoreBackup(context.Background(), backup, retainedTestID, hex.EncodeToString(h[:]), manifest.Digest)
+	_, err = library.RestoreBackup(
+		context.Background(),
+		backup,
+		retainedTestID,
+		hex.EncodeToString(h[:]),
+		manifest.Digest,
+	)
 	// Assert: no partial publication or spent claim, leaving a later valid retry possible.
 	if !errors.Is(err, ErrRetainedCapacity) || library.ledger.claims[retainedTestID] {
 		t.Fatal("capacity failure partially published", err)

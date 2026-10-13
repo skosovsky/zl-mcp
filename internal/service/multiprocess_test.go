@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,26 +14,30 @@ import (
 	"testing"
 	"time"
 
+	"net"
+
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/skosovsky/zl-mcp/internal/collector"
 	"github.com/skosovsky/zl-mcp/internal/config"
 	"github.com/skosovsky/zl-mcp/internal/domain"
-	"net"
 )
 
 type bridgeSendSource struct {
 	replayListener
+
 	sends atomic.Int32
 }
 
 func (s *bridgeSendSource) SendDirect(_ context.Context, peer, text string, quote *domain.SendQuote) (string, error) {
 	if peer != "synthetic-peer" || text != "SYNTHETIC_DIRECT_TEXT_MUST_NOT_BE_LOGGED" || quote != nil {
-		return "", fmt.Errorf("unexpected synthetic send")
+		return "", errors.New("unexpected synthetic send")
 	}
 	s.sends.Add(1)
 	return "synthetic-accepted", nil
 }
 
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 	// Arrange: two real STDIO bridge processes and one unified HTTP service; only Zalo delivery is synthetic.
 	dir, err := os.MkdirTemp("/tmp", "zl-two-bridges-")
@@ -53,20 +58,20 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 	c.Logging.MaxSizeMB = 5
 	c.Logging.MaxBackups = 3
 	token := strings.Repeat("t", 64)
-	if err := os.WriteFile(c.MCP.TokenFile, []byte(token), 0600); err != nil {
-		t.Fatal(err)
+	if writeFileErr := os.WriteFile(c.MCP.TokenFile, []byte(token), 0600); writeFileErr != nil {
+		t.Fatal(writeFileErr)
 	}
 	bin := filepath.Join(t.TempDir(), "zl-mcp")
 	build := exec.Command("go", "build", "-o", bin, "./cmd/zl-mcp")
 	build.Dir = "../.."
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build: %s %v", output, err)
+	if output, combinedOutputErr := build.CombinedOutput(); combinedOutputErr != nil {
+		t.Fatalf("build: %s %v", output, combinedOutputErr)
 	}
 	configPath := filepath.Join(c.StateDir, "config.toml")
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	serviceCtx, stopService := context.WithCancel(ctx)
-	client := &bridgeSendSource{replayListener: replayListener{messages: make(chan messageCommand)}}
+	client := &bridgeSendSource{messages: make(chan messageCommand)}
 	bound := make(chan net.Addr, 1)
 	finished := make(chan error, 1)
 	go func() {
@@ -75,9 +80,9 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 	t.Cleanup(func() {
 		stopService()
 		select {
-		case err := <-finished:
-			if err != nil {
-				t.Errorf("service shutdown: %v", err)
+		case operationErr := <-finished:
+			if operationErr != nil {
+				t.Errorf("service shutdown: %v", operationErr)
 			}
 		case <-time.After(5 * time.Second):
 			t.Error("service shutdown hung")
@@ -89,16 +94,33 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 	case <-ctx.Done():
 		t.Fatal("service not ready")
 	}
-	if err := os.WriteFile(configPath, []byte(fmt.Sprintf("state_dir = %q\n[collection]\ngroup_ids = [\"g\"]\n[mcp]\nlisten = %q\ntoken_file = %q\n", c.StateDir, addr.String(), c.MCP.TokenFile)), 0600); err != nil {
-		t.Fatal(err)
+	if nestedWriteFileErr := os.WriteFile(
+		configPath,
+		[]byte(
+			fmt.Sprintf(
+				"state_dir = %q\n[collection]\ngroup_ids = [\"g\"]\n[mcp]\nlisten = %q\ntoken_file = %q\n",
+				c.StateDir,
+				addr.String(),
+				c.MCP.TokenFile,
+			),
+		),
+		0600,
+	); nestedWriteFileErr != nil {
+		t.Fatal(nestedWriteFileErr)
 	}
 	for {
-		reply := serviceRPC(t, "http://"+addr.String()+"/mcp", token, "tools/call", map[string]any{"name": "zalo_get_status", "arguments": map[string]any{}})
+		reply := serviceRPC(
+			t,
+			"http://"+addr.String()+"/mcp",
+			token,
+			"tools/call",
+			map[string]any{"name": "zalo_get_status", "arguments": map[string]any{}},
+		)
 		status, ok := reply["structuredContent"].(map[string]any)
 		if !ok {
-			encoded, err := json.Marshal(reply)
-			if err != nil {
-				t.Fatal(err)
+			encoded, marshalErr := json.Marshal(reply)
+			if marshalErr != nil {
+				t.Fatal(marshalErr)
 			}
 			var rejected struct {
 				IsError bool `json:"isError"`
@@ -106,13 +128,15 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 					Text string `json:"text"`
 				} `json:"content"`
 			}
-			if err = json.Unmarshal(encoded, &rejected); err != nil {
-				t.Fatal(err)
+			if marshalErr = json.Unmarshal(encoded, &rejected); marshalErr != nil {
+				t.Fatal(marshalErr)
 			}
 			var failure domain.Error
 			// Account binding during startup invalidates the old invocation scope.
 			// Wait for a fresh binding; persistent/other errors still fail this test.
-			if rejected.IsError && len(rejected.Content) == 1 && json.Unmarshal([]byte(rejected.Content[0].Text), &failure) == nil && failure.Code == "PERMISSION_DENIED" {
+			if rejected.IsError && len(rejected.Content) == 1 &&
+				json.Unmarshal([]byte(rejected.Content[0].Text), &failure) == nil &&
+				failure.Code == "PERMISSION_DENIED" {
 				select {
 				case <-ctx.Done():
 					t.Fatalf("startup scope remained unavailable: %v", reply)
@@ -138,26 +162,26 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 		child := exec.Command(bin, "-config", configPath, "serve")
 		child.Stderr = &logs[i]
 		sdkClient := mcp.NewClient(&mcp.Implementation{Name: fmt.Sprintf("parallel-reader-%d", i), Version: "1"}, nil)
-		session, err := sdkClient.Connect(ctx, &mcp.CommandTransport{Command: child}, nil)
-		if err != nil {
-			t.Fatal(err)
+		session, connectErr := sdkClient.Connect(ctx, &mcp.CommandTransport{Command: child}, nil)
+		if connectErr != nil {
+			t.Fatal(connectErr)
 		}
 		sessions[i] = session
 		t.Cleanup(func() { session.Close() })
 	}
 	call := func(session *mcp.ClientSession, name string, args map[string]any) map[string]any {
 		t.Helper()
-		result, err := session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
-		if err != nil || result.IsError {
-			t.Fatalf("%s result=%+v error=%v", name, result, err)
+		result, callToolErr := session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
+		if callToolErr != nil || result.IsError {
+			t.Fatalf("%s result=%+v error=%v", name, result, callToolErr)
 		}
-		data, err := json.Marshal(result.StructuredContent)
-		if err != nil {
-			t.Fatal(err)
+		data, callToolErr := json.Marshal(result.StructuredContent)
+		if callToolErr != nil {
+			t.Fatal(callToolErr)
 		}
 		var wire map[string]any
-		if err = json.Unmarshal(data, &wire); err != nil {
-			t.Fatal(err)
+		if callToolErr = json.Unmarshal(data, &wire); callToolErr != nil {
+			t.Fatal(callToolErr)
 		}
 		return wire
 	}
@@ -171,9 +195,9 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 	ack := make(chan error, 1)
 	client.messages <- messageCommand{message: domain.Message{GroupID: "g", ID: "live-message", SenderID: "sender", SentAt: time.Now().UTC(), Text: "Ремонт кондиционера подтверждён", Source: "live"}, done: ack}
 	select {
-	case err := <-ack:
-		if err != nil {
-			t.Fatal(err)
+	case persistMessageErr := <-ack:
+		if persistMessageErr != nil {
+			t.Fatal(persistMessageErr)
 		}
 	case <-ctx.Done():
 		t.Fatal("message was not collected")
@@ -186,31 +210,49 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 		if len(messages) != 1 || messages[0].(map[string]any)["message_id"] != "live-message" {
 			t.Fatalf("search=%+v", search)
 		}
-		contextResult := call(session, "zalo_get_message_context", map[string]any{"group_id": "g", "message_id": "live-message"})
+		contextResult := call(
+			session,
+			"zalo_get_message_context",
+			map[string]any{"group_id": "g", "message_id": "live-message"},
+		)
 		if contextResult["anchor"].(map[string]any)["text"] != "Ремонт кондиционера подтверждён" {
 			t.Fatalf("context=%+v", contextResult)
 		}
 		// Unapproved secret-looking input must produce a safe error without logging its value.
-		denied, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_join_group", Arguments: map[string]any{"plan_token": "SYNTHETIC_TOKEN_MUST_NOT_BE_LOGGED", "request_id": "d9a901ed-b070-4712-a72f-4a5942b3312c"}})
-		if err != nil || !denied.IsError {
-			t.Fatalf("unapproved join: %+v %v", denied, err)
+		denied, nestedCallToolErr := session.CallTool(
+			ctx,
+			&mcp.CallToolParams{
+				Name: "zalo_join_group",
+				Arguments: map[string]any{
+					"plan_token": "SYNTHETIC_TOKEN_MUST_NOT_BE_LOGGED",
+					"request_id": "d9a901ed-b070-4712-a72f-4a5942b3312c",
+				},
+			},
+		)
+		if nestedCallToolErr != nil || !denied.IsError {
+			t.Fatalf("unapproved join: %+v %v", denied, nestedCallToolErr)
 		}
 		group := call(session, "zalo_get_group", map[string]any{"group_id": "g"})
 		if group["group"].(map[string]any)["name"] != "Test group" {
 			t.Fatalf("control group=%+v", group)
 		}
 		// Two independent STDIO clients share a durable send identity in the service.
-		args := map[string]any{"recipient_id": "synthetic-peer", "text": "SYNTHETIC_DIRECT_TEXT_MUST_NOT_BE_LOGGED", "request_id": "c0000000-0000-4000-8000-00000000000c"}
+		args := map[string]any{
+			"recipient_id": "synthetic-peer",
+			"text":         "SYNTHETIC_DIRECT_TEXT_MUST_NOT_BE_LOGGED",
+			"request_id":   "c0000000-0000-4000-8000-00000000000c",
+		}
 		sent := call(session, "zalo_send_direct_message", args)
 		status := call(session, "zalo_get_send_status", map[string]any{"request_id": args["request_id"]})
-		if sent["status"] != "sent" || sent["message_id"] != "synthetic-accepted" || status["message_id"] != sent["message_id"] {
+		if sent["status"] != "sent" || sent["message_id"] != "synthetic-accepted" ||
+			status["message_id"] != sent["message_id"] {
 			t.Fatal("STDIO bridge lost send result")
 		}
 	}
 	// Close waits for the subprocess streams before inspecting captured logs.
 	for i, session := range sessions {
-		if err := session.Close(); err != nil {
-			t.Fatal(err)
+		if closeErr := session.Close(); closeErr != nil {
+			t.Fatal(closeErr)
 		}
 		logText := logs[i].String()
 		for _, forbidden := range []string{"SYNTHETIC_TOKEN_MUST_NOT_BE_LOGGED", "SYNTHETIC_DIRECT_TEXT_MUST_NOT_BE_LOGGED", "Ремонт кондиционера подтверждён", "live-message"} {
@@ -221,10 +263,10 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 		if strings.TrimSpace(logText) == "" {
 			continue
 		}
-		for _, line := range strings.Split(strings.TrimSpace(logText), "\n") {
+		for line := range strings.SplitSeq(strings.TrimSpace(logText), "\n") {
 			var entry map[string]any
-			if err := json.Unmarshal([]byte(line), &entry); err != nil {
-				t.Fatalf("reader %d malformed audit log: %v", i, err)
+			if unmarshalErr := json.Unmarshal([]byte(line), &entry); unmarshalErr != nil {
+				t.Fatalf("reader %d malformed audit log: %v", i, unmarshalErr)
 			}
 			if entry["msg"] != "mcp_call" || entry["tool"] == nil || entry["correlation_id"] == nil {
 				t.Fatalf("reader %d missing audit fields: %+v", i, entry)
@@ -236,7 +278,7 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 		t.Fatal(err)
 	}
 	auditCalls := 0
-	for _, line := range bytes.Split(bytes.TrimSpace(logData), []byte("\n")) {
+	for line := range bytes.SplitSeq(bytes.TrimSpace(logData), []byte("\n")) {
 		var entry map[string]any
 		if err := json.Unmarshal(line, &entry); err != nil {
 			t.Fatal(err)
@@ -248,7 +290,8 @@ func TestTwoMCPProcessesReadCollectorWrites(t *testing.T) {
 			}
 		}
 	}
-	if auditCalls < 8 || strings.Contains(string(logData), "SYNTHETIC_TOKEN_MUST_NOT_BE_LOGGED") || strings.Contains(string(logData), "Ремонт кондиционера подтверждён") {
+	if auditCalls < 8 || strings.Contains(string(logData), "SYNTHETIC_TOKEN_MUST_NOT_BE_LOGGED") ||
+		strings.Contains(string(logData), "Ремонт кондиционера подтверждён") {
 		t.Fatal("missing or unsafe service audit")
 	}
 	if client.calls.Load() != 1 {

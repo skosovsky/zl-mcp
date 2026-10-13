@@ -13,7 +13,13 @@ import (
 )
 
 func historyRequest() domain.HistoryImportRequest {
-	return domain.HistoryImportRequest{ConversationType: "group", ConversationID: "synthetic-group", RequestID: "00000000-0000-4000-8000-000000000001", Since: "2026-09-01T00:00:00Z", Until: "2026-11-01T00:00:00Z"}
+	return domain.HistoryImportRequest{
+		ConversationType: "group",
+		ConversationID:   "synthetic-group",
+		RequestID:        "00000000-0000-4000-8000-000000000001",
+		Since:            "2026-09-01T00:00:00Z",
+		Until:            "2026-11-01T00:00:00Z",
+	}
 }
 
 func historyOperationStore(t *testing.T, path string, policy domain.CollectionPolicy) *Store {
@@ -48,6 +54,7 @@ func assertHistoryStatusSchema(t *testing.T, op HistoryOperation) {
 	}
 }
 
+//nolint:cyclop,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestHistoryOperationDurableCheckpointAndRequestIdentity(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
@@ -90,7 +97,13 @@ func TestHistoryOperationDurableCheckpointAndRequestIdentity(t *testing.T) {
 	op, err = s.CommitHistoryOperationPage(ctx, op.Status.OperationID, op.Revision, page, 2*time.Second)
 
 	// Assert
-	if err != nil || op.Cursor != cursor || op.Status.State != "running" || op.Status.InsertedCount != 1 || op.Status.DuplicateCount != 1 || op.Status.OutOfIntervalCount != 1 || op.Status.RecordsObserved != 3 || op.Status.PagesObserved != 1 || op.WorkDuration < 2*time.Second || op.WorkDuration > 3*time.Second {
+	if err != nil || op.Cursor != cursor || op.Status.State != "running" || op.Status.InsertedCount != 1 ||
+		op.Status.DuplicateCount != 1 ||
+		op.Status.OutOfIntervalCount != 1 ||
+		op.Status.RecordsObserved != 3 ||
+		op.Status.PagesObserved != 1 ||
+		op.WorkDuration < 2*time.Second ||
+		op.WorkDuration > 3*time.Second {
 		t.Fatalf("wrong checkpoint: op=%+v error=%v", op, err)
 	}
 	assertHistoryStatusSchema(t, op)
@@ -107,10 +120,20 @@ func TestHistoryOperationDurableCheckpointAndRequestIdentity(t *testing.T) {
 		t.Fatal(err)
 	}
 	loaded, err = s.HistoryOperation(ctx, op.Status.OperationID)
-	if err != nil || loaded.Status.State != "queued" || loaded.Cursor != cursor || loaded.Status.InsertedCount != 1 || loaded.WorkDuration != op.WorkDuration {
+	if err != nil || loaded.Status.State != "queued" || loaded.Cursor != cursor || loaded.Status.InsertedCount != 1 ||
+		loaded.WorkDuration != op.WorkDuration {
 		t.Fatal("restart lost checkpoint", err)
 	}
-	if _, err = s.CommitHistoryOperationPage(ctx, op.Status.OperationID, oldRevision, page, time.Second); !errors.Is(err, ErrHistoryState) {
+	if _, err = s.CommitHistoryOperationPage(
+		ctx,
+		op.Status.OperationID,
+		oldRevision,
+		page,
+		time.Second,
+	); !errors.Is(
+		err,
+		ErrHistoryState,
+	) {
 		t.Fatal("stale worker advanced checkpoint", err)
 	}
 	loaded, err = s.ClaimHistoryOperation(ctx, loaded.Status.OperationID, loaded.Revision)
@@ -118,7 +141,10 @@ func TestHistoryOperationDurableCheckpointAndRequestIdentity(t *testing.T) {
 		t.Fatal(err)
 	}
 	loaded, err = s.CommitHistoryOperationPage(ctx, loaded.Status.OperationID, loaded.Revision, page, time.Second)
-	if err != nil || loaded.Status.State != "partial" || loaded.Status.StopReason == nil || *loaded.Status.StopReason != "repeated_cursor" || loaded.Status.InsertedCount != 1 || loaded.Status.DuplicateCount != 3 {
+	if err != nil || loaded.Status.State != "partial" || loaded.Status.StopReason == nil ||
+		*loaded.Status.StopReason != "repeated_cursor" ||
+		loaded.Status.InsertedCount != 1 ||
+		loaded.Status.DuplicateCount != 3 {
 		t.Fatalf("repeated cursor was not bounded: op=%+v error=%v", loaded, err)
 	}
 	assertHistoryStatusSchema(t, loaded)
@@ -138,14 +164,22 @@ func TestHistoryOperationPageAndCheckpointRollbackTogether(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = s.DB.Exec(`CREATE TRIGGER reject_checkpoint BEFORE UPDATE ON history_operations BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`); err != nil {
+	if _, err = s.DB.Exec(
+		`CREATE TRIGGER reject_checkpoint BEFORE UPDATE ON history_operations BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`,
+	); err != nil {
 		t.Fatal(err)
 	}
 	more, cursor := true, "123"
 	m := historicalFixture(r.Ref(), "first")
 	m.SentAt = time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC)
 	// Act
-	_, err = s.CommitHistoryOperationPage(ctx, op.Status.OperationID, op.Revision, domain.HistoryPage{Messages: []domain.Message{m}, HasMore: &more, Cursor: &cursor}, time.Second)
+	_, err = s.CommitHistoryOperationPage(
+		ctx,
+		op.Status.OperationID,
+		op.Revision,
+		domain.HistoryPage{Messages: []domain.Message{m}, HasMore: &more, Cursor: &cursor},
+		time.Second,
+	)
 	// Assert
 	if err == nil {
 		t.Fatal("failed checkpoint was reported committed")
@@ -186,7 +220,16 @@ func TestHistoryOperationCancellationUnsupportedAndAccountBoundary(t *testing.T)
 	if err != nil || cancelled.Status.State != "cancelled" {
 		t.Fatal(err)
 	}
-	if _, err = s.CommitHistoryOperationPage(ctx, op.Status.OperationID, op.Revision, domain.HistoryPage{}, 0); !errors.Is(err, ErrHistoryState) {
+	if _, err = s.CommitHistoryOperationPage(
+		ctx,
+		op.Status.OperationID,
+		op.Revision,
+		domain.HistoryPage{},
+		0,
+	); !errors.Is(
+		err,
+		ErrHistoryState,
+	) {
 		t.Fatal("cancelled worker persisted", err)
 	}
 	again, err := s.PrepareHistoryOperation(ctx, r)
@@ -208,12 +251,17 @@ func TestHistoryOperationCancellationUnsupportedAndAccountBoundary(t *testing.T)
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestHistoryOperationContinuationBoundsAndAuthPause(t *testing.T) {
 	for _, mode := range []string{"missing", "filtered", "page_limit", "message_limit", "auth_pause"} {
 		t.Run(mode, func(t *testing.T) {
 			// Arrange
 			ctx := context.Background()
-			s := historyOperationStore(t, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true})
+			s := historyOperationStore(
+				t,
+				filepath.Join(t.TempDir(), "messages.sqlite"),
+				domain.CollectionPolicy{All: true},
+			)
 			defer s.Close()
 			r := historyRequest()
 			if mode == "page_limit" {
@@ -245,7 +293,14 @@ func TestHistoryOperationContinuationBoundsAndAuthPause(t *testing.T) {
 			}
 			// Act
 			if mode == "auth_pause" {
-				op, err = s.StopHistoryOperation(ctx, op.Status.OperationID, op.Revision, "paused", "auth_required", 3*time.Second)
+				op, err = s.StopHistoryOperation(
+					ctx,
+					op.Status.OperationID,
+					op.Revision,
+					"paused",
+					"auth_required",
+					3*time.Second,
+				)
 			} else {
 				op, err = s.CommitHistoryOperationPage(ctx, op.Status.OperationID, op.Revision, page, time.Second)
 			}
@@ -256,11 +311,13 @@ func TestHistoryOperationContinuationBoundsAndAuthPause(t *testing.T) {
 			assertHistoryStatusSchema(t, op)
 			if mode == "auth_pause" {
 				pending, err := s.PendingHistoryOperations(ctx, 10)
-				if err != nil || len(pending) != 1 || pending[0].Status.State != "paused" || pending[0].WorkDuration != 3*time.Second {
+				if err != nil || len(pending) != 1 || pending[0].Status.State != "paused" ||
+					pending[0].WorkDuration != 3*time.Second {
 					t.Fatal("auth checkpoint missing", err)
 				}
 				op, err = s.ClaimHistoryOperation(ctx, op.Status.OperationID, op.Revision)
-				if err != nil || op.Status.State != "running" || op.WorkDuration != 3*time.Second || op.Status.PagesObserved != 0 {
+				if err != nil || op.Status.State != "running" || op.WorkDuration != 3*time.Second ||
+					op.Status.PagesObserved != 0 {
 					t.Fatal("auth resume lost work budget", err)
 				}
 			} else if op.Status.State != "partial" || op.Status.StopReason == nil || *op.Status.StopReason != reason || op.Status.HistoryComplete {
@@ -292,7 +349,9 @@ func TestHistoryOperationRevocationAndMigrationRollback(t *testing.T) {
 		t.Fatal(err)
 	}
 	var state string
-	if err = s.DB.QueryRow("SELECT state FROM history_operations WHERE operation_id=?", op.Status.OperationID).Scan(&state); err != nil || state != "cancelled" {
+	if err = s.DB.QueryRow("SELECT state FROM history_operations WHERE operation_id=?", op.Status.OperationID).
+		Scan(&state); err != nil ||
+		state != "cancelled" {
 		t.Fatal("revoked operation remained active", err)
 	}
 	if _, err = s.HistoryOperation(ctx, op.Status.OperationID); err == nil {
@@ -300,8 +359,10 @@ func TestHistoryOperationRevocationAndMigrationRollback(t *testing.T) {
 	}
 
 	// Arrange: force version 8's final marker to fail after its DDL.
-	if _, err = s.DB.Exec(`DROP TABLE history_cursors; DROP TABLE history_operations; DELETE FROM schema_migrations WHERE version=8;
-CREATE TRIGGER reject_history_migration BEFORE INSERT ON schema_migrations WHEN new.version=8 BEGIN SELECT RAISE(ABORT,'synthetic migration failure'); END`); err != nil {
+	if _, err = s.DB.Exec(
+		`DROP TABLE history_cursors; DROP TABLE history_operations; DELETE FROM schema_migrations WHERE version=8;
+CREATE TRIGGER reject_history_migration BEFORE INSERT ON schema_migrations WHEN new.version=8 BEGIN SELECT RAISE(ABORT,'synthetic migration failure'); END`,
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act
@@ -311,7 +372,9 @@ CREATE TRIGGER reject_history_migration BEFORE INSERT ON schema_migrations WHEN 
 		t.Fatal("failed migration succeeded")
 	}
 	var n int
-	if err = s.DB.QueryRow("SELECT count(*) FROM sqlite_master WHERE name IN ('history_operations','history_cursors','history_active_conversation')").Scan(&n); err != nil || n != 0 {
+	if err = s.DB.QueryRow("SELECT count(*) FROM sqlite_master WHERE name IN ('history_operations','history_cursors','history_active_conversation')").
+		Scan(&n); err != nil ||
+		n != 0 {
 		t.Fatal("partial history schema escaped rollback", err)
 	}
 	if err = s.DB.QueryRow("SELECT count(*) FROM schema_migrations WHERE version=8").Scan(&n); err != nil || n != 0 {
@@ -330,7 +393,7 @@ func TestHistoryOperationCrashChargesDurableSourceReservation(t *testing.T) {
 	}
 	defer func() { s.Close() }()
 	// Act: simulate four crashes after the durable pre-request reservation.
-	for attempt := 0; attempt < 4; attempt++ {
+	for range 4 {
 		op, err = s.ClaimHistoryOperation(ctx, op.Status.OperationID, op.Revision)
 		if err != nil {
 			t.Fatal(err)
@@ -339,13 +402,21 @@ func TestHistoryOperationCrashChargesDurableSourceReservation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := s.ReserveHistoryPage(ctx, op.Status.OperationID, op.Revision, time.Second); !errors.Is(err, ErrHistoryState) {
-			t.Fatalf("double reservation allowed: %v", err)
+		if _, reserveHistoryPageErr := s.ReserveHistoryPage(
+			ctx,
+			op.Status.OperationID,
+			op.Revision,
+			time.Second,
+		); !errors.Is(
+			reserveHistoryPageErr,
+			ErrHistoryState,
+		) {
+			t.Fatalf("double reservation allowed: %v", reserveHistoryPageErr)
 		}
 		s.Close()
 		s = historyOperationStore(t, path, domain.CollectionPolicy{All: true})
-		if err := s.RecoverInterruptedHistory(ctx); err != nil {
-			t.Fatal(err)
+		if recoverInterruptedHistoryErr := s.RecoverInterruptedHistory(ctx); recoverInterruptedHistoryErr != nil {
+			t.Fatal(recoverInterruptedHistoryErr)
 		}
 		op, err = s.HistoryOperation(ctx, op.Status.OperationID)
 		if err != nil {
@@ -353,7 +424,10 @@ func TestHistoryOperationCrashChargesDurableSourceReservation(t *testing.T) {
 		}
 	}
 	// Assert: no records/events were invented and restart cannot reset the budget.
-	if op.WorkDuration != HistoryWorkBudget || op.ReservedDuration != 0 || op.Status.State != "partial" || op.Status.StopReason == nil || *op.Status.StopReason != "time_limit" || op.Status.PagesObserved != 0 {
+	if op.WorkDuration != HistoryWorkBudget || op.ReservedDuration != 0 || op.Status.State != "partial" ||
+		op.Status.StopReason == nil ||
+		*op.Status.StopReason != "time_limit" ||
+		op.Status.PagesObserved != 0 {
 		t.Fatalf("crash budget not enforced: %#v", op)
 	}
 }
@@ -376,12 +450,19 @@ func TestHistoryOperationReservationReconcilesActualSourceWork(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Act: auth loss after a short request, then an arbitrary waiting period.
-	op, err = s.StopHistoryOperation(ctx, op.Status.OperationID, op.Revision, "paused", "auth_required", time.Millisecond)
+	op, err = s.StopHistoryOperation(
+		ctx,
+		op.Status.OperationID,
+		op.Revision,
+		"paused",
+		"auth_required",
+		time.Millisecond,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.RecoverInterruptedHistory(ctx); err != nil {
-		t.Fatal(err)
+	if nestedRecoverInterruptedHistoryErr := s.RecoverInterruptedHistory(ctx); nestedRecoverInterruptedHistoryErr != nil {
+		t.Fatal(nestedRecoverInterruptedHistoryErr)
 	}
 	op, err = s.HistoryOperation(ctx, op.Status.OperationID)
 	if err != nil {
@@ -431,7 +512,13 @@ func TestHistoryPhaseIdentitySurvivesReopen(t *testing.T) {
 		t.Fatal(err)
 	}
 	more, old, cursor := true, true, "0"
-	page := domain.HistoryPage{PhaseRequired: true, Messages: []domain.Message{historicalFixture(historyRequest().Ref(), "phase")}, HasMore: &more, Cursor: &cursor, IsOld: &old}
+	page := domain.HistoryPage{
+		PhaseRequired: true,
+		Messages:      []domain.Message{historicalFixture(historyRequest().Ref(), "phase")},
+		HasMore:       &more,
+		Cursor:        &cursor,
+		IsOld:         &old,
+	}
 	// Act: initial recent/0 and next old/0 are different continuations.
 	op, err = s.CommitHistoryOperationPage(ctx, op.Status.OperationID, op.Revision, page, time.Millisecond)
 	// Assert
@@ -449,7 +536,8 @@ func TestHistoryPhaseIdentitySurvivesReopen(t *testing.T) {
 	// Act: repeating old/0 must stop without creating an event.
 	op, err = s.CommitHistoryOperationPage(ctx, op.Status.OperationID, op.Revision, page, time.Millisecond)
 	// Assert
-	if err != nil || op.Status.State != "partial" || op.Status.StopReason == nil || *op.Status.StopReason != "repeated_cursor" {
+	if err != nil || op.Status.State != "partial" || op.Status.StopReason == nil ||
+		*op.Status.StopReason != "repeated_cursor" {
 		t.Fatal("same-phase repetition accepted", err)
 	}
 	assertHistoryStatusSchema(t, op)
@@ -474,9 +562,21 @@ func TestHistoryContinuingProductionPageRequiresPhase(t *testing.T) {
 	}
 	more, cursor := true, "1"
 	// Act
-	op, err = s.CommitHistoryOperationPage(ctx, op.Status.OperationID, op.Revision, domain.HistoryPage{PhaseRequired: true, Messages: []domain.Message{historicalFixture(historyRequest().Ref(), "phase")}, HasMore: &more, Cursor: &cursor}, time.Millisecond)
+	op, err = s.CommitHistoryOperationPage(
+		ctx,
+		op.Status.OperationID,
+		op.Revision,
+		domain.HistoryPage{
+			PhaseRequired: true,
+			Messages:      []domain.Message{historicalFixture(historyRequest().Ref(), "phase")},
+			HasMore:       &more,
+			Cursor:        &cursor,
+		},
+		time.Millisecond,
+	)
 	// Assert
-	if err != nil || op.Status.State != "partial" || op.Status.StopReason == nil || *op.Status.StopReason != "missing_continuation" {
+	if err != nil || op.Status.State != "partial" || op.Status.StopReason == nil ||
+		*op.Status.StopReason != "missing_continuation" {
 		t.Fatal("missing phase guessed", err)
 	}
 }

@@ -181,68 +181,9 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 	if err != nil {
 		return nil, err
 	}
-	more, blocked := false, false
-	used := 0
-	for rows.Next() {
-		var n int64
-		var payload []byte
-		var state string
-		var kind, peer sql.NullString
-		if err = rows.Scan(&n, &payload, &state, &kind, &peer); err != nil {
-			//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
-			rows.Close()
-			return nil, err
-		}
-		if state == "pending" || state == "sending" {
-			blocked = true
-			break
-		}
-		if len(entries) >= limit {
-			more = true
-			break
-		}
-		var event any
-		var reason any
-		if !kind.Valid || !s.AllowsConversation(domain.ConversationRef{Type: kind.String, ID: peer.String}) {
-			reason = "message_unavailable_or_access_revoked"
-		} else if len(payload) == 0 {
-			reason = "payload_unavailable"
-		} else if json.Unmarshal(payload, &event) != nil {
-			reason = "invalid_payload"
-			event = nil
-		}
-		if state != "delivered" {
-			event = nil
-			reason = "delivery_" + state
-		}
-		entry := map[string]any{
-			"event":          event,
-			"delivery_state": state,
-			"gap_reason":     reason,
-			"receipt":        s.receipt(processingReceipt{id, gen, from, n}),
-		}
-		b, _ := json.Marshal(entry)
-		if used+len(b) > 28<<10 {
-			if len(entries) == 0 {
-				//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
-				rows.Close()
-				return nil, domain.ResponseTooLarge(
-					"Event exceeds recovery response budget.",
-					"Read the retained message through its context tool; report this limitation.",
-				)
-			}
-			more = true
-			break
-		}
-		used += len(b)
-		entries = append(entries, entry)
-		from = n
-	}
-	err = rows.Err()
-	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
-	rows.Close()
-	if err != nil {
-		return nil, err
+	entries, more, blocked, scanErr := s.readRecoveryEntries(rows, id, gen, from, limit, entries)
+	if scanErr != nil {
+		return nil, scanErr
 	}
 	if err = tx.Commit(); err != nil {
 		return nil, err
@@ -330,4 +271,76 @@ func (s *Store) pruneEventJournal(ctx context.Context, at time.Time) error {
 		return err
 	}
 	return tx.Commit()
+}
+
+func (s *Store) projectRecoveryEvent(payload []byte, state string, kind, peer sql.NullString) (any, any) {
+	var event any
+	var reason any
+	if !kind.Valid || !s.AllowsConversation(domain.ConversationRef{Type: kind.String, ID: peer.String}) {
+		reason = "message_unavailable_or_access_revoked"
+	} else if len(payload) == 0 {
+		reason = "payload_unavailable"
+	} else if json.Unmarshal(payload, &event) != nil {
+		reason = "invalid_payload"
+		event = nil
+	}
+	if state != "delivered" {
+		event = nil
+		reason = "delivery_" + state
+	}
+	return event, reason
+}
+
+func (s *Store) readRecoveryEntries(rows *sql.Rows, id, gen string, from int64, limit int, entries []map[string]any) ([]map[string]any, bool, bool, error) {
+	more, blocked := false, false
+	used := 0
+	for rows.Next() {
+		var n int64
+		var payload []byte
+		var state string
+		var kind, peer sql.NullString
+		if err := rows.Scan(&n, &payload, &state, &kind, &peer); err != nil {
+			//nolint:gosec // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
+			rows.Close()
+			return nil, false, false, err
+		}
+		if state == "pending" || state == "sending" {
+			blocked = true
+			break
+		}
+		if len(entries) >= limit {
+			more = true
+			break
+		}
+		event, reason := s.projectRecoveryEvent(payload, state, kind, peer)
+		entry := map[string]any{
+			"event":          event,
+			"delivery_state": state,
+			"gap_reason":     reason,
+			"receipt":        s.receipt(processingReceipt{id, gen, from, n}),
+		}
+		b, _ := json.Marshal(entry)
+		if used+len(b) > 28<<10 {
+			if len(entries) == 0 {
+				//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
+				rows.Close()
+				return nil, false, false, domain.ResponseTooLarge(
+					"Event exceeds recovery response budget.",
+					"Read the retained message through its context tool; report this limitation.",
+				)
+			}
+			more = true
+			break
+		}
+		used += len(b)
+		entries = append(entries, entry)
+		from = n
+	}
+	err := rows.Err()
+	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
+	rows.Close()
+	if err != nil {
+		return nil, false, false, err
+	}
+	return entries, more, blocked, nil
 }

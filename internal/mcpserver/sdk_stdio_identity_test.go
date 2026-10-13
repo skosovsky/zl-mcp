@@ -44,6 +44,7 @@ type sdkRawChild struct {
 	ctx    context.Context
 }
 
+//nolint:gocognit // This test helper checks the complete fixture/metric shape without dropping nested boundary assertions.
 func sdkStartRawBridge(t *testing.T, endpoint, token string) *sdkRawChild {
 	t.Helper()
 	dir := t.TempDir()
@@ -190,7 +191,7 @@ func sdkReadFrameResult(t *testing.T, frame []byte) sdkHTTPResult {
 }
 func TestSDK01ActualSTDIOIdentityBoundsAndOutOfOrder(t *testing.T) {
 	// Arrange: real bridge subprocess borrows the synthetic HTTP owner.
-	handler, _, token, reader := sdkBlockingHTTP(t)
+	handler, token, reader := sdkBlockingHTTP(t)
 	endpoint := httptest.NewServer(handler)
 	t.Cleanup(endpoint.Close)
 	child := sdkStartRawBridge(t, endpoint.URL, token)
@@ -271,7 +272,7 @@ func TestSDK01ActualSTDIOCancellationAndIDReusePrivacy(t *testing.T) {
 	previous := slog.Default()
 	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, &slog.HandlerOptions{Level: slog.LevelDebug})))
 	defer slog.SetDefault(previous)
-	handler, _, token, reader := sdkBlockingHTTP(t)
+	handler, token, reader := sdkBlockingHTTP(t)
 	endpoint := httptest.NewServer(handler)
 	t.Cleanup(endpoint.Close)
 	child := sdkStartRawBridge(t, endpoint.URL, token)

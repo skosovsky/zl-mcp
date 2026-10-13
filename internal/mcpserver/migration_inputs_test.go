@@ -3,7 +3,7 @@ package mcpserver
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -12,10 +12,12 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/santhosh-tekuri/jsonschema/v6"
+
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMigrationInputCharacterization(t *testing.T) {
 	cases := []struct{ name, tool, raw, code string }{
 		{"missing-query", "zalo_search_messages", `{}`, "INVALID_ARGUMENT"},
@@ -28,19 +30,39 @@ func TestMigrationInputCharacterization(t *testing.T) {
 		{"unparseable-limit", "zalo_search_messages", `{"query":"x","limit":"many"}`, "INVALID_ARGUMENT"},
 		{"invalid-time", "zalo_search_messages", `{"query":"x","since":"2026-99-01T00:00:00Z"}`, "INVALID_ARGUMENT"},
 		{"invalid-uuid", "zalo_get_send_status", `{"request_id":"not-a-uuid"}`, "INVALID_ARGUMENT"},
-		{"numeric-id", "zalo_get_message_context", `{"group_id":9007199254740993,"message_id":"m"}`, "INVALID_ARGUMENT"},
-		{"opaque-id", "zalo_get_message_context", `{"group_id":"9007199254740993","message_id":"9007199254740993123","before":"0","after":"0"}`, "NOT_FOUND"},
+		{
+			"numeric-id",
+			"zalo_get_message_context",
+			`{"group_id":9007199254740993,"message_id":"m"}`,
+			"INVALID_ARGUMENT",
+		},
+		{
+			"opaque-id",
+			"zalo_get_message_context",
+			`{"group_id":"9007199254740993","message_id":"9007199254740993123","before":"0","after":"0"}`,
+			"NOT_FOUND",
+		},
 		{"unicode-normalized-limit", "zalo_search_messages", `{"query":"Кофе ☕","limit":"10"}`, ""},
 		{"null-object-baseline", "zalo_get_status", `null`, ""},
 		{"missing-object-baseline", "zalo_get_status", ``, ""},
-		{"explicit-zero-neighbors", "zalo_get_message_context", `{"group_id":"missing","message_id":"missing","before":0,"after":0}`, "NOT_FOUND"},
+		{
+			"explicit-zero-neighbors",
+			"zalo_get_message_context",
+			`{"group_id":"missing","message_id":"missing","before":0,"after":0}`,
+			"NOT_FOUND",
+		},
 		{"query-size", "zalo_search_messages", `{"query":"` + strings.Repeat("x", 501) + `"}`, "INVALID_ARGUMENT"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange: independent synthetic state gives each case a fresh admission budget.
 			ctx := context.Background()
-			store, err := storage.Open(ctx, filepath.Join(t.TempDir(), "messages.sqlite"), []string{"9007199254740993", "missing"}, 90)
+			store, err := storage.Open(
+				ctx,
+				filepath.Join(t.TempDir(), "messages.sqlite"),
+				[]string{"9007199254740993", "missing"},
+				90,
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -53,7 +75,13 @@ func TestMigrationInputCharacterization(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			svc := withMigrationReads(&migrationService{Store: store, input: map[string]*jsonschema.Schema{tc.tool: schema}, output: map[string]*jsonschema.Schema{tc.tool: output}})
+			svc := withMigrationReads(
+				&migrationService{
+					Store:  store,
+					input:  map[string]*jsonschema.Schema{tc.tool: schema},
+					output: map[string]*jsonschema.Schema{tc.tool: output},
+				},
+			)
 			// Act
 			result := svc.call(ctx, tc.tool, json.RawMessage(tc.raw))
 			// Assert
@@ -87,21 +115,21 @@ func normalizeSearchSnapshot(result *mcp.CallToolResult) error {
 		return err
 	}
 	var payload, textPayload map[string]any
-	if err := json.Unmarshal(b, &payload); err != nil {
-		return err
+	if unmarshalErr := json.Unmarshal(b, &payload); unmarshalErr != nil {
+		return unmarshalErr
 	}
-	if err := json.Unmarshal([]byte(result.Content[0].(*mcp.TextContent).Text), &textPayload); err != nil {
-		return err
+	if nestedUnmarshalErr := json.Unmarshal([]byte(result.Content[0].(*mcp.TextContent).Text), &textPayload); nestedUnmarshalErr != nil {
+		return nestedUnmarshalErr
 	}
 	if !reflect.DeepEqual(payload, textPayload) {
-		return fmt.Errorf("text and structured projections differ")
+		return errors.New("text and structured projections differ")
 	}
 	stamp, ok := payload["snapshot_at"].(string)
 	if !ok {
-		return fmt.Errorf("snapshot_at missing")
+		return errors.New("snapshot_at missing")
 	}
-	if _, err := time.Parse(time.RFC3339Nano, stamp); err != nil {
-		return err
+	if _, parseErr := time.Parse(time.RFC3339Nano, stamp); parseErr != nil {
+		return parseErr
 	}
 	payload["snapshot_at"] = "2026-10-01T00:00:00Z"
 	textPayload["snapshot_at"] = "2026-10-01T00:00:00Z"

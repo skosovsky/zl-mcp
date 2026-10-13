@@ -14,6 +14,8 @@ var ErrSnapshotSourceUnsupported = errors.New("selected mobile snapshot source i
 // ReadHistoryPage resumes a trusted journal checkpoint from the same encrypted
 // snapshot. It never downloads, requests the phone, writes the corpus or emits Events.
 // The caller supplies only durable progress from the operation/source journal.
+//
+//nolint:funlen,gocognit // This owner keeps selected archive, prepared page and converted records alive until the control-prelude/snapshot proof is accepted, then transfers records before deferred Clear.
 func (s *SnapshotStore) ReadHistoryPage(
 	ctx context.Context,
 	request domain.MobileBackupRequest,
@@ -25,11 +27,9 @@ func (s *SnapshotStore) ReadHistoryPage(
 ) (domain.MobileHistoryPage, error) {
 	var result domain.MobileHistoryPage
 	var err error
-	r, err := request.Normalize()
-	if err != nil || examined < 0 || examined >= r.MaxMessages ||
-		examined == 0 && (after != nil || previous != nil && !previous.ControlPreludeComplete) ||
-		examined > 0 && (previous == nil || after == nil) {
-		return result, ErrSnapshot
+	r, bindingErr := bindHistoryPage(request, examined, previous, after)
+	if bindingErr != nil {
+		return result, bindingErr
 	}
 	selected, err := s.Read(ctx, r, account)
 	if err != nil {
@@ -41,8 +41,7 @@ func (s *SnapshotStore) ReadHistoryPage(
 		return result, ErrSnapshot
 	}
 	digest := sha256.Sum256(selected.File.Data)
-	if previous != nil &&
-		(previous.ID != r.RequestID || previous.Digest != digest || previous.CreatedMS != selected.snapshotCreatedMS || previous.ExpiresMS != selected.snapshotExpiresMS) {
+	if !historySnapshotMatches(previous, r.RequestID, digest, selected.snapshotCreatedMS, selected.snapshotExpiresMS) {
 		return result, ErrSnapshotConflict
 	}
 	var cursor *PreparedArchiveCursor
@@ -88,19 +87,7 @@ func (s *SnapshotStore) ReadHistoryPage(
 		ControlRows:          page.SourceControls,
 	}
 	if previous == nil && source.ControlRows > 0 && r.ConversationType == domain.ConversationDirect && !source.WALMode {
-		controls, scanErr := ReadOwnDirectRecallSet(ctx, selected, r, account, scratch, 5000, mapper)
-		if scanErr != nil {
-			return result, scanErr
-		}
-		defer controls.Clear()
-		if ctx.Err() != nil || time.Now().UnixMilli() >= source.ExpiresMS ||
-			len(controls.Recalls) != source.ControlRows {
-			return result, ErrSnapshot
-		}
-		source.ControlPreludeComplete = true
-		result.Snapshot, result.ControlPrelude, result.HasMore = source, true, true
-		result.Recalls, controls.Recalls = controls.Recalls, nil
-		return result, nil
+		return readHistoryControlPrelude(ctx, selected, r, account, scratch, source, mapper)
 	}
 	if previous != nil {
 		source.ControlPreludeComplete = previous.ControlPreludeComplete
@@ -148,5 +135,36 @@ func (s *SnapshotStore) ReadHistoryPage(
 	if !source.ControlPreludeComplete {
 		result.Recalls, converted.Recalls = converted.Recalls, nil
 	}
+	return result, nil
+}
+
+func bindHistoryPage(request domain.MobileBackupRequest, examined int, previous *domain.MobileHistorySnapshot, after *domain.MobileHistoryPosition) (domain.MobileBackupRequest, error) {
+	r, err := request.Normalize()
+	if err != nil || examined < 0 || examined >= r.MaxMessages ||
+		examined == 0 && (after != nil || previous != nil && !previous.ControlPreludeComplete) ||
+		examined > 0 && (previous == nil || after == nil) {
+		return domain.MobileBackupRequest{}, ErrSnapshot
+	}
+	return r, nil
+}
+
+func historySnapshotMatches(previous *domain.MobileHistorySnapshot, id string, digest [32]byte, createdMS, expiresMS int64) bool {
+	return previous == nil || (previous.ID == id && previous.Digest == digest && previous.CreatedMS == createdMS && previous.ExpiresMS == expiresMS)
+}
+
+func readHistoryControlPrelude(ctx context.Context, selected SelectedArchive, r domain.MobileBackupRequest, account, scratch string, source domain.MobileHistorySnapshot, mapper domain.MobileIdentitySource) (domain.MobileHistoryPage, error) {
+	var result domain.MobileHistoryPage
+	controls, scanErr := ReadOwnDirectRecallSet(ctx, selected, r, account, scratch, 5000, mapper)
+	if scanErr != nil {
+		return result, scanErr
+	}
+	defer controls.Clear()
+	if ctx.Err() != nil || time.Now().UnixMilli() >= source.ExpiresMS ||
+		len(controls.Recalls) != source.ControlRows {
+		return result, ErrSnapshot
+	}
+	source.ControlPreludeComplete = true
+	result.Snapshot, result.ControlPrelude, result.HasMore = source, true, true
+	result.Recalls, controls.Recalls = controls.Recalls, nil
 	return result, nil
 }

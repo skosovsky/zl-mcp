@@ -155,6 +155,7 @@ func (p *membershipPort) snapshotPage(
 	return page, nil
 }
 
+//nolint:funlen // The source/page owner keeps both borrowed buffers alive through signed cursor publication and the fixed response table; row suppression/projection is a separate helper.
 func (p *membershipPort) archiveMessages(
 	ctx context.Context,
 	args map[string]any,
@@ -201,20 +202,9 @@ func (p *membershipPort) archiveMessages(
 		return nil, err
 	}
 	token.Since, token.Until = since.UTC().Format(time.RFC3339Nano), until.UTC().Format(time.RFC3339Nano)
-	if sealed := archiveString(args, "cursor"); sealed != "" {
-		saved, err := p.openArchiveRead(ctx, "cursor", sealed)
-		if err != nil || saved.Account != token.Account || saved.Source != token.Source ||
-			saved.Digest != token.Digest ||
-			saved.Ref != token.Ref ||
-			saved.Since != token.Since ||
-			saved.Until != token.Until ||
-			saved.Order != token.Order ||
-			saved.Position == nil ||
-			saved.Target != "" ||
-			saved.Limit != 0 {
-			return nil, archiveInvalidCursor()
-		}
-		token = saved
+	token, err = p.bindArchiveMessagesCursor(ctx, token, archiveString(args, "cursor"))
+	if err != nil {
+		return nil, err
 	}
 	limit := archiveLimit(args)
 	page, err := p.snapshotPage(ctx, source, token, limit)
@@ -223,26 +213,9 @@ func (p *membershipPort) archiveMessages(
 	}
 	defer page.Clear()
 	now := time.Now()
-	values := []map[string]any{}
-	suppressed := 0
-	for _, record := range page.Records {
-		hidden, err := p.store.ArchiveMessageSuppressed(ctx, ref, record.GlobalID, now.UnixMilli())
-		if err != nil {
-			return nil, err
-		}
-		if hidden {
-			suppressed++
-			continue
-		}
-		if len(record.Text) > 1<<20 {
-			page.Unsupported["text_size_limit"]++
-			continue
-		}
-		value, err := p.archiveExcerpt(ctx, record, token, limit)
-		if err != nil {
-			return nil, err
-		}
-		values = append(values, value)
+	values, suppressed, projectionErr := p.archiveMessageValues(ctx, &page, ref, token, limit, now.UnixMilli())
+	if projectionErr != nil {
+		return nil, projectionErr
 	}
 	var next any
 	if page.HasMore {
@@ -372,4 +345,48 @@ func (p *membershipPort) archiveResource(ctx context.Context, args any) (map[str
 		return record.TransportRecord(), nil
 	}
 	return nil, archiveReadUnavailable()
+}
+
+func (p *membershipPort) bindArchiveMessagesCursor(ctx context.Context, token archiveReadToken, sealedToken string) (archiveReadToken, error) {
+	if sealed := sealedToken; sealed != "" {
+		saved, openArchiveReadErr := p.openArchiveRead(ctx, "cursor", sealed)
+		if openArchiveReadErr != nil || saved.Account != token.Account || saved.Source != token.Source ||
+			saved.Digest != token.Digest ||
+			saved.Ref != token.Ref ||
+			saved.Since != token.Since ||
+			saved.Until != token.Until ||
+			saved.Order != token.Order ||
+			saved.Position == nil ||
+			saved.Target != "" ||
+			saved.Limit != 0 {
+			return archiveReadToken{}, archiveInvalidCursor()
+		}
+		token = saved
+	}
+	return token, nil
+}
+
+func (p *membershipPort) archiveMessageValues(ctx context.Context, page *mobilebackup.SnapshotPage, ref domain.ConversationRef, token archiveReadToken, limit int, nowMS int64) ([]map[string]any, int, error) {
+	values := []map[string]any{}
+	suppressed := 0
+	for _, record := range page.Records {
+		hidden, err := p.store.ArchiveMessageSuppressed(ctx, ref, record.GlobalID, nowMS)
+		if err != nil {
+			return nil, 0, err
+		}
+		if hidden {
+			suppressed++
+			continue
+		}
+		if len(record.Text) > 1<<20 {
+			page.Unsupported["text_size_limit"]++
+			continue
+		}
+		value, err := p.archiveExcerpt(ctx, record, token, limit)
+		if err != nil {
+			return nil, 0, err
+		}
+		values = append(values, value)
+	}
+	return values, suppressed, nil
 }

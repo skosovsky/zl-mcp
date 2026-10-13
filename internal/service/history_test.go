@@ -18,11 +18,17 @@ import (
 
 type historyServiceSource struct {
 	authListener
+
 	started chan struct{}
 	pages   atomic.Int32
 }
 
-func (s *historyServiceSource) Listen(ctx context.Context, _ func(domain.Message) error, _ func(string, string) error, connected func() error) error {
+func (s *historyServiceSource) Listen(
+	ctx context.Context,
+	_ func(domain.Message) error,
+	_ func(string, string) error,
+	connected func() error,
+) error {
 	if err := connected(); err != nil {
 		return err
 	}
@@ -31,17 +37,49 @@ func (s *historyServiceSource) Listen(ctx context.Context, _ func(domain.Message
 	return ctx.Err()
 }
 
-func (s *historyServiceSource) HistoryPage(ctx context.Context, ref domain.ConversationRef, cursor string, limit int) (domain.HistoryPage, error) {
+func (s *historyServiceSource) HistoryPage(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	cursor string,
+	limit int,
+) (domain.HistoryPage, error) {
 	s.pages.Add(1)
 	more := false
-	return domain.HistoryPage{Messages: []domain.Message{{Conversation: ref, ID: "historical", SenderID: "synthetic-author", SentAt: time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC), Text: "Synthetic service history"}}, HasMore: &more}, nil
+	return domain.HistoryPage{
+		Messages: []domain.Message{
+			{
+				Conversation: ref,
+				ID:           "historical",
+				SenderID:     "synthetic-author",
+				SentAt:       time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC),
+				Text:         "Synthetic service history",
+			},
+		},
+		HasMore: &more,
+	}, nil
 }
 
-func (s *historyServiceSource) PreloadHistoryPage(ctx context.Context, ref domain.ConversationRef, limit int) (domain.HistoryPage, error) {
+func (s *historyServiceSource) PreloadHistoryPage(
+	ctx context.Context,
+	ref domain.ConversationRef,
+	limit int,
+) (domain.HistoryPage, error) {
 	s.pages.Add(1)
-	return domain.HistoryPage{Messages: []domain.Message{{Conversation: ref, ID: "historical", SenderID: "synthetic-author", SentAt: time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC), Text: "Synthetic preload service history"}}, LimitedSnapshot: true}, nil
+	return domain.HistoryPage{
+		Messages: []domain.Message{
+			{
+				Conversation: ref,
+				ID:           "historical",
+				SenderID:     "synthetic-author",
+				SentAt:       time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC),
+				Text:         "Synthetic preload service history",
+			},
+		},
+		LimitedSnapshot: true,
+	}, nil
 }
 
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestHTTPHistoryToolsUseExistingCollectorSession(t *testing.T) {
 	for _, tc := range []struct{ name, kind, source, state string }{
 		{"group paging", "group", "", "completed"},
@@ -95,7 +133,13 @@ func TestHTTPHistoryToolsUseExistingCollectorSession(t *testing.T) {
 				t.Fatal("collector session not ready")
 			}
 			endpoint := "http://" + addr.String() + "/mcp"
-			args := map[string]any{"conversation_type": tc.kind, "conversation_id": "synthetic-group", "request_id": "00000000-0000-4000-8000-000000000001", "since": "2026-09-01T00:00:00Z", "until": "2026-11-01T00:00:00Z"}
+			args := map[string]any{
+				"conversation_type": tc.kind,
+				"conversation_id":   "synthetic-group",
+				"request_id":        "00000000-0000-4000-8000-000000000001",
+				"since":             "2026-09-01T00:00:00Z",
+				"until":             "2026-11-01T00:00:00Z",
+			}
 			if tc.source != "" {
 				args["source"] = tc.source
 			}
@@ -117,16 +161,39 @@ func TestHTTPHistoryToolsUseExistingCollectorSession(t *testing.T) {
 				}
 				time.Sleep(100 * time.Millisecond)
 			}
-			if tc.source != "" && (status["source_kind"] != tc.source || status["stop_reason"] != "source_window_limited" || status["source_has_more"] != nil) {
+			if tc.source != "" &&
+				(status["source_kind"] != tc.source || status["stop_reason"] != "source_window_limited" || status["source_has_more"] != nil) {
 				t.Fatal("snapshot source evidence lost")
 			}
-			read := call("zalo_get_conversation_message_context", map[string]any{"conversation_type": tc.kind, "conversation_id": "synthetic-group", "message_id": "historical"})
+			read := call(
+				"zalo_get_conversation_message_context",
+				map[string]any{
+					"conversation_type": tc.kind,
+					"conversation_id":   "synthetic-group",
+					"message_id":        "historical",
+				},
+			)
 			again := call("zalo_import_conversation_history", args)
 			// Assert
-			if restores.Load() != 1 || source.pages.Load() != 1 || status["notification_policy"] != "none" || status["inserted_count"] != float64(1) || status["history_complete"] != false || again["operation_id"] != id || read["anchor"] == nil {
-				t.Fatalf("shared service history mismatch: restores=%d pages=%d status=%#v", restores.Load(), source.pages.Load(), status)
+			if restores.Load() != 1 || source.pages.Load() != 1 || status["notification_policy"] != "none" ||
+				status["inserted_count"] != float64(1) ||
+				status["history_complete"] != false ||
+				again["operation_id"] != id ||
+				read["anchor"] == nil {
+				t.Fatalf(
+					"shared service history mismatch: restores=%d pages=%d status=%#v",
+					restores.Load(),
+					source.pages.Load(),
+					status,
+				)
 			}
-			diagnostics := serviceConversationRPC(t, endpoint, token, "resources/read", map[string]any{"uri": "zalo://events/diagnostics"})
+			diagnostics := serviceConversationRPC(
+				t,
+				endpoint,
+				token,
+				"resources/read",
+				map[string]any{"uri": "zalo://events/diagnostics"},
+			)
 			if diagnostics["contents"] == nil {
 				t.Fatal("event diagnostics unavailable after silent import")
 			}
@@ -147,7 +214,6 @@ func TestHTTPHistoryToolsUseExistingCollectorSession(t *testing.T) {
 					t.Fatalf("historical import created %s deliveries: %d", state, count)
 				}
 			}
-
 		})
 	}
 }

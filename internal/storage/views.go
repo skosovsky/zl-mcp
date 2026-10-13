@@ -31,30 +31,9 @@ func (s *Store) Groups(ctx context.Context, query string, limit int, token strin
 	if e != nil {
 		return nil, e
 	}
-	groups := []domain.Group{}
-	var updated *string
-	for rows.Next() {
-		var g domain.Group
-		var at string
-		if e = rows.Scan(&g.ID, &g.Name, &g.MemberCount, &at); e != nil {
-			//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
-			rows.Close()
-			return nil, e
-		}
-		g.CollectionEnabled = s.Allowed(g.ID)
-		if updated == nil || at > *updated {
-			v := at
-			updated = &v
-		}
-		if query == "" || strings.Contains(folded(g.Name), folded(query)) {
-			groups = append(groups, g)
-		}
-	}
-	e = rows.Err()
-	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
-	rows.Close()
-	if e != nil {
-		return nil, e
+	groups, scanErr := s.scanGroups(rows, query)
+	if scanErr != nil {
+		return nil, scanErr
 	}
 	var catalog string
 	e = s.DB.QueryRowContext(ctx, "SELECT value FROM metadata WHERE key='catalog_updated_at'").Scan(&catalog)
@@ -70,7 +49,7 @@ func (s *Store) Groups(ctx context.Context, query string, limit int, token strin
 	if e != nil {
 		return nil, e
 	}
-	updated = &catalog
+	updated := &catalog
 	c := struct {
 		Query string
 		Last  string
@@ -305,37 +284,7 @@ func (s *Store) context(
 		return nil, e
 	}
 	get := func(operator, direction string, limit int) ([]domain.Message, error) {
-		rows, e := s.DB.QueryContext(
-			ctx,
-			//nolint:gosec // G202: SQL fragments are fixed internal predicates/operators; all client values use placeholders.
-			"SELECT "+messageColumns+" FROM visible_messages WHERE conversation_type=? AND group_id=? AND (sent_at "+operator+" ? OR (sent_at=? AND message_id "+operator+" ?)) ORDER BY sent_at "+direction+",message_id "+direction+" LIMIT ?",
-			ref.Type,
-			ref.ID,
-			anchor.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"),
-			anchor.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"),
-			id,
-			limit,
-		)
-		if e != nil {
-			return nil, e
-		}
-		// G104: Read-only query cleanup; Scan/Rows.Err determines the result.
-		defer rows.Close()
-		msgs := []domain.Message{}
-		for rows.Next() {
-			m, e := scanMessage(rows)
-			if e != nil {
-				return nil, e
-			}
-			if general {
-				m.Conversation = ref
-				if ref.Type == domain.ConversationDirect {
-					m.GroupID = ""
-				}
-			}
-			msgs = append(msgs, display(m))
-		}
-		return msgs, rows.Err()
+		return s.contextNeighbors(ctx, ref, anchor, id, operator, direction, limit, general)
 	}
 	pre, e := get("<", "DESC", before)
 	if e != nil {
@@ -350,12 +299,12 @@ func (s *Store) context(
 	}
 	var reply *domain.Message
 	if anchor.ReplyTo != nil {
-		r, e := read(*anchor.ReplyTo)
-		if e == nil {
+		r, readErr := read(*anchor.ReplyTo)
+		if readErr == nil {
 			v := display(r)
 			reply = &v
-		} else if !errors.Is(e, sql.ErrNoRows) {
-			return nil, e
+		} else if !errors.Is(readErr, sql.ErrNoRows) {
+			return nil, readErr
 		}
 	}
 	coverage, e := s.conversationCoverage(ctx, ref)
@@ -373,48 +322,8 @@ func (s *Store) context(
 		"omitted_after_id":  nil,
 		"next_action":       nil,
 	}
-	for {
-		b, e := json.Marshal(result)
-		if e != nil {
-			return nil, e
-		}
-		if len(b) <= 20<<10 {
-			return result, nil
-		}
-		if len(pre) == 0 && len(post) == 0 {
-			anchorValue, ok := result["anchor"].(domain.Message)
-			if !ok {
-				return nil, errors.New("invalid clipped context anchor")
-			}
-			if utf8.RuneCountInString(anchorValue.Text) > 1000 {
-				result["anchor"] = clip(anchorValue, max(1000, utf8.RuneCountInString(anchorValue.Text)/2))
-				continue
-			}
-			if reply != nil && utf8.RuneCountInString(reply.Text) > 1000 {
-				v := clip(*reply, max(1000, utf8.RuneCountInString(reply.Text)/2))
-				reply = &v
-				result["reply_to"] = reply
-				continue
-			}
-			return nil, domain.ResponseTooLarge(
-				"Context metadata exceeds the response budget.",
-				"Report that context cannot fit. Read full message text only through a resource URI previously returned by the server; do not claim complete coverage.",
-			)
-		}
-		result["context_truncated"] = true
-		result["next_action"] = domain.NextAction{
-			Instruction: "Read omitted message IDs with zalo_get_message_context.",
-		}
-		if len(post) >= len(pre) && len(post) > 0 {
-			result["omitted_after_id"] = post[len(post)-1].ID
-			post = post[:len(post)-1]
-		} else {
-			result["omitted_before_id"] = pre[0].ID
-			pre = pre[1:]
-		}
-		result["before"] = pre
-		result["after"] = post
-	}
+	budget := contextResponseBudget{result: result, pre: pre, post: post, reply: reply}
+	return budget.fit()
 }
 func (s *Store) SetState(ctx context.Context, state map[string]any) error {
 	b, e := json.Marshal(state)
@@ -439,18 +348,11 @@ func (s *Store) TouchHeartbeat(ctx context.Context) error {
 func (s *Store) State(ctx context.Context) (map[string]any, error) {
 	var b, heartbeat string
 	e := s.DB.QueryRowContext(ctx, "SELECT payload,heartbeat FROM collector_state WHERE id=1").Scan(&b, &heartbeat)
-	state := map[string]any{}
+	var state map[string]any
 	if e == nil {
-		e = json.Unmarshal([]byte(b), &state)
+		state, e = decodeCollectorState(b, heartbeat)
 		if e != nil {
 			return nil, e
-		}
-		at, err := time.Parse(time.RFC3339Nano, heartbeat)
-		if err != nil {
-			return nil, err
-		}
-		if time.Since(at) > 30*time.Second && state["collector_state"] != "auth_required" {
-			state["collector_state"] = "stopped"
 		}
 	} else if errors.Is(e, sql.ErrNoRows) {
 		state = map[string]any{
@@ -519,4 +421,138 @@ func (s *Store) BeginGap(ctx context.Context, reason string) error {
 func (s *Store) EndGaps(ctx context.Context) error {
 	_, e := s.DB.ExecContext(ctx, "UPDATE collection_gaps SET ended_at=? WHERE ended_at IS NULL", now())
 	return e
+}
+
+func (s *Store) contextNeighbors(ctx context.Context, ref domain.ConversationRef, anchor domain.Message, id, operator, direction string, limit int, general bool) ([]domain.Message, error) {
+	rows, queryContextErr := s.DB.QueryContext(
+		ctx,
+		//nolint:gosec // G202: SQL fragments are fixed internal predicates/operators; all client values use placeholders.
+		"SELECT "+messageColumns+" FROM visible_messages WHERE conversation_type=? AND group_id=? AND (sent_at "+operator+" ? OR (sent_at=? AND message_id "+operator+" ?)) ORDER BY sent_at "+direction+",message_id "+direction+" LIMIT ?",
+		ref.Type,
+		ref.ID,
+		anchor.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"),
+		anchor.SentAt.UTC().Format("2006-01-02T15:04:05.000000000Z"),
+		id,
+		limit,
+	)
+	if queryContextErr != nil {
+		return nil, queryContextErr
+	}
+	// G104: Read-only query cleanup; Scan/Rows.Err determines the result.
+	defer rows.Close()
+	msgs := []domain.Message{}
+	for rows.Next() {
+		m, scanMessageErr := scanMessage(rows)
+		if scanMessageErr != nil {
+			return nil, scanMessageErr
+		}
+		if general {
+			m.Conversation = ref
+			if ref.Type == domain.ConversationDirect {
+				m.GroupID = ""
+			}
+		}
+		msgs = append(msgs, display(m))
+	}
+	return msgs, rows.Err()
+
+}
+
+type contextResponseBudget struct {
+	result    map[string]any
+	pre, post []domain.Message
+	reply     *domain.Message
+}
+
+func (budget *contextResponseBudget) fit() (map[string]any, error) {
+	for {
+		b, e := json.Marshal(budget.result)
+		if e != nil {
+			return nil, e
+		}
+		if len(b) <= 20<<10 {
+			return budget.result, nil
+		}
+		if trimErr := budget.trim(); trimErr != nil {
+			return nil, trimErr
+		}
+	}
+}
+
+func (budget *contextResponseBudget) trim() error {
+	if len(budget.pre) == 0 && len(budget.post) == 0 {
+		anchorValue, ok := budget.result["anchor"].(domain.Message)
+		if !ok {
+			return errors.New("invalid clipped context anchor")
+		}
+		if utf8.RuneCountInString(anchorValue.Text) > 1000 {
+			budget.result["anchor"] = clip(anchorValue, max(1000, utf8.RuneCountInString(anchorValue.Text)/2))
+			return nil
+		}
+		if budget.reply != nil && utf8.RuneCountInString(budget.reply.Text) > 1000 {
+			v := clip(*budget.reply, max(1000, utf8.RuneCountInString(budget.reply.Text)/2))
+			budget.reply = &v
+			budget.result["reply_to"] = budget.reply
+			return nil
+		}
+		return domain.ResponseTooLarge(
+			"Context metadata exceeds the response budget.",
+			"Report that context cannot fit. Read full message text only through a resource URI previously returned by the server; do not claim complete coverage.",
+		)
+	}
+	budget.result["context_truncated"] = true
+	budget.result["next_action"] = domain.NextAction{
+		Instruction: "Read omitted message IDs with zalo_get_message_context.",
+	}
+	if len(budget.post) >= len(budget.pre) && len(budget.post) > 0 {
+		budget.result["omitted_after_id"] = budget.post[len(budget.post)-1].ID
+		budget.post = budget.post[:len(budget.post)-1]
+	} else {
+		budget.result["omitted_before_id"] = budget.pre[0].ID
+		budget.pre = budget.pre[1:]
+	}
+	budget.result["before"] = budget.pre
+	budget.result["after"] = budget.post
+	return nil
+}
+
+func (s *Store) scanGroups(rows *sql.Rows, query string) ([]domain.Group, error) {
+	groups := []domain.Group{}
+	for rows.Next() {
+		var g domain.Group
+		var at string
+		if e := rows.Scan(&g.ID, &g.Name, &g.MemberCount, &at); e != nil {
+			//nolint:gosec // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
+			rows.Close()
+			return nil, e
+		}
+		g.CollectionEnabled = s.Allowed(g.ID)
+
+		if query == "" || strings.Contains(folded(g.Name), folded(query)) {
+			groups = append(groups, g)
+		}
+	}
+	e := rows.Err()
+	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
+	rows.Close()
+	if e != nil {
+		return nil, e
+	}
+	return groups, nil
+}
+
+func decodeCollectorState(b, heartbeat string) (map[string]any, error) {
+	state := map[string]any{}
+	e := json.Unmarshal([]byte(b), &state)
+	if e != nil {
+		return nil, e
+	}
+	at, err := time.Parse(time.RFC3339Nano, heartbeat)
+	if err != nil {
+		return nil, err
+	}
+	if time.Since(at) > 30*time.Second && state["collector_state"] != "auth_required" {
+		state["collector_state"] = "stopped"
+	}
+	return state, nil
 }

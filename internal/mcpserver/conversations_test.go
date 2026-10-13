@@ -3,21 +3,29 @@ package mcpserver
 import (
 	"context"
 	"encoding/json"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/skosovsky/zl-mcp/internal/domain"
-	"github.com/skosovsky/zl-mcp/internal/storage"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
+	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestConversationMCPSearchContextCatalogueAndFullText(t *testing.T) {
 	// Arrange
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	dir := t.TempDir()
-	store, err := storage.OpenWithPolicy(ctx, filepath.Join(dir, "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	store, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(dir, "messages.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +35,18 @@ func TestConversationMCPSearchContextCatalogueAndFullText(t *testing.T) {
 	name := "Synthetic peer"
 	ref := domain.ConversationRef{Type: domain.ConversationDirect, ID: "same/opaque%"}
 	for _, kind := range []string{domain.ConversationDirect, domain.ConversationGroup} {
-		if err = store.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: kind, ID: ref.ID}, ID: "m/opaque%", SenderID: ref.ID, SenderName: &name, SentAt: stamp, Text: text, Source: "replay"}); err != nil {
+		if err = store.Put(
+			ctx,
+			domain.Message{
+				Conversation: domain.ConversationRef{Type: kind, ID: ref.ID},
+				ID:           "m/opaque%",
+				SenderID:     ref.ID,
+				SenderName:   &name,
+				SentAt:       stamp,
+				Text:         text,
+				Source:       "replay",
+			},
+		); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -64,19 +83,33 @@ func TestConversationMCPSearchContextCatalogueAndFullText(t *testing.T) {
 	}
 	// Act
 	first := call("zalo_search_conversation_messages", map[string]any{"query": "synthetic", "limit": 1})
-	second := call("zalo_search_conversation_messages", map[string]any{"query": "synthetic", "limit": 1, "cursor": first["next_cursor"]})
-	contextResult := call("zalo_get_conversation_message_context", map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "message_id": "m/opaque%"})
+	second := call(
+		"zalo_search_conversation_messages",
+		map[string]any{"query": "synthetic", "limit": 1, "cursor": first["next_cursor"]},
+	)
+	contextResult := call(
+		"zalo_get_conversation_message_context",
+		map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID, "message_id": "m/opaque%"},
+	)
 	catalog := call("zalo_list_conversations", map[string]any{})
 	metadata := call("zalo_get_conversation", map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID})
-	browsed := call("zalo_list_conversation_messages", map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID})
+	browsed := call(
+		"zalo_list_conversation_messages",
+		map[string]any{"conversation_type": ref.Type, "conversation_id": ref.ID},
+	)
 	browseHit := browsed["messages"].([]any)[0].(map[string]any)
 	browseFull, browseErr := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: browseHit["text_resource_uri"].(string)})
-	full, err := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: contextResult["anchor"].(map[string]any)["text_resource_uri"].(string)})
+	full, err := cs.ReadResource(
+		ctx,
+		&mcp.ReadResourceParams{URI: contextResult["anchor"].(map[string]any)["text_resource_uri"].(string)},
+	)
 	// Assert
 	if err != nil || full.Contents[0].Text != text {
 		t.Fatal("escaped full-text resource failed")
 	}
-	if browseErr != nil || browseFull.Contents[0].Text != text || browseHit["conversation_type"] != "direct" || browsed["has_more"] != false || browseHit["direction"] != "incoming" {
+	if browseErr != nil || browseFull.Contents[0].Text != text || browseHit["conversation_type"] != "direct" ||
+		browsed["has_more"] != false ||
+		browseHit["direction"] != "incoming" {
 		t.Fatal("keyword-free browse/full resource contract failed", browseErr, browsed)
 	}
 	a := first["messages"].([]any)[0].(map[string]any)
@@ -87,10 +120,13 @@ func TestConversationMCPSearchContextCatalogueAndFullText(t *testing.T) {
 	if _, present := a["group_id"]; present {
 		t.Fatal("general hit leaked legacy address")
 	}
-	if len(catalog["conversations"].([]any)) != 2 || catalog["catalog_complete"] != false || metadata["conversation"].(map[string]any)["name"] != name {
+	if len(catalog["conversations"].([]any)) != 2 || catalog["catalog_complete"] != false ||
+		metadata["conversation"].(map[string]any)["name"] != name {
 		t.Fatal("catalogue discovery/name/completeness incorrect")
 	}
-	if contextResult["anchor"].(map[string]any)["conversation_type"] != "direct" || len(contextResult["before"].([]any)) != 0 || len(contextResult["after"].([]any)) != 0 {
+	if contextResult["anchor"].(map[string]any)["conversation_type"] != "direct" ||
+		len(contextResult["before"].([]any)) != 0 ||
+		len(contextResult["after"].([]any)) != 0 {
 		t.Fatal("context crossed namespace")
 	}
 	status, err := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: "zalo://collection"})
@@ -102,15 +138,22 @@ func TestConversationMCPSearchContextCatalogueAndFullText(t *testing.T) {
 		t.Fatal(err)
 	}
 	counts := observed["message_counts"].(map[string]any)
-	if observed["mode"] != "all" || counts["direct"] != float64(1) || counts["group"] != float64(1) || observed["catalog_complete"] != false {
+	if observed["mode"] != "all" || counts["direct"] != float64(1) || counts["group"] != float64(1) ||
+		observed["catalog_complete"] != false {
 		t.Fatal("collection diagnostics mismatch")
 	}
 	// Act: metadata-only discovery must work through the actual MCP schemas.
-	if _, err = store.PutContacts(ctx, []domain.Contact{{ID: "directory-only", Name: "Đặng", Aliases: []string{"Hoài An"}, Friendship: "unknown"}}); err != nil {
+	if _, err = store.PutContacts(
+		ctx,
+		[]domain.Contact{{ID: "directory-only", Name: "Đặng", Aliases: []string{"Hoài An"}, Friendship: "unknown"}},
+	); err != nil {
 		t.Fatal(err)
 	}
 	directory := call("zalo_list_conversations", map[string]any{"query": "hoai an"})
-	details := call("zalo_get_conversation", map[string]any{"conversation_type": "direct", "conversation_id": "directory-only"})
+	details := call(
+		"zalo_get_conversation",
+		map[string]any{"conversation_type": "direct", "conversation_id": "directory-only"},
+	)
 	diagnostics, err := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: "zalo://catalog/diagnostics"})
 	// Assert
 	if err != nil {
@@ -121,11 +164,23 @@ func TestConversationMCPSearchContextCatalogueAndFullText(t *testing.T) {
 		t.Fatal(err)
 	}
 	entries := directory["conversations"].([]any)
-	if len(entries) != 1 || entries[0].(map[string]any)["has_stored_messages"] != false || details["conversation"].(map[string]any)["availability"] != "unknown" || catalogStatus["status"] != "not_attempted" {
+	if len(entries) != 1 || entries[0].(map[string]any)["has_stored_messages"] != false ||
+		details["conversation"].(map[string]any)["availability"] != "unknown" ||
+		catalogStatus["status"] != "not_attempted" {
 		t.Fatal("metadata-only MCP contract failed")
 	}
 	// Act / Assert: a general cursor is bound to the original filters.
-	invalid, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_search_conversation_messages", Arguments: map[string]any{"query": "synthetic", "conversation_type": "group", "cursor": first["next_cursor"]}})
+	invalid, err := cs.CallTool(
+		ctx,
+		&mcp.CallToolParams{
+			Name: "zalo_search_conversation_messages",
+			Arguments: map[string]any{
+				"query":             "synthetic",
+				"conversation_type": "group",
+				"cursor":            first["next_cursor"],
+			},
+		},
+	)
 	if err != nil || !invalid.IsError {
 		t.Fatal("cursor accepted different namespace filter")
 	}

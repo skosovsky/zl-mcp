@@ -10,7 +10,15 @@ import (
 )
 
 func historicalFixture(ref domain.ConversationRef, id string) domain.Message {
-	return domain.Message{Conversation: ref, GroupID: ref.ID, ID: id, SenderID: ref.ID, SentAt: time.Now().UTC().AddDate(0, 0, -2), Text: "Synthetic historical text", Direction: "incoming"}
+	return domain.Message{
+		Conversation: ref,
+		GroupID:      ref.ID,
+		ID:           id,
+		SenderID:     ref.ID,
+		SentAt:       time.Now().UTC().AddDate(0, 0, -2),
+		Text:         "Synthetic historical text",
+		Direction:    "incoming",
+	}
 }
 
 func TestHistoryPageSilentAtomicAndReplayAfterRetention(t *testing.T) {
@@ -39,7 +47,9 @@ func TestHistoryPageSilentAtomicAndReplayAfterRetention(t *testing.T) {
 		}
 	}
 	var certainty string
-	if err = s.DB.QueryRow("SELECT certainty FROM peer_first_incoming WHERE peer_id=?", ref.ID).Scan(&certainty); err != nil || certainty != "unknown" {
+	if err = s.DB.QueryRow("SELECT certainty FROM peer_first_incoming WHERE peer_id=?", ref.ID).
+		Scan(&certainty); err != nil ||
+		certainty != "unknown" {
 		t.Fatalf("historical peer novelty: certainty=%s error=%v", certainty, err)
 	}
 	stored, err := s.ConversationMessage(ctx, ref, m.ID)
@@ -76,12 +86,18 @@ func TestHistoryPageSilentAtomicAndReplayAfterRetention(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestHistoryPageRollbackAndExistingLivePreservation(t *testing.T) {
 	for _, cause := range []string{"invalid_record", "database_failure"} {
 		t.Run(cause, func(t *testing.T) {
 			// Arrange
 			ctx := context.Background()
-			s, err := OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+			s, err := OpenWithPolicy(
+				ctx,
+				filepath.Join(t.TempDir(), "messages.sqlite"),
+				domain.CollectionPolicy{All: true},
+				90,
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -137,7 +153,9 @@ func TestHistoryPageRollbackAndExistingLivePreservation(t *testing.T) {
 		t.Fatal("history overwrote existing live record", err)
 	}
 	var first int64
-	if err = s.DB.QueryRow("SELECT first_seq FROM peer_first_incoming").Scan(&first); err != nil || first != originalFirst {
+	if err = s.DB.QueryRow("SELECT first_seq FROM peer_first_incoming").
+		Scan(&first); err != nil ||
+		first != originalFirst {
 		t.Fatal("history changed known first incoming", err)
 	}
 	var n int

@@ -74,6 +74,7 @@ func (p *membershipPort) recallControl(w http.ResponseWriter, r *http.Request, b
 	_ = json.NewEncoder(w).Encode(result)
 }
 
+//nolint:cyclop,funlen,gocognit,gocyclo // This one-effect owner keeps the exclusive receipt open from fsynced reservation through dispatch and outcome sync; receipt reading, quote validation and writing are separate helpers.
 func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallReceipt, error) {
 	bad := errors.New("recall diagnostic unavailable")
 	empty := recallReceipt{}
@@ -112,40 +113,13 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 	defer root.Close()
 	digest := sha256.Sum256([]byte(own + "\x00" + id))
 	name := hex.EncodeToString(digest[:]) + ".receipt"
-	if info, e := root.Lstat(name); e == nil {
-		if !info.Mode().IsRegular() || info.Mode().Perm() != 0600 || info.Size() > 512 {
-			return empty, bad
-		}
-		f, e := root.Open(name)
-		if e != nil {
-			return empty, bad
-		}
-		// G104: Cleanup preserves the original setup/operation error.
-		defer f.Close()
-		data, e := io.ReadAll(io.LimitReader(f, 513))
-		if e != nil {
-			return empty, bad
-		}
-		var out recallReceipt
-		schema, e := contracts.Compile("cli_probe_recall", "output")
-		var raw any
-		if e != nil || json.Unmarshal(data, &raw) != nil || schema.Validate(raw) != nil ||
-			json.Unmarshal(data, &out) != nil {
-			return empty, bad
-		}
-		return out, nil
-	} else if !errors.Is(e, os.ErrNotExist) {
-		return empty, bad
+	prior, exists, receiptErr := readRecallReceipt(root, name, bad)
+	if receiptErr != nil || exists {
+		return prior, receiptErr
 	}
-	if time.Since(op.UpdatedAt) > 30*time.Minute || time.Until(op.UpdatedAt) > time.Minute ||
-		!canonicalDiagnosticID(op.RecipientID) ||
-		!canonicalDiagnosticID(*op.MessageID) {
-		return empty, bad
-	}
-	quote, e := p.store.SendQuote(ctx, op.RecipientID, *op.MessageID)
-	if e != nil || quote.SenderID != own || quote.Text != recallDiagnosticText ||
-		!canonicalDiagnosticID(quote.Metadata.ClientMessageID) {
-		return empty, bad
+	quote, quoteErr := p.recallQuote(ctx, op, own, bad)
+	if quoteErr != nil {
+		return empty, quoteErr
 	}
 	dir, e := root.Open(".")
 	if e != nil {
@@ -163,19 +137,7 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 	}
 	// G104: Cleanup preserves the original setup/operation error.
 	defer f.Close()
-	write := func(out recallReceipt) error {
-		b, e := json.Marshal(out)
-		if e != nil {
-			return e
-		}
-		if e = f.Truncate(0); e != nil {
-			return e
-		}
-		if _, e = f.WriteAt(b, 0); e != nil {
-			return e
-		}
-		return f.Sync()
-	}
+	write := func(out recallReceipt) error { return writeRecallReceipt(f, out) }
 	out := recallReceipt{State: "reserved"}
 	if write(out) != nil {
 		return empty, bad
@@ -208,4 +170,67 @@ func (p *membershipPort) probeRecall(ctx context.Context, id string) (recallRece
 func canonicalDiagnosticID(id string) bool {
 	n, e := strconv.ParseUint(id, 10, 64)
 	return e == nil && n > 0 && strconv.FormatUint(n, 10) == id
+}
+
+func readRecallReceipt(root *os.Root, name string, bad error) (recallReceipt, bool, error) {
+	if info, lstatErr := root.Lstat(name); lstatErr == nil {
+		out, readErr := decodeRecallReceipt(root, name, info, bad)
+		return out, readErr == nil, readErr
+	} else if !errors.Is(lstatErr, os.ErrNotExist) {
+		return recallReceipt{}, false, bad
+	}
+	return recallReceipt{}, false, nil
+}
+
+func (p *membershipPort) recallQuote(ctx context.Context, op domain.SendOperation, own string, bad error) (*domain.SendQuote, error) {
+	if time.Since(op.UpdatedAt) > 30*time.Minute || time.Until(op.UpdatedAt) > time.Minute ||
+		!canonicalDiagnosticID(op.RecipientID) ||
+		!canonicalDiagnosticID(*op.MessageID) {
+		return nil, bad
+	}
+	quote, e := p.store.SendQuote(ctx, op.RecipientID, *op.MessageID)
+	if e != nil || quote.SenderID != own || quote.Text != recallDiagnosticText ||
+		!canonicalDiagnosticID(quote.Metadata.ClientMessageID) {
+		return nil, bad
+	}
+	return quote, nil
+}
+
+func writeRecallReceipt(f *os.File, out recallReceipt) error {
+	b, marshalErr := json.Marshal(out)
+	if marshalErr != nil {
+		return marshalErr
+	}
+	if marshalErr = f.Truncate(0); marshalErr != nil {
+		return marshalErr
+	}
+	if _, marshalErr = f.WriteAt(b, 0); marshalErr != nil {
+		return marshalErr
+	}
+	return f.Sync()
+
+}
+
+func decodeRecallReceipt(root *os.Root, name string, info os.FileInfo, bad error) (recallReceipt, error) {
+	if !info.Mode().IsRegular() || info.Mode().Perm() != 0600 || info.Size() > 512 {
+		return recallReceipt{}, bad
+	}
+	f, openErr := root.Open(name)
+	if openErr != nil {
+		return recallReceipt{}, bad
+	}
+	// G104: Cleanup preserves the original setup/operation error.
+	defer f.Close()
+	data, openErr := io.ReadAll(io.LimitReader(f, 513))
+	if openErr != nil {
+		return recallReceipt{}, bad
+	}
+	var out recallReceipt
+	schema, openErr := contracts.Compile("cli_probe_recall", "output")
+	var raw any
+	if openErr != nil || json.Unmarshal(data, &raw) != nil || schema.Validate(raw) != nil ||
+		json.Unmarshal(data, &out) != nil {
+		return recallReceipt{}, bad
+	}
+	return out, nil
 }

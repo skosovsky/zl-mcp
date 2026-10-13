@@ -30,7 +30,7 @@ func (p *OwnDirectRecallSet) Clear() {
 // borrows a selected immutable image and the existing session mapper; it never
 // writes the corpus, requests the phone or changes persistence eligibility.
 //
-//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+//nolint:cyclop,funlen,gocognit,gocyclo,nonamedreturns // This bounded recall scan owns its versioned SQLite cursors and strict identity/retention filters together; controls must never be ingested as messages. Deferred cleanup retains the returned result/error.
 func ReadOwnDirectRecallSet(
 	parent context.Context,
 	archive SelectedArchive,

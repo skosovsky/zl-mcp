@@ -15,11 +15,16 @@ import (
 )
 
 func mobileLedgerMethod(method string) bool {
-	return accountArchiveMethod(method) || method == "cli_prepare_mobile_backup" || method == "cli_mobile_backup_status" || method == "cli_cancel_prepared_mobile_backup" || (method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive")
+	return accountArchiveMethod(method) || method == "cli_prepare_mobile_backup" ||
+		method == "cli_mobile_backup_status" ||
+		method == "cli_cancel_prepared_mobile_backup" ||
+		(method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive")
 }
 
 // uniqueLedgerJSON rejects ambiguous object keys before normal contract decoding.
 // Ledger envelopes contain only objects and scalars, so arrays are rejected.
+//
+//nolint:gocognit // The bounded JSON token recognizer keeps nesting and duplicate-key rejection in one lexical pass; duplicate keys must not be normalized away.
 func uniqueLedgerJSON(body []byte) bool {
 	d := json.NewDecoder(bytes.NewReader(body))
 	var value func(int) error
@@ -40,17 +45,17 @@ func uniqueLedgerJSON(body []byte) bool {
 		}
 		seen := map[string]bool{}
 		for d.More() {
-			key, err := d.Token()
-			if err != nil {
-				return err
+			key, tokenErr := d.Token()
+			if tokenErr != nil {
+				return tokenErr
 			}
 			name, ok := key.(string)
 			if !ok || seen[name] {
 				return domain.Invalid("Invalid ledger request.")
 			}
 			seen[name] = true
-			if err = value(depth + 1); err != nil {
-				return err
+			if tokenErr = value(depth + 1); tokenErr != nil {
+				return tokenErr
 			}
 		}
 		end, err := d.Token()
@@ -73,26 +78,7 @@ func (p *membershipPort) mobileLedgerControl(w http.ResponseWriter, r *http.Requ
 	}
 	w.Header().Set("Content-Type", "application/json")
 	fail := func(err error) {
-		code := "OPERATION_FAILED"
-		switch {
-		case errors.Is(err, storage.ErrMobileBackupConflict):
-			code = "REQUEST_CONFLICT"
-		case errors.Is(err, storage.ErrMobileBackupBusy):
-			code = "OPERATION_ACTIVE"
-		case errors.Is(err, storage.ErrMobileBackupCapacity):
-			code = "CAPACITY_EXCEEDED"
-		case errors.Is(err, storage.ErrMobileBackupState):
-			code = "INVALID_OPERATION_STATE"
-		case errors.Is(err, sql.ErrNoRows):
-			code = "NOT_FOUND"
-		}
-		de := &domain.Error{Code: code, Message: "Local mobile attempt request failed.", NextAction: domain.NextAction{Instruction: "Read the local attempt status; do not dispatch or retry phone work automatically."}, Details: map[string]any{}}
-		var typed *domain.Error
-		if errors.As(err, &typed) {
-			de = typed
-		}
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(de)
+		writeMobileLedgerFailure(w, err)
 	}
 	if r.Method != http.MethodPost || r.URL.Path != "/rpc" || !uniqueLedgerJSON(body) {
 		fail(domain.Invalid("Use a unique JSON object with POST /rpc."))
@@ -120,48 +106,10 @@ func (p *membershipPort) mobileLedgerControl(w http.ResponseWriter, r *http.Requ
 			cancel()
 		}
 	}
-	var probe map[string]any
-	var result storage.MobileBackupAttempt
-	if method == "cli_prepare_mobile_backup" {
-		var request domain.MobileBackupRequest
-		if json.Unmarshal(envelope.Arguments, &request) != nil {
-			fail(domain.Invalid("Invalid mobile attempt request."))
-			return
-		}
-		result, e = p.store.PrepareMobileBackup(ctx, request)
-	} else {
-		var args struct {
-			ID               string `json:"operation_id"`
-			Revision         int64  `json:"revision"`
-			ComparisonSendID string `json:"comparison_send_request_id"`
-		}
-		if json.Unmarshal(envelope.Arguments, &args) != nil {
-			fail(domain.Invalid("Invalid mobile attempt reference."))
-			return
-		}
-		result, e = p.store.MobileBackupAttempt(ctx, args.ID)
-		if e == nil && (method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive") {
-			if method == "cli_probe_mobile_backup_archive" {
-				probe, e = p.probeMobileArchiveComparison(ctx, args.ID, args.Revision, args.ComparisonSendID)
-			} else {
-				probe, e = p.probeMobileOffer(ctx, args.ID, args.Revision)
-			}
-		}
-		if e == nil && method == "cli_cancel_prepared_mobile_backup" {
-			if result.Revision != args.Revision || result.State != "prepared" && result.State != "cancelled" {
-				e = storage.ErrMobileBackupState
-			} else if result.State == "prepared" {
-				result, e = p.store.ProgressMobileBackup(ctx, args.ID, args.Revision, "cancelled")
-			}
-		}
-	}
+	response, e := p.runMobileLedgerMethod(ctx, method, envelope.Arguments)
 	if e != nil {
 		fail(e)
 		return
-	}
-	var response any = result
-	if method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive" {
-		response = probe
 	}
 	encoded, e := json.Marshal(response)
 	var output any
@@ -171,4 +119,78 @@ func (p *membershipPort) mobileLedgerControl(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	_, _ = w.Write(append(encoded, '\n'))
+}
+
+func writeMobileLedgerFailure(w http.ResponseWriter, err error) {
+	code := "OPERATION_FAILED"
+	switch {
+	case errors.Is(err, storage.ErrMobileBackupConflict):
+		code = "REQUEST_CONFLICT"
+	case errors.Is(err, storage.ErrMobileBackupBusy):
+		code = "OPERATION_ACTIVE"
+	case errors.Is(err, storage.ErrMobileBackupCapacity):
+		code = "CAPACITY_EXCEEDED"
+	case errors.Is(err, storage.ErrMobileBackupState):
+		code = "INVALID_OPERATION_STATE"
+	case errors.Is(err, sql.ErrNoRows):
+		code = "NOT_FOUND"
+	}
+	de := &domain.Error{
+		Code:    code,
+		Message: "Local mobile attempt request failed.",
+		NextAction: domain.NextAction{
+			Instruction: "Read the local attempt status; do not dispatch or retry phone work automatically.",
+		},
+		Details: map[string]any{},
+	}
+	if typed, ok := errors.AsType[*domain.Error](err); ok {
+		de = typed
+	}
+	w.WriteHeader(http.StatusBadRequest)
+	_ = json.NewEncoder(w).Encode(de)
+}
+
+func (p *membershipPort) runMobileLedgerMethod(ctx context.Context, method string, arguments json.RawMessage) (any, error) {
+	var e error
+	var probe map[string]any
+	var result storage.MobileBackupAttempt
+	if method == "cli_prepare_mobile_backup" {
+		var request domain.MobileBackupRequest
+		if json.Unmarshal(arguments, &request) != nil {
+			return nil, domain.Invalid("Invalid mobile attempt request.")
+		}
+		return p.store.PrepareMobileBackup(ctx, request)
+	}
+
+	var args struct {
+		ID               string `json:"operation_id"`
+		Revision         int64  `json:"revision"`
+		ComparisonSendID string `json:"comparison_send_request_id"`
+	}
+	if json.Unmarshal(arguments, &args) != nil {
+		return nil, domain.Invalid("Invalid mobile attempt reference.")
+	}
+	result, e = p.store.MobileBackupAttempt(ctx, args.ID)
+	if e == nil && (method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive") {
+		if method == "cli_probe_mobile_backup_archive" {
+			probe, e = p.probeMobileArchiveComparison(ctx, args.ID, args.Revision, args.ComparisonSendID)
+		} else {
+			probe, e = p.probeMobileOffer(ctx, args.ID, args.Revision)
+		}
+	}
+	if e == nil && method == "cli_cancel_prepared_mobile_backup" {
+		if result.Revision != args.Revision || result.State != "prepared" && result.State != "cancelled" {
+			e = storage.ErrMobileBackupState
+		} else if result.State == "prepared" {
+			result, e = p.store.ProgressMobileBackup(ctx, args.ID, args.Revision, "cancelled")
+		}
+	}
+	if e != nil {
+		return nil, e
+	}
+	var response any = result
+	if method == "cli_probe_mobile_backup_offer" || method == "cli_probe_mobile_backup_archive" {
+		response = probe
+	}
+	return response, nil
 }

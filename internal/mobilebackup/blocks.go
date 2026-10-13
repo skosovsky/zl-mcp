@@ -22,8 +22,17 @@ func DecryptFormat1(ctx context.Context, r io.Reader, keyText string, limit int6
 
 // allowPartialTail never decrypts a partial block; the caller must reject any
 // declared container crossing the returned complete-block prefix.
-func decryptFormat1(ctx context.Context, r io.Reader, keyText string, limit int64, allowPartialTail bool) ([]byte, uint64, error) {
-	if ctx == nil || r == nil || limit <= 0 || uint64(limit) > MaxTotalBytes || len(keyText) < 32 || len(keyText) > 256 || len(keyText)%2 != 0 {
+//nolint:gocognit // This bounded protocol parser validates complete framing/records before publishing and retains its buffer-clearing error paths.
+func decryptFormat1(
+	ctx context.Context,
+	r io.Reader,
+	keyText string,
+	limit int64,
+	allowPartialTail bool,
+) ([]byte, uint64, error) {
+	if ctx == nil || r == nil || limit <= 0 || uint64(limit) > MaxTotalBytes || len(keyText) < 32 ||
+		len(keyText) > 256 ||
+		len(keyText)%2 != 0 {
 		return nil, 0, ErrBlocks
 	}
 	var key [32]byte
@@ -32,7 +41,7 @@ func decryptFormat1(ctx context.Context, r io.Reader, keyText string, limit int6
 		if b >= 'a' && b <= 'f' {
 			b -= 'a' - 'A'
 		}
-		if !(b >= '0' && b <= '9' || b >= 'A' && b <= 'F') {
+		if (b < '0' || b > '9') && (b < 'A' || b > 'F') {
 			return nil, 0, ErrBlocks
 		}
 		if i < len(key) {
@@ -46,7 +55,18 @@ func decryptFormat1(ctx context.Context, r io.Reader, keyText string, limit int6
 		return nil, 0, ErrBlocks
 	}
 	if len(data) < aes.BlockSize || int64(len(data)) > limit || len(data)%aes.BlockSize != 0 && !allowPartialTail {
-		slog.Warn("mobile_archive_format_failed", "stage", "CIPHERTEXT_LENGTH", "ciphertext_bytes", len(data), "block_remainder", len(data)%aes.BlockSize, "budget_exceeded", int64(len(data)) > limit)
+		slog.WarnContext(
+			ctx,
+			"mobile_archive_format_failed",
+			"stage",
+			"CIPHERTEXT_LENGTH",
+			"ciphertext_bytes",
+			len(data),
+			"block_remainder",
+			len(data)%aes.BlockSize,
+			"budget_exceeded",
+			int64(len(data)) > limit,
+		)
 		clear(data)
 		return nil, 0, ErrBlocks
 	}
@@ -69,7 +89,7 @@ func decryptFormat1(ctx context.Context, r io.Reader, keyText string, limit int6
 		cipher.NewCBCDecrypter(block, iv[:]).CryptBlocks(part, part)
 	}
 	if string(data[:6]) != "ZDB4.0" {
-		slog.Warn("mobile_archive_format_failed", "stage", "DECRYPTED_MAGIC")
+		slog.WarnContext(ctx, "mobile_archive_format_failed", "stage", "DECRYPTED_MAGIC")
 		clear(data)
 		return nil, 0, ErrBlocks
 	}

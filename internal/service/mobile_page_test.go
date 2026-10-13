@@ -100,6 +100,7 @@ func (r *cancelArchiveReader) Read(p []byte) (int, error) {
 	}
 	return n, e
 }
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestServiceMobilePageUsesCollectorSessionAndExpiresHistoricalRows(t *testing.T) {
 	for _, name := range []string{"complete", "cancel-during-body", "walk"} {
 		cancelBody := name == "cancel-during-body"
@@ -149,8 +150,8 @@ func TestServiceMobilePageUsesCollectorSessionAndExpiresHistoricalRows(t *testin
 			}()
 			defer func() {
 				cancel()
-				if e := <-done; e != nil {
-					t.Error(e)
+				if operationErr := <-done; operationErr != nil {
+					t.Error(operationErr)
 				}
 			}()
 			select {
@@ -179,14 +180,14 @@ func TestServiceMobilePageUsesCollectorSessionAndExpiresHistoricalRows(t *testin
 				now     int64
 				size    int
 			}{{"relative", 1, 1}, {scratch, 0, 1}, {scratch, 1, 51}} {
-				if page, e := port.prepareFirstMobilePage(
+				if page, prepareFirstMobilePageErr := port.prepareFirstMobilePage(
 					ctx,
 					attempt.OperationID,
 					downloader,
 					bad.scratch,
 					bad.now,
 					bad.size,
-				); e == nil || page.Examined != 0 ||
+				); prepareFirstMobilePageErr == nil || page.Examined != 0 ||
 					source.offers.Load() != 0 {
 					t.Fatal("invalid local arguments dispatched phone request")
 				}

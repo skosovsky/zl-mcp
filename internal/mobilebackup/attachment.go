@@ -43,7 +43,7 @@ func (a *Attachment) Clear() {
 	*a = Attachment{}
 }
 
-//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+//nolint:funlen,nonamedreturns // The bounded TLV tag-to-field table retains explicit scalar/text ownership and Clear-on-error in one protocol parser. Returned result/error and deferred cleanup keep the same owner.
 func ParseAttachment(ctx context.Context, data []byte) (result Attachment, err error) {
 	fields, err := ParseTLV(ctx, data)
 	if err != nil {

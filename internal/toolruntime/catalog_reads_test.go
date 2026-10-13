@@ -11,6 +11,7 @@ import (
 
 type catalogAuthority struct {
 	*observedReader
+
 	shifted     atomic.Bool
 	statusCalls atomic.Int32
 }
@@ -38,9 +39,9 @@ func TestCollectorStatusKeepsNullCompatibilityAndRejectsStaleAccountBeforeRead(t
 	binding := bound(t, r)
 	// Act: original null/missing-object forms all run as empty arguments.
 	for _, raw := range []string{"null", "", "{}"} {
-		result, err := r.Execute(context.Background(), binding, "zalo_get_status", []byte(raw))
-		if err != nil || result.CollectorStatus == nil {
-			t.Fatalf("legacy empty arguments changed: %q %v", raw, err)
+		result, executeErr := r.Execute(context.Background(), binding, "zalo_get_status", []byte(raw))
+		if executeErr != nil || result.CollectorStatus == nil {
+			t.Fatalf("legacy empty arguments changed: %q %v", raw, executeErr)
 		}
 	}
 	// Assert: exactly one native read per accepted call.

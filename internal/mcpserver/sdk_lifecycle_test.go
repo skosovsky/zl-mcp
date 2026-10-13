@@ -20,7 +20,6 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/events"
 	nativeMessaging "github.com/skosovsky/zl-mcp/internal/messaging"
-	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
 type sdkInvocation struct {
@@ -54,7 +53,7 @@ func (p *sdkBlockingRead) GroupContext(
 	}
 	return p.Reader.GroupContext(ctx, input)
 }
-func sdkBlockingHTTP(t *testing.T) (*HTTPService, *storage.Store, string, *sdkBlockingRead) {
+func sdkBlockingHTTP(t *testing.T) (*HTTPService, string, *sdkBlockingRead) {
 	t.Helper()
 	_, owner, token := sdkIdentityService(t)
 	for _, id := range []string{"first", "second", "reused"} {
@@ -91,7 +90,7 @@ func sdkBlockingHTTP(t *testing.T) (*HTTPService, *storage.Store, string, *sdkBl
 	if err != nil {
 		t.Fatal(err)
 	}
-	return handler, owner, token, reader
+	return handler, token, reader
 }
 func sdkNextInvocation(t *testing.T, reader *sdkBlockingRead) sdkInvocation {
 	t.Helper()
@@ -182,7 +181,7 @@ func sdkAssertContextReply(t *testing.T, result sdkHTTPResult, id, message strin
 }
 func TestSDK01HTTPNeighboringIDsOutOfOrder(t *testing.T) {
 	// Arrange: native typed reads are gated independently; IDs collapse on float64.
-	handler, _, token, reader := sdkBlockingHTTP(t)
+	handler, token, reader := sdkBlockingHTTP(t)
 	endpoint := httptest.NewServer(handler)
 	defer endpoint.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -209,7 +208,7 @@ func TestSDK01HTTPNeighboringIDsOutOfOrder(t *testing.T) {
 func TestSDK01HTTPDisconnectCancelsOnlySelectedInvocation(t *testing.T) {
 	// Arrange: stateless HTTP does not route separate notification cancellation;
 	// the supported disconnect lifecycle is tied to each request's carrier.
-	handler, _, token, reader := sdkBlockingHTTP(t)
+	handler, token, reader := sdkBlockingHTTP(t)
 	endpoint := httptest.NewServer(handler)
 	defer endpoint.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -274,6 +273,7 @@ func (w *sdkLostResponse) Write(body []byte) (int, error) {
 	return 0, io.ErrClosedPipe
 }
 func (w *sdkLostResponse) Unwrap() http.ResponseWriter { return w.ResponseRecorder }
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSDK01LostReplyRetainsDurableUUIDAndNeverResends(t *testing.T) {
 	for _, ambiguous := range []bool{false, true} {
 		t.Run(map[bool]string{false: "confirmed", true: "unknown"}[ambiguous], func(t *testing.T) {

@@ -65,6 +65,7 @@ func conversionPage(t *testing.T) (PreparedArchivePage, domain.MobileBackupReque
 	return page, r, now
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileRichTextProjectionBoundaries(t *testing.T) {
 	for _, mode := range []string{"title", "empty", "absent", "different-action", "multiple", "invalid-utf8", "oversized", "unknown-tag", "wal", "control"} {
 		t.Run(mode, func(t *testing.T) {
@@ -358,6 +359,7 @@ func TestWALSnapshotCannotBecomeImportRecords(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobilePlainAttachmentFallbackKeepsAdmissionGates(t *testing.T) {
 	for _, mode := range []string{"absent", "empty", "unknown-fields", "multiple", "unknown-action", "wal", "controls"} {
 		t.Run(mode, func(t *testing.T) {

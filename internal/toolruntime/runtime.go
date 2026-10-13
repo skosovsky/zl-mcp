@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/skosovsky/toolsy"
+
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 	"github.com/skosovsky/zl-mcp/internal/app/archives"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
@@ -21,7 +21,12 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
-var readNames = []string{"zalo_search_messages", "zalo_search_conversation_messages", "zalo_get_message_context", "zalo_get_conversation_message_context"}
+var readNames = []string{
+	"zalo_search_messages",
+	"zalo_search_conversation_messages",
+	"zalo_get_message_context",
+	"zalo_get_conversation_message_context",
+}
 
 type Authority interface {
 	shared.IdentityPort
@@ -136,11 +141,23 @@ func (r *Result) value() any {
 	}
 }
 
-func New(searchHandler *search.Handler, conversationHandler *conversations.Handler, authority Authority, extra ...Capabilities) (*Runtime, error) {
-	if searchHandler == nil || conversationHandler == nil || authority == nil || searchHandler.Reads == nil || conversationHandler.Reads == nil {
-		return nil, fmt.Errorf("typed handlers and read authority are required")
+//nolint:cyclop,funlen,gocognit,gocyclo,nestif // This declarative registry binds the complete fixed capability/schema set; keep registration and required-port checks together.
+func New(
+	searchHandler *search.Handler,
+	conversationHandler *conversations.Handler,
+	authority Authority,
+	extra ...Capabilities,
+) (*Runtime, error) {
+	if searchHandler == nil || conversationHandler == nil || authority == nil || searchHandler.Reads == nil ||
+		conversationHandler.Reads == nil {
+		return nil, errors.New("typed handlers and read authority are required")
 	}
-	r := &Runtime{authority: authority, search: searchHandler, conversations: conversationHandler, schemas: map[string]*jsonschema.Schema{}}
+	r := &Runtime{
+		authority:     authority,
+		search:        searchHandler,
+		conversations: conversationHandler,
+		schemas:       map[string]*jsonschema.Schema{},
+	}
 	names := append([]string(nil), readNames...)
 	if conversationHandler.Catalog != nil {
 		names = append(names, "zalo_get_status", "zalo_list_groups")
@@ -152,36 +169,54 @@ func New(searchHandler *search.Handler, conversationHandler *conversations.Handl
 		names = append(names, "zalo_get_conversation", "zalo_list_conversations", "zalo_list_conversation_messages")
 	}
 	if len(extra) > 1 {
-		return nil, fmt.Errorf("one operation read bundle is permitted")
+		return nil, errors.New("one operation read bundle is permitted")
 	}
 	if len(extra) == 1 {
 		r.operations = extra[0]
 		v := r.operations
 		if v.Events != nil {
 			if v.Events.Journal == nil {
-				return nil, fmt.Errorf("typed Events journal port is required")
+				return nil, errors.New("typed Events journal port is required")
 			}
 			names = append(names, "zalo_list_event_subscriptions", "zalo_read_subscription_events")
 		}
 		if v.Archives != nil {
 			if v.Archives.Reads == nil {
-				return nil, fmt.Errorf("typed archive port is required")
+				return nil, errors.New("typed archive port is required")
 			}
 			names = append(names, "zalo_list_archive_sources")
 		}
 		if v.Messaging != nil || v.History != nil || v.Membership != nil {
-			if v.Messaging == nil || v.History == nil || v.Membership == nil || v.Messaging.Reads == nil || v.History.Reads == nil || v.Membership.Reads == nil {
-				return nil, fmt.Errorf("all typed operation read ports are required")
+			if v.Messaging == nil || v.History == nil || v.Membership == nil || v.Messaging.Reads == nil ||
+				v.History.Reads == nil ||
+				v.Membership.Reads == nil {
+				return nil, errors.New("all typed operation read ports are required")
 			}
-			names = append(names, "zalo_get_send_status", "zalo_get_history_import_status", "zalo_get_join_status", "zalo_inspect_invite")
+			names = append(
+				names,
+				"zalo_get_send_status",
+				"zalo_get_history_import_status",
+				"zalo_get_join_status",
+				"zalo_inspect_invite",
+			)
 		}
 		if commandsPresent(v) {
-			if v.Messaging == nil || v.History == nil || v.Membership == nil || v.Events == nil || v.Messaging.Commands == nil || v.History.Commands == nil || v.Membership.Commands == nil || v.Events.Commands == nil {
-				return nil, fmt.Errorf("all typed command ports are required")
+			if v.Messaging == nil || v.History == nil || v.Membership == nil || v.Events == nil ||
+				v.Messaging.Commands == nil ||
+				v.History.Commands == nil ||
+				v.Membership.Commands == nil ||
+				v.Events.Commands == nil {
+				return nil, errors.New("all typed command ports are required")
 			}
-			names = append(names, "zalo_send_direct_message", "zalo_join_group", "zalo_import_conversation_history", "zalo_cancel_history_import", "zalo_ack_subscription_events")
+			names = append(
+				names,
+				"zalo_send_direct_message",
+				"zalo_join_group",
+				"zalo_import_conversation_history",
+				"zalo_cancel_history_import",
+				"zalo_ack_subscription_events",
+			)
 		}
-
 	}
 	builder := toolsy.NewRegistryBuilder(toolsy.WithPolicy("zl-local-read-v1", toolsy.PolicyFunc(r.decide)))
 	for _, name := range names {
@@ -206,21 +241,33 @@ func New(searchHandler *search.Handler, conversationHandler *conversations.Handl
 		if !isCommand(name) {
 			options = append(options, toolsy.WithReadOnly())
 		}
-		tool, err := toolsy.NewProxyTool(name, "Local capability with current account policy", raw, func(ctx context.Context, _ *toolsy.RunEnv, rawArgs []byte, yield func(toolsy.Chunk) error) error {
-			args, err := BindArguments(rawArgs)
-			if err != nil {
-				return err
-			}
-			result, err := r.dispatch(ctx, name, args)
-			if err != nil {
-				return err
-			}
-			data, err := json.Marshal(result.value())
-			if err != nil {
-				return err
-			}
-			return yield(toolsy.Chunk{Event: toolsy.EventResult, MimeType: toolsy.MimeTypeJSON, Data: data, TypedResult: result})
-		}, options...)
+		tool, err := toolsy.NewProxyTool(
+			name,
+			"Local capability with current account policy",
+			raw,
+			func(ctx context.Context, _ *toolsy.RunEnv, rawArgs []byte, yield func(toolsy.Chunk) error) error {
+				args, bindArgumentsErr := BindArguments(rawArgs)
+				if bindArgumentsErr != nil {
+					return bindArgumentsErr
+				}
+				result, bindArgumentsErr := r.dispatch(ctx, name, args)
+				if bindArgumentsErr != nil {
+					return bindArgumentsErr
+				}
+				data, bindArgumentsErr := json.Marshal(result.value())
+				if bindArgumentsErr != nil {
+					return bindArgumentsErr
+				}
+				return yield(
+					toolsy.Chunk{
+						Event:       toolsy.EventResult,
+						MimeType:    toolsy.MimeTypeJSON,
+						Data:        data,
+						TypedResult: result,
+					},
+				)
+			},
+			options...)
 		if err != nil {
 			return nil, err
 		}
@@ -230,7 +277,14 @@ func New(searchHandler *search.Handler, conversationHandler *conversations.Handl
 	if err != nil {
 		return nil, err
 	}
-	r.view, err = registry.View(toolsy.RegistryViewSpec{ToolNames: names, RequiredToolNames: names, Owner: "zl-local-host", Reason: "typed read capabilities"})
+	r.view, err = registry.View(
+		toolsy.RegistryViewSpec{
+			ToolNames:         names,
+			RequiredToolNames: names,
+			Owner:             "zl-local-host",
+			Reason:            "typed read capabilities",
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -252,10 +306,17 @@ func (r *Runtime) Bind(ctx context.Context) (Binding, error) {
 	return Binding{owner: r, identity: identity}, nil
 }
 func permission() error {
-	return &domain.Error{Code: "PERMISSION_DENIED", Message: "Local read authority is unavailable.", NextAction: domain.NextAction{Instruction: "Use the authorized local MCP transport."}, Details: map[string]any{}}
+	return &domain.Error{
+		Code:       "PERMISSION_DENIED",
+		Message:    "Local read authority is unavailable.",
+		NextAction: domain.NextAction{Instruction: "Use the authorized local MCP transport."},
+		Details:    map[string]any{},
+	}
 }
 func invalidSchema() error {
-	return domain.Invalid("Arguments do not match the tool schema; check types, required fields, ranges and RFC3339 dates.")
+	return domain.Invalid(
+		"Arguments do not match the tool schema; check types, required fields, ranges and RFC3339 dates.",
+	)
 }
 
 func (r *Runtime) Execute(ctx context.Context, binding Binding, name string, raw []byte) (*Result, error) {
@@ -296,11 +357,19 @@ func (r *Runtime) execute(ctx context.Context, binding Binding, name string, raw
 		return nil, err
 	}
 	var result *Result
-	call := toolsy.ToolCall{ToolName: name, Input: toolsy.ToolInput{ArgsJSON: normalized}, Env: toolsy.NewRunEnv(nil), CallContext: toolsy.NewCallContext(subject{r, binding.identity.Principal, binding.identity.Account}, scope{r, binding.identity.PolicyRevision})}
+	call := toolsy.ToolCall{
+		ToolName: name,
+		Input:    toolsy.ToolInput{ArgsJSON: normalized},
+		Env:      toolsy.NewRunEnv(nil),
+		CallContext: toolsy.NewCallContext(
+			subject{r, binding.identity.Principal, binding.identity.Account},
+			scope{r, binding.identity.PolicyRevision},
+		),
+	}
 	err = r.view.Execute(ctx, call, func(chunk toolsy.Chunk) error {
 		value, ok := chunk.TypedResult.(*Result)
 		if chunk.Event != toolsy.EventResult || chunk.IsError || !ok || result != nil {
-			return fmt.Errorf("unexpected read execution result")
+			return errors.New("unexpected read execution result")
 		}
 		result = value
 		return nil
@@ -309,7 +378,7 @@ func (r *Runtime) execute(ctx context.Context, binding Binding, name string, raw
 		return nil, mapError(err)
 	}
 	if result == nil {
-		return nil, fmt.Errorf("missing read execution result")
+		return nil, errors.New("missing read execution result")
 	}
 	return result, nil
 }
@@ -324,7 +393,8 @@ func (r *Runtime) decide(ctx context.Context, req toolsy.PolicyRequest) toolsy.D
 	if err != nil {
 		return deny(err)
 	}
-	if current.Principal != identity.principal || current.Account != identity.account || current.PolicyRevision != capability.revision {
+	if current.Principal != identity.principal || current.Account != identity.account ||
+		current.PolicyRevision != capability.revision {
 		return deny(permission())
 	}
 	args, err := BindArguments(req.Input.ArgsJSON)
@@ -347,7 +417,24 @@ func (r *Runtime) decide(ctx context.Context, req toolsy.PolicyRequest) toolsy.D
 		err = r.authority.CheckGroupContext(ctx, contextRequest(args, true))
 	case "zalo_get_conversation_message_context":
 		err = r.authority.CheckConversationContext(ctx, contextRequest(args, false))
-	case "zalo_send_direct_message", "zalo_join_group", "zalo_import_conversation_history", "zalo_cancel_history_import", "zalo_ack_subscription_events", "zalo_list_event_subscriptions", "zalo_read_subscription_events", "zalo_get_conversation", "zalo_list_conversations", "zalo_list_conversation_messages", "zalo_list_archive_sources", "zalo_get_status", "zalo_list_groups", "zalo_get_group", "zalo_get_send_status", "zalo_get_history_import_status", "zalo_get_join_status", "zalo_inspect_invite":
+	case "zalo_send_direct_message",
+		"zalo_join_group",
+		"zalo_import_conversation_history",
+		"zalo_cancel_history_import",
+		"zalo_ack_subscription_events",
+		"zalo_list_event_subscriptions",
+		"zalo_read_subscription_events",
+		"zalo_get_conversation",
+		"zalo_list_conversations",
+		"zalo_list_conversation_messages",
+		"zalo_list_archive_sources",
+		"zalo_get_status",
+		"zalo_list_groups",
+		"zalo_get_group",
+		"zalo_get_send_status",
+		"zalo_get_history_import_status",
+		"zalo_get_join_status",
+		"zalo_inspect_invite":
 		// Native owners recheck operation/account authority; schema and host scope
 		// have already been checked without invoking a command.
 	default:
@@ -364,8 +451,7 @@ func deny(err error) toolsy.Decision {
 	return d
 }
 func mapError(err error) error {
-	var domainError *domain.Error
-	if errors.As(err, &domainError) {
+	if domainError, ok := errors.AsType[*domain.Error](err); ok {
 		return domainError
 	}
 	if errors.Is(err, toolsy.ErrValidation) {
@@ -376,6 +462,8 @@ func mapError(err error) error {
 	}
 	return err // Existing wire projection keeps storage/internal details private.
 }
+
+//nolint:cyclop,funlen,gocognit,gocyclo // The closed typed operation dispatch keeps each BYOT request/result pair visible and invokes exactly one consumer-owned operation.
 func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any) (*Result, error) {
 	out := &Result{}
 	var err error
@@ -386,15 +474,39 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 			reply = &text
 		}
 		var v domain.SendOperation
-		v, err = r.operations.Messaging.Send(ctx, domain.SendRequest{RecipientID: stringArg(args, "recipient_id"), Text: stringArg(args, "text"), RequestID: stringArg(args, "request_id"), ReplyTo: reply})
+		v, err = r.operations.Messaging.Send(
+			ctx,
+			domain.SendRequest{
+				RecipientID: stringArg(args, "recipient_id"),
+				Text:        stringArg(args, "text"),
+				RequestID:   stringArg(args, "request_id"),
+				ReplyTo:     reply,
+			},
+		)
 		out.SendStatus = &v
 	case "zalo_join_group":
 		var v membership.JoinStatus
-		v, err = r.operations.Membership.Join(ctx, membership.JoinRequest{PlanToken: stringArg(args, "plan_token"), RequestID: stringArg(args, "request_id")})
+		v, err = r.operations.Membership.Join(
+			ctx,
+			membership.JoinRequest{PlanToken: stringArg(args, "plan_token"), RequestID: stringArg(args, "request_id")},
+		)
 		out.JoinStatus = &v
 	case "zalo_import_conversation_history":
 		var v domain.HistoryImportStatus
-		v, err = r.operations.History.Start(ctx, history.StartRequest{Source: stringArg(args, "source"), ConversationType: stringArg(args, "conversation_type"), ConversationID: stringArg(args, "conversation_id"), RequestID: stringArg(args, "request_id"), Since: stringArg(args, "since"), Until: stringArg(args, "until"), PageSize: optionalInt(args, "page_size"), MaxPages: optionalInt(args, "max_pages"), MaxMessages: optionalInt(args, "max_messages")})
+		v, err = r.operations.History.Start(
+			ctx,
+			history.StartRequest{
+				Source:           stringArg(args, "source"),
+				ConversationType: stringArg(args, "conversation_type"),
+				ConversationID:   stringArg(args, "conversation_id"),
+				RequestID:        stringArg(args, "request_id"),
+				Since:            stringArg(args, "since"),
+				Until:            stringArg(args, "until"),
+				PageSize:         optionalInt(args, "page_size"),
+				MaxPages:         optionalInt(args, "max_pages"),
+				MaxMessages:      optionalInt(args, "max_messages"),
+			},
+		)
 		out.ImportStatus = &v
 	case "zalo_cancel_history_import":
 		var v domain.HistoryImportStatus
@@ -406,7 +518,12 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 			return nil, e
 		}
 		var v eventaccess.Acknowledgement
-		v, err = r.operations.Events.Acknowledge(ctx, identity.Principal, stringArg(args, "subscription_id"), stringArg(args, "receipt"))
+		v, err = r.operations.Events.Acknowledge(
+			ctx,
+			identity.Principal,
+			stringArg(args, "subscription_id"),
+			stringArg(args, "receipt"),
+		)
 		out.Acknowledgement = &v
 	case "zalo_list_event_subscriptions":
 		identity, e := r.authority.ReadIdentity(ctx)
@@ -422,7 +539,12 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 			return nil, e
 		}
 		var v eventaccess.Page
-		v, err = r.operations.Events.ReadEvents(ctx, identity.Principal, stringArg(args, "subscription_id"), intArg(args, "limit", 20))
+		v, err = r.operations.Events.ReadEvents(
+			ctx,
+			identity.Principal,
+			stringArg(args, "subscription_id"),
+			intArg(args, "limit", 20),
+		)
 		out.Events = &v
 	case "zalo_search_messages":
 		out.GroupSearch, err = r.search.Group(ctx, groupRequest(args))
@@ -445,19 +567,58 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 			if r.operations.Archives == nil {
 				return nil, permission()
 			}
-			out.ArchiveDirectory, err = r.operations.Archives.Directory(ctx, archives.DirectoryRequest{SourceID: source, Type: stringArg(args, "conversation_type"), Query: stringArg(args, "query"), Cursor: stringArg(args, "cursor"), Limit: intArg(args, "limit", 20)})
+			out.ArchiveDirectory, err = r.operations.Archives.Directory(
+				ctx,
+				archives.DirectoryRequest{
+					SourceID: source,
+					Type:     stringArg(args, "conversation_type"),
+					Query:    stringArg(args, "query"),
+					Cursor:   stringArg(args, "cursor"),
+					Limit:    intArg(args, "limit", 20),
+				},
+			)
 		} else {
-			out.Directory, err = r.conversations.Directory(ctx, conversations.DirectoryRequest{Type: stringArg(args, "conversation_type"), Query: stringArg(args, "query"), Cursor: stringArg(args, "cursor"), Limit: intArg(args, "limit", 20)})
+			out.Directory, err = r.conversations.Directory(
+				ctx,
+				conversations.DirectoryRequest{
+					Type:   stringArg(args, "conversation_type"),
+					Query:  stringArg(args, "query"),
+					Cursor: stringArg(args, "cursor"),
+					Limit:  intArg(args, "limit", 20),
+				},
+			)
 		}
 	case "zalo_list_conversation_messages":
 		if source := stringArg(args, "source_id"); source != "" {
 			if r.operations.Archives == nil {
 				return nil, permission()
 			}
-			out.ArchiveBrowse, err = r.operations.Archives.Browse(ctx, archives.BrowseRequest{SourceID: source, ConversationType: stringArg(args, "conversation_type"), ConversationID: stringArg(args, "conversation_id"), Since: stringArg(args, "since"), Until: stringArg(args, "until"), Order: stringArg(args, "order"), Cursor: stringArg(args, "cursor"), Limit: intArg(args, "limit", 20)})
+			out.ArchiveBrowse, err = r.operations.Archives.Browse(
+				ctx,
+				archives.BrowseRequest{
+					SourceID:         source,
+					ConversationType: stringArg(args, "conversation_type"),
+					ConversationID:   stringArg(args, "conversation_id"),
+					Since:            stringArg(args, "since"),
+					Until:            stringArg(args, "until"),
+					Order:            stringArg(args, "order"),
+					Cursor:           stringArg(args, "cursor"),
+					Limit:            intArg(args, "limit", 20),
+				},
+			)
 		} else {
 			var v conversations.Browse
-			v, err = r.conversations.Browse(ctx, conversations.BrowseRequest{Conversation: ref(args), Since: stringArg(args, "since"), Until: stringArg(args, "until"), Order: stringArg(args, "order"), Cursor: stringArg(args, "cursor"), Limit: intArg(args, "limit", 20)})
+			v, err = r.conversations.Browse(
+				ctx,
+				conversations.BrowseRequest{
+					Conversation: ref(args),
+					Since:        stringArg(args, "since"),
+					Until:        stringArg(args, "until"),
+					Order:        stringArg(args, "order"),
+					Cursor:       stringArg(args, "cursor"),
+					Limit:        intArg(args, "limit", 20),
+				},
+			)
 			out.Browse = &v
 		}
 	case "zalo_list_archive_sources":
@@ -469,7 +630,14 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 		v, err = r.conversations.Status(ctx)
 		out.CollectorStatus = &v
 	case "zalo_list_groups":
-		out.GroupList, err = r.conversations.Groups(ctx, conversations.GroupRequest{Query: stringArg(args, "query"), Limit: intArg(args, "limit", 20), Cursor: stringArg(args, "cursor")})
+		out.GroupList, err = r.conversations.Groups(
+			ctx,
+			conversations.GroupRequest{
+				Query:  stringArg(args, "query"),
+				Limit:  intArg(args, "limit", 20),
+				Cursor: stringArg(args, "cursor"),
+			},
+		)
 	case "zalo_get_group":
 		var v conversations.GroupDetail
 		v, err = r.conversations.Group(ctx, stringArg(args, "group_id"))
@@ -498,13 +666,19 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 
 func isCommand(name string) bool {
 	switch name {
-	case "zalo_send_direct_message", "zalo_join_group", "zalo_import_conversation_history", "zalo_cancel_history_import", "zalo_ack_subscription_events":
+	case "zalo_send_direct_message",
+		"zalo_join_group",
+		"zalo_import_conversation_history",
+		"zalo_cancel_history_import",
+		"zalo_ack_subscription_events":
 		return true
 	}
 	return false
 }
 func commandsPresent(v Capabilities) bool {
-	return v.Messaging != nil && v.Messaging.Commands != nil || v.History != nil && v.History.Commands != nil || v.Membership != nil && v.Membership.Commands != nil || v.Events != nil && v.Events.Commands != nil
+	return v.Messaging != nil && v.Messaging.Commands != nil || v.History != nil && v.History.Commands != nil ||
+		v.Membership != nil && v.Membership.Commands != nil ||
+		v.Events != nil && v.Events.Commands != nil
 }
 func optionalInt(args map[string]any, key string) *int {
 	if _, ok := args[key]; !ok {

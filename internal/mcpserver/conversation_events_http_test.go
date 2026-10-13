@@ -31,11 +31,17 @@ func TestConversationEventsThroughHTTPAndSignedTLSReceiver(t *testing.T) {
 	}
 }
 
+//nolint:cyclop,gocognit,gocyclo // This test helper checks the complete fixture/metric shape without dropping nested boundary assertions.
 func testConversationProfileTLS(t *testing.T, profileName string, profileVersion float64) {
 	// Arrange: an all-conversation service and an independent signed TLS receiver.
 	ctx := context.Background()
 	dir := t.TempDir()
-	store, err := storage.OpenWithPolicy(ctx, filepath.Join(dir, "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	store, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(dir, "messages.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,39 +50,41 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 	received := make(chan map[string]any, 4)
 	var verificationSubscription, expectedSubscription string
 	receiver := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			t.Error(err)
-			w.WriteHeader(400)
+		body, readAllErr := io.ReadAll(r.Body)
+		if readAllErr != nil {
+			t.Error(readAllErr)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		mac := hmac.New(sha256.New, key)
-		mac.Write([]byte(r.Header.Get("webhook-id") + "." + r.Header.Get("webhook-timestamp") + "."))
+		mac.Write([]byte(r.Header.Get("Webhook-Id") + "." + r.Header.Get("Webhook-Timestamp") + "."))
 		mac.Write(body)
-		sig, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("webhook-signature"), "v1,"))
-		if err != nil || !hmac.Equal(sig, mac.Sum(nil)) {
+		sig, readAllErr := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"))
+		if readAllErr != nil || !hmac.Equal(sig, mac.Sum(nil)) {
 			t.Error("invalid callback signature")
-			w.WriteHeader(400)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		var value map[string]any
-		if err := json.Unmarshal(body, &value); err != nil {
-			t.Error(err)
-			w.WriteHeader(400)
+		if unmarshalErr := json.Unmarshal(body, &value); unmarshalErr != nil {
+			t.Error(unmarshalErr)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		if value["type"] == "verification" {
-			verificationSubscription = r.Header.Get("X-MCP-Subscription-Id")
+			verificationSubscription = r.Header.Get("X-Mcp-Subscription-Id")
 			json.NewEncoder(w).Encode(map[string]any{"challenge": value["challenge"]})
 			return
 		}
-		if r.Header.Get("Content-Type") != "application/json" || r.Header.Get("webhook-id") != value["eventId"] || r.Header.Get("X-MCP-Subscription-Id") != expectedSubscription || expectedSubscription == "" {
+		if r.Header.Get("Content-Type") != "application/json" || r.Header.Get("Webhook-Id") != value["eventId"] ||
+			r.Header.Get("X-Mcp-Subscription-Id") != expectedSubscription ||
+			expectedSubscription == "" {
 			t.Error("callback routing headers differ from subscribed identity")
-			w.WriteHeader(400)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		received <- value
-		w.WriteHeader(204)
+		w.WriteHeader(http.StatusNoContent)
 	}))
 	defer receiver.Close()
 	target, _ := url.Parse(receiver.URL)
@@ -97,8 +105,12 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 	params := map[string]any{
 		"name":      profileName,
 		"arguments": map[string]any{"scope": "all"},
-		"delivery":  map[string]any{"mode": "webhook", "url": "https://receiver.example/events", "secret": "whsec_" + base64.StdEncoding.EncodeToString(key)},
-		"ttlMs":     nil,
+		"delivery": map[string]any{
+			"mode":   "webhook",
+			"url":    "https://receiver.example/events",
+			"secret": "whsec_" + base64.StdEncoding.EncodeToString(key),
+		},
+		"ttlMs": nil,
 	}
 	fullText := strings.Repeat("界", 2049)
 	// Act: activate through MCP, insert both conversation types and deliver via TLS.
@@ -108,7 +120,17 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 		t.Fatal("verification and subscription IDs differ")
 	}
 	for _, kind := range []string{domain.ConversationDirect, domain.ConversationGroup} {
-		if err := store.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: kind, ID: "same/id"}, ID: "same/message", SenderID: "author", SentAt: time.Now().Add(-time.Hour), Text: fullText, Source: "replay"}); err != nil {
+		if err := store.Put(
+			ctx,
+			domain.Message{
+				Conversation: domain.ConversationRef{Type: kind, ID: "same/id"},
+				ID:           "same/message",
+				SenderID:     "author",
+				SentAt:       time.Now().Add(-time.Hour),
+				Text:         fullText,
+				Source:       "replay",
+			},
+		); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -131,11 +153,20 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 		}
 		data := event["data"].(map[string]any)
 		kind := data["conversation_type"].(string)
-		if seen[kind] || event["name"] != profileName || data["schema_version"] != profileVersion || data["conversation_id"] != "same/id" || data["text_truncated"] != true || len([]rune(data["text"].(string))) != 2048 {
+		if seen[kind] || event["name"] != profileName || data["schema_version"] != profileVersion ||
+			data["conversation_id"] != "same/id" ||
+			data["text_truncated"] != true ||
+			len([]rune(data["text"].(string))) != 2048 {
 			t.Fatalf("invalid typed event: %v", event)
 		}
 		seen[kind] = true
-		resource := httpRPC(t, endpoint.URL+"/mcp", token, "resources/read", map[string]any{"uri": data["text_resource_uri"]})
+		resource := httpRPC(
+			t,
+			endpoint.URL+"/mcp",
+			token,
+			"resources/read",
+			map[string]any{"uri": data["text_resource_uri"]},
+		)
 		if resource["contents"].([]any)[0].(map[string]any)["text"] != fullText {
 			t.Fatal("full text resource mismatch")
 		}
@@ -172,19 +203,34 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 		if payload["name"] != profileName || payload["eventId"] == nil || entry["delivery_state"] != "delivered" {
 			t.Fatal("recovery did not return exact envelope")
 		}
-		result := tools("zalo_ack_subscription_events", map[string]any{"subscription_id": expectedSubscription, "receipt": entry["receipt"]})
+		result := tools(
+			"zalo_ack_subscription_events",
+			map[string]any{"subscription_id": expectedSubscription, "receipt": entry["receipt"]},
+		)
 		if result["acknowledged"] != true {
 			t.Fatal(result)
 		}
 	}
-	if len(tools("zalo_read_subscription_events", map[string]any{"subscription_id": expectedSubscription})["events"].([]any)) != 0 {
+	if len(
+		tools("zalo_read_subscription_events", map[string]any{"subscription_id": expectedSubscription})["events"].([]any),
+	) != 0 {
 		t.Fatal("acknowledged events replayed")
 	}
 	// Act: cancel through MCP and insert another record.
 	params["delivery"] = map[string]any{"mode": "webhook", "url": "https://receiver.example/events"}
 	delete(params, "ttlMs")
 	httpRPC(t, endpoint.URL+"/mcp", token, "events/unsubscribe", params)
-	if err := store.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: domain.ConversationDirect, ID: "another"}, ID: "after-cancel", SenderID: "author", SentAt: time.Now(), Text: "synthetic", Source: "live"}); err != nil {
+	if err := store.Put(
+		ctx,
+		domain.Message{
+			Conversation: domain.ConversationRef{Type: domain.ConversationDirect, ID: "another"},
+			ID:           "after-cancel",
+			SenderID:     "author",
+			SentAt:       time.Now(),
+			Text:         "synthetic",
+			Source:       "live",
+		},
+	); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := store.FanoutProfileEvents(ctx, time.Now(), worker.Policy, worker.Encoder.EncodeProfile); err != nil {

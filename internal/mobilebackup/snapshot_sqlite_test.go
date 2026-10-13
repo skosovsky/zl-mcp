@@ -5,26 +5,42 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
+	"strconv"
 	"testing"
 	"time"
 )
 
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSnapshotSQLiteZeroIDsPagingAndImportIsolation(t *testing.T) {
 	// Arrange: mixed storage types, tied timestamps and records rejected after zero-ID handling.
 	from := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC)
 	until := from.Add(time.Hour)
-	data := sqliteFixture(t, `CREATE TABLE ChatContent(SenderId TEXT,GlbMsgId,CliMsgId TEXT,MsgContent TEXT,TimeStamp INTEGER,TTL INTEGER,MsgType INTEGER,MsgStatus INTEGER,BinNet BLOB)`, func(db *sql.DB) {
-		for i, id := range []any{int64(0), "0", "2", "0", "00", nil} {
-			client := fmt.Sprint(i + 1)
-			if i == 3 {
-				client = "0"
+	data := sqliteFixture(
+		t,
+		`CREATE TABLE ChatContent(SenderId TEXT,GlbMsgId,CliMsgId TEXT,MsgContent TEXT,TimeStamp INTEGER,TTL INTEGER,MsgType INTEGER,MsgStatus INTEGER,BinNet BLOB)`,
+		func(db *sql.DB) {
+			for i, id := range []any{int64(0), "0", "2", "0", "00", nil} {
+				client := strconv.Itoa(i + 1)
+				if i == 3 {
+					client = "0"
+				}
+				if _, err := db.Exec(
+					"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+					"12",
+					id,
+					client,
+					"synthetic",
+					from.UnixMilli(),
+					0,
+					0,
+					1,
+					nil,
+				); err != nil {
+					t.Fatal(err)
+				}
 			}
-			if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "12", id, client, "synthetic", from.UnixMilli(), 0, 0, 1, nil); err != nil {
-				t.Fatal(err)
-			}
-		}
-	})
+		},
+	)
 	file := ArchiveFile{Name: "901.db", Data: data}
 	ctx := context.Background()
 	scratch := t.TempDir()
@@ -50,19 +66,25 @@ func TestSnapshotSQLiteZeroIDsPagingAndImportIsolation(t *testing.T) {
 	}
 	defer strict.Clear()
 	// Assert: physical identities stay separate; zero IDs never become fabricated upstream IDs.
-	if len(first.Rows) != 2 || first.Rows[0].MessageID != "" || first.Rows[1].MessageID != "" || first.Rows[0].SourceRowID != 1 || first.Rows[1].SourceRowID != 2 || !first.HasMore || !first.Next.Snapshot {
+	if len(first.Rows) != 2 || first.Rows[0].MessageID != "" || first.Rows[1].MessageID != "" ||
+		first.Rows[0].SourceRowID != 1 ||
+		first.Rows[1].SourceRowID != 2 ||
+		!first.HasMore ||
+		!first.Next.Snapshot {
 		t.Fatal("snapshot identity or cursor lost")
 	}
-	if len(second.Rows) != 1 || second.Rows[0].MessageID != "2" || second.RejectedReasons["client_id"] != 1 || !second.HasMore {
+	if len(second.Rows) != 1 || second.Rows[0].MessageID != "2" || second.RejectedReasons["client_id"] != 1 ||
+		!second.HasMore {
 		t.Fatal("remaining scalar validation waived")
 	}
 	if len(third.Rows) != 0 || third.Rejected != 2 || third.HasMore || third.RejectedReasons["message_id"] != 2 {
 		t.Fatal("invalid IDs repaired or rejected page not advanced")
 	}
-	if len(strict.Rows) != 1 || strict.Rejected != 5 || strict.Rows[0].MessageID != "2" || strict.Rows[0].SourceRowID != 0 {
+	if len(strict.Rows) != 1 || strict.Rejected != 5 || strict.Rows[0].MessageID != "2" ||
+		strict.Rows[0].SourceRowID != 0 {
 		t.Fatal("strict import reader changed")
 	}
-	if page, err := ReadSQLitePage(ctx, file, scratch, from, until, 2, first.Next); err == nil {
+	if page, readSQLitePageErr := ReadSQLitePage(ctx, file, scratch, from, until, 2, first.Next); readSQLitePageErr == nil {
 		page.Clear()
 		t.Fatal("snapshot cursor admitted to strict reader")
 	}
@@ -82,7 +104,7 @@ func TestSnapshotSQLiteZeroIDsPagingAndImportIsolation(t *testing.T) {
 		case "window":
 			start = from.Add(time.Millisecond)
 		}
-		if page, err := ReadSnapshotSQLitePage(ctx, selected, scratch, start, until, 2, first.Next, order); err == nil {
+		if page, readSnapshotSQLitePageErr := ReadSnapshotSQLitePage(ctx, selected, scratch, start, until, 2, first.Next, order); readSnapshotSQLitePageErr == nil {
 			page.Clear()
 			t.Fatal("changed cursor binding accepted")
 		}
@@ -105,23 +127,44 @@ func TestSnapshotSQLiteZeroIDsPagingAndImportIsolation(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSnapshotSQLiteBlocksEveryDeferredControlOutsideWindow(t *testing.T) {
-	for kind := int64(0); kind <= 100; kind++ {
+	for kind := range int64(101) {
 		if !deferredMobileControl(kind) {
 			continue
 		}
-		t.Run(fmt.Sprint(kind), func(t *testing.T) {
+		t.Run(strconv.FormatInt(kind, 10), func(t *testing.T) {
 			// Arrange: one ordinary in-window row and a control outside that interval.
 			from := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC)
 			data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
 				for _, row := range [][3]int64{{0, from.UnixMilli(), 1}, {kind, from.Add(-time.Hour).UnixMilli(), 2}} {
-					if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "12", fmt.Sprint(row[2]), fmt.Sprint(row[2]), "synthetic", row[1], 0, row[0], 1, nil); err != nil {
+					if _, err := db.Exec(
+						"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+						"12",
+						strconv.FormatInt(row[2], 10),
+						strconv.FormatInt(row[2], 10),
+						"synthetic",
+						row[1],
+						0,
+						row[0],
+						1,
+						nil,
+					); err != nil {
 						t.Fatal(err)
 					}
 				}
 			})
 			// Act: scan whole-file controls before returning the requested prefix.
-			page, err := ReadSnapshotSQLitePage(context.Background(), ArchiveFile{Name: "901.db", Data: data}, t.TempDir(), from, from.Add(time.Hour), 1, nil, "asc")
+			page, err := ReadSnapshotSQLitePage(
+				context.Background(),
+				ArchiveFile{Name: "901.db", Data: data},
+				t.TempDir(),
+				from,
+				from.Add(time.Hour),
+				1,
+				nil,
+				"asc",
+			)
 			defer page.Clear()
 			// Assert: no text, row or cursor escapes a source with unclassified controls.
 			if kind == 20 {

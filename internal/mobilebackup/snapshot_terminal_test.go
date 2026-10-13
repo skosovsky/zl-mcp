@@ -41,7 +41,10 @@ func TestSnapshotTerminalCleanupRetainsSpentIdentity(t *testing.T) {
 	} else {
 		got.Clear()
 	}
-	if err := s.CleanupTerminal(ctx, func(context.Context, string, string, string) (bool, error) { return true, nil }); err != nil {
+	if err := s.CleanupTerminal(
+		ctx,
+		func(context.Context, string, string, string) (bool, error) { return true, nil },
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Assert: image gone, key/claims retained, retry cannot renew the source.
@@ -83,6 +86,7 @@ func TestSnapshotTerminalCleanupPredicateFailurePreservesImage(t *testing.T) {
 // Counting the crypto operation tests actual archive reads, not polling timing.
 type cleanupCountingAEAD struct {
 	cipher.AEAD
+
 	opens int
 }
 
@@ -108,7 +112,7 @@ func TestSnapshotTerminalCleanupHintsCannotAuthorizeRemoval(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Act: repeated idle polls must not reread the full encrypted image.
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		if err := s.CleanupTerminal(ctx, active); err != nil {
 			t.Fatal(err)
 		}
@@ -124,8 +128,8 @@ func TestSnapshotTerminalCleanupHintsCannotAuthorizeRemoval(t *testing.T) {
 		t.Fatal(err)
 	}
 	bytes[len(bytes)-1] ^= 1
-	if err := os.WriteFile(file, bytes, 0600); err != nil {
-		t.Fatal(err)
+	if writeFileErr := os.WriteFile(file, bytes, 0600); writeFileErr != nil {
+		t.Fatal(writeFileErr)
 	}
 	err = s.CleanupTerminal(ctx, func(context.Context, string, string, string) (bool, error) { return true, nil })
 	// Assert: current bytes were authenticated again and rejected without removal.
@@ -147,12 +151,18 @@ func TestSnapshotTerminalCleanupRechecksJournalAfterHint(t *testing.T) {
 	if err := s.Save(ctx, selected, request, "10"); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.CleanupTerminal(ctx, func(context.Context, string, string, string) (bool, error) { return false, nil }); err != nil {
+	if err := s.CleanupTerminal(
+		ctx,
+		func(context.Context, string, string, string) (bool, error) { return false, nil },
+	); err != nil {
 		t.Fatal(err)
 	}
 	calls := 0
 	// Act: the hint lookup says terminal; the authoritative second lookup refuses.
-	err := s.CleanupTerminal(ctx, func(context.Context, string, string, string) (bool, error) { calls++; return calls == 1, nil })
+	err := s.CleanupTerminal(
+		ctx,
+		func(context.Context, string, string, string) (bool, error) { calls++; return calls == 1, nil },
+	)
 	// Assert: only the current authenticated binding can authorize removal.
 	if err != nil || calls != 2 {
 		t.Fatal("journal was not rechecked", err, calls)

@@ -171,43 +171,15 @@ func Scan(root string) ([]File, error) {
 			return err
 		}
 		if d.IsDir() {
-			if path != root {
-				if strings.HasPrefix(d.Name(), ".") || d.Name() == "vendor" || d.Name() == "testdata" {
-					return filepath.SkipDir
-				}
-				if _, e := os.Stat(filepath.Join(path, "go.mod")); e == nil {
-					return filepath.SkipDir
-				}
-			}
-			return nil
+			return scanDirectory(root, path, d)
 		}
 		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 			return nil
 		}
-		ast, e := parser.ParseFile(token.NewFileSet(), path, nil, parser.AllErrors)
-		if e != nil {
-			return e
+		f, scanErr := scanProductionFile(root, path, packageNames)
+		if scanErr != nil {
+			return scanErr
 		}
-		dir := filepath.Dir(path)
-		if name, ok := packageNames[dir]; ok && name != ast.Name.Name {
-			return fmt.Errorf("conflicting production package names: %s", dir)
-		}
-		packageNames[dir] = ast.Name.Name
-		rel, e := filepath.Rel(root, path)
-		if e != nil {
-			return e
-		}
-		f := File{File: filepath.ToSlash(rel), Imports: []string{}}
-		for _, i := range ast.Imports {
-			v, e := strconv.Unquote(i.Path.Value)
-			if e != nil {
-				return e
-			}
-			if v != "C" {
-				f.Imports = append(f.Imports, v)
-			}
-		}
-		sort.Strings(f.Imports)
 		files = append(files, f)
 		return nil
 	})
@@ -380,6 +352,8 @@ func Controls(ctx context.Context, binary string, config []byte) ([]Control, err
 	}
 	return controls, nil
 }
+
+//nolint:gocognit // Each adversarial fixture keeps write, scan, loader validation and verdict together; loader errors must never count as rejection.
 func SourceControls(ctx context.Context, binary string, config []byte) ([]Control, error) {
 	cases := []struct{ name, path, tag, dep, reason string }{
 		{"platform-sdk", "internal/service/illegal_windows.go", "", "github.com/modelcontextprotocol/go-sdk/mcp", "security"},
@@ -449,6 +423,7 @@ func validateConfig(config []byte) error {
 	}
 	return nil
 }
+
 //nolint:nonamedreturns // Deferred failure handling annotates the returned Evidence without losing the original error.
 func Check(ctx context.Context, root, binary string) (e Evidence, err error) {
 	e.Status = "FAIL"
@@ -464,22 +439,8 @@ func Check(ctx context.Context, root, binary string) (e Evidence, err error) {
 	if err = validateConfig(config); err != nil {
 		return e, err
 	}
-	var manifest struct {
-		Exceptions []json.RawMessage `json:"exceptions"`
-	}
-	data, err := os.ReadFile(filepath.Join(root, "docs/mcp-migration/architecture-exceptions.json"))
-	if err != nil {
+	if err = validateClosedExceptions(root); err != nil {
 		return e, err
-	}
-	if err = json.Unmarshal(data, &manifest); err != nil {
-		return e, err
-	}
-	var raw map[string]json.RawMessage
-	if err = json.Unmarshal(data, &raw); err != nil {
-		return e, err
-	}
-	if _, ok := raw["exceptions"]; !ok || manifest.Exceptions == nil || len(manifest.Exceptions) != 0 {
-		return e, errors.New("temporary architecture exceptions must remain closed")
 	}
 	code, info, _, err := command(ctx, root, "go", "version", "-m", binary)
 	if err != nil {
@@ -518,12 +479,8 @@ func Check(ctx context.Context, root, binary string) (e Evidence, err error) {
 		return e, fmt.Errorf("production graph loading failed: %s", stderr)
 	}
 	e.Dependencies = strings.Fields(deps)
-	for _, dep := range e.Dependencies {
-		for _, forbidden := range []string{module + "/internal/evaluation", module + "/internal/evalfixture", "github.com/skosovsky/evaly"} {
-			if within(dep, forbidden) {
-				return e, fmt.Errorf("evaluation in production graph: %s", dep)
-			}
-		}
+	if err = validateProductionDependencies(e.Dependencies); err != nil {
+		return e, err
 	}
 	e.Controls, err = Controls(ctx, binary, config)
 	if err != nil {
@@ -561,3 +518,76 @@ func WriteEvidence(path string, e Evidence) error {
 }
 
 var _ io.Writer = (*boundedBuffer)(nil)
+
+func scanDirectory(root, path string, entry os.DirEntry) error {
+	if path == root {
+		return nil
+	}
+	if strings.HasPrefix(entry.Name(), ".") || entry.Name() == "vendor" || entry.Name() == "testdata" {
+		return filepath.SkipDir
+	}
+	if _, err := os.Stat(filepath.Join(path, "go.mod")); err == nil {
+		return filepath.SkipDir
+	}
+	return nil
+}
+
+func validateClosedExceptions(root string) error {
+	var manifest struct {
+		Exceptions []json.RawMessage `json:"exceptions"`
+	}
+	data, err := os.ReadFile(filepath.Join(root, "docs/mcp-migration/architecture-exceptions.json"))
+	if err != nil {
+		return err
+	}
+	if err = json.Unmarshal(data, &manifest); err != nil {
+		return err
+	}
+	var raw map[string]json.RawMessage
+	if err = json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["exceptions"]; !ok || manifest.Exceptions == nil || len(manifest.Exceptions) != 0 {
+		return errors.New("temporary architecture exceptions must remain closed")
+	}
+	return nil
+}
+
+func validateProductionDependencies(dependencies []string) error {
+	for _, dep := range dependencies {
+		for _, forbidden := range []string{module + "/internal/evaluation", module + "/internal/evalfixture", "github.com/skosovsky/evaly"} {
+			if within(dep, forbidden) {
+				return fmt.Errorf("evaluation in production graph: %s", dep)
+			}
+		}
+	}
+	return nil
+}
+
+func scanProductionFile(root, path string, packageNames map[string]string) (File, error) {
+	ast, e := parser.ParseFile(token.NewFileSet(), path, nil, parser.AllErrors)
+	if e != nil {
+		return File{}, e
+	}
+	dir := filepath.Dir(path)
+	if name, ok := packageNames[dir]; ok && name != ast.Name.Name {
+		return File{}, fmt.Errorf("conflicting production package names: %s", dir)
+	}
+	packageNames[dir] = ast.Name.Name
+	rel, e := filepath.Rel(root, path)
+	if e != nil {
+		return File{}, e
+	}
+	f := File{File: filepath.ToSlash(rel), Imports: []string{}}
+	for _, i := range ast.Imports {
+		v, e := strconv.Unquote(i.Path.Value)
+		if e != nil {
+			return File{}, e
+		}
+		if v != "C" {
+			f.Imports = append(f.Imports, v)
+		}
+	}
+	sort.Strings(f.Imports)
+	return f, nil
+}

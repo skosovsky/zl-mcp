@@ -76,38 +76,9 @@ func (p *membershipPort) archiveConversations(
 		Members: make([]byte, (len(refs)+7)/8),
 	}
 	token := archiveString(args, "cursor")
-	if token != "" {
-		body, err := p.library.OpenArchiveToken(ctx, "cursor", token)
-		if err != nil {
-			return nil, archiveInvalidCursor()
-		}
-		defer clear(body)
-		var saved archiveCatalogueCursor
-		if json.Unmarshal(body, &saved) != nil || saved.Version != cursor.Version || saved.Kind != cursor.Kind ||
-			saved.Account != binding ||
-			saved.Source != sourceID ||
-			saved.Digest != manifest.Digest ||
-			saved.Type != kind ||
-			saved.Query != query ||
-			saved.Next < 0 ||
-			saved.Next >= len(refs) ||
-			len(saved.Members) != len(cursor.Members) {
-			return nil, archiveInvalidCursor()
-		}
-		cursor = saved
-	} else {
-		for index, ref := range refs {
-			if !p.store.AllowsConversation(ref) || kind != "" && kind != ref.Type {
-				continue
-			}
-			item, err := p.archiveConversation(ctx, ref, manifest.CapturedAt)
-			if err != nil {
-				return nil, err
-			}
-			if archiveNameMatches(item, query) {
-				cursor.Members[index/8] |= 1 << uint(index%8)
-			}
-		}
+	cursor, err = p.bindCatalogueCursor(ctx, cursor, token, refs, manifest.CapturedAt)
+	if err != nil {
+		return nil, err
 	}
 	values := []map[string]any{}
 	next := len(refs)
@@ -212,4 +183,42 @@ func archiveNameMatches(item map[string]any, query string) bool {
 		}
 	}
 	return false
+}
+
+func (p *membershipPort) bindCatalogueCursor(ctx context.Context, cursor archiveCatalogueCursor, token string, refs []domain.ConversationRef, captured string) (archiveCatalogueCursor, error) {
+	if token == "" {
+		for index, ref := range refs {
+			if !p.store.AllowsConversation(ref) || cursor.Type != "" && cursor.Type != ref.Type {
+				continue
+			}
+			item, err := p.archiveConversation(ctx, ref, captured)
+			if err != nil {
+				return archiveCatalogueCursor{}, err
+			}
+			if archiveNameMatches(item, cursor.Query) {
+				cursor.Members[index/8] |= 1 << uint(index%8)
+			}
+		}
+
+		return cursor, nil
+	}
+	body, err := p.library.OpenArchiveToken(ctx, "cursor", token)
+	if err != nil {
+		return archiveCatalogueCursor{}, archiveInvalidCursor()
+	}
+	defer clear(body)
+	var saved archiveCatalogueCursor
+	if json.Unmarshal(body, &saved) != nil || saved.Version != cursor.Version || saved.Kind != cursor.Kind ||
+		saved.Account != cursor.Account ||
+		saved.Source != cursor.Source ||
+		saved.Digest != cursor.Digest ||
+		saved.Type != cursor.Type ||
+		saved.Query != cursor.Query ||
+		saved.Next < 0 ||
+		saved.Next >= len(refs) ||
+		len(saved.Members) != len(cursor.Members) {
+		return archiveCatalogueCursor{}, archiveInvalidCursor()
+	}
+	cursor = saved
+	return cursor, nil
 }

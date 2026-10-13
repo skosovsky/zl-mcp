@@ -44,6 +44,7 @@ func (s *productionHistorySource) ReceiveMobileBackupOffer(
 	return offer, err
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileHistoryWorkerUsesExistingCollector(t *testing.T) {
 	// Arrange: encrypted synthetic archive, production session guard and one queued import.
 	raw, err := os.ReadFile("../mobilebackup/testdata/format1-sqlite-vector.json")
@@ -117,9 +118,9 @@ func TestMobileHistoryWorkerUsesExistingCollector(t *testing.T) {
 	defer func() {
 		cancel()
 		select {
-		case err := <-done:
-			if err != nil {
-				t.Error(err)
+		case operationErr := <-done:
+			if operationErr != nil {
+				t.Error(operationErr)
 			}
 		case <-time.After(5 * time.Second):
 			t.Error("collector and mobile worker did not stop")
@@ -160,6 +161,7 @@ func (s *historyLeaseSource) MobileBackupContext(ctx context.Context) (context.C
 	return child, func() { s.closed++; cancel() }, nil
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileHistorySessionLifetime(t *testing.T) {
 	for _, mode := range []string{"success", "parent-stop", "service-stop", "session-loss", "callback-error"} {
 		t.Run(mode, func(t *testing.T) {

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 	storeadapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
 	"github.com/skosovsky/zl-mcp/internal/app/shared"
@@ -25,6 +26,7 @@ func (a *auditAdmission) AllowRead(context.Context) (bool, error) { return a.all
 
 type auditAuthority struct {
 	*storeadapter.Reader
+
 	denied, panic bool
 }
 
@@ -38,6 +40,7 @@ func (a *auditAuthority) ReadIdentity(ctx context.Context) (shared.ReadIdentity,
 	return a.Reader.ReadIdentity(ctx)
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestFinalAuditIncludesPreflightAndPostExecutionFailures(t *testing.T) {
 	// Arrange: real app runtime, synthetic native owner, independent execution counter.
 	ctx := context.Background()
@@ -53,7 +56,12 @@ func TestFinalAuditIncludesPreflightAndPostExecutionFailures(t *testing.T) {
 		t.Fatal(err)
 	}
 	admission := &auditAdmission{allow: true}
-	service := &Service{runtime: runtime, admission: admission, input: map[string]*jsonschema.Schema{}, output: map[string]*jsonschema.Schema{}}
+	service := &Service{
+		runtime:   runtime,
+		admission: admission,
+		input:     map[string]*jsonschema.Schema{},
+		output:    map[string]*jsonschema.Schema{},
+	}
 	for _, name := range contracts.Names() {
 		service.input[name], err = contracts.Compile(name, "input")
 		if err != nil {
@@ -86,7 +94,8 @@ func TestFinalAuditIncludesPreflightAndPostExecutionFailures(t *testing.T) {
 			t.Fatal("missing or duplicate final audit")
 		}
 		var entry map[string]any
-		if json.Unmarshal([]byte(lines[0]), &entry) != nil || entry["code"] != code || entry["outcome"] != "error" || entry["correlation_id"] == "" {
+		if json.Unmarshal([]byte(lines[0]), &entry) != nil || entry["code"] != code || entry["outcome"] != "error" ||
+			entry["correlation_id"] == "" {
 			t.Fatalf("incorrect final audit: %s", lines[0])
 		}
 		if strings.Contains(logs.String(), "PRIVATE_SENTINEL") {
@@ -103,7 +112,10 @@ func TestFinalAuditIncludesPreflightAndPostExecutionFailures(t *testing.T) {
 	run(`{"unknown":"PRIVATE_SENTINEL"}`, "INVALID_ARGUMENT", 0)
 	// Arrange: execution succeeds, but output validation fails afterwards.
 	tool = "zalo_search_messages"
-	if err = owner.Put(ctx, domain.Message{GroupID: "g", ID: "m", SenderID: "peer", Text: "search", SentAt: time.Now(), Source: "live"}); err != nil {
+	if err = owner.Put(
+		ctx,
+		domain.Message{GroupID: "g", ID: "m", SenderID: "peer", Text: "search", SentAt: time.Now(), Source: "live"},
+	); err != nil {
 		t.Fatal(err)
 	}
 	original := service.output[tool]
@@ -130,7 +142,9 @@ func TestFinalAuditIncludesPreflightAndPostExecutionFailures(t *testing.T) {
 		service.call(ctx, "zalo_list_groups", json.RawMessage(`{}`))
 	}()
 	var entry map[string]any
-	if json.Unmarshal(bytes.TrimSpace(logs.Bytes()), &entry) != nil || entry["outcome"] != "panic" || entry["code"] != "TOOL_ERROR" || strings.Contains(logs.String(), "PRIVATE_SENTINEL") {
+	if json.Unmarshal(bytes.TrimSpace(logs.Bytes()), &entry) != nil || entry["outcome"] != "panic" ||
+		entry["code"] != "TOOL_ERROR" ||
+		strings.Contains(logs.String(), "PRIVATE_SENTINEL") {
 		t.Fatal("unsafe/missing panic audit")
 	}
 }

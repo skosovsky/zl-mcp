@@ -17,6 +17,7 @@ func (f contactPages) ContactsPage(ctx context.Context, page, limit int) ([]doma
 	return f(ctx, page, limit)
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestContactsRefreshBoundsAndPartialRecords(t *testing.T) {
 	for _, test := range []struct {
 		name           string
@@ -36,7 +37,12 @@ func TestContactsRefreshBoundsAndPartialRecords(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			// Arrange
 			ctx := context.Background()
-			s, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+			s, err := storage.OpenWithPolicy(
+				ctx,
+				filepath.Join(t.TempDir(), "messages.sqlite"),
+				domain.CollectionPolicy{All: true},
+				90,
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -66,7 +72,11 @@ func TestContactsRefreshBoundsAndPartialRecords(t *testing.T) {
 				}
 				contacts := make([]domain.Contact, n)
 				for i := range contacts {
-					contacts[i] = domain.Contact{ID: fmt.Sprintf("peer-%d", offset+i), Name: "Synthetic", Friendship: "unknown"}
+					contacts[i] = domain.Contact{
+						ID:         fmt.Sprintf("peer-%d", offset+i),
+						Name:       "Synthetic",
+						Friendship: "unknown",
+					}
 				}
 				return contacts, nil
 			})
@@ -77,7 +87,9 @@ func TestContactsRefreshBoundsAndPartialRecords(t *testing.T) {
 				t.Fatal(e)
 			}
 			// Assert
-			if (err != nil) != test.wantErr || pages != test.pages || status["status"] != test.status || status["stop_reason"] != test.reason || status["observed_count"] != float64(test.count) {
+			if (err != nil) != test.wantErr || pages != test.pages || status["status"] != test.status ||
+				status["stop_reason"] != test.reason ||
+				status["observed_count"] != float64(test.count) {
 				t.Fatalf("result: pages=%d err=%v status=%#v", pages, err, status)
 			}
 			var n int
@@ -97,7 +109,12 @@ func TestContactsRefreshBoundsAndPartialRecords(t *testing.T) {
 func TestContactsRefreshCancellation(t *testing.T) {
 	// Arrange
 	ctx, cancel := context.WithCancel(context.Background())
-	s, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	s, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(t.TempDir(), "messages.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +131,8 @@ func TestContactsRefreshCancellation(t *testing.T) {
 		t.Fatal(e)
 	}
 	// Assert
-	if !errors.Is(err, context.Canceled) || status["status"] != "partial" || status["stop_reason"] != "cancelled_or_deadline" {
+	if !errors.Is(err, context.Canceled) || status["status"] != "partial" ||
+		status["stop_reason"] != "cancelled_or_deadline" {
 		t.Fatalf("cancel: %v %#v", err, status)
 	}
 }

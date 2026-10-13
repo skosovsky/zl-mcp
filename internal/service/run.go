@@ -157,6 +157,8 @@ func run(
 
 // configure permits offline integration tests to inject a TLS receiver transport
 // before goroutines start. Production Run always uses the validated HTTP client.
+//
+//nolint:funlen,gocognit // The service owner registers logger restoration, store/exporter/archive/listener cleanup and keeps shared resources alive until all service loops join; endpoint and worker logic are separate helpers.
 func runConfigured(
 	parent context.Context,
 	c config.Config,
@@ -170,27 +172,14 @@ func runConfigured(
 		return err
 	}
 	defer unlock()
-	var logFile *logging.File
-	if c.Logging.File != "" {
-		logFile, err = logging.Open(c.Logging.File, c.Logging.MaxSizeMB, c.Logging.MaxBackups, os.Stderr)
-		if err != nil {
-			return err
-		}
-		previous := slog.Default()
-		level := slog.LevelInfo
-		switch c.Logging.Level {
-		case "debug":
-			level = slog.LevelDebug
-		case "warn":
-			level = slog.LevelWarn
-		case "error":
-			level = slog.LevelError
-		}
-		slog.SetDefault(slog.New(slog.NewJSONHandler(logFile, &slog.HandlerOptions{Level: level})))
+	logFile, restoreLog, err := openConfiguredLog(c)
+	if err != nil {
+		return err
+	}
+	if restoreLog != nil {
 		defer func() {
-			slog.SetDefault(previous)
-			if err := logFile.Close(); resultErr == nil && err != nil {
-				resultErr = err
+			if closeErr := restoreLog(); resultErr == nil && closeErr != nil {
+				resultErr = closeErr
 			}
 		}()
 	}
@@ -230,7 +219,7 @@ func runConfigured(
 		return err
 	}
 	defer func() {
-		if err := telemetryOwner.Shutdown(ctx); err != nil {
+		if shutdownErr := telemetryOwner.Shutdown(ctx); shutdownErr != nil {
 			slog.WarnContext(parent, "telemetry_shutdown_failed")
 		}
 	}()
@@ -289,26 +278,12 @@ func runConfigured(
 	if err = port.CleanupHistorySnapshots(ctx); err != nil {
 		return errors.New("private mobile snapshot cleanup unavailable")
 	}
-	protocol, err := events.NewSubscriptionManager(store, c.StateDir)
-	if err != nil {
-		return err
+	handler, worker, eventTrace, endpointErr := configuredEndpoints(c, store, port, token)
+	if endpointErr != nil {
+		return endpointErr
 	}
-	handler, err := mcpserver.NewHTTP(token, mcpReadPorts(store, port), protocol)
-	if err != nil {
-		return err
-	}
-	worker, err := events.NewWorker(store)
-	if err != nil {
-		return err
-	}
-	var eventTrace *logging.File
-	if c.Logging.EventTraceFile != "" {
-		eventTrace, err = logging.Open(c.Logging.EventTraceFile, c.Logging.MaxSizeMB, c.Logging.MaxBackups, os.Stderr)
-		if err != nil {
-			return err
-		}
+	if eventTrace != nil {
 		defer eventTrace.Close()
-		worker.TraceLogger = slog.New(slog.NewJSONHandler(eventTrace, nil))
 	}
 	if configure != nil {
 		configure(handler, worker)
@@ -318,16 +293,9 @@ func runConfigured(
 		return err
 	}
 	defer listener.Close()
-	socket, err := local.SocketPath(c.StateDir)
-	if err != nil {
-		return err
-	}
-	if err = os.Remove(socket); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return err
-	}
-	ipc, err := (&net.ListenConfig{}).Listen(ctx, "unix", socket)
-	if err != nil {
-		return err
+	ipc, socket, ipcErr := openConfiguredIPC(ctx, c.StateDir)
+	if ipcErr != nil {
+		return ipcErr
 	}
 	defer ipc.Close()
 	defer os.Remove(socket)
@@ -352,89 +320,13 @@ func runConfigured(
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      450 * time.Second,
 	}
-	errorsCh := make(chan error, 8)
-	var wg sync.WaitGroup
-	launch := func(fn func() error) {
-		wg.Go(func() {
-			err := fn()
-			if errors.Is(err, http.ErrServerClosed) {
-				err = nil
-			}
-			errorsCh <- err
-			cancel()
-		})
+	loop := serviceLoop{
+		parent: parent, ctx: ctx, cancel: cancel, config: c, store: store, port: port,
+		restore: restore, save: save, ready: ready, worker: worker,
+		httpServer: httpServer, cliServer: cliServer, listener: listener, ipc: ipc,
+		logFile: logFile, eventTrace: eventTrace,
 	}
-	if logFile != nil {
-		launch(func() error {
-			select {
-			case <-ctx.Done():
-				return nil
-			case <-logFile.Failed():
-				return logFile.Err()
-			}
-		})
-	}
-	if eventTrace != nil {
-		launch(func() error {
-			select {
-			case <-ctx.Done():
-				return nil
-			case <-eventTrace.Failed():
-				return eventTrace.Err()
-			}
-		})
-	}
-	slog.InfoContext(parent, "service started", "mcp_listen", listener.Addr().String())
-	launch(func() error { return httpServer.Serve(listener) })
-	launch(func() error { return cliServer.Serve(ipc) })
-	launch(func() error { return worker.Run(ctx) })
-	if shared.Recording(ctx) {
-		launch(func() error { return observeNativeQueues(ctx, store) })
-	}
-
-	launch(func() error {
-		ticker := time.NewTicker(5 * time.Minute)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return nil
-			case <-ticker.C:
-				if err := store.Retain(ctx); err != nil {
-					return err
-				}
-			}
-		}
-	})
-	launch(func() error { return collect(ctx, c, store, port, restore, save) })
-	if ready != nil {
-		ready(listener.Addr())
-	}
-	<-ctx.Done()
-	shutdown, stop := context.WithTimeout(context.Background(), 5*time.Second)
-	defer stop()
-	// Stop accepting requests before waiting for ports or closing shared SQLite.
-	_ = httpServer.Shutdown(shutdown)
-	_ = cliServer.Shutdown(shutdown)
-	_ = httpServer.Close()
-	_ = cliServer.Close()
-	wg.Wait()
-	if shared.Recording(ctx) {
-		sample, cancelSample := context.WithTimeout(context.WithoutCancel(ctx), 500*time.Millisecond)
-		sampleNativeQueues(sample, store)
-		cancelSample()
-	}
-	slog.InfoContext(parent, "service stopped")
-	if logFile != nil && logFile.Err() != nil {
-		return logFile.Err()
-	}
-	close(errorsCh)
-	for err := range errorsCh {
-		if err != nil && !errors.Is(err, context.Canceled) {
-			return err
-		}
-	}
-	return nil
+	return loop.run()
 }
 
 func collect(
@@ -522,125 +414,329 @@ func collectSession(
 			return nil
 		}
 		if err == nil {
-			if err = store.BindAccount(ctx, client.AccountID()); err != nil {
-				return err
-			}
-			if err = save(client); err != nil {
-				return err
-			}
-			sessionCtx, stopSession := context.WithCancel(ctx)
-			var mobileDone chan error
-			err = collector.RunInternal(sessionCtx, c, store, client, func(j *collector.JoinManager) error {
-				port.set(j)
-				if sender, ok := client.(messaging.Sender); ok {
-					port.setSender(sender)
-				}
-				if port.snapshots != nil {
-					mobileDone = make(chan error, 1)
-					go func() {
-						e := historyimport.RunMobile(sessionCtx, store, port)
-						mobileDone <- e
-						if e != nil {
-							stopSession()
-						}
-					}()
-				}
-				return nil
-			})
-			stopSession()
-			if mobileDone != nil {
-				if mobileErr := <-mobileDone; mobileErr != nil && err == nil {
-					if errors.Is(mobileErr, domain.ErrAuthenticationRequired) {
-						err = mobileErr
-					} else {
-						err = &domain.Error{Code: "STORAGE_ERROR", Message: "Mobile history worker storage failed."}
-					}
-				}
-			}
-			port.setSender(nil)
-			port.set(nil)
-			if ctx.Err() != nil {
-				//nolint:nilerr // Owner context cancellation is normal service shutdown, not a session failure requiring retry.
-				return nil
-			}
-			if err == nil {
-				return errors.New("collector stopped unexpectedly")
-			}
-			if !errors.Is(err, domain.ErrAuthenticationRequired) {
-				return err
+			err = runVerifiedCollector(ctx, c, store, port, client, save)
+			terminal, outcomeErr := activeCollectorOutcome(ctx, err)
+			if terminal {
+				return outcomeErr
 			}
 		}
 		if errors.Is(err, domain.ErrAuthenticationRequired) {
-			if err = store.BeginGap(ctx, "auth_required"); err != nil {
-				return err
-			}
-			if err = store.SetState(
-				ctx,
-				map[string]any{
-					"authenticated":     false,
-					"collector_state":   "auth_required",
-					"last_connected_at": nil,
-					"last_event_at":     nil,
-					"last_persisted_at": nil,
-					"last_error": map[string]any{
-						"code":    "NOT_AUTHENTICATED",
-						"message": "Stop service and run local login.",
-					},
-				},
-			); err != nil {
-				return err
-			}
-			slog.WarnContext(ctx, "Zalo authentication required; waiting for local login")
-			<-ctx.Done()
-			return nil
+			return awaitLocalLogin(ctx, store)
 		}
 		var typed *domain.Error
 		if errors.As(err, &typed) && typed.Code == "STORAGE_ERROR" {
-			if saveErr := store.SetState(
-				ctx,
-				map[string]any{
-					"authenticated":     false,
-					"collector_state":   "stopped",
-					"last_connected_at": nil,
-					"last_event_at":     nil,
-					"last_persisted_at": nil,
-					"last_error": map[string]any{
-						"code":    "STORAGE_ERROR",
-						"message": "Cannot read private saved session.",
-					},
-				},
-			); saveErr != nil {
-				return saveErr
-			}
-			return err
+			return persistSessionStorageFailure(ctx, store, err)
 		}
-		if err = store.BeginGap(ctx, "session_restore_failed"); err != nil {
-			return err
-		}
-		if err = store.SetState(
-			ctx,
-			map[string]any{
-				"authenticated":     false,
-				"collector_state":   "reconnecting",
-				"last_connected_at": nil,
-				"last_event_at":     nil,
-				"last_persisted_at": nil,
-				"last_error": map[string]any{
-					"code":    "UPSTREAM_UNAVAILABLE",
-					"message": "Saved session verification failed; retrying.",
-				},
-			},
-		); err != nil {
-			return err
-		}
-		slog.WarnContext(ctx, "Zalo session verification unavailable; retrying", "retry_seconds", delay.Seconds())
-		timer := time.NewTimer(delay)
-		select {
-		case <-ctx.Done():
-			timer.Stop()
-			return nil
-		case <-timer.C:
+		retry, retryErr := awaitSessionRetry(ctx, store, delay)
+		if retryErr != nil || !retry {
+			return retryErr
 		}
 		delay = min(delay*2, 40*time.Second)
 	}
+}
+
+func runActiveCollector(ctx context.Context, c config.Config, store *storage.Store, port *membershipPort, client collector.ListenerUpstream) error {
+	sessionCtx, stopSession := context.WithCancel(ctx)
+	var mobileDone chan error
+	err := collector.RunInternal(sessionCtx, c, store, client, func(j *collector.JoinManager) error {
+		port.set(j)
+		if sender, ok := client.(messaging.Sender); ok {
+			port.setSender(sender)
+		}
+		if port.snapshots != nil {
+			mobileDone = make(chan error, 1)
+			go func() {
+				e := historyimport.RunMobile(sessionCtx, store, port)
+				mobileDone <- e
+				if e != nil {
+					stopSession()
+				}
+			}()
+		}
+		return nil
+	})
+	stopSession()
+	if mobileDone != nil {
+		if mobileErr := <-mobileDone; mobileErr != nil && err == nil {
+			if errors.Is(mobileErr, domain.ErrAuthenticationRequired) {
+				err = mobileErr
+			} else {
+				err = &domain.Error{Code: "STORAGE_ERROR", Message: "Mobile history worker storage failed."}
+			}
+		}
+	}
+	port.setSender(nil)
+	port.set(nil)
+	return err
+}
+
+type serviceLoop struct {
+	parent, ctx           context.Context
+	cancel                context.CancelFunc
+	config                config.Config
+	store                 *storage.Store
+	port                  *membershipPort
+	restore               restoreFunc
+	save                  func(collector.ListenerUpstream) error
+	ready                 func(net.Addr)
+	worker                *events.Worker
+	httpServer, cliServer *http.Server
+	listener, ipc         net.Listener
+	logFile, eventTrace   *logging.File
+}
+
+func (loop serviceLoop) run() error {
+	errorsCh := make(chan error, 8)
+	var wg sync.WaitGroup
+	launch := func(fn func() error) {
+		wg.Go(func() {
+			err := fn()
+			if errors.Is(err, http.ErrServerClosed) {
+				err = nil
+			}
+			errorsCh <- err
+			loop.cancel()
+		})
+	}
+	if loop.logFile != nil {
+		launch(func() error {
+			select {
+			case <-loop.ctx.Done():
+				return nil
+			case <-loop.logFile.Failed():
+				return loop.logFile.Err()
+			}
+		})
+	}
+	if loop.eventTrace != nil {
+		launch(func() error {
+			select {
+			case <-loop.ctx.Done():
+				return nil
+			case <-loop.eventTrace.Failed():
+				return loop.eventTrace.Err()
+			}
+		})
+	}
+	slog.InfoContext(loop.parent, "service started", "mcp_listen", loop.listener.Addr().String())
+	launch(func() error { return loop.httpServer.Serve(loop.listener) })
+	launch(func() error { return loop.cliServer.Serve(loop.ipc) })
+	launch(func() error { return loop.worker.Run(loop.ctx) })
+	if shared.Recording(loop.ctx) {
+		launch(func() error { return observeNativeQueues(loop.ctx, loop.store) })
+	}
+
+	launch(loop.retain)
+	launch(func() error { return collect(loop.ctx, loop.config, loop.store, loop.port, loop.restore, loop.save) })
+	if loop.ready != nil {
+		loop.ready(loop.listener.Addr())
+	}
+	<-loop.ctx.Done()
+	shutdown, stop := context.WithTimeout(context.Background(), 5*time.Second)
+	defer stop()
+	// Stop accepting requests before waiting for ports or closing shared SQLite.
+	_ = loop.httpServer.Shutdown(shutdown)
+	_ = loop.cliServer.Shutdown(shutdown)
+	_ = loop.httpServer.Close()
+	_ = loop.cliServer.Close()
+	wg.Wait()
+	if shared.Recording(loop.ctx) {
+		sample, cancelSample := context.WithTimeout(context.WithoutCancel(loop.ctx), 500*time.Millisecond)
+		sampleNativeQueues(sample, loop.store)
+		cancelSample()
+	}
+	slog.InfoContext(loop.parent, "service stopped")
+	if loop.logFile != nil && loop.logFile.Err() != nil {
+		return loop.logFile.Err()
+	}
+	close(errorsCh)
+	for err := range errorsCh {
+		if err != nil && !errors.Is(err, context.Canceled) {
+			return err
+		}
+	}
+	return nil
+}
+
+func (loop serviceLoop) retain() error {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-loop.ctx.Done():
+			return nil
+		case <-ticker.C:
+			if err := loop.store.Retain(loop.ctx); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+func openConfiguredLog(c config.Config) (*logging.File, func() error, error) {
+	if c.Logging.File == "" {
+		return nil, nil, nil
+	}
+	logFile, err := logging.Open(c.Logging.File, c.Logging.MaxSizeMB, c.Logging.MaxBackups, os.Stderr)
+	if err != nil {
+		return nil, nil, err
+	}
+	previous := slog.Default()
+	level := slog.LevelInfo
+	switch c.Logging.Level {
+	case "debug":
+		level = slog.LevelDebug
+	case "warn":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	}
+	slog.SetDefault(slog.New(slog.NewJSONHandler(logFile, &slog.HandlerOptions{Level: level})))
+	restore := func() error {
+		slog.SetDefault(previous)
+		return logFile.Close()
+	}
+	return logFile, restore, nil
+}
+
+func runVerifiedCollector(ctx context.Context, c config.Config, store *storage.Store, port *membershipPort, client collector.ListenerUpstream, save func(collector.ListenerUpstream) error) error {
+	var err error
+	if err = store.BindAccount(ctx, client.AccountID()); err != nil {
+		return err
+	}
+	if err = save(client); err != nil {
+		return err
+	}
+	return runActiveCollector(ctx, c, store, port, client)
+}
+
+func awaitLocalLogin(ctx context.Context, store *storage.Store) error {
+	var err error
+	if err = store.BeginGap(ctx, "auth_required"); err != nil {
+		return err
+	}
+	if err = store.SetState(
+		ctx,
+		map[string]any{
+			"authenticated":     false,
+			"collector_state":   "auth_required",
+			"last_connected_at": nil,
+			"last_event_at":     nil,
+			"last_persisted_at": nil,
+			"last_error": map[string]any{
+				"code":    "NOT_AUTHENTICATED",
+				"message": "Stop service and run local login.",
+			},
+		},
+	); err != nil {
+		return err
+	}
+	slog.WarnContext(ctx, "Zalo authentication required; waiting for local login")
+	<-ctx.Done()
+	return nil
+
+}
+
+func persistSessionStorageFailure(ctx context.Context, store *storage.Store, err error) error {
+	if saveErr := store.SetState(
+		ctx,
+		map[string]any{
+			"authenticated":     false,
+			"collector_state":   "stopped",
+			"last_connected_at": nil,
+			"last_event_at":     nil,
+			"last_persisted_at": nil,
+			"last_error": map[string]any{
+				"code":    "STORAGE_ERROR",
+				"message": "Cannot read private saved session.",
+			},
+		},
+	); saveErr != nil {
+		return saveErr
+	}
+	return err
+}
+
+func configuredEndpoints(c config.Config, store *storage.Store, port *membershipPort, token string) (*mcpserver.HTTPService, *events.Worker, *logging.File, error) {
+	protocol, err := events.NewSubscriptionManager(store, c.StateDir)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	handler, err := mcpserver.NewHTTP(token, mcpReadPorts(store, port), protocol)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	worker, err := events.NewWorker(store)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	var eventTrace *logging.File
+	if c.Logging.EventTraceFile != "" {
+		eventTrace, err = logging.Open(c.Logging.EventTraceFile, c.Logging.MaxSizeMB, c.Logging.MaxBackups, os.Stderr)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		worker.TraceLogger = slog.New(slog.NewJSONHandler(eventTrace, nil))
+	}
+	return handler, worker, eventTrace, nil
+}
+
+func openConfiguredIPC(ctx context.Context, stateDir string) (net.Listener, string, error) {
+	socket, err := local.SocketPath(stateDir)
+	if err != nil {
+		return nil, "", err
+	}
+	if err = os.Remove(socket); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return nil, "", err
+	}
+	ipc, err := (&net.ListenConfig{}).Listen(ctx, "unix", socket)
+	if err != nil {
+		return nil, "", err
+	}
+	return ipc, socket, nil
+}
+
+func awaitSessionRetry(ctx context.Context, store *storage.Store, delay time.Duration) (bool, error) {
+	if err := store.BeginGap(ctx, "session_restore_failed"); err != nil {
+		return false, err
+	}
+	if err := store.SetState(
+		ctx,
+		map[string]any{
+			"authenticated":     false,
+			"collector_state":   "reconnecting",
+			"last_connected_at": nil,
+			"last_event_at":     nil,
+			"last_persisted_at": nil,
+			"last_error": map[string]any{
+				"code":    "UPSTREAM_UNAVAILABLE",
+				"message": "Saved session verification failed; retrying.",
+			},
+		},
+	); err != nil {
+		return false, err
+	}
+	slog.WarnContext(ctx, "Zalo session verification unavailable; retrying", "retry_seconds", delay.Seconds())
+	timer := time.NewTimer(delay)
+	select {
+	case <-ctx.Done():
+		timer.Stop()
+		return false, nil
+	case <-timer.C:
+	}
+	return true, nil
+}
+
+func activeCollectorOutcome(ctx context.Context, err error) (bool, error) {
+	if ctx.Err() != nil {
+		//nolint:nilerr // Owner cancellation is normal session shutdown; the worker error must not trigger a retry.
+		return true, nil
+	}
+	if err == nil {
+		return true, errors.New("collector stopped unexpectedly")
+	}
+	if !errors.Is(err, domain.ErrAuthenticationRequired) {
+		return true, err
+	}
+	return false, nil
 }

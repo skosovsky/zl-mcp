@@ -44,19 +44,19 @@ func SourceFingerprint(ctx context.Context, root string) (Object, error) {
 			continue
 		}
 		path := filepath.Join(root, name)
-		info, e := os.Stat(path)
-		if os.IsNotExist(e) {
+		info, statErr := os.Stat(path)
+		if os.IsNotExist(statErr) {
 			continue
 		}
-		if e != nil {
-			return nil, e
+		if statErr != nil {
+			return nil, statErr
 		}
 		if !info.Mode().IsRegular() {
 			continue
 		}
-		hash, e := fileDigest(path)
-		if e != nil {
-			return nil, e
+		hash, statErr := fileDigest(path)
+		if statErr != nil {
+			return nil, statErr
 		}
 		files = append(files, Object{"path": name, "sha256": hash, "executable": info.Mode().Perm()&0111 != 0})
 	}
@@ -82,61 +82,7 @@ func Build(ctx context.Context, root, output string) error {
 		return e
 	}
 	manifest := Object{"status": "FAIL", "builds": []any{}, "model": "NOT_RUN", "live": "NOT_RUN"}
-	resultErr := func() error {
-		ctx, cancel := context.WithTimeout(ctx, 180*time.Second)
-		defer cancel()
-		head, e := hostCommand(ctx, root, "git", "rev-parse", "HEAD")
-		if e != nil {
-			return e
-		}
-		toolchain, e := hostCommand(ctx, root, "go", "version")
-		if e != nil {
-			return e
-		}
-		if !strings.Contains(string(toolchain), "go1.27.1") {
-			return fmt.Errorf("requires pinned go1.27.1")
-		}
-		sources, e := SourceFingerprint(ctx, root)
-		if e != nil {
-			return e
-		}
-		manifest["candidate_parent_sha"] = strings.TrimSpace(string(head))
-		manifest["toolchain"] = strings.TrimSpace(string(toolchain))
-		manifest["candidate_sources"] = sources
-		binary := filepath.Join(output, "zl-mcp-eval-candidate")
-		args := []string{"go", "build", "-trimpath", "-o", binary, "./cmd/zl-mcp-eval"}
-		env := append(os.Environ(), "GOWORK=off")
-		out, stderr, code, e := process(ctx, root, env, args, 4<<20)
-		//nolint:gosec // G306: this synthetic evidence contains build/host provenance, never account credentials.
-		logErr := os.WriteFile(filepath.Join(output, "candidate.build.log"), append(out, stderr...), 0644)
-		record := Object{"kind": "candidate", "target": "./cmd/zl-mcp-eval", "command": args, "exit_status": code, "binary": binary}
-		manifest["builds"] = []any{record}
-		if logErr != nil {
-			return logErr
-		}
-		if e != nil {
-			return e
-		}
-		hash, e := fileDigest(binary)
-		if e != nil {
-			return e
-		}
-		info, e := hostCommand(ctx, root, "go", "version", "-m", binary)
-		if e != nil {
-			return e
-		}
-		record["binary_sha256"] = hash
-		record["build_info"] = string(info)
-		after, e := SourceFingerprint(ctx, root)
-		if e != nil {
-			return e
-		}
-		if after["source_digest_sha256"] != sources["source_digest_sha256"] {
-			return fmt.Errorf("source tree changed during build")
-		}
-		manifest["status"] = "PASS"
-		return nil
-	}()
+	resultErr := buildCandidate(ctx, root, output, manifest)
 	if resultErr != nil {
 		manifest["error"] = resultErr.Error()
 	}
@@ -144,4 +90,60 @@ func Build(ctx context.Context, root, output string) error {
 		return e
 	}
 	return resultErr
+}
+
+func buildCandidate(ctx context.Context, root, output string, manifest Object) error {
+	ctx, cancel := context.WithTimeout(ctx, 180*time.Second)
+	defer cancel()
+	head, e := hostCommand(ctx, root, "git", "rev-parse", "HEAD")
+	if e != nil {
+		return e
+	}
+	toolchain, e := hostCommand(ctx, root, "go", "version")
+	if e != nil {
+		return e
+	}
+	if !strings.Contains(string(toolchain), "go1.27.1") {
+		return fmt.Errorf("requires pinned go1.27.1")
+	}
+	sources, e := SourceFingerprint(ctx, root)
+	if e != nil {
+		return e
+	}
+	manifest["candidate_parent_sha"] = strings.TrimSpace(string(head))
+	manifest["toolchain"] = strings.TrimSpace(string(toolchain))
+	manifest["candidate_sources"] = sources
+	binary := filepath.Join(output, "zl-mcp-eval-candidate")
+	args := []string{"go", "build", "-trimpath", "-o", binary, "./cmd/zl-mcp-eval"}
+	env := append(os.Environ(), "GOWORK=off")
+	out, stderr, code, e := process(ctx, root, env, args, 4<<20)
+	//nolint:gosec // G306: this synthetic evidence contains build/host provenance, never account credentials.
+	logErr := os.WriteFile(filepath.Join(output, "candidate.build.log"), append(out, stderr...), 0644)
+	record := Object{"kind": "candidate", "target": "./cmd/zl-mcp-eval", "command": args, "exit_status": code, "binary": binary}
+	manifest["builds"] = []any{record}
+	if logErr != nil {
+		return logErr
+	}
+	if e != nil {
+		return e
+	}
+	hash, e := fileDigest(binary)
+	if e != nil {
+		return e
+	}
+	info, e := hostCommand(ctx, root, "go", "version", "-m", binary)
+	if e != nil {
+		return e
+	}
+	record["binary_sha256"] = hash
+	record["build_info"] = string(info)
+	after, e := SourceFingerprint(ctx, root)
+	if e != nil {
+		return e
+	}
+	if after["source_digest_sha256"] != sources["source_digest_sha256"] {
+		return fmt.Errorf("source tree changed during build")
+	}
+	manifest["status"] = "PASS"
+	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
+//nolint:gocognit // This test helper checks the complete fixture/metric shape without dropping nested boundary assertions.
 func testOfflineArchiveCatalogue(t *testing.T, owner *membershipPort, sourceID string, recalled bool) {
 	t.Helper()
 	// Arrange: authenticated library has two direct files and a colliding group ID.
@@ -19,7 +20,12 @@ func testOfflineArchiveCatalogue(t *testing.T, owner *membershipPort, sourceID s
 	if err != nil || len(restricted["conversations"].([]map[string]any)) != 0 {
 		t.Fatal("restricted archive leaked peers", err)
 	}
-	store, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "corpus.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	store, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(t.TempDir(), "corpus.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,22 +42,25 @@ func testOfflineArchiveCatalogue(t *testing.T, owner *membershipPort, sourceID s
 	}
 	var firstCursor string
 	// Act: page the immutable file mapping without a collector or catalogue rows.
-	for page := 0; page < 3; page++ {
-		result, err := offline.Call(ctx, "zalo_list_conversations", args)
-		if err != nil {
-			t.Fatal(err)
+	for page := range 3 {
+		result, callErr := offline.Call(ctx, "zalo_list_conversations", args)
+		if callErr != nil {
+			t.Fatal(callErr)
 		}
 		encoded, _ := json.Marshal(result)
 		var value any
 		json.Unmarshal(encoded, &value)
-		if err = schema.Validate(value); err != nil {
-			t.Fatal("archive catalogue contract", err)
+		if callErr = schema.Validate(value); callErr != nil {
+			t.Fatal("archive catalogue contract", callErr)
 		}
 		items := result["conversations"].([]map[string]any)
 		if len(items) != 1 {
 			t.Fatal("archive pagination skipped mapping")
 		}
-		ref := domain.ConversationRef{Type: items[0]["conversation_type"].(string), ID: items[0]["conversation_id"].(string)}
+		ref := domain.ConversationRef{
+			Type: items[0]["conversation_type"].(string),
+			ID:   items[0]["conversation_id"].(string),
+		}
 		if seen[ref] {
 			t.Fatal("archive pagination repeated mapping")
 		}
@@ -70,18 +79,31 @@ func testOfflineArchiveCatalogue(t *testing.T, owner *membershipPort, sourceID s
 		}
 	}
 	// Assert: typed collisions stay separate; cursor substitution and new filters fail.
-	if len(seen) != 3 || !seen[domain.ConversationRef{Type: "direct", ID: "12"}] || !seen[domain.ConversationRef{Type: "group", ID: "12"}] {
+	if len(seen) != 3 || !seen[domain.ConversationRef{Type: "direct", ID: "12"}] ||
+		!seen[domain.ConversationRef{Type: "group", ID: "12"}] {
 		t.Fatal("typed source mapping changed")
 	}
-	if _, err = offline.Call(ctx, "zalo_list_conversations", map[string]any{"source_id": sourceID, "cursor": firstCursor, "conversation_type": "group"}); err == nil {
+	if _, err = offline.Call(
+		ctx,
+		"zalo_list_conversations",
+		map[string]any{"source_id": sourceID, "cursor": firstCursor, "conversation_type": "group"},
+	); err == nil {
 		t.Fatal("cursor filter substitution accepted")
 	}
 	narrowed := &membershipPort{store: owner.store, library: owner.library}
-	denied, err := narrowed.Call(ctx, "zalo_list_conversations", map[string]any{"source_id": sourceID, "cursor": firstCursor})
+	denied, err := narrowed.Call(
+		ctx,
+		"zalo_list_conversations",
+		map[string]any{"source_id": sourceID, "cursor": firstCursor},
+	)
 	if err != nil || len(denied["conversations"].([]map[string]any)) != 0 {
 		t.Fatal("cursor bypassed current policy", err)
 	}
-	result, err := offline.Call(ctx, "zalo_list_conversations", map[string]any{"source_id": sourceID, "query": "unobserved name"})
+	result, err := offline.Call(
+		ctx,
+		"zalo_list_conversations",
+		map[string]any{"source_id": sourceID, "query": "unobserved name"},
+	)
 	if err != nil || len(result["conversations"].([]map[string]any)) != 0 {
 		t.Fatal("unknown names invented", err)
 	}

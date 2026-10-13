@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -23,13 +24,35 @@ func controlScanFixture(t *testing.T, count int, modify func(*sql.DB)) (Selected
 	stamp := since.Add(-24 * time.Hour).UnixMilli()
 	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
 		// An unrelated normal row is intentionally not a control candidate.
-		if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "902", "9", "8", "ordinary", stamp, 0, 0, 1, nil); err != nil {
+		if _, err := db.Exec(
+			"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+			"902",
+			"9",
+			"8",
+			"ordinary",
+			stamp,
+			0,
+			0,
+			1,
+			nil,
+		); err != nil {
 			t.Fatal(err)
 		}
-		for i := 0; i < count; i++ {
+		for i := range count {
 			// Some controls precede the requested period, others follow its first page.
 			at := stamp + int64(i)*24*60*60*1000
-			if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", fmt.Sprint(100+i), fmt.Sprint(200+i), []byte{255}, at, 0, 36, 3, []byte{255}); err != nil {
+			if _, err := db.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				"901",
+				strconv.Itoa(100+i),
+				strconv.Itoa(200+i),
+				[]byte{255},
+				at,
+				0,
+				36,
+				3,
+				[]byte{255},
+			); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -37,19 +60,26 @@ func controlScanFixture(t *testing.T, count int, modify func(*sql.DB)) (Selected
 			modify(db)
 		}
 	})
-	selected := SelectedArchive{requestID: r.RequestID, requestFingerprint: r.Fingerprint(), ref: r.Ref(), File: ArchiveFile{Name: "902.db", Data: data}}
+	selected := SelectedArchive{
+		requestID:          r.RequestID,
+		requestFingerprint: r.Fingerprint(),
+		ref:                r.Ref(),
+		File:               ArchiveFile{Name: "902.db", Data: data},
+	}
 	t.Cleanup(func() { selected.Clear() })
 	return selected, r
 }
 
 func controlOwnerMapper(counter *int) domain.MobileIdentitySource {
-	return identitySourceFunc(func(ctx context.Context, r domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-		*counter = *counter + 1
-		if len(r.Direct) != 1 || r.Direct[0] != "901" || len(r.Groups) != 0 {
-			return nil, errors.New("unexpected synthetic identity request")
-		}
-		return []domain.MobileIdentityPair{{Plain: "901", Session: "10"}}, nil
-	})
+	return identitySourceFunc(
+		func(ctx context.Context, r domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+			*counter = *counter + 1
+			if len(r.Direct) != 1 || r.Direct[0] != "901" || len(r.Groups) != 0 {
+				return nil, errors.New("unexpected synthetic identity request")
+			}
+			return []domain.MobileIdentityPair{{Plain: "901", Session: "10"}}, nil
+		},
+	)
 }
 
 func TestWholeSourceControlScanIncludesLateAndOutsidePeriodRows(t *testing.T) {
@@ -57,13 +87,23 @@ func TestWholeSourceControlScanIncludesLateAndOutsidePeriodRows(t *testing.T) {
 	selected, r := controlScanFixture(t, 52, nil)
 	calls := 0
 	// Act.
-	set, err := ReadOwnDirectRecallSet(context.Background(), selected, r, "10", t.TempDir(), 100, controlOwnerMapper(&calls))
+	set, err := ReadOwnDirectRecallSet(
+		context.Background(),
+		selected,
+		r,
+		"10",
+		t.TempDir(),
+		100,
+		controlOwnerMapper(&calls),
+	)
 	defer set.Clear()
 	// Assert: complete exact target set, one mapping, no private payload returned.
 	if err != nil || len(set.Recalls) != 52 || calls != 1 {
 		t.Fatal("whole-source scan failed", err, len(set.Recalls), calls)
 	}
-	if set.Recalls[0].MessageID != "100" || set.Recalls[51].MessageID != "151" || set.Recalls[0].Conversation != r.Ref() || set.Recalls[0].SenderID != "10" {
+	if set.Recalls[0].MessageID != "100" || set.Recalls[51].MessageID != "151" ||
+		set.Recalls[0].Conversation != r.Ref() ||
+		set.Recalls[0].SenderID != "10" {
 		t.Fatal("control binding lost")
 	}
 	since, _ := time.Parse(time.RFC3339Nano, r.Since)
@@ -81,6 +121,7 @@ func TestWholeSourceControlScanIncludesLateAndOutsidePeriodRows(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestWholeSourceControlScanReturnsNoPrefixOnInvalidSource(t *testing.T) {
 	for _, mode := range []string{"type33", "incoming", "status", "duplicate", "invalid-time", "missing-id", "oversized", "wal", "cancelled", "partial-mapping", "foreign-request"} {
 		t.Run(mode, func(t *testing.T) {
@@ -122,9 +163,11 @@ func TestWholeSourceControlScanReturnsNoPrefixOnInvalidSource(t *testing.T) {
 			case "foreign-request":
 				r.ConversationID = "99"
 			case "partial-mapping":
-				mapper = identitySourceFunc(func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-					return nil, nil
-				})
+				mapper = identitySourceFunc(
+					func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+						return nil, nil
+					},
+				)
 			}
 			// Act.
 			set, err := ReadOwnDirectRecallSet(ctx, selected, r, "10", t.TempDir(), limit, mapper)
@@ -145,7 +188,15 @@ func TestWholeSourceControlScanEmptySetNeedsNoMapping(t *testing.T) {
 	selected, r := controlScanFixture(t, 0, nil)
 	calls := 0
 	// Act.
-	set, err := ReadOwnDirectRecallSet(context.Background(), selected, r, "10", t.TempDir(), 1, controlOwnerMapper(&calls))
+	set, err := ReadOwnDirectRecallSet(
+		context.Background(),
+		selected,
+		r,
+		"10",
+		t.TempDir(),
+		1,
+		controlOwnerMapper(&calls),
+	)
 	defer set.Clear()
 	// Assert.
 	if err != nil || calls != 0 || len(set.Recalls) != 0 || set.digest == ([32]byte{}) || set.requestID != r.RequestID {
@@ -156,10 +207,12 @@ func TestWholeSourceControlScanEmptySetNeedsNoMapping(t *testing.T) {
 func TestWholeSourceControlScanRejectsImageMutationDuringMapping(t *testing.T) {
 	// Arrange: the mapper must not be able to rebind proof to different image bytes.
 	selected, r := controlScanFixture(t, 1, nil)
-	mapper := identitySourceFunc(func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-		selected.File.Data[len(selected.File.Data)-1] ^= 1
-		return []domain.MobileIdentityPair{{Plain: "901", Session: "10"}}, nil
-	})
+	mapper := identitySourceFunc(
+		func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+			selected.File.Data[len(selected.File.Data)-1] ^= 1
+			return []domain.MobileIdentityPair{{Plain: "901", Session: "10"}}, nil
+		},
+	)
 	// Act.
 	set, err := ReadOwnDirectRecallSet(context.Background(), selected, r, "10", t.TempDir(), 1, mapper)
 	defer set.Clear()

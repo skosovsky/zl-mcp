@@ -3,8 +3,8 @@ package storage
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -15,6 +15,7 @@ func queueEncoder(id string, m domain.Message) ([]byte, error) {
 	return json.Marshal(map[string]string{"eventId": id, "text": m.Text})
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestBroadConversationFanoutCapacityPreservesCollectedCorpus(t *testing.T) {
 	// Arrange: overlapping all/direct scopes across newly discovered dialogues.
 	ctx := context.Background()
@@ -25,29 +26,51 @@ func TestBroadConversationFanoutCapacityPreservesCollectedCorpus(t *testing.T) {
 	defer s.Close()
 	at := time.Now().UTC()
 	for _, scope := range []string{"all", "direct"} {
-		revision, err := s.SubscriptionRevision(ctx, scope)
-		if err != nil {
-			t.Fatal(err)
+		revision, subscriptionRevisionErr := s.SubscriptionRevision(ctx, scope)
+		if subscriptionRevisionErr != nil {
+			t.Fatal(subscriptionRevisionErr)
 		}
-		sub := EventSubscription{ID: scope, Principal: "owner", Profile: domain.ConversationMessageCreatedV2, Scope: scope, Callback: "https://callback.example", Secret: "synthetic"}
+		sub := EventSubscription{
+			ID:        scope,
+			Principal: "owner",
+			Profile:   domain.ConversationMessageCreatedV2,
+			Scope:     scope,
+			Callback:  "https://callback.example",
+			Secret:    "synthetic",
+		}
 		if scope == "direct" {
 			sub.ConversationType = "direct"
 		}
-		if _, err := s.ActivateSubscription(ctx, sub, revision, at); err != nil {
-			t.Fatal(err)
+		if _, activateSubscriptionErr := s.ActivateSubscription(ctx, sub, revision, at); activateSubscriptionErr != nil {
+			t.Fatal(activateSubscriptionErr)
 		}
 	}
 	for n := range 10 {
 		for _, kind := range []string{"direct", "group"} {
-			if err := s.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: kind, ID: fmt.Sprint(n)}, ID: "m", SenderID: "peer", SentAt: at, Text: "synthetic", Source: "live"}); err != nil {
-				t.Fatal(err)
+			if putErr := s.Put(
+				ctx,
+				domain.Message{
+					Conversation: domain.ConversationRef{Type: kind, ID: strconv.Itoa(n)},
+					ID:           "m",
+					SenderID:     "peer",
+					SentAt:       at,
+					Text:         "synthetic",
+					Source:       "live",
+				},
+			); putErr != nil {
+				t.Fatal(putErr)
 			}
 		}
 	}
 	p := DefaultDeliveryPolicy()
 	p.MaxJobs = 3
 	// Act: twenty journal records fan out to thirty targets under one global quota.
-	n, err := s.FanoutProfileEvents(ctx, at, p, func(_ string, id string, m domain.Message) ([]byte, error) { return queueEncoder(id, m) })
+	n, err := s.FanoutProfileEvents(
+		ctx,
+		at,
+		p,
+		func(_ string, id string, m domain.Message) ([]byte, error) { return queueEncoder(id, m) },
+	)
 	if err != nil || n != 20 {
 		t.Fatalf("fanout=%d error=%v", n, err)
 	}
@@ -84,28 +107,48 @@ func TestConversationDeliveryRevocationAfterRestart(t *testing.T) {
 		{ID: "exact", Profile: domain.ConversationMessageCreatedV2, Scope: "conversation", ConversationType: "direct", GroupID: "same"},
 	} {
 		sub.Principal, sub.Callback, sub.Secret = "owner", "https://callback.example", "synthetic"
-		revision, err := s.SubscriptionRevision(ctx, sub.ID)
-		if err != nil {
-			t.Fatal(err)
+		revision, nestedSubscriptionRevisionErr := s.SubscriptionRevision(ctx, sub.ID)
+		if nestedSubscriptionRevisionErr != nil {
+			t.Fatal(nestedSubscriptionRevisionErr)
 		}
-		if _, err := s.ActivateSubscription(ctx, sub, revision, at); err != nil {
-			t.Fatal(err)
+		if _, nestedActivateSubscriptionErr := s.ActivateSubscription(ctx, sub, revision, at); nestedActivateSubscriptionErr != nil {
+			t.Fatal(nestedActivateSubscriptionErr)
 		}
 	}
 	for _, kind := range []string{"direct", "group"} {
-		if err := s.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: kind, ID: "same"}, ID: "m", SenderID: "peer", SentAt: at, Text: "synthetic", Source: "live"}); err != nil {
-			t.Fatal(err)
+		if nestedPutErr := s.Put(
+			ctx,
+			domain.Message{
+				Conversation: domain.ConversationRef{Type: kind, ID: "same"},
+				ID:           "m",
+				SenderID:     "peer",
+				SentAt:       at,
+				Text:         "synthetic",
+				Source:       "live",
+			},
+		); nestedPutErr != nil {
+			t.Fatal(nestedPutErr)
 		}
 	}
 	p := DefaultDeliveryPolicy()
-	if _, err := s.FanoutProfileEvents(ctx, at, p, func(_ string, id string, m domain.Message) ([]byte, error) { return queueEncoder(id, m) }); err != nil {
-		t.Fatal(err)
+	if _, fanoutProfileEventsErr := s.FanoutProfileEvents(
+		ctx,
+		at,
+		p,
+		func(_ string, id string, m domain.Message) ([]byte, error) { return queueEncoder(id, m) },
+	); fanoutProfileEventsErr != nil {
+		t.Fatal(fanoutProfileEventsErr)
 	}
 	// Act: reopen with only the group permitted, retaining all durable queues.
-	if err := s.Close(); err != nil {
-		t.Fatal(err)
+	if closeErr := s.Close(); closeErr != nil {
+		t.Fatal(closeErr)
 	}
-	s, err = OpenWithPolicy(ctx, path, domain.CollectionPolicy{Selected: map[domain.ConversationRef]bool{{Type: "group", ID: "same"}: true}}, 90)
+	s, err = OpenWithPolicy(
+		ctx,
+		path,
+		domain.CollectionPolicy{Selected: map[domain.ConversationRef]bool{{Type: "group", ID: "same"}: true}},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,8 +156,8 @@ func TestConversationDeliveryRevocationAfterRestart(t *testing.T) {
 	if err != nil || job == nil || job.SubscriptionID != "all" {
 		t.Fatalf("permitted job=%v error=%v", job, err)
 	}
-	if err := s.FinishDelivery(ctx, *job, DeliveryOutcome{State: "delivered"}, at); err != nil {
-		t.Fatal(err)
+	if finishDeliveryErr := s.FinishDelivery(ctx, *job, DeliveryOutcome{State: "delivered"}, at); finishDeliveryErr != nil {
+		t.Fatal(finishDeliveryErr)
 	}
 	next, err := s.ClaimDelivery(ctx, at, p)
 	// Assert: neither broad nor exact scopes bypass revocation or type isolation.
@@ -122,7 +165,8 @@ func TestConversationDeliveryRevocationAfterRestart(t *testing.T) {
 		t.Fatalf("revoked job=%v error=%v", next, err)
 	}
 	var cleared int
-	if err := s.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM event_deliveries WHERE state='cancelled' AND last_reason='access_revoked' AND length(payload)=0").Scan(&cleared); err != nil {
+	if err := s.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM event_deliveries WHERE state='cancelled' AND last_reason='access_revoked' AND length(payload)=0").
+		Scan(&cleared); err != nil {
 		t.Fatal(err)
 	}
 	if cleared != 3 {
@@ -132,7 +176,13 @@ func TestConversationDeliveryRevocationAfterRestart(t *testing.T) {
 
 func queueSubscription(t *testing.T, s *Store, id string, at time.Time) EventSubscription {
 	t.Helper()
-	sub := EventSubscription{ID: id, Principal: "owner", GroupID: "g1", Callback: "https://callback.example", Secret: "synthetic"}
+	sub := EventSubscription{
+		ID:        id,
+		Principal: "owner",
+		GroupID:   "g1",
+		Callback:  "https://callback.example",
+		Secret:    "synthetic",
+	}
 	revision, err := s.SubscriptionRevision(context.Background(), id)
 	if err != nil {
 		t.Fatal(err)
@@ -153,7 +203,10 @@ func TestFanoutFiltersHistoryAndCommitsWatermarkWithTasks(t *testing.T) {
 	queueSubscription(t, s, "subscription", at)
 	putTest(t, s, "late", "g1", "late replay", at.Add(-time.Hour))
 	putTest(t, s, "other", "g2", "not subscribed", at)
-	if _, err := s.DB.ExecContext(ctx, `CREATE TRIGGER reject_task BEFORE INSERT ON event_deliveries BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`); err != nil {
+	if _, err := s.DB.ExecContext(
+		ctx,
+		`CREATE TRIGGER reject_task BEFORE INSERT ON event_deliveries BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`,
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act: interruption during fan-out rolls back earlier watermark updates too.
@@ -163,15 +216,15 @@ func TestFanoutFiltersHistoryAndCommitsWatermarkWithTasks(t *testing.T) {
 		t.Fatal("fanout failure ignored")
 	}
 	var watermark, count int
-	if err := s.DB.QueryRowContext(ctx, "SELECT seq FROM event_fanout").Scan(&watermark); err != nil {
-		t.Fatal(err)
+	if scanErr := s.DB.QueryRowContext(ctx, "SELECT seq FROM event_fanout").Scan(&watermark); scanErr != nil {
+		t.Fatal(scanErr)
 	}
 	if watermark != 0 {
 		t.Fatal("failed transaction advanced watermark")
 	}
 	// Arrange.
-	if _, err := s.DB.ExecContext(ctx, "DROP TRIGGER reject_task"); err != nil {
-		t.Fatal(err)
+	if _, execContextErr := s.DB.ExecContext(ctx, "DROP TRIGGER reject_task"); execContextErr != nil {
+		t.Fatal(execContextErr)
 	}
 	// Act.
 	n, err := s.FanoutEvents(ctx, at, DefaultDeliveryPolicy(), queueEncoder)
@@ -204,16 +257,16 @@ func TestDeliveryLeaseSurvivesRestartAndRejectsStaleCompletion(t *testing.T) {
 	p := DefaultDeliveryPolicy()
 	queueSubscription(t, s, "sub", at)
 	putTest(t, s, "message", "g1", "body", at)
-	if _, err := s.FanoutEvents(ctx, at, p, queueEncoder); err != nil {
-		t.Fatal(err)
+	if _, fanoutEventsErr := s.FanoutEvents(ctx, at, p, queueEncoder); fanoutEventsErr != nil {
+		t.Fatal(fanoutEventsErr)
 	}
 	// Act.
 	first, err := s.ClaimDelivery(ctx, at, p)
 	if err != nil || first == nil {
 		t.Fatalf("claim: %v", err)
 	}
-	if err := s.Close(); err != nil {
-		t.Fatal(err)
+	if nestedCloseErr := s.Close(); nestedCloseErr != nil {
+		t.Fatal(nestedCloseErr)
 	}
 	s, err = Open(ctx, path, []string{"g1"}, 90)
 	if err != nil {
@@ -225,7 +278,9 @@ func TestDeliveryLeaseSurvivesRestartAndRejectsStaleCompletion(t *testing.T) {
 	}
 	retry, err := s.ClaimDelivery(ctx, at.Add(p.Lease+time.Second), p)
 	// Assert: no parallel callback, then same persisted payload and event identity.
-	if err != nil || busy != nil || retry == nil || retry.EventID != first.EventID || string(retry.Payload) != string(first.Payload) || retry.Attempts != 2 {
+	if err != nil || busy != nil || retry == nil || retry.EventID != first.EventID ||
+		string(retry.Payload) != string(first.Payload) ||
+		retry.Attempts != 2 {
 		t.Fatalf("lease/retry mismatch: %v", err)
 	}
 	// Act: a response from the first request cannot complete the reclaimed lease.
@@ -245,7 +300,9 @@ func TestDeliveryLeaseSurvivesRestartAndRejectsStaleCompletion(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Assert.
-	if err := s.DB.QueryRowContext(ctx, "SELECT state FROM event_deliveries").Scan(&state); err != nil || state != "delivered" {
+	if err := s.DB.QueryRowContext(ctx, "SELECT state FROM event_deliveries").
+		Scan(&state); err != nil ||
+		state != "delivered" {
 		t.Fatal("current lease did not complete")
 	}
 }
@@ -268,10 +325,12 @@ func TestQueueCapacityIsVisibleAndDoesNotStopCollection(t *testing.T) {
 	putTest(t, s, "three", "g1", "collection continues", at)
 	// Assert.
 	var pending, failed int
-	if err := s.DB.QueryRowContext(ctx, "SELECT count(*) FROM event_deliveries WHERE state='pending'").Scan(&pending); err != nil {
+	if err := s.DB.QueryRowContext(ctx, "SELECT count(*) FROM event_deliveries WHERE state='pending'").
+		Scan(&pending); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.DB.QueryRowContext(ctx, "SELECT count(*) FROM event_deliveries WHERE state='failed' AND last_reason='queue_capacity'").Scan(&failed); err != nil {
+	if err := s.DB.QueryRowContext(ctx, "SELECT count(*) FROM event_deliveries WHERE state='failed' AND last_reason='queue_capacity'").
+		Scan(&failed); err != nil {
 		t.Fatal(err)
 	}
 	if pending != 1 || failed != 1 {
@@ -329,7 +388,8 @@ func TestCancelledGenerationCannotBeResurrectedByResponse(t *testing.T) {
 	}
 	// Assert: late 410 from old generation cannot revoke the new activation.
 	var active int
-	if err := s.DB.QueryRowContext(ctx, "SELECT active FROM event_subscriptions WHERE id='sub'").Scan(&active); err != nil {
+	if err := s.DB.QueryRowContext(ctx, "SELECT active FROM event_subscriptions WHERE id='sub'").
+		Scan(&active); err != nil {
 		t.Fatal(err)
 	}
 	if active != 1 {
@@ -354,7 +414,12 @@ func TestRetryPreservesSubscriptionOrderWithoutBlockingOtherSubscriptions(t *tes
 	if err != nil || first == nil {
 		t.Fatal("first job unavailable")
 	}
-	if err = s.FinishDelivery(ctx, *first, DeliveryOutcome{State: "pending", Reason: "network", RetryAt: at.Add(time.Minute)}, at); err != nil {
+	if err = s.FinishDelivery(
+		ctx,
+		*first,
+		DeliveryOutcome{State: "pending", Reason: "network", RetryAt: at.Add(time.Minute)},
+		at,
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act: the other subscriber advances, but the retrying subscriber's second job cannot overtake its first.

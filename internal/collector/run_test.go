@@ -17,10 +17,16 @@ import (
 
 type scriptedListener struct {
 	*fakeZalo
+
 	listen func(context.Context, func(domain.Message) error, func(string, string) error, func() error) error
 }
 
-func (s *scriptedListener) Listen(ctx context.Context, message func(domain.Message) error, deletion func(string, string) error, connected func() error) error {
+func (s *scriptedListener) Listen(
+	ctx context.Context,
+	message func(domain.Message) error,
+	deletion func(string, string) error,
+	connected func() error,
+) error {
 	return s.listen(ctx, message, deletion, connected)
 }
 
@@ -50,7 +56,14 @@ func TestSessionCollectsReplayAndStopsCleanly(t *testing.T) {
 		if err := onConnected(); err != nil {
 			return err
 		}
-		m := domain.Message{GroupID: "g", ID: "m", SenderID: "sender", SentAt: time.Now().UTC(), Text: "Ремонт кондиционера", Source: "live"}
+		m := domain.Message{
+			GroupID:  "g",
+			ID:       "m",
+			SenderID: "sender",
+			SentAt:   time.Now().UTC(),
+			Text:     "Ремонт кондиционера",
+			Source:   "live",
+		}
 		if err := onMessage(m); err != nil {
 			return err
 		}
@@ -92,7 +105,9 @@ func TestSessionCollectsReplayAndStopsCleanly(t *testing.T) {
 func TestStorageFailureRemainsVisibleDuringReconnect(t *testing.T) {
 	// Arrange: fail only message INSERTs, leaving status and gap storage available.
 	c, s := sessionStore(t)
-	if _, err := s.DB.Exec(`CREATE TRIGGER fail_message BEFORE INSERT ON messages BEGIN SELECT RAISE(FAIL,'synthetic write failure'); END`); err != nil {
+	if _, err := s.DB.Exec(
+		`CREATE TRIGGER fail_message BEFORE INSERT ON messages BEGIN SELECT RAISE(FAIL,'synthetic write failure'); END`,
+	); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -105,7 +120,16 @@ func TestStorageFailureRemainsVisibleDuringReconnect(t *testing.T) {
 			if err := onConnected(); err != nil {
 				return err
 			}
-			return onMessage(domain.Message{GroupID: "g", ID: "m", SenderID: "sender", SentAt: time.Now().UTC(), Text: "test", Source: "live"})
+			return onMessage(
+				domain.Message{
+					GroupID:  "g",
+					ID:       "m",
+					SenderID: "sender",
+					SentAt:   time.Now().UTC(),
+					Text:     "test",
+					Source:   "live",
+				},
+			)
 		}
 		close(reconnecting)
 		<-ctx.Done()
@@ -130,11 +154,14 @@ func TestStorageFailureRemainsVisibleDuringReconnect(t *testing.T) {
 		t.Fatalf("state=%v coverage=%v run=%v", err, coverageErr, runErr)
 	}
 	last := state["last_error"].(map[string]any)
-	if last["code"] != "STORAGE_ERROR" || len(coverage.KnownGaps) != 1 || coverage.KnownGaps[0].Reason != "collector_start_or_restart" || coverage.KnownGaps[0].To != nil {
+	if last["code"] != "STORAGE_ERROR" || len(coverage.KnownGaps) != 1 ||
+		coverage.KnownGaps[0].Reason != "collector_start_or_restart" ||
+		coverage.KnownGaps[0].To != nil {
 		t.Fatalf("state=%+v coverage=%+v", state, coverage)
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestConnectedListenerResolvesOnlyListenerFailure(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
@@ -147,7 +174,9 @@ func TestConnectedListenerResolvesOnlyListenerFailure(t *testing.T) {
 			// Arrange: interrupt the first connected session, then reconnect.
 			c, s := sessionStore(t)
 			if tc.storage {
-				if _, err := s.DB.Exec(`CREATE TRIGGER fail_message BEFORE INSERT ON messages BEGIN SELECT RAISE(FAIL,'synthetic write failure'); END`); err != nil {
+				if _, err := s.DB.Exec(
+					`CREATE TRIGGER fail_message BEFORE INSERT ON messages BEGIN SELECT RAISE(FAIL,'synthetic write failure'); END`,
+				); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -163,7 +192,16 @@ func TestConnectedListenerResolvesOnlyListenerFailure(t *testing.T) {
 						return err
 					}
 					if tc.storage {
-						return message(domain.Message{GroupID: "g", ID: "m", SenderID: "sender", SentAt: time.Now().UTC(), Text: "test", Source: "live"})
+						return message(
+							domain.Message{
+								GroupID:  "g",
+								ID:       "m",
+								SenderID: "sender",
+								SentAt:   time.Now().UTC(),
+								Text:     "test",
+								Source:   "live",
+							},
+						)
 					}
 					return errors.New("synthetic listener interruption")
 				}
@@ -200,7 +238,8 @@ func TestConnectedListenerResolvesOnlyListenerFailure(t *testing.T) {
 				t.Fatal("listener did not reconnect")
 			}
 			// Assert: readiness resolves transport failure, not persistence failure.
-			if states[0]["collector_state"] != "connecting" || states[1]["collector_state"] != "connected" || states[1]["last_connected_at"] == nil {
+			if states[0]["collector_state"] != "connecting" || states[1]["collector_state"] != "connected" ||
+				states[1]["last_connected_at"] == nil {
 				t.Fatalf("unexpected reconnect states: %+v", states)
 			}
 			before, ok := states[0]["last_error"].(map[string]any)
@@ -236,13 +275,16 @@ func TestAuthenticationFailureStopsReconnectAndPreservesState(t *testing.T) {
 	state, stateErr := s.State(context.Background())
 	coverage, coverageErr := s.Coverage(context.Background(), "g")
 	// Assert: cleanup must not overwrite the terminal auth_required state with stopped.
-	if !errors.Is(err, domain.ErrAuthenticationRequired) || stateErr != nil || coverageErr != nil || attempts.Load() != 1 {
+	if !errors.Is(err, domain.ErrAuthenticationRequired) || stateErr != nil || coverageErr != nil ||
+		attempts.Load() != 1 {
 		t.Fatalf("run=%v state=%v coverage=%v attempts=%d", err, stateErr, coverageErr, attempts.Load())
 	}
-	if state["authenticated"] != false || state["collector_state"] != "auth_required" || state["last_error"].(map[string]any)["code"] != "NOT_AUTHENTICATED" {
+	if state["authenticated"] != false || state["collector_state"] != "auth_required" ||
+		state["last_error"].(map[string]any)["code"] != "NOT_AUTHENTICATED" {
 		t.Fatalf("incorrect auth state: %+v", state)
 	}
-	if len(coverage.KnownGaps) != 1 || coverage.KnownGaps[0].Reason != "collector_start_or_restart" || coverage.KnownGaps[0].To != nil {
+	if len(coverage.KnownGaps) != 1 || coverage.KnownGaps[0].Reason != "collector_start_or_restart" ||
+		coverage.KnownGaps[0].To != nil {
 		t.Fatalf("missing authentication gap: %+v", coverage)
 	}
 	if _, err := os.Stat(filepath.Join(c.StateDir, "collector.sock")); !errors.Is(err, os.ErrNotExist) {
@@ -260,12 +302,21 @@ func TestInternalCollectorHasNoControlListener(t *testing.T) {
 	client.listen = func(ctx context.Context, message func(domain.Message) error, _ func(string, string) error, connected func() error) error {
 		// Assert while the collector is active: it has no IPC listener of its own.
 		if _, err := os.Stat(filepath.Join(c.StateDir, "collector.sock")); !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("internal collector opened a socket: %v", err)
+			return fmt.Errorf("internal collector opened a socket: %w", err)
 		}
 		if err := connected(); err != nil {
 			return err
 		}
-		if err := message(domain.Message{GroupID: "g", ID: "internal", SenderID: "sender", SentAt: time.Now().UTC(), Text: "internal collector", Source: "live"}); err != nil {
+		if err := message(
+			domain.Message{
+				GroupID:  "g",
+				ID:       "internal",
+				SenderID: "sender",
+				SentAt:   time.Now().UTC(),
+				Text:     "internal collector",
+				Source:   "live",
+			},
+		); err != nil {
 			return err
 		}
 		cancel()

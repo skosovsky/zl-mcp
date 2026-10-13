@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	operationsadapter "github.com/skosovsky/zl-mcp/internal/adapters/operations"
 	storeadapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
 	"github.com/skosovsky/zl-mcp/internal/app/archives"
@@ -23,11 +24,17 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/toolruntime"
 )
 
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMCPHistoryImportDiscoveryStatusAndReads(t *testing.T) {
 	// Arrange: real MCP transport and schemas around the durable backend/worker.
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	s, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	s, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(t.TempDir(), "messages.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +45,26 @@ func TestMCPHistoryImportDiscoveryStatusAndReads(t *testing.T) {
 	reader := storeadapter.New(s)
 	backend := &historyimport.Manager{Store: s}
 	operations := operationsadapter.NewReader(backend)
-	server, err := mcpserver.New(mcpserver.Ports{Operations: toolruntime.Capabilities{Messaging: &messaging.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}}, Archives: &archives.Handler{Reads: operationsadapter.NewArchiveReader(backend)}, Search: &search.Handler{Reads: reader}, Conversations: &conversations.Handler{Reads: reader, Catalog: reader, DirectoryReads: reader, LiveGroups: operations}, Authority: reader, Admission: reader, Events: &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader}})
+	server, err := mcpserver.New(
+		mcpserver.Ports{
+			Operations: toolruntime.Capabilities{
+				Messaging:  &messaging.Handler{Reads: operations, Commands: operations},
+				History:    &history.Handler{Reads: operations, Commands: operations},
+				Membership: &membership.Handler{Reads: operations, Commands: operations},
+			},
+			Archives: &archives.Handler{Reads: operationsadapter.NewArchiveReader(backend)},
+			Search:   &search.Handler{Reads: reader},
+			Conversations: &conversations.Handler{
+				Reads:          reader,
+				Catalog:        reader,
+				DirectoryReads: reader,
+				LiveGroups:     operations,
+			},
+			Authority: reader,
+			Admission: reader,
+			Events:    &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader},
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,11 +86,15 @@ func TestMCPHistoryImportDiscoveryStatusAndReads(t *testing.T) {
 	}
 	seen := map[string]bool{}
 	for _, tool := range tools.Tools {
-		if tool.Name == "zalo_import_conversation_history" || tool.Name == "zalo_cancel_history_import" || tool.Name == "zalo_get_history_import_status" {
+		if tool.Name == "zalo_import_conversation_history" || tool.Name == "zalo_cancel_history_import" ||
+			tool.Name == "zalo_get_history_import_status" {
 			seen[tool.Name] = true
 			wantRead := tool.Name == "zalo_get_history_import_status"
 			wantWorld := tool.Name == "zalo_import_conversation_history"
-			if tool.Annotations == nil || tool.Annotations.ReadOnlyHint != wantRead || tool.Annotations.OpenWorldHint == nil || *tool.Annotations.OpenWorldHint != wantWorld || !tool.Annotations.IdempotentHint {
+			if tool.Annotations == nil || tool.Annotations.ReadOnlyHint != wantRead ||
+				tool.Annotations.OpenWorldHint == nil ||
+				*tool.Annotations.OpenWorldHint != wantWorld ||
+				!tool.Annotations.IdempotentHint {
 				t.Fatalf("incorrect history annotations: %s", tool.Name)
 			}
 		}
@@ -72,7 +102,13 @@ func TestMCPHistoryImportDiscoveryStatusAndReads(t *testing.T) {
 	if len(seen) != 3 {
 		t.Fatal("history capability missing")
 	}
-	args := map[string]any{"conversation_type": "group", "conversation_id": "synthetic-group", "request_id": "00000000-0000-4000-8000-000000000001", "since": "2026-09-01T00:00:00Z", "until": "2026-11-01T00:00:00Z"}
+	args := map[string]any{
+		"conversation_type": "group",
+		"conversation_id":   "synthetic-group",
+		"request_id":        "00000000-0000-4000-8000-000000000001",
+		"since":             "2026-09-01T00:00:00Z",
+		"until":             "2026-11-01T00:00:00Z",
+	}
 	// Act
 	accepted, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_import_conversation_history", Arguments: args})
 	// Assert
@@ -94,15 +130,36 @@ func TestMCPHistoryImportDiscoveryStatusAndReads(t *testing.T) {
 	}()
 	defer func() { stop(); <-done }()
 	awaitState(t, s, id, "completed")
-	status, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_get_history_import_status", Arguments: map[string]any{"operation_id": id}})
+	status, err := cs.CallTool(
+		ctx,
+		&mcp.CallToolParams{Name: "zalo_get_history_import_status", Arguments: map[string]any{"operation_id": id}},
+	)
 	if err != nil || status.IsError || status.StructuredContent.(map[string]any)["history_complete"] != false {
 		t.Fatal("status contract failed", err)
 	}
-	read, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_get_conversation_message_context", Arguments: map[string]any{"conversation_type": "group", "conversation_id": "synthetic-group", "message_id": "historical-message"}})
+	read, err := cs.CallTool(
+		ctx,
+		&mcp.CallToolParams{
+			Name: "zalo_get_conversation_message_context",
+			Arguments: map[string]any{
+				"conversation_type": "group",
+				"conversation_id":   "synthetic-group",
+				"message_id":        "historical-message",
+			},
+		},
+	)
 	if err != nil || read.IsError {
 		t.Fatalf("imported context unavailable: result=%+v error=%v", read, err)
 	}
-	resource, err := cs.ReadResource(ctx, &mcp.ReadResourceParams{URI: storage.ConversationMessageURI(domain.ConversationRef{Type: "group", ID: "synthetic-group"}, "historical-message")})
+	resource, err := cs.ReadResource(
+		ctx,
+		&mcp.ReadResourceParams{
+			URI: storage.ConversationMessageURI(
+				domain.ConversationRef{Type: "group", ID: "synthetic-group"},
+				"historical-message",
+			),
+		},
+	)
 	if err != nil || len(resource.Contents) != 1 || resource.Contents[0].Text != "Synthetic history" {
 		t.Fatal("historical full-text resource failed", err)
 	}

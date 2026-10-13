@@ -29,8 +29,8 @@ func TestCancellationDuringVerificationPreventsActivation(t *testing.T) {
 	entered, release := make(chan struct{}), make(chan struct{})
 	manager.Client = &http.Client{Transport: callbackRoundTrip(func(r *http.Request) (*http.Response, error) {
 		var challenge map[string]string
-		if err := json.NewDecoder(r.Body).Decode(&challenge); err != nil {
-			return nil, err
+		if decodeErr := json.NewDecoder(r.Body).Decode(&challenge); decodeErr != nil {
+			return nil, decodeErr
 		}
 		close(entered)
 		select {
@@ -38,18 +38,35 @@ func TestCancellationDuringVerificationPreventsActivation(t *testing.T) {
 		case <-r.Context().Done():
 			return nil, r.Context().Err()
 		}
-		wire, err := json.Marshal(map[string]string{"challenge": challenge["challenge"]})
-		if err != nil {
-			return nil, err
+		wire, marshalErr := json.Marshal(map[string]string{"challenge": challenge["challenge"]})
+		if marshalErr != nil {
+			return nil, marshalErr
 		}
-		return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(string(wire)))}, nil
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{},
+			Body:       io.NopCloser(strings.NewReader(string(wire))),
+		}, nil
 	})}
 	secret := "whsec_" + base64.StdEncoding.EncodeToString([]byte(strings.Repeat("x", 32)))
-	subscribe, err := json.Marshal(map[string]any{"name": MessageCreated, "arguments": map[string]any{"group_id": "group"}, "delivery": map[string]any{"mode": "webhook", "url": "https://callback.example/events", "secret": secret}, "ttlMs": nil})
+	subscribe, err := json.Marshal(
+		map[string]any{
+			"name":      MessageCreated,
+			"arguments": map[string]any{"group_id": "group"},
+			"delivery":  map[string]any{"mode": "webhook", "url": "https://callback.example/events", "secret": secret},
+			"ttlMs":     nil,
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	unsubscribe, err := json.Marshal(map[string]any{"name": MessageCreated, "arguments": map[string]any{"group_id": "group"}, "delivery": map[string]any{"mode": "webhook", "url": "https://callback.example/events"}})
+	unsubscribe, err := json.Marshal(
+		map[string]any{
+			"name":      MessageCreated,
+			"arguments": map[string]any{"group_id": "group"},
+			"delivery":  map[string]any{"mode": "webhook", "url": "https://callback.example/events"},
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

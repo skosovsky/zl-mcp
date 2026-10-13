@@ -26,7 +26,7 @@ func TestReadBudgetSharedAcrossStoresAndRestart(t *testing.T) {
 	var allowed atomic.Int32
 	var wg sync.WaitGroup
 	// Act: simultaneous calls cannot multiply burst by the number of readers.
-	for i := 0; i < 40; i++ {
+	for i := range 40 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -51,9 +51,9 @@ func TestReadBudgetSharedAcrossStoresAndRestart(t *testing.T) {
 	}
 	defer reopened.Close()
 	for _, stamp := range []int64{at, at - int64(time.Second), at + int64(99*time.Millisecond)} {
-		ok, err := reopened.allowReadAt(ctx, stamp)
-		if err != nil || ok {
-			t.Fatalf("premature refill at %d: %v %v", stamp, ok, err)
+		ok, allowReadAtErr := reopened.allowReadAt(ctx, stamp)
+		if allowReadAtErr != nil || ok {
+			t.Fatalf("premature refill at %d: %v %v", stamp, ok, allowReadAtErr)
 		}
 	}
 	ok, err := reopened.allowReadAt(ctx, at+int64(100*time.Millisecond))

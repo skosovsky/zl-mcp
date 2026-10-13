@@ -32,6 +32,7 @@ func (r *trackedDownloadBody) Read(p []byte) (int, error) {
 }
 func (r *trackedDownloadBody) Close() error { r.closed = true; return nil }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestDownloadExactLengthAndFailureBounds(t *testing.T) {
 	for _, tc := range []struct {
 		name, body, encoding string
@@ -58,13 +59,25 @@ func TestDownloadExactLengthAndFailureBounds(t *testing.T) {
 			calls := 0
 			d.client.Transport = downloadTransport(func(r *http.Request) (*http.Response, error) {
 				calls++
-				if r.Method != "GET" || r.Header.Get("Accept-Encoding") != "identity" || r.Header.Get("Authorization") != "" || r.Header.Get("Cookie") != "" {
+				if r.Method != http.MethodGet || r.Header.Get("Accept-Encoding") != "identity" ||
+					r.Header.Get("Authorization") != "" ||
+					r.Header.Get("Cookie") != "" {
 					t.Fatal("unexpected credentials/encoding")
 				}
-				return &http.Response{StatusCode: tc.status, ContentLength: tc.length, Header: http.Header{"Content-Encoding": []string{tc.encoding}}, Body: body}, nil
+				return &http.Response{
+					StatusCode:    tc.status,
+					ContentLength: tc.length,
+					Header:        http.Header{"Content-Encoding": []string{tc.encoding}},
+					Body:          body,
+				}, nil
 			})
 			// Act.
-			data, err := d.Fetch(context.Background(), "https://archive.example.com/backup?signature=synthetic-private", 10, 20)
+			data, err := d.Fetch(
+				context.Background(),
+				"https://archive.example.com/backup?signature=synthetic-private",
+				10,
+				20,
+			)
 			// Assert: bounds, close and fixed errors apply even to a valid prefix.
 			if calls != 1 || !body.closed || body.read > 11 {
 				t.Fatal("unbounded or repeated read")
@@ -87,7 +100,9 @@ func TestDownloadPolicyRejectsBeforeNetwork(t *testing.T) {
 		t.Fatal(err)
 	}
 	calls := 0
-	d.client.Transport = downloadTransport(func(*http.Request) (*http.Response, error) { calls++; return nil, errors.New("unexpected transport") })
+	d.client.Transport = downloadTransport(
+		func(*http.Request) (*http.Response, error) { calls++; return nil, errors.New("unexpected transport") },
+	)
 	// Act / Assert.
 	for _, raw := range []string{"http://archive.example.com/file", "https://other.example.com/file", "https://archive.example.com.evil.invalid/file", "https://archive.example.com:444/file", "https://user:password@archive.example.com/file", "https://archive.example.com/file#fragment", "https://archive.example.com./file", "https://127.0.0.1/file"} {
 		if data, err := d.Fetch(context.Background(), raw, 10, 20); !errors.Is(err, ErrDownload) || data != nil {
@@ -95,7 +110,15 @@ func TestDownloadPolicyRejectsBeforeNetwork(t *testing.T) {
 		}
 	}
 	for _, limits := range [][2]uint64{{0, 10}, {11, 10}, {1, MaxTotalBytes + 1}} {
-		if _, err := d.Fetch(context.Background(), "https://archive.example.com/file", limits[0], limits[1]); !errors.Is(err, ErrDownload) {
+		if _, err := d.Fetch(
+			context.Background(),
+			"https://archive.example.com/file",
+			limits[0],
+			limits[1],
+		); !errors.Is(
+			err,
+			ErrDownload,
+		) {
 			t.Fatal("budget bypass")
 		}
 	}
@@ -125,7 +148,10 @@ func TestDownloadProductionTransportPolicy(t *testing.T) {
 	}
 	transport, ok := d.client.Transport.(*http.Transport)
 	// Assert: no proxy/cookie state and redirects are rejected without a request.
-	if !ok || transport.Proxy != nil || d.client.Jar != nil || !transport.DisableKeepAlives || transport.DialContext == nil || d.client.Timeout.Seconds() != 120 || d.client.CheckRedirect(&http.Request{}, nil) == nil {
+	if !ok || transport.Proxy != nil || d.client.Jar != nil || !transport.DisableKeepAlives ||
+		transport.DialContext == nil ||
+		d.client.Timeout.Seconds() != 120 ||
+		d.client.CheckRedirect(&http.Request{}, nil) == nil {
 		t.Fatal("unsafe production client")
 	}
 }
@@ -138,7 +164,12 @@ func TestDownloadFailureDiagnosticsExcludeURLAndBody(t *testing.T) {
 	defer slog.SetDefault(previous)
 	d, _ := NewDownloader([]string{"archive.example.com"})
 	d.client.Transport = downloadTransport(func(*http.Request) (*http.Response, error) {
-		return &http.Response{StatusCode: 403, Header: make(http.Header), ContentLength: 12, Body: io.NopCloser(strings.NewReader("private-body"))}, nil
+		return &http.Response{
+			StatusCode:    http.StatusForbidden,
+			Header:        make(http.Header),
+			ContentLength: 12,
+			Body:          io.NopCloser(strings.NewReader("private-body")),
+		}, nil
 	})
 	// Act.
 	_, err := d.Fetch(context.Background(), "https://archive.example.com/private-path?signature=private-token", 12, 20)

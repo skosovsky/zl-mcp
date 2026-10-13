@@ -17,12 +17,20 @@ import (
 
 type offerSourceFunc func(context.Context, *domain.MobileBackupObserver) (domain.MobileBackupOffer, error)
 
-func (f offerSourceFunc) ReceiveMobileBackupOffer(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+func (f offerSourceFunc) ReceiveMobileBackupOffer(
+	c context.Context,
+	o *domain.MobileBackupObserver,
+) (domain.MobileBackupOffer, error) {
 	return f(c, o)
 }
 func runnerAttempt(t *testing.T) (*storage.Store, storage.MobileBackupAttempt, string) {
 	t.Helper()
-	s, e := storage.OpenWithPolicy(context.Background(), filepath.Join(t.TempDir(), "corpus.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	s, e := storage.OpenWithPolicy(
+		context.Background(),
+		filepath.Join(t.TempDir(), "corpus.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -30,7 +38,16 @@ func runnerAttempt(t *testing.T) (*storage.Store, storage.MobileBackupAttempt, s
 	if e = s.BindAccount(context.Background(), "synthetic-account"); e != nil {
 		t.Fatal(e)
 	}
-	a, e := s.PrepareMobileBackup(context.Background(), domain.MobileBackupRequest{RequestID: "00000000-0000-4000-8000-000000000001", ConversationType: "direct", ConversationID: "synthetic-peer", Since: "2026-09-01T00:00:00Z", Until: "2026-10-01T00:00:00Z"})
+	a, e := s.PrepareMobileBackup(
+		context.Background(),
+		domain.MobileBackupRequest{
+			RequestID:        "00000000-0000-4000-8000-000000000001",
+			ConversationType: "direct",
+			ConversationID:   "synthetic-peer",
+			Since:            "2026-09-01T00:00:00Z",
+			Until:            "2026-10-01T00:00:00Z",
+		},
+	)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -46,23 +63,29 @@ func TestPreparedOfferDurableDispatchAndNoRetry(t *testing.T) {
 	// Arrange: source checks dispatch evidence before simulating outbound request.
 	s, a, public := runnerAttempt(t)
 	requests := 0
-	source := offerSourceFunc(func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
-		if e := o.BeforeDispatch(public); e != nil {
-			return domain.MobileBackupOffer{}, e
-		}
-		persisted, e := s.MobileBackupAttempt(c, a.OperationID)
-		if e != nil || persisted.State != "dispatching" || persisted.PublicKey != public {
-			t.Fatal("request precedes journal")
-		}
-		requests++
-		if e = o.Progress("waiting_for_confirmation"); e != nil {
-			return domain.MobileBackupOffer{}, e
-		}
-		if e = o.Progress("offer_ready"); e != nil {
-			return domain.MobileBackupOffer{}, e
-		}
-		return domain.MobileBackupOffer{URL: "https://example.invalid/archive", KeyText: "synthetic-key", FileSize: 16}, nil
-	})
+	source := offerSourceFunc(
+		func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+			if e := o.BeforeDispatch(public); e != nil {
+				return domain.MobileBackupOffer{}, e
+			}
+			persisted, e := s.MobileBackupAttempt(c, a.OperationID)
+			if e != nil || persisted.State != "dispatching" || persisted.PublicKey != public {
+				t.Fatal("request precedes journal")
+			}
+			requests++
+			if e = o.Progress("waiting_for_confirmation"); e != nil {
+				return domain.MobileBackupOffer{}, e
+			}
+			if e = o.Progress("offer_ready"); e != nil {
+				return domain.MobileBackupOffer{}, e
+			}
+			return domain.MobileBackupOffer{
+				URL:      "https://example.invalid/archive",
+				KeyText:  "synthetic-key",
+				FileSize: 16,
+			}, nil
+		},
+	)
 	// Act.
 	offer, e := RunPreparedOffer(context.Background(), s, source, a.OperationID)
 	_, retry := RunPreparedOffer(context.Background(), s, source, a.OperationID)
@@ -71,6 +94,7 @@ func TestPreparedOfferDurableDispatchAndNoRetry(t *testing.T) {
 		t.Fatal("offer identity/retry lost")
 	}
 }
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestPreparedOfferFailuresCloseEvidenceAndDiscardOffer(t *testing.T) {
 	for _, mode := range []string{"premature", "cancel-before", "cancel-after", "unknown", "explicit"} {
 		t.Run(mode, func(t *testing.T) {
@@ -82,27 +106,29 @@ func TestPreparedOfferFailuresCloseEvidenceAndDiscardOffer(t *testing.T) {
 			if mode == "cancel-before" {
 				cancel()
 			}
-			source := offerSourceFunc(func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
-				calls++
-				if mode == "premature" {
-					return domain.MobileBackupOffer{KeyText: "must-discard"}, nil
-				}
-				if e := o.BeforeDispatch(public); e != nil {
-					return domain.MobileBackupOffer{}, e
-				}
-				if e := o.Progress("waiting_for_confirmation"); e != nil {
-					return domain.MobileBackupOffer{}, e
-				}
-				switch mode {
-				case "cancel-after":
-					cancel()
-					return domain.MobileBackupOffer{KeyText: "must-discard"}, nil
-				case "unknown":
-					return domain.MobileBackupOffer{}, domain.ErrMobileBackupUnknown
-				default:
-					return domain.MobileBackupOffer{}, errors.New("private source failure must not escape")
-				}
-			})
+			source := offerSourceFunc(
+				func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+					calls++
+					if mode == "premature" {
+						return domain.MobileBackupOffer{KeyText: "must-discard"}, nil
+					}
+					if e := o.BeforeDispatch(public); e != nil {
+						return domain.MobileBackupOffer{}, e
+					}
+					if e := o.Progress("waiting_for_confirmation"); e != nil {
+						return domain.MobileBackupOffer{}, e
+					}
+					switch mode {
+					case "cancel-after":
+						cancel()
+						return domain.MobileBackupOffer{KeyText: "must-discard"}, nil
+					case "unknown":
+						return domain.MobileBackupOffer{}, domain.ErrMobileBackupUnknown
+					default:
+						return domain.MobileBackupOffer{}, errors.New("private source failure must not escape")
+					}
+				},
+			)
 			// Act.
 			offer, e := RunPreparedOffer(ctx, s, source, a.OperationID)
 			persisted, read := s.MobileBackupAttempt(context.Background(), a.OperationID)
@@ -114,7 +140,8 @@ func TestPreparedOfferFailuresCloseEvidenceAndDiscardOffer(t *testing.T) {
 			if mode == "cancel-after" || mode == "unknown" {
 				want = "interrupted"
 			}
-			if !errors.Is(e, ErrOfferExecution) || offer.KeyText != "" || read != nil || persisted.State != want || mode == "cancel-before" && calls != 0 {
+			if !errors.Is(e, ErrOfferExecution) || offer.KeyText != "" || read != nil || persisted.State != want ||
+				mode == "cancel-before" && calls != 0 {
 				t.Fatal("failure evidence not closed", read)
 			}
 		})
@@ -125,28 +152,32 @@ func TestPreparedOfferRetryCannotInterruptCurrentOwner(t *testing.T) {
 	// Arrange: first request owns the durable dispatch while a retry arrives.
 	s, a, public := runnerAttempt(t)
 	entered, release := make(chan struct{}), make(chan struct{})
-	original := offerSourceFunc(func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
-		if e := o.BeforeDispatch(public); e != nil {
-			return domain.MobileBackupOffer{}, e
-		}
-		if e := o.Progress("waiting_for_confirmation"); e != nil {
-			return domain.MobileBackupOffer{}, e
-		}
-		close(entered)
-		<-release
-		if e := o.Progress("offer_ready"); e != nil {
-			return domain.MobileBackupOffer{}, e
-		}
-		return domain.MobileBackupOffer{FileSize: 16}, nil
-	})
+	original := offerSourceFunc(
+		func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+			if e := o.BeforeDispatch(public); e != nil {
+				return domain.MobileBackupOffer{}, e
+			}
+			if e := o.Progress("waiting_for_confirmation"); e != nil {
+				return domain.MobileBackupOffer{}, e
+			}
+			close(entered)
+			<-release
+			if e := o.Progress("offer_ready"); e != nil {
+				return domain.MobileBackupOffer{}, e
+			}
+			return domain.MobileBackupOffer{FileSize: 16}, nil
+		},
+	)
 	done := make(chan error, 1)
 	go func() { _, e := RunPreparedOffer(context.Background(), s, original, a.OperationID); done <- e }()
 	<-entered
 	// Act.
-	retrySource := offerSourceFunc(func(context.Context, *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
-		t.Error("retry reached source")
-		return domain.MobileBackupOffer{}, nil
-	})
+	retrySource := offerSourceFunc(
+		func(context.Context, *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+			t.Error("retry reached source")
+			return domain.MobileBackupOffer{}, nil
+		},
+	)
 	_, retry := RunPreparedOffer(context.Background(), s, retrySource, a.OperationID)
 	state, e := s.MobileBackupAttempt(context.Background(), a.OperationID)
 	close(release)
@@ -160,23 +191,33 @@ func TestPreparedOfferRetryCannotInterruptCurrentOwner(t *testing.T) {
 func TestPreparedOfferStaleObserverCannotCloseWinningDispatch(t *testing.T) {
 	// Arrange: both invocations attach before either reserves dispatch.
 	s, a, public := runnerAttempt(t)
-	firstEntered, secondEntered, dispatched, release := make(chan struct{}), make(chan struct{}), make(chan struct{}), make(chan struct{})
-	winner := offerSourceFunc(func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
-		close(firstEntered)
-		<-secondEntered
-		if e := o.BeforeDispatch(public); e != nil {
-			return domain.MobileBackupOffer{}, e
-		}
-		if e := o.Progress("waiting_for_confirmation"); e != nil {
-			return domain.MobileBackupOffer{}, e
-		}
-		close(dispatched)
-		<-release
-		if e := o.Progress("offer_ready"); e != nil {
-			return domain.MobileBackupOffer{}, e
-		}
-		return domain.MobileBackupOffer{FileSize: 16}, nil
-	})
+	firstEntered, secondEntered, dispatched, release := make(
+		chan struct{},
+	), make(
+		chan struct{},
+	), make(
+		chan struct{},
+	), make(
+		chan struct{},
+	)
+	winner := offerSourceFunc(
+		func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+			close(firstEntered)
+			<-secondEntered
+			if e := o.BeforeDispatch(public); e != nil {
+				return domain.MobileBackupOffer{}, e
+			}
+			if e := o.Progress("waiting_for_confirmation"); e != nil {
+				return domain.MobileBackupOffer{}, e
+			}
+			close(dispatched)
+			<-release
+			if e := o.Progress("offer_ready"); e != nil {
+				return domain.MobileBackupOffer{}, e
+			}
+			return domain.MobileBackupOffer{FileSize: 16}, nil
+		},
+	)
 	loser := offerSourceFunc(func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
 		close(secondEntered)
 		<-dispatched
@@ -205,24 +246,26 @@ func TestPreparedOfferFailureFinalizesAfterConnectionContention(t *testing.T) {
 	// upstream request fails. This exceeds the old three-second cleanup budget.
 	s, a, public := runnerAttempt(t)
 	var released chan struct{}
-	source := offerSourceFunc(func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
-		if err := o.BeforeDispatch(public); err != nil {
-			return domain.MobileBackupOffer{}, err
-		}
-		if err := o.Progress("waiting_for_confirmation"); err != nil {
-			return domain.MobileBackupOffer{}, err
-		}
-		if err := o.Progress("waiting_for_backup"); err != nil {
-			return domain.MobileBackupOffer{}, err
-		}
-		conn, err := s.DB.Conn(c)
-		if err != nil {
-			return domain.MobileBackupOffer{}, err
-		}
-		released = make(chan struct{})
-		go func() { time.Sleep(3200 * time.Millisecond); conn.Close(); close(released) }()
-		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
-	})
+	source := offerSourceFunc(
+		func(c context.Context, o *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+			if err := o.BeforeDispatch(public); err != nil {
+				return domain.MobileBackupOffer{}, err
+			}
+			if err := o.Progress("waiting_for_confirmation"); err != nil {
+				return domain.MobileBackupOffer{}, err
+			}
+			if err := o.Progress("waiting_for_backup"); err != nil {
+				return domain.MobileBackupOffer{}, err
+			}
+			conn, err := s.DB.Conn(c)
+			if err != nil {
+				return domain.MobileBackupOffer{}, err
+			}
+			released = make(chan struct{})
+			go func() { time.Sleep(3200 * time.Millisecond); conn.Close(); close(released) }()
+			return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+		},
+	)
 	// Act.
 	_, err := RunPreparedOffer(context.Background(), s, source, a.OperationID)
 	if released != nil {

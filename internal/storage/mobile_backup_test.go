@@ -38,6 +38,7 @@ func mobileJournalPublic(t *testing.T) string {
 	return base64.StdEncoding.EncodeToString(der)
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileBackupJournalIdentityCASAndRestart(t *testing.T) {
 	// Arrange.
 	ctx := context.Background()

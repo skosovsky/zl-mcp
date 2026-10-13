@@ -18,8 +18,8 @@ func TestProcessHelper(t *testing.T) {
 	// Arrange: modes run only in the isolated test subprocess.
 	mode := ""
 	for _, arg := range os.Args {
-		if strings.HasPrefix(arg, "helper=") {
-			mode = strings.TrimPrefix(arg, "helper=")
+		if after, ok := strings.CutPrefix(arg, "helper="); ok {
+			mode = after
 		}
 	}
 	if mode == "" {
@@ -59,6 +59,7 @@ func TestProcessHelper(t *testing.T) {
 	os.Exit(0)
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestWatchdogTerminatesDescendantsAfterNormalExitAndTimeout(t *testing.T) {
 	for _, mode := range []string{"descendant-normal", "descendant-timeout"} {
 		t.Run(mode, func(t *testing.T) {
@@ -71,7 +72,12 @@ func TestWatchdogTerminatesDescendantsAfterNormalExitAndTimeout(t *testing.T) {
 			defer cancel()
 			started := time.Now()
 			// Act.
-			stdout, _, processErr := Process(ctx, binary, []string{"-test.run=^TestProcessHelper$", "--", "helper=" + mode}, 4096)
+			stdout, _, processErr := Process(
+				ctx,
+				binary,
+				[]string{"-test.run=^TestProcessHelper$", "--", "helper=" + mode},
+				4096,
+			)
 			// Assert: Wait is bounded and both exit paths terminate the owned group.
 			pid, err := strconv.Atoi(string(stdout))
 			if err != nil || pid <= 0 || time.Since(started) > 3*time.Second {
@@ -85,10 +91,7 @@ func TestWatchdogTerminatesDescendantsAfterNormalExitAndTimeout(t *testing.T) {
 				t.Fatal(processErr)
 			}
 			deadline := time.Now().Add(2 * time.Second)
-			for {
-				if errors.Is(syscall.Kill(pid, 0), syscall.ESRCH) {
-					break
-				}
+			for !errors.Is(syscall.Kill(pid, 0), syscall.ESRCH) {
 				// A reparented zombie has terminated; reaping belongs to the host.
 				state, _ := exec.Command("ps", "-o", "stat=", "-p", strconv.Itoa(pid)).Output()
 				if strings.HasPrefix(strings.TrimSpace(string(state)), "Z") {
@@ -102,6 +105,7 @@ func TestWatchdogTerminatesDescendantsAfterNormalExitAndTimeout(t *testing.T) {
 		})
 	}
 }
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestExternalWatchdogAndOutputBounds(t *testing.T) {
 	for _, mode := range []string{"hang", "flood", "normal"} {
 		t.Run(mode, func(t *testing.T) {
@@ -120,7 +124,12 @@ func TestExternalWatchdogAndOutputBounds(t *testing.T) {
 			defer cancel()
 			started := time.Now()
 			// Act
-			stdout, stderr, err := Process(ctx, binary, []string{"-test.run=^TestProcessHelper$", "--", "helper=" + mode}, 4096)
+			stdout, stderr, err := Process(
+				ctx,
+				binary,
+				[]string{"-test.run=^TestProcessHelper$", "--", "helper=" + mode},
+				4096,
+			)
 			// Assert
 			if time.Since(started) > 3*time.Second {
 				t.Fatal("watchdog did not terminate and Wait")
@@ -144,7 +153,11 @@ func TestExternalWatchdogAndOutputBounds(t *testing.T) {
 }
 func TestFailedEvidenceCannotPassDeterministicGrader(t *testing.T) {
 	// Arrange
-	cs := Case{ID: "case", ExpectedEffects: map[string]int{}, Checks: []Check{{Name: "required", Step: 0, Op: "success"}}}
+	cs := Case{
+		ID:              "case",
+		ExpectedEffects: map[string]int{},
+		Checks:          []Check{{Name: "required", Step: 0, Op: "success"}},
+	}
 	out := Output{CaseID: "case", Complete: false, Cleanup: false, Effects: map[string]int{"send": 1}}
 	// Act
 	assertions := Grade(cs, out)

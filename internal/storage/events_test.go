@@ -31,7 +31,10 @@ func TestMessageAndEventAreAtomicAndReplayIsDeduplicated(t *testing.T) {
 	}
 
 	// Arrange: a storage failure occurs precisely between message and event writes.
-	if _, err := s.DB.ExecContext(ctx, `CREATE TRIGGER reject_event BEFORE INSERT ON message_events BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`); err != nil {
+	if _, err := s.DB.ExecContext(
+		ctx,
+		`CREATE TRIGGER reject_event BEFORE INSERT ON message_events BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`,
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Act.
@@ -40,7 +43,7 @@ func TestMessageAndEventAreAtomicAndReplayIsDeduplicated(t *testing.T) {
 	if err == nil {
 		t.Fatal("event failure ignored")
 	}
-	if _, err := s.Message(ctx, "g1", "failed"); err == nil {
+	if _, messageErr := s.Message(ctx, "g1", "failed"); messageErr == nil {
 		t.Fatal("message survived failed event transaction")
 	}
 	hits, _, _, err := s.Search(ctx, Search{Query: "failed"})
@@ -59,7 +62,13 @@ func TestSubscriptionBoundarySurvivesRefreshRestartAndCancellation(t *testing.T)
 	}
 	defer func() { s.Close() }()
 	putTest(t, s, "old", "g1", "old corpus", time.Now())
-	sub := EventSubscription{ID: "id", Principal: "owner", GroupID: "g1", Callback: "https://callback.example", Secret: "synthetic-secret"}
+	sub := EventSubscription{
+		ID:        "id",
+		Principal: "owner",
+		GroupID:   "g1",
+		Callback:  "https://callback.example",
+		Secret:    "synthetic-secret",
+	}
 	rev, err := s.SubscriptionRevision(ctx, sub.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -76,16 +85,17 @@ func TestSubscriptionBoundarySurvivesRefreshRestartAndCancellation(t *testing.T)
 	}
 	// Assert: sent_at does not move the insertion boundary; refresh retains it.
 	var lateSeq int64
-	if err := s.DB.QueryRowContext(ctx, "SELECT seq FROM messages WHERE message_id='late'").Scan(&lateSeq); err != nil {
-		t.Fatal(err)
+	if scanErr := s.DB.QueryRowContext(ctx, "SELECT seq FROM messages WHERE message_id='late'").Scan(&lateSeq); scanErr != nil {
+		t.Fatal(scanErr)
 	}
-	if active.StartSeq >= lateSeq || refreshed.StartSeq != active.StartSeq || refreshed.Generation != active.Generation {
+	if active.StartSeq >= lateSeq || refreshed.StartSeq != active.StartSeq ||
+		refreshed.Generation != active.Generation {
 		t.Fatal("activation boundary shifted on replay or refresh")
 	}
 
 	// Arrange / Act: close and reopen the real SQLite database.
-	if err := s.Close(); err != nil {
-		t.Fatal(err)
+	if closeErr := s.Close(); closeErr != nil {
+		t.Fatal(closeErr)
 	}
 	s, err = Open(ctx, path, []string{"g1"}, 90)
 	if err != nil {
@@ -98,8 +108,8 @@ func TestSubscriptionBoundarySurvivesRefreshRestartAndCancellation(t *testing.T)
 	}
 
 	// Act: cancellation invalidates a verification begun with the old revision.
-	if err := s.CancelSubscription(ctx, sub.ID, sub.Principal, time.Now()); err != nil {
-		t.Fatal(err)
+	if cancelSubscriptionErr := s.CancelSubscription(ctx, sub.ID, sub.Principal, time.Now()); cancelSubscriptionErr != nil {
+		t.Fatal(cancelSubscriptionErr)
 	}
 	_, err = s.ActivateSubscription(ctx, sub, rev, time.Now())
 	// Assert.
@@ -128,7 +138,13 @@ func TestSubscriptionBoundaryDoesNotResetWhenCorpusIsDeleted(t *testing.T) {
 	if err := s.Delete(ctx, "g1", "old"); err != nil {
 		t.Fatal(err)
 	}
-	sub := EventSubscription{ID: "id", Principal: "owner", GroupID: "g1", Callback: "https://callback.example", Secret: "synthetic-secret"}
+	sub := EventSubscription{
+		ID:        "id",
+		Principal: "owner",
+		GroupID:   "g1",
+		Callback:  "https://callback.example",
+		Secret:    "synthetic-secret",
+	}
 	rev, err := s.SubscriptionRevision(ctx, sub.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -157,7 +173,8 @@ func TestReplayAfterRetentionDoesNotCreateAnotherEvent(t *testing.T) {
 	putTest(t, s, "old", "g1", "replayed text", time.Now())
 	// Assert.
 	var count int
-	if err := s.DB.QueryRowContext(ctx, "SELECT count(*) FROM message_events WHERE group_id='g1'").Scan(&count); err != nil {
+	if err := s.DB.QueryRowContext(ctx, "SELECT count(*) FROM message_events WHERE group_id='g1'").
+		Scan(&count); err != nil {
 		t.Fatal(err)
 	}
 	if count != 0 {
@@ -170,7 +187,13 @@ func TestRemovalPurgesEventAndQueuedText(t *testing.T) {
 	s := openTest(t)
 	ctx := context.Background()
 	putTest(t, s, "message", "g1", "private body", time.Now())
-	_, err := s.DB.ExecContext(ctx, `INSERT INTO event_deliveries(event_id,subscription_id,generation,payload,state,next_attempt_at,deadline) SELECT event_id,'sub','generation',?,'pending',?,? FROM message_events`, []byte("private body"), now(), now())
+	_, err := s.DB.ExecContext(
+		ctx,
+		`INSERT INTO event_deliveries(event_id,subscription_id,generation,payload,state,next_attempt_at,deadline) SELECT event_id,'sub','generation',?,'pending',?,? FROM message_events`,
+		[]byte("private body"),
+		now(),
+		now(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,7 +205,8 @@ func TestRemovalPurgesEventAndQueuedText(t *testing.T) {
 	}
 	var state, reason string
 	var payload []byte
-	if err := s.DB.QueryRowContext(ctx, "SELECT state,last_reason,payload FROM event_deliveries").Scan(&state, &reason, &payload); err != nil {
+	if err := s.DB.QueryRowContext(ctx, "SELECT state,last_reason,payload FROM event_deliveries").
+		Scan(&state, &reason, &payload); err != nil {
 		t.Fatal(err)
 	}
 	var count int
@@ -204,7 +228,14 @@ func TestFiniteSubscriptionRefreshKeepsBoundaryAndExpiryStartsNewGeneration(t *t
 		t.Fatal(err)
 	}
 	expires := at.Add(time.Minute)
-	sub := EventSubscription{ID: "finite", Principal: "owner", GroupID: "g1", Callback: "https://callback.example", Secret: "synthetic", ExpiresAt: &expires}
+	sub := EventSubscription{
+		ID:        "finite",
+		Principal: "owner",
+		GroupID:   "g1",
+		Callback:  "https://callback.example",
+		Secret:    "synthetic",
+		ExpiresAt: &expires,
+	}
 	first, err := s.ActivateSubscription(ctx, sub, revision, at)
 	if err != nil {
 		t.Fatal(err)
@@ -224,7 +255,8 @@ func TestFiniteSubscriptionRefreshKeepsBoundaryAndExpiryStartsNewGeneration(t *t
 		t.Fatal(err)
 	}
 	// Assert.
-	if refreshed.Generation != first.Generation || refreshed.StartSeq != first.StartSeq || !refreshed.ExpiresAt.Equal(refreshedExpiry) {
+	if refreshed.Generation != first.Generation || refreshed.StartSeq != first.StartSeq ||
+		!refreshed.ExpiresAt.Equal(refreshedExpiry) {
 		t.Fatal("refresh changed boundary or failed to extend expiry")
 	}
 	if afterExpiry.Generation == first.Generation || afterExpiry.StartSeq <= first.StartSeq {
@@ -242,10 +274,21 @@ func TestActiveSubscriptionCapacityAllowsRefreshAndReleasesCancelledSlot(t *test
 		if err != nil {
 			return EventSubscription{}, err
 		}
-		return s.ActivateSubscription(ctx, EventSubscription{ID: id, Principal: "owner", GroupID: "g1", Callback: "https://callback.example", Secret: "synthetic"}, revision, at)
+		return s.ActivateSubscription(
+			ctx,
+			EventSubscription{
+				ID:        id,
+				Principal: "owner",
+				GroupID:   "g1",
+				Callback:  "https://callback.example",
+				Secret:    "synthetic",
+			},
+			revision,
+			at,
+		)
 	}
 	var first EventSubscription
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		sub, err := activate(fmt.Sprintf("sub-%d", i))
 		if err != nil {
 			t.Fatal(err)

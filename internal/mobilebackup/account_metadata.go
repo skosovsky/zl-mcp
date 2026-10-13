@@ -66,7 +66,11 @@ type AccountMetadataDiagnostics struct {
 // inspectAccountMetadata reports protocol observations only. It never renders
 // source text or accepts an attachment action, and retains no raw metadata.
 func inspectAccountMetadata(ctx context.Context, rows []SQLiteRow) (*AccountMetadataDiagnostics, error) {
-	result := &AccountMetadataDiagnostics{ActionClasses: map[string]int{}, TextProjectionClasses: map[string]int{}, ActionShapes: []AccountActionShape{}}
+	result := &AccountMetadataDiagnostics{
+		ActionClasses:         map[string]int{},
+		TextProjectionClasses: map[string]int{},
+		ActionShapes:          []AccountActionShape{},
+	}
 	seen := map[string]bool{}
 	for _, row := range rows {
 		if ctx.Err() != nil {
@@ -105,35 +109,47 @@ func inspectAccountMetadata(ctx context.Context, rows []SQLiteRow) (*AccountMeta
 		result.TextProjectionClasses[projection]++
 		result.UnsupportedFields += meta.UnsupportedFields
 		for _, attachment := range meta.Attachments {
-			result.AttachmentCount++
-			if attachment.Title.Present {
-				result.TitlePresent++
-				if string(attachment.Title.Bytes) == row.Text {
-					result.TitleEqualsText++
-				}
-			}
-			class := "absent"
-			if attachment.Action.Present {
-				class = "other"
-				switch string(attachment.Action.Bytes) {
-				case "":
-					class = "empty"
-				case "rtf", "ecard", "text", "plain", "webchat":
-					class = string(attachment.Action.Bytes)
-				}
-				digest := sha256.Sum256(attachment.Action.Bytes)
-				id := hex.EncodeToString(digest[:])
-				if !seen[id] && len(result.ActionShapes) >= 50 {
-					result.ShapesTruncated = true
-				}
-				if !seen[id] && len(result.ActionShapes) < 50 {
-					seen[id] = true
-					result.ActionShapes = append(result.ActionShapes, AccountActionShape{SHA256: id, ByteLength: len(attachment.Action.Bytes), UTF8Valid: utf8.Valid(attachment.Action.Bytes), ContainsNUL: bytes.IndexByte(attachment.Action.Bytes, 0) >= 0})
-				}
-			}
-			result.ActionClasses[class]++
+			recordAccountAttachment(result, attachment, row.Text, seen)
 		}
 		meta.Clear()
 	}
 	return result, nil
+}
+
+func recordAccountAttachment(result *AccountMetadataDiagnostics, attachment Attachment, text string, seen map[string]bool) {
+	result.AttachmentCount++
+	if attachment.Title.Present {
+		result.TitlePresent++
+		if string(attachment.Title.Bytes) == text {
+			result.TitleEqualsText++
+		}
+	}
+	class := "absent"
+	if attachment.Action.Present {
+		class = "other"
+		switch string(attachment.Action.Bytes) {
+		case "":
+			class = "empty"
+		case "rtf", "ecard", "text", "plain", "webchat":
+			class = string(attachment.Action.Bytes)
+		}
+		digest := sha256.Sum256(attachment.Action.Bytes)
+		id := hex.EncodeToString(digest[:])
+		if !seen[id] && len(result.ActionShapes) >= 50 {
+			result.ShapesTruncated = true
+		}
+		if !seen[id] && len(result.ActionShapes) < 50 {
+			seen[id] = true
+			result.ActionShapes = append(
+				result.ActionShapes,
+				AccountActionShape{
+					SHA256:      id,
+					ByteLength:  len(attachment.Action.Bytes),
+					UTF8Valid:   utf8.Valid(attachment.Action.Bytes),
+					ContainsNUL: bytes.IndexByte(attachment.Action.Bytes, 0) >= 0,
+				},
+			)
+		}
+	}
+	result.ActionClasses[class]++
 }

@@ -30,7 +30,6 @@ func refreshContactProfiles(parent context.Context, store *storage.Store, source
 	if err != nil {
 		return err
 	}
-	var requestedCount, returnedCount, missingCount int
 	status := map[string]any{
 		"status":          "running",
 		"last_attempt_at": time.Now().UTC().Format(time.RFC3339Nano),
@@ -56,18 +55,38 @@ func refreshContactProfiles(parent context.Context, store *storage.Store, source
 		}
 		return cause
 	}
-	storageFailure := func(cause error) error {
+	storageError := func(cause error) error {
 		reason := "storage_or_metadata_error"
 		if errors.Is(cause, context.Canceled) || errors.Is(cause, context.DeadlineExceeded) || ctx.Err() != nil {
 			reason = "cancelled_or_deadline"
 		}
 		return finish("partial", reason, cause)
 	}
+	return refreshProfilePages(ctx, store, source, status, finish, storageError)
+}
+
+func validateProfileIdentities(ids []string, records []domain.Contact) error {
+	requested := map[string]bool{}
+	returned := map[string]bool{}
+	for _, id := range ids {
+		requested[id] = true
+	}
+	for _, record := range records {
+		if !requested[record.ID] || returned[record.ID] {
+			return domain.Invalid("Invalid profile response identity.")
+		}
+		returned[record.ID] = true
+	}
+	return nil
+}
+
+func refreshProfilePages(ctx context.Context, store *storage.Store, source domain.ContactProfileSource, status map[string]any, finish func(string, string, error) error, storageError func(error) error) error {
+	var requestedCount, returnedCount, missingCount int
 	after := ""
 	for range 20 {
 		ids, cursor, more, e := store.UnenrichedDirectIDs(ctx, after, 100)
 		if e != nil {
-			return storageFailure(e)
+			return storageError(e)
 		}
 		after = cursor
 		if len(ids) > 0 {
@@ -75,35 +94,14 @@ func refreshContactProfiles(parent context.Context, store *storage.Store, source
 			status["requested_count"] = requestedCount
 			records, e := source.ContactProfiles(ctx, ids)
 			if e != nil {
-				state, reason := "partial", "upstream_unavailable"
-				switch {
-				case errors.Is(e, errContactsUnsupported):
-					state = "unsupported"
-					reason = "source_unsupported"
-				case errors.Is(e, domain.ErrAuthenticationRequired):
-					reason = "auth_required"
-				case ctx.Err() != nil:
-					reason = "cancelled_or_deadline"
-				}
+				state, reason := contactSourceOutcome(ctx, e)
 				return finish(state, reason, e)
 			}
-			requested := map[string]bool{}
-			returned := map[string]bool{}
-			for _, id := range ids {
-				requested[id] = true
-			}
-			for _, record := range records {
-				if !requested[record.ID] || returned[record.ID] {
-					return finish(
-						"partial",
-						"storage_or_metadata_error",
-						domain.Invalid("Invalid profile response identity."),
-					)
-				}
-				returned[record.ID] = true
+			if validationErr := validateProfileIdentities(ids, records); validationErr != nil {
+				return finish("partial", "storage_or_metadata_error", validationErr)
 			}
 			if _, e = store.PutContacts(ctx, records); e != nil {
-				return storageFailure(e)
+				return storageError(e)
 			}
 			returnedCount += len(records)
 			status["returned_count"] = returnedCount

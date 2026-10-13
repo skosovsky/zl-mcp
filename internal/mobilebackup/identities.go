@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"io"
 	"strconv"
 	"strings"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 var ErrIdentities = errors.New("invalid mobile backup identity mapping")
@@ -72,6 +73,7 @@ func IdentityPayload(r IdentityRequest) ([]byte, error) {
 
 // DecodeIdentities accepts already unwrapped plaintext only. It does not perform
 // authenticated requests, infer account identity or resolve missing mappings.
+//nolint:gocognit // This bounded protocol parser validates complete framing/records before publishing and retains its buffer-clearing error paths.
 func DecodeIdentities(r IdentityRequest, data []byte) ([]IdentityPair, error) {
 	if !validIdentityRequest(r) || len(data) == 0 || len(data) > 256<<10 {
 		return nil, ErrIdentities

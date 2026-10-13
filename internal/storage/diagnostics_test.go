@@ -27,12 +27,18 @@ func TestDeliveryDiagnosticsAreBoundedAndHidePrivateValues(t *testing.T) {
 	// Act
 	diagnostics, err := s.DeliveryDiagnostics(ctx, at)
 	// Assert: actual capacity failures are visible with no payload or callback data.
-	if err != nil || diagnostics.ActiveSubscriptions != 1 || diagnostics.JournalPending != 0 || diagnostics.StateCounts["pending"] != 1 || diagnostics.StateCounts["failed"] != 2 || diagnostics.ReasonCounts["queue_capacity"] != 2 || diagnostics.PendingPayloadBytes <= 0 {
+	if err != nil || diagnostics.ActiveSubscriptions != 1 || diagnostics.JournalPending != 0 ||
+		diagnostics.StateCounts["pending"] != 1 ||
+		diagnostics.StateCounts["failed"] != 2 ||
+		diagnostics.ReasonCounts["queue_capacity"] != 2 ||
+		diagnostics.PendingPayloadBytes <= 0 {
 		t.Fatalf("diagnostics=%+v err=%v", diagnostics, err)
 	}
 	// Arrange: raw corrupted reason/state must never become response keys.
-	if _, err := s.DB.Exec("UPDATE event_deliveries SET last_reason='PRIVATE_CALLBACK_SECRET',state='PRIVATE_STATE' WHERE id=(SELECT max(id) FROM event_deliveries)"); err != nil {
-		t.Fatal(err)
+	if _, execErr := s.DB.Exec(
+		"UPDATE event_deliveries SET last_reason='PRIVATE_CALLBACK_SECRET',state='PRIVATE_STATE' WHERE id=(SELECT max(id) FROM event_deliveries)",
+	); execErr != nil {
+		t.Fatal(execErr)
 	}
 	// Act
 	diagnostics, err = s.DeliveryDiagnostics(ctx, at)
@@ -53,7 +59,10 @@ func TestDeliveryDiagnosticsAreBoundedAndHidePrivateValues(t *testing.T) {
 	if err := schema.Validate(wire); err != nil {
 		t.Fatal(err)
 	}
-	if diagnostics.StateCounts["other"] != 1 || diagnostics.ReasonCounts["other"] != 1 || strings.Contains(string(body), "PRIVATE_") || strings.Contains(string(body), "callback.example") || strings.Contains(string(body), "synthetic") {
+	if diagnostics.StateCounts["other"] != 1 || diagnostics.ReasonCounts["other"] != 1 ||
+		strings.Contains(string(body), "PRIVATE_") ||
+		strings.Contains(string(body), "callback.example") ||
+		strings.Contains(string(body), "synthetic") {
 		t.Fatalf("unsafe diagnostics: %s", body)
 	}
 }

@@ -198,14 +198,14 @@ func strNumber(v any) string { n, _ := v.(json.Number); return string(n) }
 
 var workerOnce sync.Once
 var workerPath string
-var workerErr error
+var errWorker error
 
 func worker(t *testing.T, mode string) string {
 	t.Helper()
 	workerOnce.Do(func() {
 		dir, e := os.MkdirTemp("", "zl-go-perf-test-worker-")
 		if e != nil {
-			workerErr = e
+			errWorker = e
 			return
 		}
 		workerPath = filepath.Join(dir, "worker")
@@ -213,11 +213,11 @@ func worker(t *testing.T, mode string) string {
 		cmd.Env = append(os.Environ(), "GOWORK=off")
 		b, e := cmd.CombinedOutput()
 		if e != nil {
-			workerErr = fmt.Errorf("%w: %s", e, b)
+			errWorker = fmt.Errorf("%w: %s", e, b)
 		}
 	})
-	if workerErr != nil {
-		t.Fatal(workerErr)
+	if errWorker != nil {
+		t.Fatal(errWorker)
 	}
 	path := filepath.Join(t.TempDir(), mode)
 	if e := os.Symlink(workerPath, path); e != nil {

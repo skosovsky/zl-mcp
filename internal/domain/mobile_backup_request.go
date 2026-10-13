@@ -25,24 +25,7 @@ func (r MobileBackupRequest) Ref() ConversationRef {
 }
 func (r MobileBackupRequest) Normalize() (MobileBackupRequest, error) {
 	if r.ArchiveScope != "" {
-		if r.ArchiveScope != "account" || r.ConversationType != "" || r.ConversationID != "" || r.Since != "" || r.Until != "" || r.MaxMessages != 0 {
-			return r, Invalid("Account capture cannot select a chat or interval.")
-		}
-		id, err := uuid.Parse(r.RequestID)
-		if err != nil || len(r.RequestID) != 36 {
-			return r, Invalid("Account capture needs a request UUID.")
-		}
-		r.RequestID = id.String()
-		if r.MaxArchiveBytes == 0 {
-			r.MaxArchiveBytes = 512 << 20
-		}
-		if r.RetentionHours == 0 {
-			r.RetentionHours = 168
-		}
-		if r.MaxArchiveBytes < 1 || r.MaxArchiveBytes > 512<<20 || r.RetentionHours < 1 || r.RetentionHours > 720 {
-			return r, Invalid("Account capture exceeds its storage bounds.")
-		}
-		return r, nil
+		return r.normalizeAccountCapture()
 	}
 	if r.RetentionHours != 0 {
 		return r, Invalid("Selected import cannot set account archive retention.")
@@ -65,4 +48,27 @@ func (r MobileBackupRequest) Fingerprint() string {
 	b, _ := json.Marshal(r)
 	h := sha256.Sum256(append([]byte("mobile_backup:"), b...))
 	return hex.EncodeToString(h[:])
+}
+
+func (r MobileBackupRequest) normalizeAccountCapture() (MobileBackupRequest, error) {
+	if r.ArchiveScope != "account" || r.ConversationType != "" || r.ConversationID != "" || r.Since != "" ||
+		r.Until != "" ||
+		r.MaxMessages != 0 {
+		return r, Invalid("Account capture cannot select a chat or interval.")
+	}
+	id, err := uuid.Parse(r.RequestID)
+	if err != nil || len(r.RequestID) != 36 {
+		return r, Invalid("Account capture needs a request UUID.")
+	}
+	r.RequestID = id.String()
+	if r.MaxArchiveBytes == 0 {
+		r.MaxArchiveBytes = 512 << 20
+	}
+	if r.RetentionHours == 0 {
+		r.RetentionHours = 168
+	}
+	if r.MaxArchiveBytes < 1 || r.MaxArchiveBytes > 512<<20 || r.RetentionHours < 1 || r.RetentionHours > 720 {
+		return r, Invalid("Account capture exceeds its storage bounds.")
+	}
+	return r, nil
 }

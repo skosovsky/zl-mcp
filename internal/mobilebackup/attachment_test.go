@@ -17,6 +17,7 @@ func attachmentField(tag uint32, value []byte) []byte {
 	copy(data[8:], value)
 	return data
 }
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestAttachmentNativeFieldsPresenceOwnershipAndRedaction(t *testing.T) {
 	// Arrange: all native byte fields, signed/zero scalar values and two unknown occurrences.
 	tags := []uint32{40, 43, 45, 46, 47, 48, 49, 50, 66, 67, 68}
@@ -40,10 +41,25 @@ func TestAttachmentNativeFieldsPresenceOwnershipAndRedaction(t *testing.T) {
 	// Act.
 	got, err := ParseAttachment(context.Background(), input)
 	// Assert: exact signed values and owned UTF-8 bytes; unknown occurrences remain visible.
-	if err != nil || got.CategoryID == nil || *got.CategoryID != -1 || got.ID == nil || *got.ID != 0 || got.ChildNumber == nil || *got.ChildNumber != 16909060 || got.UnsupportedFields != 2 {
+	if err != nil || got.CategoryID == nil || *got.CategoryID != -1 || got.ID == nil || *got.ID != 0 ||
+		got.ChildNumber == nil ||
+		*got.ChildNumber != 16909060 ||
+		got.UnsupportedFields != 2 {
 		t.Fatal("native scalars or coverage changed", err)
 	}
-	values := []*AttachmentValue{&got.Type, &got.ExtInfo, &got.Action, &got.Params, &got.Title, &got.Href, &got.Thumb, &got.Description, &got.Remains, &got.ZInstantData, &got.ZInstantMessage}
+	values := []*AttachmentValue{
+		&got.Type,
+		&got.ExtInfo,
+		&got.Action,
+		&got.Params,
+		&got.Title,
+		&got.Href,
+		&got.Thumb,
+		&got.Description,
+		&got.Remains,
+		&got.ZInstantData,
+		&got.ZInstantMessage,
+	}
 	for i, v := range values {
 		if !v.Present || string(v.Bytes) != fmt.Sprintf("value-%d", tags[i]) {
 			t.Fatal("field mapping lost")
@@ -100,7 +116,8 @@ func TestBinNetRichTextUsesDecodedVisibleTitle(t *testing.T) {
 	nested := append(attachmentField(45, []byte("rtf")), attachmentField(47, []byte("synthetic title"))...)
 	input := attachmentField(6, nested)
 	metadata, err := ParseBinNet(context.Background(), input)
-	if err != nil || len(metadata.Attachments) != 1 || string(metadata.Attachments[0].Action.Bytes) != "rtf" || metadata.UnsupportedFields != 0 {
+	if err != nil || len(metadata.Attachments) != 1 || string(metadata.Attachments[0].Action.Bytes) != "rtf" ||
+		metadata.UnsupportedFields != 0 {
 		t.Fatal("nested attachment not decoded", err)
 	}
 	page, r, now := conversionPage(t)
@@ -111,12 +128,15 @@ func TestBinNetRichTextUsesDecodedVisibleTitle(t *testing.T) {
 	converted, err := ConvertPreparedArchivePage(context.Background(), page, r, "10", now)
 	defer converted.Clear()
 	// Assert: visible title follows the native text rule and remains marked rich text.
-	if err != nil || converted.UnsupportedContent != 0 || len(converted.Records) != 2 || converted.Records[0].Message.Text != "synthetic title" || !reflect.DeepEqual(converted.Records[0].Message.AttachmentTypes, []string{"rtf"}) {
+	if err != nil || converted.UnsupportedContent != 0 || len(converted.Records) != 2 ||
+		converted.Records[0].Message.Text != "synthetic title" ||
+		!reflect.DeepEqual(converted.Records[0].Message.AttachmentTypes, []string{"rtf"}) {
 		t.Fatal("rich-text projection lost", err)
 	}
 	duplicate := append(bytes.Clone(input), input...)
 	got, err := ParseBinNet(context.Background(), duplicate)
-	if err != nil || len(got.Attachments) != 2 || string(got.Attachments[0].Title.Bytes) != "synthetic title" || string(got.Attachments[1].Title.Bytes) != "synthetic title" {
+	if err != nil || len(got.Attachments) != 2 || string(got.Attachments[0].Title.Bytes) != "synthetic title" ||
+		string(got.Attachments[1].Title.Bytes) != "synthetic title" {
 		t.Fatal("repeated attachment lost", err)
 	}
 	got.Clear()
@@ -131,7 +151,8 @@ func TestBinNetMalformedQuoteClearsPrecedingAttachments(t *testing.T) {
 	// Act.
 	got, err := ParseBinNet(context.Background(), input)
 	// Assert: nested failure discards previously decoded data, without modifying borrowed input.
-	if err == nil || got.Attachments != nil || got.Quote != nil || got.Mentions != nil || got.UnsupportedFields != 0 || !bytes.Equal(input, original) {
+	if err == nil || got.Attachments != nil || got.Quote != nil || got.Mentions != nil || got.UnsupportedFields != 0 ||
+		!bytes.Equal(input, original) {
 		t.Fatal("malformed quote exposed attachment prefix", err)
 	}
 }

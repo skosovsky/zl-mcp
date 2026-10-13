@@ -128,121 +128,142 @@ func (a AccountArchive) ReadSnapshotPage(
 		}
 	}
 	for _, row := range batch.Rows {
-		if ctx.Err() != nil {
-			return result, ErrArchive
+		if rowErr := a.appendSnapshotRow(ctx, row, &batch, mapped, ref, sourceID, index, nowMS, &result); rowErr != nil {
+			return result, rowErr
 		}
-		if row.Type == 36 || row.Type != 20 && batch.recalls.suppresses(row) {
-			result.SuppressedSource++
-			continue
-		}
-		if row.Type == 20 {
-			// The native SQL query excludes this format type before conversion.
-			// Metadata is only diagnostic; it cannot turn the body into visible text.
-			metadata, metadataErr := ParseBinNet(ctx, row.BinNet)
-			if ctx.Err() != nil {
-				metadata.Clear()
-				return result, ErrArchive
-			}
-			if metadataErr != nil {
-				result.Unsupported["invalid_excluded_metadata"]++
-				result.Unsupported["native_excluded"]++
-			} else {
-				result.UnsupportedMetadataFields += metadata.UnsupportedFields
-				if metadata.Quote != nil {
-					result.UnresolvedQuotes++
-				}
-				result.UnresolvedMentions += len(metadata.Mentions)
-				if snapshotInformation(ctx, row.BinNet) {
-					result.Unsupported["native_information"]++
-				} else {
-					result.Unsupported["native_excluded"]++
-				}
-			}
-			metadata.Clear()
-			continue
-		}
-		expiry, declared, e := MessageExpiryMS(row.TimestampMS, row.TTL)
-		if e != nil {
-			result.Unsupported["invalid_expiry"]++
-			continue
-		}
-		if declared && nowMS >= expiry {
-			result.Expired++
-			continue
-		}
-		kind, known := mobilePayloadKind(row.Type)
-		if !known {
-			result.Unsupported["unknown_content_kind"]++
-			continue
-		}
-		if len(row.BinNet) == 0 {
-			result.Unsupported["missing_metadata"]++
-			continue
-		}
-		metadata, e := ParseBinNet(ctx, row.BinNet)
-		if ctx.Err() != nil {
-			metadata.Clear()
-			return result, ErrArchive
-		}
-		if e != nil {
-			metadata.Clear()
-			result.Unsupported["invalid_metadata"]++
-			continue
-		}
-		text, rich, supported, valid := archiveText(PreparedRow{Row: row, Kind: kind, Metadata: metadata})
-		result.UnsupportedMetadataFields += metadata.UnsupportedFields
-		if metadata.Quote != nil {
-			result.UnresolvedQuotes++
-		}
-		result.UnresolvedMentions += len(metadata.Mentions)
-		metadata.Clear()
-		if !valid {
-			result.Unsupported["invalid_text_projection"]++
-			continue
-		}
-		if !supported {
-			result.Unsupported["unsupported_content"]++
-			continue
-		}
-		if text == "" {
-			result.Unsupported["empty_text_projection"]++
-			continue
-		}
-		sender := mapped[row.SenderID]
-		direction := "unknown"
-		if sender != "" {
-			if ref.Type == domain.ConversationDirect && sender != a.ownerAccount && sender != ref.ID {
-				result.Unsupported["sender_conversation_mismatch"]++
-				continue
-			}
-			direction = "incoming"
-			if sender == a.ownerAccount {
-				direction = "outgoing"
-			}
-		} else {
-			result.UnresolvedSenders++
-		}
-		textKind := "plain"
-		if rich {
-			textKind = "rich"
-		}
-		identity := "ar:" + sourceID + ":" + strconv.Itoa(index) + ":" + strconv.FormatInt(row.SourceRowID, 10)
-		result.Records = append(
-			result.Records,
-			SnapshotRecord{
-				ArchiveRowID: identity,
-				GlobalID:     row.MessageID,
-				SenderID:     sender,
-				Conversation: ref,
-				Direction:    direction,
-				TextKind:     textKind,
-				Text:         text,
-				TimestampMS:  row.TimestampMS,
-			},
-		)
 	}
 	if ctx.Err() != nil {
 		return result, ErrArchive
 	}
 	return result, nil
+}
+
+func (a AccountArchive) appendSnapshotRow(ctx context.Context, row SQLiteRow, batch *SQLiteBatch, mapped map[string]string, ref domain.ConversationRef, sourceID string, index int, nowMS int64, result *SnapshotPage) error {
+	if ctx.Err() != nil {
+		return ErrArchive
+	}
+	if row.Type == 36 || row.Type != 20 && batch.recalls.suppresses(row) {
+		result.SuppressedSource++
+		return nil
+	}
+	if row.Type == 20 {
+		return inspectExcludedSnapshotRow(ctx, row, result)
+	}
+	expiry, declared, e := MessageExpiryMS(row.TimestampMS, row.TTL)
+	if e != nil {
+		result.Unsupported["invalid_expiry"]++
+		//nolint:nilerr // Invalid expiry is a counted row omission, not a failure of the bounded snapshot page.
+		return nil
+	}
+	if declared && nowMS >= expiry {
+		result.Expired++
+		return nil
+	}
+	kind, known := mobilePayloadKind(row.Type)
+	if !known {
+		result.Unsupported["unknown_content_kind"]++
+		return nil
+	}
+	if len(row.BinNet) == 0 {
+		result.Unsupported["missing_metadata"]++
+		return nil
+	}
+	text, rich, visible, projectionErr := snapshotRowProjection(ctx, row, kind, result)
+	if projectionErr != nil || !visible {
+		return projectionErr
+	}
+	sender := mapped[row.SenderID]
+	direction := "unknown"
+	if sender != "" {
+		if ref.Type == domain.ConversationDirect && sender != a.ownerAccount && sender != ref.ID {
+			result.Unsupported["sender_conversation_mismatch"]++
+			return nil
+		}
+		direction = "incoming"
+		if sender == a.ownerAccount {
+			direction = "outgoing"
+		}
+	} else {
+		result.UnresolvedSenders++
+	}
+	textKind := "plain"
+	if rich {
+		textKind = "rich"
+	}
+	identity := "ar:" + sourceID + ":" + strconv.Itoa(index) + ":" + strconv.FormatInt(row.SourceRowID, 10)
+	result.Records = append(
+		result.Records,
+		SnapshotRecord{
+			ArchiveRowID: identity,
+			GlobalID:     row.MessageID,
+			SenderID:     sender,
+			Conversation: ref,
+			Direction:    direction,
+			TextKind:     textKind,
+			Text:         text,
+			TimestampMS:  row.TimestampMS,
+		},
+	)
+	return nil
+}
+
+func inspectExcludedSnapshotRow(ctx context.Context, row SQLiteRow, result *SnapshotPage) error {
+	// The native SQL query excludes this format type before conversion.
+	// Metadata is only diagnostic; it cannot turn the body into visible text.
+	metadata, metadataErr := ParseBinNet(ctx, row.BinNet)
+	if ctx.Err() != nil {
+		metadata.Clear()
+		return ErrArchive
+	}
+	if metadataErr != nil {
+		result.Unsupported["invalid_excluded_metadata"]++
+		result.Unsupported["native_excluded"]++
+	} else {
+		result.UnsupportedMetadataFields += metadata.UnsupportedFields
+		if metadata.Quote != nil {
+			result.UnresolvedQuotes++
+		}
+		result.UnresolvedMentions += len(metadata.Mentions)
+		if snapshotInformation(ctx, row.BinNet) {
+			result.Unsupported["native_information"]++
+		} else {
+			result.Unsupported["native_excluded"]++
+		}
+	}
+	metadata.Clear()
+	return nil
+}
+
+func snapshotRowProjection(ctx context.Context, row SQLiteRow, kind string, result *SnapshotPage) (string, bool, bool, error) {
+	metadata, e := ParseBinNet(ctx, row.BinNet)
+	if ctx.Err() != nil {
+		metadata.Clear()
+		return "", false, false, ErrArchive
+	}
+	if e != nil {
+		metadata.Clear()
+		result.Unsupported["invalid_metadata"]++
+		//nolint:nilerr // Malformed row metadata is counted and omitted; it does not invalidate the complete bounded page.
+		return "", false, false, nil
+	}
+	text, rich, supported, valid := archiveText(PreparedRow{Row: row, Kind: kind, Metadata: metadata})
+	result.UnsupportedMetadataFields += metadata.UnsupportedFields
+	if metadata.Quote != nil {
+		result.UnresolvedQuotes++
+	}
+	result.UnresolvedMentions += len(metadata.Mentions)
+	metadata.Clear()
+	if !valid {
+		result.Unsupported["invalid_text_projection"]++
+		return "", false, false, nil
+	}
+	if !supported {
+		result.Unsupported["unsupported_content"]++
+		return "", false, false, nil
+	}
+	if text == "" {
+		result.Unsupported["empty_text_projection"]++
+		return "", false, false, nil
+	}
+	return text, rich, true, nil
 }

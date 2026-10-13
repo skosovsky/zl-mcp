@@ -38,14 +38,28 @@ func (o *wireObservation) ResponseBytes(_ context.Context, tool string, transpor
 func (*wireObservation) Upstream(ctx context.Context, _ domain.WorkKind, next func(context.Context) error) error {
 	return next(ctx)
 }
-func (*wireObservation) Transition(context.Context, domain.WorkKind, domain.OperationState, domain.OperationState, *time.Duration) {
+
+func (*wireObservation) Transition(
+	context.Context,
+	domain.WorkKind,
+	domain.OperationState,
+	domain.OperationState,
+	*time.Duration,
+) {
 }
 func (*wireObservation) Queue(context.Context, domain.WorkKind, int64)     {}
 func (*wireObservation) Remember(context.Context, domain.WorkKind, string) {}
-func (*wireObservation) Worker(ctx context.Context, _ domain.WorkKind, _ string, next func(context.Context) error) error {
+
+func (*wireObservation) Worker(
+	ctx context.Context,
+	_ domain.WorkKind,
+	_ string,
+	next func(context.Context) error,
+) error {
 	return next(ctx)
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestHTTPResponseObservationCountsActualSDKWireBytes(t *testing.T) {
 	// Arrange: independent recorder observes the real SDK output with escaping and Unicode.
 	ctx := context.Background()
@@ -58,7 +72,17 @@ func TestHTTPResponseObservationCountsActualSDKWireBytes(t *testing.T) {
 	if err = owner.BindAccount(ctx, "synthetic-account"); err != nil {
 		t.Fatal(err)
 	}
-	if err = owner.Put(ctx, domain.Message{GroupID: "g", ID: "9007199254740993", SenderID: "peer", Text: "界 🍀 <>& newline\nquote\"", SentAt: time.Now().UTC(), Source: "live"}); err != nil {
+	if err = owner.Put(
+		ctx,
+		domain.Message{
+			GroupID:  "g",
+			ID:       "9007199254740993",
+			SenderID: "peer",
+			Text:     "界 🍀 <>& newline\nquote\"",
+			SentAt:   time.Now().UTC(),
+			Source:   "live",
+		},
+	); err != nil {
 		t.Fatal(err)
 	}
 	token := strings.Repeat("t", 32)
@@ -77,14 +101,24 @@ func TestHTTPResponseObservationCountsActualSDKWireBytes(t *testing.T) {
 		{"resources/read", map[string]any{"uri": "zalo://capabilities"}, domain.TransportResource, 0},
 	} {
 		t.Run(test.method, func(t *testing.T) {
-			test.params["_meta"] = map[string]any{"io.modelcontextprotocol/protocolVersion": "2026-07-28", "io.modelcontextprotocol/clientCapabilities": map[string]any{}}
-			body, _ := json.Marshal(map[string]any{"jsonrpc": "2.0", "id": "9007199254740993", "method": test.method, "params": test.params})
+			test.params["_meta"] = map[string]any{
+				"io.modelcontextprotocol/protocolVersion":    "2026-07-28",
+				"io.modelcontextprotocol/clientCapabilities": map[string]any{},
+			}
+			body, _ := json.Marshal(
+				map[string]any{
+					"jsonrpc": "2.0",
+					"id":      "9007199254740993",
+					"method":  test.method,
+					"params":  test.params,
+				},
+			)
 			request := httptest.NewRequest(http.MethodPost, "http://127.0.0.1/mcp", bytes.NewReader(body))
 			request = request.WithContext(shared.WithTelemetry(ctx, observer))
 			request.Header.Set("Authorization", "Bearer "+token)
 			request.Header.Set("Content-Type", "application/json")
 			request.Header.Set("Accept", "application/json, text/event-stream")
-			request.Header.Set("MCP-Protocol-Version", "2026-07-28")
+			request.Header.Set("Mcp-Protocol-Version", "2026-07-28")
 			request.Header.Set("Mcp-Method", test.method)
 			if name, ok := test.params["name"].(string); ok {
 				request.Header.Set("Mcp-Name", name)
@@ -100,11 +134,16 @@ func TestHTTPResponseObservationCountsActualSDKWireBytes(t *testing.T) {
 				ID    string `json:"id"`
 				Error any    `json:"error"`
 			}
-			if err := json.Unmarshal(response.Body.Bytes(), &output); err != nil || response.Code != 200 || output.Error != nil || output.ID != "9007199254740993" {
+			if err := json.Unmarshal(
+				response.Body.Bytes(),
+				&output,
+			); err != nil || response.Code != 200 || output.Error != nil ||
+				output.ID != "9007199254740993" {
 				t.Fatalf("unexpected SDK reply: %s", response.Body.String())
 			}
 			sample := observer.samples[len(observer.samples)-1]
-			if sample.bytes != int64(response.Body.Len()) || sample.transport != test.transport || observer.executions-before != test.executions {
+			if sample.bytes != int64(response.Body.Len()) || sample.transport != test.transport ||
+				observer.executions-before != test.executions {
 				t.Fatal("wire byte measurement/execution count changed")
 			}
 			if test.method == "tools/call" && sample.tool != "zalo_get_message_context" {

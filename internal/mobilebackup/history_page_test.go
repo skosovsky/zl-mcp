@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -37,13 +38,30 @@ func historyPageFixture(t *testing.T) (SelectedArchive, domain.MobileBackupReque
 				ttl = time.Now().Add(time.Hour).UnixMilli() - stamp
 			}
 			metadata := []byte{0, 0, 0, 9, 0, 0, 0, 1, 'x'}
-			_, e := db.Exec("INSERT INTO ChatContent(rowid,SenderId,GlbMsgId,CliMsgId,MsgContent,TimeStamp,TTL,MsgType,MsgStatus,BinNet) VALUES(?,?,?,?,?,?,?,?,?,?)", int64(9007199254740992)+int64(i), sender, fmt.Sprint(i), fmt.Sprint(i), "synthetic history", stamp, ttl, kind, 1, metadata)
+			_, e := db.Exec(
+				"INSERT INTO ChatContent(rowid,SenderId,GlbMsgId,CliMsgId,MsgContent,TimeStamp,TTL,MsgType,MsgStatus,BinNet) VALUES(?,?,?,?,?,?,?,?,?,?)",
+				int64(9007199254740992)+int64(i),
+				sender,
+				strconv.Itoa(i),
+				strconv.Itoa(i),
+				"synthetic history",
+				stamp,
+				ttl,
+				kind,
+				1,
+				metadata,
+			)
 			if e != nil {
 				t.Fatal(e)
 			}
 		}
 	})
-	return SelectedArchive{requestID: r.RequestID, requestFingerprint: r.Fingerprint(), ref: r.Ref(), File: ArchiveFile{Name: "902.db", Data: data}}, r
+	return SelectedArchive{
+		requestID:          r.RequestID,
+		requestFingerprint: r.Fingerprint(),
+		ref:                r.Ref(),
+		File:               ArchiveFile{Name: "902.db", Data: data},
+	}, r
 }
 
 func historyPageMapper() domain.MobileIdentitySource {
@@ -52,6 +70,7 @@ func historyPageMapper() domain.MobileIdentitySource {
 	})
 }
 
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSnapshotReaderConverterJournalResumeTogether(t *testing.T) {
 	// Arrange: one selected image, with a rejected/expired-only first page.
 	ctx := context.Background()
@@ -75,7 +94,19 @@ func TestSnapshotReaderConverterJournalResumeTogether(t *testing.T) {
 	}
 	s := open()
 	defer func() { s.Close() }()
-	op, err := s.PrepareMobileHistoryOperation(ctx, domain.HistoryImportRequest{Source: domain.HistorySourceMobileArchive, RequestID: r.RequestID, ConversationType: r.ConversationType, ConversationID: r.ConversationID, Since: r.Since, Until: r.Until, MaxMessages: r.MaxMessages, PageSize: 2})
+	op, err := s.PrepareMobileHistoryOperation(
+		ctx,
+		domain.HistoryImportRequest{
+			Source:           domain.HistorySourceMobileArchive,
+			RequestID:        r.RequestID,
+			ConversationType: r.ConversationType,
+			ConversationID:   r.ConversationID,
+			Since:            r.Since,
+			Until:            r.Until,
+			MaxMessages:      r.MaxMessages,
+			PageSize:         2,
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +115,10 @@ func TestSnapshotReaderConverterJournalResumeTogether(t *testing.T) {
 		t.Fatal(err)
 	}
 	page, err := snapshot.ReadHistoryPage(ctx, r, "10", t.TempDir(), 2, 0, nil, nil, historyPageMapper())
-	if err != nil || len(page.Records) != 0 || page.Counts.Examined != 2 || page.Counts.Rejected != 1 || page.Counts.Expired != 1 || page.Next == nil || page.Next.RowID != 9007199254740994 {
+	if err != nil || len(page.Records) != 0 || page.Counts.Examined != 2 || page.Counts.Rejected != 1 ||
+		page.Counts.Expired != 1 ||
+		page.Next == nil ||
+		page.Next.RowID != 9007199254740994 {
 		t.Fatal("gap-only reader page did not advance", err)
 	}
 	firstSource := page.Snapshot
@@ -115,7 +149,17 @@ func TestSnapshotReaderConverterJournalResumeTogether(t *testing.T) {
 		if e != nil || checkpoint.Snapshot != firstSource {
 			t.Fatal("restart replaced source or renewed expiry", e)
 		}
-		page, e = snapshot.ReadHistoryPage(ctx, r, "10", t.TempDir(), 2, op.Status.RecordsObserved, &checkpoint.Snapshot, checkpoint.Next, historyPageMapper())
+		page, e = snapshot.ReadHistoryPage(
+			ctx,
+			r,
+			"10",
+			t.TempDir(),
+			2,
+			op.Status.RecordsObserved,
+			&checkpoint.Snapshot,
+			checkpoint.Next,
+			historyPageMapper(),
+		)
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -134,7 +178,15 @@ func TestSnapshotReaderConverterJournalResumeTogether(t *testing.T) {
 		}
 	}
 	// Assert: raw-row coverage, two retained messages and no historical notification.
-	if op.Status.State != "partial" || op.Status.StopReason == nil || *op.Status.StopReason != "source_gaps" || op.Status.RecordsObserved != 5 || op.Status.PagesObserved != 3 || op.Status.InsertedCount != 2 || op.Status.MobileCoverage == nil || op.Status.MobileCoverage.Expired != 1 || op.Status.MobileCoverage.UnsupportedTypes != 1 || op.Status.MobileCoverage.UnknownMetadataFields != 3 || op.Status.HistoryComplete {
+	if op.Status.State != "partial" || op.Status.StopReason == nil || *op.Status.StopReason != "source_gaps" ||
+		op.Status.RecordsObserved != 5 ||
+		op.Status.PagesObserved != 3 ||
+		op.Status.InsertedCount != 2 ||
+		op.Status.MobileCoverage == nil ||
+		op.Status.MobileCoverage.Expired != 1 ||
+		op.Status.MobileCoverage.UnsupportedTypes != 1 ||
+		op.Status.MobileCoverage.UnknownMetadataFields != 3 ||
+		op.Status.HistoryComplete {
 		t.Fatal("integrated coverage differs from source")
 	}
 	for table, want := range map[string]int{"messages": 2, "message_identities": 2, "message_events": 0, "event_deliveries": 0} {
@@ -144,11 +196,14 @@ func TestSnapshotReaderConverterJournalResumeTogether(t *testing.T) {
 		}
 	}
 	var storedExpiry int64
-	if err = s.DB.QueryRow("SELECT expires_ms FROM history_message_expiry WHERE message_id='5'").Scan(&storedExpiry); err != nil || expectedExpiry == 0 || storedExpiry != expectedExpiry {
+	if err = s.DB.QueryRow("SELECT expires_ms FROM history_message_expiry WHERE message_id='5'").
+		Scan(&storedExpiry); err != nil || expectedExpiry == 0 ||
+		storedExpiry != expectedExpiry {
 		t.Fatal("journal changed original TTL", err)
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSnapshotHistoryPageRejectsBindingAndUnsafeSources(t *testing.T) {
 	for _, mode := range []string{"account", "digest", "expiry", "coverage", "missing-source", "missing-position", "zero-progress", "limit", "wal", "controls", "cancelled"} {
 		t.Run(mode, func(t *testing.T) {
@@ -160,7 +215,18 @@ func TestSnapshotHistoryPageRejectsBindingAndUnsafeSources(t *testing.T) {
 			}
 			if mode == "controls" {
 				selected.File.Data = sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
-					_, e := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", "1", "1", "synthetic", time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC).UnixMilli(), 0, 33, 1, nil)
+					_, e := db.Exec(
+						"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+						"901",
+						"1",
+						"1",
+						"synthetic",
+						time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC).UnixMilli(),
+						0,
+						33,
+						1,
+						nil,
+					)
 					if e != nil {
 						t.Fatal(e)
 					}
@@ -206,7 +272,17 @@ func TestSnapshotHistoryPageRejectsBindingAndUnsafeSources(t *testing.T) {
 				ctx = cancelled
 			}
 			// Act: reject the whole writable result instead of returning a prefix.
-			page, err := s.ReadHistoryPage(ctx, r, account, t.TempDir(), 2, examined, previous, after, historyPageMapper())
+			page, err := s.ReadHistoryPage(
+				ctx,
+				r,
+				account,
+				t.TempDir(),
+				2,
+				examined,
+				previous,
+				after,
+				historyPageMapper(),
+			)
 			// Assert: no record/source/continuation is handed to the journal.
 			if err == nil || len(page.Records) != 0 || page.Next != nil || page.Snapshot.ID != "" {
 				t.Fatal("unsafe snapshot returned writable page")

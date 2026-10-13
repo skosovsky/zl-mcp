@@ -59,13 +59,15 @@ func TestConversationMigrationPreservesBoundariesPayloadAndFTS(t *testing.T) {
 	var seq, boundary, watermark, fts int
 	var kind, id, profile, generation, state string
 	var payload []byte
-	if err := s.DB.QueryRow("SELECT seq,conversation_type,conversation_id FROM messages").Scan(&seq, &kind, &id); err != nil {
+	if err := s.DB.QueryRow("SELECT seq,conversation_type,conversation_id FROM messages").
+		Scan(&seq, &kind, &id); err != nil {
 		t.Fatal(err)
 	}
 	if seq != 42 || kind != "group" || id != "same" {
 		t.Fatal("legacy message changed identity")
 	}
-	if err := s.DB.QueryRow("SELECT start_seq,profile,generation FROM event_subscriptions").Scan(&boundary, &profile, &generation); err != nil {
+	if err := s.DB.QueryRow("SELECT start_seq,profile,generation FROM event_subscriptions").
+		Scan(&boundary, &profile, &generation); err != nil {
 		t.Fatal(err)
 	}
 	if boundary != 75 || profile != "zalo.message.created" || generation != "gen" {
@@ -74,16 +76,20 @@ func TestConversationMigrationPreservesBoundariesPayloadAndFTS(t *testing.T) {
 	if err := s.DB.QueryRow("SELECT seq FROM event_fanout WHERE id=1").Scan(&watermark); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.DB.QueryRow("SELECT payload,state FROM event_deliveries WHERE id=1").Scan(&payload, &state); err != nil {
+	if err := s.DB.QueryRow("SELECT payload,state FROM event_deliveries WHERE id=1").
+		Scan(&payload, &state); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.DB.QueryRow("SELECT count(*) FROM messages_fts WHERE messages_fts MATCH 'synthetic'").Scan(&fts); err != nil {
+	if err := s.DB.QueryRow("SELECT count(*) FROM messages_fts WHERE messages_fts MATCH 'synthetic'").
+		Scan(&fts); err != nil {
 		t.Fatal(err)
 	}
 	if watermark != 42 || string(payload) != "\x01\x02\x03" || state != "pending" || fts != 1 {
 		t.Fatal("queue, watermark or FTS changed")
 	}
-	_, err := s.DB.Exec("INSERT INTO messages(group_id,conversation_type,message_id,sender_id,sent_at,received_at,text,attachments,source) VALUES('same','direct','m','sender','2026-10-03T00:00:00Z','2026-10-03T00:00:00Z','direct synthetic','[]','live')")
+	_, err := s.DB.Exec(
+		"INSERT INTO messages(group_id,conversation_type,message_id,sender_id,sent_at,received_at,text,attachments,source) VALUES('same','direct','m','sender','2026-10-03T00:00:00Z','2026-10-03T00:00:00Z','direct synthetic','[]','live')",
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,8 +114,8 @@ func TestConversationMigrationRollsBackPartialDDL(t *testing.T) {
 		t.Fatal("injected failure did not occur")
 	}
 	var count int
-	if err := s.DB.QueryRow("SELECT count(*) FROM schema_migrations WHERE version=4").Scan(&count); err != nil {
-		t.Fatal(err)
+	if scanErr := s.DB.QueryRow("SELECT count(*) FROM schema_migrations WHERE version=4").Scan(&count); scanErr != nil {
+		t.Fatal(scanErr)
 	}
 	if count != 0 {
 		t.Fatal("failed migration marked complete")

@@ -27,7 +27,12 @@ type Manager struct {
 }
 
 func failure(code, message string) error {
-	return &domain.Error{Code: code, Message: message, NextAction: domain.NextAction{Instruction: "Inspect send status before creating another request."}, Details: map[string]any{}}
+	return &domain.Error{
+		Code:       code,
+		Message:    message,
+		NextAction: domain.NextAction{Instruction: "Inspect send status before creating another request."},
+		Details:    map[string]any{},
+	}
 }
 
 func (m *Manager) Call(ctx context.Context, method string, args any) (map[string]any, error) {
@@ -40,18 +45,7 @@ func (m *Manager) Call(ctx context.Context, method string, args any) (map[string
 		return nil, domain.Invalid("Invalid send arguments.")
 	}
 	if method == "zalo_get_send_status" {
-		op, err := m.Store.SendStatus(ctx, r.RequestID)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, failure("NOT_FOUND", "Send operation is unavailable.")
-			}
-			var invalid *domain.Error
-			if errors.As(err, &invalid) {
-				return nil, invalid
-			}
-			return nil, failure("STORAGE_ERROR", "Cannot read send status; do not create another request.")
-		}
-		return view(op), nil
+		return m.sendStatus(ctx, r.RequestID)
 	}
 	if method != "zalo_send_direct_message" {
 		return nil, domain.Invalid("Unknown messaging method.")
@@ -62,15 +56,9 @@ func (m *Manager) Call(ctx context.Context, method string, args any) (map[string
 	if !m.Enabled || (len(m.Recipients) > 0 && !m.Recipients[r.RecipientID]) {
 		return nil, failure("PERMISSION_DENIED", "Direct sending is not permitted for this recipient.")
 	}
-	op, err := m.Store.PrepareSend(ctx, r)
-	if errors.Is(err, storage.ErrSendConflict) {
-		return nil, failure("REQUEST_CONFLICT", "request_id already belongs to different send arguments.")
-	}
-	if errors.Is(err, storage.ErrSendCapacity) {
-		return nil, failure("CAPACITY_EXCEEDED", "Send operation ledger is full.")
-	}
-	if err != nil {
-		return nil, err
+	op, prepareErr := m.prepareSend(ctx, r)
+	if prepareErr != nil {
+		return nil, prepareErr
 	}
 	if observer := shared.Telemetry(ctx); observer != nil && observer.Recording() {
 		observer.Remember(ctx, domain.WorkSend, op.RequestID)
@@ -81,16 +69,9 @@ func (m *Manager) Call(ctx context.Context, method string, args any) (map[string
 	if m.Sender == nil {
 		return nil, failure("NOT_AUTHENTICATED", "Zalo session is unavailable; the pending operation was not sent.")
 	}
-	var quote *domain.SendQuote
-	if r.ReplyTo != nil {
-		quote, err = m.Store.SendQuote(ctx, r.RecipientID, *r.ReplyTo)
-		if err != nil {
-			var invalid *domain.Error
-			if errors.Is(err, sql.ErrNoRows) || errors.As(err, &invalid) {
-				return nil, failure("QUOTE_UNAVAILABLE", "Retained direct message has no supported quote metadata; nothing was sent.")
-			}
-			return nil, failure("STORAGE_ERROR", "Cannot read reply source; nothing was sent.")
-		}
+	quote, err := m.replyQuote(ctx, r)
+	if err != nil {
+		return nil, err
 	}
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
@@ -110,37 +91,9 @@ func (m *Manager) Call(ctx context.Context, method string, args any) (map[string
 	shared.ObserveTransition(ctx, domain.WorkSend, "pending", "sending", created)
 	var result map[string]any
 	err = shared.ObserveWorker(ctx, domain.WorkSend, op.RequestID, func(ctx context.Context) error {
-		sendCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-		id, sendErr := shared.ObserveUpstream(sendCtx, domain.WorkSend, func(ctx context.Context) (string, error) {
-			return m.Sender.SendDirect(ctx, r.RecipientID, r.Text, quote)
-		})
-		cancel()
-		state := "sent"
-		var messageID, reason *string
-		if sendErr == nil && id != "" {
-			messageID = &id
-		} else {
-			state = "unknown"
-			category := "upstream_ambiguous"
-			if errors.Is(sendErr, ErrRejected) {
-				state = "failed"
-				category = "upstream_rejected"
-			}
-			reason = &category
-		}
-		// A cancelled client must not prevent recording a confirmed upstream result.
-		finish, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-		if err = m.Store.CompleteSend(finish, r.RequestID, state, messageID, reason); err != nil {
-			return failure("STORAGE_ERROR", "Cannot record send result; do not create another request.")
-		}
-		shared.ObserveTransition(ctx, domain.WorkSend, "sending", state, created)
-		op, err = m.Store.SendStatus(finish, r.RequestID)
-		if err != nil {
-			return err
-		}
-		result = view(op)
-		return nil
+		var sendResultErr error
+		result, sendResultErr = m.sendOnceObserved(ctx, r, quote, created)
+		return sendResultErr
 	})
 	return result, err
 }
@@ -150,4 +103,85 @@ func view(op domain.SendOperation) map[string]any {
 	var v map[string]any
 	_ = json.Unmarshal(b, &v)
 	return v
+}
+
+func (m *Manager) sendStatus(ctx context.Context, requestID string) (map[string]any, error) {
+	op, sendStatusErr := m.Store.SendStatus(ctx, requestID)
+	if sendStatusErr != nil {
+		if errors.Is(sendStatusErr, sql.ErrNoRows) {
+			return nil, failure("NOT_FOUND", "Send operation is unavailable.")
+		}
+		if invalid, ok := errors.AsType[*domain.Error](sendStatusErr); ok {
+			return nil, invalid
+		}
+		return nil, failure("STORAGE_ERROR", "Cannot read send status; do not create another request.")
+	}
+	return view(op), nil
+}
+
+func (m *Manager) replyQuote(ctx context.Context, r domain.SendRequest) (*domain.SendQuote, error) {
+	if r.ReplyTo == nil {
+		//nolint:nilnil // A missing reply anchor means no quote is requested.
+		return nil, nil
+	}
+
+	quote, err := m.Store.SendQuote(ctx, r.RecipientID, *r.ReplyTo)
+	if err != nil {
+		var invalid *domain.Error
+		if errors.Is(err, sql.ErrNoRows) || errors.As(err, &invalid) {
+			return nil, failure(
+				"QUOTE_UNAVAILABLE",
+				"Retained direct message has no supported quote metadata; nothing was sent.",
+			)
+		}
+		return nil, failure("STORAGE_ERROR", "Cannot read reply source; nothing was sent.")
+	}
+	return quote, nil
+}
+
+func (m *Manager) sendOnceObserved(ctx context.Context, r domain.SendRequest, quote *domain.SendQuote, created time.Time) (map[string]any, error) {
+	sendCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	id, sendErr := shared.ObserveUpstream(sendCtx, domain.WorkSend, func(ctx context.Context) (string, error) {
+		return m.Sender.SendDirect(ctx, r.RecipientID, r.Text, quote)
+	})
+	cancel()
+	state := "sent"
+	var messageID, reason *string
+	if sendErr == nil && id != "" {
+		messageID = &id
+	} else {
+		state = "unknown"
+		category := "upstream_ambiguous"
+		if errors.Is(sendErr, ErrRejected) {
+			state = "failed"
+			category = "upstream_rejected"
+		}
+		reason = &category
+	}
+	// A cancelled client must not prevent recording a confirmed upstream result.
+	finish, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if err := m.Store.CompleteSend(finish, r.RequestID, state, messageID, reason); err != nil {
+		return nil, failure("STORAGE_ERROR", "Cannot record send result; do not create another request.")
+	}
+	shared.ObserveTransition(ctx, domain.WorkSend, "sending", state, created)
+	op, err := m.Store.SendStatus(finish, r.RequestID)
+	if err != nil {
+		return nil, err
+	}
+	return view(op), nil
+}
+
+func (m *Manager) prepareSend(ctx context.Context, r domain.SendRequest) (domain.SendOperation, error) {
+	op, err := m.Store.PrepareSend(ctx, r)
+	if errors.Is(err, storage.ErrSendConflict) {
+		return domain.SendOperation{}, failure("REQUEST_CONFLICT", "request_id already belongs to different send arguments.")
+	}
+	if errors.Is(err, storage.ErrSendCapacity) {
+		return domain.SendOperation{}, failure("CAPACITY_EXCEEDED", "Send operation ledger is full.")
+	}
+	if err != nil {
+		return domain.SendOperation{}, err
+	}
+	return op, nil
 }

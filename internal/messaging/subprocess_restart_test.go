@@ -4,6 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
 	operationsadapter "github.com/skosovsky/zl-mcp/internal/adapters/operations"
 	storeadapter "github.com/skosovsky/zl-mcp/internal/adapters/store"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
@@ -16,15 +23,11 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/local"
 	"github.com/skosovsky/zl-mcp/internal/storage"
 	"github.com/skosovsky/zl-mcp/internal/toolruntime"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
-	"testing"
-	"time"
 )
 
 // This helper only runs in explicitly selected synthetic child processes.
+//
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestCommandOwnerCrashHelper(t *testing.T) {
 	mode := os.Getenv("ZL_T07_CRASH_MODE")
 	if mode == "" {
@@ -37,7 +40,12 @@ func TestCommandOwnerCrashHelper(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer unlock()
-	owner, err := storage.OpenWithPolicy(ctx, filepath.Join(dir, "state.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	owner, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(dir, "state.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,36 +57,56 @@ func TestCommandOwnerCrashHelper(t *testing.T) {
 		t.Fatal(err)
 	}
 	sender := senderFunc(func(ctx context.Context, _ string, _ string, _ *domain.SendQuote) (string, error) {
-		counter, err := os.OpenFile(filepath.Join(dir, "effects"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
-		if err != nil {
-			return "", err
+		counter, openFileErr := os.OpenFile(filepath.Join(dir, "effects"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+		if openFileErr != nil {
+			return "", openFileErr
 		}
-		_, err = counter.WriteString("send\n")
-		if err == nil {
-			err = counter.Sync()
+		_, openFileErr = counter.WriteString("send\n")
+		if openFileErr == nil {
+			openFileErr = counter.Sync()
 		}
 		closeErr := counter.Close()
-		if err != nil {
-			return "", err
+		if openFileErr != nil {
+			return "", openFileErr
 		}
 		if closeErr != nil {
 			return "", closeErr
 		}
 		if mode == "crash" {
-			if err = os.WriteFile(filepath.Join(dir, "ready"), []byte("native send entered after durable claim"), 0600); err != nil {
-				return "", err
+			if openFileErr = os.WriteFile(
+				filepath.Join(dir, "ready"),
+				[]byte("native send entered after durable claim"),
+				0600,
+			); openFileErr != nil {
+				return "", openFileErr
 			}
 			<-ctx.Done()
 			return "", ctx.Err()
 		}
 		return "unexpected-resend", nil
 	})
-	manager := &Manager{Store: owner, Sender: sender, Enabled: true, Recipients: map[string]bool{"synthetic-peer": true}}
+	manager := &Manager{
+		Store:      owner,
+		Sender:     sender,
+		Enabled:    true,
+		Recipients: map[string]bool{"synthetic-peer": true},
+	}
 	reader := storeadapter.New(owner)
 	operations := operationsadapter.NewReader(manager)
-	runtime, err := toolruntime.New(&search.Handler{Reads: reader}, &conversations.Handler{Reads: reader}, reader, toolruntime.Capabilities{
-		Messaging: &messagingapp.Handler{Reads: operations, Commands: operations}, History: &history.Handler{Reads: operations, Commands: operations}, Membership: &membership.Handler{Reads: operations, Commands: operations}, Events: &eventaccess.Handler{Journal: reader, Commands: reader},
-	})
+	runtime, err := toolruntime.New(
+		&search.Handler{Reads: reader},
+		&conversations.Handler{Reads: reader},
+		reader,
+		toolruntime.Capabilities{
+			Messaging: &messagingapp.Handler{
+				Reads:    operations,
+				Commands: operations,
+			},
+			History:    &history.Handler{Reads: operations, Commands: operations},
+			Membership: &membership.Handler{Reads: operations, Commands: operations},
+			Events:     &eventaccess.Handler{Journal: reader, Commands: reader},
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +114,9 @@ func TestCommandOwnerCrashHelper(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	request := []byte(`{"recipient_id":"synthetic-peer","text":"synthetic Cà phê 🍀","request_id":"00000000-0000-4000-8000-000000000007"}`)
+	request := []byte(
+		`{"recipient_id":"synthetic-peer","text":"synthetic Cà phê 🍀","request_id":"00000000-0000-4000-8000-000000000007"}`,
+	)
 	result, err := runtime.Execute(ctx, binding, "zalo_send_direct_message", request)
 	if err != nil {
 		t.Fatal(err)
@@ -94,7 +124,9 @@ func TestCommandOwnerCrashHelper(t *testing.T) {
 	if mode == "crash" {
 		t.Fatal("crash helper returned before abrupt termination")
 	}
-	if result.SendStatus == nil || result.SendStatus.Status != "unknown" || result.SendStatus.Reason == nil || *result.SendStatus.Reason != "interrupted" || result.SendStatus.RetrySafe {
+	if result.SendStatus == nil || result.SendStatus.Status != "unknown" || result.SendStatus.Reason == nil ||
+		*result.SendStatus.Reason != "interrupted" ||
+		result.SendStatus.RetrySafe {
 		t.Fatalf("restart changed ambiguous send: %+v", result.SendStatus)
 	}
 	conflicting := []byte(strings.Replace(string(request), "synthetic Cà phê 🍀", "different synthetic text", 1))
@@ -155,8 +187,8 @@ func TestScopedCommandOwnerSurvivesAbruptSubprocessCrashWithoutResend(t *testing
 		t.Fatal("expected abrupt subprocess termination")
 	}
 	recovery := child("recover")
-	if output, err := recovery.CombinedOutput(); err != nil {
-		t.Fatalf("restart: %v %s", err, output)
+	if output, combinedOutputErr := recovery.CombinedOutput(); combinedOutputErr != nil {
+		t.Fatalf("restart: %v %s", combinedOutputErr, output)
 	}
 	// Assert: independent effect counter and native durable operation agree.
 	effects, err := os.ReadFile(filepath.Join(dir, "effects"))
@@ -174,7 +206,9 @@ func TestScopedCommandOwnerSurvivesAbruptSubprocessCrashWithoutResend(t *testing
 	if err = json.Unmarshal(wire, &operation); err != nil {
 		t.Fatal(err)
 	}
-	if operation.RequestID != "00000000-0000-4000-8000-000000000007" || operation.Status != "unknown" || operation.MessageID != nil || operation.RetrySafe {
+	if operation.RequestID != "00000000-0000-4000-8000-000000000007" || operation.Status != "unknown" ||
+		operation.MessageID != nil ||
+		operation.RetrySafe {
 		t.Fatal(operation)
 	}
 }

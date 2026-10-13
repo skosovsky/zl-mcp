@@ -32,12 +32,33 @@ func readyWorker(t *testing.T, transport http.RoundTripper) (*Worker, *storage.S
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = s.ActivateSubscription(ctx, storage.EventSubscription{ID: "subscription", Principal: "owner", GroupID: "group", Callback: "https://callback.example/events", Secret: "whsec_" + base64.StdEncoding.EncodeToString([]byte("synthetic-key-for-webhook-32bytes!"))}, revision, at)
+	_, err = s.ActivateSubscription(
+		ctx,
+		storage.EventSubscription{
+			ID:        "subscription",
+			Principal: "owner",
+			GroupID:   "group",
+			Callback:  "https://callback.example/events",
+			Secret:    "whsec_" + base64.StdEncoding.EncodeToString([]byte("synthetic-key-for-webhook-32bytes!")),
+		},
+		revision,
+		at,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.Put(ctx, domain.Message{GroupID: "group", ID: "message", SenderID: "author", Text: strings.Repeat("界", 2050), SentAt: at, Source: "live"}); err != nil {
-		t.Fatal(err)
+	if putErr := s.Put(
+		ctx,
+		domain.Message{
+			GroupID:  "group",
+			ID:       "message",
+			SenderID: "author",
+			Text:     strings.Repeat("界", 2050),
+			SentAt:   at,
+			Source:   "live",
+		},
+	); putErr != nil {
+		t.Fatal(putErr)
 	}
 	w, err := NewWorker(s)
 	if err != nil {
@@ -60,14 +81,17 @@ func TestSignedDeliveryRetryAfterAndStablePayload(t *testing.T) {
 			t.Fatal(err)
 		}
 		var event MessageEvent
-		if err := json.Unmarshal(body, &event); err != nil {
-			t.Fatal(err)
+		if unmarshalErr := json.Unmarshal(body, &event); unmarshalErr != nil {
+			t.Fatal(unmarshalErr)
 		}
 		mac := hmac.New(sha256.New, []byte("synthetic-key-for-webhook-32bytes!"))
-		mac.Write([]byte(r.Header.Get("webhook-id") + "." + r.Header.Get("webhook-timestamp") + "."))
+		mac.Write([]byte(r.Header.Get("Webhook-Id") + "." + r.Header.Get("Webhook-Timestamp") + "."))
 		mac.Write(body)
-		signature, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("webhook-signature"), "v1,"))
-		if err != nil || !hmac.Equal(signature, mac.Sum(nil)) || r.Header.Get("webhook-id") != event.EventID || r.Header.Get("X-MCP-Subscription-Id") != "subscription" || !event.Data.TextTruncated || event.Data.TextResourceURI == nil {
+		signature, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"))
+		if err != nil || !hmac.Equal(signature, mac.Sum(nil)) || r.Header.Get("Webhook-Id") != event.EventID ||
+			r.Header.Get("X-Mcp-Subscription-Id") != "subscription" ||
+			!event.Data.TextTruncated ||
+			event.Data.TextResourceURI == nil {
 			t.Fatal("invalid signed delivery")
 		}
 		bodies = append(bodies, body)
@@ -76,7 +100,11 @@ func TestSignedDeliveryRetryAfterAndStablePayload(t *testing.T) {
 		if len(bodies) == 1 {
 			code = 503
 		}
-		return &http.Response{StatusCode: code, Header: http.Header{"Retry-After": []string{"60"}}, Body: io.NopCloser(strings.NewReader(""))}, nil
+		return &http.Response{
+			StatusCode: code,
+			Header:     http.Header{"Retry-After": []string{"60"}},
+			Body:       io.NopCloser(strings.NewReader("")),
+		}, nil
 	})
 	w, s, at := readyWorker(t, transport)
 	// Act.
@@ -106,7 +134,11 @@ func TestDeliveryTerminalHTTPResponses(t *testing.T) {
 			calls := 0
 			w, s, at := readyWorker(t, callbackRoundTrip(func(*http.Request) (*http.Response, error) {
 				calls++
-				return &http.Response{StatusCode: code, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(""))}, nil
+				return &http.Response{
+					StatusCode: code,
+					Header:     http.Header{},
+					Body:       io.NopCloser(strings.NewReader("")),
+				}, nil
 			}))
 			// Act.
 			if _, err := w.DeliverOne(context.Background(), at); err != nil {
@@ -141,9 +173,23 @@ func TestRetryPreservesSubscriptionOrder(t *testing.T) {
 		if len(received) == 1 {
 			code = http.StatusServiceUnavailable
 		}
-		return &http.Response{StatusCode: code, Header: http.Header{"Retry-After": []string{"60"}}, Body: io.NopCloser(strings.NewReader(""))}, nil
+		return &http.Response{
+			StatusCode: code,
+			Header:     http.Header{"Retry-After": []string{"60"}},
+			Body:       io.NopCloser(strings.NewReader("")),
+		}, nil
 	}))
-	if err := s.Put(ctx, domain.Message{GroupID: "group", ID: "later", SenderID: "author", Text: "second synthetic message", SentAt: at.Add(time.Second), Source: "live"}); err != nil {
+	if err := s.Put(
+		ctx,
+		domain.Message{
+			GroupID:  "group",
+			ID:       "later",
+			SenderID: "author",
+			Text:     "second synthetic message",
+			SentAt:   at.Add(time.Second),
+			Source:   "live",
+		},
+	); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := s.FanoutEvents(ctx, at, w.Policy, w.Encoder.Encode); err != nil {
@@ -161,7 +207,8 @@ func TestRetryPreservesSubscriptionOrder(t *testing.T) {
 		t.Fatalf("unexpected receipt order: %v", received)
 	}
 	var completed int
-	if err := s.DB.QueryRow("SELECT COUNT(*) FROM event_deliveries WHERE state='delivered'").Scan(&completed); err != nil {
+	if err := s.DB.QueryRow("SELECT COUNT(*) FROM event_deliveries WHERE state='delivered'").
+		Scan(&completed); err != nil {
 		t.Fatal(err)
 	}
 	if completed != 2 {
@@ -169,13 +216,18 @@ func TestRetryPreservesSubscriptionOrder(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestBoundedDiagnosticsExcludePrivateContentInEverySink(t *testing.T) {
 	// Arrange: sent event text and syntactically valid receiver IDs are private too.
 	var logs, trace bytes.Buffer
 	var sent []byte
 	w, _, at := readyWorker(t, callbackRoundTrip(func(r *http.Request) (*http.Response, error) {
 		sent, _ = io.ReadAll(r.Body)
-		return &http.Response{StatusCode: 202, Header: http.Header{"X-Request-Id": []string{"PRIVATE_SENTINEL_RECEIVER"}}, Body: io.NopCloser(strings.NewReader(`{"nested":{"token":"PRIVATE_SENTINEL_RESPONSE"}}`))}, nil
+		return &http.Response{
+			StatusCode: http.StatusAccepted,
+			Header:     http.Header{"X-Request-Id": []string{"PRIVATE_SENTINEL_RECEIVER"}},
+			Body:       io.NopCloser(strings.NewReader(`{"nested":{"token":"PRIVATE_SENTINEL_RESPONSE"}}`)),
+		}, nil
 	}))
 	w.Logger = slog.New(slog.NewJSONHandler(&logs, nil))
 	w.TraceLogger = slog.New(slog.NewJSONHandler(&trace, nil))
@@ -185,7 +237,19 @@ func TestBoundedDiagnosticsExcludePrivateContentInEverySink(t *testing.T) {
 	if err != nil || !handled || !bytes.Contains(sent, []byte("界")) {
 		t.Fatal("callback delivery changed")
 	}
-	allowed := map[string]bool{"time": true, "level": true, "msg": true, "correlation_id": true, "attempt": true, "body_bytes": true, "elapsed_ms": true, "http_status": true, "outcome": true, "reason": true, "receipt_persisted": true}
+	allowed := map[string]bool{
+		"time":              true,
+		"level":             true,
+		"msg":               true,
+		"correlation_id":    true,
+		"attempt":           true,
+		"body_bytes":        true,
+		"elapsed_ms":        true,
+		"http_status":       true,
+		"outcome":           true,
+		"reason":            true,
+		"receipt_persisted": true,
+	}
 	var correlation string
 	for _, sink := range []struct {
 		data  string
@@ -218,7 +282,8 @@ func TestBoundedDiagnosticsExcludePrivateContentInEverySink(t *testing.T) {
 			if v["body_bytes"] != float64(len(sent)) {
 				t.Fatal("missing bounded size")
 			}
-			if v["msg"] == "mcp_event_delivery_finished" && (v["http_status"] != float64(202) || v["receipt_persisted"] != true || v["outcome"] != "delivered") {
+			if v["msg"] == "mcp_event_delivery_finished" &&
+				(v["http_status"] != float64(202) || v["receipt_persisted"] != true || v["outcome"] != "delivered") {
 				t.Fatal("missing receipt metadata")
 			}
 		}

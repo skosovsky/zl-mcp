@@ -50,6 +50,7 @@ func DecompressXZ(ctx context.Context, r io.Reader, compressedLimit, outputLimit
 type xzRecord struct{ unpadded, output uint64 }
 
 // inspectXZ walks complete stream indexes before any dictionary can be allocated.
+//nolint:cyclop,funlen,gocognit,gocyclo // This bounded protocol parser validates complete framing/records before publishing and retains its buffer-clearing error paths.
 func inspectXZ(ctx context.Context, data []byte, outputLimit uint64) (uint64, error) {
 	if len(data) < 32 || len(data)%4 != 0 {
 		return 0, ErrXZ
@@ -162,6 +163,7 @@ func inspectXZ(ctx context.Context, data []byte, outputLimit uint64) (uint64, er
 	return output, nil
 }
 
+//nolint:gocognit // This bounded protocol parser validates complete framing/records before publishing and retains its buffer-clearing error paths.
 func inspectXZBlock(block []byte, record xzRecord, checkBytes int) bool {
 	if len(block) == 0 || block[0] == 0 {
 		return false

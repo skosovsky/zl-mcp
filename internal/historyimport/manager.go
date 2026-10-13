@@ -15,7 +15,14 @@ import (
 type Manager struct{ Store *storage.Store }
 
 func managerError(code, message string) error {
-	return &domain.Error{Code: code, Message: message, NextAction: domain.NextAction{Instruction: "Inspect import status; reuse the original request UUID for retries. Check collector authentication and collection policy."}, Details: map[string]any{}}
+	return &domain.Error{
+		Code:    code,
+		Message: message,
+		NextAction: domain.NextAction{
+			Instruction: "Inspect import status; reuse the original request UUID for retries. Check collector authentication and collection policy.",
+		},
+		Details: map[string]any{},
+	}
 }
 
 func (m *Manager) Call(ctx context.Context, method string, arguments any) (map[string]any, error) {
@@ -62,25 +69,12 @@ func (m *Manager) Call(ctx context.Context, method string, arguments any) (map[s
 		}
 	}
 	if err != nil {
-		var typed *domain.Error
-		switch {
-		case errors.As(err, &typed):
-			return nil, typed
-		case errors.Is(err, storage.ErrHistoryConflict):
-			return nil, managerError("REQUEST_CONFLICT", "request_id belongs to different history arguments.")
-		case errors.Is(err, storage.ErrHistoryBusy):
-			return nil, managerError("OPERATION_IN_PROGRESS", "This conversation already has active history work.")
-		case errors.Is(err, storage.ErrHistoryCapacity):
-			return nil, managerError("CAPACITY_EXCEEDED", "History operation ledger is full.")
-		case errors.Is(err, sql.ErrNoRows) && method == "zalo_import_conversation_history":
-			return nil, managerError("NOT_AUTHENTICATED", "No authenticated account is bound to this state directory.")
-		case errors.Is(err, sql.ErrNoRows):
-			return nil, managerError("NOT_FOUND", "No accessible history operation was found.")
-		default:
-			return nil, managerError("STORAGE_ERROR", "Cannot access the history operation; do not create a replacement UUID blindly.")
-		}
+		return nil, projectHistoryError(method, err)
 	}
-	if observer := shared.Telemetry(ctx); observer != nil && observer.Recording() && method == "zalo_import_conversation_history" {
+	if observer := shared.Telemetry(
+		ctx,
+	); observer != nil && observer.Recording() &&
+		method == "zalo_import_conversation_history" {
 		observer.Remember(ctx, domain.WorkHistory, op.Status.OperationID)
 	}
 	encoded, err := json.Marshal(op.Status)
@@ -92,4 +86,27 @@ func (m *Manager) Call(ctx context.Context, method string, arguments any) (map[s
 		return nil, managerError("STORAGE_ERROR", "Cannot encode history status.")
 	}
 	return result, nil
+}
+
+func projectHistoryError(method string, err error) error {
+	var typed *domain.Error
+	switch {
+	case errors.As(err, &typed):
+		return typed
+	case errors.Is(err, storage.ErrHistoryConflict):
+		return managerError("REQUEST_CONFLICT", "request_id belongs to different history arguments.")
+	case errors.Is(err, storage.ErrHistoryBusy):
+		return managerError("OPERATION_IN_PROGRESS", "This conversation already has active history work.")
+	case errors.Is(err, storage.ErrHistoryCapacity):
+		return managerError("CAPACITY_EXCEEDED", "History operation ledger is full.")
+	case errors.Is(err, sql.ErrNoRows) && method == "zalo_import_conversation_history":
+		return managerError("NOT_AUTHENTICATED", "No authenticated account is bound to this state directory.")
+	case errors.Is(err, sql.ErrNoRows):
+		return managerError("NOT_FOUND", "No accessible history operation was found.")
+	default:
+		return managerError(
+			"STORAGE_ERROR",
+			"Cannot access the history operation; do not create a replacement UUID blindly.",
+		)
+	}
 }

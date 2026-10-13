@@ -58,6 +58,7 @@ func (s *Store) FanoutEvents(
 	})
 }
 
+//nolint:cyclop,funlen,gocognit,gocyclo // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) FanoutProfileEvents(
 	ctx context.Context,
 	at time.Time,
@@ -126,10 +127,10 @@ func (s *Store) FanoutProfileEvents(
 		message.Direction = event.direction
 		message.FirstIncoming = event.firstIncoming
 		if encodeErr == nil {
-			if err := tx.QueryRowContext(ctx, "SELECT name FROM conversations WHERE conversation_type=? AND conversation_id=?", event.kind, event.group).
-				Scan(&message.ConversationName); err != nil &&
-				!errors.Is(err, sql.ErrNoRows) {
-				return 0, err
+			if scanErr := tx.QueryRowContext(ctx, "SELECT name FROM conversations WHERE conversation_type=? AND conversation_id=?", event.kind, event.group).
+				Scan(&message.ConversationName); scanErr != nil &&
+				!errors.Is(scanErr, sql.ErrNoRows) {
+				return 0, scanErr
 			}
 		}
 		rows, err := tx.QueryContext(
@@ -149,13 +150,13 @@ func (s *Store) FanoutProfileEvents(
 		type target struct{ id, generation, profile string }
 		var targets []target
 		for rows.Next() {
-			var target target
-			if err := rows.Scan(&target.id, &target.generation, &target.profile); err != nil {
+			var operationValue target
+			if err := rows.Scan(&operationValue.id, &operationValue.generation, &operationValue.profile); err != nil {
 				//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
 				rows.Close()
 				return 0, err
 			}
-			targets = append(targets, target)
+			targets = append(targets, operationValue)
 		}
 		if err := rows.Err(); err != nil {
 			//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
@@ -244,6 +245,7 @@ type EventDelivery struct {
 
 // ClaimDelivery uses a durable lease; an unacknowledged request is retried after
 // lease expiry. One active lease per subscription serializes its callbacks.
+//nolint:gocognit // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) ClaimDelivery(ctx context.Context, at time.Time, p DeliveryPolicy) (*EventDelivery, error) {
 	if err := p.validate(); err != nil {
 		return nil, err
@@ -288,8 +290,8 @@ func (s *Store) ClaimDelivery(ctx context.Context, at time.Time, p DeliveryPolic
 		err := tx.QueryRowContext(ctx, `SELECT d.id,d.event_id,d.subscription_id,d.generation,d.payload,d.attempts,d.deadline,s.callback,s.secret,s.principal,s.group_id,s.profile,s.scope,s.conversation_type,COALESCE(m.conversation_type,s.conversation_type),COALESCE(m.conversation_id,s.group_id),ev.created_at FROM event_deliveries d LEFT JOIN message_events ev ON ev.event_id=d.event_id JOIN event_subscriptions s ON s.id=d.subscription_id LEFT JOIN messages m ON m.seq=d.message_seq WHERE d.state='pending' AND julianday(d.next_attempt_at)<=julianday(?) AND NOT EXISTS(SELECT 1 FROM event_deliveries busy WHERE busy.subscription_id=d.subscription_id AND busy.state='sending') AND NOT EXISTS(SELECT 1 FROM event_deliveries earlier WHERE earlier.subscription_id=d.subscription_id AND earlier.id<d.id AND earlier.state IN ('pending','sending')) ORDER BY d.id LIMIT 1`, ts).
 			Scan(&d.ID, &d.EventID, &d.SubscriptionID, &d.Generation, &d.Payload, &d.Attempts, &deadline, &d.Callback, &d.Secret, &d.Principal, &d.GroupID, &profile, &scope, &kind, &ref.Type, &ref.ID, &created)
 		if errors.Is(err, sql.ErrNoRows) {
-			if err := tx.Commit(); err != nil {
-				return nil, err
+			if commitErr := tx.Commit(); commitErr != nil {
+				return nil, commitErr
 			}
 			//nolint:nilnil // An empty delivery queue returns no job and no failure.
 			return nil, nil
@@ -298,13 +300,13 @@ func (s *Store) ClaimDelivery(ctx context.Context, at time.Time, p DeliveryPolic
 			return nil, err
 		}
 		if !s.AllowsConversation(ref) || !subscriptionMatches(profile, scope, kind, d.GroupID, ref) {
-			if _, err := tx.ExecContext(
+			if _, execContextErr := tx.ExecContext(
 				ctx,
 				"UPDATE event_deliveries SET state='cancelled',last_reason='access_revoked',completed_at=?,payload=X'' WHERE id=?",
 				ts,
 				d.ID,
-			); err != nil {
-				return nil, err
+			); execContextErr != nil {
+				return nil, execContextErr
 			}
 			continue
 		}

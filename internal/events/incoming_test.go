@@ -17,10 +17,16 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestFilteredProfileCanonicalIdentitySignedPayloadAndCancel(t *testing.T) {
 	// Arrange.
 	ctx := context.Background()
-	s, err := storage.OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "state.sqlite"), domain.CollectionPolicy{All: true}, 90)
+	s, err := storage.OpenWithPolicy(
+		ctx,
+		filepath.Join(t.TempDir(), "state.sqlite"),
+		domain.CollectionPolicy{All: true},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,25 +39,36 @@ func TestFilteredProfileCanonicalIdentitySignedPayloadAndCancel(t *testing.T) {
 	secret := "whsec_" + base64.StdEncoding.EncodeToString(key)
 	m.Client = &http.Client{Transport: callbackRoundTrip(func(r *http.Request) (*http.Response, error) {
 		var c map[string]string
-		if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
-			return nil, err
+		if decodeErr := json.NewDecoder(r.Body).Decode(&c); decodeErr != nil {
+			return nil, decodeErr
 		}
 		b, _ := json.Marshal(c)
-		return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(string(b)))}, nil
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{},
+			Body:       io.NopCloser(strings.NewReader(string(b))),
+		}, nil
 	})}
 	raw := func(args map[string]any, sign bool) json.RawMessage {
 		d := map[string]any{"mode": "webhook", "url": "https://receiver.example/events"}
 		if sign {
 			d["secret"] = secret
 		}
-		b, _ := json.Marshal(map[string]any{"name": domain.ConversationMessageCreatedV2, "arguments": args, "delivery": d})
+		b, _ := json.Marshal(
+			map[string]any{"name": domain.ConversationMessageCreatedV2, "arguments": args, "delivery": d},
+		)
 		return b
 	}
 	defaults, err := m.Call(ctx, "events/subscribe", "owner", raw(map[string]any{"scope": "direct"}, true))
 	if err != nil {
 		t.Fatal(err)
 	}
-	explicit, err := m.Call(ctx, "events/subscribe", "owner", raw(map[string]any{"scope": "direct", "direction": "all", "first_incoming_only": false}, true))
+	explicit, err := m.Call(
+		ctx,
+		"events/subscribe",
+		"owner",
+		raw(map[string]any{"scope": "direct", "direction": "all", "first_incoming_only": false}, true),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,8 +85,19 @@ func TestFilteredProfileCanonicalIdentitySignedPayloadAndCancel(t *testing.T) {
 	}
 	put := func(id, direction string) {
 		t.Helper()
-		if err := s.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: "direct", ID: "peer"}, ID: id, SenderID: "peer", Direction: direction, SentAt: time.Now().Add(-time.Hour), Text: "synthetic", Source: "replay"}); err != nil {
-			t.Fatal(err)
+		if putErr := s.Put(
+			ctx,
+			domain.Message{
+				Conversation: domain.ConversationRef{Type: "direct", ID: "peer"},
+				ID:           id,
+				SenderID:     "peer",
+				Direction:    direction,
+				SentAt:       time.Now().Add(-time.Hour),
+				Text:         "synthetic",
+				Source:       "replay",
+			},
+		); putErr != nil {
+			t.Fatal(putErr)
 		}
 	}
 	w, err := NewWorker(s)
@@ -78,20 +106,20 @@ func TestFilteredProfileCanonicalIdentitySignedPayloadAndCancel(t *testing.T) {
 	}
 	received, firstCount := 0, 0
 	w.Client = &http.Client{Transport: callbackRoundTrip(func(r *http.Request) (*http.Response, error) {
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			return nil, err
+		body, readAllErr := io.ReadAll(r.Body)
+		if readAllErr != nil {
+			return nil, readAllErr
 		}
 		mac := hmac.New(sha256.New, key)
-		mac.Write([]byte(r.Header.Get("webhook-id") + "." + r.Header.Get("webhook-timestamp") + "."))
+		mac.Write([]byte(r.Header.Get("Webhook-Id") + "." + r.Header.Get("Webhook-Timestamp") + "."))
 		mac.Write(body)
-		sig, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("webhook-signature"), "v1,"))
-		if err != nil || !hmac.Equal(sig, mac.Sum(nil)) {
+		sig, readAllErr := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"))
+		if readAllErr != nil || !hmac.Equal(sig, mac.Sum(nil)) {
 			t.Fatal("invalid independent signature")
 		}
 		var v map[string]any
-		if err = json.Unmarshal(body, &v); err != nil {
-			t.Fatal(err)
+		if readAllErr = json.Unmarshal(body, &v); readAllErr != nil {
+			t.Fatal(readAllErr)
 		}
 		d := v["data"].(map[string]any)
 		if v["name"] != domain.ConversationMessageCreatedV2 || d["schema_version"] != float64(2) {
@@ -104,7 +132,11 @@ func TestFilteredProfileCanonicalIdentitySignedPayloadAndCancel(t *testing.T) {
 			firstCount++
 		}
 		received++
-		return &http.Response{StatusCode: 204, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(""))}, nil
+		return &http.Response{
+			StatusCode: http.StatusNoContent,
+			Header:     http.Header{},
+			Body:       io.NopCloser(strings.NewReader("")),
+		}, nil
 	})}
 	// Act.
 	put("own", "outgoing")
@@ -114,9 +146,9 @@ func TestFilteredProfileCanonicalIdentitySignedPayloadAndCancel(t *testing.T) {
 		t.Fatal(err)
 	}
 	for {
-		did, err := w.DeliverOne(ctx, time.Now())
-		if err != nil {
-			t.Fatal(err)
+		did, deliverOneErr := w.DeliverOne(ctx, time.Now())
+		if deliverOneErr != nil {
+			t.Fatal(deliverOneErr)
 		}
 		if !did {
 			break
@@ -130,7 +162,9 @@ func TestFilteredProfileCanonicalIdentitySignedPayloadAndCancel(t *testing.T) {
 		t.Fatalf("received=%d first=%d", received, firstCount)
 	}
 	var active int
-	if err = s.DB.QueryRow("SELECT active FROM event_subscriptions WHERE id=?", first.(map[string]any)["id"]).Scan(&active); err != nil || active != 0 {
+	if err = s.DB.QueryRow("SELECT active FROM event_subscriptions WHERE id=?", first.(map[string]any)["id"]).
+		Scan(&active); err != nil ||
+		active != 0 {
 		t.Fatal("filtered cancellation failed")
 	}
 }

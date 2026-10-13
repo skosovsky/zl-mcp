@@ -12,12 +12,18 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileSnapshotCleanupOwnershipAndTerminalState(t *testing.T) {
 	for _, mode := range []string{"running", "paused", "partial", "failed", "unsupported", "cancelled", "revoked-policy", "foreign-account", "changed-binding", "unlinked"} {
 		t.Run(mode, func(t *testing.T) {
 			// Arrange: account-bound mobile operation and permanent acquisition link.
 			ctx := context.Background()
-			s, err := OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "messages.sqlite"), domain.CollectionPolicy{All: true}, 90)
+			s, err := OpenWithPolicy(
+				ctx,
+				filepath.Join(t.TempDir(), "messages.sqlite"),
+				domain.CollectionPolicy{All: true},
+				90,
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -25,7 +31,16 @@ func TestMobileSnapshotCleanupOwnershipAndTerminalState(t *testing.T) {
 			if err = s.BindAccount(ctx, "10"); err != nil {
 				t.Fatal(err)
 			}
-			op, err := s.PrepareMobileHistoryOperation(ctx, domain.HistoryImportRequest{RequestID: "00000000-0000-4000-8000-000000000001", ConversationType: "direct", ConversationID: "12", Since: "2026-09-01T00:00:00Z", Until: "2026-10-01T00:00:00Z"})
+			op, err := s.PrepareMobileHistoryOperation(
+				ctx,
+				domain.HistoryImportRequest{
+					RequestID:        "00000000-0000-4000-8000-000000000001",
+					ConversationType: "direct",
+					ConversationID:   "12",
+					Since:            "2026-09-01T00:00:00Z",
+					Until:            "2026-10-01T00:00:00Z",
+				},
+			)
 			if err == nil {
 				op, err = s.ClaimHistoryOperation(ctx, op.Status.OperationID, op.Revision)
 			}
@@ -75,7 +90,8 @@ func TestMobileSnapshotCleanupOwnershipAndTerminalState(t *testing.T) {
 			// Act: cleanup authorization grants no read, retry or phone capability.
 			eligible, err := s.MobileHistorySnapshotTerminal(ctx, id, fingerprint, owner)
 			// Assert: terminal owned bindings alone qualify, even after collection revocation.
-			want := mode == "partial" || mode == "failed" || mode == "unsupported" || mode == "cancelled" || mode == "revoked-policy"
+			want := mode == "partial" || mode == "failed" || mode == "unsupported" || mode == "cancelled" ||
+				mode == "revoked-policy"
 			if err != nil || eligible != want {
 				t.Fatal("incorrect cleanup authority", eligible, err)
 			}

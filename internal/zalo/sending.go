@@ -7,6 +7,7 @@ import (
 	"github.com/amrakk/zcago/api"
 	"github.com/amrakk/zcago/errs"
 	"github.com/amrakk/zcago/model"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/messaging"
 )
@@ -14,20 +15,20 @@ import (
 func (c *Client) SendDirect(ctx context.Context, peer, text string, q *domain.SendQuote) (string, error) {
 	content := api.MessageContent{Msg: text}
 	if q != nil {
-		content.Quote = &api.SendMessageQuote{MsgID: q.MessageID, CliMsgID: q.Metadata.ClientMessageID, MsgType: q.Metadata.MessageType, UIDFrom: q.SenderID, Content: model.Content{String: &q.Text}, TS: q.Metadata.Timestamp, TTL: q.Metadata.TTL}
+		content.Quote = &api.SendMessageQuote{
+			MsgID:    q.MessageID,
+			CliMsgID: q.Metadata.ClientMessageID,
+			MsgType:  q.Metadata.MessageType,
+			UIDFrom:  q.SenderID,
+			Content:  model.Content{String: &q.Text},
+			TS:       q.Metadata.Timestamp,
+			TTL:      q.Metadata.TTL,
+		}
 	}
 	r, err := c.api.SendMessage(ctx, peer, model.ThreadTypeUser, content)
 	if err != nil {
-		var value errs.ZaloAPIError
-		var pointer *errs.ZaloAPIError
-		if errors.As(err, &value) {
-			if confirmedRejection(value.Code) {
-				return "", messaging.ErrRejected
-			}
-		} else if errors.As(err, &pointer) && pointer != nil {
-			if confirmedRejection(pointer.Code) {
-				return "", messaging.ErrRejected
-			}
+		if confirmedSendFailure(err) {
+			return "", messaging.ErrRejected
 		}
 		return "", errors.New("upstream send result is ambiguous")
 	}
@@ -42,4 +43,12 @@ func (c *Client) SendDirect(ctx context.Context, peer, text string, q *domain.Se
 // rejection; invalid parameters is the documented protocol code exception.
 func confirmedRejection(code *errs.ZaloErrorCode) bool {
 	return code != nil && *code != 0 && (*code == errs.ZaloErrorCodeInvalidParams || *code < 100 || *code > 599)
+}
+
+func confirmedSendFailure(err error) bool {
+	if value, ok := errors.AsType[errs.ZaloAPIError](err); ok {
+		return confirmedRejection(value.Code)
+	}
+	var pointer *errs.ZaloAPIError
+	return errors.As(err, &pointer) && pointer != nil && confirmedRejection(pointer.Code)
 }

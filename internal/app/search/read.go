@@ -3,6 +3,7 @@ package search
 
 import (
 	"context"
+
 	"github.com/skosovsky/zl-mcp/internal/app/shared"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
@@ -13,10 +14,12 @@ type Query struct {
 }
 type GroupRequest struct {
 	Query
+
 	GroupID string
 }
 type ConversationRequest struct {
 	Query
+
 	Conversation domain.ConversationRef
 }
 
@@ -114,7 +117,10 @@ func (h *Handler) Conversation(ctx context.Context, r ConversationRequest) (*Con
 }
 func (e *GroupExecution) Shorten(ctx context.Context) error {
 	if len(e.page.Hits) < 2 {
-		return domain.ResponseTooLarge("One search record or its coverage exceeds the response budget.", "Select a different group with less metadata. If a selected group still exceeds the limit, report the limitation rather than repeating the same query.")
+		return domain.ResponseTooLarge(
+			"One search record or its coverage exceeds the response budget.",
+			"Select a different group with less metadata. If a selected group still exceeds the limit, report the limitation rather than repeating the same query.",
+		)
 	}
 	if err := e.page.Shorten(len(e.page.Hits) - 1); err != nil {
 		return err
@@ -127,7 +133,10 @@ func (e *GroupExecution) Shorten(ctx context.Context) error {
 }
 func (e *ConversationExecution) Shorten(ctx context.Context) error {
 	if len(e.page.Hits) < 2 {
-		return domain.ResponseTooLarge("One search record or coverage exceeds the response budget.", "Select a conversation with less metadata or report the limitation.")
+		return domain.ResponseTooLarge(
+			"One search record or coverage exceeds the response budget.",
+			"Select a conversation with less metadata or report the limitation.",
+		)
 	}
 	if err := e.page.Shorten(len(e.page.Hits) - 1); err != nil {
 		return err
@@ -140,7 +149,13 @@ func (e *ConversationExecution) Shorten(ctx context.Context) error {
 }
 
 func groupResult(ctx context.Context, reads ReadPort, r GroupRequest, p *Page) (GroupResult, error) {
-	out := GroupResult{Messages: p.Hits, HasMore: p.NextCursor != nil, NextCursor: p.NextCursor, Coverage: []domain.Coverage{}, SnapshotAt: p.SnapshotAt}
+	out := GroupResult{
+		Messages:   p.Hits,
+		HasMore:    p.NextCursor != nil,
+		NextCursor: p.NextCursor,
+		Coverage:   []domain.Coverage{},
+		SnapshotAt: p.SnapshotAt,
+	}
 	seen := map[string]bool{}
 	for _, hit := range p.Hits {
 		if seen[hit.GroupID] {
@@ -175,8 +190,20 @@ func groupResult(ctx context.Context, reads ReadPort, r GroupRequest, p *Page) (
 	out.CoverageSummary = summary
 	return out, err
 }
-func conversationResult(ctx context.Context, reads ReadPort, r ConversationRequest, p *Page) (ConversationResult, error) {
-	out := ConversationResult{Messages: []shared.ConversationHit{}, HasMore: p.NextCursor != nil, NextCursor: p.NextCursor, Coverage: []shared.ConversationCoverage{}, SnapshotAt: p.SnapshotAt}
+
+func conversationResult(
+	ctx context.Context,
+	reads ReadPort,
+	r ConversationRequest,
+	p *Page,
+) (ConversationResult, error) {
+	out := ConversationResult{
+		Messages:   []shared.ConversationHit{},
+		HasMore:    p.NextCursor != nil,
+		NextCursor: p.NextCursor,
+		Coverage:   []shared.ConversationCoverage{},
+		SnapshotAt: p.SnapshotAt,
+	}
 	seen := map[domain.ConversationRef]bool{}
 	for _, hit := range p.Hits {
 		out.Messages = append(out.Messages, shared.Hit(hit))
@@ -191,26 +218,9 @@ func conversationResult(ctx context.Context, reads ReadPort, r ConversationReque
 		out.Coverage = append(out.Coverage, shared.Coverage(hit.Conversation, c))
 	}
 	if len(p.Hits) == 0 {
-		reason := "no_matches"
-		if r.Conversation.ID != "" {
-			c, err := reads.ConversationCoverage(ctx, r.Conversation)
-			if err != nil {
-				return out, err
-			}
-			out.Coverage = append(out.Coverage, shared.Coverage(r.Conversation, c))
-			if c.EarliestStoredAt == nil {
-				reason = "no_collected_data"
-			}
-		} else {
-			count, err := reads.StoredMessageCount(ctx)
-			if err != nil {
-				return out, err
-			}
-			if count == 0 {
-				reason = "no_collected_data"
-			}
+		if emptyErr := populateEmptyConversationSearch(ctx, reads, r, &out); emptyErr != nil {
+			return out, emptyErr
 		}
-		out.EmptyReason = &reason
 	}
 	summary, err := reads.ConversationSummary(ctx)
 	out.CoverageSummary = summary
@@ -221,4 +231,30 @@ func conversationResult(ctx context.Context, reads ReadPort, r ConversationReque
 type AccessPort interface {
 	CheckGroupSearch(context.Context, GroupRequest) error
 	CheckConversationSearch(context.Context, ConversationRequest) error
+}
+
+func populateEmptyConversationSearch(ctx context.Context, reads ReadPort, r ConversationRequest, out *ConversationResult) error {
+	reason := "no_matches"
+	if r.Conversation.ID == "" {
+		count, err := reads.StoredMessageCount(ctx)
+		if err != nil {
+			return err
+		}
+		if count == 0 {
+			reason = "no_collected_data"
+		}
+
+		out.EmptyReason = &reason
+		return nil
+	}
+	c, err := reads.ConversationCoverage(ctx, r.Conversation)
+	if err != nil {
+		return err
+	}
+	out.Coverage = append(out.Coverage, shared.Coverage(r.Conversation, c))
+	if c.EarliestStoredAt == nil {
+		reason = "no_collected_data"
+	}
+	out.EmptyReason = &reason
+	return nil
 }

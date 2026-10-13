@@ -15,6 +15,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestNativeBinaryTerminalStartupAcceptance(t *testing.T) {
 	binary := os.Getenv("ZL_MCP_ACCEPTANCE_BINARY")
 	if binary == "" {
@@ -79,9 +80,9 @@ func TestNativeBinaryTerminalStartupAcceptance(t *testing.T) {
 	}
 	identities := make(map[string][32]byte)
 	for _, file := range []string{snapshotKeyName, snapshotClaimsName} {
-		data, err := os.ReadFile(filepath.Join(snapshots, file))
-		if err != nil {
-			t.Fatal(err)
+		data, readFileErr := os.ReadFile(filepath.Join(snapshots, file))
+		if readFileErr != nil {
+			t.Fatal(readFileErr)
 		}
 		identities[file] = sha256.Sum256(data)
 	}
@@ -92,7 +93,12 @@ func TestNativeBinaryTerminalStartupAcceptance(t *testing.T) {
 	address := listener.Addr().String()
 	listener.Close()
 	config := filepath.Join(state, "config.toml")
-	content := fmt.Sprintf("state_dir = %q\n[collection]\nmode = \"all\"\n[logging]\nfile = %q\n[mcp]\nlisten = %q\n", state, filepath.Join(state, "service.log"), address)
+	content := fmt.Sprintf(
+		"state_dir = %q\n[collection]\nmode = \"all\"\n[logging]\nfile = %q\n[mcp]\nlisten = %q\n",
+		state,
+		filepath.Join(state, "service.log"),
+		address,
+	)
 	if err = os.WriteFile(config, []byte(content), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +107,11 @@ func TestNativeBinaryTerminalStartupAcceptance(t *testing.T) {
 		t.Run(fmt.Sprintf("restart-%d", i), func(t *testing.T) {
 			command := exec.Command(binary, "-config", config, "service")
 			command.Env = append(os.Environ(), "HOME="+state)
-			output, err := os.OpenFile(filepath.Join(state, fmt.Sprintf("startup-%d.log", i)), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+			output, err := os.OpenFile(
+				filepath.Join(state, fmt.Sprintf("startup-%d.log", i)),
+				os.O_CREATE|os.O_EXCL|os.O_WRONLY,
+				0600,
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -117,9 +127,9 @@ func TestNativeBinaryTerminalStartupAcceptance(t *testing.T) {
 			defer func() {
 				command.Process.Signal(os.Interrupt)
 				select {
-				case err := <-done:
-					if err != nil {
-						t.Error("native shutdown failed", err)
+				case operationErr := <-done:
+					if operationErr != nil {
+						t.Error("native shutdown failed", operationErr)
 					}
 				case <-time.After(5 * time.Second):
 					command.Process.Kill()
@@ -156,7 +166,11 @@ func TestNativeBinaryTerminalStartupAcceptance(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer reopened.Close()
-			if op, err := reopened.HistoryOperation(ctx, pending.Status.OperationID); err != nil || op.Status.State != "partial" {
+			if op, err := reopened.HistoryOperation(
+				ctx,
+				pending.Status.OperationID,
+			); err != nil ||
+				op.Status.State != "partial" {
 				t.Fatal("startup changed terminal history state", err)
 			}
 			assertSilentWorker(t, reopened, 0)
@@ -166,7 +180,6 @@ func TestNativeBinaryTerminalStartupAcceptance(t *testing.T) {
 					t.Fatal("startup changed private snapshot identity", err)
 				}
 			}
-
 		})
 	}
 }

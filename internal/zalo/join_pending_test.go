@@ -9,11 +9,13 @@ import (
 	"github.com/amrakk/zcago"
 	"github.com/amrakk/zcago/api"
 	"github.com/amrakk/zcago/errs"
+
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 type joinResponseAPI struct {
 	zcago.API
+
 	responseErr error
 	calls       int
 }
@@ -23,6 +25,7 @@ func (a *joinResponseAPI) JoinGroupLink(context.Context, string) (api.JoinGroupL
 	return "", a.responseErr
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestClientJoinRecognizesOnlyExplicitApprovalCode(t *testing.T) {
 	for _, code := range []int{0, 178, 239, 240, 241, 401} {
 		for _, pointer := range []bool{false, true} {
@@ -41,12 +44,17 @@ func TestClientJoinRecognizesOnlyExplicitApprovalCode(t *testing.T) {
 				err := client.Join(context.Background(), "https://zalo.me/g/synthetic")
 				// Assert: exactly one request; only 240 becomes the safe pending sentinel.
 				if errors.Is(err, domain.ErrJoinPendingApproval) != (code == 240) || upstream.calls != 1 {
-					t.Fatalf("wrong classification: code=%d pending=%v calls=%d", code, errors.Is(err, domain.ErrJoinPendingApproval), upstream.calls)
+					t.Fatalf(
+						"wrong classification: code=%d pending=%v calls=%d",
+						code,
+						errors.Is(err, domain.ErrJoinPendingApproval),
+						upstream.calls,
+					)
 				}
 				if code == 240 && err.Error() != "join pending administrator approval" {
 					t.Fatal("unsafe pending error")
 				}
-				if code != 240 && err != upstreamErr {
+				if code != 240 && !errors.Is(err, upstreamErr) {
 					t.Fatal("other error was reclassified")
 				}
 			})
@@ -59,7 +67,12 @@ func TestClientJoinRecognizesOnlyExplicitApprovalCode(t *testing.T) {
 	if err := client.Join(context.Background(), "https://zalo.me/g/synthetic"); err != nil || upstream.calls != 1 {
 		t.Fatal("success changed")
 	}
-	if err := classifyJoinFailure(errs.ZaloAPIError{Message: "240 approval required"}); errors.Is(err, domain.ErrJoinPendingApproval) {
+	if err := classifyJoinFailure(
+		errs.ZaloAPIError{Message: "240 approval required"},
+	); errors.Is(
+		err,
+		domain.ErrJoinPendingApproval,
+	) {
 		t.Fatal("message text guessed as a code")
 	}
 }

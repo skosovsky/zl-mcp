@@ -42,7 +42,7 @@ func (p *PreparedArchivePage) Clear() {
 	}
 }
 
-//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+//nolint:gocognit,nonamedreturns // The batch/page owner keeps stage failure diagnostics and Clear-on-error around validation, mapping, expiry and cursor publication; cursor parsing is a separate helper. Returned result/error and deferred cleanup keep the same owner.
 func ReadPreparedArchivePage(
 	ctx context.Context,
 	archive SelectedArchive,
@@ -72,14 +72,10 @@ func ReadPreparedArchivePage(
 	examined := 0
 	var sqliteAfter *SQLiteCursor
 	if after != nil {
-		if after.requestID != normalized.RequestID || after.fingerprint != normalized.Fingerprint() ||
-			after.account != account ||
-			after.examined <= 0 ||
-			after.examined >= normalized.MaxMessages {
-			return result, ErrSQLite
+		examined, sqliteAfter, e = bindPreparedCursor(after, normalized, account)
+		if e != nil {
+			return result, e
 		}
-		examined = after.examined
-		sqliteAfter = &after.sqlite
 	}
 	remaining := normalized.MaxMessages - examined
 	if size > remaining {
@@ -130,4 +126,18 @@ func ReadPreparedArchivePage(
 		}
 	}
 	return result, nil
+}
+
+func bindPreparedCursor(after *PreparedArchiveCursor, normalized domain.MobileBackupRequest, account string) (int, *SQLiteCursor, error) {
+
+	if after.requestID != normalized.RequestID || after.fingerprint != normalized.Fingerprint() ||
+		after.account != account ||
+		after.examined <= 0 ||
+		after.examined >= normalized.MaxMessages {
+		return 0, nil, ErrSQLite
+	}
+	examined := after.examined
+	sqliteAfter := &after.sqlite
+
+	return examined, sqliteAfter, nil
 }

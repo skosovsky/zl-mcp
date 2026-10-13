@@ -2,8 +2,8 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -24,9 +24,17 @@ func TestConcurrentIncomingInsertsAndRetentionNeverResetFirst(t *testing.T) {
 	// Act.
 	for n := range 40 {
 		wg.Go(func() {
-			m := domain.Message{Conversation: domain.ConversationRef{Type: "direct", ID: "peer"}, ID: fmt.Sprint(n % 10), SenderID: "peer", Direction: "incoming", SentAt: at.Add(time.Duration(n%10) * time.Minute), Text: "synthetic", Source: "replay"}
-			if err := s.Put(ctx, m); err != nil {
-				t.Error(err)
+			m := domain.Message{
+				Conversation: domain.ConversationRef{Type: "direct", ID: "peer"},
+				ID:           strconv.Itoa(n % 10),
+				SenderID:     "peer",
+				Direction:    "incoming",
+				SentAt:       at.Add(time.Duration(n%10) * time.Minute),
+				Text:         "synthetic",
+				Source:       "replay",
+			}
+			if putErr := s.Put(ctx, m); putErr != nil {
+				t.Error(putErr)
 			}
 		})
 	}
@@ -53,12 +61,25 @@ func TestConcurrentIncomingInsertsAndRetentionNeverResetFirst(t *testing.T) {
 	if err = s.DB.QueryRow("SELECT count(*) FROM messages").Scan(&retained); err != nil || retained != 0 {
 		t.Fatal("old corpus was not expired", err)
 	}
-	if err = s.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: "direct", ID: "peer"}, ID: "after-retention", SenderID: "peer", Direction: "incoming", SentAt: time.Now(), Text: "new synthetic", Source: "live"}); err != nil {
+	if err = s.Put(
+		ctx,
+		domain.Message{
+			Conversation: domain.ConversationRef{Type: "direct", ID: "peer"},
+			ID:           "after-retention",
+			SenderID:     "peer",
+			Direction:    "incoming",
+			SentAt:       time.Now(),
+			Text:         "new synthetic",
+			Source:       "live",
+		},
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Assert: deleting text does not make this peer new again.
 	var got int
-	if err = s.DB.QueryRow("SELECT first_incoming FROM message_events WHERE seq=(SELECT seq FROM messages WHERE message_id='after-retention')").Scan(&got); err != nil || got != 0 {
+	if err = s.DB.QueryRow("SELECT first_incoming FROM message_events WHERE seq=(SELECT seq FROM messages WHERE message_id='after-retention')").
+		Scan(&got); err != nil ||
+		got != 0 {
 		t.Fatal("retention reset first incoming", err)
 	}
 }
@@ -80,18 +101,29 @@ func TestIncomingFiltersPreserveFirstAcrossReplayDeletionRestart(t *testing.T) {
 		sub.Principal = "owner"
 		sub.Callback = "https://receiver.example/events"
 		sub.Secret = "synthetic"
-		r, err := s.SubscriptionRevision(ctx, sub.ID)
-		if err != nil {
-			t.Fatal(err)
+		r, subscriptionRevisionErr := s.SubscriptionRevision(ctx, sub.ID)
+		if subscriptionRevisionErr != nil {
+			t.Fatal(subscriptionRevisionErr)
 		}
-		if _, err = s.ActivateSubscription(ctx, sub, r, at); err != nil {
-			t.Fatal(err)
+		if _, subscriptionRevisionErr = s.ActivateSubscription(ctx, sub, r, at); subscriptionRevisionErr != nil {
+			t.Fatal(subscriptionRevisionErr)
 		}
 	}
 	put := func(store *Store, id, direction string) {
 		t.Helper()
-		if err := store.Put(ctx, domain.Message{Conversation: domain.ConversationRef{Type: "direct", ID: "peer"}, ID: id, SenderID: "peer", Direction: direction, SentAt: at.Add(-time.Hour), Text: "synthetic", Source: "replay"}); err != nil {
-			t.Fatal(err)
+		if nestedPutErr := store.Put(
+			ctx,
+			domain.Message{
+				Conversation: domain.ConversationRef{Type: "direct", ID: "peer"},
+				ID:           id,
+				SenderID:     "peer",
+				Direction:    direction,
+				SentAt:       at.Add(-time.Hour),
+				Text:         "synthetic",
+				Source:       "replay",
+			},
+		); nestedPutErr != nil {
+			t.Fatal(nestedPutErr)
 		}
 	}
 	// Act.
@@ -99,10 +131,19 @@ func TestIncomingFiltersPreserveFirstAcrossReplayDeletionRestart(t *testing.T) {
 	put(s, "first-message", "incoming")
 	put(s, "first-message", "incoming")
 	put(s, "second-message", "incoming")
-	if _, err = s.FanoutProfileEvents(ctx, at, DefaultDeliveryPolicy(), func(_, _ string, m domain.Message) ([]byte, error) { return []byte("synthetic"), nil }); err != nil {
+	if _, err = s.FanoutProfileEvents(
+		ctx,
+		at,
+		DefaultDeliveryPolicy(),
+		func(_, _ string, m domain.Message) ([]byte, error) { return []byte("synthetic"), nil },
+	); err != nil {
 		t.Fatal(err)
 	}
-	if err = s.DeleteConversation(ctx, domain.ConversationRef{Type: "direct", ID: "peer"}, "first-message"); err != nil {
+	if err = s.DeleteConversation(
+		ctx,
+		domain.ConversationRef{Type: "direct", ID: "peer"},
+		"first-message",
+	); err != nil {
 		t.Fatal(err)
 	}
 	if err = s.Close(); err != nil {
@@ -115,18 +156,27 @@ func TestIncomingFiltersPreserveFirstAcrossReplayDeletionRestart(t *testing.T) {
 	defer s.Close()
 	put(s, "first-message", "incoming")
 	put(s, "third-message", "incoming")
-	if _, err = s.FanoutProfileEvents(ctx, at, DefaultDeliveryPolicy(), func(_, _ string, m domain.Message) ([]byte, error) { return []byte("synthetic"), nil }); err != nil {
+	if _, err = s.FanoutProfileEvents(
+		ctx,
+		at,
+		DefaultDeliveryPolicy(),
+		func(_, _ string, m domain.Message) ([]byte, error) { return []byte("synthetic"), nil },
+	); err != nil {
 		t.Fatal(err)
 	}
 	// Assert.
 	for id, want := range map[string]int{"first": 1, "incoming": 3, "outgoing": 1} {
 		var got int
-		if err = s.DB.QueryRow("SELECT count(*) FROM event_deliveries WHERE subscription_id=?", id).Scan(&got); err != nil || got != want {
+		if err = s.DB.QueryRow("SELECT count(*) FROM event_deliveries WHERE subscription_id=?", id).
+			Scan(&got); err != nil ||
+			got != want {
 			t.Fatalf("subscription=%s got=%d want=%d err=%v", id, got, want, err)
 		}
 	}
 	var first int
-	if err = s.DB.QueryRow("SELECT count(*) FROM message_events WHERE first_incoming=1").Scan(&first); err != nil || first != 0 {
+	if err = s.DB.QueryRow("SELECT count(*) FROM message_events WHERE first_incoming=1").
+		Scan(&first); err != nil ||
+		first != 0 {
 		t.Fatal("deleted identity emitted another first")
 	}
 }
@@ -139,7 +189,14 @@ func TestUnknownDirectionNeverAssertsFirstIncoming(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	m := domain.Message{Conversation: domain.ConversationRef{Type: "direct", ID: "peer"}, ID: "unknown", SenderID: "peer", SentAt: time.Now(), Text: "synthetic", Source: "live"}
+	m := domain.Message{
+		Conversation: domain.ConversationRef{Type: "direct", ID: "peer"},
+		ID:           "unknown",
+		SenderID:     "peer",
+		SentAt:       time.Now(),
+		Text:         "synthetic",
+		Source:       "live",
+	}
 	// Act.
 	if err = s.Put(ctx, m); err != nil {
 		t.Fatal(err)
@@ -151,7 +208,9 @@ func TestUnknownDirectionNeverAssertsFirstIncoming(t *testing.T) {
 	}
 	// Assert.
 	var asserted int
-	if err = s.DB.QueryRow("SELECT count(*) FROM message_events WHERE first_incoming IS NOT NULL").Scan(&asserted); err != nil || asserted != 0 {
+	if err = s.DB.QueryRow("SELECT count(*) FROM message_events WHERE first_incoming IS NOT NULL").
+		Scan(&asserted); err != nil ||
+		asserted != 0 {
 		t.Fatal("unknown evidence became first incoming")
 	}
 }

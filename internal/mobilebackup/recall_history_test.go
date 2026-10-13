@@ -11,6 +11,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/storage"
 )
 
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestRecallSnapshotConverterJournalResumeTogether(t *testing.T) {
 	// Arrange: a complete own recall in the first source page, with a later message.
 	ctx := context.Background()
@@ -20,14 +21,41 @@ func TestRecallSnapshotConverterJournalResumeTogether(t *testing.T) {
 	}
 	stamp := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC).UnixMilli()
 	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
-		if _, e := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", "13", "14", "untrusted recalled body", stamp, 0, 36, 3, nil); e != nil {
+		if _, e := db.Exec(
+			"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+			"901",
+			"13",
+			"14",
+			"untrusted recalled body",
+			stamp,
+			0,
+			36,
+			3,
+			nil,
+		); e != nil {
 			t.Fatal(e)
 		}
-		if _, e := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "902", "15", "16", "synthetic later message", stamp+1, 0, 0, 1, []byte{0, 0, 0, 9, 0, 0, 0, 1, 'x'}); e != nil {
+		if _, e := db.Exec(
+			"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+			"902",
+			"15",
+			"16",
+			"synthetic later message",
+			stamp+1,
+			0,
+			0,
+			1,
+			[]byte{0, 0, 0, 9, 0, 0, 0, 1, 'x'},
+		); e != nil {
 			t.Fatal(e)
 		}
 	})
-	selected := SelectedArchive{requestID: r.RequestID, requestFingerprint: r.Fingerprint(), ref: r.Ref(), File: ArchiveFile{Name: "902.db", Data: data}}
+	selected := SelectedArchive{
+		requestID:          r.RequestID,
+		requestFingerprint: r.Fingerprint(),
+		ref:                r.Ref(),
+		File:               ArchiveFile{Name: "902.db", Data: data},
+	}
 	defer selected.Clear()
 	dir := filepath.Join(t.TempDir(), "snapshots")
 	snapshot := openSnapshotStore(t, dir, 1<<20)
@@ -47,11 +75,30 @@ func TestRecallSnapshotConverterJournalResumeTogether(t *testing.T) {
 	}
 	s := open()
 	defer func() { s.Close() }()
-	old := domain.Message{Conversation: r.Ref(), ID: "13", SenderID: "10", Direction: "outgoing", SentAt: time.UnixMilli(stamp), Text: "synthetic retained original"}
+	old := domain.Message{
+		Conversation: r.Ref(),
+		ID:           "13",
+		SenderID:     "10",
+		Direction:    "outgoing",
+		SentAt:       time.UnixMilli(stamp),
+		Text:         "synthetic retained original",
+	}
 	if _, err = s.PutHistoryPage(ctx, r.Ref(), []domain.Message{old}); err != nil {
 		t.Fatal(err)
 	}
-	op, err := s.PrepareMobileHistoryOperation(ctx, domain.HistoryImportRequest{Source: domain.HistorySourceMobileArchive, RequestID: r.RequestID, ConversationType: r.ConversationType, ConversationID: r.ConversationID, Since: r.Since, Until: r.Until, MaxMessages: r.MaxMessages, PageSize: 1})
+	op, err := s.PrepareMobileHistoryOperation(
+		ctx,
+		domain.HistoryImportRequest{
+			Source:           domain.HistorySourceMobileArchive,
+			RequestID:        r.RequestID,
+			ConversationType: r.ConversationType,
+			ConversationID:   r.ConversationID,
+			Since:            r.Since,
+			Until:            r.Until,
+			MaxMessages:      r.MaxMessages,
+			PageSize:         1,
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,20 +106,23 @@ func TestRecallSnapshotConverterJournalResumeTogether(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	mapper := identitySourceFunc(func(ctx context.Context, req domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-		out := []domain.MobileIdentityPair{}
-		for _, plain := range req.Direct {
-			session := "12"
-			if plain == "901" {
-				session = "10"
+	mapper := identitySourceFunc(
+		func(ctx context.Context, req domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+			out := []domain.MobileIdentityPair{}
+			for _, plain := range req.Direct {
+				session := "12"
+				if plain == "901" {
+					session = "10"
+				}
+				out = append(out, domain.MobileIdentityPair{Plain: plain, Session: session})
 			}
-			out = append(out, domain.MobileIdentityPair{Plain: plain, Session: session})
-		}
-		return out, nil
-	})
+			return out, nil
+		},
+	)
 	// Act: classify/commit the recall, then restart both stores before the message page.
 	page, err := snapshot.ReadHistoryPage(ctx, r, "10", t.TempDir(), 1, 0, nil, nil, mapper)
-	if err != nil || len(page.Recalls) != 1 || len(page.Records) != 0 || !page.ControlPrelude || page.Counts != (domain.MobileHistoryCounts{}) {
+	if err != nil || len(page.Recalls) != 1 || len(page.Records) != 0 || !page.ControlPrelude ||
+		page.Counts != (domain.MobileHistoryCounts{}) {
 		t.Fatal("source recall projection failed", err)
 	}
 	op, err = s.CommitMobileHistoryPage(ctx, op.Status.OperationID, op.Revision, page, 0)
@@ -88,7 +138,17 @@ func TestRecallSnapshotConverterJournalResumeTogether(t *testing.T) {
 	if err != nil || checkpoint.Snapshot.ControlRows != 1 {
 		t.Fatal("source controls lost on restart", err)
 	}
-	page, err = snapshot.ReadHistoryPage(ctx, r, "10", t.TempDir(), 1, op.Status.RecordsObserved, &checkpoint.Snapshot, checkpoint.Next, mapper)
+	page, err = snapshot.ReadHistoryPage(
+		ctx,
+		r,
+		"10",
+		t.TempDir(),
+		1,
+		op.Status.RecordsObserved,
+		&checkpoint.Snapshot,
+		checkpoint.Next,
+		mapper,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +164,17 @@ func TestRecallSnapshotConverterJournalResumeTogether(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	page, err = snapshot.ReadHistoryPage(ctx, r, "10", t.TempDir(), 1, op.Status.RecordsObserved, &checkpoint.Snapshot, checkpoint.Next, mapper)
+	page, err = snapshot.ReadHistoryPage(
+		ctx,
+		r,
+		"10",
+		t.TempDir(),
+		1,
+		op.Status.RecordsObserved,
+		&checkpoint.Snapshot,
+		checkpoint.Next,
+		mapper,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +193,9 @@ func TestRecallSnapshotConverterJournalResumeTogether(t *testing.T) {
 	if _, err = s.ConversationMessage(ctx, r.Ref(), "13"); err == nil {
 		t.Fatal("old recalled message visible")
 	}
-	if op.Status.MobileCoverage.OwnRecalls != 1 || op.Status.MobileCoverage.SourceControls != 1 || op.Status.RecordsObserved != 2 || op.Status.InsertedCount != 1 {
+	if op.Status.MobileCoverage.OwnRecalls != 1 || op.Status.MobileCoverage.SourceControls != 1 ||
+		op.Status.RecordsObserved != 2 ||
+		op.Status.InsertedCount != 1 {
 		t.Fatal("recall coverage mismatch")
 	}
 	// A later replay cannot restore a recalled ID.
@@ -147,25 +219,44 @@ func TestArchiveControlsOutsideFirstPageReturnPreludeBeforeMessages(t *testing.T
 			if kind == 36 {
 				status = 3
 			}
-			if _, e := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", 100+i, 200+i, "synthetic", stamp+int64(i), 0, kind, status, []byte{0, 0, 0, 9, 0, 0, 0, 1, 'x'}); e != nil {
+			if _, e := db.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				"901",
+				100+i,
+				200+i,
+				"synthetic",
+				stamp+int64(i),
+				0,
+				kind,
+				status,
+				[]byte{0, 0, 0, 9, 0, 0, 0, 1, 'x'},
+			); e != nil {
 				t.Fatal(e)
 			}
 		}
 	})
-	selected := SelectedArchive{requestID: r.RequestID, requestFingerprint: r.Fingerprint(), ref: r.Ref(), File: ArchiveFile{Name: "902.db", Data: data}}
+	selected := SelectedArchive{
+		requestID:          r.RequestID,
+		requestFingerprint: r.Fingerprint(),
+		ref:                r.Ref(),
+		File:               ArchiveFile{Name: "902.db", Data: data},
+	}
 	defer selected.Clear()
 	snapshots := openSnapshotStore(t, filepath.Join(t.TempDir(), "snapshots"), 1<<20)
 	if err := snapshots.Save(ctx, selected, r, "10"); err != nil {
 		t.Fatal(err)
 	}
-	mapper := identitySourceFunc(func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-		return []domain.MobileIdentityPair{{Plain: "901", Session: "10"}}, nil
-	})
+	mapper := identitySourceFunc(
+		func(context.Context, domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+			return []domain.MobileIdentityPair{{Plain: "901", Session: "10"}}, nil
+		},
+	)
 	// Act.
 	page, err := snapshots.ReadHistoryPage(ctx, r, "10", t.TempDir(), 1, 0, nil, nil, mapper)
 	defer page.Clear()
 	// Assert: no ordinary-record prefix before the unresolved later control.
-	if err != nil || !page.ControlPrelude || len(page.Records) != 0 || len(page.Recalls) != 1 || page.Counts.Examined != 0 {
+	if err != nil || !page.ControlPrelude || len(page.Records) != 0 || len(page.Recalls) != 1 ||
+		page.Counts.Examined != 0 {
 		t.Fatal("unseen control permitted record prefix", err)
 	}
 }

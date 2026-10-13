@@ -12,6 +12,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/santhosh-tekuri/jsonschema/v6"
+
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/storage"
@@ -28,8 +29,8 @@ func baselineJSON(t *testing.T, name string, value any) {
 	b = append(b, '\n')
 	path := filepath.Join("testdata", "migration", name+".json")
 	if os.Getenv("ZL_MIGRATION_FREEZE") == "1" {
-		if err := os.WriteFile(path, b, 0644); err != nil {
-			t.Fatal(err)
+		if writeFileErr := os.WriteFile(path, b, 0644); writeFileErr != nil {
+			t.Fatal(writeFileErr)
 		}
 	}
 	want, err := os.ReadFile(path)
@@ -52,6 +53,7 @@ func baselineJSON(t *testing.T, name string, value any) {
 	}
 }
 
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMigrationCatalogBaseline(t *testing.T) {
 	// Arrange
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -96,13 +98,13 @@ func TestMigrationCatalogBaseline(t *testing.T) {
 		t.Fatal(err)
 	}
 	var errorDoc map[string]any
-	if err := json.Unmarshal(errorBytes, &errorDoc); err != nil {
-		t.Fatal(err)
+	if unmarshalErr := json.Unmarshal(errorBytes, &errorDoc); unmarshalErr != nil {
+		t.Fatal(unmarshalErr)
 	}
 	compiler := jsonschema.NewCompiler()
 	compiler.AssertFormat()
-	if err := compiler.AddResource("https://zl-mcp.local/error.json", errorDoc); err != nil {
-		t.Fatal(err)
+	if addResourceErr := compiler.AddResource("https://zl-mcp.local/error.json", errorDoc); addResourceErr != nil {
+		t.Fatal(addResourceErr)
 	}
 	errorSchema, err := compiler.Compile("https://zl-mcp.local/error.json")
 	if err != nil {
@@ -164,7 +166,11 @@ func TestMigrationCatalogBaseline(t *testing.T) {
 				t.Fatalf("invalid input dispatched: %v %+v", err, result)
 			}
 			var failure domain.Error
-			if err := json.Unmarshal([]byte(result.Content[0].(*mcp.TextContent).Text), &failure); err != nil || failure.Code != "INVALID_ARGUMENT" {
+			if err := json.Unmarshal(
+				[]byte(result.Content[0].(*mcp.TextContent).Text),
+				&failure,
+			); err != nil ||
+				failure.Code != "INVALID_ARGUMENT" {
 				t.Fatalf("expected validation error: %+v %v", failure, err)
 			}
 			var errorValue map[string]any

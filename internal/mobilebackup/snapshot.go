@@ -203,41 +203,7 @@ func (s *SnapshotStore) claim(id string) error {
 func snapshotKey(root *os.Root) ([]byte, error) {
 	info, err := root.Lstat(snapshotKeyName)
 	if errors.Is(err, os.ErrNotExist) {
-		// An existing snapshot without its key must not be silently abandoned.
-		dir, e := root.Open(".")
-		if e != nil {
-			return nil, ErrSnapshot
-		}
-		entries, e := dir.ReadDir(64)
-		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
-		dir.Close()
-		if e != nil && !errors.Is(e, io.EOF) || len(entries) != 0 {
-			return nil, ErrSnapshot
-		}
-		key := make([]byte, 32)
-		if _, e = rand.Read(key); e != nil {
-			clear(key)
-			return nil, ErrSnapshot
-		}
-		f, e := root.OpenFile(snapshotKeyName, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-		if e != nil {
-			clear(key)
-			return nil, ErrSnapshot
-		}
-		_, e = f.Write(key)
-		if e == nil {
-			e = f.Sync()
-		}
-		closeErr := f.Close()
-		if e != nil || closeErr != nil {
-			clear(key)
-			return nil, ErrSnapshot
-		}
-		if snapshotSyncDirectory(root) != nil {
-			clear(key)
-			return nil, ErrSnapshot
-		}
-		return key, nil
+		return createSnapshotKey(root)
 	}
 	if err != nil || !privateRegular(info) || info.Size() != 32 {
 		return nil, ErrSnapshot
@@ -288,6 +254,8 @@ func snapshotName(id string) (string, bool) {
 }
 
 // Save binds one exact immutable source. Retrying never extends its lifetime.
+//
+//nolint:funlen,gocognit // Snapshot capacity, durable claim, encrypted write, rename and directory sync stay under one store lock; plaintext cleanup and existing-snapshot comparison retain their original scopes.
 func (s *SnapshotStore) Save(
 	ctx context.Context,
 	selected SelectedArchive,
@@ -298,17 +266,11 @@ func (s *SnapshotStore) Save(
 		return ErrSnapshot
 	}
 	defer s.unlock()
-	r, err := request.Normalize()
-	if err != nil || ctx == nil || ctx.Err() != nil || s.root == nil || !canonicalIdentity(account) ||
-		!canonicalIdentity(r.ConversationID) ||
-		selected.requestID != r.RequestID ||
-		selected.requestFingerprint != r.Fingerprint() ||
-		selected.ref != r.Ref() ||
-		!validName(selected.File.Name) ||
-		uint64(len(selected.File.Data)) > MaxFileBytes ||
-		!standaloneSQLite(selected.File.Data) {
-		return ErrSnapshot
+	r, bindingErr := s.bindSnapshotSave(ctx, selected, request, account)
+	if bindingErr != nil {
+		return bindingErr
 	}
+	var err error
 	name, ok := snapshotName(r.RequestID)
 	if !ok {
 		return ErrSnapshot
@@ -538,41 +500,12 @@ func (s *SnapshotStore) sweep(ctx context.Context) (int, int64, error) {
 		if ctx.Err() != nil {
 			return 0, 0, ErrSnapshot
 		}
-		name := entry.Name()
-		if name == snapshotKeyName || name == snapshotClaimsName {
-			continue
+		entryCount, entryBytes, entryErr := s.sweepEntry(entry)
+		if entryErr != nil {
+			return 0, 0, entryErr
 		}
-		if before, ok := strings.CutSuffix(name, ".tmp"); ok {
-			id := before
-			_, ok := snapshotName(id)
-			info, e := s.root.Lstat(name)
-			if !ok || e != nil || !privateRegular(info) || s.root.Remove(name) != nil {
-				return 0, 0, ErrSnapshot
-			}
-			continue
-		}
-		id := strings.TrimSuffix(name, ".snapshot")
-		expected, ok := snapshotName(id)
-		if !ok || expected != name || !s.claims[id] {
-			return 0, 0, ErrSnapshot
-		}
-		meta, data, e := s.decode(name, id)
-		clear(data)
-		if e != nil {
-			return 0, 0, e
-		}
-		if s.now().UnixMilli() >= meta.ExpiresMS {
-			if s.root.Remove(name) != nil {
-				return 0, 0, ErrSnapshot
-			}
-			continue
-		}
-		info, e := s.root.Lstat(name)
-		if e != nil {
-			return 0, 0, ErrSnapshot
-		}
-		count++
-		used += info.Size()
+		count += entryCount
+		used += entryBytes
 	}
 	if snapshotSyncDirectory(s.root) != nil {
 		return 0, 0, ErrSnapshot
@@ -631,4 +564,94 @@ func (s *SnapshotStore) Close() error {
 	s.root = nil
 	s.aead = nil
 	return err
+}
+
+func createSnapshotKey(root *os.Root) ([]byte, error) {
+	// An existing snapshot without its key must not be silently abandoned.
+	dir, e := root.Open(".")
+	if e != nil {
+		return nil, ErrSnapshot
+	}
+	entries, e := dir.ReadDir(64)
+	//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
+	dir.Close()
+	if e != nil && !errors.Is(e, io.EOF) || len(entries) != 0 {
+		return nil, ErrSnapshot
+	}
+	key := make([]byte, 32)
+	if _, e = rand.Read(key); e != nil {
+		clear(key)
+		return nil, ErrSnapshot
+	}
+	f, e := root.OpenFile(snapshotKeyName, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if e != nil {
+		clear(key)
+		return nil, ErrSnapshot
+	}
+	_, e = f.Write(key)
+	if e == nil {
+		e = f.Sync()
+	}
+	closeErr := f.Close()
+	if e != nil || closeErr != nil {
+		clear(key)
+		return nil, ErrSnapshot
+	}
+	if snapshotSyncDirectory(root) != nil {
+		clear(key)
+		return nil, ErrSnapshot
+	}
+	return key, nil
+}
+
+func (s *SnapshotStore) bindSnapshotSave(ctx context.Context, selected SelectedArchive, request domain.MobileBackupRequest, account string) (domain.MobileBackupRequest, error) {
+	r, err := request.Normalize()
+	if err != nil || ctx == nil || ctx.Err() != nil || s.root == nil || !canonicalIdentity(account) ||
+		!canonicalIdentity(r.ConversationID) ||
+		selected.requestID != r.RequestID ||
+		selected.requestFingerprint != r.Fingerprint() ||
+		selected.ref != r.Ref() ||
+		!validName(selected.File.Name) ||
+		uint64(len(selected.File.Data)) > MaxFileBytes ||
+		!standaloneSQLite(selected.File.Data) {
+		return domain.MobileBackupRequest{}, ErrSnapshot
+	}
+	return r, nil
+}
+
+func (s *SnapshotStore) sweepEntry(entry os.DirEntry) (int, int64, error) {
+	name := entry.Name()
+	if name == snapshotKeyName || name == snapshotClaimsName {
+		return 0, 0, nil
+	}
+	if before, ok := strings.CutSuffix(name, ".tmp"); ok {
+		id := before
+		_, ok := snapshotName(id)
+		info, e := s.root.Lstat(name)
+		if !ok || e != nil || !privateRegular(info) || s.root.Remove(name) != nil {
+			return 0, 0, ErrSnapshot
+		}
+		return 0, 0, nil
+	}
+	id := strings.TrimSuffix(name, ".snapshot")
+	expected, ok := snapshotName(id)
+	if !ok || expected != name || !s.claims[id] {
+		return 0, 0, ErrSnapshot
+	}
+	meta, data, e := s.decode(name, id)
+	clear(data)
+	if e != nil {
+		return 0, 0, e
+	}
+	if s.now().UnixMilli() >= meta.ExpiresMS {
+		if s.root.Remove(name) != nil {
+			return 0, 0, ErrSnapshot
+		}
+		return 0, 0, nil
+	}
+	info, e := s.root.Lstat(name)
+	if e != nil {
+		return 0, 0, ErrSnapshot
+	}
+	return 1, info.Size(), nil
 }

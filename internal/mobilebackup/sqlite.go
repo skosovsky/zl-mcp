@@ -167,7 +167,7 @@ func ReadSnapshotSQLitePage(
 	return readSQLitePageMode(parent, file, scratch, since, until, maxRows, after, false, true, order == "desc")
 }
 
-//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+//nolint:funlen,nonamedreturns // The owner holds scratch directory, database, connection, rows and private batch cleanup in their required order; schema, controls, query and row validation are separate phases. Returned result/error and deferred cleanup keep the same owner.
 func readSQLitePageMode(
 	parent context.Context,
 	file ArchiveFile,
@@ -192,37 +192,18 @@ func readSQLitePageMode(
 		}
 	}()
 	from, to, validWindow := millisecondWindow(since, until)
-	if !validWindow || parent == nil || parent.Err() != nil || !validName(file.Name) || !filepath.IsAbs(scratch) ||
-		maxRows < 1 ||
-		maxRows > 5000 ||
-		since.IsZero() ||
-		!until.After(since) {
+	if !validSQLitePageInput(parent, file, scratch, since, until, maxRows, validWindow) {
 		return batch, ErrSQLite
 	}
 	stage = "SQLITE_HEADER"
 	if !standaloneSQLite(file.Data) {
-		modeRead, modeWrite := 0, 0
-		if len(file.Data) >= 20 {
-			modeRead = int(file.Data[19])
-			modeWrite = int(file.Data[18])
-		}
-		slog.WarnContext(
-			parent,
-			"mobile_archive_sqlite_header",
-			"file_bytes",
-			len(file.Data),
-			"read_version",
-			modeRead,
-			"write_version",
-			modeWrite,
-		)
+		logInvalidSQLiteHeader(parent, file.Data)
 		return batch, ErrSQLite
 	}
 	batch.WALMode = file.Data[18] == 2
 	stage = "CURSOR_BINDING"
 	digest := sha256.Sum256(file.Data)
-	if after != nil &&
-		(after.Digest != digest || after.Name != file.Name || after.SinceMS != from || after.UntilMS != to || after.TimestampMS < from || after.TimestampMS >= to || after.Descending != descending || after.Snapshot != snapshot) {
+	if !validSQLiteCursor(after, digest, file.Name, from, to, descending, snapshot) {
 		return batch, ErrSQLite
 	}
 	ctx, cancel := context.WithTimeout(parent, 30*time.Second)
@@ -265,172 +246,23 @@ func readSQLitePageMode(
 	}
 	// G104: Read-only archive connection cleanup preserves the query result.
 	defer conn.Close()
-	stage = "SQLITE_LIMITS"
-	for _, limit := range [][2]int{{sqlite3.SQLITE_LIMIT_LENGTH, 1 << 20}, {sqlite3.SQLITE_LIMIT_SQL_LENGTH, 16 << 10}, {sqlite3.SQLITE_LIMIT_COLUMN, 64}, {sqlite3.SQLITE_LIMIT_EXPR_DEPTH, 20}, {sqlite3.SQLITE_LIMIT_ATTACHED, 0}} {
-		if _, e = sqlite.Limit(conn, limit[0], limit[1]); e != nil {
-			return batch, ErrSQLite
-		}
-	}
-	stage = "INTEGRITY_CHECK"
-	var check string
-	if conn.QueryRowContext(ctx, "PRAGMA integrity_check(1)").Scan(&check) != nil || check != "ok" {
-		return batch, ErrSQLite
-	}
-	stage = "CHAT_TABLE"
-	var kind string
-	var root int64
-	if conn.QueryRowContext(ctx, "SELECT type,rootpage FROM sqlite_schema WHERE name='ChatContent'").
-		Scan(&kind, &root) !=
-		nil ||
-		kind != "table" ||
-		root <= 0 {
-		return batch, ErrSQLite
+	if connectionErr := configureSQLiteConnection(ctx, conn, &stage); connectionErr != nil {
+		return batch, connectionErr
 	}
 	stage = "COLUMN_SCHEMA"
-	columns, e := conn.QueryContext(ctx, "SELECT name,type,hidden FROM pragma_table_xinfo('ChatContent')")
-	if e != nil {
-		return batch, ErrSQLite
-	}
-	required := map[string]bool{
-		"senderid":   false,
-		"glbmsgid":   false,
-		"climsgid":   false,
-		"msgcontent": false,
-		"timestamp":  false,
-		"ttl":        false,
-		"msgtype":    false,
-		"msgstatus":  false,
-		"binnet":     false,
-	}
-	for columns.Next() {
-		var name, affinity string
-		var hidden int
-		if columns.Scan(&name, &affinity, &hidden) != nil || hidden != 0 {
-			//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
-			columns.Close()
-			return batch, ErrSQLite
-		}
-		name = strings.ToLower(name)
-		if name == "rowid" || name == "_rowid_" || name == "oid" {
-			//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
-			columns.Close()
-			return batch, ErrSQLite
-		}
-		if _, ok := required[name]; ok {
-			required[name] = true
-		}
-		if name == "timestamp" && !strings.Contains(strings.ToUpper(affinity), "INT") {
-			//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
-			columns.Close()
-			return batch, ErrSQLite
-		}
-	}
-	e = columns.Err()
-	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
-	columns.Close()
-	if e != nil {
-		return batch, ErrSQLite
-	}
-	for _, present := range required {
-		if !present {
-			return batch, ErrSQLite
-		}
+	if schemaErr := validateChatColumns(ctx, conn); schemaErr != nil {
+		return batch, schemaErr
 	}
 	stage = "SOURCE_TIME_COVERAGE"
-	var earliest, latest sql.NullInt64
-	const validTimestamp = "typeof(TimeStamp)='integer' AND TimeStamp>=0 AND TimeStamp<=253402300799999"
-	coverageSQL := "SELECT count(*), coalesce(sum(CASE WHEN " + validTimestamp + " AND TimeStamp>=? AND TimeStamp<? THEN 1 ELSE 0 END),0), coalesce(sum(CASE WHEN " + validTimestamp + " THEN 0 ELSE 1 END),0), min(CASE WHEN " + validTimestamp + " THEN TimeStamp END), max(CASE WHEN " + validTimestamp + " THEN TimeStamp END) FROM ChatContent"
-	if conn.QueryRowContext(ctx, coverageSQL, from, to).
-		Scan(&batch.Coverage.SourceRows, &batch.Coverage.PeriodRows, &batch.Coverage.InvalidTimestamps, &earliest, &latest) !=
-		nil {
-		return batch, ErrSQLite
+	if coverageErr := readSQLiteCoverage(ctx, conn, &batch, from, to); coverageErr != nil {
+		return batch, coverageErr
 	}
-	batch.Coverage.HasRange = earliest.Valid && latest.Valid
-	batch.Coverage.EarliestMS, batch.Coverage.LatestMS = earliest.Int64, latest.Int64
 	// Controls outside the requested interval can still invalidate imported content.
 	stage = "SOURCE_CONTROLS"
-	if conn.QueryRowContext(ctx, "SELECT count(*) FROM ChatContent WHERE MsgType IN (33,36)").
-		Scan(&batch.SourceControls) !=
-		nil {
-		return SQLiteBatch{}, ErrSQLite
+	if controlsErr := readSQLiteControls(ctx, conn, &batch, snapshot); controlsErr != nil {
+		return SQLiteBatch{}, controlsErr
 	}
-	controlRows, e := conn.QueryContext(
-		ctx,
-		"SELECT MsgType,count(*) FROM ChatContent WHERE MsgType IN (20,21,25,26,29,32,33,34,35,36,45,51,52) GROUP BY MsgType",
-	)
-	if e != nil {
-		return SQLiteBatch{}, ErrSQLite
-	}
-	batch.DeferredControls = map[string]int{}
-	for controlRows.Next() {
-		var kind int64
-		var count int
-		if controlRows.Scan(&kind, &count) != nil || !deferredMobileControl(kind) || count < 1 {
-			//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
-			controlRows.Close()
-			return SQLiteBatch{}, ErrSQLite
-		}
-		batch.DeferredControls[strconv.FormatInt(kind, 10)] = count
-	}
-	controlErr := controlRows.Err()
-	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
-	controlRows.Close()
-	if controlErr != nil || ctx.Err() != nil {
-		return SQLiteBatch{}, ErrSQLite
-	}
-	if snapshot {
-		if conn.QueryRowContext(ctx, "SELECT count(*) FROM ChatContent WHERE MsgType IN (20,21,25,26,29,32,33,34,35,36,45,51,52)").
-			Scan(&batch.SourceControls) !=
-			nil {
-			return SQLiteBatch{}, ErrSQLite
-		}
-		if batch.SourceControls > 5000 {
-			return SQLiteBatch{}, ErrSnapshotControls
-		}
-		information := batch.DeferredControls["20"]
-		if information > 0 {
-			classified, err := classifySnapshotInformation(ctx, conn, information)
-			if err != nil {
-				return SQLiteBatch{}, err
-			}
-			batch.SourceInformation = classified
-			batch.SourceNativeExcluded = information
-			batch.SourceControls -= information
-		}
-		recalls := batch.DeferredControls["36"]
-		if recalls > 0 {
-			targets, err := classifySnapshotRecalls(ctx, conn, recalls)
-			if err != nil {
-				return SQLiteBatch{}, err
-			}
-			batch.recalls = targets
-			batch.SourceRecallRows = recalls
-			batch.SourceControls -= recalls
-		}
-		if batch.SourceControls != 0 {
-			batch.recalls.clear()
-			return SQLiteBatch{}, ErrSnapshotControls
-		}
-	}
-	statement := "SELECT rowid,SenderId,GlbMsgId,CliMsgId,MsgContent,TimeStamp,TTL,MsgType,MsgStatus,BinNet FROM ChatContent WHERE TimeStamp>=? AND TimeStamp<?"
-	if controlsOnly {
-		statement = "SELECT rowid,SenderId,GlbMsgId,CliMsgId,'',TimeStamp,TTL,MsgType,MsgStatus,NULL FROM ChatContent WHERE TimeStamp>=? AND TimeStamp<? AND MsgType IN (33,36)"
-	}
-	args := []any{from, to}
-	if after != nil {
-		operator := ">"
-		if descending {
-			operator = "<"
-		}
-		statement += " AND (TimeStamp" + operator + "? OR (TimeStamp=? AND rowid" + operator + "?))"
-		args = append(args, after.TimestampMS, after.TimestampMS, after.RowID)
-	}
-	if descending {
-		statement += " ORDER BY TimeStamp DESC,rowid DESC LIMIT ?"
-	} else {
-		statement += " ORDER BY TimeStamp,rowid LIMIT ?"
-	}
-	args = append(args, maxRows+1)
+	statement, args := sqlitePageQuery(from, to, maxRows, after, controlsOnly, descending)
 	stage = "MESSAGE_QUERY"
 	rows, e := conn.QueryContext(ctx, statement, args...)
 	if e != nil {
@@ -445,69 +277,12 @@ func readSQLitePageMode(
 		}
 	}()
 	stage = "ROW_VALIDATION"
-	var last SQLiteCursor
-	retainedBytes := 0
-	for rows.Next() {
-		if batch.Examined == maxRows {
-			batch.HasMore = true
-			batch.Next = &last
-			break
-		}
-		var values [9]any
-		var sourceRowID int64
-		if rows.Scan(
-			&sourceRowID,
-			&values[0],
-			&values[1],
-			&values[2],
-			&values[3],
-			&values[4],
-			&values[5],
-			&values[6],
-			&values[7],
-			&values[8],
-		) != nil {
-			return batch, ErrSQLite
-		}
-		timestamp, ok := values[4].(int64)
-		if !ok || timestamp < from || timestamp >= to {
-			return batch, ErrSQLite
-		}
-		last = SQLiteCursor{
-			Digest:      digest,
-			Name:        file.Name,
-			SinceMS:     from,
-			UntilMS:     to,
-			TimestampMS: timestamp,
-			RowID:       sourceRowID,
-			Descending:  descending,
-			Snapshot:    snapshot,
-		}
-		batch.Examined++
-		row, reason := sqliteRowMode(values, from, to, snapshot)
-		if snapshot {
-			row.SourceRowID = sourceRowID
-		}
-		if reason != "" {
-			batch.Rejected++
-			if batch.RejectedReasons == nil {
-				batch.RejectedReasons = map[string]int{}
-			}
-			batch.RejectedReasons[reason]++
-			if reason == "message_id" {
-				recordRejectedMessageID(&batch, values)
-			}
-			continue
-		}
-		retainedBytes += len(row.Text) + len(row.BinNet)
-		if retainedBytes > 8<<20 {
-			clear(row.BinNet)
-			return batch, ErrSQLite
-		}
-		batch.Rows = append(batch.Rows, row)
+	template := SQLiteCursor{
+		Digest: digest, Name: file.Name, SinceMS: from, UntilMS: to,
+		TimestampMS: 0, RowID: 0, Descending: descending, Snapshot: snapshot,
 	}
-	if rows.Err() != nil || ctx.Err() != nil {
-		return batch, ErrSQLite
+	if rowErr := readSQLiteRows(ctx, rows, &batch, template, maxRows); rowErr != nil {
+		return batch, rowErr
 	}
 	return batch, nil
 }
@@ -538,6 +313,7 @@ func sqliteRowChecked(values [9]any, since, until int64) (SQLiteRow, string) {
 	return sqliteRowMode(values, since, until, false)
 }
 
+//nolint:gocognit // The versioned SQLite row projection is a closed wire-field conversion table; null, identity and recall semantics remain explicit per column.
 func sqliteRowMode(values [9]any, since, until int64, snapshot bool) (SQLiteRow, string) {
 	var row SQLiteRow
 	var ok bool
@@ -603,4 +379,284 @@ func sqliteRowMode(values [9]any, since, until int64, snapshot bool) (SQLiteRow,
 		return row, "metadata"
 	}
 	return row, ""
+}
+
+func validateChatColumns(ctx context.Context, conn *sql.Conn) error {
+	columns, e := conn.QueryContext(ctx, "SELECT name,type,hidden FROM pragma_table_xinfo('ChatContent')")
+	if e != nil {
+		return ErrSQLite
+	}
+	required := map[string]bool{
+		"senderid":   false,
+		"glbmsgid":   false,
+		"climsgid":   false,
+		"msgcontent": false,
+		"timestamp":  false,
+		"ttl":        false,
+		"msgtype":    false,
+		"msgstatus":  false,
+		"binnet":     false,
+	}
+	for columns.Next() {
+		var name, affinity string
+		var hidden int
+		if columns.Scan(&name, &affinity, &hidden) != nil || hidden != 0 {
+			//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
+			columns.Close()
+			return ErrSQLite
+		}
+		name = strings.ToLower(name)
+		if name == "rowid" || name == "_rowid_" || name == "oid" {
+			//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
+			columns.Close()
+			return ErrSQLite
+		}
+		if _, ok := required[name]; ok {
+			required[name] = true
+		}
+		if name == "timestamp" && !strings.Contains(strings.ToUpper(affinity), "INT") {
+			//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
+			columns.Close()
+			return ErrSQLite
+		}
+	}
+	e = columns.Err()
+	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
+	columns.Close()
+	if e != nil {
+		return ErrSQLite
+	}
+	for _, present := range required {
+		if !present {
+			return ErrSQLite
+		}
+	}
+	return nil
+}
+
+func readSQLiteCoverage(ctx context.Context, conn *sql.Conn, batch *SQLiteBatch, from, to int64) error {
+	var earliest, latest sql.NullInt64
+	const validTimestamp = "typeof(TimeStamp)='integer' AND TimeStamp>=0 AND TimeStamp<=253402300799999"
+	coverageSQL := "SELECT count(*), coalesce(sum(CASE WHEN " + validTimestamp + " AND TimeStamp>=? AND TimeStamp<? THEN 1 ELSE 0 END),0), coalesce(sum(CASE WHEN " + validTimestamp + " THEN 0 ELSE 1 END),0), min(CASE WHEN " + validTimestamp + " THEN TimeStamp END), max(CASE WHEN " + validTimestamp + " THEN TimeStamp END) FROM ChatContent"
+	if conn.QueryRowContext(ctx, coverageSQL, from, to).
+		Scan(&batch.Coverage.SourceRows, &batch.Coverage.PeriodRows, &batch.Coverage.InvalidTimestamps, &earliest, &latest) !=
+		nil {
+		return ErrSQLite
+	}
+	batch.Coverage.HasRange = earliest.Valid && latest.Valid
+	batch.Coverage.EarliestMS, batch.Coverage.LatestMS = earliest.Int64, latest.Int64
+	return nil
+}
+
+func readSQLiteControls(ctx context.Context, conn *sql.Conn, batch *SQLiteBatch, snapshot bool) error {
+	if conn.QueryRowContext(ctx, "SELECT count(*) FROM ChatContent WHERE MsgType IN (33,36)").
+		Scan(&batch.SourceControls) !=
+		nil {
+		return ErrSQLite
+	}
+	controlRows, e := conn.QueryContext(
+		ctx,
+		"SELECT MsgType,count(*) FROM ChatContent WHERE MsgType IN (20,21,25,26,29,32,33,34,35,36,45,51,52) GROUP BY MsgType",
+	)
+	if e != nil {
+		return ErrSQLite
+	}
+	batch.DeferredControls = map[string]int{}
+	for controlRows.Next() {
+		var kind int64
+		var count int
+		if controlRows.Scan(&kind, &count) != nil || !deferredMobileControl(kind) || count < 1 {
+			//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
+			controlRows.Close()
+			return ErrSQLite
+		}
+		batch.DeferredControls[strconv.FormatInt(kind, 10)] = count
+	}
+	controlErr := controlRows.Err()
+	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
+	controlRows.Close()
+	if controlErr != nil || ctx.Err() != nil {
+		return ErrSQLite
+	}
+	if snapshot {
+		return classifySQLiteSnapshotControls(ctx, conn, batch)
+	}
+	return nil
+}
+
+func sqlitePageQuery(from, to int64, maxRows int, after *SQLiteCursor, controlsOnly, descending bool) (string, []any) {
+	statement := "SELECT rowid,SenderId,GlbMsgId,CliMsgId,MsgContent,TimeStamp,TTL,MsgType,MsgStatus,BinNet FROM ChatContent WHERE TimeStamp>=? AND TimeStamp<?"
+	if controlsOnly {
+		statement = "SELECT rowid,SenderId,GlbMsgId,CliMsgId,'',TimeStamp,TTL,MsgType,MsgStatus,NULL FROM ChatContent WHERE TimeStamp>=? AND TimeStamp<? AND MsgType IN (33,36)"
+	}
+	args := []any{from, to}
+	if after != nil {
+		operator := ">"
+		if descending {
+			operator = "<"
+		}
+		statement += " AND (TimeStamp" + operator + "? OR (TimeStamp=? AND rowid" + operator + "?))"
+		args = append(args, after.TimestampMS, after.TimestampMS, after.RowID)
+	}
+	if descending {
+		statement += " ORDER BY TimeStamp DESC,rowid DESC LIMIT ?"
+	} else {
+		statement += " ORDER BY TimeStamp,rowid LIMIT ?"
+	}
+	args = append(args, maxRows+1)
+	return statement, args
+}
+
+func readSQLiteRows(ctx context.Context, rows *sql.Rows, batch *SQLiteBatch, template SQLiteCursor, maxRows int) error {
+	var last SQLiteCursor
+	retainedBytes := 0
+	for rows.Next() {
+		if batch.Examined == maxRows {
+			batch.HasMore = true
+			batch.Next = &last
+			break
+		}
+		var values [9]any
+		var sourceRowID int64
+		if rows.Scan(
+			&sourceRowID,
+			&values[0],
+			&values[1],
+			&values[2],
+			&values[3],
+			&values[4],
+			&values[5],
+			&values[6],
+			&values[7],
+			&values[8],
+		) != nil {
+			return ErrSQLite
+		}
+		timestamp, ok := values[4].(int64)
+		if !ok || timestamp < template.SinceMS || timestamp >= template.UntilMS {
+			return ErrSQLite
+		}
+		last = template
+		last.TimestampMS, last.RowID = timestamp, sourceRowID
+		batch.Examined++
+		row, reason := sqliteRowMode(values, template.SinceMS, template.UntilMS, template.Snapshot)
+		if template.Snapshot {
+			row.SourceRowID = sourceRowID
+		}
+		if reason != "" {
+			recordSQLiteRejection(batch, values, reason)
+			continue
+		}
+		retainedBytes += len(row.Text) + len(row.BinNet)
+		if retainedBytes > 8<<20 {
+			clear(row.BinNet)
+			return ErrSQLite
+		}
+		batch.Rows = append(batch.Rows, row)
+	}
+	if rows.Err() != nil || ctx.Err() != nil {
+		return ErrSQLite
+	}
+	return nil
+}
+
+func classifySQLiteSnapshotControls(ctx context.Context, conn *sql.Conn, batch *SQLiteBatch) error {
+	if conn.QueryRowContext(ctx, "SELECT count(*) FROM ChatContent WHERE MsgType IN (20,21,25,26,29,32,33,34,35,36,45,51,52)").
+		Scan(&batch.SourceControls) !=
+		nil {
+		return ErrSQLite
+	}
+	if batch.SourceControls > 5000 {
+		return ErrSnapshotControls
+	}
+	information := batch.DeferredControls["20"]
+	if information > 0 {
+		classified, classifySnapshotInformationErr := classifySnapshotInformation(ctx, conn, information)
+		if classifySnapshotInformationErr != nil {
+			return classifySnapshotInformationErr
+		}
+		batch.SourceInformation = classified
+		batch.SourceNativeExcluded = information
+		batch.SourceControls -= information
+	}
+	recalls := batch.DeferredControls["36"]
+	if recalls > 0 {
+		targets, classifySnapshotRecallsErr := classifySnapshotRecalls(ctx, conn, recalls)
+		if classifySnapshotRecallsErr != nil {
+			return classifySnapshotRecallsErr
+		}
+		batch.recalls = targets
+		batch.SourceRecallRows = recalls
+		batch.SourceControls -= recalls
+	}
+	if batch.SourceControls != 0 {
+		batch.recalls.clear()
+		return ErrSnapshotControls
+	}
+
+	return nil
+}
+
+func validSQLitePageInput(parent context.Context, file ArchiveFile, scratch string, since, until time.Time, maxRows int, validWindow bool) bool {
+	return validWindow && parent != nil && parent.Err() == nil && validName(file.Name) && filepath.IsAbs(scratch) &&
+		maxRows >= 1 && maxRows <= 5000 && !since.IsZero() && until.After(since)
+}
+
+func validSQLiteCursor(after *SQLiteCursor, digest [32]byte, name string, from, to int64, descending, snapshot bool) bool {
+	return after == nil || (after.Digest == digest && after.Name == name && after.SinceMS == from && after.UntilMS == to &&
+		after.TimestampMS >= from && after.TimestampMS < to && after.Descending == descending && after.Snapshot == snapshot)
+}
+
+func recordSQLiteRejection(batch *SQLiteBatch, values [9]any, reason string) {
+	batch.Rejected++
+	if batch.RejectedReasons == nil {
+		batch.RejectedReasons = map[string]int{}
+	}
+	batch.RejectedReasons[reason]++
+	if reason == "message_id" {
+		recordRejectedMessageID(batch, values)
+	}
+}
+
+func logInvalidSQLiteHeader(parent context.Context, data []byte) {
+	modeRead, modeWrite := 0, 0
+	if len(data) >= 20 {
+		modeRead = int(data[19])
+		modeWrite = int(data[18])
+	}
+	slog.WarnContext(
+		parent,
+		"mobile_archive_sqlite_header",
+		"file_bytes",
+		len(data),
+		"read_version",
+		modeRead,
+		"write_version",
+		modeWrite,
+	)
+}
+
+func configureSQLiteConnection(ctx context.Context, conn *sql.Conn, stage *string) error {
+	*stage = "SQLITE_LIMITS"
+	for _, limit := range [][2]int{{sqlite3.SQLITE_LIMIT_LENGTH, 1 << 20}, {sqlite3.SQLITE_LIMIT_SQL_LENGTH, 16 << 10}, {sqlite3.SQLITE_LIMIT_COLUMN, 64}, {sqlite3.SQLITE_LIMIT_EXPR_DEPTH, 20}, {sqlite3.SQLITE_LIMIT_ATTACHED, 0}} {
+		if _, e := sqlite.Limit(conn, limit[0], limit[1]); e != nil {
+			return ErrSQLite
+		}
+	}
+	*stage = "INTEGRITY_CHECK"
+	var check string
+	if conn.QueryRowContext(ctx, "PRAGMA integrity_check(1)").Scan(&check) != nil || check != "ok" {
+		return ErrSQLite
+	}
+	*stage = "CHAT_TABLE"
+	var kind string
+	var root int64
+	if conn.QueryRowContext(ctx, "SELECT type,rootpage FROM sqlite_schema WHERE name='ChatContent'").
+		Scan(&kind, &root) !=
+		nil ||
+		kind != "table" ||
+		root <= 0 {
+		return ErrSQLite
+	}
+	return nil
 }

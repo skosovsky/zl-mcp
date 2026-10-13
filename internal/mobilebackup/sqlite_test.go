@@ -7,10 +7,10 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -52,7 +52,18 @@ func TestSQLiteRowsPeriodBoundsPrecisionAndCleanup(t *testing.T) {
 			if i == 2 {
 				sender = "01"
 			}
-			_, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", sender, "18446744073709551615", "9007199254740997", "synthetic text", since.UnixMilli()+offset, 0, 0, 1, []byte("opaque synthetic BinNet"))
+			_, err := db.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				sender,
+				"18446744073709551615",
+				"9007199254740997",
+				"synthetic text",
+				since.UnixMilli()+offset,
+				0,
+				0,
+				1,
+				[]byte("opaque synthetic BinNet"),
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -61,9 +72,18 @@ func TestSQLiteRowsPeriodBoundsPrecisionAndCleanup(t *testing.T) {
 	before := append([]byte(nil), data...)
 	scratch := t.TempDir()
 	// Act: two examined rows plus a has_more probe.
-	batch, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "9007199254740993.db", Data: data}, scratch, since, until, 2)
+	batch, err := ReadSQLiteRows(
+		context.Background(),
+		ArchiveFile{Name: "9007199254740993.db", Data: data},
+		scratch,
+		since,
+		until,
+		2,
+	)
 	// Assert: no rounding, inclusive/exclusive window, invalid row counted, no source mutation or leftovers.
-	if err != nil || batch.Examined != 2 || batch.Rejected != 1 || !batch.HasMore || len(batch.Rows) != 1 || batch.Rows[0].MessageID != "18446744073709551615" || batch.Rows[0].TimestampMS != since.UnixMilli() {
+	if err != nil || batch.Examined != 2 || batch.Rejected != 1 || !batch.HasMore || len(batch.Rows) != 1 ||
+		batch.Rows[0].MessageID != "18446744073709551615" ||
+		batch.Rows[0].TimestampMS != since.UnixMilli() {
 		t.Fatal("bounded SQLite read failed", err)
 	}
 	if !bytes.Equal(data, before) {
@@ -97,7 +117,14 @@ func TestSQLiteRejectsHeaderAndUntrustedSchema(t *testing.T) {
 	for _, data := range [][]byte{valid[:100], badPage, mixedVersion, badCount, append(append([]byte(nil), valid...), 0), sqliteFixture(t, `CREATE VIEW ChatContent AS SELECT 1 AS SenderId`, nil), sqliteFixture(t, `CREATE TABLE ChatContent(SenderId TEXT)`, nil), sqliteFixture(t, `CREATE TABLE ChatContent(SenderId TEXT,GlbMsgId TEXT,CliMsgId TEXT,MsgContent TEXT,TimeStamp INTEGER,TTL INTEGER,MsgType INTEGER,MsgStatus INTEGER,BinNet BLOB,hiddenValue AS (1))`, nil)} {
 		// Act / Assert: no partial results, and cleanup after schema failure.
 		scratch := t.TempDir()
-		batch, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "1.db", Data: data}, scratch, since, until, 10)
+		batch, err := ReadSQLiteRows(
+			context.Background(),
+			ArchiveFile{Name: "1.db", Data: data},
+			scratch,
+			since,
+			until,
+			10,
+		)
 		if !errors.Is(err, ErrSQLite) || batch.Rows != nil {
 			t.Fatal("invalid SQLite accepted")
 		}
@@ -116,11 +143,31 @@ func TestSQLiteRejectsCancelledAndInvalidRequests(t *testing.T) {
 	scratch := t.TempDir()
 	since := time.Now()
 	// Act / Assert.
-	if _, err := ReadSQLiteRows(ctx, ArchiveFile{Name: "1.db", Data: data}, scratch, since, since.Add(time.Hour), 10); !errors.Is(err, ErrSQLite) {
+	if _, err := ReadSQLiteRows(
+		ctx,
+		ArchiveFile{Name: "1.db", Data: data},
+		scratch,
+		since,
+		since.Add(time.Hour),
+		10,
+	); !errors.Is(
+		err,
+		ErrSQLite,
+	) {
 		t.Fatal("cancel bypass")
 	}
 	for _, limit := range []int{0, 5001} {
-		if _, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "1.db", Data: data}, scratch, since, since.Add(time.Hour), limit); !errors.Is(err, ErrSQLite) {
+		if _, err := ReadSQLiteRows(
+			context.Background(),
+			ArchiveFile{Name: "1.db", Data: data},
+			scratch,
+			since,
+			since.Add(time.Hour),
+			limit,
+		); !errors.Is(
+			err,
+			ErrSQLite,
+		) {
 			t.Fatal("row budget bypass")
 		}
 	}
@@ -130,6 +177,7 @@ func TestSQLiteRejectsCancelledAndInvalidRequests(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSQLitePaginationTiesRejectedRowsAndBoundCursor(t *testing.T) {
 	// Arrange: five rows share a timestamp; invalid middle rows must still advance.
 	since := time.Date(2026, 9, 30, 0, 0, 0, 0, time.UTC)
@@ -140,7 +188,18 @@ func TestSQLitePaginationTiesRejectedRowsAndBoundCursor(t *testing.T) {
 			if i == 2 || i == 4 {
 				sender = "01"
 			}
-			if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", sender, i, i, "synthetic text", since.UnixMilli(), 0, 0, 1, nil); err != nil {
+			if _, err := db.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				sender,
+				i,
+				i,
+				"synthetic text",
+				since.UnixMilli(),
+				0,
+				0,
+				1,
+				nil,
+			); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -181,7 +240,8 @@ func TestSQLitePaginationTiesRejectedRowsAndBoundCursor(t *testing.T) {
 		}
 	}
 	// Assert: every source row examined once; no valid message lost or repeated.
-	if examined != 5 || rejected != 2 || pages != 3 || len(ids) != 3 || ids[0] != "1" || ids[1] != "3" || ids[2] != "5" {
+	if examined != 5 || rejected != 2 || pages != 3 || len(ids) != 3 || ids[0] != "1" || ids[1] != "3" ||
+		ids[2] != "5" {
 		t.Fatal("pagination gaps or repeats")
 	}
 	encoded, _ := json.Marshal(cursor)
@@ -193,16 +253,49 @@ func TestSQLitePaginationTiesRejectedRowsAndBoundCursor(t *testing.T) {
 		t.Fatal("missing first cursor")
 	}
 	for _, changed := range []ArchiveFile{{Name: "2.db", Data: data}, {Name: "1.db", Data: append(append([]byte(nil), data[:len(data)-1]...), data[len(data)-1]^1)}} {
-		if _, err := ReadSQLitePage(context.Background(), changed, scratch, since, until, 1, first.Next); !errors.Is(err, ErrSQLite) {
+		if _, err := ReadSQLitePage(
+			context.Background(),
+			changed,
+			scratch,
+			since,
+			until,
+			1,
+			first.Next,
+		); !errors.Is(
+			err,
+			ErrSQLite,
+		) {
 			t.Fatal("cursor crossed file boundary")
 		}
 	}
-	if _, err := ReadSQLitePage(context.Background(), file, scratch, since.Add(-time.Minute), until, 1, first.Next); !errors.Is(err, ErrSQLite) {
+	if _, err := ReadSQLitePage(
+		context.Background(),
+		file,
+		scratch,
+		since.Add(-time.Minute),
+		until,
+		1,
+		first.Next,
+	); !errors.Is(
+		err,
+		ErrSQLite,
+	) {
 		t.Fatal("cursor crossed period")
 	}
 	invalid := *first.Next
 	invalid.TimestampMS = until.UnixMilli()
-	if _, err := ReadSQLitePage(context.Background(), file, scratch, since, until, 1, &invalid); !errors.Is(err, ErrSQLite) {
+	if _, err := ReadSQLitePage(
+		context.Background(),
+		file,
+		scratch,
+		since,
+		until,
+		1,
+		&invalid,
+	); !errors.Is(
+		err,
+		ErrSQLite,
+	) {
 		t.Fatal("out-of-period anchor accepted")
 	}
 }
@@ -212,13 +305,32 @@ func TestSQLiteRejectsShadowedOrInexactPagingKeys(t *testing.T) {
 	until := since.Add(time.Hour)
 	shadowed := sqliteFixture(t, backupSQLiteSchema+`;ALTER TABLE ChatContent ADD COLUMN rowid INTEGER`, nil)
 	inexact := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
-		if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "1", "2", "3", "text", float64(since.UnixMilli())+0.5, 0, 0, 1, nil); err != nil {
+		if _, err := db.Exec(
+			"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+			"1",
+			"2",
+			"3",
+			"text",
+			float64(since.UnixMilli())+0.5,
+			0,
+			0,
+			1,
+			nil,
+		); err != nil {
 			t.Fatal(err)
 		}
 	})
 	for _, data := range [][]byte{shadowed, inexact} {
 		// Act / Assert: no fabricated paging anchor or partial batch.
-		batch, err := ReadSQLitePage(context.Background(), ArchiveFile{Name: "1.db", Data: data}, t.TempDir(), since, until, 1, nil)
+		batch, err := ReadSQLitePage(
+			context.Background(),
+			ArchiveFile{Name: "1.db", Data: data},
+			t.TempDir(),
+			since,
+			until,
+			1,
+			nil,
+		)
 		if !errors.Is(err, ErrSQLite) || batch.Rows != nil || batch.Next != nil {
 			t.Fatal("invalid paging key accepted")
 		}
@@ -231,19 +343,46 @@ func TestSQLiteBatchRetainedByteBudget(t *testing.T) {
 	until := since.Add(time.Hour)
 	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
 		text := string(bytes.Repeat([]byte("x"), 512<<10))
-		for i := 0; i < 17; i++ {
-			if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "1", "2", "3", text, since.UnixMilli()+int64(i), 0, 0, 1, nil); err != nil {
+		for i := range 17 {
+			if _, err := db.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				"1",
+				"2",
+				"3",
+				text,
+				since.UnixMilli()+int64(i),
+				0,
+				0,
+				1,
+				nil,
+			); err != nil {
 				t.Fatal(err)
 			}
 		}
 	})
 	// Act.
-	batch, err := ReadSQLitePage(context.Background(), ArchiveFile{Name: "1.db", Data: data}, t.TempDir(), since, until, 17, nil)
+	batch, err := ReadSQLitePage(
+		context.Background(),
+		ArchiveFile{Name: "1.db", Data: data},
+		t.TempDir(),
+		since,
+		until,
+		17,
+		nil,
+	)
 	// Assert: no partial response/continuation; a smaller page remains supported.
 	if !errors.Is(err, ErrSQLite) || batch.Rows != nil || batch.Next != nil {
 		t.Fatal("total byte budget bypass")
 	}
-	batch, err = ReadSQLitePage(context.Background(), ArchiveFile{Name: "1.db", Data: data}, t.TempDir(), since, until, 1, nil)
+	batch, err = ReadSQLitePage(
+		context.Background(),
+		ArchiveFile{Name: "1.db", Data: data},
+		t.TempDir(),
+		since,
+		until,
+		1,
+		nil,
+	)
 	if err != nil || len(batch.Rows) != 1 || !batch.HasMore || batch.Next == nil {
 		t.Fatal("bounded smaller page failed")
 	}
@@ -254,14 +393,33 @@ func TestSQLiteFractionalMillisecondWindow(t *testing.T) {
 	// Arrange: exact millisecond source timestamps, fractional inclusive/exclusive bounds.
 	base := time.Date(2026, 9, 30, 0, 0, 0, 0, time.UTC)
 	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
-		for i := int64(0); i < 3; i++ {
-			if _, e := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", fmt.Sprint(i+1), fmt.Sprint(i+1), "synthetic", base.UnixMilli()+i, 0, 0, 1, []byte{0, 0, 0, 9, 0, 0, 0, 1, 'x'}); e != nil {
+		for i := range int64(3) {
+			if _, e := db.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				"901",
+				strconv.FormatInt(i+1, 10),
+				strconv.FormatInt(i+1, 10),
+				"synthetic",
+				base.UnixMilli()+i,
+				0,
+				0,
+				1,
+				[]byte{0, 0, 0, 9, 0, 0, 0, 1, 'x'},
+			); e != nil {
 				t.Fatal(e)
 			}
 		}
 	})
 	// Act: [0.5 ms,1.5 ms) contains only the source row at 1 ms.
-	page, e := ReadSQLitePage(context.Background(), ArchiveFile{Name: "902.db", Data: data}, t.TempDir(), base.Add(500*time.Microsecond), base.Add(1500*time.Microsecond), 50, nil)
+	page, e := ReadSQLitePage(
+		context.Background(),
+		ArchiveFile{Name: "902.db", Data: data},
+		t.TempDir(),
+		base.Add(500*time.Microsecond),
+		base.Add(1500*time.Microsecond),
+		50,
+		nil,
+	)
 	defer page.Clear()
 	// Assert: neither include a pre-window row nor lose the eligible upper-millisecond row.
 	if e != nil || len(page.Rows) != 1 || page.Rows[0].TimestampMS != base.UnixMilli()+1 {
@@ -279,7 +437,14 @@ func TestSQLiteFailureDiagnosticsExcludePrivateFile(t *testing.T) {
 	copy(data, []byte("private-message-marker"))
 	from := time.Date(2026, 9, 30, 0, 0, 0, 0, time.UTC)
 	// Act.
-	_, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "123456789.db", Data: data}, t.TempDir(), from, from.Add(time.Hour), 1)
+	_, err := ReadSQLiteRows(
+		context.Background(),
+		ArchiveFile{Name: "123456789.db", Data: data},
+		t.TempDir(),
+		from,
+		from.Add(time.Hour),
+		1,
+	)
 	// Assert: only the fixed failing stage and header counts, no content or filename.
 	if err == nil || !strings.Contains(output.String(), "SQLITE_HEADER") {
 		t.Fatal("missing header diagnosis")
@@ -296,11 +461,24 @@ func TestSQLiteImmutableCheckpointedWALSnapshot(t *testing.T) {
 	// the main-file image. The reader sees only a private immutable copy.
 	from := time.Date(2026, 9, 30, 0, 0, 0, 0, time.UTC)
 	data := sqliteFixture(t, "PRAGMA journal_mode=WAL;"+backupSQLiteSchema, func(db *sql.DB) {
-		if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "12", "13", "14", "synthetic snapshot", from.UnixMilli(), 0, 0, 1, nil); err != nil {
+		if _, err := db.Exec(
+			"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+			"12",
+			"13",
+			"14",
+			"synthetic snapshot",
+			from.UnixMilli(),
+			0,
+			0,
+			1,
+			nil,
+		); err != nil {
 			t.Fatal(err)
 		}
 		var busy, logPages, checkpointed int
-		if err := db.QueryRow("PRAGMA wal_checkpoint(TRUNCATE)").Scan(&busy, &logPages, &checkpointed); err != nil || busy != 0 {
+		if err := db.QueryRow("PRAGMA wal_checkpoint(TRUNCATE)").
+			Scan(&busy, &logPages, &checkpointed); err != nil ||
+			busy != 0 {
 			t.Fatal("fixture checkpoint failed", err)
 		}
 	})
@@ -310,7 +488,14 @@ func TestSQLiteImmutableCheckpointedWALSnapshot(t *testing.T) {
 	original := append([]byte(nil), data...)
 	scratch := t.TempDir()
 	// Act.
-	batch, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "12.db", Data: data}, scratch, from, from.Add(time.Hour), 10)
+	batch, err := ReadSQLiteRows(
+		context.Background(),
+		ArchiveFile{Name: "12.db", Data: data},
+		scratch,
+		from,
+		from.Add(time.Hour),
+		10,
+	)
 	// Assert: available committed main-file rows, unchanged image, no sidecars/scratch.
 	if err != nil || !batch.WALMode || len(batch.Rows) != 1 || batch.Rows[0].MessageID != "13" {
 		t.Fatal("immutable WAL read failed", err)
@@ -336,20 +521,48 @@ func TestSQLiteCoverageDistinguishesEmptyWindowFromEmptyImage(t *testing.T) {
 	until := from.Add(time.Hour)
 	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
 		for _, ts := range []any{from.UnixMilli() - 1, until.UnixMilli(), "invalid-time"} {
-			if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "12", "13", "14", "synthetic", ts, 0, 0, 1, nil); err != nil {
+			if _, err := db.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				"12",
+				"13",
+				"14",
+				"synthetic",
+				ts,
+				0,
+				0,
+				1,
+				nil,
+			); err != nil {
 				t.Fatal(err)
 			}
 		}
 	})
 	// Act.
-	batch, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "12.db", Data: data}, t.TempDir(), from, until, 10)
+	batch, err := ReadSQLiteRows(
+		context.Background(),
+		ArchiveFile{Name: "12.db", Data: data},
+		t.TempDir(),
+		from,
+		until,
+		10,
+	)
 	// Assert: no period matches, but nonempty image and exact valid timestamp bounds.
 	c := batch.Coverage
-	if err != nil || batch.Examined != 0 || c.SourceRows != 3 || c.PeriodRows != 0 || c.InvalidTimestamps != 1 || !c.HasRange || c.EarliestMS != from.UnixMilli()-1 || c.LatestMS != until.UnixMilli() {
+	if err != nil || batch.Examined != 0 || c.SourceRows != 3 || c.PeriodRows != 0 || c.InvalidTimestamps != 1 ||
+		!c.HasRange ||
+		c.EarliestMS != from.UnixMilli()-1 ||
+		c.LatestMS != until.UnixMilli() {
 		t.Fatal("incorrect source coverage", err)
 	}
 	empty := sqliteFixture(t, backupSQLiteSchema, nil)
-	batch, err = ReadSQLiteRows(context.Background(), ArchiveFile{Name: "12.db", Data: empty}, t.TempDir(), from, until, 10)
+	batch, err = ReadSQLiteRows(
+		context.Background(),
+		ArchiveFile{Name: "12.db", Data: empty},
+		t.TempDir(),
+		from,
+		until,
+		10,
+	)
 	if err != nil || batch.Coverage.SourceRows != 0 || batch.Coverage.HasRange {
 		t.Fatal("empty snapshot has invented range", err)
 	}
@@ -371,13 +584,26 @@ func TestSQLiteImmutableMainImageCannotProveWALCompleteness(t *testing.T) {
 	from := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC)
 	insert := func(id string, kind int) {
 		t.Helper()
-		if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "12", id, id, "synthetic", from.UnixMilli(), 0, kind, 1, nil); err != nil {
-			t.Fatal(err)
+		if _, execErr := db.Exec(
+			"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+			"12",
+			id,
+			id,
+			"synthetic",
+			from.UnixMilli(),
+			0,
+			kind,
+			1,
+			nil,
+		); execErr != nil {
+			t.Fatal(execErr)
 		}
 	}
 	insert("13", 0)
 	var busy, logPages, checkpointed int
-	if err = db.QueryRow("PRAGMA wal_checkpoint(TRUNCATE)").Scan(&busy, &logPages, &checkpointed); err != nil || busy != 0 {
+	if err = db.QueryRow("PRAGMA wal_checkpoint(TRUNCATE)").
+		Scan(&busy, &logPages, &checkpointed); err != nil ||
+		busy != 0 {
 		t.Fatal("checkpoint failed", err)
 	}
 	insert("14", 0)
@@ -388,13 +614,25 @@ func TestSQLiteImmutableMainImageCannotProveWALCompleteness(t *testing.T) {
 	}
 	defer clear(data)
 	// Act: inspect only the copied main image, then compare with the producer view.
-	batch, err := ReadSQLiteRows(context.Background(), ArchiveFile{Name: "12.db", Data: data}, t.TempDir(), from, from.Add(time.Hour), 10)
+	batch, err := ReadSQLiteRows(
+		context.Background(),
+		ArchiveFile{Name: "12.db", Data: data},
+		t.TempDir(),
+		from,
+		from.Add(time.Hour),
+		10,
+	)
 	defer batch.Clear()
 	var producerRows, producerControls int
-	queryErr := db.QueryRow("SELECT count(*), sum(CASE WHEN MsgType=33 THEN 1 ELSE 0 END) FROM ChatContent").Scan(&producerRows, &producerControls)
+	queryErr := db.QueryRow("SELECT count(*), sum(CASE WHEN MsgType=33 THEN 1 ELSE 0 END) FROM ChatContent").
+		Scan(&producerRows, &producerControls)
 	// Assert: successful integrity/schema checks cannot detect omitted commits,
 	// including a control. This is synthetic evidence, not a claim about Zalo export.
-	if err != nil || queryErr != nil || !batch.WALMode || batch.Coverage.SourceRows != 1 || batch.SourceControls != 0 || len(batch.Rows) != 1 || batch.Rows[0].MessageID != "13" || producerRows != 3 || producerControls != 1 {
+	if err != nil || queryErr != nil || !batch.WALMode || batch.Coverage.SourceRows != 1 || batch.SourceControls != 0 ||
+		len(batch.Rows) != 1 ||
+		batch.Rows[0].MessageID != "13" ||
+		producerRows != 3 ||
+		producerControls != 1 {
 		t.Fatal("WAL/main-image evidence boundary lost", err, queryErr)
 	}
 }
@@ -426,7 +664,14 @@ func TestSQLiteRejectedRowReasonsPartitionPagesWithoutExposingValues(t *testing.
 	defer second.Clear()
 	encoded, _ := json.Marshal(first.RejectedReasons)
 	// Assert: stable fixed reasons partition rejected rows, without private data or duplicate paging.
-	if err != nil || first.Examined != 2 || first.Rejected != 2 || first.RejectedReasons["sender_id"] != 1 || first.RejectedReasons["client_id"] != 1 || second.Examined != 2 || second.Rejected != 1 || second.RejectedReasons["message_status"] != 1 || len(second.Rows) != 1 || second.HasMore || bytes.Contains(encoded, []byte("PRIVATE")) {
+	if err != nil || first.Examined != 2 || first.Rejected != 2 || first.RejectedReasons["sender_id"] != 1 ||
+		first.RejectedReasons["client_id"] != 1 ||
+		second.Examined != 2 ||
+		second.Rejected != 1 ||
+		second.RejectedReasons["message_status"] != 1 ||
+		len(second.Rows) != 1 ||
+		second.HasMore ||
+		bytes.Contains(encoded, []byte("PRIVATE")) {
 		t.Fatal("rejection partition or paging failed", err)
 	}
 	first.Clear()

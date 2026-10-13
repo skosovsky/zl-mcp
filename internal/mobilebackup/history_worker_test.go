@@ -7,10 +7,10 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"math/big"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -28,7 +28,10 @@ func (s *historyWorkerSource) CleanupHistorySnapshots(ctx context.Context) error
 	return s.session.snapshots.CleanupTerminal(ctx, s.session.store.MobileHistorySnapshotTerminal)
 }
 
-func (s *historyWorkerSource) WithHistorySession(ctx context.Context, visit func(context.Context, historyimport.MobileHistorySession) error) error {
+func (s *historyWorkerSource) WithHistorySession(
+	ctx context.Context,
+	visit func(context.Context, historyimport.MobileHistorySession) error,
+) error {
 	if s.leaseErr != nil {
 		return s.leaseErr
 	}
@@ -59,22 +62,38 @@ func (s *historyWorkerSession) ReceiveOffer(ctx context.Context, id string) (dom
 	if s.receiveErr != nil {
 		return domain.MobileBackupOffer{}, s.receiveErr
 	}
-	return RunPreparedOffer(ctx, s.store, offerSourceFunc(func(ctx context.Context, observer *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
-		if err := observer.BeforeDispatch(s.public); err != nil {
-			return domain.MobileBackupOffer{}, err
-		}
-		s.receives++
-		if err := observer.Progress("waiting_for_confirmation"); err != nil {
-			return domain.MobileBackupOffer{}, err
-		}
-		if err := observer.Progress("offer_ready"); err != nil {
-			return domain.MobileBackupOffer{}, err
-		}
-		return domain.MobileBackupOffer{SessionAccountID: "10", URL: "https://example.invalid/synthetic", KeyText: "synthetic-key", FileSize: 16}, nil
-	}), id)
+	return RunPreparedOffer(
+		ctx,
+		s.store,
+		offerSourceFunc(
+			func(ctx context.Context, observer *domain.MobileBackupObserver) (domain.MobileBackupOffer, error) {
+				if err := observer.BeforeDispatch(s.public); err != nil {
+					return domain.MobileBackupOffer{}, err
+				}
+				s.receives++
+				if err := observer.Progress("waiting_for_confirmation"); err != nil {
+					return domain.MobileBackupOffer{}, err
+				}
+				if err := observer.Progress("offer_ready"); err != nil {
+					return domain.MobileBackupOffer{}, err
+				}
+				return domain.MobileBackupOffer{
+					SessionAccountID: "10",
+					URL:              "https://example.invalid/synthetic",
+					KeyText:          "synthetic-key",
+					FileSize:         16,
+				}, nil
+			},
+		),
+		id,
+	)
 }
 
-func (s *historyWorkerSession) SaveOffer(ctx context.Context, r domain.MobileBackupRequest, offer domain.MobileBackupOffer) error {
+func (s *historyWorkerSession) SaveOffer(
+	ctx context.Context,
+	r domain.MobileBackupRequest,
+	offer domain.MobileBackupOffer,
+) error {
 	if !stageDeadline(ctx, 120*time.Second) || offer.SessionAccountID != "10" {
 		return errors.New("invalid download stage")
 	}
@@ -85,7 +104,13 @@ func (s *historyWorkerSession) SaveOffer(ctx context.Context, r domain.MobileBac
 	return s.snapshots.Save(ctx, s.selected, r, "10")
 }
 
-func (s *historyWorkerSession) ReadHistoryPage(ctx context.Context, r domain.MobileBackupRequest, size, examined int, previous *domain.MobileHistorySnapshot, after *domain.MobileHistoryPosition) (domain.MobileHistoryPage, error) {
+func (s *historyWorkerSession) ReadHistoryPage(
+	ctx context.Context,
+	r domain.MobileBackupRequest,
+	size, examined int,
+	previous *domain.MobileHistorySnapshot,
+	after *domain.MobileHistoryPosition,
+) (domain.MobileHistoryPage, error) {
 	if !stageDeadline(ctx, 30*time.Second) {
 		return domain.MobileHistoryPage{}, errors.New("unbounded read stage")
 	}
@@ -112,7 +137,9 @@ func (s *historyWorkerSession) ReadHistoryPage(ctx context.Context, r domain.Mob
 	return page, err
 }
 
-func historyWorkerFixture(t *testing.T) (*historyWorkerSource, storage.HistoryOperation, string, string, domain.MobileBackupRequest) {
+func historyWorkerFixture(
+	t *testing.T,
+) (*historyWorkerSource, storage.HistoryOperation, string, string, domain.MobileBackupRequest) {
 	t.Helper()
 	ctx := context.Background()
 	selected, request := historyPageFixture(t)
@@ -126,7 +153,18 @@ func historyWorkerFixture(t *testing.T) (*historyWorkerSource, storage.HistoryOp
 	if err = s.BindAccount(ctx, "10"); err != nil {
 		t.Fatal(err)
 	}
-	op, err := s.PrepareMobileHistoryOperation(ctx, domain.HistoryImportRequest{RequestID: request.RequestID, ConversationType: request.ConversationType, ConversationID: request.ConversationID, Since: request.Since, Until: request.Until, MaxMessages: request.MaxMessages, PageSize: 2})
+	op, err := s.PrepareMobileHistoryOperation(
+		ctx,
+		domain.HistoryImportRequest{
+			RequestID:        request.RequestID,
+			ConversationType: request.ConversationType,
+			ConversationID:   request.ConversationID,
+			Since:            request.Since,
+			Until:            request.Until,
+			MaxMessages:      request.MaxMessages,
+			PageSize:         2,
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -136,7 +174,15 @@ func historyWorkerFixture(t *testing.T) (*historyWorkerSource, storage.HistoryOp
 	if err != nil {
 		t.Fatal(err)
 	}
-	source := &historyWorkerSource{session: &historyWorkerSession{store: s, snapshots: openSnapshotStore(t, dir, 1<<20), selected: selected, scratch: t.TempDir(), public: base64.StdEncoding.EncodeToString(der)}}
+	source := &historyWorkerSource{
+		session: &historyWorkerSession{
+			store:     s,
+			snapshots: openSnapshotStore(t, dir, 1<<20),
+			selected:  selected,
+			scratch:   t.TempDir(),
+			public:    base64.StdEncoding.EncodeToString(der),
+		},
+	}
 	return source, op, path, dir, request
 }
 
@@ -197,7 +243,15 @@ func TestMobileWorkerFullAcquisitionSnapshotAndPagingCycle(t *testing.T) {
 	op := waitMobileState(t, source.session.store, pending.Status.OperationID, "partial")
 	stopHistoryWorker(t, cancel, done)
 	// Assert: one attempt, one download, three bounded pages and silent original-TTL records.
-	if source.session.receives != 1 || source.session.saves != 1 || source.session.reads != 3 || op.Status.StopReason == nil || *op.Status.StopReason != "source_gaps" || op.Status.PagesObserved != 3 || op.Status.RecordsObserved != 5 || op.Status.InsertedCount != 2 || op.ReservedDuration != 0 || op.WorkDuration <= 0 || op.Status.HistoryComplete {
+	if source.session.receives != 1 || source.session.saves != 1 || source.session.reads != 3 ||
+		op.Status.StopReason == nil ||
+		*op.Status.StopReason != "source_gaps" ||
+		op.Status.PagesObserved != 3 ||
+		op.Status.RecordsObserved != 5 ||
+		op.Status.InsertedCount != 2 ||
+		op.ReservedDuration != 0 ||
+		op.WorkDuration <= 0 ||
+		op.Status.HistoryComplete {
 		t.Fatal("mobile worker did not preserve bounded source coverage")
 	}
 	attempt, err := source.session.store.MobileHistoryAcquisition(context.Background(), op.Status.OperationID)
@@ -226,7 +280,14 @@ func TestMobileWorkerRestartCleansTerminalSourceWithoutSession(t *testing.T) {
 	if err = source.session.snapshots.Save(ctx, source.session.selected, request, "10"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = store.StopHistoryOperation(ctx, op.Status.OperationID, op.Revision, "partial", "source_unavailable", 0); err != nil {
+	if _, err = store.StopHistoryOperation(
+		ctx,
+		op.Status.OperationID,
+		op.Revision,
+		"partial",
+		"source_unavailable",
+		0,
+	); err != nil {
 		t.Fatal(err)
 	}
 	if err = source.session.snapshots.Close(); err != nil {
@@ -261,7 +322,15 @@ func TestMobileWorkerRestartCleansTerminalSourceWithoutSession(t *testing.T) {
 	if source.session.receives != 0 || source.session.saves != 0 || source.session.reads != 0 {
 		t.Fatal("local cleanup borrowed network authority")
 	}
-	if err = source.session.snapshots.Save(context.Background(), source.session.selected, request, "10"); !errors.Is(err, ErrSnapshot) {
+	if err = source.session.snapshots.Save(
+		context.Background(),
+		source.session.selected,
+		request,
+		"10",
+	); !errors.Is(
+		err,
+		ErrSnapshot,
+	) {
 		t.Fatal("restart cleanup renewed source", err)
 	}
 	assertSilentWorker(t, store, 0)
@@ -272,13 +341,32 @@ func TestMobileWorkerCompletedImportRemovesSource(t *testing.T) {
 	source, pending, _, dir, request := historyWorkerFixture(t)
 	source.session.selected.Clear()
 	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
-		metadata := attachmentField(6, append(attachmentField(45, []byte("rtf")), attachmentField(47, []byte("synthetic complete title"))...))
-		_, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", "13", "14", "synthetic complete import", time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC).UnixMilli(), 0, 0, 1, metadata)
+		metadata := attachmentField(
+			6,
+			append(attachmentField(45, []byte("rtf")), attachmentField(47, []byte("synthetic complete title"))...),
+		)
+		_, err := db.Exec(
+			"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+			"901",
+			"13",
+			"14",
+			"synthetic complete import",
+			time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC).UnixMilli(),
+			0,
+			0,
+			1,
+			metadata,
+		)
 		if err != nil {
 			t.Fatal(err)
 		}
 	})
-	source.session.selected = SelectedArchive{requestID: request.RequestID, requestFingerprint: request.Fingerprint(), ref: request.Ref(), File: ArchiveFile{Name: "902.db", Data: data}}
+	source.session.selected = SelectedArchive{
+		requestID:          request.RequestID,
+		requestFingerprint: request.Fingerprint(),
+		ref:                request.Ref(),
+		File:               ArchiveFile{Name: "902.db", Data: data},
+	}
 	defer source.session.selected.Clear()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -300,11 +388,16 @@ func TestMobileWorkerCompletedImportRemovesSource(t *testing.T) {
 	}
 	stopHistoryWorker(t, cancel, done)
 	// Assert: source exhaustion is limited, silent and does not retain its staging file.
-	if op.Status.InsertedCount != 1 || op.Status.PagesObserved != 1 || op.Status.HistoryComplete || source.session.receives != 1 || source.session.saves != 1 || source.session.reads != 1 {
+	if op.Status.InsertedCount != 1 || op.Status.PagesObserved != 1 || op.Status.HistoryComplete ||
+		source.session.receives != 1 ||
+		source.session.saves != 1 ||
+		source.session.reads != 1 {
 		t.Fatal("completed cleanup/import mismatch", op.Status)
 	}
 	var text, attachments, provenance string
-	if err := source.session.store.DB.QueryRow("SELECT text,attachments,source FROM messages WHERE message_id='13'").Scan(&text, &attachments, &provenance); err != nil || text != "synthetic complete title" || attachments != `["rtf"]` || provenance != "history" {
+	if err := source.session.store.DB.QueryRow("SELECT text,attachments,source FROM messages WHERE message_id='13'").
+		Scan(&text, &attachments, &provenance); err != nil || text != "synthetic complete title" || attachments != `["rtf"]` ||
+		provenance != "history" {
 		t.Fatal("visible rich-text projection was not silently preserved", err)
 	}
 	assertSilentWorker(t, source.session.store, 1)
@@ -335,7 +428,8 @@ func TestMobileWorkerRestartsFromExactSnapshotWithoutAnotherPhone(t *testing.T) 
 	}
 	stopHistoryWorkerAfterDone()
 	op, err := source.session.store.HistoryOperation(context.Background(), pending.Status.OperationID)
-	if err != nil || op.Status.PagesObserved != 1 || op.Status.RecordsObserved != 2 || op.ReservedDuration != 30*time.Second {
+	if err != nil || op.Status.PagesObserved != 1 || op.Status.RecordsObserved != 2 ||
+		op.ReservedDuration != 30*time.Second {
 		t.Fatal("shutdown lost the committed gap page", err)
 	}
 	before, err := source.session.store.MobileHistoryCheckpoint(context.Background(), op.Status.OperationID)
@@ -368,12 +462,18 @@ func TestMobileWorkerRestartsFromExactSnapshotWithoutAnotherPhone(t *testing.T) 
 	stopHistoryWorker(t, cancel, done)
 	// Assert: exact source lifetime/identity survives, and only the remaining pages are read.
 	after, err := s.MobileHistoryCheckpoint(context.Background(), op.Status.OperationID)
-	if err != nil || after.Snapshot != before.Snapshot || source.session.receives != 1 || source.session.saves != 1 || source.session.reads != 4 || op.Status.RecordsObserved != 5 || op.Status.PagesObserved != 3 || op.Status.InsertedCount != 2 || op.WorkDuration < 30*time.Second {
+	if err != nil || after.Snapshot != before.Snapshot || source.session.receives != 1 || source.session.saves != 1 ||
+		source.session.reads != 4 ||
+		op.Status.RecordsObserved != 5 ||
+		op.Status.PagesObserved != 3 ||
+		op.Status.InsertedCount != 2 ||
+		op.WorkDuration < 30*time.Second {
 		t.Fatal("restart renewed or redispatched source", err)
 	}
 	assertSilentWorker(t, s, 2)
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileWorkerLossAndCancellationDoNotRedispatchOrImportPrefixes(t *testing.T) {
 	for _, mode := range []string{"prepared-without-snapshot", "receive-failure", "save-failure", "lost-after-page", "cancel-before-commit", "invalid-page", "wal-source"} {
 		t.Run(mode, func(t *testing.T) {
@@ -441,7 +541,8 @@ func TestMobileWorkerLossAndCancellationDoNotRedispatchOrImportPrefixes(t *testi
 			if mode == "prepared-without-snapshot" || mode == "receive-failure" {
 				wantReceives = 0
 			}
-			if op.Status.PagesObserved != wantPages || source.session.receives != wantReceives || op.Status.InsertedCount != 0 {
+			if op.Status.PagesObserved != wantPages || source.session.receives != wantReceives ||
+				op.Status.InsertedCount != 0 {
 				t.Fatal("failed worker guessed a source prefix or repeated receiver")
 			}
 			if state == "partial" && (op.Status.StopReason == nil || *op.Status.StopReason != "source_unavailable") {
@@ -466,7 +567,12 @@ func TestMobileWorkerUnauthenticatedLeasePausesBeforePhone(t *testing.T) {
 	err := historyimport.RunMobile(context.Background(), source.session.store, source)
 	// Assert: no acquisition/snapshot or active work occurred.
 	op, readErr := source.session.store.HistoryOperation(context.Background(), pending.Status.OperationID)
-	if !errors.Is(err, domain.ErrAuthenticationRequired) || readErr != nil || op.Status.State != "paused" || op.WorkDuration != 0 || op.ReservedDuration != 0 || source.session.receives != 0 || source.session.saves != 0 || source.session.reads != 0 {
+	if !errors.Is(err, domain.ErrAuthenticationRequired) || readErr != nil || op.Status.State != "paused" ||
+		op.WorkDuration != 0 ||
+		op.ReservedDuration != 0 ||
+		source.session.receives != 0 ||
+		source.session.saves != 0 ||
+		source.session.reads != 0 {
 		t.Fatal("unauthenticated worker performed source work", err, readErr)
 	}
 	if _, err = source.session.store.MobileHistoryAcquisition(context.Background(), op.Status.OperationID); err == nil {
@@ -474,6 +580,7 @@ func TestMobileWorkerUnauthenticatedLeasePausesBeforePhone(t *testing.T) {
 	}
 }
 
+//nolint:cyclop,gocognit,gocyclo // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestMobileWorkerWholeControlPreludeResumesWithoutRedispatch(t *testing.T) {
 	// Arrange: 52 own recalls outside the requested period and one ordinary row.
 	source, pending, path, dir, r := historyWorkerFixture(t)
@@ -481,31 +588,74 @@ func TestMobileWorkerWholeControlPreludeResumesWithoutRedispatch(t *testing.T) {
 	until, _ := time.Parse(time.RFC3339Nano, r.Until)
 	stamp := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC).UnixMilli()
 	data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
-		metadata := attachmentField(6, append(attachmentField(45, []byte("rtf")), attachmentField(47, []byte("synthetic visible text"))...))
-		if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", "13", "14", "synthetic body", stamp, 0, 0, 1, metadata); err != nil {
+		metadata := attachmentField(
+			6,
+			append(attachmentField(45, []byte("rtf")), attachmentField(47, []byte("synthetic visible text"))...),
+		)
+		if _, err := db.Exec(
+			"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+			"901",
+			"13",
+			"14",
+			"synthetic body",
+			stamp,
+			0,
+			0,
+			1,
+			metadata,
+		); err != nil {
 			t.Fatal(err)
 		}
-		for i := 0; i < 52; i++ {
-			if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "903", fmt.Sprint(100+i), fmt.Sprint(200+i), "untrusted recalled body", until.UnixMilli()+int64(i), 0, 36, 3, nil); err != nil {
+		for i := range 52 {
+			if _, err := db.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				"903",
+				strconv.Itoa(100+i),
+				strconv.Itoa(200+i),
+				"untrusted recalled body",
+				until.UnixMilli()+int64(i),
+				0,
+				36,
+				3,
+				nil,
+			); err != nil {
 				t.Fatal(err)
 			}
 		}
 	})
-	source.session.selected = SelectedArchive{requestID: r.RequestID, requestFingerprint: r.Fingerprint(), ref: r.Ref(), File: ArchiveFile{Name: "902.db", Data: data}}
+	source.session.selected = SelectedArchive{
+		requestID:          r.RequestID,
+		requestFingerprint: r.Fingerprint(),
+		ref:                r.Ref(),
+		File:               ArchiveFile{Name: "902.db", Data: data},
+	}
 	defer source.session.selected.Clear()
-	source.session.mapper = identitySourceFunc(func(ctx context.Context, request domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
-		out := []domain.MobileIdentityPair{}
-		for _, plain := range request.Direct {
-			session := "12"
-			if plain == "903" {
-				session = "10"
+	source.session.mapper = identitySourceFunc(
+		func(ctx context.Context, request domain.MobileIdentityRequest) ([]domain.MobileIdentityPair, error) {
+			out := []domain.MobileIdentityPair{}
+			for _, plain := range request.Direct {
+				session := "12"
+				if plain == "903" {
+					session = "10"
+				}
+				out = append(out, domain.MobileIdentityPair{Plain: plain, Session: session})
 			}
-			out = append(out, domain.MobileIdentityPair{Plain: plain, Session: session})
-		}
-		return out, nil
-	})
-	original := domain.Message{Conversation: r.Ref(), ID: "100", SenderID: "10", Direction: "outgoing", SentAt: until, Text: "synthetic retained original"}
-	if _, err := source.session.store.PutHistoryPage(context.Background(), r.Ref(), []domain.Message{original}); err != nil {
+			return out, nil
+		},
+	)
+	original := domain.Message{
+		Conversation: r.Ref(),
+		ID:           "100",
+		SenderID:     "10",
+		Direction:    "outgoing",
+		SentAt:       until,
+		Text:         "synthetic retained original",
+	}
+	if _, err := source.session.store.PutHistoryPage(
+		context.Background(),
+		r.Ref(),
+		[]domain.Message{original},
+	); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -528,7 +678,10 @@ func TestMobileWorkerWholeControlPreludeResumesWithoutRedispatch(t *testing.T) {
 		t.Fatal("prelude worker stop deadline")
 	}
 	current, err := source.session.store.HistoryOperation(context.Background(), pending.Status.OperationID)
-	if err != nil || current.Status.PagesObserved != 0 || current.Status.RecordsObserved != 0 || current.Status.MobileCoverage == nil || current.Status.MobileCoverage.SourceRecalls != 52 || !current.Status.MobileCoverage.ControlPreludeComplete {
+	if err != nil || current.Status.PagesObserved != 0 || current.Status.RecordsObserved != 0 ||
+		current.Status.MobileCoverage == nil ||
+		current.Status.MobileCoverage.SourceRecalls != 52 ||
+		!current.Status.MobileCoverage.ControlPreludeComplete {
 		t.Fatal("prelude not durable before shutdown", err)
 	}
 	before, err := source.session.store.MobileHistoryCheckpoint(context.Background(), pending.Status.OperationID)
@@ -558,7 +711,14 @@ func TestMobileWorkerWholeControlPreludeResumesWithoutRedispatch(t *testing.T) {
 	stopHistoryWorker(t, stop, done)
 	// Assert: only one receive/save, no repeated prelude or outside-period message counts.
 	after, err := next.MobileHistoryCheckpoint(context.Background(), pending.Status.OperationID)
-	if err != nil || before.Snapshot != after.Snapshot || source.session.receives != 1 || source.session.saves != 1 || source.session.reads != 3 || final.Status.MobileCoverage.SourceRecalls != 52 || final.Status.MobileCoverage.OwnRecalls != 0 || final.Status.PagesObserved != 1 || final.Status.RecordsObserved != 1 || final.Status.InsertedCount != 1 || final.Status.HistoryComplete {
+	if err != nil || before.Snapshot != after.Snapshot || source.session.receives != 1 || source.session.saves != 1 ||
+		source.session.reads != 3 ||
+		final.Status.MobileCoverage.SourceRecalls != 52 ||
+		final.Status.MobileCoverage.OwnRecalls != 0 ||
+		final.Status.PagesObserved != 1 ||
+		final.Status.RecordsObserved != 1 ||
+		final.Status.InsertedCount != 1 ||
+		final.Status.HistoryComplete {
 		t.Fatal("prelude resume guessed coverage or reacquired source", err)
 	}
 	var n int

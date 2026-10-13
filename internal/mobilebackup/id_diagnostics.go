@@ -6,6 +6,8 @@ import (
 )
 
 // These are fixed observations only, never a replacement upstream identity.
+//
+//nolint:gocognit // This closed diagnostic classifier emits only fixed shape categories; it never returns or logs source identity text.
 func rejectedMessageIDShape(value any) string {
 	switch v := value.(type) {
 	case nil:
@@ -52,7 +54,7 @@ func asciiDigits(s string) bool {
 	if s == "" {
 		return false
 	}
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		if s[i] < '0' || s[i] > '9' {
 			return false
 		}

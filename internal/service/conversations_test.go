@@ -27,10 +27,16 @@ import (
 
 type conversationServiceSource struct {
 	authListener
+
 	input chan domain.Message
 }
 
-func (s *conversationServiceSource) ListenConversations(ctx context.Context, message func(domain.Message) error, _ func(domain.ConversationRef, string) error, connected func() error) error {
+func (s *conversationServiceSource) ListenConversations(
+	ctx context.Context,
+	message func(domain.Message) error,
+	_ func(domain.ConversationRef, string) error,
+	connected func() error,
+) error {
 	if err := connected(); err != nil {
 		return err
 	}
@@ -60,19 +66,22 @@ func (tr conversationServiceTransport) RoundTrip(r *http.Request) (*http.Respons
 }
 func serviceConversationRPC(t *testing.T, endpoint, token, method string, params map[string]any) map[string]any {
 	t.Helper()
-	params["_meta"] = map[string]any{"io.modelcontextprotocol/protocolVersion": "2026-07-28", "io.modelcontextprotocol/clientCapabilities": map[string]any{}}
+	params["_meta"] = map[string]any{
+		"io.modelcontextprotocol/protocolVersion":    "2026-07-28",
+		"io.modelcontextprotocol/clientCapabilities": map[string]any{},
+	}
 	body, err := json.Marshal(map[string]any{"jsonrpc": "2.0", "id": 1, "method": method, "params": params})
 	if err != nil {
 		t.Fatal(err)
 	}
-	req, err := http.NewRequest("POST", endpoint, bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		t.Fatal(err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json, text/event-stream")
-	req.Header.Set("MCP-Protocol-Version", "2026-07-28")
+	req.Header.Set("Mcp-Protocol-Version", "2026-07-28")
 	req.Header.Set("Mcp-Method", method)
 	if name, ok := params["name"].(string); ok {
 		req.Header.Set("Mcp-Name", name)
@@ -89,7 +98,7 @@ func serviceConversationRPC(t *testing.T, endpoint, token, method string, params
 	if err := json.NewDecoder(response.Body).Decode(&value); err != nil {
 		t.Fatal(err)
 	}
-	if response.StatusCode != 200 || value["error"] != nil {
+	if response.StatusCode != http.StatusOK || value["error"] != nil {
 		t.Fatalf("RPC failed: %s", method)
 	}
 	result := value["result"].(map[string]any)
@@ -110,6 +119,7 @@ func TestUnifiedConversationServiceCollectionMCPEventsRestartAndCancel(t *testin
 	}
 }
 
+//nolint:cyclop,gocognit,gocyclo // This test helper checks the complete fixture/metric shape without dropping nested boundary assertions.
 func testConversationServiceProfile(t *testing.T, profile string, version int) {
 	// Arrange: real service/storage/HTTP/worker, a synthetic Zalo source and an
 	// independently verifying TLS receiver. No account or installed state is used.
@@ -134,22 +144,22 @@ func testConversationServiceProfile(t *testing.T, profile string, version int) {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Error(err)
-			w.WriteHeader(400)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		mac := hmac.New(sha256.New, key)
-		mac.Write([]byte(r.Header.Get("webhook-id") + "." + r.Header.Get("webhook-timestamp") + "."))
+		mac.Write([]byte(r.Header.Get("Webhook-Id") + "." + r.Header.Get("Webhook-Timestamp") + "."))
 		mac.Write(body)
-		sig, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("webhook-signature"), "v1,"))
+		sig, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"))
 		if err != nil || !hmac.Equal(sig, mac.Sum(nil)) {
 			t.Error("signature mismatch")
-			w.WriteHeader(400)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		var value map[string]any
 		if err := json.Unmarshal(body, &value); err != nil {
 			t.Error(err)
-			w.WriteHeader(400)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		if value["type"] == "verification" {
@@ -157,7 +167,7 @@ func testConversationServiceProfile(t *testing.T, profile string, version int) {
 			return
 		}
 		received <- value
-		w.WriteHeader(204)
+		w.WriteHeader(http.StatusNoContent)
 	}))
 	defer receiver.Close()
 	target, _ := url.Parse(receiver.URL)
@@ -207,9 +217,19 @@ func testConversationServiceProfile(t *testing.T, profile string, version int) {
 	if version == 2 {
 		args["direction"] = "incoming"
 	}
-	delivery := map[string]any{"mode": "webhook", "url": "https://receiver.example/events", "secret": "whsec_" + base64.StdEncoding.EncodeToString(key)}
+	delivery := map[string]any{
+		"mode":   "webhook",
+		"url":    "https://receiver.example/events",
+		"secret": "whsec_" + base64.StdEncoding.EncodeToString(key),
+	}
 	// Act: activate through MCP, then ingest both types through the collector.
-	sub := serviceConversationRPC(t, endpoint, token, "events/subscribe", map[string]any{"name": profile, "arguments": args, "delivery": delivery})
+	sub := serviceConversationRPC(
+		t,
+		endpoint,
+		token,
+		"events/subscribe",
+		map[string]any{"name": profile, "arguments": args, "delivery": delivery},
+	)
 	text := "searchable " + strings.Repeat("界", 2049)
 	at := time.Now().UTC().Add(-time.Hour)
 	emit := func(id, sourceName string) {
@@ -244,7 +264,13 @@ func testConversationServiceProfile(t *testing.T, profile string, version int) {
 					}
 				}
 				seen[kind] = true
-				full := serviceConversationRPC(t, endpoint, token, "resources/read", map[string]any{"uri": data["text_resource_uri"]})
+				full := serviceConversationRPC(
+					t,
+					endpoint,
+					token,
+					"resources/read",
+					map[string]any{"uri": data["text_resource_uri"]},
+				)
 				if full["contents"].([]any)[0].(map[string]any)["text"] != text {
 					t.Fatal("full text missing")
 				}
@@ -280,7 +306,17 @@ func testConversationServiceProfile(t *testing.T, profile string, version int) {
 		t.Fatal("restart lost messages or generated duplicates")
 	}
 	// Act: cancel over MCP, then continue collecting both types.
-	serviceConversationRPC(t, endpoint, token, "events/unsubscribe", map[string]any{"name": profile, "arguments": args, "delivery": map[string]any{"mode": "webhook", "url": "https://receiver.example/events"}})
+	serviceConversationRPC(
+		t,
+		endpoint,
+		token,
+		"events/unsubscribe",
+		map[string]any{
+			"name":      profile,
+			"arguments": args,
+			"delivery":  map[string]any{"mode": "webhook", "url": "https://receiver.example/events"},
+		},
+	)
 	emit("after-cancel", "live")
 	deadline := time.Now().Add(5 * time.Second)
 	for {

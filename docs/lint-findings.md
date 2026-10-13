@@ -2,7 +2,7 @@
 
 Актуализировано после упрощения context-тестов: 2026-10-13. golangci-lint 2.14.0, root toolchain Go 1.27.2, конфиг `.golangci.yml`.
 
-Всего **2114** актуальных замечаний после L03: root — **1919**, `tools/harness` — **195**. Root lint успешно загрузил пакеты; compiler/loader blocker отсутствует. Lint остаётся FAIL из-за перечисленных diagnostics. Несколько правил на одной строке учитываются отдельно.
+Всего **1573** актуальных замечаний после L04: root — **1408**, `tools/harness` — **165**. Root lint успешно загрузил пакеты; compiler/loader blocker отсутствует. Lint остаётся FAIL из-за перечисленных diagnostics. Несколько правил на одной строке учитываются отдельно.
 
 По сравнению со снимком до восстановления компиляции не воспроизвелись **18** записей (включая агрегированный compile blocker), новых записей — **2**. ID совпавших замечаний сохранены. Исчезнувшие записи вынесены в конец документа и не входят в актуальную сводку.
 
@@ -17,7 +17,8 @@
 | L01 | Architecture PASS: host/all-build 100%, 14 isolated + 6 source controls. Tools tests/race/vet PASS. | `/tmp/zl-lint-L01-checks.log` |
 | L02 | Compilation PASS; race PASS для 11 затронутых пакетов; audit/telemetry targeted race PASS. errcheck/ineffassign/wastedassign/sqlclosecheck/nolintlint: 0 diagnostics. | `/tmp/zl-lint-L02-race.log`, `/tmp/zl-lint-L02-final-root.json` |
 | L03 | Compilation PASS; root contract/privacy/parsing race PASS; tools race PASS; frozen hash/null/Unicode and negative persisted-budget golden checks PASS. | `/tmp/zl-lint-L03-race.log`, `/tmp/zl-lint-L03-goldens.log`, `/tmp/zl-lint-L03-tools-race.log` |
-| L04–L06 | OPEN | — |
+| L04 | Accepted: independent completeness 100% (8/8), correctness PASS; complexity/shadow/unused groups 0. Root/tools race/vet, architecture and offline PASS. | `docs/lint-evidence/L04/acceptance.md` |
+| L05–L06 | OPEN | — |
 
 L01 закрывает архитектурный blocker. Статусы lint IDs обновляются по полному успешному loader run; текущий registry сохраняет закрытые и новые IDs. Shared performance worker уже имеет cleanup в TestMain; сохраняем его и проверяем build-failure путь, не создаём второй lifetime.
 
@@ -182,73 +183,176 @@ GOWORK=off golangci-lint run --config ../../.golangci.yml --timeout 10m --max-is
 
 ## Diagnostics, добавленные при реализации
 
-Состояние после L03. OPEN — актуальный diagnostic; FIXED — устранён кодом или заменён новым diagnostic; SUPPRESSED — минимальный объяснённый nolint. Исходные группы ниже сохранены как evidence. Текущие позиции и статусы всех ID: `docs/lint-evidence/registry.json`.
+Состояние после L04. OPEN — актуальный diagnostic; FIXED — устранён кодом или заменён новым diagnostic; SUPPRESSED — минимальный объяснённый nolint. Исходные группы ниже сохранены как evidence. Текущие позиции и статусы всех ID: `docs/lint-evidence/registry.json`.
 
 | ID | Правило | Файл:строка | Замечание |
 |---|---|---|---|
-| L2548 | cyclop | `internal/evalfixture/fixture.go:133` | calculated cyclomatic complexity for function New is 49, max is 30 |
-| L2549 | cyclop | `internal/evaluation/grader.go:19` | calculated cyclomatic complexity for function Grade is 72, max is 30 |
-| L2596 | cyclop | `internal/evaluation/process_test.go:1` | the average complexity for the package evaluation is 11.258065, max is 10.000000 |
-| L2551 | cyclop | `internal/evaluation/runner.go:136` | calculated cyclomatic complexity for function Run is 62, max is 30 |
-| L2552 | cyclop | `internal/evaluation/scenarios.go:23` | calculated cyclomatic complexity for function RunCase is 74, max is 30 |
-| L2553 | cyclop | `internal/events/subscriptions.go:132` | calculated cyclomatic complexity for function Call is 41, max is 30 |
-| L2554 | cyclop | `internal/mcpserver/http.go:112` | calculated cyclomatic complexity for function ServeHTTP is 42, max is 30 |
-| L2597 | cyclop | `internal/mobilebackup/xz.go:53` | calculated cyclomatic complexity for function inspectXZ is 44, max is 30 |
-| L2555 | cyclop | `internal/storage/browse.go:18` | calculated cyclomatic complexity for function Browse is 48, max is 30 |
-| L2556 | cyclop | `internal/storage/conversation_views.go:119` | calculated cyclomatic complexity for function Conversations is 32, max is 30 |
-| L2598 | exhaustruct_v5 | `internal/evalfixture/fixture.go:284` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
+| L2598 | exhaustruct_v5 | `internal/evalfixture/fixture.go:421` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
 | L2599 | exhaustruct_v5 | `internal/evaluation/model.go:99` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
-| L2600 | exhaustruct_v5 | `internal/service/run.go:316` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
-| L2601 | exhaustruct_v5 | `internal/service/run.go:328` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
-| L2557 | funlen | `internal/collector/contact_profiles.go:26` | Function 'refreshContactProfiles' has too many statements (64 > 50) |
-| L2558 | funlen | `internal/collector/contacts.go:30` | Function 'refreshContacts' has too many statements (56 > 50) |
-| L2559 | funlen | `internal/evalfixture/fixture.go:133` | Function 'New' has too many statements (118 > 50) |
-| L2602 | funlen | `internal/evaluation/benchmark.go:41` | Function 'Measure' has too many statements (66 > 50) |
-| L2560 | funlen | `internal/evaluation/grader.go:19` | Function 'Grade' has too many statements (115 > 50) |
-| L2603 | funlen | `internal/evaluation/runner.go:136` | Function 'Run' has too many statements (106 > 50) |
-| L2562 | funlen | `internal/evaluation/scenarios.go:23` | Function 'RunCase' has too many statements (227 > 50) |
-| L2563 | funlen | `internal/events/subscriptions.go:132` | Function 'Call' is too long (169 > 100) |
-| L2564 | funlen | `internal/mcpserver/http.go:112` | Function 'ServeHTTP' has too many statements (110 > 50) |
-| L2604 | funlen | `internal/mcpserver/server.go:241` | Function 'call' has too many statements (98 > 50) |
-| L2605 | funlen | `internal/mobilebackup/history_page.go:17` | Function 'ReadHistoryPage' has too many statements (61 > 50) |
-| L2606 | funlen | `internal/mobilebackup/xz.go:53` | Function 'inspectXZ' has too many statements (77 > 50) |
-| L2565 | funlen | `internal/storage/browse.go:18` | Function 'Browse' has too many statements (109 > 50) |
-| L2566 | funlen | `internal/storage/conversation_views.go:119` | Function 'Conversations' has too many statements (72 > 50) |
-| L2567 | funlen | `internal/storage/views.go:287` | Function 'context' has too many statements (69 > 50) |
-| L2568 | gocognit | `internal/collector/run.go:270` | cognitive complexity 63 of func &#96;ControlHandler&#96; is high (> 20) |
-| L2569 | gocognit | `internal/evalfixture/fixture.go:133` | cognitive complexity 81 of func &#96;New&#96; is high (> 20) |
-| L2570 | gocognit | `internal/evaluation/grader.go:19` | cognitive complexity 81 of func &#96;Grade&#96; is high (> 20) |
-| L2571 | gocognit | `internal/evaluation/runner.go:136` | cognitive complexity 100 of func &#96;Run&#96; is high (> 20) |
-| L2572 | gocognit | `internal/evaluation/scenarios.go:23` | cognitive complexity 105 of func &#96;RunCase&#96; is high (> 20) |
-| L2573 | gocognit | `internal/events/subscriptions.go:132` | cognitive complexity 51 of func &#96;(*SubscriptionManager).Call&#96; is high (> 20) |
-| L2574 | gocognit | `internal/mcpserver/http.go:112` | cognitive complexity 58 of func &#96;(*HTTPService).ServeHTTP&#96; is high (> 20) |
-| L2575 | gocognit | `internal/mobilebackup/retained_archive_test.go:172` | cognitive complexity 31 of func &#96;TestRetainedArchiveExpiryRemovalAndSpentIDs&#96; is high (> 20) |
-| L2607 | gocognit | `internal/mobilebackup/xz.go:53` | cognitive complexity 59 of func &#96;inspectXZ&#96; is high (> 20) |
-| L2576 | gocognit | `internal/storage/browse.go:18` | cognitive complexity 59 of func &#96;(*Store).Browse&#96; is high (> 20) |
-| L2577 | gocognit | `internal/storage/conversation_views.go:119` | cognitive complexity 42 of func &#96;(*Store).Conversations&#96; is high (> 20) |
-| L2578 | gocognit | `internal/storage/views.go:287` | cognitive complexity 48 of func &#96;(*Store).context&#96; is high (> 20) |
-| L2579 | gocyclo | `internal/evalfixture/fixture.go:133` | cyclomatic complexity 49 of func &#96;New&#96; is high (> 30) |
-| L2580 | gocyclo | `internal/evaluation/grader.go:19` | cyclomatic complexity 72 of func &#96;Grade&#96; is high (> 30) |
-| L2581 | gocyclo | `internal/evaluation/runner.go:136` | cyclomatic complexity 62 of func &#96;Run&#96; is high (> 30) |
-| L2582 | gocyclo | `internal/evaluation/scenarios.go:23` | cyclomatic complexity 73 of func &#96;RunCase&#96; is high (> 30) |
-| L2583 | gocyclo | `internal/events/subscriptions.go:132` | cyclomatic complexity 40 of func &#96;(*SubscriptionManager).Call&#96; is high (> 30) |
-| L2584 | gocyclo | `internal/mcpserver/http.go:112` | cyclomatic complexity 42 of func &#96;(*HTTPService).ServeHTTP&#96; is high (> 30) |
-| L2608 | gocyclo | `internal/mobilebackup/xz.go:53` | cyclomatic complexity 43 of func &#96;inspectXZ&#96; is high (> 30) |
-| L2585 | gocyclo | `internal/storage/browse.go:18` | cyclomatic complexity 48 of func &#96;(*Store).Browse&#96; is high (> 30) |
-| L2586 | gocyclo | `internal/storage/conversation_views.go:119` | cyclomatic complexity 32 of func &#96;(*Store).Conversations&#96; is high (> 30) |
-| L2587 | golines | `internal/collector/run.go:352` | File is not properly formatted |
+| L2784 | exhaustruct_v5 | `internal/service/mobile_archive_probe.go:71` | service.archiveProbeStats is missing fields convertible, unsupported, controls, textCandidates, unresolvedQuotes, unresolvedMentions, ownRecallCandidates, blocked, walMode, coverage |
+| L2600 | exhaustruct_v5 | `internal/service/run.go:291` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
+| L2601 | exhaustruct_v5 | `internal/service/run.go:692` | net.ListenConfig is missing fields Control, KeepAlive, KeepAliveConfig |
+| L2767 | exhaustruct_v5 | `internal/storage/conversation_views.go:338` | storage.conversationCursor is missing fields Kind, ID |
+| L2734 | goconst | `internal/collector/contact_profiles.go:61` | string &#96;cancelled_or_deadline&#96; has 3 occurrences, make it a constant |
+| L2735 | goconst | `internal/collector/contacts.go:121` | string &#96;unsupported&#96; has 4 occurrences, make it a constant |
+| L2736 | goconst | `internal/collector/contacts.go:121` | string &#96;source_unsupported&#96; has 4 occurrences, make it a constant |
+| L2737 | goconst | `internal/collector/contacts.go:123` | string &#96;partial&#96; has 4 occurrences, make it a constant |
+| L2738 | goconst | `internal/collector/contacts.go:123` | string &#96;auth_required&#96; has 6 occurrences, make it a constant |
+| L2739 | goconst | `internal/collector/contacts.go:125` | string &#96;cancelled_or_deadline&#96; has 3 occurrences, make it a constant |
+| L2740 | goconst | `internal/collector/preload_catalog.go:52` | string &#96;partial&#96; has 4 occurrences, make it a constant |
+| L2741 | goconst | `internal/collector/preload_catalog.go:55` | string &#96;unsupported&#96; has 4 occurrences, make it a constant |
+| L2742 | goconst | `internal/collector/preload_catalog.go:55` | string &#96;source_unsupported&#96; has 4 occurrences, make it a constant |
+| L2743 | goconst | `internal/collector/preload_catalog.go:57` | string &#96;auth_required&#96; has 6 occurrences, make it a constant |
+| L2744 | goconst | `internal/collector/preload_catalog.go:61` | string &#96;cancelled_or_deadline&#96; has 3 occurrences, make it a constant |
+| L2745 | goconst | `internal/collector/preload_probe.go:15` | string &#96;unsupported&#96; has 4 occurrences, make it a constant |
+| L2746 | goconst | `internal/collector/preload_probe.go:16` | string &#96;source_unsupported&#96; has 4 occurrences, make it a constant |
+| L2747 | goconst | `internal/collector/preload_probe.go:80` | string &#96;auth_required&#96; has 6 occurrences, make it a constant |
+| L2748 | goconst | `internal/collector/run.go:380` | string &#96;auth_required&#96; has 6 occurrences, make it a constant |
+| L2624 | goconst | `internal/evaluation/grader.go:116` | string &#96;length&#96; has 3 occurrences, make it a constant |
+| L2625 | goconst | `internal/evaluation/runner.go:236` | string &#96;length&#96; has 3 occurrences, make it a constant |
+| L2626 | gofmt | `internal/evaluation/checkpoints_test.go:104` | File is not properly formatted |
+| L2627 | gofmt | `internal/evaluation/process_test.go:107` | File is not properly formatted |
+| L2628 | gofmt | `internal/mcpserver/sdk_identity_test.go:119` | File is not properly formatted |
+| L2629 | gofmt | `internal/mcpserver/sdk_lifecycle_test.go:275` | File is not properly formatted |
+| L2631 | gofmt | `internal/mobilebackup/attachment_test.go:19` | File is not properly formatted |
+| L2632 | gofmt | `internal/mobilebackup/blocks.go:24` | File is not properly formatted |
+| L2633 | gofmt | `internal/mobilebackup/identities.go:75` | File is not properly formatted |
+| L2634 | gofmt | `internal/mobilebackup/offer_runner_test.go:96` | File is not properly formatted |
+| L2635 | gofmt | `internal/mobilebackup/page_walk_test.go:63` | File is not properly formatted |
+| L2636 | gofmt | `internal/mobilebackup/session_download_test.go:21` | File is not properly formatted |
+| L2637 | gofmt | `internal/mobilebackup/xz.go:52` | File is not properly formatted |
+| L2638 | gofmt | `internal/observability/native_test.go:47` | File is not properly formatted |
+| L2639 | gofmt | `internal/observability/observer_test.go:60` | File is not properly formatted |
+| L2640 | gofmt | `internal/service/mobile_page_test.go:102` | File is not properly formatted |
+| L2641 | gofmt | `internal/storage/contacts.go:45` | File is not properly formatted |
+| L2642 | gofmt | `internal/storage/deliveries.go:247` | File is not properly formatted |
+| L2643 | gofmt | `internal/storage/events.go:162` | File is not properly formatted |
+| L2644 | gofmt | `internal/storage/mobile_history.go:158` | File is not properly formatted |
+| L2645 | gofmt | `internal/storage/mobile_history_test.go:132` | File is not properly formatted |
+| L2647 | goimports | `internal/evaluation/checkpoints_test.go:104` | File is not properly formatted |
+| L2648 | goimports | `internal/evaluation/process_test.go:107` | File is not properly formatted |
+| L2649 | goimports | `internal/mcpserver/sdk_identity_test.go:119` | File is not properly formatted |
+| L2650 | goimports | `internal/mcpserver/sdk_lifecycle_test.go:275` | File is not properly formatted |
+| L2652 | goimports | `internal/mobilebackup/attachment_test.go:19` | File is not properly formatted |
+| L2653 | goimports | `internal/mobilebackup/blocks.go:24` | File is not properly formatted |
+| L2654 | goimports | `internal/mobilebackup/identities.go:75` | File is not properly formatted |
+| L2655 | goimports | `internal/mobilebackup/offer_runner_test.go:96` | File is not properly formatted |
+| L2656 | goimports | `internal/mobilebackup/page_walk_test.go:63` | File is not properly formatted |
+| L2657 | goimports | `internal/mobilebackup/session_download_test.go:21` | File is not properly formatted |
+| L2658 | goimports | `internal/mobilebackup/xz.go:52` | File is not properly formatted |
+| L2659 | goimports | `internal/observability/native_test.go:47` | File is not properly formatted |
+| L2660 | goimports | `internal/observability/observer_test.go:60` | File is not properly formatted |
+| L2661 | goimports | `internal/service/mobile_page_test.go:102` | File is not properly formatted |
+| L2662 | goimports | `internal/storage/contacts.go:45` | File is not properly formatted |
+| L2663 | goimports | `internal/storage/deliveries.go:247` | File is not properly formatted |
+| L2664 | goimports | `internal/storage/events.go:162` | File is not properly formatted |
+| L2665 | goimports | `internal/storage/mobile_history.go:158` | File is not properly formatted |
+| L2666 | goimports | `internal/storage/mobile_history_test.go:132` | File is not properly formatted |
+| L2668 | golines | `cmd/zl-mcp-eval/main.go:197` | File is not properly formatted |
+| L2785 | golines | `internal/app/search/read.go:236` | File is not properly formatted |
+| L2751 | golines | `internal/collector/contact_profiles.go:83` | File is not properly formatted |
+| L2752 | golines | `internal/collector/contacts.go:131` | File is not properly formatted |
+| L2786 | golines | `internal/collector/join.go:556` | File is not properly formatted |
+| L2587 | golines | `internal/collector/run.go:282` | File is not properly formatted |
 | L2609 | golines | `internal/domain/sending_fingerprint_test.go:18` | File is not properly formatted |
+| L2753 | golines | `internal/evalfixture/fixture.go:380` | File is not properly formatted |
+| L2669 | golines | `internal/evaluation/checkpoints.go:190` | File is not properly formatted |
+| L2670 | golines | `internal/evaluation/checkpoints_test.go:104` | File is not properly formatted |
+| L2671 | golines | `internal/evaluation/grader.go:142` | File is not properly formatted |
+| L2672 | golines | `internal/evaluation/process_test.go:107` | File is not properly formatted |
+| L2754 | golines | `internal/evaluation/runner.go:280` | File is not properly formatted |
+| L2673 | golines | `internal/events/conversation_test.go:135` | File is not properly formatted |
+| L2755 | golines | `internal/events/subscriptions.go:241` | File is not properly formatted |
+| L2674 | golines | `internal/events/worker.go:202` | File is not properly formatted |
+| L2675 | golines | `internal/historyimport/mobile_worker.go:222` | File is not properly formatted |
+| L2756 | golines | `internal/historyimport/worker.go:124` | File is not properly formatted |
+| L2676 | golines | `internal/mcpserver/conversations.go:59` | File is not properly formatted |
+| L2677 | golines | `internal/mcpserver/http_test.go:179` | File is not properly formatted |
+| L2678 | golines | `internal/mcpserver/migration_inputs_test.go:121` | File is not properly formatted |
+| L2679 | golines | `internal/mcpserver/sdk_identity_test.go:119` | File is not properly formatted |
+| L2680 | golines | `internal/mcpserver/sdk_lifecycle_test.go:275` | File is not properly formatted |
+| L2681 | golines | `internal/mcpserver/server.go:379` | File is not properly formatted |
+| L2787 | golines | `internal/messaging/manager.go:142` | File is not properly formatted |
+| L2788 | golines | `internal/mobilebackup/account_inspection.go:73` | File is not properly formatted |
+| L2789 | golines | `internal/mobilebackup/account_metadata.go:119` | File is not properly formatted |
+| L2683 | golines | `internal/mobilebackup/attachment_test.go:19` | File is not properly formatted |
+| L2684 | golines | `internal/mobilebackup/blocks.go:24` | File is not properly formatted |
+| L2790 | golines | `internal/mobilebackup/history_page.go:141` | File is not properly formatted |
+| L2685 | golines | `internal/mobilebackup/identities.go:75` | File is not properly formatted |
+| L2773 | golines | `internal/mobilebackup/message_conversion.go:215` | File is not properly formatted |
+| L2791 | golines | `internal/mobilebackup/offer_runner.go:105` | File is not properly formatted |
+| L2686 | golines | `internal/mobilebackup/offer_runner_test.go:96` | File is not properly formatted |
+| L2687 | golines | `internal/mobilebackup/page_walk_test.go:63` | File is not properly formatted |
+| L2792 | golines | `internal/mobilebackup/prepared_page.go:131` | File is not properly formatted |
+| L2688 | golines | `internal/mobilebackup/retained_archive_test.go:270` | File is not properly formatted |
+| L2774 | golines | `internal/mobilebackup/row_page.go:178` | File is not properly formatted |
+| L2689 | golines | `internal/mobilebackup/session_download_test.go:21` | File is not properly formatted |
+| L2793 | golines | `internal/mobilebackup/snapshot.go:607` | File is not properly formatted |
+| L2794 | golines | `internal/mobilebackup/snapshot_page.go:131` | File is not properly formatted |
+| L2690 | golines | `internal/mobilebackup/snapshot_sqlite_test.go:87` | File is not properly formatted |
+| L2795 | golines | `internal/mobilebackup/snapshot_terminal.go:63` | File is not properly formatted |
+| L2775 | golines | `internal/mobilebackup/sqlite.go:600` | File is not properly formatted |
+| L2691 | golines | `internal/mobilebackup/xz.go:52` | File is not properly formatted |
+| L2692 | golines | `internal/observability/native_test.go:47` | File is not properly formatted |
+| L2693 | golines | `internal/observability/observer_test.go:60` | File is not properly formatted |
+| L2796 | golines | `internal/service/account_archive_control.go:103` | File is not properly formatted |
+| L2797 | golines | `internal/service/archive_catalog.go:188` | File is not properly formatted |
+| L2798 | golines | `internal/service/archive_messages.go:350` | File is not properly formatted |
+| L2694 | golines | `internal/service/archive_messages_test.go:107` | File is not properly formatted |
+| L2695 | golines | `internal/service/events_restart_test.go:161` | File is not properly formatted |
+| L2696 | golines | `internal/service/mobile_archive_probe.go:71` | File is not properly formatted |
+| L2799 | golines | `internal/service/mobile_ledger_control.go:153` | File is not properly formatted |
 | L2610 | golines | `internal/service/mobile_offer_probe.go:50` | File is not properly formatted |
 | L2611 | golines | `internal/service/mobile_offer_probe_test.go:149` | File is not properly formatted |
-| L2588 | govet | `internal/storage/conversation_views.go:73` | shadow: declaration of "ok" shadows declaration at line 66 |
-| L2589 | nestif | `internal/collector/run.go:330` | &#96;if v.Method == "cli_preview" \|\| v.Method == "cli_approve"&#96; has complex nested blocks (complexity: 10) |
-| L2590 | nestif | `internal/evalfixture/fixture.go:218` | &#96;if opts.ApprovalFile != "" \|\| opts.ApprovalTokenFile != ""&#96; has complex nested blocks (complexity: 19) |
-| L2591 | nestif | `internal/events/subscriptions.go:169` | &#96;if method == "events/list"&#96; has complex nested blocks (complexity: 39) |
-| L2592 | nestif | `internal/mcpserver/http.go:271` | &#96;if request.Method == "server/discover"&#96; has complex nested blocks (complexity: 5) |
-| L2594 | revive | `internal/collector/contacts.go:98` | increment-decrement: should replace observedCount += 1 with observedCount++ |
-| L2595 | revive | `internal/collector/contacts.go:101` | increment-decrement: should replace permittedCount += 1 with permittedCount++ |
-| L2612 | gofmt | `tools/harness/internal/architecture/architecture.go:451` | File is not properly formatted |
-| L2613 | goimports | `tools/harness/internal/architecture/architecture.go:451` | File is not properly formatted |
+| L2697 | golines | `internal/service/mobile_page_test.go:102` | File is not properly formatted |
+| L2800 | golines | `internal/service/recall_diagnostic.go:185` | File is not properly formatted |
+| L2698 | golines | `internal/service/run.go:438` | File is not properly formatted |
+| L2699 | golines | `internal/service/run_test.go:203` | File is not properly formatted |
+| L2776 | golines | `internal/storage/browse.go:124` | File is not properly formatted |
+| L2700 | golines | `internal/storage/contacts.go:45` | File is not properly formatted |
+| L2777 | golines | `internal/storage/conversation_views.go:266` | File is not properly formatted |
+| L2701 | golines | `internal/storage/deliveries.go:247` | File is not properly formatted |
+| L2702 | golines | `internal/storage/deliveries_test.go:44` | File is not properly formatted |
+| L2703 | golines | `internal/storage/delivery_policy_test.go:28` | File is not properly formatted |
+| L2801 | golines | `internal/storage/event_journal.go:294` | File is not properly formatted |
+| L2704 | golines | `internal/storage/events.go:162` | File is not properly formatted |
+| L2705 | golines | `internal/storage/events_test.go:88` | File is not properly formatted |
+| L2706 | golines | `internal/storage/history_operations_test.go:464` | File is not properly formatted |
+| L2707 | golines | `internal/storage/mobile_history.go:158` | File is not properly formatted |
+| L2708 | golines | `internal/storage/mobile_history_test.go:132` | File is not properly formatted |
+| L2778 | golines | `internal/storage/views.go:426` | File is not properly formatted |
+| L2802 | golines | `internal/zalo/mobile_backup.go:115` | File is not properly formatted |
+| L2803 | golines | `internal/zalo/preload.go:148` | File is not properly formatted |
+| L2757 | mnd | `internal/evaluation/runner.go:489` | Magic number: 60, in <assign> detected |
+| L2761 | revive | `internal/historyimport/worker.go:124` | error-return: error should be the last type when returning multiple items |
+| L2713 | revive | `internal/storage/store.go:312` | var-naming: var lastInsertIdErr should be lastInsertIDErr |
+| L2804 | staticcheck | `internal/mobilebackup/retained_archive.go:613` | QF1001: could apply De Morgan's law |
+| L2714 | staticcheck | `internal/storage/store.go:312` | ST1003: var lastInsertIdErr should be lastInsertIDErr |
+| L2715 | whitespace | `cmd/zl-mcp-eval/main.go:172` | unnecessary trailing newline |
+| L2716 | whitespace | `cmd/zl-mcp-eval/main.go:195` | unnecessary trailing newline |
+| L2717 | whitespace | `cmd/zl-mcp-eval/main.go:197` | unnecessary leading newline |
+| L2718 | whitespace | `cmd/zl-mcp-eval/main.go:219` | unnecessary trailing newline |
+| L2762 | whitespace | `internal/collector/contacts.go:145` | unnecessary trailing newline |
+| L2719 | whitespace | `internal/collector/run.go:309` | unnecessary leading newline |
+| L2720 | whitespace | `internal/collector/run.go:326` | unnecessary trailing newline |
+| L2721 | whitespace | `internal/collector/run.go:328` | unnecessary leading newline |
+| L2722 | whitespace | `internal/collector/run.go:343` | unnecessary trailing newline |
+| L2723 | whitespace | `internal/collector/run.go:345` | unnecessary leading newline |
+| L2765 | whitespace | `internal/collector/run.go:470` | unnecessary trailing newline |
+| L2805 | whitespace | `internal/collector/run.go:505` | unnecessary trailing newline |
+| L2806 | whitespace | `internal/evaluation/runner.go:279` | unnecessary trailing newline |
+| L2779 | whitespace | `internal/historyimport/worker.go:161` | unnecessary leading newline |
+| L2780 | whitespace | `internal/historyimport/worker.go:180` | unnecessary trailing newline |
+| L2781 | whitespace | `internal/historyimport/worker.go:274` | unnecessary trailing newline |
+| L2782 | whitespace | `internal/historyimport/worker.go:287` | unnecessary trailing newline |
+| L2807 | whitespace | `internal/mobilebackup/prepared_page.go:131` | unnecessary leading newline |
+| L2724 | whitespace | `internal/service/cli.go:124` | unnecessary leading newline |
+| L2725 | whitespace | `internal/service/cli.go:138` | unnecessary leading newline |
+| L2726 | whitespace | `internal/service/cli.go:178` | unnecessary leading newline |
+| L2808 | whitespace | `internal/service/recall_diagnostic.go:212` | unnecessary trailing newline |
+| L2766 | whitespace | `internal/service/run.go:638` | unnecessary trailing newline |
+| L2783 | whitespace | `internal/storage/views.go:459` | unnecessary trailing newline |
+| L2763 | whitespace | `tools/harness/internal/performance/compare.go:183` | unnecessary trailing newline |
 
 ## Полный актуальный список
 
@@ -260,84 +364,84 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Разбирать вместе с gocyclo/gocognit/funlen/nestif: одно изменение функции закрывает несколько diagnostics. В production выделять самостоятельные этапы с контрактами (CLI parsing, запуск, сбор результата; worker claim/reserve/commit; parser framing/records), сохраняя порядок effects и lifetime. Для линейного protocol switch и цельного AAA integration test допустим локальный nolint с объяснением, почему разделение скроет сценарий. Package-average не лечить добавлением пустых helpers; после рефакторинга оценить отдельную настройку средней сложности для тестовых пакетов.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
-| L0001 | `cmd/zl-mcp-eval/main.go:16:1` | calculated cyclomatic complexity for function run is 38, max is 30 | OPEN |
-| L0002 | `cmd/zl-mcp-eval/main_test.go:1:1` | the average complexity for the package main is 15.600000, max is 10.000000 | OPEN |
-| L0003 | `internal/collector/run.go:55:1` | calculated cyclomatic complexity for function runSession is 40, max is 30 | OPEN |
-| L0004 | `internal/config/config.go:47:1` | calculated cyclomatic complexity for function Load is 35, max is 30 | OPEN |
-| L0005 | `internal/domain/history.go:59:1` | calculated cyclomatic complexity for function NewHistoryPageFailure is 46, max is 30 | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
+| L0001 | `cmd/zl-mcp-eval/main.go:16:1` | calculated cyclomatic complexity for function run is 38, max is 30 | FIXED |
+| L0002 | `cmd/zl-mcp-eval/main_test.go:1:1` | the average complexity for the package main is 15.600000, max is 10.000000 | SUPPRESSED |
+| L0003 | `internal/collector/run.go:55:1` | calculated cyclomatic complexity for function runSession is 40, max is 30 | FIXED |
+| L0004 | `internal/config/config.go:47:1` | calculated cyclomatic complexity for function Load is 35, max is 30 | FIXED |
+| L0005 | `internal/domain/history.go:59:1` | calculated cyclomatic complexity for function NewHistoryPageFailure is 46, max is 30 | SUPPRESSED |
 | L0006 | `internal/evalfixture/fixture.go:133:1` | calculated cyclomatic complexity for function New is 47, max is 30 | FIXED |
-| L0007 | `internal/evaluation/checkpoints.go:149:1` | calculated cyclomatic complexity for function GradeCheckpoint is 112, max is 30 | OPEN |
+| L0007 | `internal/evaluation/checkpoints.go:149:1` | calculated cyclomatic complexity for function GradeCheckpoint is 112, max is 30 | FIXED |
 | L0008 | `internal/evaluation/grader.go:19:1` | calculated cyclomatic complexity for function Grade is 71, max is 30 | FIXED |
 | L0009 | `internal/evaluation/process_test.go:1:1` | the average complexity for the package evaluation is 11.161290, max is 10.000000 | FIXED |
 | L0010 | `internal/evaluation/runner.go:135:1` | calculated cyclomatic complexity for function Run is 61, max is 30 | FIXED |
-| L0011 | `internal/evaluation/scenarios.go:22:1` | calculated cyclomatic complexity for function RunCase is 71, max is 30 | FIXED |
-| L0012 | `internal/events/conversation_test.go:20:1` | calculated cyclomatic complexity for function TestConversationScopesSignedDeliveryAndCancellation is 36, max is 30 | OPEN |
+| L0011 | `internal/evaluation/scenarios.go:22:1` | calculated cyclomatic complexity for function RunCase is 71, max is 30 | SUPPRESSED |
+| L0012 | `internal/events/conversation_test.go:20:1` | calculated cyclomatic complexity for function TestConversationScopesSignedDeliveryAndCancellation is 36, max is 30 | SUPPRESSED |
 | L0013 | `internal/events/subscriptions.go:132:1` | calculated cyclomatic complexity for function Call is 37, max is 30 | FIXED |
-| L0014 | `internal/historyimport/diagnostics_test.go:1:1` | the average complexity for the package historyimport is 15.909091, max is 10.000000 | OPEN |
-| L0015 | `internal/historyimport/mcp_test.go:27:1` | calculated cyclomatic complexity for function TestMCPHistoryImportDiscoveryStatusAndReads is 34, max is 30 | OPEN |
-| L0016 | `internal/historyimport/mobile_worker.go:101:1` | calculated cyclomatic complexity for function runMobileOperationObserved is 59, max is 30 | OPEN |
-| L0017 | `internal/historyimport/worker.go:68:1` | calculated cyclomatic complexity for function runOperationObserved is 40, max is 30 | OPEN |
-| L0018 | `internal/mcpserver/conversation_events_http_test.go:34:1` | calculated cyclomatic complexity for function testConversationProfileTLS is 47, max is 30 | OPEN |
-| L0019 | `internal/mcpserver/conversations.go:17:1` | calculated cyclomatic complexity for function addConversationResources is 39, max is 30 | OPEN |
-| L0020 | `internal/mcpserver/conversations_test.go:17:1` | calculated cyclomatic complexity for function TestConversationMCPSearchContextCatalogueAndFullText is 43, max is 30 | OPEN |
+| L0014 | `internal/historyimport/diagnostics_test.go:1:1` | the average complexity for the package historyimport is 15.909091, max is 10.000000 | FIXED |
+| L0015 | `internal/historyimport/mcp_test.go:27:1` | calculated cyclomatic complexity for function TestMCPHistoryImportDiscoveryStatusAndReads is 34, max is 30 | SUPPRESSED |
+| L0016 | `internal/historyimport/mobile_worker.go:101:1` | calculated cyclomatic complexity for function runMobileOperationObserved is 59, max is 30 | FIXED |
+| L0017 | `internal/historyimport/worker.go:68:1` | calculated cyclomatic complexity for function runOperationObserved is 40, max is 30 | FIXED |
+| L0018 | `internal/mcpserver/conversation_events_http_test.go:34:1` | calculated cyclomatic complexity for function testConversationProfileTLS is 47, max is 30 | SUPPRESSED |
+| L0019 | `internal/mcpserver/conversations.go:17:1` | calculated cyclomatic complexity for function addConversationResources is 39, max is 30 | FIXED |
+| L0020 | `internal/mcpserver/conversations_test.go:17:1` | calculated cyclomatic complexity for function TestConversationMCPSearchContextCatalogueAndFullText is 43, max is 30 | SUPPRESSED |
 | L0021 | `internal/mcpserver/http.go:110:1` | calculated cyclomatic complexity for function ServeHTTP is 41, max is 30 | FIXED |
-| L0022 | `internal/mcpserver/migration_baseline_test.go:56:1` | calculated cyclomatic complexity for function TestMigrationCatalogBaseline is 34, max is 30 | OPEN |
-| L0023 | `internal/mcpserver/pagination_test.go:18:1` | calculated cyclomatic complexity for function TestLargeWirePagesKeepAllResultsAndSearchSnapshot is 32, max is 30 | OPEN |
-| L0024 | `internal/mcpserver/server.go:61:1` | calculated cyclomatic complexity for function New is 56, max is 30 | OPEN |
-| L0025 | `internal/mcpserver/server.go:239:1` | calculated cyclomatic complexity for function call is 41, max is 30 | OPEN |
-| L0026 | `internal/messaging/manager.go:38:1` | calculated cyclomatic complexity for function Call is 32, max is 30 | OPEN |
-| L0027 | `internal/messaging/subprocess_restart_test.go:1:1` | the average complexity for the package messaging is 12.000000, max is 10.000000 | OPEN |
-| L0028 | `internal/mobilebackup/control_scan.go:30:1` | calculated cyclomatic complexity for function ReadOwnDirectRecallSet is 57, max is 30 | OPEN |
-| L0029 | `internal/mobilebackup/history_page.go:17:1` | calculated cyclomatic complexity for function ReadHistoryPage is 42, max is 30 | OPEN |
-| L0030 | `internal/mobilebackup/history_page_test.go:73:1` | calculated cyclomatic complexity for function TestSnapshotReaderConverterJournalResumeTogether is 42, max is 30 | OPEN |
-| L0031 | `internal/mobilebackup/history_worker_test.go:582:1` | calculated cyclomatic complexity for function TestMobileWorkerWholeControlPreludeResumesWithoutRedispatch is 35, max is 30 | OPEN |
-| L0032 | `internal/mobilebackup/message_conversion.go:91:1` | calculated cyclomatic complexity for function convertArchiveCandidates is 62, max is 30 | OPEN |
-| L0033 | `internal/mobilebackup/native_binary_test.go:18:1` | calculated cyclomatic complexity for function TestNativeBinaryTerminalStartupAcceptance is 40, max is 30 | OPEN |
-| L0034 | `internal/mobilebackup/prepared_page.go:44:1` | calculated cyclomatic complexity for function ReadPreparedArchivePage is 31, max is 30 | OPEN |
-| L0035 | `internal/mobilebackup/recall_history_test.go:14:1` | calculated cyclomatic complexity for function TestRecallSnapshotConverterJournalResumeTogether is 38, max is 30 | OPEN |
-| L0036 | `internal/mobilebackup/retained_archive.go:448:1` | calculated cyclomatic complexity for function decode is 39, max is 30 | OPEN |
-| L0037 | `internal/mobilebackup/row_page.go:81:1` | calculated cyclomatic complexity for function PrepareRowPage is 56, max is 30 | OPEN |
-| L0038 | `internal/mobilebackup/snapshot.go:278:1` | calculated cyclomatic complexity for function Save is 35, max is 30 | OPEN |
-| L0039 | `internal/mobilebackup/snapshot_page.go:76:1` | calculated cyclomatic complexity for function ReadSnapshotPage is 41, max is 30 | OPEN |
-| L0040 | `internal/mobilebackup/snapshot_page_test.go:108:1` | calculated cyclomatic complexity for function TestSnapshotTextProjectionIdentityAuthorsAndGaps is 36, max is 30 | OPEN |
-| L0041 | `internal/mobilebackup/snapshot_sqlite_test.go:13:1` | calculated cyclomatic complexity for function TestSnapshotSQLiteZeroIDsPagingAndImportIsolation is 42, max is 30 | OPEN |
-| L0042 | `internal/mobilebackup/snapshot_terminal.go:15:1` | calculated cyclomatic complexity for function CleanupTerminal is 41, max is 30 | OPEN |
-| L0043 | `internal/mobilebackup/sqlite.go:169:1` | calculated cyclomatic complexity for function readSQLitePageMode is 86, max is 30 | OPEN |
-| L0044 | `internal/mobilebackup/xz.go:53:1` | calculated cyclomatic complexity for function inspectXZ is 43, max is 30 | FIXED |
-| L0045 | `internal/service/account_archive_control.go:24:1` | calculated cyclomatic complexity for function accountArchiveControl is 39, max is 30 | OPEN |
-| L0046 | `internal/service/account_archive_test.go:51:1` | calculated cyclomatic complexity for function testAccountArchiveCapture is 69, max is 30 | OPEN |
-| L0047 | `internal/service/archive_catalog.go:43:1` | calculated cyclomatic complexity for function archiveConversations is 33, max is 30 | OPEN |
-| L0048 | `internal/service/archive_messages.go:156:1` | calculated cyclomatic complexity for function archiveMessages is 31, max is 30 | OPEN |
-| L0049 | `internal/service/archive_messages_test.go:20:1` | calculated cyclomatic complexity for function testOfflineArchiveMessages is 31, max is 30 | OPEN |
-| L0050 | `internal/service/cli.go:28:1` | calculated cyclomatic complexity for function RunCLI is 35, max is 30 | OPEN |
-| L0051 | `internal/service/cli_mobile_ledger.go:29:1` | calculated cyclomatic complexity for function mobileLedgerArguments is 32, max is 30 | OPEN |
-| L0052 | `internal/service/conversations_test.go:122:1` | calculated cyclomatic complexity for function testConversationServiceProfile is 41, max is 30 | OPEN |
-| L0053 | `internal/service/events_restart_test.go:123:1` | calculated cyclomatic complexity for function TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary is 49, max is 30 | OPEN |
-| L0054 | `internal/service/history_test.go:82:1` | calculated cyclomatic complexity for function TestHTTPHistoryToolsUseExistingCollectorSession is 32, max is 30 | OPEN |
-| L0055 | `internal/service/mobile_ledger_control.go:72:1` | calculated cyclomatic complexity for function mobileLedgerControl is 38, max is 30 | OPEN |
-| L0056 | `internal/service/mobile_page_test.go:103:1` | calculated cyclomatic complexity for function TestServiceMobilePageUsesCollectorSessionAndExpiresHistoricalRows is 48, max is 30 | OPEN |
-| L0057 | `internal/service/multiprocess_test.go:40:1` | calculated cyclomatic complexity for function TestTwoMCPProcessesReadCollectorWrites is 67, max is 30 | OPEN |
-| L0058 | `internal/service/recall_diagnostic.go:77:1` | calculated cyclomatic complexity for function probeRecall is 51, max is 30 | OPEN |
-| L0059 | `internal/service/run.go:154:1` | calculated cyclomatic complexity for function runConfigured is 57, max is 30 | OPEN |
-| L0060 | `internal/service/run_test.go:49:1` | calculated cyclomatic complexity for function TestServicePreservesMCPWhenAuthenticationIsRequired is 48, max is 30 | OPEN |
-| L0061 | `internal/service/sending_test.go:79:1` | calculated cyclomatic complexity for function TestServiceSendAndReplyUseCollectorSessionAndPersistAcrossRestart is 46, max is 30 | OPEN |
+| L0022 | `internal/mcpserver/migration_baseline_test.go:56:1` | calculated cyclomatic complexity for function TestMigrationCatalogBaseline is 34, max is 30 | SUPPRESSED |
+| L0023 | `internal/mcpserver/pagination_test.go:18:1` | calculated cyclomatic complexity for function TestLargeWirePagesKeepAllResultsAndSearchSnapshot is 32, max is 30 | SUPPRESSED |
+| L0024 | `internal/mcpserver/server.go:61:1` | calculated cyclomatic complexity for function New is 56, max is 30 | SUPPRESSED |
+| L0025 | `internal/mcpserver/server.go:239:1` | calculated cyclomatic complexity for function call is 41, max is 30 | FIXED |
+| L0026 | `internal/messaging/manager.go:38:1` | calculated cyclomatic complexity for function Call is 32, max is 30 | FIXED |
+| L0027 | `internal/messaging/subprocess_restart_test.go:1:1` | the average complexity for the package messaging is 12.000000, max is 10.000000 | FIXED |
+| L0028 | `internal/mobilebackup/control_scan.go:30:1` | calculated cyclomatic complexity for function ReadOwnDirectRecallSet is 57, max is 30 | SUPPRESSED |
+| L0029 | `internal/mobilebackup/history_page.go:17:1` | calculated cyclomatic complexity for function ReadHistoryPage is 42, max is 30 | FIXED |
+| L0030 | `internal/mobilebackup/history_page_test.go:73:1` | calculated cyclomatic complexity for function TestSnapshotReaderConverterJournalResumeTogether is 42, max is 30 | SUPPRESSED |
+| L0031 | `internal/mobilebackup/history_worker_test.go:582:1` | calculated cyclomatic complexity for function TestMobileWorkerWholeControlPreludeResumesWithoutRedispatch is 35, max is 30 | SUPPRESSED |
+| L0032 | `internal/mobilebackup/message_conversion.go:91:1` | calculated cyclomatic complexity for function convertArchiveCandidates is 62, max is 30 | FIXED |
+| L0033 | `internal/mobilebackup/native_binary_test.go:18:1` | calculated cyclomatic complexity for function TestNativeBinaryTerminalStartupAcceptance is 40, max is 30 | SUPPRESSED |
+| L0034 | `internal/mobilebackup/prepared_page.go:44:1` | calculated cyclomatic complexity for function ReadPreparedArchivePage is 31, max is 30 | FIXED |
+| L0035 | `internal/mobilebackup/recall_history_test.go:14:1` | calculated cyclomatic complexity for function TestRecallSnapshotConverterJournalResumeTogether is 38, max is 30 | SUPPRESSED |
+| L0036 | `internal/mobilebackup/retained_archive.go:448:1` | calculated cyclomatic complexity for function decode is 39, max is 30 | FIXED |
+| L0037 | `internal/mobilebackup/row_page.go:81:1` | calculated cyclomatic complexity for function PrepareRowPage is 56, max is 30 | FIXED |
+| L0038 | `internal/mobilebackup/snapshot.go:278:1` | calculated cyclomatic complexity for function Save is 35, max is 30 | FIXED |
+| L0039 | `internal/mobilebackup/snapshot_page.go:76:1` | calculated cyclomatic complexity for function ReadSnapshotPage is 41, max is 30 | FIXED |
+| L0040 | `internal/mobilebackup/snapshot_page_test.go:108:1` | calculated cyclomatic complexity for function TestSnapshotTextProjectionIdentityAuthorsAndGaps is 36, max is 30 | SUPPRESSED |
+| L0041 | `internal/mobilebackup/snapshot_sqlite_test.go:13:1` | calculated cyclomatic complexity for function TestSnapshotSQLiteZeroIDsPagingAndImportIsolation is 42, max is 30 | SUPPRESSED |
+| L0042 | `internal/mobilebackup/snapshot_terminal.go:15:1` | calculated cyclomatic complexity for function CleanupTerminal is 41, max is 30 | FIXED |
+| L0043 | `internal/mobilebackup/sqlite.go:169:1` | calculated cyclomatic complexity for function readSQLitePageMode is 86, max is 30 | FIXED |
+| L0044 | `internal/mobilebackup/xz.go:53:1` | calculated cyclomatic complexity for function inspectXZ is 43, max is 30 | SUPPRESSED |
+| L0045 | `internal/service/account_archive_control.go:24:1` | calculated cyclomatic complexity for function accountArchiveControl is 39, max is 30 | FIXED |
+| L0046 | `internal/service/account_archive_test.go:51:1` | calculated cyclomatic complexity for function testAccountArchiveCapture is 69, max is 30 | SUPPRESSED |
+| L0047 | `internal/service/archive_catalog.go:43:1` | calculated cyclomatic complexity for function archiveConversations is 33, max is 30 | FIXED |
+| L0048 | `internal/service/archive_messages.go:156:1` | calculated cyclomatic complexity for function archiveMessages is 31, max is 30 | FIXED |
+| L0049 | `internal/service/archive_messages_test.go:20:1` | calculated cyclomatic complexity for function testOfflineArchiveMessages is 31, max is 30 | SUPPRESSED |
+| L0050 | `internal/service/cli.go:28:1` | calculated cyclomatic complexity for function RunCLI is 35, max is 30 | FIXED |
+| L0051 | `internal/service/cli_mobile_ledger.go:29:1` | calculated cyclomatic complexity for function mobileLedgerArguments is 32, max is 30 | SUPPRESSED |
+| L0052 | `internal/service/conversations_test.go:122:1` | calculated cyclomatic complexity for function testConversationServiceProfile is 41, max is 30 | SUPPRESSED |
+| L0053 | `internal/service/events_restart_test.go:123:1` | calculated cyclomatic complexity for function TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary is 49, max is 30 | SUPPRESSED |
+| L0054 | `internal/service/history_test.go:82:1` | calculated cyclomatic complexity for function TestHTTPHistoryToolsUseExistingCollectorSession is 32, max is 30 | SUPPRESSED |
+| L0055 | `internal/service/mobile_ledger_control.go:72:1` | calculated cyclomatic complexity for function mobileLedgerControl is 38, max is 30 | FIXED |
+| L0056 | `internal/service/mobile_page_test.go:103:1` | calculated cyclomatic complexity for function TestServiceMobilePageUsesCollectorSessionAndExpiresHistoricalRows is 48, max is 30 | SUPPRESSED |
+| L0057 | `internal/service/multiprocess_test.go:40:1` | calculated cyclomatic complexity for function TestTwoMCPProcessesReadCollectorWrites is 67, max is 30 | SUPPRESSED |
+| L0058 | `internal/service/recall_diagnostic.go:77:1` | calculated cyclomatic complexity for function probeRecall is 51, max is 30 | SUPPRESSED |
+| L0059 | `internal/service/run.go:154:1` | calculated cyclomatic complexity for function runConfigured is 57, max is 30 | FIXED |
+| L0060 | `internal/service/run_test.go:49:1` | calculated cyclomatic complexity for function TestServicePreservesMCPWhenAuthenticationIsRequired is 48, max is 30 | SUPPRESSED |
+| L0061 | `internal/service/sending_test.go:79:1` | calculated cyclomatic complexity for function TestServiceSendAndReplyUseCollectorSessionAndPersistAcrossRestart is 46, max is 30 | SUPPRESSED |
 | L0062 | `internal/storage/browse.go:18:1` | calculated cyclomatic complexity for function Browse is 47, max is 30 | FIXED |
-| L0063 | `internal/storage/deliveries.go:61:1` | calculated cyclomatic complexity for function FanoutProfileEvents is 33, max is 30 | OPEN |
-| L0064 | `internal/storage/events.go:159:1` | calculated cyclomatic complexity for function ActivateSubscription is 33, max is 30 | OPEN |
-| L0065 | `internal/storage/history_operations.go:430:1` | calculated cyclomatic complexity for function commitHistoryRecords is 36, max is 30 | OPEN |
-| L0066 | `internal/storage/history_operations_test.go:57:1` | calculated cyclomatic complexity for function TestHistoryOperationDurableCheckpointAndRequestIdentity is 35, max is 30 | OPEN |
-| L0067 | `internal/storage/mobile_history.go:158:1` | calculated cyclomatic complexity for function CommitMobileHistoryPage is 98, max is 30 | OPEN |
-| L0068 | `internal/storage/mobile_history_test.go:133:1` | calculated cyclomatic complexity for function TestMobileHistoryRestartExactKeysetCountsAndSilentDuplicates is 31, max is 30 | OPEN |
-| L0069 | `internal/toolruntime/runtime.go:144:1` | calculated cyclomatic complexity for function New is 45, max is 30 | OPEN |
-| L0070 | `internal/toolruntime/runtime.go:464:1` | calculated cyclomatic complexity for function dispatch is 32, max is 30 | OPEN |
-| L0071 | `internal/zalo/events.go:48:1` | calculated cyclomatic complexity for function listenConversations is 33, max is 30 | OPEN |
-| L0072 | `internal/zalo/mobile_backup.go:60:1` | calculated cyclomatic complexity for function receiveMobileBackupOffer is 66, max is 30 | OPEN |
-| L0073 | `internal/zalo/preload.go:29:1` | calculated cyclomatic complexity for function readConversationPreload is 52, max is 30 | OPEN |
-| L0074 | `tools/harness/internal/performance/bench.go:75:1` | calculated cyclomatic complexity for function Bench is 42, max is 30 | OPEN |
-| L0075 | `tools/harness/internal/performance/compare.go:8:1` | calculated cyclomatic complexity for function validate is 56, max is 30 | OPEN |
-| L0076 | `tools/harness/internal/performance/compare.go:150:1` | calculated cyclomatic complexity for function Compare is 39, max is 30 | OPEN |
+| L0063 | `internal/storage/deliveries.go:61:1` | calculated cyclomatic complexity for function FanoutProfileEvents is 33, max is 30 | SUPPRESSED |
+| L0064 | `internal/storage/events.go:159:1` | calculated cyclomatic complexity for function ActivateSubscription is 33, max is 30 | SUPPRESSED |
+| L0065 | `internal/storage/history_operations.go:430:1` | calculated cyclomatic complexity for function commitHistoryRecords is 36, max is 30 | SUPPRESSED |
+| L0066 | `internal/storage/history_operations_test.go:57:1` | calculated cyclomatic complexity for function TestHistoryOperationDurableCheckpointAndRequestIdentity is 35, max is 30 | SUPPRESSED |
+| L0067 | `internal/storage/mobile_history.go:158:1` | calculated cyclomatic complexity for function CommitMobileHistoryPage is 98, max is 30 | SUPPRESSED |
+| L0068 | `internal/storage/mobile_history_test.go:133:1` | calculated cyclomatic complexity for function TestMobileHistoryRestartExactKeysetCountsAndSilentDuplicates is 31, max is 30 | SUPPRESSED |
+| L0069 | `internal/toolruntime/runtime.go:144:1` | calculated cyclomatic complexity for function New is 45, max is 30 | SUPPRESSED |
+| L0070 | `internal/toolruntime/runtime.go:464:1` | calculated cyclomatic complexity for function dispatch is 32, max is 30 | SUPPRESSED |
+| L0071 | `internal/zalo/events.go:48:1` | calculated cyclomatic complexity for function listenConversations is 33, max is 30 | FIXED |
+| L0072 | `internal/zalo/mobile_backup.go:60:1` | calculated cyclomatic complexity for function receiveMobileBackupOffer is 66, max is 30 | FIXED |
+| L0073 | `internal/zalo/preload.go:29:1` | calculated cyclomatic complexity for function readConversationPreload is 52, max is 30 | FIXED |
+| L0074 | `tools/harness/internal/performance/bench.go:75:1` | calculated cyclomatic complexity for function Bench is 42, max is 30 | FIXED |
+| L0075 | `tools/harness/internal/performance/compare.go:8:1` | calculated cyclomatic complexity for function validate is 56, max is 30 | FIXED |
+| L0076 | `tools/harness/internal/performance/compare.go:150:1` | calculated cyclomatic complexity for function Compare is 39, max is 30 | FIXED |
 
 ### embeddedstructfieldcheck (1)
 
@@ -347,8 +451,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L0077: отделить embedded field пустой строкой. Механическое форматирование, исключение не нужно.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L0077 | `tools/harness/internal/architecture/architecture.go:71:2` | there must be an empty line separating embedded fields from regular fields | OPEN |
 
 ### errcheck (115)
@@ -359,8 +463,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Разделить по смыслу: ошибки записи/Commit/Scan/Encode и setup fixture обрабатывать; при rollback/cleanup после основной ошибки допустимо явное игнорирование с причиной (не подменять исходную ошибку). Для Assert/Marshal без возможной ошибки — только доказанный локальный nolint. L0078–L0090: unchecked assertions из map в store adapter заменить типизированной внутренней проекцией либо comma-ok с явной internal error; не превращать несоответствие типов в нулевой успешный ответ. L0112: malformed grader input должен давать явный fail, а не продолжать проверки по zero value. L0125–L0127: fallback logger не должен рекурсивно логировать ошибку собственного Write; допустим локальный nolint с причиной last-resort best effort. Ответные Encode/Write после отправки HTTP headers не повторять при ошибке: завершить handler, сохранить no-retry и privacy. Close после чтения и Close перед persistence commit имеют разные требования; не добавлять общий ignore Close.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L0078 | `internal/adapters/store/read.go:85:24` | Error return value is not checked | FIXED |
 | L0079 | `internal/adapters/store/read.go:86:24` | Error return value is not checked | FIXED |
 | L0080 | `internal/adapters/store/read.go:87:24` | Error return value is not checked | FIXED |
@@ -485,14 +589,14 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Переименовать локальные/test ошибки storageFailure/privateFailure/callbackFailure и workerErr в storageError/privateError/callbackError/errWorker, обновить references. Для domain.HistorySourceFailure/HistoryPageFailure сначала проверить всех потребителей: если имена часть согласованного Go-контракта, оставить nolint:errname с причиной; wire reason/state не переименовывать ради стиля.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
-| L0193 | `internal/collector/run.go:30:6` | the error type name &#96;storageFailure&#96; should conform to the &#96;xxxError&#96; format | OPEN |
-| L0194 | `internal/domain/history.go:13:6` | the error type name &#96;HistorySourceFailure&#96; should conform to the &#96;XxxError&#96; format | OPEN |
-| L0195 | `internal/domain/history.go:57:6` | the error type name &#96;HistoryPageFailure&#96; should conform to the &#96;XxxError&#96; format | OPEN |
-| L0196 | `internal/observability/observer_test.go:48:6` | the error type name &#96;privateFailure&#96; should conform to the &#96;xxxError&#96; format | OPEN |
-| L0197 | `internal/observability/observer_test.go:351:6` | the error type name &#96;callbackFailure&#96; should conform to the &#96;xxxError&#96; format | OPEN |
-| L0198 | `tools/harness/internal/performance/performance_test.go:201:5` | the sentinel error name &#96;workerErr&#96; should conform to the &#96;errXxx&#96; format | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
+| L0193 | `internal/collector/run.go:30:6` | the error type name &#96;storageFailure&#96; should conform to the &#96;xxxError&#96; format | FIXED |
+| L0194 | `internal/domain/history.go:13:6` | the error type name &#96;HistorySourceFailure&#96; should conform to the &#96;XxxError&#96; format | SUPPRESSED |
+| L0195 | `internal/domain/history.go:57:6` | the error type name &#96;HistoryPageFailure&#96; should conform to the &#96;XxxError&#96; format | SUPPRESSED |
+| L0196 | `internal/observability/observer_test.go:48:6` | the error type name &#96;privateFailure&#96; should conform to the &#96;xxxError&#96; format | FIXED |
+| L0197 | `internal/observability/observer_test.go:351:6` | the error type name &#96;callbackFailure&#96; should conform to the &#96;xxxError&#96; format | FIXED |
+| L0198 | `tools/harness/internal/performance/performance_test.go:201:5` | the sentinel error name &#96;workerErr&#96; should conform to the &#96;errXxx&#96; format | FIXED |
 
 ### exhaustive (6)
 
@@ -502,8 +606,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Добавить явные перечисленные ветви, сохранив текущий fallback для неизвестных значений. OutcomeUnknown/WorkOther/StateUnknown должны возвращать прежнюю нормализованную метку. Для L0203 явно объединить текущие нетерминальные states в прежний результат. L0204: не добавлять ThreadTypeUser в карту поддерживаемых типов автоматически — если карта намеренно содержит только поддерживаемое подмножество, локальный nolint:exhaustive с описанием этого подмножества.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L0199 | `internal/domain/observation.go:16:2` | missing cases in switch of type domain.Outcome: domain.OutcomeUnknown | OPEN |
 | L0200 | `internal/domain/observation.go:44:2` | missing cases in switch of type domain.WorkKind: domain.WorkOther | OPEN |
 | L0201 | `internal/domain/observation.go:82:2` | missing cases in switch of type domain.OperationState: domain.StateUnknown | OPEN |
@@ -519,8 +623,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Не заполнять сотни DTO литералов нулями. Для sparse response DTO, fixtures и типов options с документированными defaults — узкое исключение по конкретному типу или локальный nolint:exhaustruct_v5: omitted fields intentionally use zero/default values. Для обязательных полей resources/security options проверить реальную инициализацию и дописать только требуемые значения. Не исключать весь internal/domain или весь production; null/missing/empty и SDK MaxLineLength проверять по контракту, а не по требованию заполнить структуру.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L0205 | `cmd/zl-mcp-eval-fixture/main.go:27:10` | evalfixture.Options is missing fields Policy, Offline, StateDir, EffectsFile, SendTimeout, DenySend, KeepState, ArchiveVector, Fixtures, SkillDir, Empty, Stopped, JoinTimeout, ApprovalFile, ApprovalTokenFile | OPEN |
 | L0206 | `cmd/zl-mcp-eval-fixture/main.go:73:34` | mcp.StdioTransport is missing field MaxLineLength | OPEN |
 | L0207 | `internal/adapters/operations/read.go:36:19` | domain.Error is missing field Retryable | OPEN |
@@ -772,7 +876,7 @@ _Заполнить._
 | L0453 | `internal/service/run.go:549:14` | domain.Error is missing fields Retryable, NextAction, Details | OPEN |
 | L0454 | `internal/storage/browse.go:57:7` | storage.cursor is missing fields Kind, Snapshot, At, Group, ID | OPEN |
 | L0455 | `internal/storage/conversation_views.go:80:27` | domain.NextAction is missing fields Tool, Arguments | OPEN |
-| L0456 | `internal/storage/conversation_views.go:116:7` | storage.<anonymous> is missing fields Kind, ID | OPEN |
+| L0456 | `internal/storage/conversation_views.go:116:7` | storage.<anonymous> is missing fields Kind, ID | FIXED |
 | L0457 | `internal/storage/diagnostics.go:21:7` | storage.DeliveryDiagnostics is missing fields ActiveSubscriptions, JournalPending, PendingPayloadBytes | OPEN |
 | L0458 | `internal/storage/diagnostics.go:33:32` | sql.TxOptions is missing field Isolation | OPEN |
 | L0459 | `internal/storage/events.go:297:10` | domain.Error is missing field Retryable | OPEN |
@@ -837,8 +941,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L0515–L0517: CLI печатает результат пользователю — локальный nolint:forbidigo с причиной CLI output, не заменять на logger (сломает stdout/JSON). L0518: progress performance harness допустим только в диагностическом потоке; сохранить согласованный формат stdout либо перенести progress в stderr, если stdout занят machine output. Проверять ошибки записи отдельно.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L0515 | `cmd/zl-mcp-eval/main.go:186:2` | use of &#96;fmt.Printf&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | OPEN |
 | L0516 | `tools/harness/cmd/harness/main.go:52:2` | use of &#96;fmt.Println&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | OPEN |
 | L0517 | `tools/harness/cmd/harness/main.go:101:2` | use of &#96;fmt.Println&#96; forbidden by pattern &#96;^(fmt\.Print(\|f\|ln)\|print\|println)$&#96; | OPEN |
@@ -852,8 +956,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L0519–L0522: перенести constructors перед methods без изменения тел и signatures.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L0519 | `internal/mobilebackup/download.go:30:1` | constructor "NewDownloader" for struct "Downloader" should be placed before struct method "Ready" | OPEN |
 | L0520 | `internal/mobilebackup/retained_archive.go:91:1` | constructor "NewRetainedArchiveStore" for struct "RetainedArchiveStore" should be placed before struct method "String" | OPEN |
 | L0521 | `internal/mobilebackup/retained_archive.go:96:1` | constructor "NewArchiveLibraryStore" for struct "RetainedArchiveStore" should be placed before struct method "String" | OPEN |
@@ -867,75 +971,75 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Применить общий план complexity из cyclop. Не дробить транзакцию/cleanup scope ради числа строк. Разрешить точечный nolint:funlen для цельного сценария или declarative registry с объяснением; длинные orchestration functions разделять по этапам.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
-| L0523 | `cmd/zl-mcp-eval/main.go:16:6` | Function 'run' has too many statements (107 > 50) | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
+| L0523 | `cmd/zl-mcp-eval/main.go:16:6` | Function 'run' has too many statements (107 > 50) | SUPPRESSED |
 | L0524 | `internal/collector/contact_profiles.go:26:6` | Function 'refreshContactProfiles' has too many statements (60 > 50) | FIXED |
 | L0525 | `internal/collector/contacts.go:30:6` | Function 'refreshContacts' has too many statements (53 > 50) | FIXED |
-| L0526 | `internal/collector/join.go:213:23` | Function 'Start' has too many statements (71 > 50) | OPEN |
-| L0527 | `internal/collector/preload_probe.go:13:6` | Function 'probePreload' has too many statements (58 > 50) | OPEN |
-| L0528 | `internal/collector/run.go:55:6` | Function 'runSession' has too many statements (121 > 50) | OPEN |
-| L0529 | `internal/config/config.go:47:6` | Function 'Load' has too many statements (69 > 50) | OPEN |
-| L0530 | `internal/domain/history.go:59:6` | Function 'NewHistoryPageFailure' has too many statements (93 > 50) | OPEN |
+| L0526 | `internal/collector/join.go:213:23` | Function 'Start' has too many statements (71 > 50) | FIXED |
+| L0527 | `internal/collector/preload_probe.go:13:6` | Function 'probePreload' has too many statements (58 > 50) | FIXED |
+| L0528 | `internal/collector/run.go:55:6` | Function 'runSession' has too many statements (121 > 50) | SUPPRESSED |
+| L0529 | `internal/config/config.go:47:6` | Function 'Load' has too many statements (69 > 50) | FIXED |
+| L0530 | `internal/domain/history.go:59:6` | Function 'NewHistoryPageFailure' has too many statements (93 > 50) | SUPPRESSED |
 | L0531 | `internal/evalfixture/fixture.go:133:6` | Function 'New' has too many statements (115 > 50) | FIXED |
-| L0532 | `internal/evaluation/benchmark.go:39:6` | Function 'Measure' has too many statements (64 > 50) | FIXED |
-| L0533 | `internal/evaluation/checkpoints.go:149:6` | Function 'GradeCheckpoint' has too many statements (194 > 50) | OPEN |
+| L0532 | `internal/evaluation/benchmark.go:39:6` | Function 'Measure' has too many statements (64 > 50) | SUPPRESSED |
+| L0533 | `internal/evaluation/checkpoints.go:149:6` | Function 'GradeCheckpoint' has too many statements (194 > 50) | FIXED |
 | L0534 | `internal/evaluation/grader.go:19:6` | Function 'Grade' has too many statements (113 > 50) | FIXED |
 | L0535 | `internal/evaluation/runner.go:135:6` | Function 'Run' has too many statements (101 > 50) | FIXED |
-| L0536 | `internal/evaluation/scenarios.go:22:6` | Function 'RunCase' has too many statements (217 > 50) | FIXED |
+| L0536 | `internal/evaluation/scenarios.go:22:6` | Function 'RunCase' has too many statements (217 > 50) | SUPPRESSED |
 | L0537 | `internal/events/subscriptions.go:132:31` | Function 'Call' is too long (163 > 100) | FIXED |
-| L0538 | `internal/events/worker.go:94:18` | Function 'deliverClaimed' has too many statements (53 > 50) | OPEN |
-| L0539 | `internal/historyimport/mobile_worker.go:101:6` | Function 'runMobileOperationObserved' has too many statements (61 > 50) | OPEN |
-| L0540 | `internal/historyimport/worker.go:68:6` | Function 'runOperationObserved' has too many statements (79 > 50) | OPEN |
-| L0541 | `internal/mcpserver/conversations.go:17:19` | Function 'addConversationResources' is too long (132 > 100) | OPEN |
+| L0538 | `internal/events/worker.go:94:18` | Function 'deliverClaimed' has too many statements (53 > 50) | FIXED |
+| L0539 | `internal/historyimport/mobile_worker.go:101:6` | Function 'runMobileOperationObserved' has too many statements (61 > 50) | FIXED |
+| L0540 | `internal/historyimport/worker.go:68:6` | Function 'runOperationObserved' has too many statements (79 > 50) | FIXED |
+| L0541 | `internal/mcpserver/conversations.go:17:19` | Function 'addConversationResources' is too long (132 > 100) | FIXED |
 | L0542 | `internal/mcpserver/http.go:110:23` | Function 'ServeHTTP' has too many statements (109 > 50) | FIXED |
-| L0543 | `internal/mcpserver/server.go:61:6` | Function 'New' is too long (163 > 100) | OPEN |
+| L0543 | `internal/mcpserver/server.go:61:6` | Function 'New' is too long (163 > 100) | SUPPRESSED |
 | L0544 | `internal/mcpserver/server.go:239:19` | Function 'call' has too many statements (99 > 50) | FIXED |
-| L0545 | `internal/messaging/manager.go:38:19` | Function 'Call' has too many statements (57 > 50) | OPEN |
-| L0546 | `internal/mobilebackup/account_metadata.go:68:6` | Function 'inspectAccountMetadata' has too many statements (52 > 50) | OPEN |
-| L0547 | `internal/mobilebackup/attachment.go:44:6` | Function 'ParseAttachment' has too many statements (52 > 50) | OPEN |
-| L0548 | `internal/mobilebackup/control_scan.go:30:6` | Function 'ReadOwnDirectRecallSet' is too long (126 > 100) | OPEN |
-| L0549 | `internal/mobilebackup/history_page.go:17:25` | Function 'ReadHistoryPage' has too many statements (59 > 50) | FIXED |
-| L0550 | `internal/mobilebackup/message_conversion.go:91:6` | Function 'convertArchiveCandidates' has too many statements (63 > 50) | OPEN |
-| L0551 | `internal/mobilebackup/prepared_page.go:44:6` | Function 'ReadPreparedArchivePage' has too many statements (51 > 50) | OPEN |
-| L0552 | `internal/mobilebackup/retained_archive.go:448:32` | Function 'decode' has too many statements (54 > 50) | OPEN |
-| L0553 | `internal/mobilebackup/row_page.go:81:6` | Function 'PrepareRowPage' has too many statements (107 > 50) | OPEN |
-| L0554 | `internal/mobilebackup/snapshot.go:278:25` | Function 'Save' has too many statements (59 > 50) | OPEN |
-| L0555 | `internal/mobilebackup/snapshot_page.go:76:25` | Function 'ReadSnapshotPage' has too many statements (100 > 50) | OPEN |
-| L0556 | `internal/mobilebackup/snapshot_terminal.go:15:25` | Function 'CleanupTerminal' has too many statements (71 > 50) | OPEN |
-| L0557 | `internal/mobilebackup/sqlite.go:169:6` | Function 'readSQLitePageMode' has too many statements (200 > 50) | OPEN |
-| L0558 | `internal/mobilebackup/xz.go:53:6` | Function 'inspectXZ' has too many statements (74 > 50) | FIXED |
-| L0559 | `internal/service/account_archive.go:30:26` | Function 'captureAccountArchiveWithDownloader' has too many statements (55 > 50) | OPEN |
-| L0560 | `internal/service/account_archive_control.go:24:26` | Function 'accountArchiveControl' has too many statements (99 > 50) | OPEN |
-| L0561 | `internal/service/archive_catalog.go:43:26` | Function 'archiveConversations' has too many statements (52 > 50) | OPEN |
-| L0562 | `internal/service/archive_messages.go:156:26` | Function 'archiveMessages' has too many statements (68 > 50) | OPEN |
-| L0563 | `internal/service/cli.go:28:6` | Function 'RunCLI' has too many statements (94 > 50) | OPEN |
-| L0564 | `internal/service/cli_mobile_ledger.go:29:6` | Function 'mobileLedgerArguments' has too many statements (56 > 50) | OPEN |
-| L0565 | `internal/service/mobile_archive_probe.go:42:26` | Function 'probeMobileArchiveComparisonWithDownloader' is too long (184 > 100) | OPEN |
-| L0566 | `internal/service/mobile_history.go:32:26` | Function 'withHistorySession' has too many statements (51 > 50) | OPEN |
-| L0567 | `internal/service/mobile_ledger_control.go:72:26` | Function 'mobileLedgerControl' has too many statements (62 > 50) | OPEN |
-| L0568 | `internal/service/recall_diagnostic.go:77:26` | Function 'probeRecall' has too many statements (88 > 50) | OPEN |
-| L0569 | `internal/service/run.go:154:6` | Function 'runConfigured' has too many statements (145 > 50) | OPEN |
-| L0570 | `internal/service/run.go:501:6` | Function 'collectSession' has too many statements (51 > 50) | OPEN |
+| L0545 | `internal/messaging/manager.go:38:19` | Function 'Call' has too many statements (57 > 50) | FIXED |
+| L0546 | `internal/mobilebackup/account_metadata.go:68:6` | Function 'inspectAccountMetadata' has too many statements (52 > 50) | FIXED |
+| L0547 | `internal/mobilebackup/attachment.go:44:6` | Function 'ParseAttachment' has too many statements (52 > 50) | SUPPRESSED |
+| L0548 | `internal/mobilebackup/control_scan.go:30:6` | Function 'ReadOwnDirectRecallSet' is too long (126 > 100) | SUPPRESSED |
+| L0549 | `internal/mobilebackup/history_page.go:17:25` | Function 'ReadHistoryPage' has too many statements (59 > 50) | SUPPRESSED |
+| L0550 | `internal/mobilebackup/message_conversion.go:91:6` | Function 'convertArchiveCandidates' has too many statements (63 > 50) | FIXED |
+| L0551 | `internal/mobilebackup/prepared_page.go:44:6` | Function 'ReadPreparedArchivePage' has too many statements (51 > 50) | FIXED |
+| L0552 | `internal/mobilebackup/retained_archive.go:448:32` | Function 'decode' has too many statements (54 > 50) | SUPPRESSED |
+| L0553 | `internal/mobilebackup/row_page.go:81:6` | Function 'PrepareRowPage' has too many statements (107 > 50) | FIXED |
+| L0554 | `internal/mobilebackup/snapshot.go:278:25` | Function 'Save' has too many statements (59 > 50) | SUPPRESSED |
+| L0555 | `internal/mobilebackup/snapshot_page.go:76:25` | Function 'ReadSnapshotPage' has too many statements (100 > 50) | FIXED |
+| L0556 | `internal/mobilebackup/snapshot_terminal.go:15:25` | Function 'CleanupTerminal' has too many statements (71 > 50) | FIXED |
+| L0557 | `internal/mobilebackup/sqlite.go:169:6` | Function 'readSQLitePageMode' has too many statements (200 > 50) | SUPPRESSED |
+| L0558 | `internal/mobilebackup/xz.go:53:6` | Function 'inspectXZ' has too many statements (74 > 50) | SUPPRESSED |
+| L0559 | `internal/service/account_archive.go:30:26` | Function 'captureAccountArchiveWithDownloader' has too many statements (55 > 50) | SUPPRESSED |
+| L0560 | `internal/service/account_archive_control.go:24:26` | Function 'accountArchiveControl' has too many statements (99 > 50) | FIXED |
+| L0561 | `internal/service/archive_catalog.go:43:26` | Function 'archiveConversations' has too many statements (52 > 50) | FIXED |
+| L0562 | `internal/service/archive_messages.go:156:26` | Function 'archiveMessages' has too many statements (68 > 50) | SUPPRESSED |
+| L0563 | `internal/service/cli.go:28:6` | Function 'RunCLI' has too many statements (94 > 50) | FIXED |
+| L0564 | `internal/service/cli_mobile_ledger.go:29:6` | Function 'mobileLedgerArguments' has too many statements (56 > 50) | SUPPRESSED |
+| L0565 | `internal/service/mobile_archive_probe.go:42:26` | Function 'probeMobileArchiveComparisonWithDownloader' is too long (184 > 100) | SUPPRESSED |
+| L0566 | `internal/service/mobile_history.go:32:26` | Function 'withHistorySession' has too many statements (51 > 50) | SUPPRESSED |
+| L0567 | `internal/service/mobile_ledger_control.go:72:26` | Function 'mobileLedgerControl' has too many statements (62 > 50) | FIXED |
+| L0568 | `internal/service/recall_diagnostic.go:77:26` | Function 'probeRecall' has too many statements (88 > 50) | SUPPRESSED |
+| L0569 | `internal/service/run.go:154:6` | Function 'runConfigured' has too many statements (145 > 50) | SUPPRESSED |
+| L0570 | `internal/service/run.go:501:6` | Function 'collectSession' has too many statements (51 > 50) | FIXED |
 | L0571 | `internal/storage/browse.go:18:17` | Function 'Browse' has too many statements (106 > 50) | FIXED |
 | L0572 | `internal/storage/conversation_views.go:102:17` | Function 'Conversations' has too many statements (69 > 50) | FIXED |
-| L0573 | `internal/storage/deliveries.go:61:17` | Function 'FanoutProfileEvents' has too many statements (89 > 50) | OPEN |
-| L0574 | `internal/storage/event_journal.go:138:17` | Function 'ReadSubscriptionEvents' has too many statements (61 > 50) | OPEN |
-| L0575 | `internal/storage/history_operations.go:430:17` | Function 'commitHistoryRecords' has too many statements (73 > 50) | OPEN |
-| L0576 | `internal/storage/mobile_history.go:158:17` | Function 'CommitMobileHistoryPage' has too many statements (115 > 50) | OPEN |
-| L0577 | `internal/storage/store.go:258:17` | Function 'putMessageTx' is too long (108 > 100) | OPEN |
-| L0578 | `internal/storage/store.go:594:17` | Function 'searchPage' has too many statements (82 > 50) | OPEN |
-| L0579 | `internal/storage/views.go:20:17` | Function 'Groups' has too many statements (59 > 50) | OPEN |
+| L0573 | `internal/storage/deliveries.go:61:17` | Function 'FanoutProfileEvents' has too many statements (89 > 50) | SUPPRESSED |
+| L0574 | `internal/storage/event_journal.go:138:17` | Function 'ReadSubscriptionEvents' has too many statements (61 > 50) | FIXED |
+| L0575 | `internal/storage/history_operations.go:430:17` | Function 'commitHistoryRecords' has too many statements (73 > 50) | SUPPRESSED |
+| L0576 | `internal/storage/mobile_history.go:158:17` | Function 'CommitMobileHistoryPage' has too many statements (115 > 50) | SUPPRESSED |
+| L0577 | `internal/storage/store.go:258:17` | Function 'putMessageTx' is too long (108 > 100) | SUPPRESSED |
+| L0578 | `internal/storage/store.go:594:17` | Function 'searchPage' has too many statements (82 > 50) | FIXED |
+| L0579 | `internal/storage/views.go:20:17` | Function 'Groups' has too many statements (59 > 50) | FIXED |
 | L0580 | `internal/storage/views.go:283:17` | Function 'context' has too many statements (67 > 50) | FIXED |
-| L0581 | `internal/toolruntime/runtime.go:144:6` | Function 'New' has too many statements (60 > 50) | OPEN |
-| L0582 | `internal/toolruntime/runtime.go:464:19` | Function 'dispatch' has too many statements (102 > 50) | OPEN |
-| L0583 | `internal/zalo/mobile_backup.go:60:6` | Function 'receiveMobileBackupOffer' is too long (174 > 100) | OPEN |
-| L0584 | `internal/zalo/preload.go:29:6` | Function 'readConversationPreload' has too many statements (73 > 50) | OPEN |
-| L0585 | `tools/harness/internal/architecture/architecture.go:449:6` | Function 'Check' has too many statements (59 > 50) | OPEN |
-| L0586 | `tools/harness/internal/performance/bench.go:75:6` | Function 'Bench' is too long (140 > 100) | OPEN |
-| L0587 | `tools/harness/internal/performance/compare.go:8:6` | Function 'validate' has too many statements (90 > 50) | OPEN |
-| L0588 | `tools/harness/internal/performance/compare.go:150:6` | Function 'Compare' has too many statements (82 > 50) | OPEN |
-| L0589 | `tools/harness/internal/performance/process.go:18:6` | Function 'process' has too many statements (75 > 50) | OPEN |
+| L0581 | `internal/toolruntime/runtime.go:144:6` | Function 'New' has too many statements (60 > 50) | SUPPRESSED |
+| L0582 | `internal/toolruntime/runtime.go:464:19` | Function 'dispatch' has too many statements (102 > 50) | SUPPRESSED |
+| L0583 | `internal/zalo/mobile_backup.go:60:6` | Function 'receiveMobileBackupOffer' is too long (174 > 100) | FIXED |
+| L0584 | `internal/zalo/preload.go:29:6` | Function 'readConversationPreload' has too many statements (73 > 50) | FIXED |
+| L0585 | `tools/harness/internal/architecture/architecture.go:449:6` | Function 'Check' has too many statements (59 > 50) | FIXED |
+| L0586 | `tools/harness/internal/performance/bench.go:75:6` | Function 'Bench' is too long (140 > 100) | FIXED |
+| L0587 | `tools/harness/internal/performance/compare.go:8:6` | Function 'validate' has too many statements (90 > 50) | FIXED |
+| L0588 | `tools/harness/internal/performance/compare.go:150:6` | Function 'Compare' has too many statements (82 > 50) | FIXED |
+| L0589 | `tools/harness/internal/performance/process.go:18:6` | Function 'process' has too many statements (75 > 50) | SUPPRESSED |
 
 ### gochecknoglobals (12)
 
@@ -945,8 +1049,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Неизменяемые package-private registries/allowlists (toolAliases, descriptions, blockedPrefixes, toolNames, readNames, cases) оставить с nolint:gochecknoglobals и причиной read-only after initialization, проверив отсутствие writers. Exported Kinds/P95Limits сделать private с accessor/copy, чтобы внешний код не менял бюджет. workerOnce/workerPath/workerErr требуют общего владельца lifetime: TestMain build+cleanup или scoped fixture; sync.Once сам по себе не обеспечивает удаление каталога.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L0590 | `docs/contracts/contracts.go:19:5` | toolAliases is a global variable | OPEN |
 | L0591 | `internal/mcpserver/sdk_identity_test.go:25:5` | sdkIdentityCases is a global variable | OPEN |
 | L0592 | `internal/mcpserver/server.go:26:5` | descriptions is a global variable | OPEN |
@@ -958,7 +1062,7 @@ _Заполнить._
 | L0598 | `tools/harness/internal/performance/json.go:24:5` | P95Limits is a global variable | OPEN |
 | L0599 | `tools/harness/internal/performance/performance_test.go:199:5` | workerOnce is a global variable | OPEN |
 | L0600 | `tools/harness/internal/performance/performance_test.go:200:5` | workerPath is a global variable | OPEN |
-| L0601 | `tools/harness/internal/performance/performance_test.go:201:5` | workerErr is a global variable | OPEN |
+| L0601 | `tools/harness/internal/performance/performance_test.go:201:5` | workerErr is a global variable | FIXED |
 
 ### gocognit (205)
 
@@ -968,213 +1072,213 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Production: guard clauses и функции по предметным этапам; в GradeCheckpoint/Grade разделить graders по группам assertions, сохранив полный набор и counters. Tests: table-driven subtests только для независимых случаев; shared restart/transaction scenario сохранять цельным с локальным nolint:gocognit и причиной. Не выносить assertions в helpers без t.Helper и понятного имени.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
-| L0602 | `cmd/zl-mcp-eval/main.go:16:1` | cognitive complexity 58 of func &#96;run&#96; is high (> 20) | OPEN |
-| L0603 | `cmd/zl-mcp-eval/main_test.go:31:1` | cognitive complexity 25 of func &#96;TestCLIExitCodesAndFailedReports&#96; is high (> 20) | OPEN |
-| L0604 | `cmd/zl-mcp-eval/main_test.go:130:1` | cognitive complexity 24 of func &#96;TestOfflineCheckpointCLI&#96; is high (> 20) | OPEN |
-| L0605 | `internal/adapters/operations/read_test.go:53:1` | cognitive complexity 28 of func &#96;TestReadCapabilitiesPreserveNativeProjectionAndCannotDispatchCommands&#96; is high (> 20) | OPEN |
-| L0606 | `internal/adapters/store/catalog_test.go:33:1` | cognitive complexity 28 of func &#96;TestCatalogPortsPreserveNativeNullableDiagnosticsAndIdentity&#96; is high (> 20) | OPEN |
-| L0607 | `internal/adapters/store/conversation_load_test.go:16:1` | cognitive complexity 40 of func &#96;BenchmarkManyConversations&#96; is high (> 20) | OPEN |
-| L0608 | `internal/app/eventaccess/journal_test.go:11:1` | cognitive complexity 28 of func &#96;TestJournalProfileProjectionPreservesNullsAndOpaqueValues&#96; is high (> 20) | OPEN |
-| L0609 | `internal/collector/contact_profiles.go:26:1` | cognitive complexity 40 of func &#96;refreshContactProfiles&#96; is high (> 20) | OPEN |
-| L0610 | `internal/collector/contact_profiles_test.go:36:1` | cognitive complexity 21 of func &#96;TestDirectoryWorkerProfileAuthenticationBoundary&#96; is high (> 20) | OPEN |
-| L0611 | `internal/collector/contact_profiles_test.go:158:1` | cognitive complexity 51 of func &#96;TestProfileRefreshMissingForeignAndBatchLimits&#96; is high (> 20) | OPEN |
-| L0612 | `internal/collector/contacts.go:30:1` | cognitive complexity 33 of func &#96;refreshContacts&#96; is high (> 20) | OPEN |
-| L0613 | `internal/collector/contacts_test.go:20:1` | cognitive complexity 50 of func &#96;TestContactsRefreshBoundsAndPartialRecords&#96; is high (> 20) | OPEN |
-| L0614 | `internal/collector/join.go:213:1` | cognitive complexity 31 of func &#96;(*JoinManager).Start&#96; is high (> 20) | OPEN |
-| L0615 | `internal/collector/join.go:381:1` | cognitive complexity 29 of func &#96;(*JoinManager).execute&#96; is high (> 20) | OPEN |
-| L0616 | `internal/collector/preload_catalog_test.go:22:1` | cognitive complexity 22 of func &#96;TestPreloadRefreshOnlyMergesPermittedMetadataAndKeepsFailureEvidenceSafe&#96; is high (> 20) | OPEN |
-| L0617 | `internal/collector/rpc_test.go:16:1` | cognitive complexity 39 of func &#96;TestControlWorkflowContracts&#96; is high (> 20) | OPEN |
-| L0618 | `internal/collector/run.go:55:1` | cognitive complexity 71 of func &#96;runSession&#96; is high (> 20) | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
+| L0602 | `cmd/zl-mcp-eval/main.go:16:1` | cognitive complexity 58 of func &#96;run&#96; is high (> 20) | FIXED |
+| L0603 | `cmd/zl-mcp-eval/main_test.go:31:1` | cognitive complexity 25 of func &#96;TestCLIExitCodesAndFailedReports&#96; is high (> 20) | SUPPRESSED |
+| L0604 | `cmd/zl-mcp-eval/main_test.go:130:1` | cognitive complexity 24 of func &#96;TestOfflineCheckpointCLI&#96; is high (> 20) | SUPPRESSED |
+| L0605 | `internal/adapters/operations/read_test.go:53:1` | cognitive complexity 28 of func &#96;TestReadCapabilitiesPreserveNativeProjectionAndCannotDispatchCommands&#96; is high (> 20) | SUPPRESSED |
+| L0606 | `internal/adapters/store/catalog_test.go:33:1` | cognitive complexity 28 of func &#96;TestCatalogPortsPreserveNativeNullableDiagnosticsAndIdentity&#96; is high (> 20) | SUPPRESSED |
+| L0607 | `internal/adapters/store/conversation_load_test.go:16:1` | cognitive complexity 40 of func &#96;BenchmarkManyConversations&#96; is high (> 20) | SUPPRESSED |
+| L0608 | `internal/app/eventaccess/journal_test.go:11:1` | cognitive complexity 28 of func &#96;TestJournalProfileProjectionPreservesNullsAndOpaqueValues&#96; is high (> 20) | SUPPRESSED |
+| L0609 | `internal/collector/contact_profiles.go:26:1` | cognitive complexity 40 of func &#96;refreshContactProfiles&#96; is high (> 20) | FIXED |
+| L0610 | `internal/collector/contact_profiles_test.go:36:1` | cognitive complexity 21 of func &#96;TestDirectoryWorkerProfileAuthenticationBoundary&#96; is high (> 20) | SUPPRESSED |
+| L0611 | `internal/collector/contact_profiles_test.go:158:1` | cognitive complexity 51 of func &#96;TestProfileRefreshMissingForeignAndBatchLimits&#96; is high (> 20) | SUPPRESSED |
+| L0612 | `internal/collector/contacts.go:30:1` | cognitive complexity 33 of func &#96;refreshContacts&#96; is high (> 20) | FIXED |
+| L0613 | `internal/collector/contacts_test.go:20:1` | cognitive complexity 50 of func &#96;TestContactsRefreshBoundsAndPartialRecords&#96; is high (> 20) | SUPPRESSED |
+| L0614 | `internal/collector/join.go:213:1` | cognitive complexity 31 of func &#96;(*JoinManager).Start&#96; is high (> 20) | FIXED |
+| L0615 | `internal/collector/join.go:381:1` | cognitive complexity 29 of func &#96;(*JoinManager).execute&#96; is high (> 20) | FIXED |
+| L0616 | `internal/collector/preload_catalog_test.go:22:1` | cognitive complexity 22 of func &#96;TestPreloadRefreshOnlyMergesPermittedMetadataAndKeepsFailureEvidenceSafe&#96; is high (> 20) | SUPPRESSED |
+| L0617 | `internal/collector/rpc_test.go:16:1` | cognitive complexity 39 of func &#96;TestControlWorkflowContracts&#96; is high (> 20) | SUPPRESSED |
+| L0618 | `internal/collector/run.go:55:1` | cognitive complexity 71 of func &#96;runSession&#96; is high (> 20) | FIXED |
 | L0619 | `internal/collector/run.go:270:1` | cognitive complexity 48 of func &#96;ControlHandler&#96; is high (> 20) | FIXED |
-| L0620 | `internal/collector/run_test.go:164:1` | cognitive complexity 58 of func &#96;TestConnectedListenerResolvesOnlyListenerFailure&#96; is high (> 20) | OPEN |
-| L0621 | `internal/config/config.go:47:1` | cognitive complexity 33 of func &#96;Load&#96; is high (> 20) | OPEN |
+| L0620 | `internal/collector/run_test.go:164:1` | cognitive complexity 58 of func &#96;TestConnectedListenerResolvesOnlyListenerFailure&#96; is high (> 20) | SUPPRESSED |
+| L0621 | `internal/config/config.go:47:1` | cognitive complexity 33 of func &#96;Load&#96; is high (> 20) | FIXED |
 | L0622 | `internal/evalfixture/fixture.go:133:1` | cognitive complexity 78 of func &#96;New&#96; is high (> 20) | FIXED |
-| L0623 | `internal/evalfixture/fixture_test.go:137:1` | cognitive complexity 23 of func &#96;TestSyntheticMCPApprovedJoinKeepsOneMutation&#96; is high (> 20) | OPEN |
-| L0624 | `internal/evaluation/checkpoints.go:149:1` | cognitive complexity 123 of func &#96;GradeCheckpoint&#96; is high (> 20) | OPEN |
-| L0625 | `internal/evaluation/checkpoints.go:415:1` | cognitive complexity 23 of func &#96;result&#96; is high (> 20) | OPEN |
-| L0626 | `internal/evaluation/checkpoints_test.go:105:1` | cognitive complexity 29 of func &#96;TestCheckpointDatasetCoverageAndAllCases&#96; is high (> 20) | OPEN |
-| L0627 | `internal/evaluation/checkpoints_test.go:171:1` | cognitive complexity 34 of func &#96;TestCheckpointUniqueNegativeChecks&#96; is high (> 20) | OPEN |
+| L0623 | `internal/evalfixture/fixture_test.go:137:1` | cognitive complexity 23 of func &#96;TestSyntheticMCPApprovedJoinKeepsOneMutation&#96; is high (> 20) | SUPPRESSED |
+| L0624 | `internal/evaluation/checkpoints.go:149:1` | cognitive complexity 123 of func &#96;GradeCheckpoint&#96; is high (> 20) | FIXED |
+| L0625 | `internal/evaluation/checkpoints.go:415:1` | cognitive complexity 23 of func &#96;result&#96; is high (> 20) | FIXED |
+| L0626 | `internal/evaluation/checkpoints_test.go:105:1` | cognitive complexity 29 of func &#96;TestCheckpointDatasetCoverageAndAllCases&#96; is high (> 20) | SUPPRESSED |
+| L0627 | `internal/evaluation/checkpoints_test.go:171:1` | cognitive complexity 34 of func &#96;TestCheckpointUniqueNegativeChecks&#96; is high (> 20) | SUPPRESSED |
 | L0628 | `internal/evaluation/grader.go:19:1` | cognitive complexity 78 of func &#96;Grade&#96; is high (> 20) | FIXED |
-| L0629 | `internal/evaluation/process_test.go:62:1` | cognitive complexity 27 of func &#96;TestWatchdogTerminatesDescendantsAfterNormalExitAndTimeout&#96; is high (> 20) | OPEN |
-| L0630 | `internal/evaluation/process_test.go:107:1` | cognitive complexity 28 of func &#96;TestExternalWatchdogAndOutputBounds&#96; is high (> 20) | OPEN |
-| L0631 | `internal/evaluation/runner.go:45:1` | cognitive complexity 25 of func &#96;loadDataset&#96; is high (> 20) | OPEN |
+| L0629 | `internal/evaluation/process_test.go:62:1` | cognitive complexity 27 of func &#96;TestWatchdogTerminatesDescendantsAfterNormalExitAndTimeout&#96; is high (> 20) | SUPPRESSED |
+| L0630 | `internal/evaluation/process_test.go:107:1` | cognitive complexity 28 of func &#96;TestExternalWatchdogAndOutputBounds&#96; is high (> 20) | SUPPRESSED |
+| L0631 | `internal/evaluation/runner.go:45:1` | cognitive complexity 25 of func &#96;loadDataset&#96; is high (> 20) | FIXED |
 | L0632 | `internal/evaluation/runner.go:135:1` | cognitive complexity 99 of func &#96;Run&#96; is high (> 20) | FIXED |
-| L0633 | `internal/evaluation/scenarios.go:22:1` | cognitive complexity 93 of func &#96;RunCase&#96; is high (> 20) | FIXED |
-| L0634 | `internal/events/conversation_test.go:20:1` | cognitive complexity 50 of func &#96;TestConversationScopesSignedDeliveryAndCancellation&#96; is high (> 20) | OPEN |
-| L0635 | `internal/events/incoming_test.go:20:1` | cognitive complexity 40 of func &#96;TestFilteredProfileCanonicalIdentitySignedPayloadAndCancel&#96; is high (> 20) | OPEN |
-| L0636 | `internal/events/message_test.go:15:1` | cognitive complexity 22 of func &#96;TestMessageEventPreservesIDsAndProvidesFullTextReference&#96; is high (> 20) | OPEN |
-| L0637 | `internal/events/message_test.go:80:1` | cognitive complexity 28 of func &#96;TestConversationEventUnicodeBoundaryAndStableTypedURI&#96; is high (> 20) | OPEN |
+| L0633 | `internal/evaluation/scenarios.go:22:1` | cognitive complexity 93 of func &#96;RunCase&#96; is high (> 20) | SUPPRESSED |
+| L0634 | `internal/events/conversation_test.go:20:1` | cognitive complexity 50 of func &#96;TestConversationScopesSignedDeliveryAndCancellation&#96; is high (> 20) | SUPPRESSED |
+| L0635 | `internal/events/incoming_test.go:20:1` | cognitive complexity 40 of func &#96;TestFilteredProfileCanonicalIdentitySignedPayloadAndCancel&#96; is high (> 20) | SUPPRESSED |
+| L0636 | `internal/events/message_test.go:15:1` | cognitive complexity 22 of func &#96;TestMessageEventPreservesIDsAndProvidesFullTextReference&#96; is high (> 20) | SUPPRESSED |
+| L0637 | `internal/events/message_test.go:80:1` | cognitive complexity 28 of func &#96;TestConversationEventUnicodeBoundaryAndStableTypedURI&#96; is high (> 20) | SUPPRESSED |
 | L0638 | `internal/events/subscriptions.go:132:1` | cognitive complexity 43 of func &#96;(*SubscriptionManager).Call&#96; is high (> 20) | FIXED |
-| L0639 | `internal/events/webhook_test.go:22:1` | cognitive complexity 28 of func &#96;TestVerificationSignatureAndChallenge&#96; is high (> 20) | OPEN |
-| L0640 | `internal/events/worker.go:94:1` | cognitive complexity 29 of func &#96;(*Worker).deliverClaimed&#96; is high (> 20) | OPEN |
-| L0641 | `internal/events/worker.go:188:1` | cognitive complexity 43 of func &#96;(*Worker).Run&#96; is high (> 20) | OPEN |
-| L0642 | `internal/events/worker_test.go:219:1` | cognitive complexity 40 of func &#96;TestBoundedDiagnosticsExcludePrivateContentInEverySink&#96; is high (> 20) | OPEN |
-| L0643 | `internal/historyimport/manager.go:28:1` | cognitive complexity 22 of func &#96;(*Manager).Call&#96; is high (> 20) | OPEN |
-| L0644 | `internal/historyimport/mcp_test.go:27:1` | cognitive complexity 29 of func &#96;TestMCPHistoryImportDiscoveryStatusAndReads&#96; is high (> 20) | OPEN |
-| L0645 | `internal/historyimport/mobile_worker.go:38:1` | cognitive complexity 40 of func &#96;RunMobile&#96; is high (> 20) | OPEN |
-| L0646 | `internal/historyimport/mobile_worker.go:101:1` | cognitive complexity 116 of func &#96;runMobileOperationObserved&#96; is high (> 20) | OPEN |
-| L0647 | `internal/historyimport/worker.go:68:1` | cognitive complexity 64 of func &#96;runOperationObserved&#96; is high (> 20) | OPEN |
-| L0648 | `internal/logging/file_test.go:12:1` | cognitive complexity 21 of func &#96;TestRotationPreservesSizeArchiveCountAndPrivacy&#96; is high (> 20) | OPEN |
-| L0649 | `internal/mcpserver/budget_error_test.go:18:1` | cognitive complexity 26 of func &#96;TestOversizedRecordAndCoverageReturnActionableErrors&#96; is high (> 20) | OPEN |
-| L0650 | `internal/mcpserver/catalog_ports_test.go:25:1` | cognitive complexity 23 of func &#96;TestCatalogToolsAndStaticResourcesShareSingleNativeAdmission&#96; is high (> 20) | OPEN |
-| L0651 | `internal/mcpserver/conversation_events_http_test.go:34:1` | cognitive complexity 50 of func &#96;testConversationProfileTLS&#96; is high (> 20) | OPEN |
-| L0652 | `internal/mcpserver/conversations.go:17:1` | cognitive complexity 50 of func &#96;(*Service).addConversationResources&#96; is high (> 20) | OPEN |
-| L0653 | `internal/mcpserver/conversations_test.go:17:1` | cognitive complexity 36 of func &#96;TestConversationMCPSearchContextCatalogueAndFullText&#96; is high (> 20) | OPEN |
-| L0654 | `internal/mcpserver/final_audit_test.go:43:1` | cognitive complexity 25 of func &#96;TestFinalAuditIncludesPreflightAndPostExecutionFailures&#96; is high (> 20) | OPEN |
+| L0639 | `internal/events/webhook_test.go:22:1` | cognitive complexity 28 of func &#96;TestVerificationSignatureAndChallenge&#96; is high (> 20) | SUPPRESSED |
+| L0640 | `internal/events/worker.go:94:1` | cognitive complexity 29 of func &#96;(*Worker).deliverClaimed&#96; is high (> 20) | FIXED |
+| L0641 | `internal/events/worker.go:188:1` | cognitive complexity 43 of func &#96;(*Worker).Run&#96; is high (> 20) | FIXED |
+| L0642 | `internal/events/worker_test.go:219:1` | cognitive complexity 40 of func &#96;TestBoundedDiagnosticsExcludePrivateContentInEverySink&#96; is high (> 20) | SUPPRESSED |
+| L0643 | `internal/historyimport/manager.go:28:1` | cognitive complexity 22 of func &#96;(*Manager).Call&#96; is high (> 20) | FIXED |
+| L0644 | `internal/historyimport/mcp_test.go:27:1` | cognitive complexity 29 of func &#96;TestMCPHistoryImportDiscoveryStatusAndReads&#96; is high (> 20) | SUPPRESSED |
+| L0645 | `internal/historyimport/mobile_worker.go:38:1` | cognitive complexity 40 of func &#96;RunMobile&#96; is high (> 20) | FIXED |
+| L0646 | `internal/historyimport/mobile_worker.go:101:1` | cognitive complexity 116 of func &#96;runMobileOperationObserved&#96; is high (> 20) | FIXED |
+| L0647 | `internal/historyimport/worker.go:68:1` | cognitive complexity 64 of func &#96;runOperationObserved&#96; is high (> 20) | FIXED |
+| L0648 | `internal/logging/file_test.go:12:1` | cognitive complexity 21 of func &#96;TestRotationPreservesSizeArchiveCountAndPrivacy&#96; is high (> 20) | SUPPRESSED |
+| L0649 | `internal/mcpserver/budget_error_test.go:18:1` | cognitive complexity 26 of func &#96;TestOversizedRecordAndCoverageReturnActionableErrors&#96; is high (> 20) | SUPPRESSED |
+| L0650 | `internal/mcpserver/catalog_ports_test.go:25:1` | cognitive complexity 23 of func &#96;TestCatalogToolsAndStaticResourcesShareSingleNativeAdmission&#96; is high (> 20) | SUPPRESSED |
+| L0651 | `internal/mcpserver/conversation_events_http_test.go:34:1` | cognitive complexity 50 of func &#96;testConversationProfileTLS&#96; is high (> 20) | SUPPRESSED |
+| L0652 | `internal/mcpserver/conversations.go:17:1` | cognitive complexity 50 of func &#96;(*Service).addConversationResources&#96; is high (> 20) | FIXED |
+| L0653 | `internal/mcpserver/conversations_test.go:17:1` | cognitive complexity 36 of func &#96;TestConversationMCPSearchContextCatalogueAndFullText&#96; is high (> 20) | SUPPRESSED |
+| L0654 | `internal/mcpserver/final_audit_test.go:43:1` | cognitive complexity 25 of func &#96;TestFinalAuditIncludesPreflightAndPostExecutionFailures&#96; is high (> 20) | SUPPRESSED |
 | L0655 | `internal/mcpserver/http.go:110:1` | cognitive complexity 56 of func &#96;(*HTTPService).ServeHTTP&#96; is high (> 20) | FIXED |
-| L0656 | `internal/mcpserver/http_test.go:77:1` | cognitive complexity 30 of func &#96;TestHTTPEventsLifecycleWithSignedTLSReceiverAndFullText&#96; is high (> 20) | OPEN |
-| L0657 | `internal/mcpserver/http_test.go:291:1` | cognitive complexity 26 of func &#96;TestEventsHTTPTransportGuards&#96; is high (> 20) | OPEN |
-| L0658 | `internal/mcpserver/migration_baseline_test.go:56:1` | cognitive complexity 49 of func &#96;TestMigrationCatalogBaseline&#96; is high (> 20) | OPEN |
-| L0659 | `internal/mcpserver/migration_inputs_test.go:20:1` | cognitive complexity 31 of func &#96;TestMigrationInputCharacterization&#96; is high (> 20) | OPEN |
-| L0660 | `internal/mcpserver/migration_wire_test.go:16:1` | cognitive complexity 22 of func &#96;TestMigrationJSONRPCIdentityBaseline&#96; is high (> 20) | OPEN |
-| L0661 | `internal/mcpserver/pagination_test.go:18:1` | cognitive complexity 48 of func &#96;TestLargeWirePagesKeepAllResultsAndSearchSnapshot&#96; is high (> 20) | OPEN |
-| L0662 | `internal/mcpserver/sdk_identity_test.go:120:1` | cognitive complexity 23 of func &#96;TestSDK01CodecIdentityRequestsAndResponses&#96; is high (> 20) | OPEN |
-| L0663 | `internal/mcpserver/sdk_identity_test.go:152:1` | cognitive complexity 37 of func &#96;TestSDK01HTTPWrappersPreserveEnvelopeIdentity&#96; is high (> 20) | OPEN |
-| L0664 | `internal/mcpserver/sdk_lifecycle_test.go:273:1` | cognitive complexity 27 of func &#96;TestSDK01LostReplyRetainsDurableUUIDAndNeverResends&#96; is high (> 20) | OPEN |
-| L0665 | `internal/mcpserver/sdk_stdio_identity_test.go:47:1` | cognitive complexity 23 of func &#96;sdkStartRawBridge&#96; is high (> 20) | OPEN |
-| L0666 | `internal/mcpserver/server.go:61:1` | cognitive complexity 39 of func &#96;New&#96; is high (> 20) | OPEN |
-| L0667 | `internal/mcpserver/server.go:239:1` | cognitive complexity 65 of func &#96;(*Service).call&#96; is high (> 20) | OPEN |
-| L0668 | `internal/mcpserver/server_test.go:17:1` | cognitive complexity 23 of func &#96;TestMCPDiscoverySearchContextAndResourceAuthorization&#96; is high (> 20) | OPEN |
-| L0669 | `internal/mcpserver/telemetry_test.go:62:1` | cognitive complexity 22 of func &#96;TestHTTPResponseObservationCountsActualSDKWireBytes&#96; is high (> 20) | OPEN |
-| L0670 | `internal/messaging/manager.go:38:1` | cognitive complexity 45 of func &#96;(*Manager).Call&#96; is high (> 20) | OPEN |
-| L0671 | `internal/messaging/subprocess_restart_test.go:29:1` | cognitive complexity 28 of func &#96;TestCommandOwnerCrashHelper&#96; is high (> 20) | OPEN |
-| L0672 | `internal/mobilebackup/account_inspection.go:48:1` | cognitive complexity 41 of func &#96;(AccountArchive).InspectCoverageWithMetadata&#96; is high (> 20) | OPEN |
-| L0673 | `internal/mobilebackup/account_metadata.go:68:1` | cognitive complexity 42 of func &#96;inspectAccountMetadata&#96; is high (> 20) | OPEN |
-| L0674 | `internal/mobilebackup/archive_restore_test.go:103:1` | cognitive complexity 38 of func &#96;TestRestoreBackupRejectsUnsafeInputsWithoutPublishing&#96; is high (> 20) | OPEN |
-| L0675 | `internal/mobilebackup/attachment_test.go:20:1` | cognitive complexity 22 of func &#96;TestAttachmentNativeFieldsPresenceOwnershipAndRedaction&#96; is high (> 20) | OPEN |
-| L0676 | `internal/mobilebackup/binnet.go:33:1` | cognitive complexity 23 of func &#96;ParseBinNet&#96; is high (> 20) | OPEN |
-| L0677 | `internal/mobilebackup/blocks.go:25:1` | cognitive complexity 22 of func &#96;decryptFormat1&#96; is high (> 20) | OPEN |
-| L0678 | `internal/mobilebackup/control_scan.go:30:1` | cognitive complexity 75 of func &#96;ReadOwnDirectRecallSet&#96; is high (> 20) | OPEN |
-| L0679 | `internal/mobilebackup/control_scan_test.go:124:1` | cognitive complexity 26 of func &#96;TestWholeSourceControlScanReturnsNoPrefixOnInvalidSource&#96; is high (> 20) | OPEN |
-| L0680 | `internal/mobilebackup/download_test.go:35:1` | cognitive complexity 23 of func &#96;TestDownloadExactLengthAndFailureBounds&#96; is high (> 20) | OPEN |
-| L0681 | `internal/mobilebackup/history_page.go:17:1` | cognitive complexity 37 of func &#96;(*SnapshotStore).ReadHistoryPage&#96; is high (> 20) | OPEN |
-| L0682 | `internal/mobilebackup/history_page_test.go:73:1` | cognitive complexity 38 of func &#96;TestSnapshotReaderConverterJournalResumeTogether&#96; is high (> 20) | OPEN |
-| L0683 | `internal/mobilebackup/history_page_test.go:205:1` | cognitive complexity 39 of func &#96;TestSnapshotHistoryPageRejectsBindingAndUnsafeSources&#96; is high (> 20) | OPEN |
-| L0684 | `internal/mobilebackup/history_worker_test.go:476:1` | cognitive complexity 76 of func &#96;TestMobileWorkerLossAndCancellationDoNotRedispatchOrImportPrefixes&#96; is high (> 20) | OPEN |
-| L0685 | `internal/mobilebackup/history_worker_test.go:582:1` | cognitive complexity 29 of func &#96;TestMobileWorkerWholeControlPreludeResumesWithoutRedispatch&#96; is high (> 20) | OPEN |
-| L0686 | `internal/mobilebackup/id_diagnostics.go:9:1` | cognitive complexity 22 of func &#96;rejectedMessageIDShape&#96; is high (> 20) | OPEN |
-| L0687 | `internal/mobilebackup/identities.go:76:1` | cognitive complexity 40 of func &#96;DecodeIdentities&#96; is high (> 20) | OPEN |
-| L0688 | `internal/mobilebackup/message_conversion.go:91:1` | cognitive complexity 43 of func &#96;convertArchiveCandidates&#96; is high (> 20) | OPEN |
-| L0689 | `internal/mobilebackup/message_conversion_test.go:68:1` | cognitive complexity 46 of func &#96;TestMobileRichTextProjectionBoundaries&#96; is high (> 20) | OPEN |
-| L0690 | `internal/mobilebackup/message_conversion_test.go:361:1` | cognitive complexity 33 of func &#96;TestMobilePlainAttachmentFallbackKeepsAdmissionGates&#96; is high (> 20) | OPEN |
-| L0691 | `internal/mobilebackup/native_binary_test.go:18:1` | cognitive complexity 77 of func &#96;TestNativeBinaryTerminalStartupAcceptance&#96; is high (> 20) | OPEN |
-| L0692 | `internal/mobilebackup/offer_runner.go:18:1` | cognitive complexity 24 of func &#96;RunPreparedOffer&#96; is high (> 20) | OPEN |
-| L0693 | `internal/mobilebackup/offer_runner_test.go:97:1` | cognitive complexity 33 of func &#96;TestPreparedOfferFailuresCloseEvidenceAndDiscardOffer&#96; is high (> 20) | OPEN |
-| L0694 | `internal/mobilebackup/own_recall_test.go:72:1` | cognitive complexity 44 of func &#96;TestOwnRecallClassificationScopeAndMappingFailures&#96; is high (> 20) | OPEN |
-| L0695 | `internal/mobilebackup/page_walk_test.go:64:1` | cognitive complexity 32 of func &#96;TestArchiveWalkLimitsAndFailure&#96; is high (> 20) | OPEN |
-| L0696 | `internal/mobilebackup/prepared_page.go:44:1` | cognitive complexity 23 of func &#96;ReadPreparedArchivePage&#96; is high (> 20) | OPEN |
-| L0697 | `internal/mobilebackup/quote.go:37:1` | cognitive complexity 25 of func &#96;ParseQuoteScalars&#96; is high (> 20) | OPEN |
-| L0698 | `internal/mobilebackup/recall_history_test.go:14:1` | cognitive complexity 39 of func &#96;TestRecallSnapshotConverterJournalResumeTogether&#96; is high (> 20) | OPEN |
-| L0699 | `internal/mobilebackup/retained_archive.go:448:1` | cognitive complexity 26 of func &#96;(*RetainedArchiveStore).decode&#96; is high (> 20) | OPEN |
-| L0700 | `internal/mobilebackup/retained_archive.go:538:1` | cognitive complexity 31 of func &#96;(*RetainedArchiveStore).inventory&#96; is high (> 20) | OPEN |
-| L0701 | `internal/mobilebackup/retained_archive_test.go:172:1` | cognitive complexity 29 of func &#96;TestRetainedArchiveExpiryRemovalAndSpentIDs&#96; is high (> 20) | FIXED |
-| L0702 | `internal/mobilebackup/retained_archive_test.go:223:1` | cognitive complexity 41 of func &#96;TestRetainedArchiveTamperingKeyLossAndUnsafeArtifacts&#96; is high (> 20) | OPEN |
-| L0703 | `internal/mobilebackup/row_page.go:81:1` | cognitive complexity 72 of func &#96;PrepareRowPage&#96; is high (> 20) | OPEN |
-| L0704 | `internal/mobilebackup/session_download_test.go:22:1` | cognitive complexity 36 of func &#96;TestSessionDownloaderPreservesValidationAndBodyBounds&#96; is high (> 20) | OPEN |
-| L0705 | `internal/mobilebackup/snapshot.go:193:1` | cognitive complexity 24 of func &#96;snapshotKey&#96; is high (> 20) | OPEN |
-| L0706 | `internal/mobilebackup/snapshot.go:278:1` | cognitive complexity 25 of func &#96;(*SnapshotStore).Save&#96; is high (> 20) | OPEN |
-| L0707 | `internal/mobilebackup/snapshot.go:506:1` | cognitive complexity 29 of func &#96;(*SnapshotStore).sweep&#96; is high (> 20) | OPEN |
-| L0708 | `internal/mobilebackup/snapshot_information_test.go:112:1` | cognitive complexity 21 of func &#96;TestSnapshotNativeExclusionAndUnclassifiedControlGuard&#96; is high (> 20) | OPEN |
-| L0709 | `internal/mobilebackup/snapshot_page.go:76:1` | cognitive complexity 68 of func &#96;(AccountArchive).ReadSnapshotPage&#96; is high (> 20) | OPEN |
-| L0710 | `internal/mobilebackup/snapshot_page_test.go:18:1` | cognitive complexity 33 of func &#96;snapshotProjectionFixture&#96; is high (> 20) | OPEN |
-| L0711 | `internal/mobilebackup/snapshot_page_test.go:108:1` | cognitive complexity 23 of func &#96;TestSnapshotTextProjectionIdentityAuthorsAndGaps&#96; is high (> 20) | OPEN |
-| L0712 | `internal/mobilebackup/snapshot_recalls_test.go:15:1` | cognitive complexity 57 of func &#96;TestSnapshotRecallsSuppressWholeSourceTargetsAcrossPagingAndNamespaces&#96; is high (> 20) | OPEN |
-| L0713 | `internal/mobilebackup/snapshot_recalls_test.go:143:1` | cognitive complexity 27 of func &#96;TestSnapshotRecallInvalidWholeSourceReturnsNoPrefix&#96; is high (> 20) | OPEN |
-| L0714 | `internal/mobilebackup/snapshot_sqlite_test.go:13:1` | cognitive complexity 33 of func &#96;TestSnapshotSQLiteZeroIDsPagingAndImportIsolation&#96; is high (> 20) | OPEN |
-| L0715 | `internal/mobilebackup/snapshot_sqlite_test.go:129:1` | cognitive complexity 24 of func &#96;TestSnapshotSQLiteBlocksEveryDeferredControlOutsideWindow&#96; is high (> 20) | OPEN |
-| L0716 | `internal/mobilebackup/snapshot_terminal.go:15:1` | cognitive complexity 57 of func &#96;(*SnapshotStore).CleanupTerminal&#96; is high (> 20) | OPEN |
-| L0717 | `internal/mobilebackup/snapshot_test.go:196:1` | cognitive complexity 34 of func &#96;TestSnapshotCorruptionAndMissingKeyFailWithoutRotation&#96; is high (> 20) | OPEN |
-| L0718 | `internal/mobilebackup/snapshot_test.go:349:1` | cognitive complexity 29 of func &#96;TestSnapshotRejectsTruncatedClaimsAndUnownedArtifacts&#96; is high (> 20) | OPEN |
-| L0719 | `internal/mobilebackup/sqlite.go:169:1` | cognitive complexity 99 of func &#96;readSQLitePageMode&#96; is high (> 20) | OPEN |
-| L0720 | `internal/mobilebackup/sqlite.go:530:1` | cognitive complexity 27 of func &#96;sqliteRowMode&#96; is high (> 20) | OPEN |
-| L0721 | `internal/mobilebackup/sqlite_test.go:180:1` | cognitive complexity 36 of func &#96;TestSQLitePaginationTiesRejectedRowsAndBoundCursor&#96; is high (> 20) | OPEN |
-| L0722 | `internal/mobilebackup/xz.go:53:1` | cognitive complexity 56 of func &#96;inspectXZ&#96; is high (> 20) | FIXED |
-| L0723 | `internal/mobilebackup/xz.go:153:1` | cognitive complexity 22 of func &#96;inspectXZBlock&#96; is high (> 20) | OPEN |
-| L0724 | `internal/observability/native_test.go:48:1` | cognitive complexity 25 of func &#96;TestNativeSendRecordsOneAmbiguousEffectWithoutRetry&#96; is high (> 20) | OPEN |
-| L0725 | `internal/observability/native_test.go:145:1` | cognitive complexity 23 of func &#96;TestNativeHistoryWorkerKeepsLedgerAndRequestLink&#96; is high (> 20) | OPEN |
-| L0726 | `internal/observability/observer_test.go:61:1` | cognitive complexity 26 of func &#96;count&#96; is high (> 20) | OPEN |
-| L0727 | `internal/observability/observer_test.go:178:1` | cognitive complexity 26 of func &#96;TestSignalsAndOpaqueWorkerCorrelation&#96; is high (> 20) | OPEN |
-| L0728 | `internal/observability/provider.go:42:1` | cognitive complexity 24 of func &#96;NewOwned&#96; is high (> 20) | OPEN |
-| L0729 | `internal/service/account_archive.go:30:1` | cognitive complexity 22 of func &#96;(*membershipPort).captureAccountArchiveWithDownloader&#96; is high (> 20) | OPEN |
-| L0730 | `internal/service/account_archive_control.go:24:1` | cognitive complexity 33 of func &#96;(*membershipPort).accountArchiveControl&#96; is high (> 20) | OPEN |
-| L0731 | `internal/service/account_archive_test.go:51:1` | cognitive complexity 65 of func &#96;testAccountArchiveCapture&#96; is high (> 20) | OPEN |
-| L0732 | `internal/service/archive_catalog.go:43:1` | cognitive complexity 34 of func &#96;(*membershipPort).archiveConversations&#96; is high (> 20) | OPEN |
-| L0733 | `internal/service/archive_catalog_test.go:14:1` | cognitive complexity 37 of func &#96;testOfflineArchiveCatalogue&#96; is high (> 20) | OPEN |
-| L0734 | `internal/service/archive_messages.go:156:1` | cognitive complexity 29 of func &#96;(*membershipPort).archiveMessages&#96; is high (> 20) | OPEN |
-| L0735 | `internal/service/archive_messages_test.go:20:1` | cognitive complexity 60 of func &#96;testOfflineArchiveMessages&#96; is high (> 20) | OPEN |
-| L0736 | `internal/service/cli.go:28:1` | cognitive complexity 43 of func &#96;RunCLI&#96; is high (> 20) | OPEN |
-| L0737 | `internal/service/cli_mobile_ledger.go:29:1` | cognitive complexity 41 of func &#96;mobileLedgerArguments&#96; is high (> 20) | OPEN |
-| L0738 | `internal/service/conversations_test.go:122:1` | cognitive complexity 76 of func &#96;testConversationServiceProfile&#96; is high (> 20) | OPEN |
-| L0739 | `internal/service/events_restart_test.go:123:1` | cognitive complexity 59 of func &#96;TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary&#96; is high (> 20) | OPEN |
-| L0740 | `internal/service/history_test.go:82:1` | cognitive complexity 62 of func &#96;TestHTTPHistoryToolsUseExistingCollectorSession&#96; is high (> 20) | OPEN |
-| L0741 | `internal/service/mobile_archive_probe.go:42:1` | cognitive complexity 49 of func &#96;(*membershipPort).probeMobileArchiveComparisonWithDownloader&#96; is high (> 20) | OPEN |
-| L0742 | `internal/service/mobile_archive_probe_test.go:28:1` | cognitive complexity 25 of func &#96;TestMobileArchiveProbeBoundedOneShotWithoutPersistence&#96; is high (> 20) | OPEN |
-| L0743 | `internal/service/mobile_backup.go:53:1` | cognitive complexity 22 of func &#96;(*membershipPort).consumePreparedMobileArchive&#96; is high (> 20) | OPEN |
-| L0744 | `internal/service/mobile_history_test.go:47:1` | cognitive complexity 27 of func &#96;TestMobileHistoryWorkerUsesExistingCollector&#96; is high (> 20) | OPEN |
-| L0745 | `internal/service/mobile_history_test.go:161:1` | cognitive complexity 41 of func &#96;TestMobileHistorySessionLifetime&#96; is high (> 20) | OPEN |
-| L0746 | `internal/service/mobile_ledger_control.go:26:1` | cognitive complexity 24 of func &#96;uniqueLedgerJSON&#96; is high (> 20) | OPEN |
-| L0747 | `internal/service/mobile_ledger_control.go:72:1` | cognitive complexity 37 of func &#96;(*membershipPort).mobileLedgerControl&#96; is high (> 20) | OPEN |
-| L0748 | `internal/service/mobile_page_test.go:103:1` | cognitive complexity 98 of func &#96;TestServiceMobilePageUsesCollectorSessionAndExpiresHistoricalRows&#96; is high (> 20) | OPEN |
-| L0749 | `internal/service/multiprocess_test.go:40:1` | cognitive complexity 96 of func &#96;TestTwoMCPProcessesReadCollectorWrites&#96; is high (> 20) | OPEN |
-| L0750 | `internal/service/preload_probe_test.go:42:1` | cognitive complexity 25 of func &#96;TestPrivatePreloadProbeUsesServiceSessionWithoutPersistingCorpus&#96; is high (> 20) | OPEN |
-| L0751 | `internal/service/recall_diagnostic.go:77:1` | cognitive complexity 44 of func &#96;(*membershipPort).probeRecall&#96; is high (> 20) | OPEN |
-| L0752 | `internal/service/run.go:154:1` | cognitive complexity 70 of func &#96;runConfigured&#96; is high (> 20) | OPEN |
-| L0753 | `internal/service/run.go:501:1` | cognitive complexity 68 of func &#96;collectSession&#96; is high (> 20) | OPEN |
-| L0754 | `internal/service/run_test.go:49:1` | cognitive complexity 106 of func &#96;TestServicePreservesMCPWhenAuthenticationIsRequired&#96; is high (> 20) | OPEN |
-| L0755 | `internal/service/sending_test.go:79:1` | cognitive complexity 43 of func &#96;TestServiceSendAndReplyUseCollectorSessionAndPersistAcrossRestart&#96; is high (> 20) | OPEN |
+| L0656 | `internal/mcpserver/http_test.go:77:1` | cognitive complexity 30 of func &#96;TestHTTPEventsLifecycleWithSignedTLSReceiverAndFullText&#96; is high (> 20) | SUPPRESSED |
+| L0657 | `internal/mcpserver/http_test.go:291:1` | cognitive complexity 26 of func &#96;TestEventsHTTPTransportGuards&#96; is high (> 20) | SUPPRESSED |
+| L0658 | `internal/mcpserver/migration_baseline_test.go:56:1` | cognitive complexity 49 of func &#96;TestMigrationCatalogBaseline&#96; is high (> 20) | SUPPRESSED |
+| L0659 | `internal/mcpserver/migration_inputs_test.go:20:1` | cognitive complexity 31 of func &#96;TestMigrationInputCharacterization&#96; is high (> 20) | SUPPRESSED |
+| L0660 | `internal/mcpserver/migration_wire_test.go:16:1` | cognitive complexity 22 of func &#96;TestMigrationJSONRPCIdentityBaseline&#96; is high (> 20) | SUPPRESSED |
+| L0661 | `internal/mcpserver/pagination_test.go:18:1` | cognitive complexity 48 of func &#96;TestLargeWirePagesKeepAllResultsAndSearchSnapshot&#96; is high (> 20) | SUPPRESSED |
+| L0662 | `internal/mcpserver/sdk_identity_test.go:120:1` | cognitive complexity 23 of func &#96;TestSDK01CodecIdentityRequestsAndResponses&#96; is high (> 20) | SUPPRESSED |
+| L0663 | `internal/mcpserver/sdk_identity_test.go:152:1` | cognitive complexity 37 of func &#96;TestSDK01HTTPWrappersPreserveEnvelopeIdentity&#96; is high (> 20) | SUPPRESSED |
+| L0664 | `internal/mcpserver/sdk_lifecycle_test.go:273:1` | cognitive complexity 27 of func &#96;TestSDK01LostReplyRetainsDurableUUIDAndNeverResends&#96; is high (> 20) | SUPPRESSED |
+| L0665 | `internal/mcpserver/sdk_stdio_identity_test.go:47:1` | cognitive complexity 23 of func &#96;sdkStartRawBridge&#96; is high (> 20) | SUPPRESSED |
+| L0666 | `internal/mcpserver/server.go:61:1` | cognitive complexity 39 of func &#96;New&#96; is high (> 20) | SUPPRESSED |
+| L0667 | `internal/mcpserver/server.go:239:1` | cognitive complexity 65 of func &#96;(*Service).call&#96; is high (> 20) | FIXED |
+| L0668 | `internal/mcpserver/server_test.go:17:1` | cognitive complexity 23 of func &#96;TestMCPDiscoverySearchContextAndResourceAuthorization&#96; is high (> 20) | SUPPRESSED |
+| L0669 | `internal/mcpserver/telemetry_test.go:62:1` | cognitive complexity 22 of func &#96;TestHTTPResponseObservationCountsActualSDKWireBytes&#96; is high (> 20) | SUPPRESSED |
+| L0670 | `internal/messaging/manager.go:38:1` | cognitive complexity 45 of func &#96;(*Manager).Call&#96; is high (> 20) | FIXED |
+| L0671 | `internal/messaging/subprocess_restart_test.go:29:1` | cognitive complexity 28 of func &#96;TestCommandOwnerCrashHelper&#96; is high (> 20) | SUPPRESSED |
+| L0672 | `internal/mobilebackup/account_inspection.go:48:1` | cognitive complexity 41 of func &#96;(AccountArchive).InspectCoverageWithMetadata&#96; is high (> 20) | FIXED |
+| L0673 | `internal/mobilebackup/account_metadata.go:68:1` | cognitive complexity 42 of func &#96;inspectAccountMetadata&#96; is high (> 20) | FIXED |
+| L0674 | `internal/mobilebackup/archive_restore_test.go:103:1` | cognitive complexity 38 of func &#96;TestRestoreBackupRejectsUnsafeInputsWithoutPublishing&#96; is high (> 20) | SUPPRESSED |
+| L0675 | `internal/mobilebackup/attachment_test.go:20:1` | cognitive complexity 22 of func &#96;TestAttachmentNativeFieldsPresenceOwnershipAndRedaction&#96; is high (> 20) | SUPPRESSED |
+| L0676 | `internal/mobilebackup/binnet.go:33:1` | cognitive complexity 23 of func &#96;ParseBinNet&#96; is high (> 20) | SUPPRESSED |
+| L0677 | `internal/mobilebackup/blocks.go:25:1` | cognitive complexity 22 of func &#96;decryptFormat1&#96; is high (> 20) | SUPPRESSED |
+| L0678 | `internal/mobilebackup/control_scan.go:30:1` | cognitive complexity 75 of func &#96;ReadOwnDirectRecallSet&#96; is high (> 20) | SUPPRESSED |
+| L0679 | `internal/mobilebackup/control_scan_test.go:124:1` | cognitive complexity 26 of func &#96;TestWholeSourceControlScanReturnsNoPrefixOnInvalidSource&#96; is high (> 20) | SUPPRESSED |
+| L0680 | `internal/mobilebackup/download_test.go:35:1` | cognitive complexity 23 of func &#96;TestDownloadExactLengthAndFailureBounds&#96; is high (> 20) | SUPPRESSED |
+| L0681 | `internal/mobilebackup/history_page.go:17:1` | cognitive complexity 37 of func &#96;(*SnapshotStore).ReadHistoryPage&#96; is high (> 20) | SUPPRESSED |
+| L0682 | `internal/mobilebackup/history_page_test.go:73:1` | cognitive complexity 38 of func &#96;TestSnapshotReaderConverterJournalResumeTogether&#96; is high (> 20) | SUPPRESSED |
+| L0683 | `internal/mobilebackup/history_page_test.go:205:1` | cognitive complexity 39 of func &#96;TestSnapshotHistoryPageRejectsBindingAndUnsafeSources&#96; is high (> 20) | SUPPRESSED |
+| L0684 | `internal/mobilebackup/history_worker_test.go:476:1` | cognitive complexity 76 of func &#96;TestMobileWorkerLossAndCancellationDoNotRedispatchOrImportPrefixes&#96; is high (> 20) | SUPPRESSED |
+| L0685 | `internal/mobilebackup/history_worker_test.go:582:1` | cognitive complexity 29 of func &#96;TestMobileWorkerWholeControlPreludeResumesWithoutRedispatch&#96; is high (> 20) | SUPPRESSED |
+| L0686 | `internal/mobilebackup/id_diagnostics.go:9:1` | cognitive complexity 22 of func &#96;rejectedMessageIDShape&#96; is high (> 20) | SUPPRESSED |
+| L0687 | `internal/mobilebackup/identities.go:76:1` | cognitive complexity 40 of func &#96;DecodeIdentities&#96; is high (> 20) | SUPPRESSED |
+| L0688 | `internal/mobilebackup/message_conversion.go:91:1` | cognitive complexity 43 of func &#96;convertArchiveCandidates&#96; is high (> 20) | FIXED |
+| L0689 | `internal/mobilebackup/message_conversion_test.go:68:1` | cognitive complexity 46 of func &#96;TestMobileRichTextProjectionBoundaries&#96; is high (> 20) | SUPPRESSED |
+| L0690 | `internal/mobilebackup/message_conversion_test.go:361:1` | cognitive complexity 33 of func &#96;TestMobilePlainAttachmentFallbackKeepsAdmissionGates&#96; is high (> 20) | SUPPRESSED |
+| L0691 | `internal/mobilebackup/native_binary_test.go:18:1` | cognitive complexity 77 of func &#96;TestNativeBinaryTerminalStartupAcceptance&#96; is high (> 20) | SUPPRESSED |
+| L0692 | `internal/mobilebackup/offer_runner.go:18:1` | cognitive complexity 24 of func &#96;RunPreparedOffer&#96; is high (> 20) | FIXED |
+| L0693 | `internal/mobilebackup/offer_runner_test.go:97:1` | cognitive complexity 33 of func &#96;TestPreparedOfferFailuresCloseEvidenceAndDiscardOffer&#96; is high (> 20) | SUPPRESSED |
+| L0694 | `internal/mobilebackup/own_recall_test.go:72:1` | cognitive complexity 44 of func &#96;TestOwnRecallClassificationScopeAndMappingFailures&#96; is high (> 20) | SUPPRESSED |
+| L0695 | `internal/mobilebackup/page_walk_test.go:64:1` | cognitive complexity 32 of func &#96;TestArchiveWalkLimitsAndFailure&#96; is high (> 20) | SUPPRESSED |
+| L0696 | `internal/mobilebackup/prepared_page.go:44:1` | cognitive complexity 23 of func &#96;ReadPreparedArchivePage&#96; is high (> 20) | SUPPRESSED |
+| L0697 | `internal/mobilebackup/quote.go:37:1` | cognitive complexity 25 of func &#96;ParseQuoteScalars&#96; is high (> 20) | SUPPRESSED |
+| L0698 | `internal/mobilebackup/recall_history_test.go:14:1` | cognitive complexity 39 of func &#96;TestRecallSnapshotConverterJournalResumeTogether&#96; is high (> 20) | SUPPRESSED |
+| L0699 | `internal/mobilebackup/retained_archive.go:448:1` | cognitive complexity 26 of func &#96;(*RetainedArchiveStore).decode&#96; is high (> 20) | SUPPRESSED |
+| L0700 | `internal/mobilebackup/retained_archive.go:538:1` | cognitive complexity 31 of func &#96;(*RetainedArchiveStore).inventory&#96; is high (> 20) | FIXED |
+| L0701 | `internal/mobilebackup/retained_archive_test.go:172:1` | cognitive complexity 29 of func &#96;TestRetainedArchiveExpiryRemovalAndSpentIDs&#96; is high (> 20) | SUPPRESSED |
+| L0702 | `internal/mobilebackup/retained_archive_test.go:223:1` | cognitive complexity 41 of func &#96;TestRetainedArchiveTamperingKeyLossAndUnsafeArtifacts&#96; is high (> 20) | SUPPRESSED |
+| L0703 | `internal/mobilebackup/row_page.go:81:1` | cognitive complexity 72 of func &#96;PrepareRowPage&#96; is high (> 20) | FIXED |
+| L0704 | `internal/mobilebackup/session_download_test.go:22:1` | cognitive complexity 36 of func &#96;TestSessionDownloaderPreservesValidationAndBodyBounds&#96; is high (> 20) | SUPPRESSED |
+| L0705 | `internal/mobilebackup/snapshot.go:193:1` | cognitive complexity 24 of func &#96;snapshotKey&#96; is high (> 20) | FIXED |
+| L0706 | `internal/mobilebackup/snapshot.go:278:1` | cognitive complexity 25 of func &#96;(*SnapshotStore).Save&#96; is high (> 20) | SUPPRESSED |
+| L0707 | `internal/mobilebackup/snapshot.go:506:1` | cognitive complexity 29 of func &#96;(*SnapshotStore).sweep&#96; is high (> 20) | FIXED |
+| L0708 | `internal/mobilebackup/snapshot_information_test.go:112:1` | cognitive complexity 21 of func &#96;TestSnapshotNativeExclusionAndUnclassifiedControlGuard&#96; is high (> 20) | SUPPRESSED |
+| L0709 | `internal/mobilebackup/snapshot_page.go:76:1` | cognitive complexity 68 of func &#96;(AccountArchive).ReadSnapshotPage&#96; is high (> 20) | FIXED |
+| L0710 | `internal/mobilebackup/snapshot_page_test.go:18:1` | cognitive complexity 33 of func &#96;snapshotProjectionFixture&#96; is high (> 20) | SUPPRESSED |
+| L0711 | `internal/mobilebackup/snapshot_page_test.go:108:1` | cognitive complexity 23 of func &#96;TestSnapshotTextProjectionIdentityAuthorsAndGaps&#96; is high (> 20) | SUPPRESSED |
+| L0712 | `internal/mobilebackup/snapshot_recalls_test.go:15:1` | cognitive complexity 57 of func &#96;TestSnapshotRecallsSuppressWholeSourceTargetsAcrossPagingAndNamespaces&#96; is high (> 20) | SUPPRESSED |
+| L0713 | `internal/mobilebackup/snapshot_recalls_test.go:143:1` | cognitive complexity 27 of func &#96;TestSnapshotRecallInvalidWholeSourceReturnsNoPrefix&#96; is high (> 20) | SUPPRESSED |
+| L0714 | `internal/mobilebackup/snapshot_sqlite_test.go:13:1` | cognitive complexity 33 of func &#96;TestSnapshotSQLiteZeroIDsPagingAndImportIsolation&#96; is high (> 20) | SUPPRESSED |
+| L0715 | `internal/mobilebackup/snapshot_sqlite_test.go:129:1` | cognitive complexity 24 of func &#96;TestSnapshotSQLiteBlocksEveryDeferredControlOutsideWindow&#96; is high (> 20) | SUPPRESSED |
+| L0716 | `internal/mobilebackup/snapshot_terminal.go:15:1` | cognitive complexity 57 of func &#96;(*SnapshotStore).CleanupTerminal&#96; is high (> 20) | FIXED |
+| L0717 | `internal/mobilebackup/snapshot_test.go:196:1` | cognitive complexity 34 of func &#96;TestSnapshotCorruptionAndMissingKeyFailWithoutRotation&#96; is high (> 20) | SUPPRESSED |
+| L0718 | `internal/mobilebackup/snapshot_test.go:349:1` | cognitive complexity 29 of func &#96;TestSnapshotRejectsTruncatedClaimsAndUnownedArtifacts&#96; is high (> 20) | SUPPRESSED |
+| L0719 | `internal/mobilebackup/sqlite.go:169:1` | cognitive complexity 99 of func &#96;readSQLitePageMode&#96; is high (> 20) | FIXED |
+| L0720 | `internal/mobilebackup/sqlite.go:530:1` | cognitive complexity 27 of func &#96;sqliteRowMode&#96; is high (> 20) | SUPPRESSED |
+| L0721 | `internal/mobilebackup/sqlite_test.go:180:1` | cognitive complexity 36 of func &#96;TestSQLitePaginationTiesRejectedRowsAndBoundCursor&#96; is high (> 20) | SUPPRESSED |
+| L0722 | `internal/mobilebackup/xz.go:53:1` | cognitive complexity 56 of func &#96;inspectXZ&#96; is high (> 20) | SUPPRESSED |
+| L0723 | `internal/mobilebackup/xz.go:153:1` | cognitive complexity 22 of func &#96;inspectXZBlock&#96; is high (> 20) | SUPPRESSED |
+| L0724 | `internal/observability/native_test.go:48:1` | cognitive complexity 25 of func &#96;TestNativeSendRecordsOneAmbiguousEffectWithoutRetry&#96; is high (> 20) | SUPPRESSED |
+| L0725 | `internal/observability/native_test.go:145:1` | cognitive complexity 23 of func &#96;TestNativeHistoryWorkerKeepsLedgerAndRequestLink&#96; is high (> 20) | SUPPRESSED |
+| L0726 | `internal/observability/observer_test.go:61:1` | cognitive complexity 26 of func &#96;count&#96; is high (> 20) | SUPPRESSED |
+| L0727 | `internal/observability/observer_test.go:178:1` | cognitive complexity 26 of func &#96;TestSignalsAndOpaqueWorkerCorrelation&#96; is high (> 20) | SUPPRESSED |
+| L0728 | `internal/observability/provider.go:42:1` | cognitive complexity 24 of func &#96;NewOwned&#96; is high (> 20) | FIXED |
+| L0729 | `internal/service/account_archive.go:30:1` | cognitive complexity 22 of func &#96;(*membershipPort).captureAccountArchiveWithDownloader&#96; is high (> 20) | SUPPRESSED |
+| L0730 | `internal/service/account_archive_control.go:24:1` | cognitive complexity 33 of func &#96;(*membershipPort).accountArchiveControl&#96; is high (> 20) | FIXED |
+| L0731 | `internal/service/account_archive_test.go:51:1` | cognitive complexity 65 of func &#96;testAccountArchiveCapture&#96; is high (> 20) | SUPPRESSED |
+| L0732 | `internal/service/archive_catalog.go:43:1` | cognitive complexity 34 of func &#96;(*membershipPort).archiveConversations&#96; is high (> 20) | FIXED |
+| L0733 | `internal/service/archive_catalog_test.go:14:1` | cognitive complexity 37 of func &#96;testOfflineArchiveCatalogue&#96; is high (> 20) | SUPPRESSED |
+| L0734 | `internal/service/archive_messages.go:156:1` | cognitive complexity 29 of func &#96;(*membershipPort).archiveMessages&#96; is high (> 20) | FIXED |
+| L0735 | `internal/service/archive_messages_test.go:20:1` | cognitive complexity 60 of func &#96;testOfflineArchiveMessages&#96; is high (> 20) | SUPPRESSED |
+| L0736 | `internal/service/cli.go:28:1` | cognitive complexity 43 of func &#96;RunCLI&#96; is high (> 20) | FIXED |
+| L0737 | `internal/service/cli_mobile_ledger.go:29:1` | cognitive complexity 41 of func &#96;mobileLedgerArguments&#96; is high (> 20) | SUPPRESSED |
+| L0738 | `internal/service/conversations_test.go:122:1` | cognitive complexity 76 of func &#96;testConversationServiceProfile&#96; is high (> 20) | SUPPRESSED |
+| L0739 | `internal/service/events_restart_test.go:123:1` | cognitive complexity 59 of func &#96;TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary&#96; is high (> 20) | SUPPRESSED |
+| L0740 | `internal/service/history_test.go:82:1` | cognitive complexity 62 of func &#96;TestHTTPHistoryToolsUseExistingCollectorSession&#96; is high (> 20) | SUPPRESSED |
+| L0741 | `internal/service/mobile_archive_probe.go:42:1` | cognitive complexity 49 of func &#96;(*membershipPort).probeMobileArchiveComparisonWithDownloader&#96; is high (> 20) | FIXED |
+| L0742 | `internal/service/mobile_archive_probe_test.go:28:1` | cognitive complexity 25 of func &#96;TestMobileArchiveProbeBoundedOneShotWithoutPersistence&#96; is high (> 20) | SUPPRESSED |
+| L0743 | `internal/service/mobile_backup.go:53:1` | cognitive complexity 22 of func &#96;(*membershipPort).consumePreparedMobileArchive&#96; is high (> 20) | FIXED |
+| L0744 | `internal/service/mobile_history_test.go:47:1` | cognitive complexity 27 of func &#96;TestMobileHistoryWorkerUsesExistingCollector&#96; is high (> 20) | SUPPRESSED |
+| L0745 | `internal/service/mobile_history_test.go:161:1` | cognitive complexity 41 of func &#96;TestMobileHistorySessionLifetime&#96; is high (> 20) | SUPPRESSED |
+| L0746 | `internal/service/mobile_ledger_control.go:26:1` | cognitive complexity 24 of func &#96;uniqueLedgerJSON&#96; is high (> 20) | SUPPRESSED |
+| L0747 | `internal/service/mobile_ledger_control.go:72:1` | cognitive complexity 37 of func &#96;(*membershipPort).mobileLedgerControl&#96; is high (> 20) | FIXED |
+| L0748 | `internal/service/mobile_page_test.go:103:1` | cognitive complexity 98 of func &#96;TestServiceMobilePageUsesCollectorSessionAndExpiresHistoricalRows&#96; is high (> 20) | SUPPRESSED |
+| L0749 | `internal/service/multiprocess_test.go:40:1` | cognitive complexity 96 of func &#96;TestTwoMCPProcessesReadCollectorWrites&#96; is high (> 20) | SUPPRESSED |
+| L0750 | `internal/service/preload_probe_test.go:42:1` | cognitive complexity 25 of func &#96;TestPrivatePreloadProbeUsesServiceSessionWithoutPersistingCorpus&#96; is high (> 20) | SUPPRESSED |
+| L0751 | `internal/service/recall_diagnostic.go:77:1` | cognitive complexity 44 of func &#96;(*membershipPort).probeRecall&#96; is high (> 20) | SUPPRESSED |
+| L0752 | `internal/service/run.go:154:1` | cognitive complexity 70 of func &#96;runConfigured&#96; is high (> 20) | SUPPRESSED |
+| L0753 | `internal/service/run.go:501:1` | cognitive complexity 68 of func &#96;collectSession&#96; is high (> 20) | FIXED |
+| L0754 | `internal/service/run_test.go:49:1` | cognitive complexity 106 of func &#96;TestServicePreservesMCPWhenAuthenticationIsRequired&#96; is high (> 20) | SUPPRESSED |
+| L0755 | `internal/service/sending_test.go:79:1` | cognitive complexity 43 of func &#96;TestServiceSendAndReplyUseCollectorSessionAndPersistAcrossRestart&#96; is high (> 20) | SUPPRESSED |
 | L0756 | `internal/storage/browse.go:18:1` | cognitive complexity 57 of func &#96;(*Store).Browse&#96; is high (> 20) | FIXED |
-| L0757 | `internal/storage/contacts.go:45:1` | cognitive complexity 29 of func &#96;(*Store).PutContacts&#96; is high (> 20) | OPEN |
+| L0757 | `internal/storage/contacts.go:45:1` | cognitive complexity 29 of func &#96;(*Store).PutContacts&#96; is high (> 20) | SUPPRESSED |
 | L0758 | `internal/storage/conversation_views.go:102:1` | cognitive complexity 39 of func &#96;(*Store).Conversations&#96; is high (> 20) | FIXED |
-| L0759 | `internal/storage/deliveries.go:61:1` | cognitive complexity 54 of func &#96;(*Store).FanoutProfileEvents&#96; is high (> 20) | OPEN |
-| L0760 | `internal/storage/deliveries.go:240:1` | cognitive complexity 30 of func &#96;(*Store).ClaimDelivery&#96; is high (> 20) | OPEN |
-| L0761 | `internal/storage/deliveries_test.go:18:1` | cognitive complexity 21 of func &#96;TestBroadConversationFanoutCapacityPreservesCollectedCorpus&#96; is high (> 20) | OPEN |
-| L0762 | `internal/storage/delivery_policy_test.go:10:1` | cognitive complexity 37 of func &#96;TestDeliveryStopsAtExpiryDeadlineAttemptsAndAccessRevocation&#96; is high (> 20) | OPEN |
-| L0763 | `internal/storage/direct_migration_failure_test.go:14:1` | cognitive complexity 44 of func &#96;TestDirectMessagingMigrationsRollbackDDLAndPreserveCorpus&#96; is high (> 20) | OPEN |
-| L0764 | `internal/storage/event_journal.go:138:1` | cognitive complexity 29 of func &#96;(*Store).ReadSubscriptionEvents&#96; is high (> 20) | OPEN |
-| L0765 | `internal/storage/events.go:159:1` | cognitive complexity 26 of func &#96;(*Store).ActivateSubscription&#96; is high (> 20) | OPEN |
-| L0766 | `internal/storage/history_expiry_test.go:110:1` | cognitive complexity 26 of func &#96;TestHistoricalExpiryIsInvisibleBeforePhysicalCleanup&#96; is high (> 20) | OPEN |
-| L0767 | `internal/storage/history_operations.go:152:1` | cognitive complexity 25 of func &#96;(*Store).prepareHistoryOperation&#96; is high (> 20) | OPEN |
-| L0768 | `internal/storage/history_operations.go:362:1` | cognitive complexity 23 of func &#96;(*Store).commitHistoryOperationPage&#96; is high (> 20) | OPEN |
-| L0769 | `internal/storage/history_operations.go:430:1` | cognitive complexity 35 of func &#96;(*Store).commitHistoryRecords&#96; is high (> 20) | OPEN |
-| L0770 | `internal/storage/history_operations_test.go:253:1` | cognitive complexity 41 of func &#96;TestHistoryOperationContinuationBoundsAndAuthPause&#96; is high (> 20) | OPEN |
-| L0771 | `internal/storage/history_test.go:89:1` | cognitive complexity 31 of func &#96;TestHistoryPageRollbackAndExistingLivePreservation&#96; is high (> 20) | OPEN |
-| L0772 | `internal/storage/incoming_migration_test.go:12:1` | cognitive complexity 22 of func &#96;TestIncomingMigrationSeedsEvidenceAndPreservesLegacyQueue&#96; is high (> 20) | OPEN |
-| L0773 | `internal/storage/mobile_backup_test.go:41:1` | cognitive complexity 23 of func &#96;TestMobileBackupJournalIdentityCASAndRestart&#96; is high (> 20) | OPEN |
-| L0774 | `internal/storage/mobile_history.go:158:1` | cognitive complexity 94 of func &#96;(*Store).CommitMobileHistoryPage&#96; is high (> 20) | OPEN |
-| L0775 | `internal/storage/mobile_history_acquisition_test.go:98:1` | cognitive complexity 76 of func &#96;TestMobileHistoryAcquisitionRejectsStaleCancelledAndUnreservedDispatch&#96; is high (> 20) | OPEN |
-| L0776 | `internal/storage/mobile_history_acquisition_test.go:309:1` | cognitive complexity 42 of func &#96;TestMobileHistoryAcquisitionScopeAndInputFailuresHaveNoSideEffects&#96; is high (> 20) | OPEN |
-| L0777 | `internal/storage/mobile_history_acquisition_test.go:469:1` | cognitive complexity 67 of func &#96;TestMobileHistoryInactiveAcquisitionCleanupPreservesOwnershipAndEvidence&#96; is high (> 20) | OPEN |
-| L0778 | `internal/storage/mobile_history_acquisition_test.go:552:1` | cognitive complexity 62 of func &#96;TestMobileHistoryTerminalPublicationReleasesAttemptAtomically&#96; is high (> 20) | OPEN |
-| L0779 | `internal/storage/mobile_history_test.go:444:1` | cognitive complexity 40 of func &#96;TestMobileHistoryTerminalSourceCountsAndLimitWithoutContinuation&#96; is high (> 20) | OPEN |
-| L0780 | `internal/storage/mobile_history_test.go:520:1` | cognitive complexity 29 of func &#96;TestMobileHistoryPolicyRevocationAndForeignAccountCannotPersist&#96; is high (> 20) | OPEN |
-| L0781 | `internal/storage/mobile_snapshot_cleanup_test.go:15:1` | cognitive complexity 40 of func &#96;TestMobileSnapshotCleanupOwnershipAndTerminalState&#96; is high (> 20) | OPEN |
-| L0782 | `internal/storage/preload_directory_test.go:13:1` | cognitive complexity 30 of func &#96;TestPreloadDirectoryMergePreservesCorpusPolicyAndKnownMetadata&#96; is high (> 20) | OPEN |
-| L0783 | `internal/storage/store.go:258:1` | cognitive complexity 26 of func &#96;(*Store).putMessageTx&#96; is high (> 20) | OPEN |
-| L0784 | `internal/storage/store.go:532:1` | cognitive complexity 28 of func &#96;(*Store).prepareSearch&#96; is high (> 20) | OPEN |
-| L0785 | `internal/storage/store.go:594:1` | cognitive complexity 33 of func &#96;(*Store).searchPage&#96; is high (> 20) | OPEN |
-| L0786 | `internal/storage/subscription_scope.go:5:1` | cognitive complexity 29 of func &#96;normalizeSubscription&#96; is high (> 20) | OPEN |
-| L0787 | `internal/storage/views.go:20:1` | cognitive complexity 29 of func &#96;(*Store).Groups&#96; is high (> 20) | OPEN |
+| L0759 | `internal/storage/deliveries.go:61:1` | cognitive complexity 54 of func &#96;(*Store).FanoutProfileEvents&#96; is high (> 20) | SUPPRESSED |
+| L0760 | `internal/storage/deliveries.go:240:1` | cognitive complexity 30 of func &#96;(*Store).ClaimDelivery&#96; is high (> 20) | SUPPRESSED |
+| L0761 | `internal/storage/deliveries_test.go:18:1` | cognitive complexity 21 of func &#96;TestBroadConversationFanoutCapacityPreservesCollectedCorpus&#96; is high (> 20) | SUPPRESSED |
+| L0762 | `internal/storage/delivery_policy_test.go:10:1` | cognitive complexity 37 of func &#96;TestDeliveryStopsAtExpiryDeadlineAttemptsAndAccessRevocation&#96; is high (> 20) | SUPPRESSED |
+| L0763 | `internal/storage/direct_migration_failure_test.go:14:1` | cognitive complexity 44 of func &#96;TestDirectMessagingMigrationsRollbackDDLAndPreserveCorpus&#96; is high (> 20) | SUPPRESSED |
+| L0764 | `internal/storage/event_journal.go:138:1` | cognitive complexity 29 of func &#96;(*Store).ReadSubscriptionEvents&#96; is high (> 20) | FIXED |
+| L0765 | `internal/storage/events.go:159:1` | cognitive complexity 26 of func &#96;(*Store).ActivateSubscription&#96; is high (> 20) | SUPPRESSED |
+| L0766 | `internal/storage/history_expiry_test.go:110:1` | cognitive complexity 26 of func &#96;TestHistoricalExpiryIsInvisibleBeforePhysicalCleanup&#96; is high (> 20) | SUPPRESSED |
+| L0767 | `internal/storage/history_operations.go:152:1` | cognitive complexity 25 of func &#96;(*Store).prepareHistoryOperation&#96; is high (> 20) | SUPPRESSED |
+| L0768 | `internal/storage/history_operations.go:362:1` | cognitive complexity 23 of func &#96;(*Store).commitHistoryOperationPage&#96; is high (> 20) | SUPPRESSED |
+| L0769 | `internal/storage/history_operations.go:430:1` | cognitive complexity 35 of func &#96;(*Store).commitHistoryRecords&#96; is high (> 20) | SUPPRESSED |
+| L0770 | `internal/storage/history_operations_test.go:253:1` | cognitive complexity 41 of func &#96;TestHistoryOperationContinuationBoundsAndAuthPause&#96; is high (> 20) | SUPPRESSED |
+| L0771 | `internal/storage/history_test.go:89:1` | cognitive complexity 31 of func &#96;TestHistoryPageRollbackAndExistingLivePreservation&#96; is high (> 20) | SUPPRESSED |
+| L0772 | `internal/storage/incoming_migration_test.go:12:1` | cognitive complexity 22 of func &#96;TestIncomingMigrationSeedsEvidenceAndPreservesLegacyQueue&#96; is high (> 20) | SUPPRESSED |
+| L0773 | `internal/storage/mobile_backup_test.go:41:1` | cognitive complexity 23 of func &#96;TestMobileBackupJournalIdentityCASAndRestart&#96; is high (> 20) | SUPPRESSED |
+| L0774 | `internal/storage/mobile_history.go:158:1` | cognitive complexity 94 of func &#96;(*Store).CommitMobileHistoryPage&#96; is high (> 20) | SUPPRESSED |
+| L0775 | `internal/storage/mobile_history_acquisition_test.go:98:1` | cognitive complexity 76 of func &#96;TestMobileHistoryAcquisitionRejectsStaleCancelledAndUnreservedDispatch&#96; is high (> 20) | SUPPRESSED |
+| L0776 | `internal/storage/mobile_history_acquisition_test.go:309:1` | cognitive complexity 42 of func &#96;TestMobileHistoryAcquisitionScopeAndInputFailuresHaveNoSideEffects&#96; is high (> 20) | SUPPRESSED |
+| L0777 | `internal/storage/mobile_history_acquisition_test.go:469:1` | cognitive complexity 67 of func &#96;TestMobileHistoryInactiveAcquisitionCleanupPreservesOwnershipAndEvidence&#96; is high (> 20) | SUPPRESSED |
+| L0778 | `internal/storage/mobile_history_acquisition_test.go:552:1` | cognitive complexity 62 of func &#96;TestMobileHistoryTerminalPublicationReleasesAttemptAtomically&#96; is high (> 20) | SUPPRESSED |
+| L0779 | `internal/storage/mobile_history_test.go:444:1` | cognitive complexity 40 of func &#96;TestMobileHistoryTerminalSourceCountsAndLimitWithoutContinuation&#96; is high (> 20) | SUPPRESSED |
+| L0780 | `internal/storage/mobile_history_test.go:520:1` | cognitive complexity 29 of func &#96;TestMobileHistoryPolicyRevocationAndForeignAccountCannotPersist&#96; is high (> 20) | SUPPRESSED |
+| L0781 | `internal/storage/mobile_snapshot_cleanup_test.go:15:1` | cognitive complexity 40 of func &#96;TestMobileSnapshotCleanupOwnershipAndTerminalState&#96; is high (> 20) | SUPPRESSED |
+| L0782 | `internal/storage/preload_directory_test.go:13:1` | cognitive complexity 30 of func &#96;TestPreloadDirectoryMergePreservesCorpusPolicyAndKnownMetadata&#96; is high (> 20) | SUPPRESSED |
+| L0783 | `internal/storage/store.go:258:1` | cognitive complexity 26 of func &#96;(*Store).putMessageTx&#96; is high (> 20) | SUPPRESSED |
+| L0784 | `internal/storage/store.go:532:1` | cognitive complexity 28 of func &#96;(*Store).prepareSearch&#96; is high (> 20) | FIXED |
+| L0785 | `internal/storage/store.go:594:1` | cognitive complexity 33 of func &#96;(*Store).searchPage&#96; is high (> 20) | FIXED |
+| L0786 | `internal/storage/subscription_scope.go:5:1` | cognitive complexity 29 of func &#96;normalizeSubscription&#96; is high (> 20) | FIXED |
+| L0787 | `internal/storage/views.go:20:1` | cognitive complexity 29 of func &#96;(*Store).Groups&#96; is high (> 20) | FIXED |
 | L0788 | `internal/storage/views.go:283:1` | cognitive complexity 45 of func &#96;(*Store).context&#96; is high (> 20) | FIXED |
-| L0789 | `internal/toolruntime/command_scope_test.go:47:1` | cognitive complexity 38 of func &#96;TestCommandsRejectUntrustedScopeBeforeEffectsAndNeverRetryOwnerFailure&#96; is high (> 20) | OPEN |
-| L0790 | `internal/toolruntime/runtime.go:144:1` | cognitive complexity 55 of func &#96;New&#96; is high (> 20) | OPEN |
-| L0791 | `internal/toolruntime/runtime.go:464:1` | cognitive complexity 21 of func &#96;(*Runtime).dispatch&#96; is high (> 20) | OPEN |
-| L0792 | `internal/zalo/events.go:48:1` | cognitive complexity 43 of func &#96;(*Client).listenConversations&#96; is high (> 20) | OPEN |
-| L0793 | `internal/zalo/join_pending_test.go:28:1` | cognitive complexity 25 of func &#96;TestClientJoinRecognizesOnlyExplicitApprovalCode&#96; is high (> 20) | OPEN |
-| L0794 | `internal/zalo/mobile_backup.go:60:1` | cognitive complexity 111 of func &#96;receiveMobileBackupOffer&#96; is high (> 20) | OPEN |
-| L0795 | `internal/zalo/preload.go:29:1` | cognitive complexity 79 of func &#96;readConversationPreload&#96; is high (> 20) | OPEN |
-| L0796 | `internal/zalo/restore_test.go:19:1` | cognitive complexity 31 of func &#96;TestRestoreDistinguishesLoginRejectionFromNetworkFailure&#96; is high (> 20) | OPEN |
-| L0797 | `internal/zalo/restore_test.go:72:1` | cognitive complexity 24 of func &#96;TestRestoreRejectsMissingLegacyAndInsecureSessionBeforeLogin&#96; is high (> 20) | OPEN |
-| L0798 | `tools/harness/internal/architecture/architecture.go:165:1` | cognitive complexity 34 of func &#96;Scan&#96; is high (> 20) | OPEN |
-| L0799 | `tools/harness/internal/architecture/architecture.go:381:1` | cognitive complexity 22 of func &#96;SourceControls&#96; is high (> 20) | OPEN |
-| L0800 | `tools/harness/internal/architecture/architecture.go:449:1` | cognitive complexity 28 of func &#96;Check&#96; is high (> 20) | OPEN |
+| L0789 | `internal/toolruntime/command_scope_test.go:47:1` | cognitive complexity 38 of func &#96;TestCommandsRejectUntrustedScopeBeforeEffectsAndNeverRetryOwnerFailure&#96; is high (> 20) | SUPPRESSED |
+| L0790 | `internal/toolruntime/runtime.go:144:1` | cognitive complexity 55 of func &#96;New&#96; is high (> 20) | SUPPRESSED |
+| L0791 | `internal/toolruntime/runtime.go:464:1` | cognitive complexity 21 of func &#96;(*Runtime).dispatch&#96; is high (> 20) | SUPPRESSED |
+| L0792 | `internal/zalo/events.go:48:1` | cognitive complexity 43 of func &#96;(*Client).listenConversations&#96; is high (> 20) | SUPPRESSED |
+| L0793 | `internal/zalo/join_pending_test.go:28:1` | cognitive complexity 25 of func &#96;TestClientJoinRecognizesOnlyExplicitApprovalCode&#96; is high (> 20) | SUPPRESSED |
+| L0794 | `internal/zalo/mobile_backup.go:60:1` | cognitive complexity 111 of func &#96;receiveMobileBackupOffer&#96; is high (> 20) | FIXED |
+| L0795 | `internal/zalo/preload.go:29:1` | cognitive complexity 79 of func &#96;readConversationPreload&#96; is high (> 20) | FIXED |
+| L0796 | `internal/zalo/restore_test.go:19:1` | cognitive complexity 31 of func &#96;TestRestoreDistinguishesLoginRejectionFromNetworkFailure&#96; is high (> 20) | SUPPRESSED |
+| L0797 | `internal/zalo/restore_test.go:72:1` | cognitive complexity 24 of func &#96;TestRestoreRejectsMissingLegacyAndInsecureSessionBeforeLogin&#96; is high (> 20) | SUPPRESSED |
+| L0798 | `tools/harness/internal/architecture/architecture.go:165:1` | cognitive complexity 34 of func &#96;Scan&#96; is high (> 20) | FIXED |
+| L0799 | `tools/harness/internal/architecture/architecture.go:381:1` | cognitive complexity 22 of func &#96;SourceControls&#96; is high (> 20) | SUPPRESSED |
+| L0800 | `tools/harness/internal/architecture/architecture.go:449:1` | cognitive complexity 28 of func &#96;Check&#96; is high (> 20) | FIXED |
 | L0801 | `tools/harness/internal/architecture/architecture_test.go:75:1` | cognitive complexity 29 of func &#96;TestConfigDecisionEquivalence&#96; is high (> 20) | FIXED |
-| L0802 | `tools/harness/internal/performance/bench.go:75:1` | cognitive complexity 82 of func &#96;Bench&#96; is high (> 20) | OPEN |
-| L0803 | `tools/harness/internal/performance/build.go:71:1` | cognitive complexity 25 of func &#96;Build&#96; is high (> 20) | OPEN |
-| L0804 | `tools/harness/internal/performance/compare.go:8:1` | cognitive complexity 70 of func &#96;validate&#96; is high (> 20) | OPEN |
-| L0805 | `tools/harness/internal/performance/compare.go:150:1` | cognitive complexity 79 of func &#96;Compare&#96; is high (> 20) | OPEN |
-| L0806 | `tools/harness/internal/performance/process.go:18:1` | cognitive complexity 27 of func &#96;process&#96; is high (> 20) | OPEN |
+| L0802 | `tools/harness/internal/performance/bench.go:75:1` | cognitive complexity 82 of func &#96;Bench&#96; is high (> 20) | FIXED |
+| L0803 | `tools/harness/internal/performance/build.go:71:1` | cognitive complexity 25 of func &#96;Build&#96; is high (> 20) | FIXED |
+| L0804 | `tools/harness/internal/performance/compare.go:8:1` | cognitive complexity 70 of func &#96;validate&#96; is high (> 20) | FIXED |
+| L0805 | `tools/harness/internal/performance/compare.go:150:1` | cognitive complexity 79 of func &#96;Compare&#96; is high (> 20) | FIXED |
+| L0806 | `tools/harness/internal/performance/process.go:18:1` | cognitive complexity 27 of func &#96;process&#96; is high (> 20) | SUPPRESSED |
 
 ### goconst (479)
 
@@ -1184,8 +1288,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Выделять константы для действительно общего контракта: operation states, reason codes, schema keys внутри их владельца; сначала использовать существующие domain constants. Одинаковые тексты с разным смыслом не объединять. Для независимых fixture expected values и SQL/JSON ключей, где литерал делает контракт видимым, допустим точечный nolint:goconst. Не создавать общий пакет строковых констант и новые архитектурные зависимости ради lint.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L0807 | `docs/contracts/contracts.go:20:65` | string &#96;history_import_operation&#96; has 5 occurrences, make it a constant | OPEN |
 | L0808 | `internal/app/search/read.go:185:13` | string &#96;no_collected_data&#96; has 3 occurrences, make it a constant | OPEN |
 | L0809 | `internal/collector/contact_profiles.go:34:3` | string &#96;status&#96; has 4 occurrences, make it a constant | OPEN |
@@ -1193,23 +1297,23 @@ _Заполнить._
 | L0811 | `internal/collector/contact_profiles.go:35:3` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | OPEN |
 | L0812 | `internal/collector/contact_profiles.go:36:3` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | OPEN |
 | L0813 | `internal/collector/contact_profiles.go:40:3` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | OPEN |
-| L0814 | `internal/collector/contact_profiles.go:61:13` | string &#96;cancelled_or_deadline&#96; has 4 occurrences, make it a constant | OPEN |
-| L0815 | `internal/collector/contact_profiles.go:76:22` | string &#96;partial&#96; has 3 occurrences, make it a constant | OPEN |
-| L0816 | `internal/collector/contact_profiles.go:76:33` | string &#96;upstream_unavailable&#96; has 3 occurrences, make it a constant | OPEN |
-| L0817 | `internal/collector/contact_profiles.go:79:14` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | OPEN |
-| L0818 | `internal/collector/contact_profiles.go:80:15` | string &#96;source_unsupported&#96; has 5 occurrences, make it a constant | OPEN |
-| L0819 | `internal/collector/contact_profiles.go:82:15` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | OPEN |
+| L0814 | `internal/collector/contact_profiles.go:61:13` | string &#96;cancelled_or_deadline&#96; has 4 occurrences, make it a constant | FIXED |
+| L0815 | `internal/collector/contact_profiles.go:76:22` | string &#96;partial&#96; has 3 occurrences, make it a constant | FIXED |
+| L0816 | `internal/collector/contact_profiles.go:76:33` | string &#96;upstream_unavailable&#96; has 3 occurrences, make it a constant | FIXED |
+| L0817 | `internal/collector/contact_profiles.go:79:14` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | FIXED |
+| L0818 | `internal/collector/contact_profiles.go:80:15` | string &#96;source_unsupported&#96; has 5 occurrences, make it a constant | FIXED |
+| L0819 | `internal/collector/contact_profiles.go:82:15` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | FIXED |
 | L0820 | `internal/collector/contacts.go:38:3` | string &#96;status&#96; has 4 occurrences, make it a constant | OPEN |
 | L0821 | `internal/collector/contacts.go:38:22` | string &#96;running&#96; has 5 occurrences, make it a constant | OPEN |
 | L0822 | `internal/collector/contacts.go:39:3` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | OPEN |
 | L0823 | `internal/collector/contacts.go:40:3` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | OPEN |
 | L0824 | `internal/collector/contacts.go:43:3` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | OPEN |
-| L0825 | `internal/collector/contacts.go:66:14` | string &#96;upstream_unavailable&#96; has 3 occurrences, make it a constant | OPEN |
-| L0826 | `internal/collector/contacts.go:67:13` | string &#96;partial&#96; has 3 occurrences, make it a constant | OPEN |
-| L0827 | `internal/collector/contacts.go:70:13` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | OPEN |
-| L0828 | `internal/collector/contacts.go:71:14` | string &#96;source_unsupported&#96; has 5 occurrences, make it a constant | OPEN |
-| L0829 | `internal/collector/contacts.go:73:14` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | OPEN |
-| L0830 | `internal/collector/contacts.go:75:14` | string &#96;cancelled_or_deadline&#96; has 4 occurrences, make it a constant | OPEN |
+| L0825 | `internal/collector/contacts.go:66:14` | string &#96;upstream_unavailable&#96; has 3 occurrences, make it a constant | FIXED |
+| L0826 | `internal/collector/contacts.go:67:13` | string &#96;partial&#96; has 3 occurrences, make it a constant | FIXED |
+| L0827 | `internal/collector/contacts.go:70:13` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | FIXED |
+| L0828 | `internal/collector/contacts.go:71:14` | string &#96;source_unsupported&#96; has 5 occurrences, make it a constant | FIXED |
+| L0829 | `internal/collector/contacts.go:73:14` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | FIXED |
+| L0830 | `internal/collector/contacts.go:75:14` | string &#96;cancelled_or_deadline&#96; has 4 occurrences, make it a constant | FIXED |
 | L0831 | `internal/collector/join.go:132:12` | string &#96;unknown&#96; has 6 occurrences, make it a constant | OPEN |
 | L0832 | `internal/collector/join.go:147:3` | string &#96;group_id&#96; has 3 occurrences, make it a constant | OPEN |
 | L0833 | `internal/collector/join.go:320:3` | string &#96;status&#96; has 4 occurrences, make it a constant | OPEN |
@@ -1222,23 +1326,23 @@ _Заполнить._
 | L0840 | `internal/collector/preload_catalog.go:27:3` | string &#96;last_attempt_at&#96; has 3 occurrences, make it a constant | OPEN |
 | L0841 | `internal/collector/preload_catalog.go:28:3` | string &#96;last_success_at&#96; has 3 occurrences, make it a constant | OPEN |
 | L0842 | `internal/collector/preload_catalog.go:33:3` | string &#96;stop_reason&#96; has 3 occurrences, make it a constant | OPEN |
-| L0843 | `internal/collector/preload_catalog.go:52:20` | string &#96;partial&#96; has 3 occurrences, make it a constant | OPEN |
-| L0844 | `internal/collector/preload_catalog.go:52:31` | string &#96;upstream_unavailable&#96; has 3 occurrences, make it a constant | OPEN |
-| L0845 | `internal/collector/preload_catalog.go:55:20` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | OPEN |
-| L0846 | `internal/collector/preload_catalog.go:55:35` | string &#96;source_unsupported&#96; has 5 occurrences, make it a constant | OPEN |
-| L0847 | `internal/collector/preload_catalog.go:57:13` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | OPEN |
+| L0843 | `internal/collector/preload_catalog.go:52:20` | string &#96;partial&#96; has 3 occurrences, make it a constant | FIXED |
+| L0844 | `internal/collector/preload_catalog.go:52:31` | string &#96;upstream_unavailable&#96; has 3 occurrences, make it a constant | FIXED |
+| L0845 | `internal/collector/preload_catalog.go:55:20` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | FIXED |
+| L0846 | `internal/collector/preload_catalog.go:55:35` | string &#96;source_unsupported&#96; has 5 occurrences, make it a constant | FIXED |
+| L0847 | `internal/collector/preload_catalog.go:57:13` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | FIXED |
 | L0848 | `internal/collector/preload_catalog.go:59:13` | string &#96;invalid_source_page&#96; has 4 occurrences, make it a constant | OPEN |
-| L0849 | `internal/collector/preload_catalog.go:61:13` | string &#96;cancelled_or_deadline&#96; has 4 occurrences, make it a constant | OPEN |
-| L0850 | `internal/collector/preload_probe.go:15:32` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | OPEN |
-| L0851 | `internal/collector/preload_probe.go:16:32` | string &#96;source_unsupported&#96; has 5 occurrences, make it a constant | OPEN |
+| L0849 | `internal/collector/preload_catalog.go:61:13` | string &#96;cancelled_or_deadline&#96; has 4 occurrences, make it a constant | FIXED |
+| L0850 | `internal/collector/preload_probe.go:15:32` | string &#96;unsupported&#96; has 5 occurrences, make it a constant | FIXED |
+| L0851 | `internal/collector/preload_probe.go:16:32` | string &#96;source_unsupported&#96; has 5 occurrences, make it a constant | FIXED |
 | L0852 | `internal/collector/preload_probe.go:37:29` | string &#96;failed&#96; has 3 occurrences, make it a constant | OPEN |
 | L0853 | `internal/collector/preload_probe.go:38:15` | string &#96;unknown&#96; has 6 occurrences, make it a constant | OPEN |
-| L0854 | `internal/collector/preload_probe.go:46:30` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | OPEN |
+| L0854 | `internal/collector/preload_probe.go:46:30` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | FIXED |
 | L0855 | `internal/collector/preload_probe.go:49:15` | string &#96;invalid_source_page&#96; has 4 occurrences, make it a constant | OPEN |
 | L0856 | `internal/collector/run.go:139:19` | string &#96;code&#96; has 7 occurrences, make it a constant | OPEN |
 | L0857 | `internal/collector/run.go:139:27` | string &#96;UPSTREAM_UNAVAILABLE&#96; has 5 occurrences, make it a constant | OPEN |
 | L0858 | `internal/collector/run.go:139:51` | string &#96;message&#96; has 7 occurrences, make it a constant | OPEN |
-| L0859 | `internal/collector/run.go:181:34` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | OPEN |
+| L0859 | `internal/collector/run.go:181:34` | string &#96;auth_required&#96; has 7 occurrences, make it a constant | FIXED |
 | L0860 | `internal/collector/run.go:349:28` | string &#96;group_id&#96; has 3 occurrences, make it a constant | OPEN |
 | L0861 | `internal/domain/history.go:60:12` | string &#96;unknown&#96; has 3 occurrences, make it a constant | OPEN |
 | L0862 | `internal/domain/observation.go:28:10` | string &#96;unknown&#96; has 3 occurrences, make it a constant | OPEN |
@@ -1674,8 +1778,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L1286/L1287/L1290–L1294: заменить if-else цепи на condition switch с тем же порядком и short-circuit. L1288: (*counter)++ допустимо. L1289 объединить else-if только сохранив два Remove — это проверка идемпотентности, см. L2513.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L1286 | `internal/evaluation/grader.go:108:3` | ifElseChain: rewrite if-else to switch statement | OPEN |
 | L1287 | `internal/mobilebackup/account_metadata.go:102:3` | ifElseChain: rewrite if-else to switch statement | OPEN |
 | L1288 | `internal/mobilebackup/control_scan_test.go:76:4` | assignOp: replace &#96;*counter = *counter + 1&#96; with &#96;*counter++&#96; | OPEN |
@@ -1694,80 +1798,80 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Закрывать теми же изменениями, что cyclop, без второго независимого рефакторинга. Для оправданного исключения перечислить только реально сработавшие complexity linters в одной директиве и дать предметную причину.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
-| L1295 | `cmd/zl-mcp-eval/main.go:16:1` | cyclomatic complexity 38 of func &#96;run&#96; is high (> 30) | OPEN |
-| L1296 | `internal/collector/run.go:55:1` | cyclomatic complexity 40 of func &#96;runSession&#96; is high (> 30) | OPEN |
-| L1297 | `internal/config/config.go:47:1` | cyclomatic complexity 34 of func &#96;Load&#96; is high (> 30) | OPEN |
-| L1298 | `internal/domain/history.go:59:1` | cyclomatic complexity 46 of func &#96;NewHistoryPageFailure&#96; is high (> 30) | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
+| L1295 | `cmd/zl-mcp-eval/main.go:16:1` | cyclomatic complexity 38 of func &#96;run&#96; is high (> 30) | FIXED |
+| L1296 | `internal/collector/run.go:55:1` | cyclomatic complexity 40 of func &#96;runSession&#96; is high (> 30) | FIXED |
+| L1297 | `internal/config/config.go:47:1` | cyclomatic complexity 34 of func &#96;Load&#96; is high (> 30) | FIXED |
+| L1298 | `internal/domain/history.go:59:1` | cyclomatic complexity 46 of func &#96;NewHistoryPageFailure&#96; is high (> 30) | SUPPRESSED |
 | L1299 | `internal/evalfixture/fixture.go:133:1` | cyclomatic complexity 47 of func &#96;New&#96; is high (> 30) | FIXED |
-| L1300 | `internal/evaluation/checkpoints.go:149:1` | cyclomatic complexity 111 of func &#96;GradeCheckpoint&#96; is high (> 30) | OPEN |
+| L1300 | `internal/evaluation/checkpoints.go:149:1` | cyclomatic complexity 111 of func &#96;GradeCheckpoint&#96; is high (> 30) | FIXED |
 | L1301 | `internal/evaluation/grader.go:19:1` | cyclomatic complexity 71 of func &#96;Grade&#96; is high (> 30) | FIXED |
 | L1302 | `internal/evaluation/runner.go:135:1` | cyclomatic complexity 61 of func &#96;Run&#96; is high (> 30) | FIXED |
-| L1303 | `internal/evaluation/scenarios.go:22:1` | cyclomatic complexity 70 of func &#96;RunCase&#96; is high (> 30) | FIXED |
-| L1304 | `internal/events/conversation_test.go:20:1` | cyclomatic complexity 36 of func &#96;TestConversationScopesSignedDeliveryAndCancellation&#96; is high (> 30) | OPEN |
+| L1303 | `internal/evaluation/scenarios.go:22:1` | cyclomatic complexity 70 of func &#96;RunCase&#96; is high (> 30) | SUPPRESSED |
+| L1304 | `internal/events/conversation_test.go:20:1` | cyclomatic complexity 36 of func &#96;TestConversationScopesSignedDeliveryAndCancellation&#96; is high (> 30) | SUPPRESSED |
 | L1305 | `internal/events/subscriptions.go:132:1` | cyclomatic complexity 36 of func &#96;(*SubscriptionManager).Call&#96; is high (> 30) | FIXED |
-| L1306 | `internal/historyimport/mcp_test.go:27:1` | cyclomatic complexity 34 of func &#96;TestMCPHistoryImportDiscoveryStatusAndReads&#96; is high (> 30) | OPEN |
-| L1307 | `internal/historyimport/mobile_worker.go:101:1` | cyclomatic complexity 59 of func &#96;runMobileOperationObserved&#96; is high (> 30) | OPEN |
-| L1308 | `internal/historyimport/worker.go:68:1` | cyclomatic complexity 40 of func &#96;runOperationObserved&#96; is high (> 30) | OPEN |
-| L1309 | `internal/mcpserver/conversation_events_http_test.go:34:1` | cyclomatic complexity 46 of func &#96;testConversationProfileTLS&#96; is high (> 30) | OPEN |
-| L1310 | `internal/mcpserver/conversations.go:17:1` | cyclomatic complexity 39 of func &#96;(*Service).addConversationResources&#96; is high (> 30) | OPEN |
-| L1311 | `internal/mcpserver/conversations_test.go:17:1` | cyclomatic complexity 43 of func &#96;TestConversationMCPSearchContextCatalogueAndFullText&#96; is high (> 30) | OPEN |
+| L1306 | `internal/historyimport/mcp_test.go:27:1` | cyclomatic complexity 34 of func &#96;TestMCPHistoryImportDiscoveryStatusAndReads&#96; is high (> 30) | SUPPRESSED |
+| L1307 | `internal/historyimport/mobile_worker.go:101:1` | cyclomatic complexity 59 of func &#96;runMobileOperationObserved&#96; is high (> 30) | FIXED |
+| L1308 | `internal/historyimport/worker.go:68:1` | cyclomatic complexity 40 of func &#96;runOperationObserved&#96; is high (> 30) | FIXED |
+| L1309 | `internal/mcpserver/conversation_events_http_test.go:34:1` | cyclomatic complexity 46 of func &#96;testConversationProfileTLS&#96; is high (> 30) | SUPPRESSED |
+| L1310 | `internal/mcpserver/conversations.go:17:1` | cyclomatic complexity 39 of func &#96;(*Service).addConversationResources&#96; is high (> 30) | FIXED |
+| L1311 | `internal/mcpserver/conversations_test.go:17:1` | cyclomatic complexity 43 of func &#96;TestConversationMCPSearchContextCatalogueAndFullText&#96; is high (> 30) | SUPPRESSED |
 | L1312 | `internal/mcpserver/http.go:110:1` | cyclomatic complexity 41 of func &#96;(*HTTPService).ServeHTTP&#96; is high (> 30) | FIXED |
-| L1313 | `internal/mcpserver/migration_baseline_test.go:56:1` | cyclomatic complexity 34 of func &#96;TestMigrationCatalogBaseline&#96; is high (> 30) | OPEN |
-| L1314 | `internal/mcpserver/pagination_test.go:18:1` | cyclomatic complexity 32 of func &#96;TestLargeWirePagesKeepAllResultsAndSearchSnapshot&#96; is high (> 30) | OPEN |
-| L1315 | `internal/mcpserver/server.go:61:1` | cyclomatic complexity 56 of func &#96;New&#96; is high (> 30) | OPEN |
-| L1316 | `internal/mcpserver/server.go:239:1` | cyclomatic complexity 39 of func &#96;(*Service).call&#96; is high (> 30) | OPEN |
-| L1317 | `internal/messaging/manager.go:38:1` | cyclomatic complexity 32 of func &#96;(*Manager).Call&#96; is high (> 30) | OPEN |
-| L1318 | `internal/mobilebackup/control_scan.go:30:1` | cyclomatic complexity 57 of func &#96;ReadOwnDirectRecallSet&#96; is high (> 30) | OPEN |
-| L1319 | `internal/mobilebackup/history_page.go:17:1` | cyclomatic complexity 42 of func &#96;(*SnapshotStore).ReadHistoryPage&#96; is high (> 30) | OPEN |
-| L1320 | `internal/mobilebackup/history_page_test.go:73:1` | cyclomatic complexity 42 of func &#96;TestSnapshotReaderConverterJournalResumeTogether&#96; is high (> 30) | OPEN |
-| L1321 | `internal/mobilebackup/history_worker_test.go:582:1` | cyclomatic complexity 35 of func &#96;TestMobileWorkerWholeControlPreludeResumesWithoutRedispatch&#96; is high (> 30) | OPEN |
-| L1322 | `internal/mobilebackup/message_conversion.go:91:1` | cyclomatic complexity 62 of func &#96;convertArchiveCandidates&#96; is high (> 30) | OPEN |
-| L1323 | `internal/mobilebackup/native_binary_test.go:18:1` | cyclomatic complexity 40 of func &#96;TestNativeBinaryTerminalStartupAcceptance&#96; is high (> 30) | OPEN |
-| L1324 | `internal/mobilebackup/prepared_page.go:44:1` | cyclomatic complexity 31 of func &#96;ReadPreparedArchivePage&#96; is high (> 30) | OPEN |
-| L1325 | `internal/mobilebackup/recall_history_test.go:14:1` | cyclomatic complexity 38 of func &#96;TestRecallSnapshotConverterJournalResumeTogether&#96; is high (> 30) | OPEN |
-| L1326 | `internal/mobilebackup/retained_archive.go:448:1` | cyclomatic complexity 39 of func &#96;(*RetainedArchiveStore).decode&#96; is high (> 30) | OPEN |
-| L1327 | `internal/mobilebackup/row_page.go:81:1` | cyclomatic complexity 56 of func &#96;PrepareRowPage&#96; is high (> 30) | OPEN |
-| L1328 | `internal/mobilebackup/snapshot.go:278:1` | cyclomatic complexity 35 of func &#96;(*SnapshotStore).Save&#96; is high (> 30) | OPEN |
-| L1329 | `internal/mobilebackup/snapshot_page.go:76:1` | cyclomatic complexity 41 of func &#96;(AccountArchive).ReadSnapshotPage&#96; is high (> 30) | OPEN |
-| L1330 | `internal/mobilebackup/snapshot_page_test.go:108:1` | cyclomatic complexity 36 of func &#96;TestSnapshotTextProjectionIdentityAuthorsAndGaps&#96; is high (> 30) | OPEN |
-| L1331 | `internal/mobilebackup/snapshot_sqlite_test.go:13:1` | cyclomatic complexity 42 of func &#96;TestSnapshotSQLiteZeroIDsPagingAndImportIsolation&#96; is high (> 30) | OPEN |
-| L1332 | `internal/mobilebackup/snapshot_terminal.go:15:1` | cyclomatic complexity 41 of func &#96;(*SnapshotStore).CleanupTerminal&#96; is high (> 30) | OPEN |
-| L1333 | `internal/mobilebackup/sqlite.go:169:1` | cyclomatic complexity 86 of func &#96;readSQLitePageMode&#96; is high (> 30) | OPEN |
-| L1334 | `internal/mobilebackup/xz.go:53:1` | cyclomatic complexity 42 of func &#96;inspectXZ&#96; is high (> 30) | FIXED |
-| L1335 | `internal/service/account_archive_control.go:24:1` | cyclomatic complexity 39 of func &#96;(*membershipPort).accountArchiveControl&#96; is high (> 30) | OPEN |
-| L1336 | `internal/service/account_archive_test.go:51:1` | cyclomatic complexity 69 of func &#96;testAccountArchiveCapture&#96; is high (> 30) | OPEN |
-| L1337 | `internal/service/archive_catalog.go:43:1` | cyclomatic complexity 33 of func &#96;(*membershipPort).archiveConversations&#96; is high (> 30) | OPEN |
-| L1338 | `internal/service/archive_messages.go:156:1` | cyclomatic complexity 31 of func &#96;(*membershipPort).archiveMessages&#96; is high (> 30) | OPEN |
-| L1339 | `internal/service/archive_messages_test.go:20:1` | cyclomatic complexity 31 of func &#96;testOfflineArchiveMessages&#96; is high (> 30) | OPEN |
-| L1340 | `internal/service/cli.go:28:1` | cyclomatic complexity 34 of func &#96;RunCLI&#96; is high (> 30) | OPEN |
-| L1341 | `internal/service/cli_mobile_ledger.go:29:1` | cyclomatic complexity 32 of func &#96;mobileLedgerArguments&#96; is high (> 30) | OPEN |
-| L1342 | `internal/service/conversations_test.go:122:1` | cyclomatic complexity 41 of func &#96;testConversationServiceProfile&#96; is high (> 30) | OPEN |
-| L1343 | `internal/service/events_restart_test.go:123:1` | cyclomatic complexity 49 of func &#96;TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary&#96; is high (> 30) | OPEN |
-| L1344 | `internal/service/history_test.go:82:1` | cyclomatic complexity 32 of func &#96;TestHTTPHistoryToolsUseExistingCollectorSession&#96; is high (> 30) | OPEN |
-| L1345 | `internal/service/mobile_ledger_control.go:72:1` | cyclomatic complexity 38 of func &#96;(*membershipPort).mobileLedgerControl&#96; is high (> 30) | OPEN |
-| L1346 | `internal/service/mobile_page_test.go:103:1` | cyclomatic complexity 48 of func &#96;TestServiceMobilePageUsesCollectorSessionAndExpiresHistoricalRows&#96; is high (> 30) | OPEN |
-| L1347 | `internal/service/multiprocess_test.go:40:1` | cyclomatic complexity 67 of func &#96;TestTwoMCPProcessesReadCollectorWrites&#96; is high (> 30) | OPEN |
-| L1348 | `internal/service/recall_diagnostic.go:77:1` | cyclomatic complexity 51 of func &#96;(*membershipPort).probeRecall&#96; is high (> 30) | OPEN |
-| L1349 | `internal/service/run.go:154:1` | cyclomatic complexity 57 of func &#96;runConfigured&#96; is high (> 30) | OPEN |
-| L1350 | `internal/service/run_test.go:49:1` | cyclomatic complexity 48 of func &#96;TestServicePreservesMCPWhenAuthenticationIsRequired&#96; is high (> 30) | OPEN |
-| L1351 | `internal/service/sending_test.go:79:1` | cyclomatic complexity 46 of func &#96;TestServiceSendAndReplyUseCollectorSessionAndPersistAcrossRestart&#96; is high (> 30) | OPEN |
+| L1313 | `internal/mcpserver/migration_baseline_test.go:56:1` | cyclomatic complexity 34 of func &#96;TestMigrationCatalogBaseline&#96; is high (> 30) | SUPPRESSED |
+| L1314 | `internal/mcpserver/pagination_test.go:18:1` | cyclomatic complexity 32 of func &#96;TestLargeWirePagesKeepAllResultsAndSearchSnapshot&#96; is high (> 30) | SUPPRESSED |
+| L1315 | `internal/mcpserver/server.go:61:1` | cyclomatic complexity 56 of func &#96;New&#96; is high (> 30) | SUPPRESSED |
+| L1316 | `internal/mcpserver/server.go:239:1` | cyclomatic complexity 39 of func &#96;(*Service).call&#96; is high (> 30) | FIXED |
+| L1317 | `internal/messaging/manager.go:38:1` | cyclomatic complexity 32 of func &#96;(*Manager).Call&#96; is high (> 30) | FIXED |
+| L1318 | `internal/mobilebackup/control_scan.go:30:1` | cyclomatic complexity 57 of func &#96;ReadOwnDirectRecallSet&#96; is high (> 30) | SUPPRESSED |
+| L1319 | `internal/mobilebackup/history_page.go:17:1` | cyclomatic complexity 42 of func &#96;(*SnapshotStore).ReadHistoryPage&#96; is high (> 30) | FIXED |
+| L1320 | `internal/mobilebackup/history_page_test.go:73:1` | cyclomatic complexity 42 of func &#96;TestSnapshotReaderConverterJournalResumeTogether&#96; is high (> 30) | SUPPRESSED |
+| L1321 | `internal/mobilebackup/history_worker_test.go:582:1` | cyclomatic complexity 35 of func &#96;TestMobileWorkerWholeControlPreludeResumesWithoutRedispatch&#96; is high (> 30) | SUPPRESSED |
+| L1322 | `internal/mobilebackup/message_conversion.go:91:1` | cyclomatic complexity 62 of func &#96;convertArchiveCandidates&#96; is high (> 30) | FIXED |
+| L1323 | `internal/mobilebackup/native_binary_test.go:18:1` | cyclomatic complexity 40 of func &#96;TestNativeBinaryTerminalStartupAcceptance&#96; is high (> 30) | SUPPRESSED |
+| L1324 | `internal/mobilebackup/prepared_page.go:44:1` | cyclomatic complexity 31 of func &#96;ReadPreparedArchivePage&#96; is high (> 30) | FIXED |
+| L1325 | `internal/mobilebackup/recall_history_test.go:14:1` | cyclomatic complexity 38 of func &#96;TestRecallSnapshotConverterJournalResumeTogether&#96; is high (> 30) | SUPPRESSED |
+| L1326 | `internal/mobilebackup/retained_archive.go:448:1` | cyclomatic complexity 39 of func &#96;(*RetainedArchiveStore).decode&#96; is high (> 30) | FIXED |
+| L1327 | `internal/mobilebackup/row_page.go:81:1` | cyclomatic complexity 56 of func &#96;PrepareRowPage&#96; is high (> 30) | FIXED |
+| L1328 | `internal/mobilebackup/snapshot.go:278:1` | cyclomatic complexity 35 of func &#96;(*SnapshotStore).Save&#96; is high (> 30) | FIXED |
+| L1329 | `internal/mobilebackup/snapshot_page.go:76:1` | cyclomatic complexity 41 of func &#96;(AccountArchive).ReadSnapshotPage&#96; is high (> 30) | FIXED |
+| L1330 | `internal/mobilebackup/snapshot_page_test.go:108:1` | cyclomatic complexity 36 of func &#96;TestSnapshotTextProjectionIdentityAuthorsAndGaps&#96; is high (> 30) | SUPPRESSED |
+| L1331 | `internal/mobilebackup/snapshot_sqlite_test.go:13:1` | cyclomatic complexity 42 of func &#96;TestSnapshotSQLiteZeroIDsPagingAndImportIsolation&#96; is high (> 30) | SUPPRESSED |
+| L1332 | `internal/mobilebackup/snapshot_terminal.go:15:1` | cyclomatic complexity 41 of func &#96;(*SnapshotStore).CleanupTerminal&#96; is high (> 30) | FIXED |
+| L1333 | `internal/mobilebackup/sqlite.go:169:1` | cyclomatic complexity 86 of func &#96;readSQLitePageMode&#96; is high (> 30) | FIXED |
+| L1334 | `internal/mobilebackup/xz.go:53:1` | cyclomatic complexity 42 of func &#96;inspectXZ&#96; is high (> 30) | SUPPRESSED |
+| L1335 | `internal/service/account_archive_control.go:24:1` | cyclomatic complexity 39 of func &#96;(*membershipPort).accountArchiveControl&#96; is high (> 30) | FIXED |
+| L1336 | `internal/service/account_archive_test.go:51:1` | cyclomatic complexity 69 of func &#96;testAccountArchiveCapture&#96; is high (> 30) | SUPPRESSED |
+| L1337 | `internal/service/archive_catalog.go:43:1` | cyclomatic complexity 33 of func &#96;(*membershipPort).archiveConversations&#96; is high (> 30) | FIXED |
+| L1338 | `internal/service/archive_messages.go:156:1` | cyclomatic complexity 31 of func &#96;(*membershipPort).archiveMessages&#96; is high (> 30) | FIXED |
+| L1339 | `internal/service/archive_messages_test.go:20:1` | cyclomatic complexity 31 of func &#96;testOfflineArchiveMessages&#96; is high (> 30) | SUPPRESSED |
+| L1340 | `internal/service/cli.go:28:1` | cyclomatic complexity 34 of func &#96;RunCLI&#96; is high (> 30) | FIXED |
+| L1341 | `internal/service/cli_mobile_ledger.go:29:1` | cyclomatic complexity 32 of func &#96;mobileLedgerArguments&#96; is high (> 30) | SUPPRESSED |
+| L1342 | `internal/service/conversations_test.go:122:1` | cyclomatic complexity 41 of func &#96;testConversationServiceProfile&#96; is high (> 30) | SUPPRESSED |
+| L1343 | `internal/service/events_restart_test.go:123:1` | cyclomatic complexity 49 of func &#96;TestServiceEventsSurviveRestartWithStableDeliveryAndBoundary&#96; is high (> 30) | SUPPRESSED |
+| L1344 | `internal/service/history_test.go:82:1` | cyclomatic complexity 32 of func &#96;TestHTTPHistoryToolsUseExistingCollectorSession&#96; is high (> 30) | SUPPRESSED |
+| L1345 | `internal/service/mobile_ledger_control.go:72:1` | cyclomatic complexity 38 of func &#96;(*membershipPort).mobileLedgerControl&#96; is high (> 30) | FIXED |
+| L1346 | `internal/service/mobile_page_test.go:103:1` | cyclomatic complexity 48 of func &#96;TestServiceMobilePageUsesCollectorSessionAndExpiresHistoricalRows&#96; is high (> 30) | SUPPRESSED |
+| L1347 | `internal/service/multiprocess_test.go:40:1` | cyclomatic complexity 67 of func &#96;TestTwoMCPProcessesReadCollectorWrites&#96; is high (> 30) | SUPPRESSED |
+| L1348 | `internal/service/recall_diagnostic.go:77:1` | cyclomatic complexity 51 of func &#96;(*membershipPort).probeRecall&#96; is high (> 30) | SUPPRESSED |
+| L1349 | `internal/service/run.go:154:1` | cyclomatic complexity 57 of func &#96;runConfigured&#96; is high (> 30) | FIXED |
+| L1350 | `internal/service/run_test.go:49:1` | cyclomatic complexity 48 of func &#96;TestServicePreservesMCPWhenAuthenticationIsRequired&#96; is high (> 30) | SUPPRESSED |
+| L1351 | `internal/service/sending_test.go:79:1` | cyclomatic complexity 46 of func &#96;TestServiceSendAndReplyUseCollectorSessionAndPersistAcrossRestart&#96; is high (> 30) | SUPPRESSED |
 | L1352 | `internal/storage/browse.go:18:1` | cyclomatic complexity 47 of func &#96;(*Store).Browse&#96; is high (> 30) | FIXED |
-| L1353 | `internal/storage/deliveries.go:61:1` | cyclomatic complexity 33 of func &#96;(*Store).FanoutProfileEvents&#96; is high (> 30) | OPEN |
-| L1354 | `internal/storage/events.go:159:1` | cyclomatic complexity 33 of func &#96;(*Store).ActivateSubscription&#96; is high (> 30) | OPEN |
-| L1355 | `internal/storage/history_operations.go:430:1` | cyclomatic complexity 35 of func &#96;(*Store).commitHistoryRecords&#96; is high (> 30) | OPEN |
-| L1356 | `internal/storage/history_operations_test.go:57:1` | cyclomatic complexity 35 of func &#96;TestHistoryOperationDurableCheckpointAndRequestIdentity&#96; is high (> 30) | OPEN |
-| L1357 | `internal/storage/mobile_history.go:158:1` | cyclomatic complexity 98 of func &#96;(*Store).CommitMobileHistoryPage&#96; is high (> 30) | OPEN |
-| L1358 | `internal/storage/mobile_history_test.go:133:1` | cyclomatic complexity 31 of func &#96;TestMobileHistoryRestartExactKeysetCountsAndSilentDuplicates&#96; is high (> 30) | OPEN |
-| L1359 | `internal/toolruntime/runtime.go:144:1` | cyclomatic complexity 45 of func &#96;New&#96; is high (> 30) | OPEN |
-| L1360 | `internal/toolruntime/runtime.go:464:1` | cyclomatic complexity 31 of func &#96;(*Runtime).dispatch&#96; is high (> 30) | OPEN |
-| L1361 | `internal/zalo/events.go:48:1` | cyclomatic complexity 33 of func &#96;(*Client).listenConversations&#96; is high (> 30) | OPEN |
-| L1362 | `internal/zalo/mobile_backup.go:60:1` | cyclomatic complexity 62 of func &#96;receiveMobileBackupOffer&#96; is high (> 30) | OPEN |
-| L1363 | `internal/zalo/preload.go:29:1` | cyclomatic complexity 51 of func &#96;readConversationPreload&#96; is high (> 30) | OPEN |
-| L1364 | `tools/harness/internal/performance/bench.go:75:1` | cyclomatic complexity 42 of func &#96;Bench&#96; is high (> 30) | OPEN |
-| L1365 | `tools/harness/internal/performance/compare.go:8:1` | cyclomatic complexity 56 of func &#96;validate&#96; is high (> 30) | OPEN |
-| L1366 | `tools/harness/internal/performance/compare.go:150:1` | cyclomatic complexity 39 of func &#96;Compare&#96; is high (> 30) | OPEN |
+| L1353 | `internal/storage/deliveries.go:61:1` | cyclomatic complexity 33 of func &#96;(*Store).FanoutProfileEvents&#96; is high (> 30) | SUPPRESSED |
+| L1354 | `internal/storage/events.go:159:1` | cyclomatic complexity 33 of func &#96;(*Store).ActivateSubscription&#96; is high (> 30) | SUPPRESSED |
+| L1355 | `internal/storage/history_operations.go:430:1` | cyclomatic complexity 35 of func &#96;(*Store).commitHistoryRecords&#96; is high (> 30) | SUPPRESSED |
+| L1356 | `internal/storage/history_operations_test.go:57:1` | cyclomatic complexity 35 of func &#96;TestHistoryOperationDurableCheckpointAndRequestIdentity&#96; is high (> 30) | SUPPRESSED |
+| L1357 | `internal/storage/mobile_history.go:158:1` | cyclomatic complexity 98 of func &#96;(*Store).CommitMobileHistoryPage&#96; is high (> 30) | SUPPRESSED |
+| L1358 | `internal/storage/mobile_history_test.go:133:1` | cyclomatic complexity 31 of func &#96;TestMobileHistoryRestartExactKeysetCountsAndSilentDuplicates&#96; is high (> 30) | SUPPRESSED |
+| L1359 | `internal/toolruntime/runtime.go:144:1` | cyclomatic complexity 45 of func &#96;New&#96; is high (> 30) | SUPPRESSED |
+| L1360 | `internal/toolruntime/runtime.go:464:1` | cyclomatic complexity 31 of func &#96;(*Runtime).dispatch&#96; is high (> 30) | SUPPRESSED |
+| L1361 | `internal/zalo/events.go:48:1` | cyclomatic complexity 33 of func &#96;(*Client).listenConversations&#96; is high (> 30) | FIXED |
+| L1362 | `internal/zalo/mobile_backup.go:60:1` | cyclomatic complexity 62 of func &#96;receiveMobileBackupOffer&#96; is high (> 30) | FIXED |
+| L1363 | `internal/zalo/preload.go:29:1` | cyclomatic complexity 51 of func &#96;readConversationPreload&#96; is high (> 30) | FIXED |
+| L1364 | `tools/harness/internal/performance/bench.go:75:1` | cyclomatic complexity 42 of func &#96;Bench&#96; is high (> 30) | FIXED |
+| L1365 | `tools/harness/internal/performance/compare.go:8:1` | cyclomatic complexity 56 of func &#96;validate&#96; is high (> 30) | FIXED |
+| L1366 | `tools/harness/internal/performance/compare.go:150:1` | cyclomatic complexity 39 of func &#96;Compare&#96; is high (> 30) | FIXED |
 
 ### godoclint (8)
 
@@ -1777,8 +1881,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L1367–L1373: начать комментарий с имени объявленного символа, сохранить смысл контракта. L1374: заменить exec.Cmd.Wait на [exec.Cmd.Wait]. Без nolint.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L1367 | `internal/app/eventaccess/journal.go:8:1` | godoc should start with symbol name ("Subscription") | OPEN |
 | L1368 | `internal/app/eventaccess/journal.go:43:1` | godoc should start with symbol name ("MarshalJSON") | OPEN |
 | L1369 | `internal/app/history/command.go:10:1` | godoc should start with symbol name ("StartRequest") | OPEN |
@@ -1796,8 +1900,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Отформатировать перечисленные tools/harness файлы штатным formatter; затем проверить diff. Не менять SQL/JSON fixtures и shell literal contents ради ширины строки.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L1376 | `tools/harness/cmd/harness/main.go:52:1` | File is not properly formatted | OPEN |
 | L1377 | `tools/harness/internal/architecture/architecture.go:163:1` | File is not properly formatted | OPEN |
 | L1378 | `tools/harness/internal/architecture/architecture_test.go:195:1` | File is not properly formatted | OPEN |
@@ -1814,8 +1918,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Разбор G115 и специальных security findings приведён выше в разделе «Адресные решения». G104 обрабатывать вместе с errcheck; не подавлять весь gosec на функции. G202 допускает локальный nolint только для фиксированных SQL fragments и placeholders для всех пользовательских значений. G702/G703/G204 проверять по происхождению binary/path/args. Права synthetic evidence и реальные credentials не объединять одним исключением.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L1383 | `internal/collector/join.go:484:4` | G104: Errors unhandled | SUPPRESSED |
 | L1384 | `internal/collector/join.go:489:4` | G104: Errors unhandled | SUPPRESSED |
 | L1385 | `internal/collector/join.go:500:2` | G104: Errors unhandled | SUPPRESSED |
@@ -1850,7 +1954,7 @@ _Заполнить._
 | L1414 | `internal/local/files.go:21:18` | G104: Errors unhandled | FIXED |
 | L1415 | `internal/local/files.go:21:57` | G104: Errors unhandled | FIXED |
 | L1416 | `internal/logging/file.go:37:48` | G115: integer overflow conversion int -> uint32 | SUPPRESSED |
-| L1417 | `internal/logging/file.go:40:12` | G302: Expect file permissions to be 0600 or less | SUPPRESSED |
+| L1417 | `internal/logging/file.go:40:12` | G302: Expect file permissions to be 0600 or less | FIXED |
 | L1418 | `internal/logging/file.go:45:92` | G115: integer overflow conversion int -> uint32 | SUPPRESSED |
 | L1419 | `internal/logging/startup.go:46:3` | G104: Errors unhandled | SUPPRESSED |
 | L1420 | `internal/logging/startup.go:52:3` | G104: Errors unhandled | SUPPRESSED |
@@ -1976,204 +2080,204 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** В snapshot замечания shadow; не заменять повсеместно := на =: это меняет scope и может повторить недавнюю регрессию. При реально перекрытом result/err/ctx использовать осмысленные имена (queryErr, buildCtx) либо сократить scope внешней переменной. Для обычного if err := operation(); err != nil с независимым внутренним err допустим локальный nolint:govet с причиной; поскольку он подавляет весь govet на строке, предпочитать переименование при одинаковой читаемости. Остальные vet diagnostics, если появятся на rerun, разбирать отдельно.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
-| L1534 | `cmd/zl-mcp-eval/main_test.go:50:5` | shadow: declaration of "err" shadows declaration at line 40 | OPEN |
-| L1535 | `cmd/zl-mcp-eval/main_test.go:68:5` | shadow: declaration of "err" shadows declaration at line 40 | OPEN |
-| L1536 | `cmd/zl-mcp-eval/main_test.go:163:12` | shadow: declaration of "err" shadows declaration at line 139 | OPEN |
-| L1537 | `docs/contracts/archive_metadata_diagnostics_test.go:17:5` | shadow: declaration of "err" shadows declaration at line 11 | OPEN |
-| L1538 | `docs/contracts/history_import_test.go:58:4` | shadow: declaration of "err" shadows declaration at line 10 | OPEN |
-| L1539 | `internal/collector/conversations_test.go:45:6` | shadow: declaration of "err" shadows declaration at line 36 | OPEN |
-| L1540 | `internal/collector/conversations_test.go:49:7` | shadow: declaration of "err" shadows declaration at line 36 | OPEN |
-| L1541 | `internal/collector/conversations_test.go:62:6` | shadow: declaration of "err" shadows declaration at line 36 | OPEN |
-| L1542 | `internal/collector/conversations_test.go:68:6` | shadow: declaration of "err" shadows declaration at line 36 | OPEN |
-| L1543 | `internal/collector/join.go:115:6` | shadow: declaration of "e" shadows declaration at line 82 | OPEN |
-| L1544 | `internal/collector/mobile_backup_test.go:55:7` | shadow: declaration of "err" shadows declaration at line 49 | OPEN |
-| L1545 | `internal/collector/preload_catalog.go:45:6` | shadow: declaration of "err" shadows declaration at line 21 | OPEN |
-| L1546 | `internal/collector/run.go:118:6` | shadow: declaration of "cancel" shadows declaration at line 63 | OPEN |
-| L1547 | `internal/collector/run.go:120:6` | shadow: declaration of "e" shadows declaration at line 62 | OPEN |
-| L1548 | `internal/collector/run.go:124:11` | shadow: declaration of "e" shadows declaration at line 62 | OPEN |
-| L1549 | `internal/collector/run.go:343:8` | shadow: declaration of "e" shadows declaration at line 295 | OPEN |
-| L1550 | `internal/collector/run.go:352:11` | shadow: declaration of "e" shadows declaration at line 295 | OPEN |
-| L1551 | `internal/events/conversation_test.go:39:6` | shadow: declaration of "err" shadows declaration at line 26 | OPEN |
-| L1552 | `internal/events/conversation_test.go:65:11` | shadow: declaration of "err" shadows declaration at line 26 | OPEN |
-| L1553 | `internal/events/conversation_test.go:127:9` | shadow: declaration of "err" shadows declaration at line 26 | OPEN |
-| L1554 | `internal/events/conversation_test.go:168:11` | shadow: declaration of "err" shadows declaration at line 26 | OPEN |
-| L1555 | `internal/events/incoming_test.go:41:6` | shadow: declaration of "err" shadows declaration at line 23 | OPEN |
-| L1556 | `internal/events/incoming_test.go:87:6` | shadow: declaration of "err" shadows declaration at line 23 | OPEN |
-| L1557 | `internal/events/incoming_test.go:108:9` | shadow: declaration of "err" shadows declaration at line 23 | OPEN |
-| L1558 | `internal/events/incoming_test.go:148:8` | shadow: declaration of "err" shadows declaration at line 23 | OPEN |
-| L1559 | `internal/events/message_test.go:35:6` | shadow: declaration of "err" shadows declaration at line 30 | OPEN |
-| L1560 | `internal/events/message_test.go:112:7` | shadow: declaration of "err" shadows declaration at line 97 | OPEN |
-| L1561 | `internal/events/subscriptions.go:243:5` | shadow: declaration of "err" shadows declaration at line 232 | OPEN |
-| L1562 | `internal/events/subscriptions_test.go:32:6` | shadow: declaration of "err" shadows declaration at line 20 | OPEN |
-| L1563 | `internal/events/subscriptions_test.go:41:9` | shadow: declaration of "err" shadows declaration at line 20 | OPEN |
-| L1564 | `internal/events/worker.go:88:7` | shadow: declaration of "err" shadows declaration at line 82 | OPEN |
-| L1565 | `internal/events/worker.go:241:11` | shadow: declaration of "err" shadows declaration at line 238 | OPEN |
-| L1566 | `internal/events/worker_test.go:50:5` | shadow: declaration of "err" shadows declaration at line 25 | OPEN |
-| L1567 | `internal/events/worker_test.go:84:6` | shadow: declaration of "err" shadows declaration at line 79 | OPEN |
-| L1568 | `internal/historyimport/mobile_worker.go:177:12` | shadow: declaration of "e" shadows declaration at line 175 | OPEN |
-| L1569 | `internal/historyimport/mobile_worker.go:214:8` | shadow: declaration of "err" shadows declaration at line 107 | OPEN |
-| L1570 | `internal/historyimport/mobile_worker.go:247:17` | shadow: declaration of "e" shadows declaration at line 240 | OPEN |
-| L1571 | `internal/historyimport/worker.go:84:6` | shadow: declaration of "err" shadows declaration at line 74 | OPEN |
-| L1572 | `internal/logging/file.go:40:5` | shadow: declaration of "err" shadows declaration at line 32 | OPEN |
-| L1573 | `internal/logging/file.go:43:11` | shadow: declaration of "err" shadows declaration at line 32 | OPEN |
-| L1574 | `internal/logging/file_test.go:25:9` | shadow: declaration of "err" shadows declaration at line 17 | OPEN |
-| L1575 | `internal/logging/file_test.go:30:5` | shadow: declaration of "err" shadows declaration at line 17 | OPEN |
-| L1576 | `internal/logging/file_test.go:50:9` | shadow: declaration of "err" shadows declaration at line 17 | OPEN |
-| L1577 | `internal/mcpserver/budget_error_test.go:60:11` | shadow: declaration of "err" shadows declaration at line 23 | OPEN |
-| L1578 | `internal/mcpserver/catalog_ports_test.go:75:11` | shadow: declaration of "err" shadows declaration at line 29 | OPEN |
-| L1579 | `internal/mcpserver/catalog_ports_test.go:84:11` | shadow: declaration of "err" shadows declaration at line 29 | OPEN |
-| L1580 | `internal/mcpserver/conversation_events_http_test.go:52:9` | shadow: declaration of "err" shadows declaration at line 38 | OPEN |
-| L1581 | `internal/mcpserver/conversations.go:29:13` | shadow: declaration of "err" shadows declaration at line 18 | OPEN |
-| L1582 | `internal/mcpserver/diagnostics_test.go:40:5` | shadow: declaration of "err" shadows declaration at line 18 | OPEN |
-| L1583 | `internal/mcpserver/http_test.go:91:9` | shadow: declaration of "err" shadows declaration at line 82 | OPEN |
-| L1584 | `internal/mcpserver/http_test.go:139:5` | shadow: declaration of "err" shadows declaration at line 82 | OPEN |
-| L1585 | `internal/mcpserver/http_test.go:164:6` | shadow: declaration of "err" shadows declaration at line 82 | OPEN |
-| L1586 | `internal/mcpserver/http_test.go:178:8` | shadow: declaration of "err" shadows declaration at line 82 | OPEN |
-| L1587 | `internal/mcpserver/http_test.go:181:8` | shadow: declaration of "err" shadows declaration at line 82 | OPEN |
-| L1588 | `internal/mcpserver/http_test.go:215:5` | shadow: declaration of "err" shadows declaration at line 82 | OPEN |
-| L1589 | `internal/mcpserver/http_test.go:228:8` | shadow: declaration of "err" shadows declaration at line 82 | OPEN |
-| L1590 | `internal/mcpserver/migration_baseline_test.go:32:6` | shadow: declaration of "err" shadows declaration at line 25 | OPEN |
-| L1591 | `internal/mcpserver/migration_baseline_test.go:100:5` | shadow: declaration of "err" shadows declaration at line 60 | OPEN |
-| L1592 | `internal/mcpserver/migration_baseline_test.go:105:5` | shadow: declaration of "err" shadows declaration at line 60 | OPEN |
-| L1593 | `internal/mcpserver/migration_inputs_test.go:117:5` | shadow: declaration of "err" shadows declaration at line 112 | OPEN |
-| L1594 | `internal/mcpserver/migration_inputs_test.go:120:5` | shadow: declaration of "err" shadows declaration at line 112 | OPEN |
-| L1595 | `internal/mcpserver/migration_inputs_test.go:130:8` | shadow: declaration of "err" shadows declaration at line 112 | OPEN |
-| L1596 | `internal/mcpserver/runtime_invocation_test.go:136:11` | shadow: declaration of "err" shadows declaration at line 55 | OPEN |
-| L1597 | `internal/mcpserver/sdk_identity_test.go:110:5` | shadow: declaration of "err" shadows declaration at line 105 | OPEN |
-| L1598 | `internal/mcpserver/stdio_test.go:46:5` | shadow: declaration of "err" shadows declaration at line 35 | OPEN |
-| L1599 | `internal/mcpserver/stdio_test.go:85:8` | shadow: declaration of "err" shadows declaration at line 35 | OPEN |
-| L1600 | `internal/messaging/manager.go:48:7` | shadow: declaration of "err" shadows declaration at line 39 | OPEN |
-| L1601 | `internal/messaging/subprocess_restart_test.go:58:12` | shadow: declaration of "err" shadows declaration at line 36 | OPEN |
-| L1602 | `internal/messaging/subprocess_restart_test.go:188:13` | shadow: declaration of "err" shadows declaration at line 182 | OPEN |
-| L1603 | `internal/mobilebackup/archive_library_test.go:56:11` | shadow: declaration of "err" shadows declaration at line 23 | OPEN |
-| L1604 | `internal/mobilebackup/archive_restore_test.go:37:9` | shadow: declaration of "err" shadows declaration at line 19 | OPEN |
-| L1605 | `internal/mobilebackup/archive_restore_test.go:90:10` | shadow: declaration of "err" shadows declaration at line 57 | OPEN |
-| L1606 | `internal/mobilebackup/native_binary_test.go:82:9` | shadow: declaration of "err" shadows declaration at line 30 | OPEN |
-| L1607 | `internal/mobilebackup/native_binary_test.go:129:10` | shadow: declaration of "err" shadows declaration at line 109 | OPEN |
-| L1608 | `internal/mobilebackup/retained_archive_test.go:265:12` | shadow: declaration of "err" shadows declaration at line 230 | OPEN |
-| L1609 | `internal/mobilebackup/row_page.go:176:13` | shadow: declaration of "e" shadows declaration at line 91 | OPEN |
-| L1610 | `internal/mobilebackup/snapshot_sqlite_test.go:86:11` | shadow: declaration of "err" shadows declaration at line 47 | OPEN |
-| L1611 | `internal/mobilebackup/snapshot_sqlite_test.go:106:12` | shadow: declaration of "err" shadows declaration at line 47 | OPEN |
-| L1612 | `internal/mobilebackup/snapshot_terminal.go:73:12` | shadow: declaration of "e" shadows declaration at line 60 | OPEN |
-| L1613 | `internal/mobilebackup/snapshot_terminal_test.go:131:5` | shadow: declaration of "err" shadows declaration at line 126 | OPEN |
-| L1614 | `internal/mobilebackup/sqlite.go:382:16` | shadow: declaration of "err" shadows declaration at line 177 | OPEN |
-| L1615 | `internal/mobilebackup/sqlite.go:392:13` | shadow: declaration of "err" shadows declaration at line 177 | OPEN |
-| L1616 | `internal/mobilebackup/sqlite_test.go:586:9` | shadow: declaration of "err" shadows declaration at line 574 | OPEN |
-| L1617 | `internal/observability/native_test.go:273:11` | shadow: declaration of "err" shadows declaration at line 262 | OPEN |
-| L1622 | `internal/service/account_archive_test.go:131:9` | shadow: declaration of "err" shadows declaration at line 59 | OPEN |
-| L1623 | `internal/service/account_archive_test.go:210:11` | shadow: declaration of "e" shadows declaration at line 69 | OPEN |
-| L1624 | `internal/service/archive_catalog_test.go:45:11` | shadow: declaration of "err" shadows declaration at line 18 | OPEN |
-| L1625 | `internal/service/archive_messages.go:203:10` | shadow: declaration of "err" shadows declaration at line 173 | OPEN |
-| L1626 | `internal/service/archive_messages_test.go:51:11` | shadow: declaration of "err" shadows declaration at line 33 | OPEN |
-| L1627 | `internal/service/events_restart_test.go:138:5` | shadow: declaration of "err" shadows declaration at line 126 | OPEN |
-| L1628 | `internal/service/events_restart_test.go:151:9` | shadow: declaration of "err" shadows declaration at line 126 | OPEN |
-| L1629 | `internal/service/events_restart_test.go:225:8` | shadow: declaration of "err" shadows declaration at line 126 | OPEN |
-| L1630 | `internal/service/events_restart_test.go:236:8` | shadow: declaration of "err" shadows declaration at line 126 | OPEN |
-| L1631 | `internal/service/events_restart_test.go:265:8` | shadow: declaration of "err" shadows declaration at line 126 | OPEN |
-| L1632 | `internal/service/mobile_archive_probe.go:123:18` | shadow: declaration of "e" shadows declaration at line 89 | OPEN |
-| L1633 | `internal/service/mobile_history_test.go:118:8` | shadow: declaration of "err" shadows declaration at line 49 | OPEN |
-| L1634 | `internal/service/mobile_ledger_control.go:46:9` | shadow: declaration of "err" shadows declaration at line 33 | OPEN |
-| L1635 | `internal/service/mobile_ledger_control_test.go:246:8` | shadow: declaration of "e" shadows declaration at line 212 | OPEN |
-| L1636 | `internal/service/mobile_page_test.go:150:8` | shadow: declaration of "e" shadows declaration at line 108 | OPEN |
-| L1637 | `internal/service/mobile_page_test.go:180:14` | shadow: declaration of "e" shadows declaration at line 108 | OPEN |
-| L1638 | `internal/service/multiprocess_test.go:60:5` | shadow: declaration of "err" shadows declaration at line 42 | OPEN |
-| L1639 | `internal/service/multiprocess_test.go:66:13` | shadow: declaration of "err" shadows declaration at line 42 | OPEN |
-| L1640 | `internal/service/multiprocess_test.go:82:8` | shadow: declaration of "err" shadows declaration at line 42 | OPEN |
-| L1641 | `internal/service/multiprocess_test.go:96:5` | shadow: declaration of "err" shadows declaration at line 42 | OPEN |
-| L1642 | `internal/service/multiprocess_test.go:120:13` | shadow: declaration of "err" shadows declaration at line 42 | OPEN |
-| L1643 | `internal/service/multiprocess_test.go:164:12` | shadow: declaration of "err" shadows declaration at line 42 | OPEN |
-| L1644 | `internal/service/multiprocess_test.go:173:11` | shadow: declaration of "err" shadows declaration at line 42 | OPEN |
-| L1645 | `internal/service/multiprocess_test.go:197:7` | shadow: declaration of "err" shadows declaration at line 42 | OPEN |
-| L1646 | `internal/service/multiprocess_test.go:221:11` | shadow: declaration of "err" shadows declaration at line 42 | OPEN |
-| L1647 | `internal/service/multiprocess_test.go:253:6` | shadow: declaration of "err" shadows declaration at line 42 | OPEN |
-| L1648 | `internal/service/multiprocess_test.go:267:7` | shadow: declaration of "err" shadows declaration at line 42 | OPEN |
-| L1649 | `internal/service/preload_probe_test.go:52:5` | shadow: declaration of "err" shadows declaration at line 44 | OPEN |
-| L1650 | `internal/service/preload_probe_test.go:66:8` | shadow: declaration of "err" shadows declaration at line 44 | OPEN |
-| L1651 | `internal/service/preload_probe_test.go:93:6` | shadow: declaration of "err" shadows declaration at line 44 | OPEN |
-| L1652 | `internal/service/recall_diagnostic.go:113:11` | shadow: declaration of "e" shadows declaration at line 80 | OPEN |
-| L1653 | `internal/service/recall_diagnostic.go:117:6` | shadow: declaration of "e" shadows declaration at line 113 | OPEN |
-| L1654 | `internal/service/recall_diagnostic.go:162:6` | shadow: declaration of "e" shadows declaration at line 80 | OPEN |
-| L1655 | `internal/service/run.go:186:7` | shadow: declaration of "err" shadows declaration at line 162 | OPEN |
-| L1656 | `internal/service/run.go:227:6` | shadow: declaration of "err" shadows declaration at line 162 | OPEN |
-| L1657 | `internal/service/run_test.go:69:7` | shadow: declaration of "err" shadows declaration at line 53 | OPEN |
-| L1658 | `internal/service/run_test.go:109:9` | shadow: declaration of "err" shadows declaration at line 53 | OPEN |
-| L1659 | `internal/service/run_test.go:139:15` | shadow: declaration of "err" shadows declaration at line 53 | OPEN |
-| L1660 | `internal/service/run_test.go:162:15` | shadow: declaration of "err" shadows declaration at line 53 | OPEN |
-| L1661 | `internal/service/run_test.go:202:7` | shadow: declaration of "err" shadows declaration at line 53 | OPEN |
-| L1662 | `internal/service/run_test.go:219:9` | shadow: declaration of "err" shadows declaration at line 53 | OPEN |
-| L1663 | `internal/service/run_test.go:297:5` | shadow: declaration of "err" shadows declaration at line 291 | OPEN |
-| L1664 | `internal/service/run_test.go:303:8` | shadow: declaration of "err" shadows declaration at line 291 | OPEN |
-| L1665 | `internal/service/run_test.go:321:7` | shadow: declaration of "err" shadows declaration at line 291 | OPEN |
-| L1666 | `internal/service/run_test.go:327:8` | shadow: declaration of "err" shadows declaration at line 291 | OPEN |
-| L1667 | `internal/service/run_test.go:351:7` | shadow: declaration of "err" shadows declaration at line 291 | OPEN |
-| L1668 | `internal/service/sending_test.go:112:9` | shadow: declaration of "err" shadows declaration at line 81 | OPEN |
-| L1669 | `internal/service/sending_test.go:123:8` | shadow: declaration of "err" shadows declaration at line 81 | OPEN |
-| L1670 | `internal/storage/archive_visibility_test.go:39:11` | shadow: declaration of "err" shadows declaration at line 16 | OPEN |
-| L1671 | `internal/storage/budget_test.go:54:7` | shadow: declaration of "err" shadows declaration at line 48 | OPEN |
-| L1672 | `internal/storage/contacts.go:76:9` | shadow: declaration of "err" shadows declaration at line 49 | OPEN |
-| L1673 | `internal/storage/conversation_migration_test.go:117:5` | shadow: declaration of "err" shadows declaration at line 111 | OPEN |
-| L1674 | `internal/storage/conversation_views.go:158:29` | shadow: declaration of "err" shadows declaration at line 125 | OPEN |
-| L1675 | `internal/storage/conversations_test.go:24:3` | shadow: declaration of "err" shadows declaration at line 15 | OPEN |
-| L1676 | `internal/storage/deliveries.go:125:7` | shadow: declaration of "err" shadows declaration at line 115 | OPEN |
-| L1677 | `internal/storage/deliveries.go:148:8` | shadow: declaration of "target" shadows declaration at line 145 | OPEN |
-| L1678 | `internal/storage/deliveries.go:283:7` | shadow: declaration of "err" shadows declaration at line 280 | OPEN |
-| L1679 | `internal/storage/deliveries.go:292:10` | shadow: declaration of "err" shadows declaration at line 280 | OPEN |
-| L1680 | `internal/storage/deliveries_test.go:28:13` | shadow: declaration of "err" shadows declaration at line 21 | OPEN |
-| L1681 | `internal/storage/deliveries_test.go:49:7` | shadow: declaration of "err" shadows declaration at line 21 | OPEN |
-| L1682 | `internal/storage/deliveries_test.go:109:13` | shadow: declaration of "err" shadows declaration at line 97 | OPEN |
-| L1683 | `internal/storage/deliveries_test.go:118:6` | shadow: declaration of "err" shadows declaration at line 97 | OPEN |
-| L1684 | `internal/storage/deliveries_test.go:133:8` | shadow: declaration of "err" shadows declaration at line 97 | OPEN |
-| L1685 | `internal/storage/deliveries_test.go:142:5` | shadow: declaration of "err" shadows declaration at line 97 | OPEN |
-| L1686 | `internal/storage/deliveries_test.go:158:5` | shadow: declaration of "err" shadows declaration at line 97 | OPEN |
-| L1687 | `internal/storage/deliveries_test.go:218:5` | shadow: declaration of "err" shadows declaration at line 212 | OPEN |
-| L1688 | `internal/storage/deliveries_test.go:225:8` | shadow: declaration of "err" shadows declaration at line 212 | OPEN |
-| L1689 | `internal/storage/deliveries_test.go:259:8` | shadow: declaration of "err" shadows declaration at line 250 | OPEN |
-| L1690 | `internal/storage/deliveries_test.go:267:5` | shadow: declaration of "err" shadows declaration at line 250 | OPEN |
-| L1691 | `internal/storage/delivery_policy_test.go:27:11` | shadow: declaration of "err" shadows declaration at line 16 | OPEN |
-| L1692 | `internal/storage/delivery_policy_test.go:33:10` | shadow: declaration of "err" shadows declaration at line 16 | OPEN |
-| L1693 | `internal/storage/delivery_policy_test.go:45:11` | shadow: declaration of "err" shadows declaration at line 16 | OPEN |
-| L1694 | `internal/storage/delivery_policy_test.go:50:8` | shadow: declaration of "err" shadows declaration at line 16 | OPEN |
-| L1695 | `internal/storage/delivery_policy_test.go:118:11` | shadow: declaration of "err" shadows declaration at line 107 | OPEN |
-| L1696 | `internal/storage/delivery_policy_test.go:124:5` | shadow: declaration of "err" shadows declaration at line 107 | OPEN |
-| L1697 | `internal/storage/delivery_policy_test.go:127:5` | shadow: declaration of "err" shadows declaration at line 107 | OPEN |
-| L1698 | `internal/storage/diagnostics.go:51:9` | shadow: declaration of "err" shadows declaration at line 33 | OPEN |
-| L1699 | `internal/storage/diagnostics_test.go:38:8` | shadow: declaration of "err" shadows declaration at line 28 | OPEN |
-| L1700 | `internal/storage/events.go:206:12` | shadow: declaration of "err" shadows declaration at line 177 | OPEN |
-| L1701 | `internal/storage/events_test.go:46:8` | shadow: declaration of "err" shadows declaration at line 41 | OPEN |
-| L1702 | `internal/storage/events_test.go:88:5` | shadow: declaration of "err" shadows declaration at line 59 | OPEN |
-| L1703 | `internal/storage/events_test.go:97:5` | shadow: declaration of "err" shadows declaration at line 59 | OPEN |
-| L1704 | `internal/storage/events_test.go:111:5` | shadow: declaration of "err" shadows declaration at line 59 | OPEN |
-| L1705 | `internal/storage/history_expiry_test.go:35:7` | shadow: declaration of "e" shadows declaration at line 16 | OPEN |
-| L1706 | `internal/storage/history_expiry_test.go:138:17` | shadow: declaration of "e" shadows declaration at line 113 | OPEN |
-| L1707 | `internal/storage/history_expiry_test.go:141:8` | shadow: declaration of "e" shadows declaration at line 113 | OPEN |
-| L1708 | `internal/storage/history_operations_test.go:403:9` | shadow: declaration of "err" shadows declaration at line 388 | OPEN |
-| L1709 | `internal/storage/history_operations_test.go:416:6` | shadow: declaration of "err" shadows declaration at line 388 | OPEN |
-| L1710 | `internal/storage/history_operations_test.go:462:5` | shadow: declaration of "err" shadows declaration at line 438 | OPEN |
-| L1711 | `internal/storage/incoming_migration_test.go:38:6` | shadow: declaration of "err" shadows declaration at line 16 | OPEN |
-| L1712 | `internal/storage/incoming_test.go:36:7` | shadow: declaration of "err" shadows declaration at line 17 | OPEN |
-| L1713 | `internal/storage/incoming_test.go:104:6` | shadow: declaration of "err" shadows declaration at line 91 | OPEN |
-| L1714 | `internal/storage/incoming_test.go:114:6` | shadow: declaration of "err" shadows declaration at line 91 | OPEN |
-| L1715 | `internal/storage/mobile_backup.go:125:13` | shadow: declaration of "err" shadows declaration at line 114 | OPEN |
-| L1716 | `internal/storage/preload_directory_test.go:46:5` | shadow: declaration of "err" shadows declaration at line 33 | OPEN |
-| L1717 | `internal/storage/preload_directory_test.go:53:5` | shadow: declaration of "err" shadows declaration at line 33 | OPEN |
-| L1718 | `internal/storage/preload_directory_test.go:62:6` | shadow: declaration of "err" shadows declaration at line 33 | OPEN |
-| L1719 | `internal/storage/preload_directory_test.go:70:5` | shadow: declaration of "err" shadows declaration at line 33 | OPEN |
-| L1720 | `internal/storage/preload_directory_test.go:92:6` | shadow: declaration of "err" shadows declaration at line 87 | OPEN |
-| L1721 | `internal/storage/store.go:303:8` | shadow: declaration of "err" shadows declaration at line 276 | OPEN |
-| L1722 | `internal/storage/views.go:304:9` | shadow: declaration of "e" shadows declaration at line 299 | OPEN |
-| L1723 | `internal/storage/views.go:347:6` | shadow: declaration of "e" shadows declaration at line 299 | OPEN |
-| L1724 | `internal/toolruntime/catalog_reads_test.go:42:11` | shadow: declaration of "err" shadows declaration at line 35 | OPEN |
-| L1725 | `internal/toolruntime/runtime.go:248:11` | shadow: declaration of "err" shadows declaration at line 222 | OPEN |
-| L1726 | `internal/zalo/mobile_backup.go:104:6` | shadow: declaration of "err" shadows declaration at line 80 | OPEN |
-| L1727 | `internal/zalo/mobile_backup.go:251:8` | shadow: declaration of "err" shadows declaration at line 242 | OPEN |
-| L1728 | `internal/zalo/restore_test.go:38:7` | shadow: declaration of "err" shadows declaration at line 34 | OPEN |
-| L1735 | `tools/harness/internal/performance/bench.go:101:15` | shadow: declaration of "e" shadows declaration at line 78 | OPEN |
-| L1736 | `tools/harness/internal/performance/bench.go:121:8` | shadow: declaration of "e" shadows declaration at line 101 | OPEN |
-| L1737 | `tools/harness/internal/performance/build.go:47:9` | shadow: declaration of "e" shadows declaration at line 30 | OPEN |
-| L1738 | `tools/harness/internal/performance/build.go:85:3` | shadow: declaration of "ctx" shadows declaration at line 71 | OPEN |
-| L1739 | `tools/harness/internal/performance/build.go:87:9` | shadow: declaration of "e" shadows declaration at line 72 | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
+| L1534 | `cmd/zl-mcp-eval/main_test.go:50:5` | shadow: declaration of "err" shadows declaration at line 40 | FIXED |
+| L1535 | `cmd/zl-mcp-eval/main_test.go:68:5` | shadow: declaration of "err" shadows declaration at line 40 | FIXED |
+| L1536 | `cmd/zl-mcp-eval/main_test.go:163:12` | shadow: declaration of "err" shadows declaration at line 139 | FIXED |
+| L1537 | `docs/contracts/archive_metadata_diagnostics_test.go:17:5` | shadow: declaration of "err" shadows declaration at line 11 | FIXED |
+| L1538 | `docs/contracts/history_import_test.go:58:4` | shadow: declaration of "err" shadows declaration at line 10 | FIXED |
+| L1539 | `internal/collector/conversations_test.go:45:6` | shadow: declaration of "err" shadows declaration at line 36 | FIXED |
+| L1540 | `internal/collector/conversations_test.go:49:7` | shadow: declaration of "err" shadows declaration at line 36 | FIXED |
+| L1541 | `internal/collector/conversations_test.go:62:6` | shadow: declaration of "err" shadows declaration at line 36 | FIXED |
+| L1542 | `internal/collector/conversations_test.go:68:6` | shadow: declaration of "err" shadows declaration at line 36 | FIXED |
+| L1543 | `internal/collector/join.go:115:6` | shadow: declaration of "e" shadows declaration at line 82 | FIXED |
+| L1544 | `internal/collector/mobile_backup_test.go:55:7` | shadow: declaration of "err" shadows declaration at line 49 | FIXED |
+| L1545 | `internal/collector/preload_catalog.go:45:6` | shadow: declaration of "err" shadows declaration at line 21 | FIXED |
+| L1546 | `internal/collector/run.go:118:6` | shadow: declaration of "cancel" shadows declaration at line 63 | FIXED |
+| L1547 | `internal/collector/run.go:120:6` | shadow: declaration of "e" shadows declaration at line 62 | FIXED |
+| L1548 | `internal/collector/run.go:124:11` | shadow: declaration of "e" shadows declaration at line 62 | FIXED |
+| L1549 | `internal/collector/run.go:343:8` | shadow: declaration of "e" shadows declaration at line 295 | FIXED |
+| L1550 | `internal/collector/run.go:352:11` | shadow: declaration of "e" shadows declaration at line 295 | FIXED |
+| L1551 | `internal/events/conversation_test.go:39:6` | shadow: declaration of "err" shadows declaration at line 26 | FIXED |
+| L1552 | `internal/events/conversation_test.go:65:11` | shadow: declaration of "err" shadows declaration at line 26 | FIXED |
+| L1553 | `internal/events/conversation_test.go:127:9` | shadow: declaration of "err" shadows declaration at line 26 | FIXED |
+| L1554 | `internal/events/conversation_test.go:168:11` | shadow: declaration of "err" shadows declaration at line 26 | FIXED |
+| L1555 | `internal/events/incoming_test.go:41:6` | shadow: declaration of "err" shadows declaration at line 23 | FIXED |
+| L1556 | `internal/events/incoming_test.go:87:6` | shadow: declaration of "err" shadows declaration at line 23 | FIXED |
+| L1557 | `internal/events/incoming_test.go:108:9` | shadow: declaration of "err" shadows declaration at line 23 | FIXED |
+| L1558 | `internal/events/incoming_test.go:148:8` | shadow: declaration of "err" shadows declaration at line 23 | FIXED |
+| L1559 | `internal/events/message_test.go:35:6` | shadow: declaration of "err" shadows declaration at line 30 | FIXED |
+| L1560 | `internal/events/message_test.go:112:7` | shadow: declaration of "err" shadows declaration at line 97 | FIXED |
+| L1561 | `internal/events/subscriptions.go:243:5` | shadow: declaration of "err" shadows declaration at line 232 | FIXED |
+| L1562 | `internal/events/subscriptions_test.go:32:6` | shadow: declaration of "err" shadows declaration at line 20 | FIXED |
+| L1563 | `internal/events/subscriptions_test.go:41:9` | shadow: declaration of "err" shadows declaration at line 20 | FIXED |
+| L1564 | `internal/events/worker.go:88:7` | shadow: declaration of "err" shadows declaration at line 82 | FIXED |
+| L1565 | `internal/events/worker.go:241:11` | shadow: declaration of "err" shadows declaration at line 238 | FIXED |
+| L1566 | `internal/events/worker_test.go:50:5` | shadow: declaration of "err" shadows declaration at line 25 | FIXED |
+| L1567 | `internal/events/worker_test.go:84:6` | shadow: declaration of "err" shadows declaration at line 79 | FIXED |
+| L1568 | `internal/historyimport/mobile_worker.go:177:12` | shadow: declaration of "e" shadows declaration at line 175 | FIXED |
+| L1569 | `internal/historyimport/mobile_worker.go:214:8` | shadow: declaration of "err" shadows declaration at line 107 | FIXED |
+| L1570 | `internal/historyimport/mobile_worker.go:247:17` | shadow: declaration of "e" shadows declaration at line 240 | FIXED |
+| L1571 | `internal/historyimport/worker.go:84:6` | shadow: declaration of "err" shadows declaration at line 74 | FIXED |
+| L1572 | `internal/logging/file.go:40:5` | shadow: declaration of "err" shadows declaration at line 32 | FIXED |
+| L1573 | `internal/logging/file.go:43:11` | shadow: declaration of "err" shadows declaration at line 32 | FIXED |
+| L1574 | `internal/logging/file_test.go:25:9` | shadow: declaration of "err" shadows declaration at line 17 | FIXED |
+| L1575 | `internal/logging/file_test.go:30:5` | shadow: declaration of "err" shadows declaration at line 17 | FIXED |
+| L1576 | `internal/logging/file_test.go:50:9` | shadow: declaration of "err" shadows declaration at line 17 | FIXED |
+| L1577 | `internal/mcpserver/budget_error_test.go:60:11` | shadow: declaration of "err" shadows declaration at line 23 | FIXED |
+| L1578 | `internal/mcpserver/catalog_ports_test.go:75:11` | shadow: declaration of "err" shadows declaration at line 29 | FIXED |
+| L1579 | `internal/mcpserver/catalog_ports_test.go:84:11` | shadow: declaration of "err" shadows declaration at line 29 | FIXED |
+| L1580 | `internal/mcpserver/conversation_events_http_test.go:52:9` | shadow: declaration of "err" shadows declaration at line 38 | FIXED |
+| L1581 | `internal/mcpserver/conversations.go:29:13` | shadow: declaration of "err" shadows declaration at line 18 | FIXED |
+| L1582 | `internal/mcpserver/diagnostics_test.go:40:5` | shadow: declaration of "err" shadows declaration at line 18 | FIXED |
+| L1583 | `internal/mcpserver/http_test.go:91:9` | shadow: declaration of "err" shadows declaration at line 82 | FIXED |
+| L1584 | `internal/mcpserver/http_test.go:139:5` | shadow: declaration of "err" shadows declaration at line 82 | FIXED |
+| L1585 | `internal/mcpserver/http_test.go:164:6` | shadow: declaration of "err" shadows declaration at line 82 | FIXED |
+| L1586 | `internal/mcpserver/http_test.go:178:8` | shadow: declaration of "err" shadows declaration at line 82 | FIXED |
+| L1587 | `internal/mcpserver/http_test.go:181:8` | shadow: declaration of "err" shadows declaration at line 82 | FIXED |
+| L1588 | `internal/mcpserver/http_test.go:215:5` | shadow: declaration of "err" shadows declaration at line 82 | FIXED |
+| L1589 | `internal/mcpserver/http_test.go:228:8` | shadow: declaration of "err" shadows declaration at line 82 | FIXED |
+| L1590 | `internal/mcpserver/migration_baseline_test.go:32:6` | shadow: declaration of "err" shadows declaration at line 25 | FIXED |
+| L1591 | `internal/mcpserver/migration_baseline_test.go:100:5` | shadow: declaration of "err" shadows declaration at line 60 | FIXED |
+| L1592 | `internal/mcpserver/migration_baseline_test.go:105:5` | shadow: declaration of "err" shadows declaration at line 60 | FIXED |
+| L1593 | `internal/mcpserver/migration_inputs_test.go:117:5` | shadow: declaration of "err" shadows declaration at line 112 | FIXED |
+| L1594 | `internal/mcpserver/migration_inputs_test.go:120:5` | shadow: declaration of "err" shadows declaration at line 112 | FIXED |
+| L1595 | `internal/mcpserver/migration_inputs_test.go:130:8` | shadow: declaration of "err" shadows declaration at line 112 | FIXED |
+| L1596 | `internal/mcpserver/runtime_invocation_test.go:136:11` | shadow: declaration of "err" shadows declaration at line 55 | FIXED |
+| L1597 | `internal/mcpserver/sdk_identity_test.go:110:5` | shadow: declaration of "err" shadows declaration at line 105 | FIXED |
+| L1598 | `internal/mcpserver/stdio_test.go:46:5` | shadow: declaration of "err" shadows declaration at line 35 | FIXED |
+| L1599 | `internal/mcpserver/stdio_test.go:85:8` | shadow: declaration of "err" shadows declaration at line 35 | FIXED |
+| L1600 | `internal/messaging/manager.go:48:7` | shadow: declaration of "err" shadows declaration at line 39 | FIXED |
+| L1601 | `internal/messaging/subprocess_restart_test.go:58:12` | shadow: declaration of "err" shadows declaration at line 36 | FIXED |
+| L1602 | `internal/messaging/subprocess_restart_test.go:188:13` | shadow: declaration of "err" shadows declaration at line 182 | FIXED |
+| L1603 | `internal/mobilebackup/archive_library_test.go:56:11` | shadow: declaration of "err" shadows declaration at line 23 | FIXED |
+| L1604 | `internal/mobilebackup/archive_restore_test.go:37:9` | shadow: declaration of "err" shadows declaration at line 19 | FIXED |
+| L1605 | `internal/mobilebackup/archive_restore_test.go:90:10` | shadow: declaration of "err" shadows declaration at line 57 | FIXED |
+| L1606 | `internal/mobilebackup/native_binary_test.go:82:9` | shadow: declaration of "err" shadows declaration at line 30 | FIXED |
+| L1607 | `internal/mobilebackup/native_binary_test.go:129:10` | shadow: declaration of "err" shadows declaration at line 109 | FIXED |
+| L1608 | `internal/mobilebackup/retained_archive_test.go:265:12` | shadow: declaration of "err" shadows declaration at line 230 | FIXED |
+| L1609 | `internal/mobilebackup/row_page.go:176:13` | shadow: declaration of "e" shadows declaration at line 91 | FIXED |
+| L1610 | `internal/mobilebackup/snapshot_sqlite_test.go:86:11` | shadow: declaration of "err" shadows declaration at line 47 | FIXED |
+| L1611 | `internal/mobilebackup/snapshot_sqlite_test.go:106:12` | shadow: declaration of "err" shadows declaration at line 47 | FIXED |
+| L1612 | `internal/mobilebackup/snapshot_terminal.go:73:12` | shadow: declaration of "e" shadows declaration at line 60 | FIXED |
+| L1613 | `internal/mobilebackup/snapshot_terminal_test.go:131:5` | shadow: declaration of "err" shadows declaration at line 126 | FIXED |
+| L1614 | `internal/mobilebackup/sqlite.go:382:16` | shadow: declaration of "err" shadows declaration at line 177 | FIXED |
+| L1615 | `internal/mobilebackup/sqlite.go:392:13` | shadow: declaration of "err" shadows declaration at line 177 | FIXED |
+| L1616 | `internal/mobilebackup/sqlite_test.go:586:9` | shadow: declaration of "err" shadows declaration at line 574 | FIXED |
+| L1617 | `internal/observability/native_test.go:273:11` | shadow: declaration of "err" shadows declaration at line 262 | FIXED |
+| L1622 | `internal/service/account_archive_test.go:131:9` | shadow: declaration of "err" shadows declaration at line 59 | FIXED |
+| L1623 | `internal/service/account_archive_test.go:210:11` | shadow: declaration of "e" shadows declaration at line 69 | FIXED |
+| L1624 | `internal/service/archive_catalog_test.go:45:11` | shadow: declaration of "err" shadows declaration at line 18 | FIXED |
+| L1625 | `internal/service/archive_messages.go:203:10` | shadow: declaration of "err" shadows declaration at line 173 | FIXED |
+| L1626 | `internal/service/archive_messages_test.go:51:11` | shadow: declaration of "err" shadows declaration at line 33 | FIXED |
+| L1627 | `internal/service/events_restart_test.go:138:5` | shadow: declaration of "err" shadows declaration at line 126 | FIXED |
+| L1628 | `internal/service/events_restart_test.go:151:9` | shadow: declaration of "err" shadows declaration at line 126 | FIXED |
+| L1629 | `internal/service/events_restart_test.go:225:8` | shadow: declaration of "err" shadows declaration at line 126 | FIXED |
+| L1630 | `internal/service/events_restart_test.go:236:8` | shadow: declaration of "err" shadows declaration at line 126 | FIXED |
+| L1631 | `internal/service/events_restart_test.go:265:8` | shadow: declaration of "err" shadows declaration at line 126 | FIXED |
+| L1632 | `internal/service/mobile_archive_probe.go:123:18` | shadow: declaration of "e" shadows declaration at line 89 | FIXED |
+| L1633 | `internal/service/mobile_history_test.go:118:8` | shadow: declaration of "err" shadows declaration at line 49 | FIXED |
+| L1634 | `internal/service/mobile_ledger_control.go:46:9` | shadow: declaration of "err" shadows declaration at line 33 | FIXED |
+| L1635 | `internal/service/mobile_ledger_control_test.go:246:8` | shadow: declaration of "e" shadows declaration at line 212 | FIXED |
+| L1636 | `internal/service/mobile_page_test.go:150:8` | shadow: declaration of "e" shadows declaration at line 108 | FIXED |
+| L1637 | `internal/service/mobile_page_test.go:180:14` | shadow: declaration of "e" shadows declaration at line 108 | FIXED |
+| L1638 | `internal/service/multiprocess_test.go:60:5` | shadow: declaration of "err" shadows declaration at line 42 | FIXED |
+| L1639 | `internal/service/multiprocess_test.go:66:13` | shadow: declaration of "err" shadows declaration at line 42 | FIXED |
+| L1640 | `internal/service/multiprocess_test.go:82:8` | shadow: declaration of "err" shadows declaration at line 42 | FIXED |
+| L1641 | `internal/service/multiprocess_test.go:96:5` | shadow: declaration of "err" shadows declaration at line 42 | FIXED |
+| L1642 | `internal/service/multiprocess_test.go:120:13` | shadow: declaration of "err" shadows declaration at line 42 | FIXED |
+| L1643 | `internal/service/multiprocess_test.go:164:12` | shadow: declaration of "err" shadows declaration at line 42 | FIXED |
+| L1644 | `internal/service/multiprocess_test.go:173:11` | shadow: declaration of "err" shadows declaration at line 42 | FIXED |
+| L1645 | `internal/service/multiprocess_test.go:197:7` | shadow: declaration of "err" shadows declaration at line 42 | FIXED |
+| L1646 | `internal/service/multiprocess_test.go:221:11` | shadow: declaration of "err" shadows declaration at line 42 | FIXED |
+| L1647 | `internal/service/multiprocess_test.go:253:6` | shadow: declaration of "err" shadows declaration at line 42 | FIXED |
+| L1648 | `internal/service/multiprocess_test.go:267:7` | shadow: declaration of "err" shadows declaration at line 42 | FIXED |
+| L1649 | `internal/service/preload_probe_test.go:52:5` | shadow: declaration of "err" shadows declaration at line 44 | FIXED |
+| L1650 | `internal/service/preload_probe_test.go:66:8` | shadow: declaration of "err" shadows declaration at line 44 | FIXED |
+| L1651 | `internal/service/preload_probe_test.go:93:6` | shadow: declaration of "err" shadows declaration at line 44 | FIXED |
+| L1652 | `internal/service/recall_diagnostic.go:113:11` | shadow: declaration of "e" shadows declaration at line 80 | FIXED |
+| L1653 | `internal/service/recall_diagnostic.go:117:6` | shadow: declaration of "e" shadows declaration at line 113 | FIXED |
+| L1654 | `internal/service/recall_diagnostic.go:162:6` | shadow: declaration of "e" shadows declaration at line 80 | FIXED |
+| L1655 | `internal/service/run.go:186:7` | shadow: declaration of "err" shadows declaration at line 162 | FIXED |
+| L1656 | `internal/service/run.go:227:6` | shadow: declaration of "err" shadows declaration at line 162 | FIXED |
+| L1657 | `internal/service/run_test.go:69:7` | shadow: declaration of "err" shadows declaration at line 53 | FIXED |
+| L1658 | `internal/service/run_test.go:109:9` | shadow: declaration of "err" shadows declaration at line 53 | FIXED |
+| L1659 | `internal/service/run_test.go:139:15` | shadow: declaration of "err" shadows declaration at line 53 | FIXED |
+| L1660 | `internal/service/run_test.go:162:15` | shadow: declaration of "err" shadows declaration at line 53 | FIXED |
+| L1661 | `internal/service/run_test.go:202:7` | shadow: declaration of "err" shadows declaration at line 53 | FIXED |
+| L1662 | `internal/service/run_test.go:219:9` | shadow: declaration of "err" shadows declaration at line 53 | FIXED |
+| L1663 | `internal/service/run_test.go:297:5` | shadow: declaration of "err" shadows declaration at line 291 | FIXED |
+| L1664 | `internal/service/run_test.go:303:8` | shadow: declaration of "err" shadows declaration at line 291 | FIXED |
+| L1665 | `internal/service/run_test.go:321:7` | shadow: declaration of "err" shadows declaration at line 291 | FIXED |
+| L1666 | `internal/service/run_test.go:327:8` | shadow: declaration of "err" shadows declaration at line 291 | FIXED |
+| L1667 | `internal/service/run_test.go:351:7` | shadow: declaration of "err" shadows declaration at line 291 | FIXED |
+| L1668 | `internal/service/sending_test.go:112:9` | shadow: declaration of "err" shadows declaration at line 81 | FIXED |
+| L1669 | `internal/service/sending_test.go:123:8` | shadow: declaration of "err" shadows declaration at line 81 | FIXED |
+| L1670 | `internal/storage/archive_visibility_test.go:39:11` | shadow: declaration of "err" shadows declaration at line 16 | FIXED |
+| L1671 | `internal/storage/budget_test.go:54:7` | shadow: declaration of "err" shadows declaration at line 48 | FIXED |
+| L1672 | `internal/storage/contacts.go:76:9` | shadow: declaration of "err" shadows declaration at line 49 | FIXED |
+| L1673 | `internal/storage/conversation_migration_test.go:117:5` | shadow: declaration of "err" shadows declaration at line 111 | FIXED |
+| L1674 | `internal/storage/conversation_views.go:158:29` | shadow: declaration of "err" shadows declaration at line 125 | FIXED |
+| L1675 | `internal/storage/conversations_test.go:24:3` | shadow: declaration of "err" shadows declaration at line 15 | FIXED |
+| L1676 | `internal/storage/deliveries.go:125:7` | shadow: declaration of "err" shadows declaration at line 115 | FIXED |
+| L1677 | `internal/storage/deliveries.go:148:8` | shadow: declaration of "target" shadows declaration at line 145 | FIXED |
+| L1678 | `internal/storage/deliveries.go:283:7` | shadow: declaration of "err" shadows declaration at line 280 | FIXED |
+| L1679 | `internal/storage/deliveries.go:292:10` | shadow: declaration of "err" shadows declaration at line 280 | FIXED |
+| L1680 | `internal/storage/deliveries_test.go:28:13` | shadow: declaration of "err" shadows declaration at line 21 | FIXED |
+| L1681 | `internal/storage/deliveries_test.go:49:7` | shadow: declaration of "err" shadows declaration at line 21 | FIXED |
+| L1682 | `internal/storage/deliveries_test.go:109:13` | shadow: declaration of "err" shadows declaration at line 97 | FIXED |
+| L1683 | `internal/storage/deliveries_test.go:118:6` | shadow: declaration of "err" shadows declaration at line 97 | FIXED |
+| L1684 | `internal/storage/deliveries_test.go:133:8` | shadow: declaration of "err" shadows declaration at line 97 | FIXED |
+| L1685 | `internal/storage/deliveries_test.go:142:5` | shadow: declaration of "err" shadows declaration at line 97 | FIXED |
+| L1686 | `internal/storage/deliveries_test.go:158:5` | shadow: declaration of "err" shadows declaration at line 97 | FIXED |
+| L1687 | `internal/storage/deliveries_test.go:218:5` | shadow: declaration of "err" shadows declaration at line 212 | FIXED |
+| L1688 | `internal/storage/deliveries_test.go:225:8` | shadow: declaration of "err" shadows declaration at line 212 | FIXED |
+| L1689 | `internal/storage/deliveries_test.go:259:8` | shadow: declaration of "err" shadows declaration at line 250 | FIXED |
+| L1690 | `internal/storage/deliveries_test.go:267:5` | shadow: declaration of "err" shadows declaration at line 250 | FIXED |
+| L1691 | `internal/storage/delivery_policy_test.go:27:11` | shadow: declaration of "err" shadows declaration at line 16 | FIXED |
+| L1692 | `internal/storage/delivery_policy_test.go:33:10` | shadow: declaration of "err" shadows declaration at line 16 | FIXED |
+| L1693 | `internal/storage/delivery_policy_test.go:45:11` | shadow: declaration of "err" shadows declaration at line 16 | FIXED |
+| L1694 | `internal/storage/delivery_policy_test.go:50:8` | shadow: declaration of "err" shadows declaration at line 16 | FIXED |
+| L1695 | `internal/storage/delivery_policy_test.go:118:11` | shadow: declaration of "err" shadows declaration at line 107 | FIXED |
+| L1696 | `internal/storage/delivery_policy_test.go:124:5` | shadow: declaration of "err" shadows declaration at line 107 | FIXED |
+| L1697 | `internal/storage/delivery_policy_test.go:127:5` | shadow: declaration of "err" shadows declaration at line 107 | FIXED |
+| L1698 | `internal/storage/diagnostics.go:51:9` | shadow: declaration of "err" shadows declaration at line 33 | FIXED |
+| L1699 | `internal/storage/diagnostics_test.go:38:8` | shadow: declaration of "err" shadows declaration at line 28 | FIXED |
+| L1700 | `internal/storage/events.go:206:12` | shadow: declaration of "err" shadows declaration at line 177 | FIXED |
+| L1701 | `internal/storage/events_test.go:46:8` | shadow: declaration of "err" shadows declaration at line 41 | FIXED |
+| L1702 | `internal/storage/events_test.go:88:5` | shadow: declaration of "err" shadows declaration at line 59 | FIXED |
+| L1703 | `internal/storage/events_test.go:97:5` | shadow: declaration of "err" shadows declaration at line 59 | FIXED |
+| L1704 | `internal/storage/events_test.go:111:5` | shadow: declaration of "err" shadows declaration at line 59 | FIXED |
+| L1705 | `internal/storage/history_expiry_test.go:35:7` | shadow: declaration of "e" shadows declaration at line 16 | FIXED |
+| L1706 | `internal/storage/history_expiry_test.go:138:17` | shadow: declaration of "e" shadows declaration at line 113 | FIXED |
+| L1707 | `internal/storage/history_expiry_test.go:141:8` | shadow: declaration of "e" shadows declaration at line 113 | FIXED |
+| L1708 | `internal/storage/history_operations_test.go:403:9` | shadow: declaration of "err" shadows declaration at line 388 | FIXED |
+| L1709 | `internal/storage/history_operations_test.go:416:6` | shadow: declaration of "err" shadows declaration at line 388 | FIXED |
+| L1710 | `internal/storage/history_operations_test.go:462:5` | shadow: declaration of "err" shadows declaration at line 438 | FIXED |
+| L1711 | `internal/storage/incoming_migration_test.go:38:6` | shadow: declaration of "err" shadows declaration at line 16 | FIXED |
+| L1712 | `internal/storage/incoming_test.go:36:7` | shadow: declaration of "err" shadows declaration at line 17 | FIXED |
+| L1713 | `internal/storage/incoming_test.go:104:6` | shadow: declaration of "err" shadows declaration at line 91 | FIXED |
+| L1714 | `internal/storage/incoming_test.go:114:6` | shadow: declaration of "err" shadows declaration at line 91 | FIXED |
+| L1715 | `internal/storage/mobile_backup.go:125:13` | shadow: declaration of "err" shadows declaration at line 114 | FIXED |
+| L1716 | `internal/storage/preload_directory_test.go:46:5` | shadow: declaration of "err" shadows declaration at line 33 | FIXED |
+| L1717 | `internal/storage/preload_directory_test.go:53:5` | shadow: declaration of "err" shadows declaration at line 33 | FIXED |
+| L1718 | `internal/storage/preload_directory_test.go:62:6` | shadow: declaration of "err" shadows declaration at line 33 | FIXED |
+| L1719 | `internal/storage/preload_directory_test.go:70:5` | shadow: declaration of "err" shadows declaration at line 33 | FIXED |
+| L1720 | `internal/storage/preload_directory_test.go:92:6` | shadow: declaration of "err" shadows declaration at line 87 | FIXED |
+| L1721 | `internal/storage/store.go:303:8` | shadow: declaration of "err" shadows declaration at line 276 | FIXED |
+| L1722 | `internal/storage/views.go:304:9` | shadow: declaration of "e" shadows declaration at line 299 | FIXED |
+| L1723 | `internal/storage/views.go:347:6` | shadow: declaration of "e" shadows declaration at line 299 | FIXED |
+| L1724 | `internal/toolruntime/catalog_reads_test.go:42:11` | shadow: declaration of "err" shadows declaration at line 35 | FIXED |
+| L1725 | `internal/toolruntime/runtime.go:248:11` | shadow: declaration of "err" shadows declaration at line 222 | FIXED |
+| L1726 | `internal/zalo/mobile_backup.go:104:6` | shadow: declaration of "err" shadows declaration at line 80 | FIXED |
+| L1727 | `internal/zalo/mobile_backup.go:251:8` | shadow: declaration of "err" shadows declaration at line 242 | FIXED |
+| L1728 | `internal/zalo/restore_test.go:38:7` | shadow: declaration of "err" shadows declaration at line 34 | FIXED |
+| L1735 | `tools/harness/internal/performance/bench.go:101:15` | shadow: declaration of "e" shadows declaration at line 78 | FIXED |
+| L1736 | `tools/harness/internal/performance/bench.go:121:8` | shadow: declaration of "e" shadows declaration at line 101 | FIXED |
+| L1737 | `tools/harness/internal/performance/build.go:47:9` | shadow: declaration of "e" shadows declaration at line 30 | FIXED |
+| L1738 | `tools/harness/internal/performance/build.go:85:3` | shadow: declaration of "ctx" shadows declaration at line 71 | FIXED |
+| L1739 | `tools/harness/internal/performance/build.go:87:9` | shadow: declaration of "e" shadows declaration at line 72 | FIXED |
 
 ### ineffassign (1)
 
@@ -2183,8 +2287,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L1740 (= L2508/L2541): заменить err = <-done в cancellation ветке на <-done; ожидание cmd.Wait обязательно, значение намеренно заменяется ctx.Err()/ErrOutputBudget. Не удалять receive.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L1740 | `internal/evaluation/process.go:70:3` | ineffectual assignment to err | FIXED |
 
 ### makezero (1)
@@ -2195,8 +2299,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L1743: prefix уже содержит 14-байтовый заголовок. Оставить append(prefix, body.Bytes()...) с локальным nolint:makezero — existing length is serialized header, body must follow it. Замена на make([]byte, 0, ...) потеряет заголовок.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L1743 | `internal/mobilebackup/header_test.go:79:9` | append to slice &#96;prefix&#96; with non-zero initialized length | SUPPRESSED |
 
 ### mirror (1)
@@ -2207,8 +2311,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L1744: использовать bytes.Contains для []byte вместо временного string, сохранив тот же needle и assertion.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L1744 | `internal/mobilebackup/attachment_test.go:76:45` | avoid allocations with strings.Contains | OPEN |
 
 ### mnd (388)
@@ -2219,8 +2323,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Timeouts, protocol limits, binary widths и budget numbers оформить предметными constants рядом с владельцем; использовать уже существующие constants. В boundary tests literals являются самим входом/ожиданием — локальный nolint:mnd либо узкое test исключение после согласования. Не создавать const three=3; не объединять разные лимиты только из-за совпадения числа. Performance thresholds сохранять буквально и без пересчёта baseline.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L1745 | `cmd/zl-mcp-eval/main.go:84:60` | Magic number: 20, in <argument> detected | OPEN |
 | L1746 | `cmd/zl-mcp-eval/main.go:103:17` | Magic number: 60, in <operation> detected | OPEN |
 | L1747 | `cmd/zl-mcp-eval/main.go:105:17` | Magic number: 180, in <operation> detected | OPEN |
@@ -2298,7 +2402,7 @@ _Заполнить._
 | L1819 | `internal/evaluation/runner.go:218:37` | Magic number: 20, in <assign> detected | OPEN |
 | L1820 | `internal/evaluation/runner.go:219:32` | Magic number: 4, in <assign> detected | OPEN |
 | L1821 | `internal/evaluation/runner.go:219:37` | Magic number: 20, in <assign> detected | OPEN |
-| L1822 | `internal/evaluation/runner.go:248:16` | Magic number: 60, in <operation> detected | OPEN |
+| L1822 | `internal/evaluation/runner.go:248:16` | Magic number: 60, in <operation> detected | FIXED |
 | L1823 | `internal/evaluation/runner.go:295:63` | Magic number: 4, in <argument> detected | OPEN |
 | L1824 | `internal/evaluation/runner.go:295:66` | Magic number: 20, in <argument> detected | OPEN |
 | L1825 | `internal/evaluation/runner.go:354:20` | Magic number: 3, in <assign> detected | OPEN |
@@ -2618,8 +2722,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2133–L2137: применить адресно после сверки go version tools module, проверить errors.AsType, CutPrefix, SplitSeq, maps.Copy и slices.Contains на текущих типах. Проверить nil map/empty input и порядок итерации. Новые stdlib imports согласовать с точными architecture allowlists. Не запускать очередной бесконтрольный --fix на весь root.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2133 | `tools/harness/internal/architecture/architecture.go:122:6` | errorsastype: errors.As can be simplified using AsType[*exec.ExitError] | OPEN |
 | L2134 | `tools/harness/internal/architecture/architecture.go:308:5` | stringscutprefix: HasPrefix + TrimPrefix can be simplified to CutPrefix | OPEN |
 | L2135 | `tools/harness/internal/performance/bench.go:127:26` | stringsseq: Ranging over SplitSeq is more efficient | OPEN |
@@ -2634,8 +2738,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Добавить явные json tags, в точности повторяющие существующие имена/omitempty и порядок полей. Критично L2139 SendRequest.Fingerprint: json:"Recipient", json:"Text", json:"Reply" (без omitempty); L2169 ReadIdentity: json:"All", json:"Selected". Lower snake_case здесь изменит hash/persistence semantics. Для внешних SDK structs/custom MarshalJSON, которые нельзя корректно разметить в этом repo, локальный nolint:musttag с указанием владельца codec. Проверить old/new exact bytes на nil/empty/Unicode.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2138 | `docs/contracts/sending_test.go:68:32` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
 | L2139 | `internal/domain/sending.go:41:23` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
 | L2140 | `internal/evalfixture/offline.go:226:31` | the given struct should be annotated with the &#96;json&#96; tag | FIXED |
@@ -2678,47 +2782,47 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Guard clauses и самостоятельные этапы вместо глубоких ветвей; в transaction/worker code сохранить те же commit/rollback/cancel paths. В tests допустим локальный nolint:nestif для намеренного adversarial сценария, если table-driven вариант скрывает последовательность.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
-| L2171 | `cmd/zl-mcp-eval/main.go:58:1` | &#96;if *checkpoint != ""&#96; has complex nested blocks (complexity: 5) | OPEN |
-| L2172 | `cmd/zl-mcp-eval/main.go:98:1` | &#96;if *child != ""&#96; has complex nested blocks (complexity: 12) | OPEN |
-| L2173 | `internal/app/search/read.go:220:1` | &#96;if len(p.Hits) == 0&#96; has complex nested blocks (complexity: 10) | OPEN |
-| L2174 | `internal/collector/join.go:435:1` | &#96;if member&#96; has complex nested blocks (complexity: 6) | OPEN |
-| L2175 | `internal/collector/run.go:65:1` | &#96;if ok&#96; has complex nested blocks (complexity: 8) | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
+| L2171 | `cmd/zl-mcp-eval/main.go:58:1` | &#96;if *checkpoint != ""&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2172 | `cmd/zl-mcp-eval/main.go:98:1` | &#96;if *child != ""&#96; has complex nested blocks (complexity: 12) | FIXED |
+| L2173 | `internal/app/search/read.go:220:1` | &#96;if len(p.Hits) == 0&#96; has complex nested blocks (complexity: 10) | FIXED |
+| L2174 | `internal/collector/join.go:435:1` | &#96;if member&#96; has complex nested blocks (complexity: 6) | FIXED |
+| L2175 | `internal/collector/run.go:65:1` | &#96;if ok&#96; has complex nested blocks (complexity: 8) | FIXED |
 | L2176 | `internal/collector/run.go:326:1` | &#96;if v.Method == "cli_preview" \|\| v.Method == "cli_approve"&#96; has complex nested blocks (complexity: 7) | FIXED |
-| L2177 | `internal/domain/mobile_backup_request.go:27:1` | &#96;if r.ArchiveScope != ""&#96; has complex nested blocks (complexity: 5) | OPEN |
+| L2177 | `internal/domain/mobile_backup_request.go:27:1` | &#96;if r.ArchiveScope != ""&#96; has complex nested blocks (complexity: 5) | FIXED |
 | L2178 | `internal/evalfixture/fixture.go:217:1` | &#96;if opts.ApprovalFile != "" \|\| opts.ApprovalTokenFile != ""&#96; has complex nested blocks (complexity: 18) | FIXED |
-| L2179 | `internal/evaluation/checkpoints.go:184:1` | &#96;if t.Kind == "resource"&#96; has complex nested blocks (complexity: 5) | OPEN |
-| L2180 | `internal/evaluation/checkpoints.go:424:1` | &#96;if ok&#96; has complex nested blocks (complexity: 10) | OPEN |
-| L2181 | `internal/evaluation/runner.go:228:1` | &#96;if e == nil&#96; has complex nested blocks (complexity: 6) | OPEN |
+| L2179 | `internal/evaluation/checkpoints.go:184:1` | &#96;if t.Kind == "resource"&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2180 | `internal/evaluation/checkpoints.go:424:1` | &#96;if ok&#96; has complex nested blocks (complexity: 10) | FIXED |
+| L2181 | `internal/evaluation/runner.go:228:1` | &#96;if e == nil&#96; has complex nested blocks (complexity: 6) | FIXED |
 | L2182 | `internal/events/subscriptions.go:169:1` | &#96;if method == "events/list"&#96; has complex nested blocks (complexity: 35) | FIXED |
-| L2183 | `internal/events/worker.go:121:1` | &#96;if requestErr == nil&#96; has complex nested blocks (complexity: 5) | OPEN |
-| L2184 | `internal/historyimport/mobile_worker.go:176:1` | &#96;if errors.Is(e, sql.ErrNoRows)&#96; has complex nested blocks (complexity: 10) | OPEN |
-| L2185 | `internal/historyimport/mobile_worker.go:291:1` | &#96;if e != nil&#96; has complex nested blocks (complexity: 5) | OPEN |
-| L2186 | `internal/historyimport/worker.go:126:1` | &#96;if op.Status.Source == "conversation_preload"&#96; has complex nested blocks (complexity: 6) | OPEN |
-| L2187 | `internal/mcpserver/http.go:171:1` | &#96;if strings.HasPrefix(request.Method, "events/")&#96; has complex nested blocks (complexity: 12) | OPEN |
-| L2188 | `internal/messaging/manager.go:47:1` | &#96;if method == "zalo_get_send_status"&#96; has complex nested blocks (complexity: 5) | OPEN |
-| L2189 | `internal/mobilebackup/account_inspection.go:82:1` | &#96;if err != nil&#96; has complex nested blocks (complexity: 10) | OPEN |
-| L2190 | `internal/mobilebackup/snapshot.go:195:1` | &#96;if errors.Is(err, os.ErrNotExist)&#96; has complex nested blocks (complexity: 7) | OPEN |
-| L2191 | `internal/mobilebackup/snapshot_page.go:135:1` | &#96;if row.Type == 20&#96; has complex nested blocks (complexity: 8) | OPEN |
-| L2192 | `internal/mobilebackup/sqlite.go:371:1` | &#96;if snapshot&#96; has complex nested blocks (complexity: 9) | OPEN |
-| L2193 | `internal/service/archive_catalog.go:79:1` | &#96;if token != ""&#96; has complex nested blocks (complexity: 6) | OPEN |
-| L2194 | `internal/service/archive_messages_test.go:71:1` | &#96;if !testedResource&#96; has complex nested blocks (complexity: 8) | OPEN |
-| L2195 | `internal/service/mobile_ledger_control.go:134:1` | &#96;if method == "cli_prepare_mobile_backup"&#96; has complex nested blocks (complexity: 11) | OPEN |
-| L2196 | `internal/service/recall_diagnostic.go:113:1` | &#96;if e == nil&#96; has complex nested blocks (complexity: 5) | OPEN |
-| L2197 | `internal/service/run.go:517:1` | &#96;if err == nil&#96; has complex nested blocks (complexity: 16) | OPEN |
-| L2198 | `internal/service/token.go:15:1` | &#96;if errors.Is(err, os.ErrNotExist)&#96; has complex nested blocks (complexity: 7) | OPEN |
-| L2199 | `internal/storage/events.go:212:1` | &#96;if reuse&#96; has complex nested blocks (complexity: 5) | OPEN |
-| L2200 | `internal/storage/history_operations.go:384:1` | &#96;if !s.AllowsConversation(op.Status.Ref())&#96; has complex nested blocks (complexity: 10) | OPEN |
-| L2201 | `internal/storage/mobile_history_acquisition_test.go:112:1` | &#96;if mode == "unreserved" \|\| mode == "stale-prepare" \|\| mode == "cancel-before-bind"&#96; has complex nested blocks (complexity: 5) | OPEN |
-| L2202 | `internal/storage/mobile_history_acquisition_test.go:590:1` | &#96;if rollback&#96; has complex nested blocks (complexity: 6) | OPEN |
-| L2203 | `internal/storage/views.go:434:1` | &#96;if e == nil&#96; has complex nested blocks (complexity: 5) | OPEN |
-| L2204 | `internal/toolruntime/runtime.go:173:1` | &#96;if len(extra) == 1&#96; has complex nested blocks (complexity: 12) | OPEN |
-| L2205 | `internal/zalo/preload.go:127:1` | &#96;if batch.kind == domain.ConversationDirect&#96; has complex nested blocks (complexity: 6) | OPEN |
-| L2206 | `internal/zalo/sending.go:29:1` | &#96;if err != nil&#96; has complex nested blocks (complexity: 6) | OPEN |
-| L2207 | `tools/harness/internal/architecture/architecture.go:172:1` | &#96;if d.IsDir()&#96; has complex nested blocks (complexity: 5) | OPEN |
-| L2208 | `tools/harness/internal/performance/bench.go:38:1` | &#96;if e == nil&#96; has complex nested blocks (complexity: 7) | OPEN |
-| L2209 | `tools/harness/internal/performance/bench.go:119:1` | &#96;if cpuModel == ""&#96; has complex nested blocks (complexity: 6) | OPEN |
+| L2183 | `internal/events/worker.go:121:1` | &#96;if requestErr == nil&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2184 | `internal/historyimport/mobile_worker.go:176:1` | &#96;if errors.Is(e, sql.ErrNoRows)&#96; has complex nested blocks (complexity: 10) | FIXED |
+| L2185 | `internal/historyimport/mobile_worker.go:291:1` | &#96;if e != nil&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2186 | `internal/historyimport/worker.go:126:1` | &#96;if op.Status.Source == "conversation_preload"&#96; has complex nested blocks (complexity: 6) | FIXED |
+| L2187 | `internal/mcpserver/http.go:171:1` | &#96;if strings.HasPrefix(request.Method, "events/")&#96; has complex nested blocks (complexity: 12) | FIXED |
+| L2188 | `internal/messaging/manager.go:47:1` | &#96;if method == "zalo_get_send_status"&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2189 | `internal/mobilebackup/account_inspection.go:82:1` | &#96;if err != nil&#96; has complex nested blocks (complexity: 10) | FIXED |
+| L2190 | `internal/mobilebackup/snapshot.go:195:1` | &#96;if errors.Is(err, os.ErrNotExist)&#96; has complex nested blocks (complexity: 7) | FIXED |
+| L2191 | `internal/mobilebackup/snapshot_page.go:135:1` | &#96;if row.Type == 20&#96; has complex nested blocks (complexity: 8) | FIXED |
+| L2192 | `internal/mobilebackup/sqlite.go:371:1` | &#96;if snapshot&#96; has complex nested blocks (complexity: 9) | FIXED |
+| L2193 | `internal/service/archive_catalog.go:79:1` | &#96;if token != ""&#96; has complex nested blocks (complexity: 6) | FIXED |
+| L2194 | `internal/service/archive_messages_test.go:71:1` | &#96;if !testedResource&#96; has complex nested blocks (complexity: 8) | FIXED |
+| L2195 | `internal/service/mobile_ledger_control.go:134:1` | &#96;if method == "cli_prepare_mobile_backup"&#96; has complex nested blocks (complexity: 11) | FIXED |
+| L2196 | `internal/service/recall_diagnostic.go:113:1` | &#96;if e == nil&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2197 | `internal/service/run.go:517:1` | &#96;if err == nil&#96; has complex nested blocks (complexity: 16) | FIXED |
+| L2198 | `internal/service/token.go:15:1` | &#96;if errors.Is(err, os.ErrNotExist)&#96; has complex nested blocks (complexity: 7) | FIXED |
+| L2199 | `internal/storage/events.go:212:1` | &#96;if reuse&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2200 | `internal/storage/history_operations.go:384:1` | &#96;if !s.AllowsConversation(op.Status.Ref())&#96; has complex nested blocks (complexity: 10) | FIXED |
+| L2201 | `internal/storage/mobile_history_acquisition_test.go:112:1` | &#96;if mode == "unreserved" \|\| mode == "stale-prepare" \|\| mode == "cancel-before-bind"&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2202 | `internal/storage/mobile_history_acquisition_test.go:590:1` | &#96;if rollback&#96; has complex nested blocks (complexity: 6) | FIXED |
+| L2203 | `internal/storage/views.go:434:1` | &#96;if e == nil&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2204 | `internal/toolruntime/runtime.go:173:1` | &#96;if len(extra) == 1&#96; has complex nested blocks (complexity: 12) | FIXED |
+| L2205 | `internal/zalo/preload.go:127:1` | &#96;if batch.kind == domain.ConversationDirect&#96; has complex nested blocks (complexity: 6) | FIXED |
+| L2206 | `internal/zalo/sending.go:29:1` | &#96;if err != nil&#96; has complex nested blocks (complexity: 6) | FIXED |
+| L2207 | `tools/harness/internal/architecture/architecture.go:172:1` | &#96;if d.IsDir()&#96; has complex nested blocks (complexity: 5) | FIXED |
+| L2208 | `tools/harness/internal/performance/bench.go:38:1` | &#96;if e == nil&#96; has complex nested blocks (complexity: 7) | FIXED |
+| L2209 | `tools/harness/internal/performance/bench.go:119:1` | &#96;if cpuModel == ""&#96; has complex nested blocks (complexity: 6) | FIXED |
 
 ### nilerr (13)
 
@@ -2728,8 +2832,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Не превращать штатное отсутствие работы/отказ в авторизации в ошибку. L2210–L2218: claim race/ErrHistoryState и cancellation означают завершение worker без retry; локальный nolint:nilerr с конкретной причиной только на этих return. L2219/L2220: shutdown collectSession по ctx.Err() — успешная остановка, оставить. L2221/L2222: malformed ID/digest означает false (cleanup не разрешён), оставить fail-closed predicate с nolint. Не подавлять реальные storage errors в соседних ветвях.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2210 | `internal/historyimport/mobile_worker.go:109:3` | error is not nil (line 108) but it returns nil | SUPPRESSED |
 | L2211 | `internal/historyimport/mobile_worker.go:132:4` | error is not nil (line 131) but it returns nil | SUPPRESSED |
 | L2212 | `internal/historyimport/mobile_worker.go:316:3` | error is not nil (line 315) but it returns nil | SUPPRESSED |
@@ -2752,8 +2856,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2223: nil provider означает disabled instrumentation; L2224: пустая delivery queue; L2225: missing/null optional value; L2226: fake моделирует пустой результат. Во всех четырёх оставить (nil,nil) с локальным nolint:nilnil, описывающим эту семантику. Новый sentinel изменил бы контракт.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2223 | `internal/observability/observer.go:65:3` | return both a &#96;nil&#96; error and an invalid value: use a sentinel error instead | SUPPRESSED |
 | L2224 | `internal/storage/deliveries.go:286:4` | return both a &#96;nil&#96; error and an invalid value: use a sentinel error instead | SUPPRESSED |
 | L2225 | `internal/zalo/history.go:146:3` | return both a &#96;nil&#96; error and an invalid value: use a sentinel error instead | SUPPRESSED |
@@ -2767,8 +2871,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2229/L2232: оставить exec.Command с nolint:noctx — cancellation уже реализована владельцем process group с Kill/Wait/drain и output budget. Автозамена на CommandContext не гарантирует cleanup descendants. L2227/L2228/L2230/L2231: net.ListenConfig.Listen с существующим lifecycle ctx, сохранив явный Close при shutdown (ctx Listen не закрывает готовый listener). Проверить startup cancellation.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2227 | `internal/evalfixture/fixture.go:279:29` | net.Listen must not be called. use (*net.ListenConfig).Listen | FIXED |
 | L2228 | `internal/evaluation/model.go:97:29` | net.Listen must not be called. use (*net.ListenConfig).Listen | FIXED |
 | L2229 | `internal/evaluation/process.go:50:21` | os/exec.Command must not be called. use os/exec.CommandContext | SUPPRESSED |
@@ -2784,8 +2888,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Сохранить named results там, где defer читает err, очищает result, фиксирует telemetry или собирает финальный report: локальный nolint:nonamedreturns с конкретной обязанностью defer. У простых функций без такого использования убрать имена. В parser Clear-on-error не заменять result копией: это меняет, какой buffer очищается.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2233 | `internal/evaluation/benchmark.go:39:73` | named return "result" with type "Measurement" found | SUPPRESSED |
 | L2234 | `internal/evaluation/model.go:71:84` | named return "out" with type "Output" found | SUPPRESSED |
 | L2235 | `internal/evaluation/runner.go:135:46` | named return "report" with type "Report" found | FIXED |
@@ -2846,8 +2950,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2284–L2294: fmt.Errorf без formatting заменить errors.New, добавить errors в точный пакетный allowlist при необходимости. Текст ошибок оставить побайтно; никаких новых wrappers/sentinels.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2284 | `tools/harness/cmd/harness/main.go:71:12` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
 | L2285 | `tools/harness/cmd/harness/main.go:82:12` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
 | L2286 | `tools/harness/internal/performance/bench.go:40:8` | error-format: fmt.Errorf can be replaced with errors.New | OPEN |
@@ -2868,8 +2972,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2295–L2298: copy переименовать по содержимому (clonedRequest, copiedPage, cookieCopy); не менять значение/ownership.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2295 | `internal/mcpserver/http_test.go:32:2` | variable copy has same name as predeclared identifier | OPEN |
 | L2296 | `internal/mobilebackup/snapshot_page.go:117:3` | variable copy has same name as predeclared identifier | OPEN |
 | L2297 | `internal/service/events_restart_test.go:77:2` | variable copy has same name as predeclared identifier | OPEN |
@@ -2883,8 +2987,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2299–L2302: тест CLI использует os.Args/os.Stdout. Предпочтительно вызывать run(args, writer), если такая точка уже есть, либо subprocess. Пока тест намеренно проверяет process-global CLI entrypoint — локальный nolint:reassign с причиной, обязательный restore через t.Cleanup/defer, запрет parallel для всего конфликтующего scope.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2299 | `internal/service/cli_recall_command_test.go:50:3` | reassigning variable Args in other package os | OPEN |
 | L2300 | `internal/service/cli_recall_command_test.go:51:3` | reassigning variable Stdout in other package os | OPEN |
 | L2301 | `internal/service/cli_recall_command_test.go:57:2` | reassigning variable Args in other package os | OPEN |
@@ -2898,8 +3002,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Большинство указанных типов намеренно имеют value String/GoString для redaction и pointer Clear для очистки. Не переводить redaction methods на pointer: value formatting может раскрыть поля. Для таких типов локальный nolint:recvcheck с причиной «value formatting must redact; Clear mutates owned buffers». Для остальных проверить method sets и унифицировать receivers только без изменения интерфейсов/копирования mutex.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2303 | `internal/domain/mobile_history.go:68:6` | the methods of "MobileHistoryPage" use pointer receiver and non-pointer receiver. | SUPPRESSED |
 | L2304 | `internal/mobilebackup/account_fetch.go:13:6` | the methods of "AccountArchive" use pointer receiver and non-pointer receiver. | SUPPRESSED |
 | L2305 | `internal/mobilebackup/archive.go:14:6` | the methods of "PlainArchive" use pointer receiver and non-pointer receiver. | SUPPRESSED |
@@ -2930,8 +3034,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Исправить doc comments вместе с godoclint/staticcheck. Неиспользуемые параметры интерфейсных реализаций/fakes обозначить _ без изменения signature; параметры собственных private functions удалить с callers. L2332: перенести ctx первым у private функции с обновлением callers. L2337/L2338: в test helpers сохранить t первым, ctx вторым с локальным nolint:revive и причиной test helper convention. L2336: если Preview используется снаружи collector, дать возвращаемому типу имя PreviewResult и обновить callers; если метод только внутренний — сделать его private. Не вводить interface ради правила. L2390: добавить комментарий у blank import о регистрации SQLite driver. Builtin copy исправить вместе с predeclared. Не переименовывать wire keys или protocol types ради style.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2324 | `internal/app/eventaccess/journal.go:8:1` | exported: comment on exported type Subscription should be of the form "Subscription ..." (with optional leading article) | OPEN |
 | L2325 | `internal/app/eventaccess/journal.go:43:1` | exported: comment on exported method EventData.MarshalJSON should be of the form "MarshalJSON ..." | OPEN |
 | L2326 | `internal/app/history/command.go:10:1` | exported: comment on exported type StartRequest should be of the form "StartRequest ..." (with optional leading article) | OPEN |
@@ -2944,7 +3048,7 @@ _Заполнить._
 | L2333 | `internal/collector/history_test.go:33:43` | unused-parameter: parameter 'ref' seems to be unused, consider removing or renaming it as _ | OPEN |
 | L2334 | `internal/collector/history_test.go:33:71` | unused-parameter: parameter 'cursor' seems to be unused, consider removing or renaming it as _ | OPEN |
 | L2335 | `internal/collector/history_test.go:33:86` | unused-parameter: parameter 'limit' seems to be unused, consider removing or renaming it as _ | OPEN |
-| L2336 | `internal/collector/join.go:157:64` | unexported-return: exported method Preview returns unexported type collector.preview, which can be annoying to use | OPEN |
+| L2336 | `internal/collector/join.go:157:64` | unexported-return: exported method Preview returns unexported type collector.preview, which can be annoying to use | FIXED |
 | L2337 | `internal/evalfixture/fixture_test.go:97:35` | context-as-argument: context.Context should be the first parameter of a function | OPEN |
 | L2338 | `internal/evalfixture/fixture_test.go:116:2` | context-as-argument: context.Context should be the first parameter of a function | OPEN |
 | L2339 | `internal/evaluation/process_test.go:17:24` | unused-parameter: parameter 't' seems to be unused, consider removing or renaming it as _ | OPEN |
@@ -3039,8 +3143,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Использовать уже внедрённый logger и *Context методы там, где ctx есть. Для composition root/startup и существующего глобально настроенного redacting logger допустим локальный nolint:sloglint с причиной владения logger. Не протаскивать logger через domain только ради правила. Сохранить bounded allowlist полей; raw err/payload/account IDs не добавлять в лог для обработки иных lint ошибок.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2422 | `cmd/zl-mcp-eval-fixture/main.go:71:3` | default logger should not be used | OPEN |
 | L2423 | `internal/collector/join.go:392:4` | default logger should not be used | OPEN |
 | L2424 | `internal/collector/join.go:405:4` | default logger should not be used | OPEN |
@@ -3113,8 +3217,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2485–L2490: End уже находится в deferred closure с recover, outcome attributes и повторным panic. Оставить локальный nolint:spancheck на диагностируемых местах, объяснив closure lifecycle; не добавлять второй span.End и не переставлять End до SetAttributes. Существующие panic/identity/span tests обязательны. Это обоснование путей next(), не обещание корректности произвольного паникующего exporter.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2485 | `internal/observability/observer.go:152:2` | span.End is not called on all paths, possible memory leak | SUPPRESSED |
 | L2486 | `internal/observability/observer.go:169:2` | return can be reached without calling span.End | SUPPRESSED |
 | L2487 | `internal/observability/observer.go:189:2` | span.End is not called on all paths, possible memory leak | SUPPRESSED |
@@ -3130,22 +3234,22 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Добавить defer rows.Close сразу после успешного Query в ограниченном helper scope, а явное раннее закрытие сохранить там, где оно освобождает connection перед следующей операцией. Либо локальный nolint:sqlclosecheck для намеренного early close, если все error/return paths уже покрыты. В циклах не накапливать defer до конца всей операции. rows.Err и ошибки закрытия/commit проверять отдельно.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2491 | `internal/collector/join.go:484:14` | Close should use defer | SUPPRESSED |
 | L2492 | `internal/collector/join.go:550:14` | Close should use defer | SUPPRESSED |
 | L2493 | `internal/mobilebackup/sqlite.go:305:17` | Close should use defer | SUPPRESSED |
 | L2494 | `internal/mobilebackup/sqlite.go:361:21` | Close should use defer | SUPPRESSED |
-| L2495 | `internal/storage/browse.go:107:14` | Close should use defer | SUPPRESSED |
-| L2496 | `internal/storage/conversation_views.go:150:14` | Close should use defer | SUPPRESSED |
+| L2495 | `internal/storage/browse.go:107:14` | Close should use defer | FIXED |
+| L2496 | `internal/storage/conversation_views.go:150:14` | Close should use defer | FIXED |
 | L2497 | `internal/storage/deliveries.go:95:14` | Close should use defer | SUPPRESSED |
 | L2498 | `internal/storage/deliveries.go:150:15` | Close should use defer | SUPPRESSED |
-| L2499 | `internal/storage/event_journal.go:189:14` | Close should use defer | SUPPRESSED |
+| L2499 | `internal/storage/event_journal.go:189:14` | Close should use defer | FIXED |
 | L2500 | `internal/storage/events.go:47:14` | Close should use defer | SUPPRESSED |
 | L2501 | `internal/storage/history_operations.go:568:14` | Close should use defer | SUPPRESSED |
 | L2502 | `internal/storage/performance_test.go:39:19` | Close should use defer | SUPPRESSED |
-| L2503 | `internal/storage/store.go:680:14` | Close should use defer | SUPPRESSED |
-| L2504 | `internal/storage/views.go:40:14` | Close should use defer | SUPPRESSED |
+| L2503 | `internal/storage/store.go:680:14` | Close should use defer | FIXED |
+| L2504 | `internal/storage/views.go:40:14` | Close should use defer | FIXED |
 
 ### staticcheck (15)
 
@@ -3155,8 +3259,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Doc diagnostics исправить. L2508 — receive из done сохранить, удалить только присваивание. L2513 — два явных последовательных Remove с отдельными assertions: второй проверяет идемпотентность, удалять нельзя. L2510/L2511: lowercase только если error text не зафиксирован wire/CLI контрактом, иначе локальный nolint:staticcheck с причиной сохранения текста. L2516/L2519 De Morgan допустим без смены short-circuit. L2517/L2518: protocol compatibility exception, см. адресные решения; не заменять RSA padding в одностороннем порядке.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2505 | `internal/app/eventaccess/journal.go:8:1` | ST1021: comment on exported type Subscription should be of the form "Subscription ..." (with optional leading article) | OPEN |
 | L2506 | `internal/app/eventaccess/journal.go:43:1` | ST1020: comment on exported method MarshalJSON should be of the form "MarshalJSON ..." | OPEN |
 | L2507 | `internal/app/history/command.go:10:1` | ST1021: comment on exported type StartRequest should be of the form "StartRequest ..." (with optional leading article) | OPEN |
@@ -3181,9 +3285,9 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2520: убрать неиспользуемый return Store из sdkBlockingHTTP и обновить callers. Сам store и его cleanup внутри helper сохранить.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
-| L2520 | `internal/mcpserver/sdk_lifecycle_test.go:57:51` | sdkBlockingHTTP - result 1 (*github.com/skosovsky/zl-mcp/internal/storage.Store) is never used | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
+| L2520 | `internal/mcpserver/sdk_lifecycle_test.go:57:51` | sdkBlockingHTTP - result 1 (*github.com/skosovsky/zl-mcp/internal/storage.Store) is never used | FIXED |
 
 ### unqueryvet (2)
 
@@ -3193,8 +3297,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2521/L2522: оставить m.* в versioned view migration с локальным nolint:unqueryvet: view intentionally projects full messages schema. Замена списка полей только в старой миграции даст разное поведение свежей и существующей БД. Если понадобится сузить view — отдельная persistence migration и upgrade tests.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2521 | `internal/storage/history_expiry.go:19:31` | avoid SELECT * - explicitly specify needed columns for better performance, maintainability and stability | SUPPRESSED |
 | L2522 | `internal/storage/tombstones.go:25:3` | avoid SELECT * - explicitly specify needed columns for better performance, maintainability and stability | SUPPRESSED |
 
@@ -3206,12 +3310,12 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2523/L2524/L2546/L2547: удалить неиспользуемые private helpers после поиска ссылок во всех build-tag/platform файлах и compile checks. Не оставлять compatibility wrappers или nolint:unused. Тестовые assertions, которые ранее вызывали helper, должны сохраниться после inlining.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
-| L2546 | `internal/observability/observer_test.go:325:6` | func observedAge is unused | OPEN |
-| L2523 | `internal/service/mobile_archive_probe.go:16:26` | func (*membershipPort).probeMobileArchive is unused | OPEN |
-| L2524 | `internal/service/mobile_backup.go:45:26` | func (*membershipPort).fetchPreparedMobileArchive is unused | OPEN |
-| L2547 | `internal/zalo/sending_test.go:55:6` | func codePointer is unused | OPEN |
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
+| L2546 | `internal/observability/observer_test.go:325:6` | func observedAge is unused | FIXED |
+| L2523 | `internal/service/mobile_archive_probe.go:16:26` | func (*membershipPort).probeMobileArchive is unused | FIXED |
+| L2524 | `internal/service/mobile_backup.go:45:26` | func (*membershipPort).fetchPreparedMobileArchive is unused | FIXED |
+| L2547 | `internal/zalo/sending_test.go:55:6` | func codePointer is unused | FIXED |
 
 ### usetesting (14)
 
@@ -3221,8 +3325,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** Обычные независимые каталоги заменить t.TempDir. Тесты Unix sockets с коротким /tmp пути сохранять с nolint:usetesting и явным t.Cleanup(os.RemoveAll), иначе длинное имя теста может превысить лимит socket path. L2526: TMPDIR child можно задать отдельным t.TempDir, если проверен bound socket path. L2538: shared sync.Once worker нельзя привязать к первому t.TempDir — файл исчезнет до следующих tests; TestMain владеет build+RemoveAll либо build fixture без global caching.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2525 | `internal/collector/run_test.go:36:14` | os.MkdirTemp() could be replaced by t.TempDir() in sessionStore | OPEN |
 | L2526 | `internal/mcpserver/sdk_stdio_identity_test.go:76:93` | os.TempDir() could be replaced by t.TempDir() in sdkStartRawBridge | OPEN |
 | L2527 | `internal/mobilebackup/native_binary_test.go:52:16` | os.MkdirTemp() could be replaced by t.TempDir() in TestNativeBinaryTerminalStartupAcceptance | OPEN |
@@ -3246,8 +3350,8 @@ _Заполнить._
 
 **Предлагаемое решение Ann:** L2541 объединить с L1740. L2539/L2540/L2542: убрать только начальное значение, если оно всегда заменяется до чтения; сохранить вызовы с effects. L2543: вместо бесполезного a=... убрать assignment или явно проверить новое состояние, если это цель сценария. Не удалять operations по признаку неиспользуемого результата.
 
-| ID | Файл:строка:колонка | Замечание | Статус | Статус |
-|---|---|---|---|---|
+| ID | Файл:строка:колонка | Замечание | Статус |
+|---|---|---|---|
 | L2539 | `internal/evaluation/benchmark.go:54:2` | assigned to name, but reassigned without using the value | FIXED |
 | L2540 | `internal/evaluation/model.go:31:3` | assigned to t, but reassigned without using the value | FIXED |
 | L2541 | `internal/evaluation/process.go:70:3` | assigned to err, but reassigned without using the value | FIXED |
@@ -3278,3 +3382,41 @@ _Заполнить._
 | L2544 | `whitespace` | `internal/evaluation/process_test.go:93:57` | unnecessary leading newline |
 
 L03 RSA compatibility: входящий ciphertext обрабатывается только в существующей owned mobile-offer процедуре; нет нового decrypt API. Ошибки преобразуются в общий domain invalid outcome, ciphertext/key/plaintext не добавляются в диагностику. Это compatibility exception, не заявление о безопасности PKCS#1 v1.5.
+
+## История промежуточных кандидатов L04
+
+Первый незавершённый шаг — L04. Приняты L01 `4bd21b31`, L02 `44b44e10`, L03 `114f567b`; их не пересоздавать. L04 остаётся незакоммиченным. Полный snapshot с `--max-issues-per-linter 0 --max-same-issues 0 --uniq-by-line=false`: root 1493, tools 165, всего 1658; оба loader успешны. Промежуточные deduplicated snapshots не являются полными diagnostics. Настройки `.golangci.yml` не менялись: SHA256 `dec18ea507979a4c6f58ce2f47a49f784fdbd91615682fe23182057996640335`, совпадает с исходным сохранённым checksum.
+
+Продолжение L04: разделены offline config/child execution/manifest/provenance/grading/raw trace metrics, Events discovery/permissions/challenge/mutation, HTTP Events/discovery/auth handlers, checkpoint resource parsing, history upstream dispatch, contact/profile validation/counters/outcomes, webhook delivery/fanout loops, synthetic fixture store/approval/listener/heartbeat и service loop/session phases. Root production complexity ещё OPEN. Tools complexity, shadowing и errname отсутствуют в полном snapshot; остаются style/constant/sparse DTO findings и nested decoding findings закрыты.
+
+PASS: root compilation `/tmp/zl-lint-L04-current-compile.log`; architecture `/tmp/zl-lint-L04-current-architecture.log`; relevant race logs `/tmp/zl-lint-L04-final-continuation-race.log`, `/tmp/zl-lint-L04-contact-http-race.log`, `/tmp/zl-lint-L04-fixture-store-race.log`, `/tmp/zl-lint-L04-service-loop-race.log`, `/tmp/zl-lint-L04-tools-split-race.log`. Поздние service session phases: race PASS `/tmp/zl-lint-L04-session-phases-race.log`. MCP call phase: race PASS `/tmp/zl-lint-L04-call-race-v2.log`, control error writer: race PASS `/tmp/zl-lint-L04-control-race.log`, tools decoder: race PASS `/tmp/zl-lint-L04-tools-final-race.log`. Fresh полные diagnostics: `/tmp/zl-lint-L04-handoff-root.json`, `/tmp/zl-lint-L04-handoff-tools.json`. Самостоятельный offline suite: PASS `/tmp/zl-lint-L04-offline.log`; model/live NOT_RUN. Первый resource extraction вызвал compile error из-за повторного выбора первого callback; исправлено точным выделением трёх разных callback bodies. Неуспешный log сохранён: `/tmp/zl-lint-L04-resource-race.log`; результат исправленного candidate — `/tmp/zl-lint-L04-resource-race-v2.log`.
+
+L05 semantic review накопленного autofix и style, L06 pinned lint/CI/Go 1.27.2 provenance, финальные root/tools/zcago checks, три platform builds, native startup, offline и полный performance run остаются OPEN/NOT_RUN. Числовые бюджеты и историческая evidence не изменены. Model/live NOT_RUN. Acceptance и коммит L04 не объявлять до закрытия относящихся к нему findings.
+
+
+### L04 — очередной проверенный candidate
+
+Полные diagnostics: `/tmp/zl-lint-L04-review-root.json` — root 1493, `/tmp/zl-lint-L04-handoff-tools.json` — tools 165. Loader успешен, govet shadowing/nolintlint/sqlclosecheck отсутствуют. Root complexity остаётся OPEN: gocognit 32, cyclop/gocyclo по 15, funlen 25, nestif 18. L04 не принят и не закоммичен; оставшиеся findings не переносить молча в другой шаг.
+
+Дополнительный refactor: legacy/mobile history work state, reservation/completion/source/commit phases; Browse/date bounds/predicates/scan/directions/cursor projection; conversation directory scan/filter/cursor; search bounds/policy predicates/scanner; group scanner; event recovery projection/scope validation; context query и deterministic response clipping; SQLite schema/coverage/controls/query/rows и stage logging; owned row validation/classification/identity proof/recalls; candidate binding/whole-page validation/conversion diagnostics. Убрана бесполезная max-updated_at агрегация group rows: прежний результат всегда заменялся authoritative catalog_updated_at до ответа. Scan timestamp column сохранён.
+
+Замороженные cursor JSON bytes проверены `TestConversationCursorWireBytes`: прежние keys/order, Unicode, строковый ID >2^53; `omitempty` не добавлен. Локальные complexity exceptions оставлены только для конкретных закрытых protocol switches/field classifiers и полного synthetic AAA scenario switch, с предметными причинами. Настройки/thresholds/exclusions конфигурации не изменены. Adjacent directives объединены, unused exceptions удалены; nolintlint PASS в fresh snapshot.
+
+PASS: `/tmp/zl-lint-L04-full-root-race.log`, `/tmp/zl-lint-L04-final-architecture-offline.log` (architecture compliance/coverage 100%, 14 isolated + 6 source controls; offline 50/50 cases, 480/480 assertions). Последние page phase edits дополнительно проверены `/tmp/zl-lint-L04-page-phases-final-race.log`. History/mobile/service targeted race: `/tmp/zl-lint-L04-mobile-phases-race-v2.log`, `/tmp/zl-lint-L04-history-phases-race.log`; storage full race: `/tmp/zl-lint-L04-storage-full-race.log`; mobilebackup full race: `/tmp/zl-lint-L04-mobilebackup-full-race.log`. Эти checks не заменяют финальные L06 checks и свежий полный performance run.
+
+Сохранены ранние failed extraction logs `/tmp/zl-lint-L04-mobile-phases-race.log`, `/tmp/zl-lint-L04-history-work-race.log`: ошибки сигнатур при переносе nested callbacks/outer err исправлены; corrected compilation и race подтверждены отдельными v2 logs. Failed loader/compile runs не учитываются как закрытие diagnostics. Third_party и соседние библиотеки не изменены. Model/live NOT_RUN.
+
+
+L04 owner exceptions: после выделения work/parsing/grading оставшиеся flat resource owners сохраняют требуемый порядок lock, cancellation, join и Clear/Close. Локальные exceptions привязываются к конкретной функции и только к сработавшему правилу; причина описывает принадлежащий ей lifetime. Closed CLI/TLV/channel tables также остаются цельными. Это не package/file/config exclusion; требования wire/persistence, zero repeat effects и thresholds сохраняются.
+
+## L04 — итоговая проверка
+
+Candidate: `681c72d8ecaa7d750bff1f15e04e620b4eb0fc73914b49a01a8f4280a00c392e`, 195 Go files, точный manifest и leaf requirements: `docs/lint-evidence/L04/`. Предыдущие OPEN/PENDING записи выше — история промежуточных кандидатов, не текущий статус.
+
+Свежие полные diagnostics root/tools сохранены в `docs/lint-evidence/L04/root-diagnostics.json` и `tools-diagnostics.json`. Loader успешен; complexity (cyclop/gocyclo/gocognit/funlen/nestif), shadowing, unused, ineffassign, wastedassign, errorlint и nolintlint — 0. Конфиг не менялся. Общий lint остаётся FAIL по группам L05.
+
+Root/tools race и vet PASS, architecture host/hidden graph 100%, 14 isolated + 6 source controls; offline 50/50 cases, 480/480 assertions. Дополнительный targeted race после findings review PASS. Восстановлен bounded direct type switch в listener diagnostics: errors.As autofix мог вызывать upstream callbacks и искать глубже шести звеньев. Hostile As и глубина >6 закрыты отдельными regression tests. Generated nestedOperationErr имена заменены предметными startup/shutdown/persist/activation/scan именами.
+
+Независимые итоговые review статусы фиксируются в L04 acceptance. L05/L06, mandatory CI lint, финальный patched-zcago/native/platform и полный performance остаются OPEN; model/live NOT_RUN. Историческая evidence и бюджеты сохранены.
+
+L04 принят: independent completeness 100% (8/8) и correctness PASS для итогового hash. Первый незавершённый шаг — L05; результаты и исправленные findings сохранены в `docs/lint-evidence/L04/acceptance.md`.

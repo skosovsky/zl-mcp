@@ -1,0 +1,34 @@
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp	[no test files]
+ok  	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval	31.382s
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval-fixture	[no test files]
+ok  	github.com/skosovsky/zl-mcp/docs/contracts	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/operations	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/store	2.546s
+?   	github.com/skosovsky/zl-mcp/internal/app/archives	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/app/eventaccess	(cached)
+?   	github.com/skosovsky/zl-mcp/internal/app/history	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/membership	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/messaging	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/search	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/shared	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/collector	41.209s
+ok  	github.com/skosovsky/zl-mcp/internal/config	(cached)
+?   	github.com/skosovsky/zl-mcp/internal/control	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/domain	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	11.837s
+ok  	github.com/skosovsky/zl-mcp/internal/evaluation	8.544s
+ok  	github.com/skosovsky/zl-mcp/internal/events	10.203s
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	11.605s
+ok  	github.com/skosovsky/zl-mcp/internal/local	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/logging	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	81.617s
+ok  	github.com/skosovsky/zl-mcp/internal/messaging	8.034s
+ok  	github.com/skosovsky/zl-mcp/internal/mobilebackup	(cached)
+?   	github.com/skosovsky/zl-mcp/internal/mobilebackup/archiveport	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/netpolicy	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/observability	13.041s
+ok  	github.com/skosovsky/zl-mcp/internal/service	54.099s
+ok  	github.com/skosovsky/zl-mcp/internal/storage	91.508s
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	17.166s
+ok  	github.com/skosovsky/zl-mcp/internal/zalo	(cached)

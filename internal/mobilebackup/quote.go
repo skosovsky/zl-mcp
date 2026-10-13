@@ -37,7 +37,7 @@ func (q *QuoteScalars) Clear() {
 	*q = QuoteScalars{}
 }
 
-//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+//nolint:gocognit,nonamedreturns // The closed quote scalar wire alternatives retain their explicit bounds and malformed-input precedence in one parser. Deferred cleanup retains the returned result/error.
 func ParseQuoteScalars(ctx context.Context, data []byte) (result QuoteScalars, err error) {
 	fields, err := ParseTLV(ctx, data)
 	if err != nil {

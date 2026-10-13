@@ -2,10 +2,11 @@ package storage
 
 import (
 	"context"
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 func TestAllPolicySeparatesMessagesEventsAndLegacyReads(t *testing.T) {
@@ -20,9 +21,19 @@ func TestAllPolicySeparatesMessagesEventsAndLegacyReads(t *testing.T) {
 	direct := domain.ConversationRef{Type: domain.ConversationDirect, ID: "same"}
 	put := func(ref domain.ConversationRef, text string) {
 		t.Helper()
-		err := s.Put(ctx, domain.Message{Conversation: ref, ID: "same-message", SenderID: "peer", SentAt: time.Now(), Text: text, Source: "replay"})
-		if err != nil {
-			t.Fatal(err)
+		putErr := s.Put(
+			ctx,
+			domain.Message{
+				Conversation: ref,
+				ID:           "same-message",
+				SenderID:     "peer",
+				SentAt:       time.Now(),
+				Text:         text,
+				Source:       "replay",
+			},
+		)
+		if putErr != nil {
+			t.Fatal(putErr)
 		}
 	}
 	// Act
@@ -73,12 +84,24 @@ func TestSelectedDirectPolicyDoesNotAdmitSameGroup(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
 	ref := domain.ConversationRef{Type: domain.ConversationDirect, ID: "same"}
-	s, err := OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "corpus.sqlite"), domain.CollectionPolicy{Selected: map[domain.ConversationRef]bool{ref: true}}, 90)
+	s, err := OpenWithPolicy(
+		ctx,
+		filepath.Join(t.TempDir(), "corpus.sqlite"),
+		domain.CollectionPolicy{Selected: map[domain.ConversationRef]bool{ref: true}},
+		90,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	m := domain.Message{Conversation: ref, ID: "m", SenderID: "peer", SentAt: time.Now(), Text: "synthetic", Source: "live"}
+	m := domain.Message{
+		Conversation: ref,
+		ID:           "m",
+		SenderID:     "peer",
+		SentAt:       time.Now(),
+		Text:         "synthetic",
+		Source:       "live",
+	}
 	// Act
 	if err = s.Put(ctx, m); err != nil {
 		t.Fatal(err)

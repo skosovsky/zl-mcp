@@ -32,8 +32,8 @@ func TestHistoricalExpiryIsSilentDurableAndCannotReplay(t *testing.T) {
 		t.Helper()
 		for table, want := range map[string]int{"messages": 0, "message_events": 0, "event_deliveries": 0, "message_identities": 1, "history_message_expiry": 1} {
 			var n int
-			if e := s.DB.QueryRow("SELECT count(*) FROM " + table).Scan(&n); e != nil || n != want {
-				t.Fatal("expiry invariant", table, n, e)
+			if scanErr := s.DB.QueryRow("SELECT count(*) FROM " + table).Scan(&n); scanErr != nil || n != want {
+				t.Fatal("expiry invariant", table, n, scanErr)
 			}
 		}
 	}
@@ -74,7 +74,11 @@ func TestHistoricalExpiryPreservesDuplicateAndRollsBackInvalidPage(t *testing.T)
 	}
 	m.Source = ""
 	// Act.
-	counts, e := s.PutExpiringHistoryPage(ctx, ref, []ExpiringHistoryRecord{{Message: m, ExpiresAtMS: time.Now().Add(-time.Minute).UnixMilli()}})
+	counts, e := s.PutExpiringHistoryPage(
+		ctx,
+		ref,
+		[]ExpiringHistoryRecord{{Message: m, ExpiresAtMS: time.Now().Add(-time.Minute).UnixMilli()}},
+	)
 	// Assert: original remains and its live Event is not removed by new expiry.
 	if e != nil || counts.Duplicates != 1 {
 		t.Fatal(e)
@@ -87,7 +91,14 @@ func TestHistoricalExpiryPreservesDuplicateAndRollsBackInvalidPage(t *testing.T)
 	bad.ID = "invalid"
 	good := m
 	good.ID = "good"
-	_, e = s.PutExpiringHistoryPage(ctx, ref, []ExpiringHistoryRecord{{Message: good, ExpiresAtMS: time.Now().Add(time.Hour).UnixMilli()}, {Message: bad, ExpiresAtMS: bad.SentAt.UnixMilli()}})
+	_, e = s.PutExpiringHistoryPage(
+		ctx,
+		ref,
+		[]ExpiringHistoryRecord{
+			{Message: good, ExpiresAtMS: time.Now().Add(time.Hour).UnixMilli()},
+			{Message: bad, ExpiresAtMS: bad.SentAt.UnixMilli()},
+		},
+	)
 	if e == nil {
 		t.Fatal("invalid deadline accepted")
 	}
@@ -96,6 +107,7 @@ func TestHistoricalExpiryPreservesDuplicateAndRollsBackInvalidPage(t *testing.T)
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestHistoricalExpiryIsInvisibleBeforePhysicalCleanup(t *testing.T) {
 	// Arrange: simulate a passed deadline without running maintenance or sleeping.
 	ctx := context.Background()
@@ -109,18 +121,31 @@ func TestHistoricalExpiryIsInvisibleBeforePhysicalCleanup(t *testing.T) {
 	m.SentAt = time.Now().Add(-time.Hour).UTC()
 	m.Text = "syntheticexpiryword"
 	m.QuoteMetadata = &domain.QuoteMetadata{ClientMessageID: "synthetic-client", MessageType: "webchat", Timestamp: "1"}
-	_, e = s.PutExpiringHistoryPage(ctx, ref, []ExpiringHistoryRecord{{Message: m, ExpiresAtMS: time.Now().Add(time.Hour).UnixMilli()}})
+	_, e = s.PutExpiringHistoryPage(
+		ctx,
+		ref,
+		[]ExpiringHistoryRecord{{Message: m, ExpiresAtMS: time.Now().Add(time.Hour).UnixMilli()}},
+	)
 	if e != nil {
 		t.Fatal(e)
 	}
-	query := Search{General: true, ConversationType: "direct", ConversationID: ref.ID, Query: "syntheticexpiryword", Limit: 50}
-	if hits, _, _, e := s.Search(ctx, query); e != nil || len(hits) != 1 {
-		t.Fatal("test lacks visible searchable message", e)
+	query := Search{
+		General:          true,
+		ConversationType: "direct",
+		ConversationID:   ref.ID,
+		Query:            "syntheticexpiryword",
+		Limit:            50,
 	}
-	if _, e := s.SendQuote(ctx, ref.ID, m.ID); e != nil {
-		t.Fatal("test lacks quotable message", e)
+	if hits, _, _, searchErr := s.Search(ctx, query); searchErr != nil || len(hits) != 1 {
+		t.Fatal("test lacks visible searchable message", searchErr)
 	}
-	if _, e = s.DB.Exec("UPDATE history_message_expiry SET expires_ms=?", time.Now().Add(-time.Minute).UnixMilli()); e != nil {
+	if _, sendQuoteErr := s.SendQuote(ctx, ref.ID, m.ID); sendQuoteErr != nil {
+		t.Fatal("test lacks quotable message", sendQuoteErr)
+	}
+	if _, e = s.DB.Exec(
+		"UPDATE history_message_expiry SET expires_ms=?",
+		time.Now().Add(-time.Minute).UnixMilli(),
+	); e != nil {
 		t.Fatal(e)
 	}
 	var raw int
@@ -137,7 +162,15 @@ func TestHistoricalExpiryIsInvisibleBeforePhysicalCleanup(t *testing.T) {
 	if _, e = s.context(ctx, ref, m.ID, 1, 1, true); e == nil {
 		t.Fatal("expired context exposed")
 	}
-	page, e := s.Browse(ctx, ref, time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339), time.Now().UTC().Format(time.RFC3339), "asc", 50, "")
+	page, e := s.Browse(
+		ctx,
+		ref,
+		time.Now().Add(-2*time.Hour).UTC().Format(time.RFC3339),
+		time.Now().UTC().Format(time.RFC3339),
+		"asc",
+		50,
+		"",
+	)
 	if e != nil || len(page["messages"].([]map[string]any)) != 0 {
 		t.Fatal("expired browse exposed", e)
 	}
@@ -162,7 +195,10 @@ func TestHistoricalExpiryIsInvisibleBeforePhysicalCleanup(t *testing.T) {
 		t.Fatal("disabled retention skipped expiry")
 	}
 	// Assert: moving the deadline back to the future cannot reverse observed expiry.
-	if _, e = s.DB.Exec("UPDATE history_message_expiry SET expires_ms=?", time.Now().Add(time.Hour).UnixMilli()); e != nil {
+	if _, e = s.DB.Exec(
+		"UPDATE history_message_expiry SET expires_ms=?",
+		time.Now().Add(time.Hour).UnixMilli(),
+	); e != nil {
 		t.Fatal(e)
 	}
 	m.Source = "replay"
@@ -182,14 +218,20 @@ func TestHistoricalExpiryPageRollsBackOnDeadlineStorageFailure(t *testing.T) {
 		t.Fatal(e)
 	}
 	defer s.Close()
-	if _, e = s.DB.Exec(`CREATE TRIGGER reject_deadline BEFORE INSERT ON history_message_expiry BEGIN SELECT RAISE(ABORT,'synthetic failure');END`); e != nil {
+	if _, e = s.DB.Exec(
+		`CREATE TRIGGER reject_deadline BEFORE INSERT ON history_message_expiry BEGIN SELECT RAISE(ABORT,'synthetic failure');END`,
+	); e != nil {
 		t.Fatal(e)
 	}
 	ref := domain.ConversationRef{Type: "direct", ID: "synthetic-peer"}
 	m := historicalFixture(ref, "rollback")
 	m.SentAt = time.Now().Add(-time.Hour).UTC()
 	// Act.
-	counts, e := s.PutExpiringHistoryPage(ctx, ref, []ExpiringHistoryRecord{{Message: m, ExpiresAtMS: time.Now().Add(time.Hour).UnixMilli()}})
+	counts, e := s.PutExpiringHistoryPage(
+		ctx,
+		ref,
+		[]ExpiringHistoryRecord{{Message: m, ExpiresAtMS: time.Now().Add(time.Hour).UnixMilli()}},
+	)
 	// Assert: no content, permanent identity, metadata or success prefix escapes rollback.
 	if e == nil || counts != (HistoryPageCounts{}) {
 		t.Fatal("failed page reported insertion")

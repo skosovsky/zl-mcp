@@ -169,6 +169,7 @@ func TestRetainedArchiveConflictAndCapacityDoNotReplaceSource(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestRetainedArchiveExpiryRemovalAndSpentIDs(t *testing.T) {
 	for _, mode := range []string{"expired", "removed"} {
 		t.Run(mode, func(t *testing.T) {
@@ -223,6 +224,7 @@ func TestRetainedArchiveExpiryRemovalAndSpentIDs(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestRetainedArchiveTamperingKeyLossAndUnsafeArtifacts(t *testing.T) {
 	for _, mode := range []string{"ciphertext", "missing-key", "symlink", "permissions", "unknown"} {
 		t.Run(mode, func(t *testing.T) {
@@ -265,7 +267,7 @@ func TestRetainedArchiveTamperingKeyLossAndUnsafeArtifacts(t *testing.T) {
 				}
 			}
 			// Act / Assert: reopening fails without exposing any prefix or rotating keys.
-			if got, err := NewRetainedArchiveStore(dir, 8<<20); err == nil {
+			if got, newRetainedArchiveStoreErr := NewRetainedArchiveStore(dir, 8<<20); newRetainedArchiveStoreErr == nil {
 				got.Close()
 				t.Fatal("unsafe archive reopened")
 			}

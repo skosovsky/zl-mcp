@@ -5,17 +5,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/amrakk/zcago/errs"
-	"github.com/amrakk/zcago/listener"
-	"github.com/amrakk/zcago/model"
-	"github.com/skosovsky/zl-mcp/internal/domain"
 	"log/slog"
 	"strconv"
 	"time"
+
+	"github.com/amrakk/zcago/errs"
+	"github.com/amrakk/zcago/listener"
+	"github.com/amrakk/zcago/model"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 // Listen never retries membership mutations; reconnect policy belongs to collector.
-func (c *Client) Listen(ctx context.Context, onMessage func(domain.Message) error, onDelete func(string, string) error, onConnected func() error) error {
+func (c *Client) Listen(
+	ctx context.Context,
+	onMessage func(domain.Message) error,
+	onDelete func(string, string) error,
+	onConnected func() error,
+) error {
 	return c.listenConversations(ctx, func(m domain.Message) error {
 		if m.Ref().Type == domain.ConversationGroup {
 			return onMessage(m)
@@ -29,11 +36,23 @@ func (c *Client) Listen(ctx context.Context, onMessage func(domain.Message) erro
 	}, onConnected, false)
 }
 
-func (c *Client) ListenConversations(ctx context.Context, onMessage func(domain.Message) error, onDelete func(domain.ConversationRef, string) error, onConnected func() error) error {
+func (c *Client) ListenConversations(
+	ctx context.Context,
+	onMessage func(domain.Message) error,
+	onDelete func(domain.ConversationRef, string) error,
+	onConnected func() error,
+) error {
 	return c.listenConversations(ctx, onMessage, onDelete, onConnected, true)
 }
 
-func (c *Client) listenConversations(ctx context.Context, onMessage func(domain.Message) error, onDelete func(domain.ConversationRef, string) error, onConnected func() error, includeDirect bool) error {
+//nolint:gocognit // The closed native channel dispatch keeps terminal events and callbacks within one Start/Stop lifetime; message normalization, replay batches and initial requests are separate handlers.
+func (c *Client) listenConversations(
+	ctx context.Context,
+	onMessage func(domain.Message) error,
+	onDelete func(domain.ConversationRef, string) error,
+	onConnected func() error,
+	includeDirect bool,
+) error {
 	ln := c.api.Listener()
 	if e := ln.Start(ctx, false); e != nil {
 		return listenerFailure(e, "listener connection failed")
@@ -54,31 +73,21 @@ func (c *Client) listenConversations(ctx context.Context, onMessage func(domain.
 			}
 
 		case info := <-ln.Disconnected():
-			slog.Warn("zalo_listener_disconnected", "close_code", info.Code)
+			slog.WarnContext(ctx, "zalo_listener_disconnected", "close_code", info.Code)
 			return listenerCloseFailure(info.Code, "listener disconnected")
 		case info := <-ln.Closed():
-			slog.Warn("zalo_listener_closed", "close_code", info.Code)
+			slog.WarnContext(ctx, "zalo_listener_closed", "close_code", info.Code)
 			return listenerCloseFailure(info.Code, "listener closed")
 		case err := <-ln.Error():
 			logListenerError(err)
 			return listenerFailure(err, "listener reported an error")
 		case v := <-ln.Message():
-			m, e := convertIncoming(v, "live")
-			if e != nil {
-				return e
-			}
-			if e = onMessage(m); e != nil {
-				return e
+			if deliveryErr := deliverIncoming(v, "live", onMessage); deliveryErr != nil {
+				return deliveryErr
 			}
 		case old := <-ln.OldMessages():
-			for _, v := range old.Messages {
-				m, e := convertIncoming(v, "replay")
-				if e != nil {
-					return e
-				}
-				if e = onMessage(m); e != nil {
-					return e
-				}
+			if replayErr := deliverReplay(old.Messages, onMessage); replayErr != nil {
+				return replayErr
 			}
 			if e := pager.Continue(ctx, ln, old.Replay); e != nil {
 				return listenerFailure(e, "replay continuation failed")
@@ -88,7 +97,10 @@ func (c *Client) listenConversations(ctx context.Context, onMessage func(domain.
 			if undo.IsGroup {
 				kind = domain.ConversationGroup
 			}
-			if e := onDelete(domain.ConversationRef{Type: kind, ID: undo.ThreadID}, strconv.FormatInt(undo.Data.Content.GlobalMsgID, 10)); e != nil {
+			if e := onDelete(
+				domain.ConversationRef{Type: kind, ID: undo.ThreadID},
+				strconv.FormatInt(undo.Data.Content.GlobalMsgID, 10),
+			); e != nil {
 				return e
 			}
 		case <-ln.Group():
@@ -101,14 +113,8 @@ func (c *Client) listenConversations(ctx context.Context, onMessage func(domain.
 		case <-ln.UploadAttachment():
 		case <-ln.CipherKey():
 			pager = newReplayPager(includeDirect)
-			types := []model.ThreadType{model.ThreadTypeGroup}
-			if includeDirect {
-				types = append(types, model.ThreadTypeUser)
-			}
-			for _, kind := range types {
-				if e := ln.RequestOldMessages(ctx, kind, nil); e != nil {
-					return listenerFailure(e, "replay request failed")
-				}
+			if requestErr := requestInitialReplay(ctx, ln, includeDirect); requestErr != nil {
+				return requestErr
 			}
 		}
 	}
@@ -138,10 +144,12 @@ func listenerCloseFailure(code int, message string) error {
 func logListenerError(err error) {
 	for depth := 0; err != nil && depth < 6; depth++ {
 		fields := []any{"error_type", fmt.Sprintf("%T", err)}
+		//nolint:errorlint // Inspect only this error's concrete schema; errors.As can invoke upstream callbacks.
 		switch e := err.(type) {
 		case errs.ZCAError:
 			switch e.Op {
-			case "listener.handleGroupMessages", "listener.handleOldMessages", "listener.handleActions", "listener.handleControls":
+			case "listener.handleGroupMessages", "listener.handleOldMessages",
+				"listener.handleActions", "listener.handleControls":
 				fields = append(fields, "operation", e.Op)
 			}
 		case *json.UnmarshalTypeError:
@@ -168,6 +176,92 @@ func logIngestionDiagnostics(ln listener.Listener) {
 		return
 	}
 	d := source.Diagnostics()
-	slog.Info("zalo_ingestion_pressure", "direct_frames", d.DirectFrames, "decoded_direct", d.DecodedDirect, "emitted_direct", d.EmittedDirect, "direct_errors", d.DirectErrors, "group_errors", d.GroupErrors, "replay_errors", d.ReplayErrors, "backpressure", d.Backpressure, "cancelled_emissions", d.CancelledEmissions)
-	slog.Info("zalo_ingestion_diagnostics", "frames", d.Frames, "non_binary", d.NonBinary, "unhandled", d.Unhandled, "cipher_keys", d.CipherKeys, "group_frames", d.GroupFrames, "replay_frames", d.ReplayFrames, "decoded_groups", d.DecodedGroups, "emitted_groups", d.EmittedGroups, "errors", d.Errors, "last_version", d.LastVersion, "last_command", d.LastCommand, "last_subcommand", d.LastSubcommand, "last_unhandled_command", d.LastUnhandledCommand, "replay_users", d.ReplayUsers, "replay_code", d.ReplayCode, "replay_shape", d.ReplayShape)
+	slog.Info(
+		"zalo_ingestion_pressure",
+		"direct_frames",
+		d.DirectFrames,
+		"decoded_direct",
+		d.DecodedDirect,
+		"emitted_direct",
+		d.EmittedDirect,
+		"direct_errors",
+		d.DirectErrors,
+		"group_errors",
+		d.GroupErrors,
+		"replay_errors",
+		d.ReplayErrors,
+		"backpressure",
+		d.Backpressure,
+		"cancelled_emissions",
+		d.CancelledEmissions,
+	)
+	slog.Info(
+		"zalo_ingestion_diagnostics",
+		"frames",
+		d.Frames,
+		"non_binary",
+		d.NonBinary,
+		"unhandled",
+		d.Unhandled,
+		"cipher_keys",
+		d.CipherKeys,
+		"group_frames",
+		d.GroupFrames,
+		"replay_frames",
+		d.ReplayFrames,
+		"decoded_groups",
+		d.DecodedGroups,
+		"emitted_groups",
+		d.EmittedGroups,
+		"errors",
+		d.Errors,
+		"last_version",
+		d.LastVersion,
+		"last_command",
+		d.LastCommand,
+		"last_subcommand",
+		d.LastSubcommand,
+		"last_unhandled_command",
+		d.LastUnhandledCommand,
+		"replay_users",
+		d.ReplayUsers,
+		"replay_code",
+		d.ReplayCode,
+		"replay_shape",
+		d.ReplayShape,
+	)
+}
+
+func deliverIncoming(message model.Message, source string, onMessage func(domain.Message) error) error {
+	normalized, err := convertIncoming(message, source)
+	if err != nil {
+		return err
+	}
+	return onMessage(normalized)
+}
+
+func deliverReplay(messages []model.Message, onMessage func(domain.Message) error) error {
+	for _, message := range messages {
+		if err := deliverIncoming(message, "replay", onMessage); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type oldMessageRequester interface {
+	RequestOldMessages(context.Context, model.ThreadType, *string) error
+}
+
+func requestInitialReplay(ctx context.Context, ln oldMessageRequester, includeDirect bool) error {
+	types := []model.ThreadType{model.ThreadTypeGroup}
+	if includeDirect {
+		types = append(types, model.ThreadTypeUser)
+	}
+	for _, kind := range types {
+		if e := ln.RequestOldMessages(ctx, kind, nil); e != nil {
+			return listenerFailure(e, "replay request failed")
+		}
+	}
+	return nil
 }

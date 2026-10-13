@@ -37,7 +37,7 @@ type Measurement struct {
 
 // Measure times complete real SDK calls; admission pacing is outside each sample.
 //
-//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+//nolint:funlen,nonamedreturns // Fixture ownership and the warmup/measured loop remain together so timing and allocation samples keep their original boundaries; request parsing is separate. Returned result/error and deferred cleanup keep the same owner.
 func Measure(ctx context.Context, root, state, kind string, count int) (result Measurement, err error) {
 	result = Measurement{
 		Kind:         kind,
@@ -53,22 +53,9 @@ func Measure(ctx context.Context, root, state, kind string, count int) (result M
 	if count < 1000 {
 		return result, errors.New("at least1000 measurements required")
 	}
-	var name string
-	args := map[string]any{}
-	switch kind {
-	case "read":
-		name = "zalo_list_groups"
-	case "search":
-		name = "zalo_search_messages"
-		args["query"] = "ремонт"
-	case "context":
-		name = "zalo_get_message_context"
-		args["group_id"] = "g-1"
-		args["message_id"] = "m-101"
-		args["before"] = 0
-		args["after"] = 0
-	default:
-		return result, errors.New("unknown measurement kind")
+	name, args, err := measurementRequest(kind)
+	if err != nil {
+		return result, err
 	}
 	effects := filepath.Join(state, "effects.jsonl")
 	if err = os.WriteFile(effects, nil, 0600); err != nil {
@@ -137,4 +124,25 @@ func Measure(ctx context.Context, root, state, kind string, count int) (result M
 	result.AllocBytesPerOp = float64(allocatedBytes) / float64(count)
 	result.ElapsedSeconds = time.Since(start).Seconds()
 	return result, nil
+}
+
+func measurementRequest(kind string) (string, map[string]any, error) {
+	var name string
+	args := map[string]any{}
+	switch kind {
+	case "read":
+		name = "zalo_list_groups"
+	case "search":
+		name = "zalo_search_messages"
+		args["query"] = "ремонт"
+	case "context":
+		name = "zalo_get_message_context"
+		args["group_id"] = "g-1"
+		args["message_id"] = "m-101"
+		args["before"] = 0
+		args["after"] = 0
+	default:
+		return "", nil, errors.New("unknown measurement kind")
+	}
+	return name, args, nil
 }

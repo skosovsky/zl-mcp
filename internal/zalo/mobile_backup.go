@@ -101,141 +101,19 @@ func receiveMobileBackupOffer(
 		return nil
 	}
 	if progress != nil && progress.BeforeDispatch != nil {
-		if err := progress.BeforeDispatch(public); err != nil {
-			return domain.MobileBackupOffer{}, err
+		if beforeDispatchErr := progress.BeforeDispatch(public); beforeDispatchErr != nil {
+			return domain.MobileBackupOffer{}, beforeDispatchErr
 		}
 	}
 	if ctx.Err() != nil {
 		return domain.MobileBackupOffer{}, ctx.Err()
 	}
-	err = r.RequestMobileBackup(ctx, public)
-	unknown := errors.Is(err, api.ErrMobileBackupUnknown)
-	if err != nil && !unknown {
-		if errors.Is(err, errs.ErrAuthenticationRequired) {
-			return domain.MobileBackupOffer{}, domain.ErrAuthenticationRequired
-		}
-		if errors.Is(err, api.ErrMobileBackupUnavailable) {
-			return domain.MobileBackupOffer{}, domain.ErrHistoryUnsupported
-		}
-		return domain.MobileBackupOffer{}, domain.ErrMobileBackupRejected
+	unknown, dispatchErr := dispatchMobileRequest(ctx, r, public, state)
+	if dispatchErr != nil {
+		return domain.MobileBackupOffer{}, dispatchErr
 	}
-	if unknown {
-		if err := state("request_result_unknown"); err != nil {
-			return domain.MobileBackupOffer{}, err
-		}
-	} else {
-		if err := state("waiting_for_confirmation"); err != nil {
-			return domain.MobileBackupOffer{}, err
-		}
-	}
-	for {
-		select {
-		case <-sub.Errors:
-			slog.WarnContext(parent, "mobile_backup_control_invalid", "stage", "receiver")
-			return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
-		default:
-		}
-		select {
-		case <-ctx.Done():
-			if unknown {
-				return domain.MobileBackupOffer{}, domain.ErrMobileBackupUnknown
-			}
-			return domain.MobileBackupOffer{}, ctx.Err()
-		case <-sub.Errors:
-			slog.WarnContext(parent, "mobile_backup_control_invalid", "stage", "receiver")
-			return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
-		case event := <-sub.Events:
-			logMobileControl(event, public)
-			if event.PublicKey != public {
-				return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
-			}
-			switch event.Action {
-			case "user_confirm":
-				if event.PCName != "Web" || event.UserAction == nil {
-					return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
-				}
-				switch *event.UserAction {
-				case 0:
-					return domain.MobileBackupOffer{}, domain.ErrMobileBackupRejected
-				case 2:
-					if err := state("mobile_restoring"); err != nil {
-						return domain.MobileBackupOffer{}, err
-					}
-				case 1, 3:
-					if err := state("waiting_for_backup"); err != nil {
-						return domain.MobileBackupOffer{}, err
-					}
-				default:
-					return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
-				}
-			case "transfer_error":
-				if event.PCName != "Web" {
-					return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
-				}
-				// The native client checks active/idle status before backup failure.
-				// These controls are progress, despite the misleading action name.
-				if event.Status != nil && (*event.Status == 1 || *event.Status == 2) {
-					kind := "mobile_active"
-					if *event.Status == 2 {
-						kind = "mobile_idle"
-					}
-					slog.InfoContext(parent, "mobile_backup_phone_status", "status", kind)
-					continue
-				}
-				if event.ErrorCode != nil && *event.ErrorCode != 0 {
-					slog.WarnContext(parent, "mobile_backup_transfer_rejected", "upstream_error_code", *event.ErrorCode)
-					return domain.MobileBackupOffer{}, domain.ErrMobileBackupRejected
-				}
-				if event.ErrorCode != nil && *event.ErrorCode == 0 {
-					// Native handling does not classify a zero-code control as failure.
-					// Retain the original deadline and wait for an explicit offer.
-					slog.InfoContext(parent, "mobile_backup_phone_status", "status", "transfer_no_error")
-					continue
-				}
-				return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
-			case "syncmsg_info":
-				offer, err := mobileBackupOffer(event, owner, key)
-				if err != nil {
-					return domain.MobileBackupOffer{}, err
-				}
-				pairs, err := mapMobileIdentities(
-					ctx,
-					domain.MobileIdentityRequest{Direct: []string{event.UID}},
-					mapper,
-				)
-				if err != nil {
-					slog.WarnContext(parent, "mobile_backup_account_invalid", "reason", "MAPPING_FAILED")
-					return domain.MobileBackupOffer{}, err
-				}
-				if len(pairs) != 1 || pairs[0].Group || pairs[0].Plain != event.UID || pairs[0].Session != owner {
-					slog.WarnContext(parent, "mobile_backup_account_invalid", "reason", "MAPPED_OWNER_MISMATCH")
-					return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
-				}
-				slog.InfoContext(parent, "mobile_backup_account_verified")
-				select {
-				case <-sub.Errors:
-					slog.WarnContext(parent, "mobile_backup_control_invalid", "stage", "receiver")
-					return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
-				default:
-				}
-				if ctx.Err() != nil {
-					return domain.MobileBackupOffer{}, ctx.Err()
-				}
-				if err := state("offer_ready"); err != nil {
-					return domain.MobileBackupOffer{}, err
-				}
-				slog.InfoContext(
-					parent,
-					"mobile_backup_producer_counts",
-					"claims",
-					inspectMobileProducerCounts(event.DatabaseInfo),
-				)
-				return offer, nil
-			default:
-				return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
-			}
-		}
-	}
+	session := mobileOfferSession{parent: parent, ctx: ctx, owner: owner, public: public, key: key, mapper: mapper, sub: sub, state: state}
+	return session.wait(unknown)
 }
 
 func mobileBackupOffer(e model.MobileSyncEvent, owner string, key *rsa.PrivateKey) (domain.MobileBackupOffer, error) {
@@ -248,7 +126,7 @@ func mobileBackupOffer(e model.MobileSyncEvent, owner string, key *rsa.PrivateKe
 		len(e.FromSequence) > 1 && e.FromSequence[0] == '0' {
 		return invalidMobileOffer("OFFER_ENVELOPE")
 	}
-	if _, err := strconv.ParseUint(e.FromSequence, 10, 64); err != nil {
+	if _, parseUintErr := strconv.ParseUint(e.FromSequence, 10, 64); parseUintErr != nil {
 		return invalidMobileOffer("OFFER_SEQUENCE")
 	}
 	var info struct {
@@ -324,4 +202,169 @@ func logMobileControl(event model.MobileSyncEvent, public string) {
 		args = append(args, "user_action", *event.UserAction)
 	}
 	slog.Info("mobile_backup_control", args...)
+}
+
+func dispatchMobileRequest(ctx context.Context, r mobileBackupRequester, public string, state func(string) error) (bool, error) {
+	err := r.RequestMobileBackup(ctx, public)
+	unknown := errors.Is(err, api.ErrMobileBackupUnknown)
+	if err != nil && !unknown {
+		if errors.Is(err, errs.ErrAuthenticationRequired) {
+			return false, domain.ErrAuthenticationRequired
+		}
+		if errors.Is(err, api.ErrMobileBackupUnavailable) {
+			return false, domain.ErrHistoryUnsupported
+		}
+		return false, domain.ErrMobileBackupRejected
+	}
+	if unknown {
+		if err := state("request_result_unknown"); err != nil {
+			return false, err
+		}
+	} else {
+		if err := state("waiting_for_confirmation"); err != nil {
+			return false, err
+		}
+	}
+	return unknown, nil
+}
+
+type mobileOfferSession struct {
+	parent, ctx   context.Context
+	owner, public string
+	key           *rsa.PrivateKey
+	mapper        mobileIdentityRequester
+	sub           listener.MobileSyncSubscription
+	state         func(string) error
+}
+
+func (session *mobileOfferSession) wait(unknown bool) (domain.MobileBackupOffer, error) {
+	for {
+		select {
+		case <-session.sub.Errors:
+			slog.WarnContext(session.parent, "mobile_backup_control_invalid", "stage", "receiver")
+			return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+		default:
+		}
+		select {
+		case <-session.ctx.Done():
+			if unknown {
+				return domain.MobileBackupOffer{}, domain.ErrMobileBackupUnknown
+			}
+			return domain.MobileBackupOffer{}, session.ctx.Err()
+		case <-session.sub.Errors:
+			slog.WarnContext(session.parent, "mobile_backup_control_invalid", "stage", "receiver")
+			return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+		case event := <-session.sub.Events:
+			logMobileControl(event, session.public)
+			if event.PublicKey != session.public {
+				return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+			}
+			offer, ready, controlErr := session.control(event)
+			if controlErr != nil || ready {
+				return offer, controlErr
+			}
+		}
+	}
+}
+
+func (session *mobileOfferSession) control(event model.MobileSyncEvent) (domain.MobileBackupOffer, bool, error) {
+	switch event.Action {
+	case "user_confirm":
+		return domain.MobileBackupOffer{}, false, session.confirm(event)
+	case "transfer_error":
+		return domain.MobileBackupOffer{}, false, session.transfer(event)
+	case "syncmsg_info":
+		offer, err := session.acceptOffer(event)
+		return offer, err == nil, err
+	default:
+		return domain.MobileBackupOffer{}, false, domain.ErrMobileBackupInvalid
+	}
+}
+
+func (session *mobileOfferSession) confirm(event model.MobileSyncEvent) error {
+	if event.PCName != "Web" || event.UserAction == nil {
+		return domain.ErrMobileBackupInvalid
+	}
+	switch *event.UserAction {
+	case 0:
+		return domain.ErrMobileBackupRejected
+	case 2:
+		if err := session.state("mobile_restoring"); err != nil {
+			return err
+		}
+	case 1, 3:
+		if err := session.state("waiting_for_backup"); err != nil {
+			return err
+		}
+	default:
+		return domain.ErrMobileBackupInvalid
+	}
+	return nil
+}
+
+func (session *mobileOfferSession) transfer(event model.MobileSyncEvent) error {
+	if event.PCName != "Web" {
+		return domain.ErrMobileBackupInvalid
+	}
+	// The native client checks active/idle status before backup failure.
+	// These controls are progress, despite the misleading action name.
+	if event.Status != nil && (*event.Status == 1 || *event.Status == 2) {
+		kind := "mobile_active"
+		if *event.Status == 2 {
+			kind = "mobile_idle"
+		}
+		slog.InfoContext(session.parent, "mobile_backup_phone_status", "status", kind)
+		return nil
+	}
+	if event.ErrorCode != nil && *event.ErrorCode != 0 {
+		slog.WarnContext(session.parent, "mobile_backup_transfer_rejected", "upstream_error_code", *event.ErrorCode)
+		return domain.ErrMobileBackupRejected
+	}
+	if event.ErrorCode != nil && *event.ErrorCode == 0 {
+		// Native handling does not classify a zero-code control as failure.
+		// Retain the original deadline and wait for an explicit offer.
+		slog.InfoContext(session.parent, "mobile_backup_phone_status", "status", "transfer_no_error")
+		return nil
+	}
+	return domain.ErrMobileBackupInvalid
+}
+
+func (session *mobileOfferSession) acceptOffer(event model.MobileSyncEvent) (domain.MobileBackupOffer, error) {
+	offer, err := mobileBackupOffer(event, session.owner, session.key)
+	if err != nil {
+		return domain.MobileBackupOffer{}, err
+	}
+	pairs, err := mapMobileIdentities(
+		session.ctx,
+		domain.MobileIdentityRequest{Direct: []string{event.UID}},
+		session.mapper,
+	)
+	if err != nil {
+		slog.WarnContext(session.parent, "mobile_backup_account_invalid", "reason", "MAPPING_FAILED")
+		return domain.MobileBackupOffer{}, err
+	}
+	if len(pairs) != 1 || pairs[0].Group || pairs[0].Plain != event.UID || pairs[0].Session != session.owner {
+		slog.WarnContext(session.parent, "mobile_backup_account_invalid", "reason", "MAPPED_OWNER_MISMATCH")
+		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+	}
+	slog.InfoContext(session.parent, "mobile_backup_account_verified")
+	select {
+	case <-session.sub.Errors:
+		slog.WarnContext(session.parent, "mobile_backup_control_invalid", "stage", "receiver")
+		return domain.MobileBackupOffer{}, domain.ErrMobileBackupInvalid
+	default:
+	}
+	if session.ctx.Err() != nil {
+		return domain.MobileBackupOffer{}, session.ctx.Err()
+	}
+	if err := session.state("offer_ready"); err != nil {
+		return domain.MobileBackupOffer{}, err
+	}
+	slog.InfoContext(
+		session.parent,
+		"mobile_backup_producer_counts",
+		"claims",
+		inspectMobileProducerCounts(event.DatabaseInfo),
+	)
+	return offer, nil
 }

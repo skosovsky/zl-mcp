@@ -28,11 +28,17 @@ func TestDeliveryDiagnosticsResourceThroughHTTP(t *testing.T) {
 	endpoint := httptest.NewServer(handler)
 	defer endpoint.Close()
 	// Act
-	resource := httpRPC(t, endpoint.URL+"/mcp", token, "resources/read", map[string]any{"uri": "zalo://events/diagnostics"})
+	resource := httpRPC(
+		t,
+		endpoint.URL+"/mcp",
+		token,
+		"resources/read",
+		map[string]any{"uri": "zalo://events/diagnostics"},
+	)
 	content := resource["contents"].([]any)[0].(map[string]any)
 	var wire map[string]any
-	if err := json.Unmarshal([]byte(content["text"].(string)), &wire); err != nil {
-		t.Fatal(err)
+	if unmarshalErr := json.Unmarshal([]byte(content["text"].(string)), &wire); unmarshalErr != nil {
+		t.Fatal(unmarshalErr)
 	}
 	// Assert: exact executable contract with an empty queue.
 	schema, err := contracts.Compile("events_diagnostics", "output")
@@ -42,7 +48,8 @@ func TestDeliveryDiagnosticsResourceThroughHTTP(t *testing.T) {
 	if err := schema.Validate(wire); err != nil {
 		t.Fatal(err)
 	}
-	if content["mimeType"] != "application/json" || wire["active_subscriptions"] != float64(0) || wire["state_counts"].(map[string]any)["pending"] != float64(0) {
+	if content["mimeType"] != "application/json" || wire["active_subscriptions"] != float64(0) ||
+		wire["state_counts"].(map[string]any)["pending"] != float64(0) {
 		t.Fatal("incorrect diagnostic resource")
 	}
 }

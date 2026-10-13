@@ -107,8 +107,8 @@ func sdkIdentityService(t *testing.T) (*HTTPService, *storage.Store, string) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { owner.Close() })
-	if err := owner.BindAccount(ctx, "synthetic-sdk-account"); err != nil {
-		t.Fatal(err)
+	if bindAccountErr := owner.BindAccount(ctx, "synthetic-sdk-account"); bindAccountErr != nil {
+		t.Fatal(bindAccountErr)
 	}
 	token := strings.Repeat("synthetic", 8)
 	handler, err := migrationHTTP(t, owner, dir, token)
@@ -117,6 +117,7 @@ func sdkIdentityService(t *testing.T) (*HTTPService, *storage.Store, string) {
 	}
 	return handler, owner, token
 }
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSDK01CodecIdentityRequestsAndResponses(t *testing.T) {
 	for _, tc := range sdkIdentityCases {
 		for _, kind := range []string{"request", "response", "protocol-error"} {
@@ -151,6 +152,7 @@ func TestSDK01CodecIdentityRequestsAndResponses(t *testing.T) {
 		}
 	}
 }
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSDK01HTTPWrappersPreserveEnvelopeIdentity(t *testing.T) {
 	// Arrange: native synthetic owner; real SDK discovery/resources/status and Events wrapper.
 	for _, tc := range sdkIdentityCases {

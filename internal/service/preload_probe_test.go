@@ -19,14 +19,27 @@ import (
 
 type probeServiceSource struct {
 	*historyServiceSource
+
 	calls atomic.Int32
 }
 
 func (s *probeServiceSource) ConversationPreload(context.Context) (domain.PreloadSnapshot, error) {
 	s.calls.Add(1)
-	return domain.PreloadSnapshot{Entries: []domain.PreloadEntry{{Conversation: domain.ConversationRef{Type: "direct", ID: "synthetic-peer"}}}, Messages: []domain.Message{{Conversation: domain.ConversationRef{Type: "direct", ID: "synthetic-peer"}, Text: "Synthetic available source text"}}, DirectMessagesAvailable: true}, nil
+	return domain.PreloadSnapshot{
+		Entries: []domain.PreloadEntry{
+			{Conversation: domain.ConversationRef{Type: "direct", ID: "synthetic-peer"}},
+		},
+		Messages: []domain.Message{
+			{
+				Conversation: domain.ConversationRef{Type: "direct", ID: "synthetic-peer"},
+				Text:         "Synthetic available source text",
+			},
+		},
+		DirectMessagesAvailable: true,
+	}, nil
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestPrivatePreloadProbeUsesServiceSessionWithoutPersistingCorpus(t *testing.T) {
 	// Arrange: one production service session and its owner-only Unix route.
 	dir, err := os.MkdirTemp("/tmp", "zl-preload-probe-")
@@ -37,8 +50,8 @@ func TestPrivatePreloadProbeUsesServiceSessionWithoutPersistingCorpus(t *testing
 	var c config.Config
 	c.StateDir, c.Collection.Mode, c.Storage.RetentionDays = dir, "all", 90
 	c.MCP.Listen, c.MCP.TokenFile = "127.0.0.1:0", filepath.Join(dir, "token")
-	if err := os.WriteFile(c.MCP.TokenFile, []byte(strings.Repeat("a", 64)), 0600); err != nil {
-		t.Fatal(err)
+	if writeFileErr := os.WriteFile(c.MCP.TokenFile, []byte(strings.Repeat("a", 64)), 0600); writeFileErr != nil {
+		t.Fatal(writeFileErr)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -51,9 +64,9 @@ func TestPrivatePreloadProbeUsesServiceSessionWithoutPersistingCorpus(t *testing
 	defer func() {
 		cancel()
 		select {
-		case err := <-done:
-			if err != nil {
-				t.Error(err)
+		case operationErr := <-done:
+			if operationErr != nil {
+				t.Error(operationErr)
 			}
 		case <-time.After(5 * time.Second):
 			t.Error("probe service did not stop")
@@ -78,8 +91,8 @@ func TestPrivatePreloadProbeUsesServiceSessionWithoutPersistingCorpus(t *testing
 	deadline := time.Now().Add(5 * time.Second)
 	for {
 		var count int
-		if err := db.QueryRow("SELECT count(*) FROM conversations").Scan(&count); err != nil {
-			t.Fatal(err)
+		if scanErr := db.QueryRow("SELECT count(*) FROM conversations").Scan(&count); scanErr != nil {
+			t.Fatal(scanErr)
 		}
 		if count == 1 {
 			break
@@ -97,7 +110,10 @@ func TestPrivatePreloadProbeUsesServiceSessionWithoutPersistingCorpus(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
-	if restores.Load() != 1 || source.calls.Load() != 2 || result["source_status"] != "available" || result["direct_message_count"] != float64(1) || result["metadata_persisted"] != false || result["messages_persisted"] != false {
+	if restores.Load() != 1 || source.calls.Load() != 2 || result["source_status"] != "available" ||
+		result["direct_message_count"] != float64(1) ||
+		result["metadata_persisted"] != false ||
+		result["messages_persisted"] != false {
 		t.Fatal("private probe did not share session or preserve policy")
 	}
 	for _, table := range []string{"messages", "message_identities", "message_events", "event_deliveries", "peer_first_incoming", "send_operations", "event_subscriptions"} {

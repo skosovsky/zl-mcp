@@ -19,33 +19,14 @@ func normalizeSubscription(s EventSubscription) (EventSubscription, error) {
 	} else if s.Profile != domain.ConversationMessageCreatedV2 {
 		return s, domain.Invalid("Unknown event profile.")
 	}
-	switch s.Scope {
-	case "conversation":
-		if !(domain.ConversationRef{Type: s.ConversationType, ID: s.GroupID}).Valid() {
-			return s, domain.Invalid("Typed conversation required.")
-		}
-	case "all":
-		if s.GroupID != "" || s.ConversationType != "" {
-			return s, domain.Invalid("Wide scope cannot contain a conversation.")
-		}
-	case "direct", "group":
-		if s.GroupID != "" || s.ConversationType != s.Scope {
-			return s, domain.Invalid("Type scope has conflicting identity.")
-		}
-	default:
-		return s, domain.Invalid("Unknown subscription scope.")
+	if err := validateSubscriptionScope(s); err != nil {
+		return s, err
 	}
 	if s.Direction == "" {
 		s.Direction = "all"
 	}
-	if s.Direction != "all" && s.Direction != "incoming" && s.Direction != "outgoing" {
-		return s, domain.Invalid("Invalid direction filter.")
-	}
-	if s.Profile != domain.ConversationMessageCreatedV2 && (s.Direction != "all" || s.FirstIncomingOnly) {
-		return s, domain.Invalid("Filtered Events require version 2.")
-	}
-	if s.FirstIncomingOnly && (s.Direction != "incoming" || !(s.Scope == "direct" || (s.Scope == "conversation" && s.ConversationType == domain.ConversationDirect))) {
-		return s, domain.Invalid("First incoming requires a direct incoming scope.")
+	if err := validateSubscriptionDirection(s); err != nil {
+		return s, err
 	}
 	return s, nil
 }
@@ -63,4 +44,38 @@ func subscriptionMatches(profile, scope, kind, id string, ref domain.Conversatio
 	default:
 		return false
 	}
+}
+
+func validateSubscriptionScope(s EventSubscription) error {
+	switch s.Scope {
+	case "conversation":
+		if !(domain.ConversationRef{Type: s.ConversationType, ID: s.GroupID}).Valid() {
+			return domain.Invalid("Typed conversation required.")
+		}
+	case "all":
+		if s.GroupID != "" || s.ConversationType != "" {
+			return domain.Invalid("Wide scope cannot contain a conversation.")
+		}
+	case "direct", "group":
+		if s.GroupID != "" || s.ConversationType != s.Scope {
+			return domain.Invalid("Type scope has conflicting identity.")
+		}
+	default:
+		return domain.Invalid("Unknown subscription scope.")
+	}
+	return nil
+}
+
+func validateSubscriptionDirection(s EventSubscription) error {
+	if s.Direction != "all" && s.Direction != "incoming" && s.Direction != "outgoing" {
+		return domain.Invalid("Invalid direction filter.")
+	}
+	if s.Profile != domain.ConversationMessageCreatedV2 && (s.Direction != "all" || s.FirstIncomingOnly) {
+		return domain.Invalid("Filtered Events require version 2.")
+	}
+	if s.FirstIncomingOnly &&
+		(s.Direction != "incoming" || !(s.Scope == "direct" || (s.Scope == "conversation" && s.ConversationType == domain.ConversationDirect))) {
+		return domain.Invalid("First incoming requires a direct incoming scope.")
+	}
+	return nil
 }

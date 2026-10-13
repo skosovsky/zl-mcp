@@ -85,9 +85,9 @@ func (w *Worker) DeliverOne(ctx context.Context, at time.Time) (bool, error) {
 	}
 	var handled bool
 	err = shared.ObserveWorker(ctx, domain.WorkEvents, strconv.FormatInt(d.ID, 10), func(ctx context.Context) error {
-		var err error
-		handled, err = w.deliverClaimed(ctx, at, d)
-		return err
+		var operationErr error
+		handled, operationErr = w.deliverClaimed(ctx, at, d)
+		return operationErr
 	})
 	return handled, err
 }
@@ -131,23 +131,7 @@ func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.Ev
 		}
 		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
 		response.Body.Close()
-		switch code := response.StatusCode; {
-		case code >= 200 && code < 300:
-			outcome.State, outcome.Reason = "delivered", "accepted"
-		case code == 410:
-			outcome.State, outcome.Reason, outcome.Gone = "failed", "callback_gone", true
-		case code == 413:
-			outcome.State, outcome.Reason = "failed", "payload_too_large"
-		case code == 408 || code == 429 || code >= 500:
-			outcome.Reason = "http_transient"
-			if code == 429 || code == 503 {
-				if retry := retryAfter(response.Header.Get("Retry-After"), at); retry.After(outcome.RetryAt) {
-					outcome.RetryAt = retry
-				}
-			}
-		default:
-			outcome.State, outcome.Reason = "failed", "http_rejected"
-		}
+		outcome = classifyDeliveryResponse(response, at, outcome)
 	}
 	cancel()
 	if outcome.State == "pending" && (d.Attempts >= w.Policy.MaxAttempts || !outcome.RetryAt.Before(d.Deadline)) {
@@ -195,26 +179,7 @@ func (w *Worker) Run(ctx context.Context) error {
 	errs := make(chan error, 5)
 	done := make(chan struct{}, 4)
 	for range 4 {
-		go func() {
-			defer func() { done <- struct{}{} }()
-			timer := time.NewTicker(250 * time.Millisecond)
-			defer timer.Stop()
-			for {
-				select {
-				case <-runCtx.Done():
-					return
-				case at := <-timer.C:
-					if _, err := w.DeliverOne(runCtx, at.UTC()); err != nil {
-						if runCtx.Err() != nil {
-							return
-						}
-						errs <- err
-						cancel()
-						return
-					}
-				}
-			}
-		}()
+		go w.runDeliveryWorker(runCtx, cancel, errs, done)
 	}
 	defer func() {
 		cancel()
@@ -222,37 +187,7 @@ func (w *Worker) Run(ctx context.Context) error {
 			<-done
 		}
 	}()
-	timer := time.NewTicker(250 * time.Millisecond)
-	defer timer.Stop()
-	prune := time.NewTicker(time.Hour)
-	defer prune.Stop()
-	for {
-		select {
-		case <-runCtx.Done():
-			select {
-			case err := <-errs:
-				return err
-			default:
-				return nil
-			}
-		case at := <-timer.C:
-			if _, err := w.fanout(runCtx, at.UTC()); err != nil {
-				if runCtx.Err() != nil {
-					select {
-					case err := <-errs:
-						return err
-					default:
-						return nil
-					}
-				}
-				return err
-			}
-		case at := <-prune.C:
-			if err := w.Queue.PruneDeliveries(runCtx, at.UTC()); err != nil {
-				return err
-			}
-		}
-	}
+	return w.runFanoutWorker(runCtx, errs)
 }
 
 func (w *Worker) fanout(ctx context.Context, at time.Time) (int, error) {
@@ -262,4 +197,79 @@ func (w *Worker) fanout(ctx context.Context, at time.Time) (int, error) {
 		return q.FanoutProfileEvents(ctx, at, w.Policy, w.Encoder.EncodeProfile)
 	}
 	return w.Queue.FanoutEvents(ctx, at, w.Policy, w.Encoder.Encode)
+}
+
+func classifyDeliveryResponse(response *http.Response, at time.Time, outcome storage.DeliveryOutcome) storage.DeliveryOutcome {
+	switch code := response.StatusCode; {
+	case code >= 200 && code < 300:
+		outcome.State, outcome.Reason = "delivered", "accepted"
+	case code == 410:
+		outcome.State, outcome.Reason, outcome.Gone = "failed", "callback_gone", true
+	case code == 413:
+		outcome.State, outcome.Reason = "failed", "payload_too_large"
+	case code == 408 || code == 429 || code >= 500:
+		outcome.Reason = "http_transient"
+		if code == 429 || code == 503 {
+			if retry := retryAfter(response.Header.Get("Retry-After"), at); retry.After(outcome.RetryAt) {
+				outcome.RetryAt = retry
+			}
+		}
+	default:
+		outcome.State, outcome.Reason = "failed", "http_rejected"
+	}
+	return outcome
+}
+
+func (w *Worker) runDeliveryWorker(ctx context.Context, cancel context.CancelFunc, errs chan<- error, done chan<- struct{}) {
+	defer func() { done <- struct{}{} }()
+	timer := time.NewTicker(250 * time.Millisecond)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case at := <-timer.C:
+			if _, err := w.DeliverOne(ctx, at.UTC()); err != nil {
+				if ctx.Err() != nil {
+					return
+				}
+				errs <- err
+				cancel()
+				return
+			}
+		}
+	}
+}
+
+func (w *Worker) runFanoutWorker(ctx context.Context, errs <-chan error) error {
+	timer := time.NewTicker(250 * time.Millisecond)
+	defer timer.Stop()
+	prune := time.NewTicker(time.Hour)
+	defer prune.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return pendingWorkerError(errs)
+		case at := <-timer.C:
+			if _, err := w.fanout(ctx, at.UTC()); err != nil {
+				if ctx.Err() != nil {
+					return pendingWorkerError(errs)
+				}
+				return err
+			}
+		case at := <-prune.C:
+			if err := w.Queue.PruneDeliveries(ctx, at.UTC()); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+func pendingWorkerError(errs <-chan error) error {
+	select {
+	case err := <-errs:
+		return err
+	default:
+		return nil
+	}
 }

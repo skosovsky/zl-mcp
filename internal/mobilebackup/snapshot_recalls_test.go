@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSnapshotRecallsSuppressWholeSourceTargetsAcrossPagingAndNamespaces(t *testing.T) {
 	for _, kind := range []string{"direct", "group"} {
 		t.Run(kind, func(t *testing.T) {
@@ -30,7 +32,18 @@ func TestSnapshotRecallsSuppressWholeSourceTargetsAcrossPagingAndNamespaces(t *t
 					{"901", "2", "3", 36, 3, from.Add(2 * time.Hour).UnixMilli()},
 				}
 				for _, r := range rows {
-					if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", r.sender, r.global, r.client, "PRIVATE-SYNTHETIC-TEXT", r.stamp, 0, r.typ, r.status, metadata); err != nil {
+					if _, err := db.Exec(
+						"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+						r.sender,
+						r.global,
+						r.client,
+						"PRIVATE-SYNTHETIC-TEXT",
+						r.stamp,
+						0,
+						r.typ,
+						r.status,
+						metadata,
+					); err != nil {
 						t.Fatal(err)
 					}
 				}
@@ -47,7 +60,18 @@ func TestSnapshotRecallsSuppressWholeSourceTargetsAcrossPagingAndNamespaces(t *t
 			var visible []SnapshotRecord
 			suppressed, pages := 0, 0
 			for {
-				p, err := a.ReadSnapshotPage(context.Background(), retainedTestID, ref, t.TempDir(), from, from.Add(time.Hour), 1, after, "asc", from.Add(time.Hour).UnixMilli())
+				p, err := a.ReadSnapshotPage(
+					context.Background(),
+					retainedTestID,
+					ref,
+					t.TempDir(),
+					from,
+					from.Add(time.Hour),
+					1,
+					after,
+					"asc",
+					from.Add(time.Hour).UnixMilli(),
+				)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -71,14 +95,26 @@ func TestSnapshotRecallsSuppressWholeSourceTargetsAcrossPagingAndNamespaces(t *t
 				}
 			}
 			// Assert: only exact source targets are hidden; no namespace/global-ID alias.
-			if len(visible) != 2 || suppressed != 2 || pages != 4 || visible[0].SenderID != "10" || visible[1].GlobalID != "4" {
+			if len(visible) != 2 || suppressed != 2 || pages != 4 || visible[0].SenderID != "10" ||
+				visible[1].GlobalID != "4" {
 				t.Fatal("source recall suppression mismatch")
 			}
 			other := domain.ConversationRef{Type: "group", ID: "12"}
 			if kind == "group" {
 				other.Type = "direct"
 			}
-			p, err := a.ReadSnapshotPage(context.Background(), retainedTestID, other, t.TempDir(), from, from.Add(time.Hour), 50, nil, "asc", from.Add(time.Hour).UnixMilli())
+			p, err := a.ReadSnapshotPage(
+				context.Background(),
+				retainedTestID,
+				other,
+				t.TempDir(),
+				from,
+				from.Add(time.Hour),
+				50,
+				nil,
+				"asc",
+				from.Add(time.Hour).UnixMilli(),
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -86,7 +122,14 @@ func TestSnapshotRecallsSuppressWholeSourceTargetsAcrossPagingAndNamespaces(t *t
 			if p.SourceRecallRows != 0 || p.SuppressedSource != 0 {
 				t.Fatal("source targets crossed typed files")
 			}
-			strict, err := ReadSQLiteRows(context.Background(), a.archive.Files[index], t.TempDir(), from, from.Add(time.Hour), 50)
+			strict, err := ReadSQLiteRows(
+				context.Background(),
+				a.archive.Files[index],
+				t.TempDir(),
+				from,
+				from.Add(time.Hour),
+				50,
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -98,6 +141,7 @@ func TestSnapshotRecallsSuppressWholeSourceTargetsAcrossPagingAndNamespaces(t *t
 	}
 }
 
+//nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestSnapshotRecallInvalidWholeSourceReturnsNoPrefix(t *testing.T) {
 	from := time.Date(2026, 9, 26, 0, 0, 0, 0, time.UTC)
 	for _, tc := range []struct {
@@ -117,21 +161,52 @@ func TestSnapshotRecallInvalidWholeSourceReturnsNoPrefix(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Arrange: a readable ordinary record and a bad whole-source recall.
 			data := sqliteFixture(t, backupSQLiteSchema, func(db *sql.DB) {
-				if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", "9", "8", "PRIVATE-TEXT", from.UnixMilli(), 0, 0, 1, nil); err != nil {
+				if _, err := db.Exec(
+					"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+					"901",
+					"9",
+					"8",
+					"PRIVATE-TEXT",
+					from.UnixMilli(),
+					0,
+					0,
+					1,
+					nil,
+				); err != nil {
 					t.Fatal(err)
 				}
 				count := 1
 				if tc.duplicates {
 					count = 2
 				}
-				for n := 0; n < count; n++ {
-					if _, err := db.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", tc.sender, tc.global, tc.client, "PRIVATE-RECALLED-TEXT", tc.stamp, tc.ttl, 36, tc.status, nil); err != nil {
+				for range count {
+					if _, err := db.Exec(
+						"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+						tc.sender,
+						tc.global,
+						tc.client,
+						"PRIVATE-RECALLED-TEXT",
+						tc.stamp,
+						tc.ttl,
+						36,
+						tc.status,
+						nil,
+					); err != nil {
 						t.Fatal(err)
 					}
 				}
 			})
 			// Act.
-			p, err := ReadSnapshotSQLitePage(context.Background(), ArchiveFile{Name: "901.db", Data: data}, t.TempDir(), from.Add(time.Hour), from.Add(2*time.Hour), 1, nil, "asc")
+			p, err := ReadSnapshotSQLitePage(
+				context.Background(),
+				ArchiveFile{Name: "901.db", Data: data},
+				t.TempDir(),
+				from.Add(time.Hour),
+				from.Add(2*time.Hour),
+				1,
+				nil,
+				"asc",
+			)
 			defer p.Clear()
 			// Assert: even an otherwise empty interval cannot bypass source controls.
 			if !errors.Is(err, ErrSnapshotControls) || len(p.Rows) != 0 || p.Next != nil {
@@ -154,8 +229,15 @@ func TestSnapshotRecallInvalidWholeSourceReturnsNoPrefix(t *testing.T) {
 	if result, e := classifySnapshotRecalls(ctx, conn, 1); !errors.Is(e, ErrSnapshotControls) || result != nil {
 		t.Fatal("cancelled scan returned targets")
 	}
-	targets := &snapshotRecallTargets{global: map[string]struct{}{"PRIVATE-GLOBAL-ID": {}}, client: map[[2]string]struct{}{{"PRIVATE-SENDER", "PRIVATE-CLIENT"}: {}}}
-	if fmt.Sprintf("%+v %#v", targets, targets) != "archive recall targets [redacted] archive recall targets [redacted]" {
+	targets := &snapshotRecallTargets{
+		global: map[string]struct{}{"PRIVATE-GLOBAL-ID": {}},
+		client: map[[2]string]struct{}{{"PRIVATE-SENDER", "PRIVATE-CLIENT"}: {}},
+	}
+	if fmt.Sprintf(
+		"%+v %#v",
+		targets,
+		targets,
+	) != "archive recall targets [redacted] archive recall targets [redacted]" {
 		t.Fatal("target formatting exposed identities")
 	}
 }
@@ -171,12 +253,23 @@ func TestSnapshotRecallAndInformationShareWholeSourceBudget(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer tx.Rollback()
-		for i := 0; i < 5001; i++ {
+		for i := range 5001 {
 			kind, status := int64(20), int64(1)
 			if i >= 2500 {
 				kind, status = 36, 3
 			}
-			if _, err := tx.Exec("INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)", "901", fmt.Sprint(i+1), fmt.Sprint(i+1), "PRIVATE-TEXT", from.Add(-time.Hour).UnixMilli(), 0, kind, status, metadata); err != nil {
+			if _, err := tx.Exec(
+				"INSERT INTO ChatContent VALUES(?,?,?,?,?,?,?,?,?)",
+				"901",
+				strconv.Itoa(i+1),
+				strconv.Itoa(i+1),
+				"PRIVATE-TEXT",
+				from.Add(-time.Hour).UnixMilli(),
+				0,
+				kind,
+				status,
+				metadata,
+			); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -185,7 +278,16 @@ func TestSnapshotRecallAndInformationShareWholeSourceBudget(t *testing.T) {
 		}
 	})
 	// Act.
-	p, err := ReadSnapshotSQLitePage(context.Background(), ArchiveFile{Name: "901.db", Data: data}, t.TempDir(), from, from.Add(time.Hour), 1, nil, "asc")
+	p, err := ReadSnapshotSQLitePage(
+		context.Background(),
+		ArchiveFile{Name: "901.db", Data: data},
+		t.TempDir(),
+		from,
+		from.Add(time.Hour),
+		1,
+		nil,
+		"asc",
+	)
 	defer p.Clear()
 	// Assert: no targets, prefix or continuation bypass the combined limit.
 	if !errors.Is(err, ErrSnapshotControls) || len(p.Rows) != 0 || p.Next != nil || p.recalls != nil {

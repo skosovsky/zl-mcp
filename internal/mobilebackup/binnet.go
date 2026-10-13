@@ -33,7 +33,7 @@ func (b *BinNet) Clear() {
 	*b = BinNet{}
 }
 
-//nolint:nonamedreturns // Deferred cleanup observes the returned result/error to preserve ownership and panic/error semantics.
+//nolint:gocognit,nonamedreturns // The bounded binary wire-field table keeps widths, offsets and truncation checks visible together; changing parse order would change malformed-input precedence. Deferred cleanup retains the returned result/error.
 func ParseBinNet(ctx context.Context, data []byte) (result BinNet, err error) {
 	fields, err := ParseTLV(ctx, data)
 	if err != nil {

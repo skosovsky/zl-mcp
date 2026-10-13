@@ -112,18 +112,18 @@ func (j *JoinManager) Inspect(ctx context.Context, raw string) (map[string]any, 
 			Approval: v.ApprovalRequired,
 			Expires:  time.Now().UTC().Add(10 * time.Minute),
 		}
-		b, e := json.Marshal(p)
-		if e != nil {
-			return nil, e
+		b, marshalErr := json.Marshal(p)
+		if marshalErr != nil {
+			return nil, marshalErr
 		}
-		if _, e = j.Store.DB.ExecContext(
+		if _, marshalErr = j.Store.DB.ExecContext(
 			ctx,
 			"INSERT INTO join_previews VALUES(?,?,?)",
 			p.ID,
 			string(b),
 			p.Expires.Format(time.RFC3339Nano),
-		); e != nil {
-			return nil, e
+		); marshalErr != nil {
+			return nil, marshalErr
 		}
 		id = &p.ID
 		t := p.Expires.Format(time.RFC3339Nano)
@@ -154,7 +154,7 @@ func (j *JoinManager) Inspect(ctx context.Context, raw string) (map[string]any, 
 		"preview_expires_at": expires,
 	}, nil
 }
-func (j *JoinManager) Preview(ctx context.Context, id string) (preview, error) {
+func (j *JoinManager) preview(ctx context.Context, id string) (preview, error) {
 	var b string
 	p := preview{}
 	e := j.Store.DB.QueryRowContext(ctx, "SELECT payload FROM join_previews WHERE id=?", id).Scan(&b)
@@ -178,7 +178,7 @@ func (j *JoinManager) Approve(ctx context.Context, id string) (string, error) {
 			"Set permissions.allow_join=true if joining is intended.",
 		)
 	}
-	p, e := j.Preview(ctx, id)
+	p, e := j.preview(ctx, id)
 	if e != nil {
 		return "", e
 	}
@@ -237,81 +237,14 @@ func (j *JoinManager) Start(ctx context.Context, token, requestID string) (map[s
 	if !errors.Is(e, sql.ErrNoRows) {
 		return nil, e
 	}
-	if !j.AllowJoin {
-		return nil, safeError(
-			"PERMISSION_DENIED",
-			"Joining is disabled.",
-			"Enable joining in local configuration if intended.",
-		)
-	}
-	var previewID, expiry string
-	var consumed sql.NullString
-	e = j.Store.DB.QueryRowContext(ctx, "SELECT preview_id,expires_at,request_id FROM join_approvals WHERE token_hash=?", hash).
-		Scan(&previewID, &expiry, &consumed)
-	if errors.Is(e, sql.ErrNoRows) || consumed.Valid {
-		return nil, safeError(
-			"APPROVAL_REQUIRED",
-			"No unused trusted approval was found.",
-			"Review the preview with local zl-mcp approve-join.",
-		)
-	}
-	if e != nil {
-		return nil, e
-	}
-	at, e := time.Parse(time.RFC3339Nano, expiry)
-	if e != nil {
-		return nil, e
-	}
-	if !time.Now().Before(at) {
-		return nil, safeError("APPROVAL_EXPIRED", "Approval expired.", "Inspect and approve the invitation again.")
-	}
-	p, e := j.Preview(ctx, previewID)
-	if e != nil {
-		return nil, e
-	}
-	// Do not issue a membership mutation until its target and conditions have been revalidated.
-	checked, e := shared.ObserveUpstream(
-		ctx,
-		domain.WorkJoin,
-		func(ctx context.Context) (domain.Invite, error) { return j.API.Inspect(ctx, p.URL) },
-	)
-	if e != nil {
-		return nil, safeError(
-			"UPSTREAM_UNAVAILABLE",
-			"Cannot revalidate the invitation.",
-			"Retry with the same request_id and plan_token later.",
-		)
-	}
-	if checked.Group.ID != p.GroupID || checked.Group.Name != p.Name || checked.ApprovalRequired != p.Approval {
-		return nil, safeError(
-			"PREVIEW_CHANGED",
-			"Invitation conditions changed.",
-			"Inspect and approve the invitation again.",
-		)
+	p, approvalErr := j.approvedPreview(ctx, hash)
+	if approvalErr != nil {
+		return nil, approvalErr
 	}
 	// The persisted ledger survives collector restarts; a process-local timestamp
 	// would permit a new membership attempt immediately after every restart.
-	var lastStarted string
-	if err := j.Store.DB.QueryRowContext(ctx, "SELECT created_at FROM join_requests ORDER BY rowid DESC LIMIT 1").
-		Scan(&lastStarted); err == nil {
-		last, parseErr := time.Parse(time.RFC3339Nano, lastStarted)
-		if parseErr != nil {
-			return nil, parseErr
-		}
-		if time.Since(last) < time.Minute {
-			return nil, &domain.Error{
-				Code:       "RATE_LIMITED",
-				Message:    "Wait before starting another join.",
-				Retryable:  true,
-				NextAction: domain.NextAction{Instruction: "Retry the same request after one minute."},
-				Details:    map[string]any{"retry_after_ms": 60000},
-			}
-		}
-	} else if !errors.Is(
-		err,
-		sql.ErrNoRows,
-	) {
-		return nil, err
+	if rateErr := j.checkJoinRate(ctx); rateErr != nil {
+		return nil, rateErr
 	}
 	operationID := uuid.NewString()
 	result := map[string]any{
@@ -424,15 +357,7 @@ func (j *JoinManager) execute(parent context.Context, p preview, result map[stri
 		domain.WorkJoin,
 		func(ctx context.Context) ([]domain.Group, error) { return j.API.Groups(ctx) },
 	)
-	member := false
-	if e == nil {
-		for _, g := range groups {
-			if g.ID == p.GroupID {
-				member = true
-				break
-			}
-		}
-	}
+	member := e == nil && groupPresent(groups, p.GroupID)
 	if member {
 		status = "already_member"
 	} else if e == nil {
@@ -448,13 +373,8 @@ func (j *JoinManager) execute(parent context.Context, p preview, result map[stri
 			func(ctx context.Context) ([]domain.Group, error) { return j.API.Groups(ctx) },
 		)
 		stop()
-		if checkErr == nil {
-			for _, g := range after {
-				if g.ID == p.GroupID {
-					status = "joined"
-					break
-				}
-			}
+		if checkErr == nil && groupPresent(after, p.GroupID) {
+			status = "joined"
 		}
 		// Confirmed membership takes precedence over the join response, since an
 		// administrator may approve immediately. Only an explicit upstream signal
@@ -603,4 +523,96 @@ func (j *JoinManager) Reconcile(ctx context.Context, groups []domain.Group) erro
 		}
 	}
 	return tx.Commit()
+}
+
+func (j *JoinManager) approvedPreview(ctx context.Context, hash string) (preview, error) {
+	var e error
+	if !j.AllowJoin {
+		return preview{}, safeError(
+			"PERMISSION_DENIED",
+			"Joining is disabled.",
+			"Enable joining in local configuration if intended.",
+		)
+	}
+	var previewID, expiry string
+	var consumed sql.NullString
+	e = j.Store.DB.QueryRowContext(ctx, "SELECT preview_id,expires_at,request_id FROM join_approvals WHERE token_hash=?", hash).
+		Scan(&previewID, &expiry, &consumed)
+	if errors.Is(e, sql.ErrNoRows) || consumed.Valid {
+		return preview{}, safeError(
+			"APPROVAL_REQUIRED",
+			"No unused trusted approval was found.",
+			"Review the preview with local zl-mcp approve-join.",
+		)
+	}
+	if e != nil {
+		return preview{}, e
+	}
+	at, e := time.Parse(time.RFC3339Nano, expiry)
+	if e != nil {
+		return preview{}, e
+	}
+	if !time.Now().Before(at) {
+		return preview{}, safeError("APPROVAL_EXPIRED", "Approval expired.", "Inspect and approve the invitation again.")
+	}
+	p, e := j.preview(ctx, previewID)
+	if e != nil {
+		return preview{}, e
+	}
+	// Do not issue a membership mutation until its target and conditions have been revalidated.
+	checked, e := shared.ObserveUpstream(
+		ctx,
+		domain.WorkJoin,
+		func(ctx context.Context) (domain.Invite, error) { return j.API.Inspect(ctx, p.URL) },
+	)
+	if e != nil {
+		return preview{}, safeError(
+			"UPSTREAM_UNAVAILABLE",
+			"Cannot revalidate the invitation.",
+			"Retry with the same request_id and plan_token later.",
+		)
+	}
+	if checked.Group.ID != p.GroupID || checked.Group.Name != p.Name || checked.ApprovalRequired != p.Approval {
+		return preview{}, safeError(
+			"PREVIEW_CHANGED",
+			"Invitation conditions changed.",
+			"Inspect and approve the invitation again.",
+		)
+	}
+	return p, nil
+}
+
+func (j *JoinManager) checkJoinRate(ctx context.Context) error {
+	var lastStarted string
+	if err := j.Store.DB.QueryRowContext(ctx, "SELECT created_at FROM join_requests ORDER BY rowid DESC LIMIT 1").
+		Scan(&lastStarted); err == nil {
+		last, parseErr := time.Parse(time.RFC3339Nano, lastStarted)
+		if parseErr != nil {
+			return parseErr
+		}
+		if time.Since(last) < time.Minute {
+			return &domain.Error{
+				Code:       "RATE_LIMITED",
+				Message:    "Wait before starting another join.",
+				Retryable:  true,
+				NextAction: domain.NextAction{Instruction: "Retry the same request after one minute."},
+				Details:    map[string]any{"retry_after_ms": 60000},
+			}
+		}
+	} else if !errors.Is(
+		err,
+		sql.ErrNoRows,
+	) {
+		return err
+	}
+	return nil
+}
+
+func groupPresent(groups []domain.Group, id string) bool {
+	for _, group := range groups {
+		if group.ID == id {
+			return true
+		}
+	}
+	return false
 }

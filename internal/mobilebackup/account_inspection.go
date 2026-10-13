@@ -36,11 +36,22 @@ type AccountFileCoverage struct {
 // InspectCoverage reads at most 25 files and 50 rows per file. All source bytes
 // and mappings were authenticated before selection. SQLite schema rejection is
 // reported per file, without exposing source paths or raw values.
-func (a AccountArchive) InspectCoverage(ctx context.Context, scratch string, since, until time.Time, offset, limit int) ([]AccountFileCoverage, bool, error) {
+func (a AccountArchive) InspectCoverage(
+	ctx context.Context,
+	scratch string,
+	since, until time.Time,
+	offset, limit int,
+) ([]AccountFileCoverage, bool, error) {
 	return a.InspectCoverageWithMetadata(ctx, scratch, since, until, offset, limit, false)
 }
 
-func (a AccountArchive) InspectCoverageWithMetadata(ctx context.Context, scratch string, since, until time.Time, offset, limit int, includeMetadata bool) ([]AccountFileCoverage, bool, error) {
+func (a AccountArchive) InspectCoverageWithMetadata(
+	ctx context.Context,
+	scratch string,
+	since, until time.Time,
+	offset, limit int,
+	includeMetadata bool,
+) ([]AccountFileCoverage, bool, error) {
 	if ctx == nil || ctx.Err() != nil || offset < 0 || offset > len(a.archive.Files) || limit < 1 || limit > 25 {
 		return nil, false, ErrArchive
 	}
@@ -50,65 +61,92 @@ func (a AccountArchive) InspectCoverageWithMetadata(ctx context.Context, scratch
 	end := min(offset+limit, len(a.archive.Files))
 	result := make([]AccountFileCoverage, 0, end-offset)
 	for index := offset; index < end; index++ {
-		file := a.archive.Files[index]
-		refType := "direct"
-		for _, pair := range a.pairs {
-			if pair.Group && file.Name == "group_"+pair.Plain+".db" {
-				refType = "group"
-			}
+		item, fileErr := a.inspectFileCoverage(ctx, scratch, since, until, index, includeMetadata)
+		if fileErr != nil {
+			return nil, false, fileErr
 		}
-		item := AccountFileCoverage{FileIndex: index, ConversationType: refType, Status: "available", Types: map[string]int{}}
-		batch, err := ReadSQLiteRows(ctx, file, scratch, since, until, 50)
-		if ctx.Err() != nil {
-			batch.Clear()
-			return nil, false, ErrArchive
-		}
-		if err != nil {
-			item.Status = "unreadable_sqlite"
-		} else {
-			item.SourceRows, item.PeriodRows, item.InvalidTimestamps = batch.Coverage.SourceRows, batch.Coverage.PeriodRows, batch.Coverage.InvalidTimestamps
-			item.RejectedReasons = maps.Clone(batch.RejectedReasons)
-			item.RejectedMessageIDShapes = maps.Clone(batch.RejectedMessageIDShapes)
-			item.RejectedMessageIDContext = maps.Clone(batch.RejectedMessageIDContext)
-			item.WALMode, item.Examined, item.Rejected, item.SourceControls, item.SampleHasMore = batch.WALMode, batch.Examined, batch.Rejected, batch.SourceControls, batch.HasMore
-			item.DeferredControls = maps.Clone(batch.DeferredControls)
-			if batch.Coverage.HasRange {
-				first, last := time.UnixMilli(batch.Coverage.EarliestMS).UTC().Format(time.RFC3339Nano), time.UnixMilli(batch.Coverage.LatestMS).UTC().Format(time.RFC3339Nano)
-				item.EarliestAt, item.LatestAt = &first, &last
-			}
-			if includeMetadata {
-				var metadataErr error
-				item.Metadata, metadataErr = inspectAccountMetadata(ctx, batch.Rows)
-				if metadataErr != nil {
-					batch.Clear()
-					return nil, false, metadataErr
-				}
-				byType := map[int64][]SQLiteRow{}
-				for _, row := range batch.Rows {
-					if deferredMobileControl(row.Type) {
-						byType[row.Type] = append(byType[row.Type], row)
-					}
-				}
-				item.DeferredMetadata = map[string]*AccountMetadataDiagnostics{}
-				for kind, rows := range byType {
-					diagnostic, diagnosticErr := inspectAccountMetadata(ctx, rows)
-					if diagnosticErr != nil {
-						batch.Clear()
-						return nil, false, diagnosticErr
-					}
-					item.DeferredMetadata[strconv.FormatInt(kind, 10)] = diagnostic
-				}
-			}
-			for _, row := range batch.Rows {
-				kind, known := mobilePayloadKind(row.Type)
-				if !known {
-					kind = "unsupported"
-				}
-				item.Types[kind]++
-			}
-		}
-		batch.Clear()
 		result = append(result, item)
 	}
 	return result, end < len(a.archive.Files), nil
+}
+
+func (a AccountArchive) inspectFileCoverage(ctx context.Context, scratch string, since, until time.Time, index int, includeMetadata bool) (AccountFileCoverage, error) {
+	file := a.archive.Files[index]
+	refType := "direct"
+	for _, pair := range a.pairs {
+		if pair.Group && file.Name == "group_"+pair.Plain+".db" {
+			refType = "group"
+		}
+	}
+	item := AccountFileCoverage{
+		FileIndex:        index,
+		ConversationType: refType,
+		Status:           "available",
+		Types:            map[string]int{},
+	}
+	batch, err := ReadSQLiteRows(ctx, file, scratch, since, until, 50)
+	if ctx.Err() != nil {
+		batch.Clear()
+		return AccountFileCoverage{}, ErrArchive
+	}
+	if err != nil {
+		item.Status = "unreadable_sqlite"
+		batch.Clear()
+		//nolint:nilerr // Unreadable SQLite is a per-file diagnostic status; caller cancellation already fails above.
+		return item, nil
+	}
+	item.SourceRows, item.PeriodRows, item.InvalidTimestamps = batch.Coverage.SourceRows, batch.Coverage.PeriodRows, batch.Coverage.InvalidTimestamps
+	item.RejectedReasons = maps.Clone(batch.RejectedReasons)
+	item.RejectedMessageIDShapes = maps.Clone(batch.RejectedMessageIDShapes)
+	item.RejectedMessageIDContext = maps.Clone(batch.RejectedMessageIDContext)
+	item.WALMode, item.Examined, item.Rejected, item.SourceControls, item.SampleHasMore = batch.WALMode, batch.Examined, batch.Rejected, batch.SourceControls, batch.HasMore
+	item.DeferredControls = maps.Clone(batch.DeferredControls)
+	if batch.Coverage.HasRange {
+		first, last := time.UnixMilli(batch.Coverage.EarliestMS).
+			UTC().
+			Format(time.RFC3339Nano),
+			time.UnixMilli(batch.Coverage.LatestMS).
+				UTC().
+				Format(time.RFC3339Nano)
+		item.EarliestAt, item.LatestAt = &first, &last
+	}
+	if includeMetadata {
+		if metadataErr := inspectCoverageMetadata(ctx, batch.Rows, &item); metadataErr != nil {
+			batch.Clear()
+			return AccountFileCoverage{}, metadataErr
+		}
+	}
+	for _, row := range batch.Rows {
+		kind, known := mobilePayloadKind(row.Type)
+		if !known {
+			kind = "unsupported"
+		}
+		item.Types[kind]++
+	}
+
+	batch.Clear()
+	return item, nil
+}
+
+func inspectCoverageMetadata(ctx context.Context, rows []SQLiteRow, item *AccountFileCoverage) error {
+	var metadataErr error
+	item.Metadata, metadataErr = inspectAccountMetadata(ctx, rows)
+	if metadataErr != nil {
+		return metadataErr
+	}
+	byType := map[int64][]SQLiteRow{}
+	for _, row := range rows {
+		if deferredMobileControl(row.Type) {
+			byType[row.Type] = append(byType[row.Type], row)
+		}
+	}
+	item.DeferredMetadata = map[string]*AccountMetadataDiagnostics{}
+	for kind, controlRows := range byType {
+		diagnostic, diagnosticErr := inspectAccountMetadata(ctx, controlRows)
+		if diagnosticErr != nil {
+			return diagnosticErr
+		}
+		item.DeferredMetadata[strconv.FormatInt(kind, 10)] = diagnostic
+	}
+	return nil
 }

@@ -262,6 +262,8 @@ func (s *Store) Put(ctx context.Context, m domain.Message) (err error) {
 
 // putMessageTx is shared by ordinary collection and silent historical pages.
 // The caller validates the complete request and owns the transaction/checkpoint.
+//
+//nolint:funlen,gocognit // This ledger operation keeps validation, state changes and effect counters within one transaction/commit boundary.
 func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, historical bool) (bool, error) {
 	ref := m.Ref()
 	var deleted int
@@ -307,17 +309,17 @@ func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, 
 		return false, err
 	}
 	if inserted != 0 {
-		seq, err := result.LastInsertId()
-		if err != nil {
-			return false, err
+		seq, lastInsertIdErr := result.LastInsertId()
+		if lastInsertIdErr != nil {
+			return false, lastInsertIdErr
 		}
 		if historical {
-			err = appendHistoryIdentity(ctx, tx, seq, m)
+			lastInsertIdErr = appendHistoryIdentity(ctx, tx, seq, m)
 		} else {
-			err = appendMessageEvent(ctx, tx, seq, m)
+			lastInsertIdErr = appendMessageEvent(ctx, tx, seq, m)
 		}
-		if err != nil {
-			return false, err
+		if lastInsertIdErr != nil {
+			return false, lastInsertIdErr
 		}
 	}
 	// A matching replay may restore missing protocol quote identifiers without
@@ -554,35 +556,13 @@ func (s *Store) prepareSearch(ctx context.Context, q Search) (preparedSearch, er
 	if q.GroupID != "" && !s.Allowed(q.GroupID) {
 		return preparedSearch{}, domain.Invalid("Selected group is outside the collection allowlist.")
 	}
-	var since, until time.Time
-	var err error
-	if q.Since != "" {
-		since, err = time.Parse(time.RFC3339, q.Since)
-		if err != nil {
-			return preparedSearch{}, domain.Invalid("since must use RFC3339, for example 2026-10-01T00:00:00Z.")
-		}
+	since, until, boundsErr := searchBounds(q)
+	if boundsErr != nil {
+		return preparedSearch{}, boundsErr
 	}
-	if q.Until != "" {
-		until, err = time.Parse(time.RFC3339, q.Until)
-		if err != nil {
-			return preparedSearch{}, domain.Invalid("until must use RFC3339, for example 2026-10-01T00:00:00Z.")
-		}
-	}
-	if !since.IsZero() && !until.IsZero() && !since.Before(until) {
-		return preparedSearch{}, domain.Invalid("since must precede until.")
-	}
-	c := cursor{Fingerprint: fingerprint(q), SnapshotAt: now()}
-	if q.Cursor != "" {
-		if err = s.DecodeCursor(q.Cursor, &c); err != nil {
-			return preparedSearch{}, err
-		}
-		if c.Fingerprint != fingerprint(q) {
-			return preparedSearch{}, domain.Invalid("Cursor filters differ from the original query.")
-		}
-	} else {
-		if err = s.DB.QueryRowContext(ctx, "SELECT coalesce(max(seq),0) FROM messages").Scan(&c.Snapshot); err != nil {
-			return preparedSearch{}, err
-		}
+	c, cursorErr := s.searchCursor(ctx, q)
+	if cursorErr != nil {
+		return preparedSearch{}, cursorErr
 	}
 	if q.General &&
 		((q.ConversationType != "" && q.ConversationType != "group" && q.ConversationType != "direct") || (q.ConversationID != "" && q.ConversationType == "")) {
@@ -608,61 +588,10 @@ func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *
 		return nil, nil, "", cursor{}, err
 	}
 	q, query, since, until, c := p.q, p.query, p.since, p.until, p.cursor
-	clauses := []string{"messages_fts MATCH ?", "m.seq<=?"}
-	if !q.General {
-		clauses = append(clauses, "m.conversation_type='group'")
+	clauses, args, permitted := s.searchPredicates(q, query, since, until, c)
+	if !permitted {
+		return []domain.SearchHit{}, nil, c.SnapshotAt, c, nil
 	}
-
-	args := []any{query, c.Snapshot}
-	if !s.policy.All {
-		permitted := []string{}
-		for ref, enabled := range s.policy.Selected {
-			if enabled {
-				permitted = append(permitted, "(m.conversation_type=? AND m.conversation_id=?)")
-				args = append(args, ref.Type, ref.ID)
-			}
-		}
-		if len(permitted) == 0 {
-			return []domain.SearchHit{}, nil, c.SnapshotAt, c, nil
-		}
-		clauses = append(clauses, "("+strings.Join(permitted, " OR ")+")")
-	}
-	if q.General && q.ConversationType != "" {
-		clauses = append(clauses, "m.conversation_type=?")
-		args = append(args, q.ConversationType)
-	}
-	if q.General && q.ConversationID != "" {
-		clauses = append(clauses, "m.conversation_id=?")
-		args = append(args, q.ConversationID)
-	}
-	if q.GroupID != "" {
-		clauses = append(clauses, "m.group_id=?")
-		args = append(args, q.GroupID)
-	}
-	if q.SenderID != "" {
-		clauses = append(clauses, "m.sender_id=?")
-		args = append(args, q.SenderID)
-	}
-	if !since.IsZero() {
-		clauses = append(clauses, "m.sent_at>=?")
-		args = append(args, since.UTC().Format("2006-01-02T15:04:05.000000000Z"))
-	}
-	if !until.IsZero() {
-		clauses = append(clauses, "m.sent_at<?")
-		args = append(args, until.UTC().Format("2006-01-02T15:04:05.000000000Z"))
-	}
-	if c.At != "" {
-		clauses = append(
-			clauses,
-			"(m.sent_at<? OR (m.sent_at=? AND (m.conversation_type>? OR (m.conversation_type=? AND (m.group_id>? OR (m.group_id=? AND m.message_id>?))))))",
-		)
-		kind := c.Kind
-		if kind == "" {
-			kind = domain.ConversationGroup
-		}
-		args = append(args, c.At, c.At, kind, kind, c.Group, c.Group, c.ID)
-	}
-	args = append(args, q.Limit+1)
 	rows, err := s.DB.QueryContext(
 		ctx,
 		//nolint:gosec // G202: SQL fragments are fixed internal predicates/operators; all client values use placeholders.
@@ -674,46 +603,9 @@ func (s *Store) searchPage(ctx context.Context, q Search) ([]domain.SearchHit, *
 	if err != nil {
 		return nil, nil, "", cursor{}, err
 	}
-	hits := []domain.SearchHit{}
-	times := []string{}
-	for rows.Next() {
-		var h domain.SearchHit
-		var ts, txt string
-		if err = rows.Scan(
-			&h.Conversation.Type,
-			&h.GroupID,
-			&h.ID,
-			&h.SenderID,
-			&h.GroupName,
-			&h.SenderName,
-			&ts,
-			&txt,
-		); err != nil {
-			//nolint:gosec,sqlclosecheck // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
-			rows.Close()
-			return nil, nil, "", cursor{}, err
-		}
-		h.Conversation.ID = h.GroupID
-		h.SentAt, err = time.Parse(time.RFC3339Nano, ts)
-		if err != nil {
-			//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
-			rows.Close()
-			return nil, nil, "", cursor{}, err
-		}
-		r := []rune(txt)
-		h.TextTruncated = len(r) > 150
-		if h.TextTruncated {
-			r = r[:150]
-		}
-		h.Excerpt = string(r)
-		hits = append(hits, h)
-		times = append(times, ts)
-	}
-	err = rows.Err()
-	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
-	rows.Close()
-	if err != nil {
-		return nil, nil, "", cursor{}, err
+	hits, times, scanErr := scanSearchHits(rows)
+	if scanErr != nil {
+		return nil, nil, "", cursor{}, scanErr
 	}
 	var next *string
 	if len(hits) > q.Limit {
@@ -772,4 +664,156 @@ func (s *Store) ShortenPage(p *SearchPage, n int) error {
 	p.NextCursor = &token
 	p.continuation = c
 	return nil
+}
+
+func searchBounds(q Search) (time.Time, time.Time, error) {
+	var since, until time.Time
+	var err error
+	if q.Since != "" {
+		since, err = time.Parse(time.RFC3339, q.Since)
+		if err != nil {
+			return time.Time{}, time.Time{}, domain.Invalid("since must use RFC3339, for example 2026-10-01T00:00:00Z.")
+		}
+	}
+	if q.Until != "" {
+		until, err = time.Parse(time.RFC3339, q.Until)
+		if err != nil {
+			return time.Time{}, time.Time{}, domain.Invalid("until must use RFC3339, for example 2026-10-01T00:00:00Z.")
+		}
+	}
+	if !since.IsZero() && !until.IsZero() && !since.Before(until) {
+		return time.Time{}, time.Time{}, domain.Invalid("since must precede until.")
+	}
+	return since, until, nil
+}
+
+func (s *Store) searchPredicates(q Search, query string, since, until time.Time, c cursor) ([]string, []any, bool) {
+	clauses := []string{"messages_fts MATCH ?", "m.seq<=?"}
+	if !q.General {
+		clauses = append(clauses, "m.conversation_type='group'")
+	}
+
+	args := []any{query, c.Snapshot}
+	clauses, args, permitted := s.searchPolicyPredicates(clauses, args)
+	if !permitted {
+		return nil, nil, false
+	}
+	if q.General && q.ConversationType != "" {
+		clauses = append(clauses, "m.conversation_type=?")
+		args = append(args, q.ConversationType)
+	}
+	if q.General && q.ConversationID != "" {
+		clauses = append(clauses, "m.conversation_id=?")
+		args = append(args, q.ConversationID)
+	}
+	if q.GroupID != "" {
+		clauses = append(clauses, "m.group_id=?")
+		args = append(args, q.GroupID)
+	}
+	if q.SenderID != "" {
+		clauses = append(clauses, "m.sender_id=?")
+		args = append(args, q.SenderID)
+	}
+	if !since.IsZero() {
+		clauses = append(clauses, "m.sent_at>=?")
+		args = append(args, since.UTC().Format("2006-01-02T15:04:05.000000000Z"))
+	}
+	if !until.IsZero() {
+		clauses = append(clauses, "m.sent_at<?")
+		args = append(args, until.UTC().Format("2006-01-02T15:04:05.000000000Z"))
+	}
+	if c.At != "" {
+		clauses = append(
+			clauses,
+			"(m.sent_at<? OR (m.sent_at=? AND (m.conversation_type>? OR (m.conversation_type=? AND (m.group_id>? OR (m.group_id=? AND m.message_id>?))))))",
+		)
+		kind := c.Kind
+		if kind == "" {
+			kind = domain.ConversationGroup
+		}
+		args = append(args, c.At, c.At, kind, kind, c.Group, c.Group, c.ID)
+	}
+	args = append(args, q.Limit+1)
+	return clauses, args, true
+}
+
+func scanSearchHits(rows *sql.Rows) ([]domain.SearchHit, []string, error) {
+	var err error
+	hits := []domain.SearchHit{}
+	times := []string{}
+	for rows.Next() {
+		var h domain.SearchHit
+		var ts, txt string
+		if scanErr := rows.Scan(
+			&h.Conversation.Type,
+			&h.GroupID,
+			&h.ID,
+			&h.SenderID,
+			&h.GroupName,
+			&h.SenderName,
+			&ts,
+			&txt,
+		); scanErr != nil {
+			//nolint:gosec // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
+			rows.Close()
+			return nil, nil, scanErr
+		}
+		h.Conversation.ID = h.GroupID
+		h.SentAt, err = time.Parse(time.RFC3339Nano, ts)
+		if err != nil {
+			//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
+			rows.Close()
+			return nil, nil, err
+		}
+		r := []rune(txt)
+		h.TextTruncated = len(r) > 150
+		if h.TextTruncated {
+			r = r[:150]
+		}
+		h.Excerpt = string(r)
+		hits = append(hits, h)
+		times = append(times, ts)
+	}
+	err = rows.Err()
+	//nolint:gosec // G104: Read-only query cleanup; Scan/Rows.Err determines the result.
+	rows.Close()
+	if err != nil {
+		return nil, nil, err
+	}
+	return hits, times, nil
+}
+
+func (s *Store) searchPolicyPredicates(clauses []string, args []any) ([]string, []any, bool) {
+	if !s.policy.All {
+		permitted := []string{}
+		for ref, enabled := range s.policy.Selected {
+			if enabled {
+				permitted = append(permitted, "(m.conversation_type=? AND m.conversation_id=?)")
+				args = append(args, ref.Type, ref.ID)
+			}
+		}
+		if len(permitted) == 0 {
+			return nil, nil, false
+		}
+		clauses = append(clauses, "("+strings.Join(permitted, " OR ")+")")
+	}
+	return clauses, args, true
+}
+
+func (s *Store) searchCursor(ctx context.Context, q Search) (cursor, error) {
+	var err error
+	c := cursor{Fingerprint: fingerprint(q), SnapshotAt: now()}
+	if q.Cursor != "" {
+		if err = s.DecodeCursor(q.Cursor, &c); err != nil {
+			return c, err
+		}
+		if c.Fingerprint != fingerprint(q) {
+			return c, domain.Invalid("Cursor filters differ from the original query.")
+		}
+	} else {
+		if err = s.DB.QueryRowContext(ctx, "SELECT coalesce(max(seq),0) FROM messages").Scan(&c.Snapshot); err != nil {
+			return c, err
+		}
+	}
+	return c, nil
 }
