@@ -10,7 +10,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/skosovsky/evaly v0.4.2
 	github.com/skosovsky/metry v0.10.1
-	github.com/skosovsky/toolsy v0.20.5
+	github.com/skosovsky/toolsy v0.20.6
 	github.com/ulikunitz/xz v0.5.17
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.47.0
@@ -62,4 +62,4 @@ require (
 
 replace github.com/amrakk/zcago => ./third_party/zcago
 
-replace github.com/modelcontextprotocol/go-sdk => github.com/skosovsky/go-sdk v1.8.1-0.20261012184819-4347cd438f3c
+replace github.com/modelcontextprotocol/go-sdk => github.com/skosovsky/go-sdk v1.8.1-0.20261013081052-4a7b89fe086f

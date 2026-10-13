@@ -1,0 +1,18 @@
+{
+  "completeness": {
+    "agent": "arch_go_architecture_review",
+    "percent": 100,
+    "leaves_passed": 10,
+    "leaves_total": 10,
+    "correctness": "PASS",
+    "unresolved_findings": []
+  },
+  "correctness": {
+    "agent": "cleanup_correctness",
+    "status": "PASS",
+    "unresolved_findings": []
+  },
+  "scope": "Independent read-only provenance/docs/evidence review; heavy command results supplied by root, not rerun",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

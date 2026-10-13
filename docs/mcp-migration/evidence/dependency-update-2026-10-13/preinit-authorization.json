@@ -1,0 +1,6 @@
+{
+  "date": "2026-10-13",
+  "decision": "ACCEPTED",
+  "user_answer": "Принять -32600 и зафиксировать изменение",
+  "scope": "legacy STDIO request before initialize: error.code 0 to -32600; ID and message unchanged; all other parity requirements unchanged"
+}

@@ -1,8 +1,8 @@
 # SDK-01: JSON-RPC envelope identity
 
 The user authorized the immutable remote replacement
-`github.com/modelcontextprotocol/go-sdk => github.com/skosovsky/go-sdk v1.8.1-0.20261012184819-4347cd438f3c`
-and official toolsy v0.20.5. No SDK vendor, local production patch, sibling edit or
+`github.com/modelcontextprotocol/go-sdk => github.com/skosovsky/go-sdk v1.8.1-0.20261013081052-4a7b89fe086f`
+and official toolsy v0.20.6. No SDK vendor, local production patch, sibling edit or
 fork publication is part of this adoption. The original v1.8.0 module requirement
 remains; the dependency matrix records the resolved fork origin/checksums.
 
@@ -59,3 +59,14 @@ The current candidate must be exactly `9007199254740993`; a still-rounded candid
 fails. Every other fact, domain ID, string ID, trace projection and effect remains
 under full canonical comparison. Historical T09 pure-parity capture tests remain
 unchanged and do not represent current SDK acceptance.
+
+User-authorized update 2026-10-13 also accepts the upstream correction for
+legacy STDIO requests before initialization: JSON-RPC error code `0` becomes
+`-32600` (Invalid Request), with ID/message preserved and no application dispatch.
+All other parity requirements remain unchanged. Wire evidence and update checks:
+[dependency-update-2026-10-13.md](dependency-update-2026-10-13.md).
+
+The paired/canonical comparisons described above are historical SDK-01 acceptance.
+Current permanent verification uses the standalone Go/evaly suite and precise ID
+contract tests; frozen binaries are not required. See
+[harness maintenance](../harness-maintenance.md).

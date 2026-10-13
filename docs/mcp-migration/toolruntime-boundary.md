@@ -68,3 +68,7 @@ SDK-01 user-authorized dependency update selects official toolsy v0.20.5 and
 remote SDK fork v1.8.1-0.20261012184819-4347cd438f3c. T09's accepted v0.20.2
 measurements remain historical evidence. No local toolsy/SDK patch or vendor
 is used; runtime policy/schema/authority and durable owners remain unchanged.
+
+Current user-authorized pins (2026-10-13): toolsy v0.20.6 and SDK fork
+v1.8.1-0.20261013081052-4a7b89fe086f. The SDK-01 pins above are historical.
+Current checks: [dependency-update-2026-10-13.md](dependency-update-2026-10-13.md).
