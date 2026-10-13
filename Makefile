@@ -37,7 +37,7 @@ build-platforms:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o bin/zl-mcp-linux-amd64 ./cmd/zl-mcp
 
 # Standalone synthetic service contracts are mandatory; migration parity is complete.
-check: tools-test tools-race tools-vet test race vet nested-test nested-race nested-vet architecture build-platforms eval-offline
+check: lint tools-test tools-race tools-vet test race vet nested-test nested-race nested-vet architecture build-platforms eval-offline
 
 EVAL_OUTPUT ?= /tmp/zl-mcp-offline-$$(date +%s)-$$$$
 .PHONY: eval-offline
@@ -74,3 +74,12 @@ tools-race: tools
 	cd tools/harness && ARCH_GO_BINARY="$(ARCH_GO)" GOWORK=off go test -race ./...
 tools-vet: tools
 	cd tools/harness && GOWORK=off go vet ./...
+
+GOLANGCI_LINT_VERSION := 2.14.0
+GOLANGCI_LINT ?= golangci-lint
+LINT_TIMEOUT ?= 10m
+.PHONY: lint
+lint:
+	@set -eu; task_lint_version=$$($(GOLANGCI_LINT) version --short); test "$$task_lint_version" = "$(GOLANGCI_LINT_VERSION)" || { echo "requires golangci-lint $(GOLANGCI_LINT_VERSION), got $$task_lint_version" >&2; exit 1; }
+	GOWORK=off $(GOLANGCI_LINT) run --config "$(CURDIR)/.golangci.yml" --timeout $(LINT_TIMEOUT) --max-issues-per-linter 0 --max-same-issues 0 --uniq-by-line=false ./...
+	cd tools/harness && GOWORK=off $(GOLANGCI_LINT) run --config "$(CURDIR)/.golangci.yml" --timeout $(LINT_TIMEOUT) --max-issues-per-linter 0 --max-same-issues 0 --uniq-by-line=false ./...

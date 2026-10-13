@@ -1,0 +1,2 @@
+requires golangci-lint 2.14.0, got 2.14.00
+make: *** [lint] Error 1

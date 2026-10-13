@@ -1,8 +1,8 @@
 # Замечания golangci-lint — разбор и предлагаемые решения
 
-Актуализировано после упрощения context-тестов: 2026-10-13. golangci-lint 2.14.0, root toolchain Go 1.27.2, конфиг `.golangci.yml`.
+Актуализировано по L01–L06: 2026-10-14. golangci-lint 2.14.0, root toolchain Go 1.27.2, конфиг `.golangci.yml`.
 
-Всего **0** актуальных замечаний после L05 candidate: root — **0**, `tools/harness` — **0**. Root lint успешно загрузил пакеты; compiler/loader blocker отсутствует. Lint PASS в обоих модулях; L05 принят: completeness 100%, correctness PASS; L06 остаётся OPEN. Несколько правил на одной строке учитываются отдельно.
+Всего **0** актуальных замечаний после L05 candidate: root — **0**, `tools/harness` — **0**. Root lint успешно загрузил пакеты; compiler/loader blocker отсутствует. Lint PASS в обоих модулях; L05 принят: completeness 100%, correctness PASS; итоговая приёмка L06 и все результаты проверок фиксируются в `docs/lint-evidence/L06/acceptance.md`. Несколько правил на одной строке учитываются отдельно.
 
 По сравнению со снимком до восстановления компиляции не воспроизвелись **18** записей (включая агрегированный compile blocker), новых записей — **2**. ID совпавших замечаний сохранены. Исчезнувшие записи вынесены в конец документа и не входят в актуальную сводку.
 
@@ -19,7 +19,7 @@
 | L03 | Compilation PASS; root contract/privacy/parsing race PASS; tools race PASS; frozen hash/null/Unicode and negative persisted-budget golden checks PASS. | `/tmp/zl-lint-L03-race.log`, `/tmp/zl-lint-L03-goldens.log`, `/tmp/zl-lint-L03-tools-race.log` |
 | L04 | Accepted: independent completeness 100% (8/8), correctness PASS; complexity/shadow/unused groups 0. Root/tools race/vet, architecture and offline PASS. | `docs/lint-evidence/L04/acceptance.md` |
 | L05 | ACCEPTED: completeness 100%, correctness PASS | candidate b6a5d31f… |
-| L06 | OPEN | — |
+| L06 | Pinned lint/check/CI и Go provenance реализованы; итоговая приёмка — в отчёте | `docs/lint-evidence/L06/acceptance.md` |
 
 L01 закрывает архитектурный blocker. Статусы lint IDs обновляются по полному успешному loader run; текущий registry сохраняет закрытые и новые IDs. Shared performance worker уже имеет cleanup в TestMain; сохраняем его и проверяем build-failure путь, не создаём второй lifetime.
 

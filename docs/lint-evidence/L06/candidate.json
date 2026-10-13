@@ -1,0 +1,63 @@
+{
+  "head": "9a01f7e5995a0ec10831b397703d69ca4a3510cd",
+  "algorithm": "sha256-file-manifest-json-v1",
+  "code_hash": "095d275d44ee81743eaa9ffd04448e8e106f80be14dc392712e348ba0ceb37e9",
+  "files": [
+    {
+      "path": ".github/workflows/go.yml",
+      "sha256": "1f4f8d863df32d82e00d31031e3452e111d8183d631833981650a788a6ff0842"
+    },
+    {
+      "path": ".golangci.yml",
+      "sha256": "dec18ea507979a4c6f58ce2f47a49f784fdbd91615682fe23182057996640335"
+    },
+    {
+      "path": "Makefile",
+      "sha256": "62dfeacba8b26879ca2199f688dee18f1800820eee3060a1d6b2095f7f977069"
+    },
+    {
+      "path": "docs/development.md",
+      "sha256": "78f2294bd9a2bf6b488de2849a7b3e6daab5396fbd902b7af3574460aaac3f8f"
+    },
+    {
+      "path": "docs/lint-findings.md",
+      "sha256": "f1cb9d13aeb7ea6a9b5e2452e6114fad0930fb1a58691e10f8f4271daf3fa253"
+    },
+    {
+      "path": "go.mod",
+      "sha256": "d0c508e48b97a588ab94a9e0f596ff87b2cde2a39bb7a98d2b4a1736a873ec21"
+    },
+    {
+      "path": "internal/storage/context_zero_test.go",
+      "sha256": "4fdf385ed29f2331cb004f2f1993aab08c4aea24bd34e1550c250ed00b39b0f8"
+    },
+    {
+      "path": "internal/storage/views.go",
+      "sha256": "3a4007f2d8d10517bcb56aea36f96da4b8a57997475530000479019c8c086ca5"
+    },
+    {
+      "path": "tools/harness/go.mod",
+      "sha256": "1a1a1c8b335369358217be0ac31fbfbadeec5014eaee10b038b7d13cd5dc1ca0"
+    },
+    {
+      "path": "tools/harness/internal/performance/build.go",
+      "sha256": "7e46ee539c3b0f124db589937cd4cffebba09929b6d6428291aaade3d4c78d40"
+    },
+    {
+      "path": "tools/harness/internal/performance/compare.go",
+      "sha256": "a9436a48b96aa7091701dc4ed3a966b769e55c57b0016635e6ab73c06f502bc4"
+    },
+    {
+      "path": "tools/harness/internal/performance/performance_test.go",
+      "sha256": "66526234fa95ddf6fe3a1a5800e60746eb8ef40f8f2ee4ad1e71cc97a23f33a6"
+    },
+    {
+      "path": "tools/harness/internal/performance/toolchain.go",
+      "sha256": "8dc7102d686939fea47497b9498857ba07fd43cc2ac5631cdd91689729116e3f"
+    },
+    {
+      "path": "tools/harness/internal/performance/toolchain_test.go",
+      "sha256": "a653af87bbec35d08bb735123f4a939f13a8872da7ac7a5481c1560733c27e9a"
+    }
+  ]
+}

@@ -3,7 +3,6 @@ package performance
 import (
 	"fmt"
 	"slices"
-	"strings"
 )
 
 func validate(m Object, side, buildPath string) []string {
@@ -92,8 +91,8 @@ func Compare(baseline, candidate Object, baselineBuild, candidateBuild string) O
 		errs = append(errs, sideErrors...)
 		summaries[side] = summary
 	}
-	// Every worker must agree on build/runtime platform, across all kinds.
-	for _, field := range []string{"go", "os", "arch"} {
+	// Go is verified against each side's build; runtime platforms still agree across sides.
+	for _, field := range []string{"os", "arch"} {
 		want := object(object(array(baseline["records"])[0])["measurement"])[field]
 		for _, m := range []Object{baseline, candidate} {
 			for _, r := range array(m["records"]) {
@@ -124,6 +123,10 @@ func Compare(baseline, candidate Object, baselineBuild, candidateBuild string) O
 		if !p95 || !objects || !allocBytes {
 			errs = append(errs, kind+" performance threshold exceeded")
 		}
+	}
+	result["toolchains"] = Object{
+		"baseline":    object(object(array(baseline["records"])[0])["measurement"])["go"],
+		wireCandidate: object(object(array(candidate["records"])[0])["measurement"])["go"],
 	}
 	result["summaries"] = summaries
 	result["gates"] = gates
@@ -245,8 +248,7 @@ func validateBuildProvenance(m Object, side, buildPath string, records []any, ba
 		r := object(raw)
 		a := object(r["measurement"])
 		goVersion := str(a["go"])
-		if goVersion != "go1.27.1" || !strings.Contains(str(build["toolchain"]), goVersion) ||
-			!strings.Contains(str(match["build_info"]), goVersion) {
+		if !validGoProvenance(side, goVersion, build, match) {
 			bad("invalid build provenance: measured Go differs from pinned build toolchain")
 		}
 		command := array(r["command"])

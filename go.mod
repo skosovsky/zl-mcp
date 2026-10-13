@@ -1,6 +1,6 @@
 module github.com/skosovsky/zl-mcp
 
-go 1.27.1
+go 1.27.2
 
 require (
 	github.com/amrakk/zcago v0.3.1-0.20260908044439-d4ff65b46057

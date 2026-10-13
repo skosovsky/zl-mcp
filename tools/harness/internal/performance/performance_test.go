@@ -57,10 +57,12 @@ func pair(t *testing.T) (Object, Object, string) {
 	c["build_manifest"] = filepath.Join(t.TempDir(), "build.json")
 	for _, r := range array(c["records"]) {
 		array(object(r)["command"])[0] = "/synthetic/candidate"
+		object(object(r)["measurement"])["go"] = candidateGoVersion
 	}
 	build := Object{
 		"status":            "PASS",
-		"toolchain":         "go version go1.27.1 darwin/arm64",
+		"toolchain_pin":     candidateGoVersion,
+		"toolchain":         "go version go1.27.2 darwin/arm64",
 		"candidate_sources": Object{"source_digest_sha256": strings.Repeat("b", 64)},
 		"builds": []Object{
 			{
@@ -68,7 +70,7 @@ func pair(t *testing.T) (Object, Object, string) {
 				"target":        "./cmd/zl-mcp-eval",
 				"exit_status":   0,
 				"binary":        "/synthetic/candidate",
-				"build_info":    "go1.27.1",
+				"build_info":    "go1.27.2",
 				"binary_sha256": c["binary_sha256"],
 			},
 		},
@@ -325,7 +327,8 @@ func TestBenchProtocolWithSyntheticWorker(t *testing.T) {
 	}
 	m := Object{
 		"status":            "PASS",
-		"toolchain":         "go version go1.27.1",
+		"toolchain_pin":     candidateGoVersion,
+		"toolchain":         "go version go1.27.2",
 		"candidate_sources": Object{"source_digest_sha256": strings.Repeat("b", 64)},
 		"builds": []Object{
 			{
@@ -334,7 +337,7 @@ func TestBenchProtocolWithSyntheticWorker(t *testing.T) {
 				"exit_status":   0,
 				"binary":        w,
 				"binary_sha256": hash,
-				"build_info":    "go1.27.1",
+				"build_info":    "go1.27.2",
 			},
 		},
 	}
@@ -381,7 +384,8 @@ func TestBuildProvenanceAndSourceFingerprint(t *testing.T) {
 		t.Fatal("unstable fingerprint", e)
 	}
 	for _, raw := range a["files"].([]Object) {
-		if strings.HasPrefix(str(raw["path"]), "docs/mcp-migration/evidence/") {
+		if strings.HasPrefix(str(raw["path"]), "docs/mcp-migration/evidence/") ||
+			strings.HasPrefix(str(raw["path"]), "docs/lint-evidence/") {
 			t.Fatal("historical evidence affects current fingerprint")
 		}
 	}
@@ -443,7 +447,8 @@ func TestBenchmarkPreflightMetadataTimeoutRetainsFailManifest(t *testing.T) {
 	}
 	provenance := Object{
 		"status":            "PASS",
-		"toolchain":         "go version go1.27.1",
+		"toolchain_pin":     candidateGoVersion,
+		"toolchain":         "go version go1.27.2",
 		"candidate_sources": Object{"source_digest_sha256": strings.Repeat("b", 64)},
 		"builds": []Object{
 			{
@@ -452,7 +457,7 @@ func TestBenchmarkPreflightMetadataTimeoutRetainsFailManifest(t *testing.T) {
 				"exit_status":   0,
 				"binary":        w,
 				"binary_sha256": hash,
-				"build_info":    "go1.27.1",
+				"build_info":    "go1.27.2",
 			},
 		},
 	}

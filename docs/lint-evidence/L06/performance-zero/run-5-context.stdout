@@ -1,0 +1,1 @@
+{"kind":"context","calls":1000,"warmup":50,"errors":0,"bytes":1915000,"p95_seconds":0.006682,"allocations_per_op":1956.305,"alloc_bytes_per_op":536416.392,"elapsed_seconds":121.257074875,"go":"go1.27.2","os":"darwin","arch":"arm64","concurrency":1,"pacing_millis":110,"admission_enabled":true,"exporters_enabled":false,"cleanup":true}

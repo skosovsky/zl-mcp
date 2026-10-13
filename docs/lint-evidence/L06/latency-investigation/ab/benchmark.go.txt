@@ -1,0 +1,160 @@
+package evaluation
+
+import (
+	"context"
+	"errors"
+"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
+	"sort"
+	"time"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/skosovsky/zl-mcp/internal/evalfixture"
+)
+
+type Measurement struct {
+	Kind             string  `json:"kind"`
+	Calls            int     `json:"calls"`
+	Warmup           int     `json:"warmup"`
+	Errors           int     `json:"errors"
+"encoding/json"`
+	Bytes            int     `json:"bytes"`
+	P95Seconds       float64 `json:"p95_seconds"`
+	AllocationsPerOp float64 `json:"allocations_per_op"`
+	AllocBytesPerOp  float64 `json:"alloc_bytes_per_op"`
+	ElapsedSeconds   float64 `json:"elapsed_seconds"`
+	Go               string  `json:"go"`
+	OS               string  `json:"os"`
+	Arch             string  `json:"arch"`
+	Concurrency      int     `json:"concurrency"`
+	PacingMillis     int     `json:"pacing_millis"`
+	Admission        bool    `json:"admission_enabled"`
+	Exporters        bool    `json:"exporters_enabled"`
+	Cleanup          bool    `json:"cleanup"`
+}
+
+// Measure times complete real SDK calls; admission pacing is outside each sample.
+//
+//nolint:funlen,nonamedreturns // Fixture ownership and the warmup/measured loop remain together so timing and allocation samples keep their original boundaries; request parsing is separate. Returned result/error and deferred cleanup keep the same owner.
+func Measure(ctx context.Context, root, state, kind string, count int) (result Measurement, err error) {
+	//nolint:exhaustruct_v5 // Measurement fills only this synthetic run/result phase; remaining fields keep their empty/default values.
+	result = Measurement{
+		Kind:         kind,
+		Warmup:       measurementWarmupCalls,
+		Go:           runtime.Version(),
+		OS:           runtime.GOOS,
+		Arch:         runtime.GOARCH,
+		Concurrency:  1,
+		PacingMillis: measurementPacingMillis,
+		Admission:    true,
+		Exporters:    false,
+	}
+	if count < minimumMeasuredCalls {
+		return result, errors.New("at least1000 measurements required")
+	}
+	name, args, err := measurementRequest(kind)
+	if err != nil {
+		return result, err
+	}
+	effects := filepath.Join(state, "effects.jsonl")
+	if err = os.WriteFile(effects, nil, 0600); err != nil {
+		return result, err
+	}
+	f, err := evalfixture.New(
+		ctx,
+		//nolint:exhaustruct_v5 // Fixture flags and New fill the remaining defaults; preserve unset optional policy/effect options.
+		evalfixture.Options{
+			Offline:     true,
+			StateDir:    filepath.Join(state, "state"),
+			EffectsFile: effects,
+			Fixtures:    filepath.Join(root, "docs/evals/fixtures.json"),
+		},
+	)
+	if err != nil {
+		return result, err
+	}
+	c, err := connect(ctx, f)
+	if err != nil {
+		//nolint:gosec // G104: Cleanup preserves the original setup/operation error.
+		f.Close()
+		return result, err
+	}
+	defer func() {
+		c.close()
+		e := f.Close()
+		result.Cleanup = e == nil
+		if err == nil {
+			err = e
+		}
+	}()
+	diagnosticSamples := []map[string]any{}
+	samples := make([]float64, count)
+	var allocations, allocatedBytes uint64
+	start := time.Now()
+	for i := -result.Warmup; i < count; i++ {
+		select {
+		case <-ctx.Done():
+			return result, ctx.Err()
+		case <-time.After(measurementPacingInterval):
+		}
+		variant := "baseline"
+		skip := "0"
+		if i % 2 == 0 { variant = "zero-window"; skip = "1" }
+		if err = os.Setenv("ZL_DIAGNOSTIC_SKIP_ZERO",skip); err != nil { return result,err }
+		var before, after runtime.MemStats
+		runtime.ReadMemStats(&before)
+		began := time.Now()
+		//nolint:exhaustruct_v5 // Unused optional SDK metadata/progress fields remain absent for this invocation.
+		response, e := c.session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: args})
+		wire := marshaled(response)
+		duration := time.Since(began).Seconds()
+		runtime.ReadMemStats(&after)
+		if e != nil || response == nil || response.IsError {
+			result.Errors++
+			if e != nil {
+				return result, fmt.Errorf("benchmark MCP failure: %w", e)
+			}
+			return result, errors.New("benchmark MCP failure: <nil>")
+		}
+		if i >= 0 {
+			diagnosticSamples = append(diagnosticSamples, map[string]any{"index":i,"variant":variant,"seconds":duration,"allocations":after.Mallocs-before.Mallocs,"bytes":after.TotalAlloc-before.TotalAlloc,"response_bytes":len(wire)})
+			result.Calls++
+			samples[i] = duration
+			result.Bytes += len(wire)
+			allocations += after.Mallocs - before.Mallocs
+			allocatedBytes += after.TotalAlloc - before.TotalAlloc
+		}
+	}
+	encoded, writeErr := json.Marshal(diagnosticSamples); if writeErr != nil { return result,writeErr }; if writeErr = os.WriteFile(os.Getenv("ZL_DIAGNOSTIC_SAMPLES"),encoded,0600); writeErr != nil {return result,writeErr}
+	sort.Float64s(samples)
+	result.P95Seconds = samples[(p95Percent*count+percentileRoundUp)/percentileScale-1]
+	result.AllocationsPerOp = float64(allocations) / float64(count)
+	result.AllocBytesPerOp = float64(allocatedBytes) / float64(count)
+	result.ElapsedSeconds = time.Since(start).Seconds()
+	return result, nil
+}
+
+func measurementRequest(kind string) (string, map[string]any, error) {
+	var name string
+	args := map[string]any{}
+	switch kind {
+	case "read":
+		name = "zalo_list_groups"
+	case "search":
+		name = toolSearchMessages
+		args[fieldQuery] = fixtureSearchText
+	case "context":
+		name = toolGetMessageContext
+		args["group_id"] = fixtureG1ID
+		args["message_id"] = "m-101"
+		args["before"] = 0
+		args["after"] = 0
+	default:
+		return "", nil, errors.New("unknown measurement kind")
+	}
+	return name, args, nil
+}

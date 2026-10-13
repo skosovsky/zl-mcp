@@ -1,0 +1,16 @@
+{
+  "baseline": {
+    "calls": 500,
+    "p50_ms": 2.7614375,
+    "p95_ms": 6.801167,
+    "mean_allocations": 2055.866,
+    "mean_bytes": 540459.36
+  },
+  "zero-window": {
+    "calls": 500,
+    "p50_ms": 2.3076045,
+    "p95_ms": 5.928167,
+    "mean_allocations": 1955.25,
+    "mean_bytes": 536088.208
+  }
+}

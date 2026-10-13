@@ -1,0 +1,4 @@
+ok  	github.com/skosovsky/zl-mcp/internal/storage	107.987s
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/store	2.725s
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	30.537s
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	97.714s

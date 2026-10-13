@@ -1,0 +1,3 @@
+ok  	github.com/skosovsky/zl-mcp/tools/harness/cmd/harness	0.622s
+ok  	github.com/skosovsky/zl-mcp/tools/harness/internal/architecture	6.298s
+ok  	github.com/skosovsky/zl-mcp/tools/harness/internal/performance	2.868s

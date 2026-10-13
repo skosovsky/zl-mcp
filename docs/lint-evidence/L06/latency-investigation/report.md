@@ -1,0 +1,13 @@
+# Context latency investigation
+
+User authorized investigation with unchanged budgets after L06 fullperformanceFAIL. Scope: synthetic/local diagnostic overlays only; no product source edit, sibling/third_party change, deployment/model/live/account. Last acceptance fullrunContextmedian7.190166ms >6.9967799ms remainsFAIL.
+
+CPU/trace diagnostic: oneContextprofile worker + unchangedRead/Search parallel controls, Go1.27.2,1050totalcalls (50warmup,1000measured),110mspacing. Main-onlyoverlay starts CPU/block/runtime trace; fixture/wire/request/measurement logic unchanged. Instrumenteddiagnosticp95=5.919708ms; notacceptance. CPU3.79s; contextNeighbors0.28s cumulative(7.39%), including SQLite compile/WAL lock/syscalls for two LIMIT0 queries. Schedulerprofile also shows channel/releaser runnable delay; this does not establish external-app or compiler causality.
+
+Paired A/B diagnostic: temporary storage branch controlled by a dedicated synthetic envflag; benchmark alternates baseline/zero-window before eachtimedsample,500samples each,50mixedwarmup. Read/Search controlworkers remain originalacceptancebinary. Raw1000sampledurations/allocations preserved. Wholeprocess p95 is informational; neither subgroup nor diagnostic profile replaces five-run acceptance. Baselinep95=6.801167ms,p50=2.7614375ms; zero-windowp95=5.928167ms,p50=2.3076045ms. Meanallocations2055.866→1955.25; B/op540459.36→536088.208.
+
+Draft productionpatch: onlycontextNeighbors limit==0 returns nonnil[]domain.Message{} andctx.Err(). CheckContextAccess/anchor/reply/coverage/responsebudget remain unchanged, negative limits still rejected. No retry/cache/admission or persistence changes. All earlier FAIL/raw excursions retained. Contract review: temporary short-circuit admissible with nonnil arrays and cancellation; production patch reviewed subject to tests. Root storage/adapters/toolruntime/MCP full race PASS, including added exact JSON typed-group/direct zero/mixed window, opaque IDs/Unicode, missing/invalid/canceled/closed-DB tests. Production application requires explicit scope decision.
+
+Files are diagnostic evidence, not active CI/harness scripts. Overlay paths refer to retained original /tmp directories; binaries are temporary only. Compressed raw trace and pprof profiles retain diagnostic provenance. Model/liveNOT_RUN.
+
+Independent proposal reviewer recalculated the1000rawsamples:500/500strictalternation, equalresponsesizes, p95 reduction12.84%; proposalPASS, fullperformanceacceptance remainsFAIL. Added production-test draft through a temporary overlay (not workspace source): legacygroup/typedgroup/typeddirect zero/mixedwire, existing/deletedreply, cancellationimmediatelybeforeneighbors; targetedracePASS. User scope approval toapplyproductionpatch ispending.

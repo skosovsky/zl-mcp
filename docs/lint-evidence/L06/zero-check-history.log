@@ -1,0 +1,11 @@
+GOWORK=off golangci-lint run --config "/workspace/zl-mcp/.golangci.yml" --timeout 10m --max-issues-per-linter 0 --max-same-issues 0 --uniq-by-line=false ./...
+internal/storage/context_zero_test.go:17:1: calculated cyclomatic complexity for function TestZeroContextWindowsPreserveWireAndReply is 31, max is 30 (cyclop)
+func TestZeroContextWindowsPreserveWireAndReply(t *testing.T) {
+^
+internal/storage/context_zero_test.go:17:1: cyclomatic complexity 31 of func `TestZeroContextWindowsPreserveWireAndReply` is high (> 30) (gocyclo)
+func TestZeroContextWindowsPreserveWireAndReply(t *testing.T) {
+^
+2 issues:
+* cyclop: 1
+* gocyclo: 1
+make: *** [lint] Error 1

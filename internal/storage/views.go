@@ -436,6 +436,10 @@ func (s *Store) contextNeighbors(
 	limit int,
 	general bool,
 ) ([]domain.Message, error) {
+	// Empty windows retain non-nil arrays and cancellation without a LIMIT 0 query.
+	if limit == 0 {
+		return []domain.Message{}, ctx.Err()
+	}
 	rows, queryContextErr := s.DB.QueryContext(
 		ctx,
 		//nolint:gosec // G202: SQL fragments are fixed internal predicates/operators; all client values use placeholders.

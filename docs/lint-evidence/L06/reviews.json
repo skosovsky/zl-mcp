@@ -1,0 +1,18 @@
+{
+  "candidate": "095d275d44ee81743eaa9ffd04448e8e106f80be14dc392712e348ba0ceb37e9",
+  "completeness": {
+    "reviewer": "/root/l04_completeness",
+    "percent": 100,
+    "leaves": "8/8",
+    "findings": []
+  },
+  "correctness": {
+    "reviewer": "/root/l04_correctness",
+    "verdict": "PASS",
+    "findings": []
+  },
+  "offline_acceptance": "PASS",
+  "performance_gates": "9/9 PASS",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

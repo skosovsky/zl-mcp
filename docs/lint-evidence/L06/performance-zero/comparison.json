@@ -1,0 +1,113 @@
+{
+  "errors": null,
+  "fixed_thresholds": {
+    "alloc_bytes": 1.2,
+    "allocations": 2,
+    "p95_limits_seconds": {
+      "context": 0.0069967799,
+      "read": 0.0078683,
+      "search": 0.0070726337
+    },
+    "zero_baseline": 0
+  },
+  "gate_contract_revision": "2026-10-12-candidate-latency-plus10-v3",
+  "gates": {
+    "context": {
+      "alloc_bytes_limit_per_op": 546305.1264,
+      "alloc_bytes_pass": true,
+      "allocations_limit_per_op": 2132.106,
+      "allocations_pass": true,
+      "p95_limit_seconds": 0.0069967799,
+      "p95_pass": true
+    },
+    "read": {
+      "alloc_bytes_limit_per_op": 516337.79519999993,
+      "alloc_bytes_pass": true,
+      "allocations_limit_per_op": 1735.28,
+      "allocations_pass": true,
+      "p95_limit_seconds": 0.0078683,
+      "p95_pass": true
+    },
+    "search": {
+      "alloc_bytes_limit_per_op": 558227.2416,
+      "alloc_bytes_pass": true,
+      "allocations_limit_per_op": 2288.54,
+      "allocations_pass": true,
+      "p95_limit_seconds": 0.0070726337,
+      "p95_pass": true
+    }
+  },
+  "inputs": [
+    {
+      "path": "/workspace/zl-mcp/docs/mcp-migration/evidence/T03/performance-baseline/manifest.json",
+      "sha256": "812ca94c04f9b983ec212e82666b46514f36a0f3f7598049b7ab609b5b57a7f1"
+    },
+    {
+      "path": "/tmp/zl-lint-L06-performance-zero.H09Gqf/results/manifest.json",
+      "sha256": "07ea4ddd40e94152afbd8d9e0a03b7608ba4739bb0ccc3735b1dc1f6ed772750"
+    }
+  ],
+  "latency_acceptance_basis": "User-authorized retrospective candidate +10% fixed budgets; not original frozen-baseline latency parity",
+  "live": "NOT_RUN",
+  "measurement_gate_metadata_revision": "2026-10-12-objects-and-bytes-v2",
+  "model": "NOT_RUN",
+  "status": "PASS",
+  "summaries": {
+    "baseline": {
+      "context": {
+        "alloc_bytes_per_op": 455254.272,
+        "allocations_per_op": 1066.053,
+        "calls": 5000,
+        "errors": 0,
+        "p95_seconds": 0.003545208,
+        "response_bytes": 9581000
+      },
+      "read": {
+        "alloc_bytes_per_op": 430281.496,
+        "allocations_per_op": 867.64,
+        "calls": 5000,
+        "errors": 0,
+        "p95_seconds": 0.003563834,
+        "response_bytes": 5163000
+      },
+      "search": {
+        "alloc_bytes_per_op": 465189.368,
+        "allocations_per_op": 1144.27,
+        "calls": 5000,
+        "errors": 0,
+        "p95_seconds": 0.003375625,
+        "response_bytes": 13251948
+      }
+    },
+    "candidate": {
+      "context": {
+        "alloc_bytes_per_op": 536487.864,
+        "allocations_per_op": 1956.629,
+        "calls": 5000,
+        "errors": 0,
+        "p95_seconds": 0.006714417,
+        "response_bytes": 9579000
+      },
+      "read": {
+        "alloc_bytes_per_op": 496395.28,
+        "allocations_per_op": 1585.683,
+        "calls": 5000,
+        "errors": 0,
+        "p95_seconds": 0.007012042,
+        "response_bytes": 5163000
+      },
+      "search": {
+        "alloc_bytes_per_op": 548765,
+        "allocations_per_op": 2132.891,
+        "calls": 5000,
+        "errors": 0,
+        "p95_seconds": 0.00630125,
+        "response_bytes": 13249894
+      }
+    }
+  },
+  "toolchains": {
+    "baseline": "go1.27.1",
+    "candidate": "go1.27.2"
+  }
+}

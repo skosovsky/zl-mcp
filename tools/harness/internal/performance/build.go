@@ -41,7 +41,8 @@ func SourceFingerprint(ctx context.Context, root string) (Object, error) {
 			continue
 		}
 		last = name
-		if strings.HasPrefix(name, "docs/mcp-migration/evidence/") || name == "docs/mcp-migration/spec-review.md" {
+		if strings.HasPrefix(name, "docs/mcp-migration/evidence/") || strings.HasPrefix(name, "docs/lint-evidence/") ||
+			name == "docs/mcp-migration/spec-review.md" {
 			continue
 		}
 		path := filepath.Join(root, name)
@@ -108,14 +109,15 @@ func buildCandidate(ctx context.Context, root, output string, manifest Object) e
 	if e != nil {
 		return e
 	}
-	if !strings.Contains(string(toolchain), "go1.27.1") {
-		return errors.New("requires pinned go1.27.1")
+	if toolchainVersion(string(toolchain)) != candidateGoVersion {
+		return errors.New("requires pinned go1.27.2")
 	}
 	sources, e := SourceFingerprint(ctx, root)
 	if e != nil {
 		return e
 	}
 	manifest["candidate_parent_sha"] = strings.TrimSpace(string(head))
+	manifest["toolchain_pin"] = candidateGoVersion
 	manifest["toolchain"] = strings.TrimSpace(string(toolchain))
 	manifest["candidate_sources"] = sources
 	binary := filepath.Join(output, "zl-mcp-eval-candidate")

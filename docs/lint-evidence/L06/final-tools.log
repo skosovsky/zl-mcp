@@ -1,0 +1,11 @@
+mkdir -p "/workspace/zl-mcp/.tools"
+GOWORK=off GOBIN="/workspace/zl-mcp/.tools" go install github.com/arch-go/arch-go/v2@v2.1.2
+cd tools/harness && ARCH_GO_BINARY="/workspace/zl-mcp/.tools/arch-go" GOWORK=off go test ./...
+ok  	github.com/skosovsky/zl-mcp/tools/harness/cmd/harness	0.528s
+ok  	github.com/skosovsky/zl-mcp/tools/harness/internal/architecture	(cached)
+ok  	github.com/skosovsky/zl-mcp/tools/harness/internal/performance	5.089s
+cd tools/harness && ARCH_GO_BINARY="/workspace/zl-mcp/.tools/arch-go" GOWORK=off go test -race ./...
+ok  	github.com/skosovsky/zl-mcp/tools/harness/cmd/harness	1.592s
+ok  	github.com/skosovsky/zl-mcp/tools/harness/internal/architecture	(cached)
+ok  	github.com/skosovsky/zl-mcp/tools/harness/internal/performance	13.677s
+cd tools/harness && GOWORK=off go vet ./...

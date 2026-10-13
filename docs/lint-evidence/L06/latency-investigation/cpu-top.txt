@@ -1,0 +1,393 @@
+File: eval-profile
+Type: cpu
+Time: 2026-10-14 01:06:25 +07
+Duration: 121.31s, Total samples = 3.79s ( 3.12%)
+Showing nodes accounting for 3.37s, 88.92% of 3.79s total
+Dropped 201 nodes (cum <= 0.02s)
+      flat  flat%   sum%        cum   cum%
+     1.03s 27.18% 27.18%      1.03s 27.18%  syscall.rawsyscalln
+     0.77s 20.32% 47.49%      0.77s 20.32%  runtime.pthread_cond_signal
+     0.24s  6.33% 53.83%      0.24s  6.33%  runtime.pthread_cond_wait
+     0.19s  5.01% 58.84%      0.19s  5.01%  runtime.usleep
+     0.16s  4.22% 63.06%      0.16s  4.22%  runtime.kevent
+     0.06s  1.58% 64.64%      0.09s  2.37%  runtime.(*traceMap).newTraceMapNode
+     0.06s  1.58% 66.23%      0.06s  1.58%  runtime.memmove
+     0.06s  1.58% 67.81%      0.06s  1.58%  runtime.pthread_kill
+     0.06s  1.58% 69.39%      0.07s  1.85%  runtime.tryDeferToSpanScan
+     0.05s  1.32% 70.71%      0.16s  4.22%  runtime.pcvalue
+     0.05s  1.32% 72.03%      0.05s  1.32%  runtime.typePointers.next
+     0.04s  1.06% 73.09%      0.04s  1.06%  runtime.nanotime1
+     0.04s  1.06% 74.14%      0.07s  1.85%  runtime.scanObjectsSmall
+     0.04s  1.06% 75.20%      0.07s  1.85%  runtime.step
+     0.03s  0.79% 75.99%      0.03s  0.79%  runtime.acquirem (inline)
+     0.03s  0.79% 76.78%      0.03s  0.79%  runtime.funcdata (inline)
+     0.03s  0.79% 77.57%      0.03s  0.79%  runtime.mmap
+     0.03s  0.79% 78.36%      0.03s  0.79%  runtime.pthread_cond_timedwait_relative_np
+     0.03s  0.79% 79.16%      0.03s  0.79%  runtime.readvarint (inline)
+     0.02s  0.53% 79.68%      0.02s  0.53%  encoding/json/internal/jsonwire.ConsumeSimpleString (inline)
+     0.02s  0.53% 80.21%      0.02s  0.53%  modernc.org/libc.Xmalloc
+     0.02s  0.53% 80.74%      0.03s  0.79%  modernc.org/sqlite/lib._lookupName
+     0.02s  0.53% 81.27%      0.09s  2.37%  modernc.org/sqlite/lib._sqlite3WhereCodeOneLoopStart
+     0.02s  0.53% 81.79%      0.02s  0.53%  runtime.(*traceBuf).varint (inline)
+     0.02s  0.53% 82.32%      0.02s  0.53%  runtime.adjustpointers
+     0.02s  0.53% 82.85%      0.07s  1.85%  runtime.fpunwindExpand
+     0.02s  0.53% 83.38%      0.02s  0.53%  runtime.munmap
+     0.02s  0.53% 83.91%      0.10s  2.64%  runtime.scanObject
+     0.01s  0.26% 84.17%      0.02s  0.53%  encoding/json/internal/jsonwire.ConsumeStringResumable
+     0.01s  0.26% 84.43%      0.03s  0.79%  encoding/json/internal/jsonwire.ReformatString
+     0.01s  0.26% 84.70%      0.05s  1.32%  encoding/json/jsontext.(*encoderState).reformatValue
+     0.01s  0.26% 84.96%      0.04s  1.06%  github.com/modelcontextprotocol/go-sdk/mcp.validateRequestMeta
+     0.01s  0.26% 85.22%      0.03s  0.79%  github.com/skosovsky/toolsy.(*valueCloner).cloneJSONReference
+     0.01s  0.26% 85.49%      1.43s 37.73%  github.com/skosovsky/zl-mcp/internal/mcpserver.(*Service).call
+     0.01s  0.26% 85.75%      0.23s  6.07%  modernc.org/sqlite/lib.Xsqlite3_finalize
+     0.01s  0.26% 86.02%      0.02s  0.53%  modernc.org/sqlite/lib._propagateConstants
+     0.01s  0.26% 86.28%      0.04s  1.06%  modernc.org/sqlite/lib._resolveExprStep
+     0.01s  0.26% 86.54%      0.02s  0.53%  modernc.org/sqlite/lib._sqlite3DbMallocRawNN
+     0.01s  0.26% 86.81%      0.08s  2.11%  modernc.org/sqlite/lib._sqlite3ExprIfTrue
+     0.01s  0.26% 87.07%      0.02s  0.53%  modernc.org/sqlite/lib._sqlite3VdbeMemClearAndResize
+     0.01s  0.26% 87.34%      0.02s  0.53%  modernc.org/sqlite/lib._tokenExpr
+     0.01s  0.26% 87.60%      0.25s  6.60%  modernc.org/sqlite/lib._yy_reduce
+     0.01s  0.26% 87.86%      0.10s  2.64%  runtime.(*traceMap).put
+     0.01s  0.26% 88.13%      0.03s  0.79%  runtime.(*unwinder).resolveInternal
+     0.01s  0.26% 88.39%      0.36s  9.50%  runtime.goexit0
+     0.01s  0.26% 88.65%      0.02s  0.53%  runtime.mapassign_faststr
+     0.01s  0.26% 88.92%      0.02s  0.53%  runtime.scanblock
+         0     0% 88.92%      0.21s  5.54%  _.goready.func1
+         0     0% 88.92%      0.82s 21.64%  database/sql.(*DB).QueryContext
+         0     0% 88.92%      0.82s 21.64%  database/sql.(*DB).QueryContext.func1
+         0     0% 88.92%      0.54s 14.25%  database/sql.(*DB).QueryRowContext (partial-inline)
+         0     0% 88.92%      0.82s 21.64%  database/sql.(*DB).query
+         0     0% 88.92%      0.82s 21.64%  database/sql.(*DB).queryDC
+         0     0% 88.92%      0.81s 21.37%  database/sql.(*DB).queryDC.func1
+         0     0% 88.92%      0.82s 21.64%  database/sql.(*DB).retry
+         0     0% 88.92%      0.24s  6.33%  database/sql.(*Row).Scan
+         0     0% 88.92%      0.24s  6.33%  database/sql.(*Rows).Close
+         0     0% 88.92%      0.25s  6.60%  database/sql.(*Rows).close
+         0     0% 88.92%      0.23s  6.07%  database/sql.(*Rows).close.func1
+         0     0% 88.92%      0.81s 21.37%  database/sql.ctxDriverQuery
+         0     0% 88.92%      1.05s 27.70%  database/sql.withLock
+         0     0% 88.92%      0.03s  0.79%  encoding/json.(*Encoder).Encode
+         0     0% 88.92%      0.08s  2.11%  encoding/json.Marshal (inline)
+         0     0% 88.92%      0.02s  0.53%  encoding/json/internal/jsonwire.ConsumeString (inline)
+         0     0% 88.92%      0.02s  0.53%  encoding/json/jsontext.(*Encoder).WriteToken (inline)
+         0     0% 88.92%      0.05s  1.32%  encoding/json/jsontext.(*Encoder).WriteValue (inline)
+         0     0% 88.92%      0.02s  0.53%  encoding/json/jsontext.(*encoderState).WriteToken
+         0     0% 88.92%      0.05s  1.32%  encoding/json/jsontext.(*encoderState).WriteValue
+         0     0% 88.92%      0.05s  1.32%  encoding/json/jsontext.(*encoderState).reformatObject
+         0     0% 88.92%      0.08s  2.11%  encoding/json/v2.Marshal
+         0     0% 88.92%      0.03s  0.79%  encoding/json/v2.MarshalEncode
+         0     0% 88.92%      0.05s  1.32%  encoding/json/v2.makeInterfaceArshaler.func1
+         0     0% 88.92%      0.02s  0.53%  encoding/json/v2.makeMapArshaler.func2
+         0     0% 88.92%      0.08s  2.11%  encoding/json/v2.makeMethodArshaler.func3
+         0     0% 88.92%      0.04s  1.06%  encoding/json/v2.makePointerArshaler.func2
+         0     0% 88.92%      0.04s  1.06%  encoding/json/v2.makeSliceArshaler.func2
+         0     0% 88.92%      0.07s  1.85%  encoding/json/v2.makeStructArshaler.func2
+         0     0% 88.92%      0.10s  2.64%  encoding/json/v2.marshalEncode
+         0     0% 88.92%      0.02s  0.53%  encoding/json/v2.marshalValueAny
+         0     0% 88.92%      0.04s  1.06%  github.com/modelcontextprotocol/go-sdk/internal/json.(*Decoder).Decode (inline)
+         0     0% 88.92%      0.05s  1.32%  github.com/modelcontextprotocol/go-sdk/internal/json.Unmarshal
+         0     0% 88.92%      0.03s  0.79%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*Connection).Call
+         0     0% 88.92%      1.16s 30.61%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*Connection).handleAsync.func2
+         0     0% 88.92%      0.02s  0.53%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*Connection).readIncoming
+         0     0% 88.92%      0.02s  0.53%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*Connection).write
+         0     0% 88.92%      0.02s  0.53%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.EncodeMessage
+         0     0% 88.92%      1.17s 30.87%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.HandlerFunc.Handle
+         0     0% 88.92%      0.02s  0.53%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.NewCall (inline)
+         0     0% 88.92%      0.04s  1.06%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.jsonMarshal
+         0     0% 88.92%      0.02s  0.53%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.marshalToRaw
+         0     0% 88.92%      0.04s  1.06%  github.com/modelcontextprotocol/go-sdk/mcp.(*CallToolResult).MarshalJSON
+         0     0% 88.92%      0.05s  1.32%  github.com/modelcontextprotocol/go-sdk/mcp.(*ClientSession).CallTool
+         0     0% 88.92%      1.42s 37.47%  github.com/modelcontextprotocol/go-sdk/mcp.(*Server).callTool
+         0     0% 88.92%      1.17s 30.87%  github.com/modelcontextprotocol/go-sdk/mcp.(*ServerSession).handle
+         0     0% 88.92%      0.02s  0.53%  github.com/modelcontextprotocol/go-sdk/mcp.(*ioConn).Write
+         0     0% 88.92%      0.04s  1.06%  github.com/modelcontextprotocol/go-sdk/mcp.call
+         0     0% 88.92%      0.04s  1.06%  github.com/modelcontextprotocol/go-sdk/mcp.clientMultiRoundTripMiddleware.func1.1
+         0     0% 88.92%      1.36s 35.88%  github.com/modelcontextprotocol/go-sdk/mcp.defaultReceivingMethodHandler[go.shape.*uint8]
+         0     0% 88.92%      0.04s  1.06%  github.com/modelcontextprotocol/go-sdk/mcp.defaultSendingMethodHandler
+         0     0% 88.92%      0.03s  0.79%  github.com/modelcontextprotocol/go-sdk/mcp.extractRequestMeta
+         0     0% 88.92%      1.13s 29.82%  github.com/modelcontextprotocol/go-sdk/mcp.handleReceive[go.shape.*uint8]
+         0     0% 88.92%      0.04s  1.06%  github.com/modelcontextprotocol/go-sdk/mcp.handleSend[go.shape.*uint8]
+         0     0% 88.92%      1.42s 37.47%  github.com/modelcontextprotocol/go-sdk/mcp.newServerMethodInfo[go.shape.*github.com/modelcontextprotocol/go-sdk/mcp.CallToolParamsRaw,go.shape.*uint8,go.shape.struct { github.com/modelcontextprotocol/go-sdk/mcp.Meta "json:\"_meta,omitempty\""; Name string "json:\"name\""; Arguments encoding/json/jsontext.Value "json:\"arguments,omitempty\""; InputResponses github.com/modelcontextprotocol/go-sdk/mcp.InputResponseMap "json:\"inputResponses,omitempty\""; RequestState string "json:\"requestState,omitempty\"" }].func2
+         0     0% 88.92%      1.42s 37.47%  github.com/modelcontextprotocol/go-sdk/mcp.serverMethod[go.shape.*uint8,go.shape.*uint8].func1
+         0     0% 88.92%      1.12s 29.55%  github.com/modelcontextprotocol/go-sdk/mcp.serverMultiRoundTripMiddleware.func1.1
+         0     0% 88.92%      0.03s  0.79%  github.com/santhosh-tekuri/jsonschema/v6.(*Schema).Validate (partial-inline)
+         0     0% 88.92%      0.03s  0.79%  github.com/santhosh-tekuri/jsonschema/v6.(*Schema).validate
+         0     0% 88.92%      0.02s  0.53%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).condValidate
+         0     0% 88.92%      0.03s  0.79%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).objValidate
+         0     0% 88.92%      0.03s  0.79%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validate
+         0     0% 88.92%      0.03s  0.79%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validateRef
+         0     0% 88.92%      0.03s  0.79%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validateSelf
+         0     0% 88.92%      0.03s  0.79%  github.com/santhosh-tekuri/jsonschema/v6.(*validator).validateVal
+         0     0% 88.92%      0.04s  1.06%  github.com/segmentio/encoding/json.(*Decoder).Decode
+         0     0% 88.92%      0.04s  1.06%  github.com/segmentio/encoding/json.Parse
+         0     0% 88.92%      0.04s  1.06%  github.com/segmentio/encoding/json.constructStructDecodeFunc.func1
+         0     0% 88.92%      0.03s  0.79%  github.com/segmentio/encoding/json.decoder.decodeInterface
+         0     0% 88.92%      0.03s  0.79%  github.com/segmentio/encoding/json.decoder.decodeMapStringInterface
+         0     0% 88.92%      0.04s  1.06%  github.com/segmentio/encoding/json.decoder.decodeStruct
+         0     0% 88.92%      0.02s  0.53%  github.com/segmentio/encoding/json.decoder.parseObject
+         0     0% 88.92%      0.02s  0.53%  github.com/segmentio/encoding/json.decoder.parseTrue
+         0     0% 88.92%      0.02s  0.53%  github.com/segmentio/encoding/json.decoder.parseValue
+         0     0% 88.92%      0.71s 18.73%  github.com/skosovsky/toolsy.(*Registry).Execute (inline)
+         0     0% 88.92%      0.71s 18.73%  github.com/skosovsky/toolsy.(*Registry).execute (inline)
+         0     0% 88.92%      0.71s 18.73%  github.com/skosovsky/toolsy.(*Registry).executeWithSummary
+         0     0% 88.92%      0.70s 18.47%  github.com/skosovsky/toolsy.(*Registry).runToolWithValidationAndExecute
+         0     0% 88.92%      0.71s 18.73%  github.com/skosovsky/toolsy.(*RegistryView).Execute
+         0     0% 88.92%      0.56s 14.78%  github.com/skosovsky/toolsy.(*tool).Execute
+         0     0% 88.92%      0.03s  0.79%  github.com/skosovsky/toolsy.(*valueCloner).clone
+         0     0% 88.92%      0.03s  0.79%  github.com/skosovsky/toolsy.(*valueCloner).cloneAny
+         0     0% 88.92%      0.03s  0.79%  github.com/skosovsky/toolsy.(*valueCloner).cloneReference
+         0     0% 88.92%      0.56s 14.78%  github.com/skosovsky/toolsy.ExecutePrepared
+         0     0% 88.92%      0.11s  2.90%  github.com/skosovsky/toolsy.PolicyFunc.Decide
+         0     0% 88.92%      0.03s  0.79%  github.com/skosovsky/toolsy.cloneManifestForPolicy
+         0     0% 88.92%      0.03s  0.79%  github.com/skosovsky/toolsy.cloneMutableValue
+         0     0% 88.92%      0.03s  0.79%  github.com/skosovsky/toolsy.cloneReflectValue
+         0     0% 88.92%      0.03s  0.79%  github.com/skosovsky/toolsy.deepCloneMap
+         0     0% 88.92%      0.11s  2.90%  github.com/skosovsky/toolsy.evaluatePolicy
+         0     0% 88.92%      0.56s 14.78%  github.com/skosovsky/toolsy.executePreparedResult
+         0     0% 88.92%      0.56s 14.78%  github.com/skosovsky/toolsy.executePreparedResult.func2
+         0     0% 88.92%      0.03s  0.79%  github.com/skosovsky/toolsy.executePreparedResult.func2.1
+         0     0% 88.92%      0.02s  0.53%  github.com/skosovsky/toolsy.prepareFreshResultChunk
+         0     0% 88.92%      0.02s  0.53%  github.com/skosovsky/toolsy.prepareResultChunk
+         0     0% 88.92%      0.56s 14.78%  github.com/skosovsky/toolsy.rawArgsValidatedExecute.func1
+         0     0% 88.92%      0.56s 14.78%  github.com/skosovsky/toolsy.rawArgsValidatedExecute.func1.1
+         0     0% 88.92%      0.03s  0.79%  github.com/skosovsky/toolsy.rawArgsValidatedExecute.func1.1.1
+         0     0% 88.92%      0.25s  6.60%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).AllowRead
+         0     0% 88.92%      0.53s 13.98%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).GroupContext
+         0     0% 88.92%      0.31s  8.18%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).ReadIdentity
+         0     0% 88.92%      0.53s 13.98%  github.com/skosovsky/zl-mcp/internal/app/conversations.(*Handler).GroupContext
+         0     0% 88.92%      0.02s  0.53%  github.com/skosovsky/zl-mcp/internal/evalfixture.New
+         0     0% 88.92%      0.11s  2.90%  github.com/skosovsky/zl-mcp/internal/evaluation.Measure
+         0     0% 88.92%      0.03s  0.79%  github.com/skosovsky/zl-mcp/internal/evaluation.marshaled
+         0     0% 88.92%      0.20s  5.28%  github.com/skosovsky/zl-mcp/internal/mcpserver.(*Service).call.func1
+         0     0% 88.92%      0.02s  0.53%  github.com/skosovsky/zl-mcp/internal/mcpserver.(*Service).encode
+         0     0% 88.92%      0.06s  1.58%  github.com/skosovsky/zl-mcp/internal/mcpserver.(*Service).encodeReadExecution
+         0     0% 88.92%      0.45s 11.87%  github.com/skosovsky/zl-mcp/internal/mcpserver.(*Service).prepareReadCall
+         0     0% 88.92%      1.43s 37.73%  github.com/skosovsky/zl-mcp/internal/mcpserver.New.func1
+         0     0% 88.92%      0.25s  6.60%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).AllowRead
+         0     0% 88.92%      0.53s 13.98%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).Context (inline)
+         0     0% 88.92%      0.13s  3.43%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).Message
+         0     0% 88.92%      0.28s  7.39%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).ReadIdentity
+         0     0% 88.92%      0.25s  6.60%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).allowReadAt
+         0     0% 88.92%      0.53s 13.98%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).context
+         0     0% 88.92%      0.13s  3.43%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).context.func1 (inline)
+         0     0% 88.92%      0.28s  7.39%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).context.func2 (inline)
+         0     0% 88.92%      0.28s  7.39%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).contextNeighbors
+         0     0% 88.92%      0.12s  3.17%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).conversationCoverage
+         0     0% 88.92%      0.28s  7.39%  github.com/skosovsky/zl-mcp/internal/storage.historyAccount
+         0     0% 88.92%      0.02s  0.53%  github.com/skosovsky/zl-mcp/internal/storage.scanMessage
+         0     0% 88.92%      0.20s  5.28%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).Bind
+         0     0% 88.92%      0.71s 18.73%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).Execute
+         0     0% 88.92%      0.11s  2.90%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).decide
+         0     0% 88.92%      0.53s 13.98%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).dispatch
+         0     0% 88.92%      0.71s 18.73%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).execute
+         0     0% 88.92%      0.56s 14.78%  github.com/skosovsky/zl-mcp/internal/toolruntime.New.func1
+         0     0% 88.92%      0.64s 16.89%  golang.org/x/sys/unix.FcntlFlock (inline)
+         0     0% 88.92%      0.05s  1.32%  golang.org/x/sys/unix.Fsync
+         0     0% 88.92%      0.08s  2.11%  golang.org/x/sys/unix.Pwrite (inline)
+         0     0% 88.92%      0.64s 16.89%  golang.org/x/sys/unix.fcntl
+         0     0% 88.92%      0.08s  2.11%  golang.org/x/sys/unix.pwrite
+         0     0% 88.92%      0.23s  6.07%  internal/poll.(*FD).Write
+         0     0% 88.92%      0.23s  6.07%  internal/poll.ignoringEINTRIO (inline)
+         0     0% 88.92%      0.20s  5.28%  log.(*Logger).output
+         0     0% 88.92%      0.20s  5.28%  log.init.0.func1
+         0     0% 88.92%      0.20s  5.28%  log/slog.(*Logger).log
+         0     0% 88.92%      0.20s  5.28%  log/slog.(*defaultHandler).Handle
+         0     0% 88.92%      0.20s  5.28%  log/slog.InfoContext (inline)
+         0     0% 88.92%      0.12s  3.17%  main.main
+         0     0% 88.92%      0.12s  3.17%  main.profileRun
+         0     0% 88.92%      0.11s  2.90%  main.run
+         0     0% 88.92%      0.11s  2.90%  main.runMeasurementMode
+         0     0% 88.92%      0.64s 16.89%  modernc.org/libc.Xfcntl
+         0     0% 88.92%      0.64s 16.89%  modernc.org/libc.Xfcntl64
+         0     0% 88.92%      0.05s  1.32%  modernc.org/libc.Xfsync
+         0     0% 88.92%      0.08s  2.11%  modernc.org/libc.Xpwrite
+         0     0% 88.92%      0.81s 21.37%  modernc.org/sqlite.(*conn).QueryContext
+         0     0% 88.92%      0.23s  6.07%  modernc.org/sqlite.(*conn).finalize
+         0     0% 88.92%      0.20s  5.28%  modernc.org/sqlite.(*conn).prepareV2
+         0     0% 88.92%      0.81s 21.37%  modernc.org/sqlite.(*conn).query
+         0     0% 88.92%      0.60s 15.83%  modernc.org/sqlite.(*conn).step
+         0     0% 88.92%      0.23s  6.07%  modernc.org/sqlite.(*rows).Close
+         0     0% 88.92%      0.61s 16.09%  modernc.org/sqlite.(*stmt).query
+         0     0% 88.92%      0.20s  5.28%  modernc.org/sqlite.newStmt
+         0     0% 88.92%      0.20s  5.28%  modernc.org/sqlite/lib.Xsqlite3_prepare_v2 (inline)
+         0     0% 88.92%      0.61s 16.09%  modernc.org/sqlite/lib.Xsqlite3_step
+         0     0% 88.92%      0.53s 13.98%  modernc.org/sqlite/lib._btreeBeginTrans
+         0     0% 88.92%      0.10s  2.64%  modernc.org/sqlite/lib._btreeEndTransaction
+         0     0% 88.92%      0.02s  0.53%  modernc.org/sqlite/lib._exprAnalyze
+         0     0% 88.92%      0.05s  1.32%  modernc.org/sqlite/lib._full_fsync
+         0     0% 88.92%      0.02s  0.53%  modernc.org/sqlite/lib._generateColumnTypes
+         0     0% 88.92%      0.53s 13.98%  modernc.org/sqlite/lib._lockBtree
+         0     0% 88.92%      0.66s 17.41%  modernc.org/sqlite/lib._modernc_seh_try
+         0     0% 88.92%      0.53s 13.98%  modernc.org/sqlite/lib._pagerBeginReadTransaction
+         0     0% 88.92%      0.10s  2.64%  modernc.org/sqlite/lib._pagerUnlockAndRollback
+         0     0% 88.92%      0.10s  2.64%  modernc.org/sqlite/lib._pagerUnlockIfUnused (inline)
+         0     0% 88.92%      0.13s  3.43%  modernc.org/sqlite/lib._pagerWalFrames
+         0     0% 88.92%      0.10s  2.64%  modernc.org/sqlite/lib._pager_unlock
+         0     0% 88.92%      0.10s  2.64%  modernc.org/sqlite/lib._releasePageOne (inline)
+         0     0% 88.92%      0.04s  1.06%  modernc.org/sqlite/lib._resolveSelectStep
+         0     0% 88.92%      0.08s  2.11%  modernc.org/sqlite/lib._seekAndWrite (inline)
+         0     0% 88.92%      0.08s  2.11%  modernc.org/sqlite/lib._seekAndWriteFd
+         0     0% 88.92%      0.53s 13.98%  modernc.org/sqlite/lib._sqlite3BtreeBeginTrans
+         0     0% 88.92%      0.13s  3.43%  modernc.org/sqlite/lib._sqlite3BtreeCommitPhaseOne
+         0     0% 88.92%      0.11s  2.90%  modernc.org/sqlite/lib._sqlite3BtreeCommitPhaseTwo
+         0     0% 88.92%      0.07s  1.85%  modernc.org/sqlite/lib._sqlite3CodeSubselect
+         0     0% 88.92%      0.08s  2.11%  modernc.org/sqlite/lib._sqlite3ExprCodeTarget
+         0     0% 88.92%      0.08s  2.11%  modernc.org/sqlite/lib._sqlite3ExprCodeTemp
+         0     0% 88.92%      0.09s  2.37%  modernc.org/sqlite/lib._sqlite3ExprIfFalse
+         0     0% 88.92%      0.02s  0.53%  modernc.org/sqlite/lib._sqlite3GenerateColumnNames
+         0     0% 88.92%      0.02s  0.53%  modernc.org/sqlite/lib._sqlite3Insert
+         0     0% 88.92%      0.26s  6.86%  modernc.org/sqlite/lib._sqlite3LockAndPrepare
+         0     0% 88.92%      0.64s 16.89%  modernc.org/sqlite/lib._sqlite3OsShmLock (inline)
+         0     0% 88.92%      0.05s  1.32%  modernc.org/sqlite/lib._sqlite3OsSync
+         0     0% 88.92%      0.08s  2.11%  modernc.org/sqlite/lib._sqlite3OsWrite (inline)
+         0     0% 88.92%      0.13s  3.43%  modernc.org/sqlite/lib._sqlite3PagerCommitPhaseOne
+         0     0% 88.92%      0.53s 13.98%  modernc.org/sqlite/lib._sqlite3PagerSharedLock
+         0     0% 88.92%      0.10s  2.64%  modernc.org/sqlite/lib._sqlite3PagerUnrefPageOne
+         0     0% 88.92%      0.26s  6.86%  modernc.org/sqlite/lib._sqlite3Parser
+         0     0% 88.92%      0.26s  6.86%  modernc.org/sqlite/lib._sqlite3Prepare
+         0     0% 88.92%      0.06s  1.58%  modernc.org/sqlite/lib._sqlite3Reprepare
+         0     0% 88.92%      0.04s  1.06%  modernc.org/sqlite/lib._sqlite3ResolveExprListNames
+         0     0% 88.92%      0.04s  1.06%  modernc.org/sqlite/lib._sqlite3ResolveSelectNames
+         0     0% 88.92%      0.26s  6.86%  modernc.org/sqlite/lib._sqlite3RunParser
+         0     0% 88.92%      0.17s  4.49%  modernc.org/sqlite/lib._sqlite3Select
+         0     0% 88.92%      0.04s  1.06%  modernc.org/sqlite/lib._sqlite3SelectPrep
+         0     0% 88.92%      0.55s 14.51%  modernc.org/sqlite/lib._sqlite3Step
+         0     0% 88.92%      0.55s 14.51%  modernc.org/sqlite/lib._sqlite3VdbeExec
+         0     0% 88.92%      0.24s  6.33%  modernc.org/sqlite/lib._sqlite3VdbeHalt
+         0     0% 88.92%      0.02s  0.53%  modernc.org/sqlite/lib._sqlite3VdbeMemSetText
+         0     0% 88.92%      0.22s  5.80%  modernc.org/sqlite/lib._sqlite3VdbeReset
+         0     0% 88.92%      0.02s  0.53%  modernc.org/sqlite/lib._sqlite3VdbeSetColName
+         0     0% 88.92%      0.53s 13.98%  modernc.org/sqlite/lib._sqlite3WalBeginReadTransaction
+         0     0% 88.92%      0.10s  2.64%  modernc.org/sqlite/lib._sqlite3WalEndReadTransaction
+         0     0% 88.92%      0.13s  3.43%  modernc.org/sqlite/lib._sqlite3WalFrames
+         0     0% 88.92%      0.04s  1.06%  modernc.org/sqlite/lib._sqlite3WalkExprNN
+         0     0% 88.92%      0.04s  1.06%  modernc.org/sqlite/lib._sqlite3WalkSelect
+         0     0% 88.92%      0.10s  2.64%  modernc.org/sqlite/lib._sqlite3WhereBegin
+         0     0% 88.92%      0.02s  0.53%  modernc.org/sqlite/lib._sqlite3WhereExprAnalyze
+         0     0% 88.92%      0.02s  0.53%  modernc.org/sqlite/lib._sqlite3WhereExprUsage (inline)
+         0     0% 88.92%      0.02s  0.53%  modernc.org/sqlite/lib._sqlite3WhereExprUsageFull
+         0     0% 88.92%      0.02s  0.53%  modernc.org/sqlite/lib._sqlite3WhereExprUsageNN
+         0     0% 88.92%      0.64s 16.89%  modernc.org/sqlite/lib._unixShmLock
+         0     0% 88.92%      0.64s 16.89%  modernc.org/sqlite/lib._unixShmSystemLock
+         0     0% 88.92%      0.05s  1.32%  modernc.org/sqlite/lib._unixSync
+         0     0% 88.92%      0.08s  2.11%  modernc.org/sqlite/lib._unixWrite
+         0     0% 88.92%      0.10s  2.64%  modernc.org/sqlite/lib._unlockBtreeIfUnused
+         0     0% 88.92%      0.24s  6.33%  modernc.org/sqlite/lib._vdbeCommit
+         0     0% 88.92%      0.53s 13.98%  modernc.org/sqlite/lib._walBeginReadTransaction
+         0     0% 88.92%      0.13s  3.43%  modernc.org/sqlite/lib._walFrames
+         0     0% 88.92%      0.07s  1.85%  modernc.org/sqlite/lib._walLockExclusive
+         0     0% 88.92%      0.46s 12.14%  modernc.org/sqlite/lib._walLockShared
+         0     0% 88.92%      0.53s 13.98%  modernc.org/sqlite/lib._walSehBeginReadTransaction
+         0     0% 88.92%      0.13s  3.43%  modernc.org/sqlite/lib._walSehFrames
+         0     0% 88.92%      0.66s 17.41%  modernc.org/sqlite/lib._walSehTry (inline)
+         0     0% 88.92%      0.53s 13.98%  modernc.org/sqlite/lib._walTryBeginRead
+         0     0% 88.92%      0.10s  2.64%  modernc.org/sqlite/lib._walUnlockShared
+         0     0% 88.92%      0.08s  2.11%  modernc.org/sqlite/lib._walWriteOneFrame
+         0     0% 88.92%      0.08s  2.11%  modernc.org/sqlite/lib._walWriteToLog
+         0     0% 88.92%      0.23s  6.07%  os.(*File).Write
+         0     0% 88.92%      0.23s  6.07%  os.(*File).write (inline)
+         0     0% 88.92%      0.03s  0.79%  os.Getuid (inline)
+         0     0% 88.92%      0.14s  3.69%  runtime.(*Frames).Next
+         0     0% 88.92%      0.07s  1.85%  runtime.(*gcControllerState).enlistWorker
+         0     0% 88.92%      0.03s  0.79%  runtime.(*inlineUnwinder).resolveInternal (inline)
+         0     0% 88.92%      0.03s  0.79%  runtime.(*mcache).nextFree
+         0     0% 88.92%      0.03s  0.79%  runtime.(*mcache).refill
+         0     0% 88.92%      0.02s  0.53%  runtime.(*mheap).alloc.func1
+         0     0% 88.92%      0.02s  0.53%  runtime.(*mheap).allocSpan
+         0     0% 88.92%      0.35s  9.23%  runtime.(*traceAdvancerState).start.func1
+         0     0% 88.92%      0.02s  0.53%  runtime.(*traceBuf).stringData (inline)
+         0     0% 88.92%      0.02s  0.53%  runtime.(*traceMap).reset
+         0     0% 88.92%      0.02s  0.53%  runtime.(*traceRegionAlloc).alloc.func1
+         0     0% 88.92%      0.02s  0.53%  runtime.(*traceRegionAlloc).drop
+         0     0% 88.92%      0.36s  9.50%  runtime.(*traceStackTable).dump
+         0     0% 88.92%      0.11s  2.90%  runtime.(*traceStringTable).put
+         0     0% 88.92%      0.02s  0.53%  runtime.(*traceStringTable).put.func1
+         0     0% 88.92%      0.02s  0.53%  runtime.(*traceStringTable).writeString
+         0     0% 88.92%      0.04s  1.06%  runtime.(*unwinder).next
+         0     0% 88.92%      0.03s  0.79%  runtime.adjustframe
+         0     0% 88.92%      0.02s  0.53%  runtime.bgsweep
+         0     0% 88.92%      0.02s  0.53%  runtime.callers
+         0     0% 88.92%      0.02s  0.53%  runtime.callers.func1
+         0     0% 88.92%      0.05s  1.32%  runtime.copystack
+         0     0% 88.92%      0.34s  8.97%  runtime.dumpStacksRec
+         0     0% 88.92%      0.51s 13.46%  runtime.findRunnable
+         0     0% 88.92%      0.12s  3.17%  runtime.funcline1
+         0     0% 88.92%      0.02s  0.53%  runtime.funcspdelta (inline)
+         0     0% 88.92%      0.21s  5.54%  runtime.gcBgMarkWorker
+         0     0% 88.92%      0.29s  7.65%  runtime.gcBgMarkWorker.func2
+         0     0% 88.92%      0.29s  7.65%  runtime.gcDrain
+         0     0% 88.92%      0.26s  6.86%  runtime.gcDrainMarkWorkerDedicated (inline)
+         0     0% 88.92%      0.03s  0.79%  runtime.gcDrainMarkWorkerIdle (inline)
+         0     0% 88.92%      0.02s  0.53%  runtime.gcstopm
+         0     0% 88.92%      0.02s  0.53%  runtime.gopreempt_m (inline)
+         0     0% 88.92%      0.02s  0.53%  runtime.goschedImpl
+         0     0% 88.92%      0.02s  0.53%  runtime.growslice
+         0     0% 88.92%      0.02s  0.53%  runtime.lock (inline)
+         0     0% 88.92%      0.02s  0.53%  runtime.lock2
+         0     0% 88.92%      0.02s  0.53%  runtime.lockWithRank (inline)
+         0     0% 88.92%      0.24s  6.33%  runtime.mPark (inline)
+         0     0% 88.92%      0.02s  0.53%  runtime.mProf_Malloc
+         0     0% 88.92%      0.12s  3.17%  runtime.main
+         0     0% 88.92%      0.11s  2.90%  runtime.makeTraceFrame
+         0     0% 88.92%      0.25s  6.60%  runtime.makeTraceFrames
+         0     0% 88.92%      0.05s  1.32%  runtime.mallocgc
+         0     0% 88.92%      0.03s  0.79%  runtime.mallocgcSmallNoscan
+         0     0% 88.92%      0.02s  0.53%  runtime.mallocgcSmallScanNoHeader
+         0     0% 88.92%      0.04s  1.06%  runtime.markroot
+         0     0% 88.92%      0.02s  0.53%  runtime.markroot.func1
+         0     0% 88.92%      0.02s  0.53%  runtime.markrootBlock
+         0     0% 88.92%      0.62s 16.36%  runtime.mcall
+         0     0% 88.92%      0.02s  0.53%  runtime.morestack
+         0     0% 88.92%      0.04s  1.06%  runtime.nanotime (inline)
+         0     0% 88.92%      0.16s  4.22%  runtime.netpoll
+         0     0% 88.92%      0.06s  1.58%  runtime.newInlineUnwinder
+         0     0% 88.92%      0.02s  0.53%  runtime.newproc
+         0     0% 88.92%      0.44s 11.61%  runtime.newproc.func1
+         0     0% 88.92%      0.03s  0.79%  runtime.newproc1
+         0     0% 88.92%      0.07s  1.85%  runtime.newstack
+         0     0% 88.92%      0.24s  6.33%  runtime.notesleep
+         0     0% 88.92%      0.03s  0.79%  runtime.notetsleep
+         0     0% 88.92%      0.03s  0.79%  runtime.notetsleep_internal
+         0     0% 88.92%      0.77s 20.32%  runtime.notewakeup
+         0     0% 88.92%      0.02s  0.53%  runtime.osyield (inline)
+         0     0% 88.92%      0.26s  6.86%  runtime.park_m
+         0     0% 88.92%      0.03s  0.79%  runtime.pcdatavalue1
+         0     0% 88.92%      0.06s  1.58%  runtime.preemptM
+         0     0% 88.92%      0.05s  1.32%  runtime.preemptone
+         0     0% 88.92%      0.02s  0.53%  runtime.profilealloc
+         0     0% 88.92%      0.21s  5.54%  runtime.ready
+         0     0% 88.92%      0.10s  2.64%  runtime.resetspinning
+         0     0% 88.92%      0.17s  4.49%  runtime.runqgrab
+         0     0% 88.92%      0.17s  4.49%  runtime.runqsteal
+         0     0% 88.92%      0.08s  2.11%  runtime.scanSpan
+         0     0% 88.92%      0.61s 16.09%  runtime.schedule
+         0     0% 88.92%      0.27s  7.12%  runtime.semasleep
+         0     0% 88.92%      0.77s 20.32%  runtime.semawakeup
+         0     0% 88.92%      0.06s  1.58%  runtime.signalM (inline)
+         0     0% 88.92%      0.11s  2.90%  runtime.startTheWorld.func1
+         0     0% 88.92%      0.11s  2.90%  runtime.startTheWorldWithSema
+         0     0% 88.92%      0.77s 20.32%  runtime.startm
+         0     0% 88.92%      0.18s  4.75%  runtime.stealWork
+         0     0% 88.92%      0.04s  1.06%  runtime.stopTheWorld.func1
+         0     0% 88.92%      0.04s  1.06%  runtime.stopTheWorldWithSema
+         0     0% 88.92%      0.26s  6.86%  runtime.stopm
+         0     0% 88.92%      0.03s  0.79%  runtime.sysAlloc
+         0     0% 88.92%      0.03s  0.79%  runtime.sysAllocOS (inline)
+         0     0% 88.92%      0.02s  0.53%  runtime.sysFree
+         0     0% 88.92%      0.02s  0.53%  runtime.sysFreeOS (inline)
+         0     0% 88.92%      1.17s 30.87%  runtime.systemstack
+         0     0% 88.92%      0.36s  9.50%  runtime.traceAdvance
+         0     0% 88.92%      0.04s  1.06%  runtime.traceClockNow (inline)
+         0     0% 88.92%      0.04s  1.06%  runtime.traceEventWriter.event
+         0     0% 88.92%      0.02s  0.53%  runtime.traceLocker.GoCreate
+         0     0% 88.92%      0.04s  1.06%  runtime.traceWriter.event
+         0     0% 88.92%      0.02s  0.53%  runtime.tracebackPCs
+         0     0% 88.92%      0.77s 20.32%  runtime.wakep
+         0     0% 88.92%      0.03s  0.79%  runtime/trace.(*traceMultiplexer).startLocked.func1
+         0     0% 88.92%      0.03s  0.79%  syscall.Getuid
+         0     0% 88.92%      0.23s  6.07%  syscall.Write (inline)
+         0     0% 88.92%      0.03s  0.79%  syscall.rawSyscall
+         0     0% 88.92%      0.92s 24.27%  syscall.syscall
+         0     0% 88.92%      0.08s  2.11%  syscall.syscall6
+         0     0% 88.92%         1s 26.39%  syscall.syscalln
+         0     0% 88.92%      0.23s  6.07%  syscall.write

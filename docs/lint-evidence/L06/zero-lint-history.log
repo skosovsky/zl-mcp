@@ -1,0 +1,28 @@
+GOWORK=off golangci-lint run --config "/workspace/zl-mcp/.golangci.yml" --timeout 10m --max-issues-per-linter 0 --max-same-issues 0 --uniq-by-line=false ./...
+internal/storage/context_zero_test.go:16:1: directive `//nolint:funlen,gocognit,gocyclo,cyclop,mnd // This complete fixture checks the same zero/mixed window contract in all three public namespaces; fixed dates, IDs and neighboring offsets are independent synthetic literals.` is unused for linter "funlen" (nolintlint)
+//nolint:funlen,gocognit,gocyclo,cyclop,mnd // This complete fixture checks the same zero/mixed window contract in all three public namespaces; fixed dates, IDs and neighboring offsets are independent synthetic literals.
+^
+internal/storage/context_zero_test.go:16:1: directive `//nolint:funlen,gocognit,gocyclo,cyclop,mnd // This complete fixture checks the same zero/mixed window contract in all three public namespaces; fixed dates, IDs and neighboring offsets are independent synthetic literals.` is unused for linter "gocyclo" (nolintlint)
+//nolint:funlen,gocognit,gocyclo,cyclop,mnd // This complete fixture checks the same zero/mixed window contract in all three public namespaces; fixed dates, IDs and neighboring offsets are independent synthetic literals.
+^
+internal/storage/context_zero_test.go:16:1: directive `//nolint:funlen,gocognit,gocyclo,cyclop,mnd // This complete fixture checks the same zero/mixed window contract in all three public namespaces; fixed dates, IDs and neighboring offsets are independent synthetic literals.` is unused for linter "cyclop" (nolintlint)
+//nolint:funlen,gocognit,gocyclo,cyclop,mnd // This complete fixture checks the same zero/mixed window contract in all three public namespaces; fixed dates, IDs and neighboring offsets are independent synthetic literals.
+^
+internal/storage/context_zero_test.go:16:1: directive `//nolint:funlen,gocognit,gocyclo,cyclop,mnd // This complete fixture checks the same zero/mixed window contract in all three public namespaces; fixed dates, IDs and neighboring offsets are independent synthetic literals.` is unused for linter "mnd" (nolintlint)
+//nolint:funlen,gocognit,gocyclo,cyclop,mnd // This complete fixture checks the same zero/mixed window contract in all three public namespaces; fixed dates, IDs and neighboring offsets are independent synthetic literals.
+^
+internal/storage/context_zero_test.go:22:4: directive `//nolint:exhaustruct_v5 // The synthetic all-policy fixture intentionally leaves the optional selected map unset.` is unused for linter "exhaustruct_v5" (nolintlint)
+			//nolint:exhaustruct_v5 // The synthetic all-policy fixture intentionally leaves the optional selected map unset.
+			^
+internal/storage/context_zero_test.go:51:5: directive `//nolint:exhaustruct_v5 // Synthetic message preserves absent optional metadata/attachments; only the anchor has an explicit reply.` is unused for linter "exhaustruct_v5" (nolintlint)
+				//nolint:exhaustruct_v5 // Synthetic message preserves absent optional metadata/attachments; only the anchor has an explicit reply.
+				^
+internal/storage/context_zero_test.go:138:2: directive `//nolint:exhaustruct_v5 // No database is needed for an empty window; this fixture tests cancellation before any query.` is unused for linter "exhaustruct_v5" (nolintlint)
+	//nolint:exhaustruct_v5 // No database is needed for an empty window; this fixture tests cancellation before any query.
+	^
+internal/storage/context_zero_test.go:141:2: directive `//nolint:exhaustruct_v5 // Anchor metadata is irrelevant to a zero window; the cancellation must be propagated without reading it.` is unused for linter "exhaustruct_v5" (nolintlint)
+	//nolint:exhaustruct_v5 // Anchor metadata is irrelevant to a zero window; the cancellation must be propagated without reading it.
+	^
+8 issues:
+* nolintlint: 8
+make: *** [lint] Error 1

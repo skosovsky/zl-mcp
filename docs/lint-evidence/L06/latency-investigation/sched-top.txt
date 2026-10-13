@@ -1,0 +1,113 @@
+File: eval-profile
+Type: delay
+Showing nodes accounting for 1804940.85us, 92.70% of 1947015.10us total
+Dropped 840 nodes (cum <= 9735.08us)
+      flat  flat%   sum%        cum   cum%
+769613.57us 39.53% 39.53% 769614.28us 39.53%  runtime.chansend1
+662898.82us 34.05% 73.57% 662898.82us 34.05%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*releaser).release
+161684.72us  8.30% 81.88% 162326.58us  8.34%  context.(*cancelCtx).cancel
+99429.18us  5.11% 86.99% 99429.18us  5.11%  modernc.org/sqlite.interruptOnDone.func2
+77087.87us  3.96% 90.95% 77087.87us  3.96%  runtime.systemstack_switch
+17794.88us  0.91% 91.86% 17899.32us  0.92%  runtime.selectgo
+15286.40us  0.79% 92.64% 22832.19us  1.17%  runtime.gcMarkDone
+  468.93us 0.024% 92.67% 112335.81us  5.77%  database/sql.(*DB).retry
+  379.65us 0.019% 92.69% 53094.27us  2.73%  runtime.gcStart
+  172.48us 0.0089% 92.70% 108642.05us  5.58%  database/sql.withLock
+   42.11us 0.0022% 92.70%    40464us  2.08%  runtime.makeslice
+   32.38us 0.0017% 92.70% 52894.98us  2.72%  runtime.mallocgc
+   16.77us 0.00086% 92.70% 12324.35us  0.63%  net.(*pipe).write
+   16.45us 0.00084% 92.70% 41279.35us  2.12%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).ReadIdentity
+    8.26us 0.00042% 92.70% 168292.66us  8.64%  database/sql.(*Rows).Close
+    6.40us 0.00033% 92.70% 12720.70us  0.65%  github.com/modelcontextprotocol/go-sdk/mcp.(*ClientSession).CallTool
+    1.98us 0.0001% 92.70% 94163.13us  4.84%  github.com/skosovsky/toolsy.executePreparedResult
+         0     0% 92.70% 161778.67us  8.31%  context.WithCancel.func1
+         0     0% 92.70% 112121.92us  5.76%  database/sql.(*DB).QueryContext
+         0     0% 92.70% 111652.99us  5.73%  database/sql.(*DB).QueryContext.func1
+         0     0% 92.70% 54239.88us  2.79%  database/sql.(*DB).QueryRowContext
+         0     0% 92.70% 111652.99us  5.73%  database/sql.(*DB).query
+         0     0% 92.70% 111696.19us  5.74%  database/sql.(*DB).queryDC
+         0     0% 92.70% 107290.24us  5.51%  database/sql.(*DB).queryDC.func1
+         0     0% 92.70% 165913.20us  8.52%  database/sql.(*Row).Scan
+         0     0% 92.70% 168587.83us  8.66%  database/sql.(*Rows).close
+         0     0% 92.70% 107290.24us  5.51%  database/sql.ctxDriverQuery
+         0     0% 92.70% 769818.69us 39.54%  encoding/json.(*Decoder).Decode
+         0     0% 92.70% 769721.03us 39.53%  encoding/json/jsontext.(*Decoder).ReadValue
+         0     0% 92.70% 769721.03us 39.53%  encoding/json/jsontext.(*decoderState).ReadValue
+         0     0% 92.70% 769569.86us 39.53%  encoding/json/jsontext.(*decoderState).consumeWhitespace
+         0     0% 92.70% 769628.74us 39.53%  encoding/json/jsontext.(*decoderState).fetch
+         0     0% 92.70% 40685.70us  2.09%  github.com/modelcontextprotocol/go-sdk/internal/json.(*Decoder).Decode
+         0     0% 92.70% 40724.86us  2.09%  github.com/modelcontextprotocol/go-sdk/internal/json.Unmarshal
+         0     0% 92.70% 11941.18us  0.61%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*Connection).Call
+         0     0% 92.70% 1001379.64us 51.43%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*Connection).handleAsync.func2
+         0     0% 92.70% 12327.10us  0.63%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.(*Connection).write
+         0     0% 92.70% 662898.82us 34.05%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.Async
+         0     0% 92.70% 994447.54us 51.08%  github.com/modelcontextprotocol/go-sdk/internal/jsonrpc2.HandlerFunc.Handle
+         0     0% 92.70% 291253.75us 14.96%  github.com/modelcontextprotocol/go-sdk/mcp.(*Server).callTool
+         0     0% 92.70% 994447.54us 51.08%  github.com/modelcontextprotocol/go-sdk/mcp.(*ServerSession).handle
+         0     0% 92.70% 769628.74us 39.53%  github.com/modelcontextprotocol/go-sdk/mcp.(*frameLimitReader).Read
+         0     0% 92.70% 12327.10us  0.63%  github.com/modelcontextprotocol/go-sdk/mcp.(*ioConn).Write
+         0     0% 92.70% 12552.64us  0.64%  github.com/modelcontextprotocol/go-sdk/mcp.call
+         0     0% 92.70% 12566.02us  0.65%  github.com/modelcontextprotocol/go-sdk/mcp.clientMultiRoundTripMiddleware.func1.1
+         0     0% 92.70% 19004.61us  0.98%  github.com/modelcontextprotocol/go-sdk/mcp.decodeMetaValue[...]
+         0     0% 92.70% 291253.75us 14.96%  github.com/modelcontextprotocol/go-sdk/mcp.defaultReceivingMethodHandler[...]
+         0     0% 92.70% 12566.02us  0.65%  github.com/modelcontextprotocol/go-sdk/mcp.defaultSendingMethodHandler
+         0     0% 92.70% 304239.09us 15.63%  github.com/modelcontextprotocol/go-sdk/mcp.handleReceive[...]
+         0     0% 92.70% 12569.92us  0.65%  github.com/modelcontextprotocol/go-sdk/mcp.handleSend[...]
+         0     0% 92.70% 775308.86us 39.82%  github.com/modelcontextprotocol/go-sdk/mcp.newIOConnLimited.func1
+         0     0% 92.70% 12985.34us  0.67%  github.com/modelcontextprotocol/go-sdk/mcp.newMethodInfo[...].func1
+         0     0% 92.70% 291253.75us 14.96%  github.com/modelcontextprotocol/go-sdk/mcp.newServerMethodInfo[...].func2
+         0     0% 92.70% 19157.57us  0.98%  github.com/modelcontextprotocol/go-sdk/mcp.remarshal
+         0     0% 92.70% 291253.75us 14.96%  github.com/modelcontextprotocol/go-sdk/mcp.serverMethod[...].func1
+         0     0% 92.70% 291253.75us 14.96%  github.com/modelcontextprotocol/go-sdk/mcp.serverMultiRoundTripMiddleware.func1.1
+         0     0% 92.70% 27309.63us  1.40%  github.com/modelcontextprotocol/go-sdk/mcp.validateRequestMeta
+         0     0% 92.70% 40685.70us  2.09%  github.com/segmentio/encoding/json.(*Decoder).Decode
+         0     0% 92.70% 38917.76us  2.00%  github.com/segmentio/encoding/json.(*Decoder).readValue
+         0     0% 92.70% 115704.43us  5.94%  github.com/skosovsky/toolsy.(*Registry).Execute
+         0     0% 92.70% 115704.43us  5.94%  github.com/skosovsky/toolsy.(*Registry).execute
+         0     0% 92.70% 115704.43us  5.94%  github.com/skosovsky/toolsy.(*Registry).executeWithSummary
+         0     0% 92.70% 113780.08us  5.84%  github.com/skosovsky/toolsy.(*Registry).runToolWithValidationAndExecute
+         0     0% 92.70% 115726.70us  5.94%  github.com/skosovsky/toolsy.(*RegistryView).Execute
+         0     0% 92.70% 94364.41us  4.85%  github.com/skosovsky/toolsy.(*tool).Execute
+         0     0% 92.70% 94161.14us  4.84%  github.com/skosovsky/toolsy.ExecutePrepared
+         0     0% 92.70% 17256.76us  0.89%  github.com/skosovsky/toolsy.PolicyFunc.Decide
+         0     0% 92.70% 17256.76us  0.89%  github.com/skosovsky/toolsy.evaluatePolicy
+         0     0% 92.70% 94161.14us  4.84%  github.com/skosovsky/toolsy.executePreparedResult.func2
+         0     0% 92.70% 94348.15us  4.85%  github.com/skosovsky/toolsy.rawArgsValidatedExecute.func1
+         0     0% 92.70% 94161.14us  4.84%  github.com/skosovsky/toolsy.rawArgsValidatedExecute.func1.1
+         0     0% 92.70% 148232.77us  7.61%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).AllowRead
+         0     0% 92.70% 92237.05us  4.74%  github.com/skosovsky/zl-mcp/internal/adapters/store.(*Reader).GroupContext
+         0     0% 92.70% 92237.05us  4.74%  github.com/skosovsky/zl-mcp/internal/app/conversations.(*Handler).GroupContext
+         0     0% 92.70% 16580.35us  0.85%  github.com/skosovsky/zl-mcp/internal/evaluation.Measure
+         0     0% 92.70% 291253.75us 14.96%  github.com/skosovsky/zl-mcp/internal/mcpserver.(*Service).call
+         0     0% 92.70% 175125.51us  8.99%  github.com/skosovsky/zl-mcp/internal/mcpserver.(*Service).prepareReadCall
+         0     0% 92.70% 291253.75us 14.96%  github.com/skosovsky/zl-mcp/internal/mcpserver.New.func1
+         0     0% 92.70% 148232.77us  7.61%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).AllowRead
+         0     0% 92.70% 92237.05us  4.74%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).Context
+         0     0% 92.70% 16561.28us  0.85%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).Message
+         0     0% 92.70% 41262.90us  2.12%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).ReadIdentity
+         0     0% 92.70% 148232.77us  7.61%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).allowReadAt
+         0     0% 92.70% 92237.05us  4.74%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).context
+         0     0% 92.70% 16561.28us  0.85%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).context.func1
+         0     0% 92.70% 55177.79us  2.83%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).context.func2
+         0     0% 92.70% 55177.79us  2.83%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).contextNeighbors
+         0     0% 92.70% 20461.50us  1.05%  github.com/skosovsky/zl-mcp/internal/storage.(*Store).conversationCoverage
+         0     0% 92.70% 40855.16us  2.10%  github.com/skosovsky/zl-mcp/internal/storage.historyAccount
+         0     0% 92.70%  9347.32us  0.48%  github.com/skosovsky/zl-mcp/internal/storage.scanMessage
+         0     0% 92.70% 24597.57us  1.26%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).Bind
+         0     0% 92.70% 115812.72us  5.95%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).Execute
+         0     0% 92.70% 17256.76us  0.89%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).decide
+         0     0% 92.70% 92237.05us  4.74%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).dispatch
+         0     0% 92.70% 115812.72us  5.95%  github.com/skosovsky/zl-mcp/internal/toolruntime.(*Runtime).execute
+         0     0% 92.70% 94161.14us  4.84%  github.com/skosovsky/zl-mcp/internal/toolruntime.New.func1
+         0     0% 92.70% 16629.89us  0.85%  main.main
+         0     0% 92.70% 16629.89us  0.85%  main.profileRun
+         0     0% 92.70% 16582.97us  0.85%  main.run
+         0     0% 92.70% 16582.97us  0.85%  main.runMeasurementMode
+         0     0% 92.70% 107290.24us  5.51%  modernc.org/sqlite.(*conn).QueryContext
+         0     0% 92.70% 107290.24us  5.51%  modernc.org/sqlite.(*conn).query
+         0     0% 92.70% 102855.23us  5.28%  modernc.org/sqlite.(*stmt).query
+         0     0% 92.70% 769628.74us 39.53%  net.(*pipe).Read
+         0     0% 92.70% 12324.35us  0.63%  net.(*pipe).Write
+         0     0% 92.70% 769628.74us 39.53%  net.(*pipe).read
+         0     0% 92.70% 39775.81us  2.04%  runtime.gcBgMarkWorker
+         0     0% 92.70% 38803.65us  1.99%  runtime.mallocgcLarge

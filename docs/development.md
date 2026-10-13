@@ -189,3 +189,9 @@ NOT_RUN unless separately executed and accepted. No deployment is authorized.
 Historical acceptance and rollback: [final report](mcp-migration/final-report.md)
 and [handoff](mcp-migration/rollback.md). Current tooling retirement and gates:
 [harness maintenance](harness-maintenance.md).
+
+Lint is mandatory in `make check` and CI: `make lint` requires golangci-lint 2.14.0 and checks root and tools/harness sequentially, without autofix. The checked-in config is unchanged.
+
+Current performance builds require exactly Go 1.27.2, recorded as toolchain_pin in build provenance. The comparator checks exact runtime/build version tokens. Historical unversioned Go 1.27.1 manifests remain readable; the baseline/candidate compiler difference is intentional, while OS/architecture compatibility and fixed object/byte/latency budgets remain mandatory. Generated docs/lint-evidence artifacts are excluded from source fingerprints, like historical migration evidence; production source, config and other documentation remain included.
+
+Context reads with a zero before/after window retain empty JSON arrays and cancellation without issuing a SQL LIMIT 0 neighbor query. Required access, anchor, reply, coverage and response-budget checks still run; nonzero window ordering and persistence stay unchanged.

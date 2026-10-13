@@ -1,0 +1,135 @@
+package storage
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
+)
+
+type zeroContextRead func(context.Context, string, int, int) (map[string]any, error)
+
+//nolint:funlen,gocognit,gocyclo,cyclop,mnd // This complete fixture checks the same zero/mixed window contract in all three public namespaces; fixed dates, IDs and neighboring offsets are independent synthetic literals.
+func TestZeroContextWindowsPreserveWireAndReply(t *testing.T) {
+	for _, kind := range []string{"legacy", domain.ConversationGroup, domain.ConversationDirect} {
+		t.Run(kind, func(t *testing.T) {
+			// Arrange: fixed Unicode messages and opaque IDs, with a real reply.
+			ctx := t.Context()
+			//nolint:exhaustruct_v5 // The synthetic all-policy fixture intentionally leaves the optional selected map unset.
+			s, err := OpenWithPolicy(ctx, filepath.Join(t.TempDir(), "corpus.sqlite"), domain.CollectionPolicy{All: true}, 90)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				if closeErr := s.Close(); closeErr != nil {
+					t.Error(closeErr)
+				}
+			})
+			ref := domain.ConversationRef{Type: kind, ID: "9007199254740993"}
+			if kind == "legacy" {
+				ref.Type = domain.ConversationGroup
+			}
+			read := zeroContextRead(func(ctx context.Context, id string, before, after int) (map[string]any, error) {
+				return s.ConversationContext(ctx, ref, id, before, after)
+			})
+			if kind == "legacy" {
+				read = func(ctx context.Context, id string, before, after int) (map[string]any, error) {
+					return s.Context(ctx, ref.ID, id, before, after)
+				}
+			}
+			ids := []string{"9007199254740993", "9007199254740994", "9007199254740995"}
+			for n, id := range ids {
+				//nolint:exhaustruct_v5 // Synthetic message preserves absent optional metadata/attachments; only the anchor has an explicit reply.
+				message := domain.Message{Conversation: ref, ID: id, SenderID: "peer", SentAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC).Add(time.Duration(n) * time.Second), Text: "ремонт Cà phê", Source: "live"}
+				if n == 1 {
+					replyID := ids[0]
+					message.ReplyTo = &replyID
+				}
+				if err = s.Put(ctx, message); err != nil {
+					t.Fatal(err)
+				}
+			}
+			for _, window := range [][2]int{{0, 0}, {0, 1}, {1, 0}, {1, 1}} {
+				// Act.
+				result, readErr := read(ctx, ids[1], window[0], window[1])
+				if readErr != nil {
+					t.Fatal(readErr)
+				}
+				raw, marshalErr := json.Marshal(result)
+				if marshalErr != nil {
+					t.Fatal(marshalErr)
+				}
+				fields := map[string]json.RawMessage{}
+				if err = json.Unmarshal(raw, &fields); err != nil {
+					t.Fatal(err)
+				}
+				// Assert: empty arrays stay arrays; neighbor order and exact IDs are retained.
+				for index, key := range []string{"before", "after"} {
+					messages := []map[string]any{}
+					if err = json.Unmarshal(fields[key], &messages); err != nil {
+						t.Fatal(err)
+					}
+					if len(messages) != window[index] {
+						t.Fatal(string(raw))
+					}
+					if window[index] == 0 && string(fields[key]) != "[]" {
+						t.Fatal(string(raw))
+					}
+					if window[index] != 0 && messages[0]["message_id"] != ids[index*2] {
+						t.Fatal(string(raw))
+					}
+				}
+				reply := map[string]any{}
+				if err = json.Unmarshal(fields["reply_to"], &reply); err != nil {
+					t.Fatal(err)
+				}
+				if reply["message_id"] != ids[0] {
+					t.Fatal(string(raw))
+				}
+			}
+			// Act/Assert: after deleting the reply, zero-window output represents absence as null.
+			if ref.Type == domain.ConversationDirect {
+				err = s.DeleteConversation(ctx, ref, ids[0])
+			} else {
+				err = s.Delete(ctx, ref.ID, ids[0])
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			result, err := read(ctx, ids[1], 0, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			raw, err := json.Marshal(result)
+			if err != nil {
+				t.Fatal(err)
+			}
+			fields := map[string]json.RawMessage{}
+			if err = json.Unmarshal(raw, &fields); err != nil {
+				t.Fatal(err)
+			}
+			if string(fields["reply_to"]) != "null" {
+				t.Fatal(string(raw))
+			}
+		})
+	}
+}
+
+func TestZeroContextNeighborCancellation(t *testing.T) {
+	// Arrange: cancellation happens immediately before the optional neighbor phase.
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	//nolint:exhaustruct_v5 // No database is needed for an empty window; this fixture tests cancellation before any query.
+	s := &Store{}
+	// Act.
+	//nolint:exhaustruct_v5 // Anchor metadata is irrelevant to a zero window; the cancellation must be propagated without reading it.
+	messages, err := s.contextNeighbors(ctx, domain.ConversationRef{Type: domain.ConversationGroup, ID: "g"}, domain.Message{}, "m", "<", "DESC", 0, false)
+	// Assert.
+	if !errors.Is(err, context.Canceled) || messages == nil || len(messages) != 0 {
+		t.Fatalf("messages=%v err=%v", messages, err)
+	}
+}

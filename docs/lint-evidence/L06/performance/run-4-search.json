@@ -1,0 +1,36 @@
+{
+  "command": [
+    "/tmp/zl-lint-L06-performance.OYqrLp/build/zl-mcp-eval-candidate",
+    "--root",
+    "/workspace/zl-mcp",
+    "--measure-kind",
+    "search",
+    "--measure-calls",
+    "1000",
+    "--state-dir",
+    "/tmp/local-temp/zl-mcp-bench-1754950933"
+  ],
+  "exit_status": 0,
+  "kind": "search",
+  "measurement": {
+    "admission_enabled": true,
+    "alloc_bytes_per_op": 548853.856,
+    "allocations_per_op": 2132.323,
+    "arch": "arm64",
+    "bytes": 2650756,
+    "calls": 1000,
+    "cleanup": true,
+    "concurrency": 1,
+    "elapsed_seconds": 121.361179042,
+    "errors": 0,
+    "exporters_enabled": false,
+    "go": "go1.27.2",
+    "kind": "search",
+    "os": "darwin",
+    "p95_seconds": 0.006647583,
+    "pacing_millis": 110,
+    "warmup": 50
+  },
+  "run": 4,
+  "status": "PASS"
+}
