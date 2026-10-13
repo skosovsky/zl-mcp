@@ -1,0 +1,2301 @@
+{
+  "tasks": [
+    {
+      "task": "T01",
+      "commit": "a3151c6bbee589cfaa3aeb21b147afe59e2ad321",
+      "message": "test(mcp): freeze migration compatibility baseline",
+      "requirements": "docs/mcp-migration/evidence/T01/requirements.json",
+      "leaf_contract": {
+        "task": "T01",
+        "formula": "100 * verified_pass_leaves / required_total; all leaves equal weight",
+        "non_goals": [
+          "model and live execution",
+          "production refactoring",
+          "T02+ dependency integration"
+        ],
+        "model_gate": "NOT_RUN",
+        "live_gate": "NOT_RUN",
+        "revision": 2,
+        "revision_reason": "Before acceptance, expand original compound groups into additive atomic subrequirements; no original requirement removed or weakened.",
+        "group_required_total": 10,
+        "groups": [
+          {
+            "id": "T01-01",
+            "requirement": "Runtime tools/list catalog equals contracts.Names 1:1; freeze names/descriptions/schemas/annotations/order."
+          },
+          {
+            "id": "T01-02",
+            "requirement": "Inventory resources/templates/MIME/auth/limits; Events HTTP extension and STDIO boundaries; owner-only CLI."
+          },
+          {
+            "id": "T01-03",
+            "requirement": "Machine manifest includes transport/handler/permissions/effects/error/budgets/normalization/timeouts/owner for every tool, including aliases."
+          },
+          {
+            "id": "T01-04",
+            "requirement": "Freeze baseline SHA/tree/toolchain and HEAD/dirty status of used library repositories."
+          },
+          {
+            "id": "T01-05",
+            "requirement": "Reproducible synthetic old binary/dataset without credentials; source/build manifests and smoke."
+          },
+          {
+            "id": "T01-06",
+            "requirement": "Executable parity assertions for every tool and negative inputs; preserve strict formats and exact opaque IDs, normalization, missing/null/bounds/Unicode/size semantics."
+          },
+          {
+            "id": "T01-07",
+            "requirement": "Comparison permits only characterized dynamic values; structural contract regressions fail."
+          },
+          {
+            "id": "T01-08",
+            "requirement": "Root tests/vet and HTTP/STDIO/resources/contracts/operations baseline suites with explicit commands/status; known failures distinguished."
+          },
+          {
+            "id": "T01-09",
+            "requirement": "Baseline measurement command, frozen sources for T02 compiler rebuild, no production behavior/persistence/third-party/sibling changes."
+          },
+          {
+            "id": "T01-10",
+            "requirement": "Evidence parent/source digest; independent completeness 100% and correctness PASS before sole exact-message commit."
+          }
+        ],
+        "group_formula": "100 * fully_verified_groups / 10; group passes only if every leaf passes",
+        "requirements": [
+          {
+            "id": "T01-01.01",
+            "group": "T01-01",
+            "requirement": "Runtime catalog names equal contracts.Names 1:1"
+          },
+          {
+            "id": "T01-01.02",
+            "group": "T01-01",
+            "requirement": "Descriptions frozen"
+          },
+          {
+            "id": "T01-01.03",
+            "group": "T01-01",
+            "requirement": "Input schemas and aliases frozen"
+          },
+          {
+            "id": "T01-01.04",
+            "group": "T01-01",
+            "requirement": "Output schemas and aliases frozen"
+          },
+          {
+            "id": "T01-01.05",
+            "group": "T01-01",
+            "requirement": "Annotations frozen"
+          },
+          {
+            "id": "T01-01.06",
+            "group": "T01-01",
+            "requirement": "Deterministic ordering frozen"
+          },
+          {
+            "id": "T01-02.01",
+            "group": "T01-02",
+            "requirement": "Static resources inventoried from runtime discovery"
+          },
+          {
+            "id": "T01-02.02",
+            "group": "T01-02",
+            "requirement": "Resource templates inventoried from runtime discovery"
+          },
+          {
+            "id": "T01-02.03",
+            "group": "T01-02",
+            "requirement": "Resource MIME and URI preserved"
+          },
+          {
+            "id": "T01-02.04",
+            "group": "T01-02",
+            "requirement": "Resource auth/current-policy and independent admission documented"
+          },
+          {
+            "id": "T01-02.05",
+            "group": "T01-02",
+            "requirement": "Resource byte budgets characterized"
+          },
+          {
+            "id": "T01-02.06",
+            "group": "T01-02",
+            "requirement": "HTTP Events profiles and extension methods inventoried"
+          },
+          {
+            "id": "T01-02.07",
+            "group": "T01-02",
+            "requirement": "STDIO bridge owns no collector/DB and advertises no Events"
+          },
+          {
+            "id": "T01-02.08",
+            "group": "T01-02",
+            "requirement": "Owner-only CLI commands and approval authority inventoried"
+          },
+          {
+            "id": "T01-03.01",
+            "group": "T01-03",
+            "requirement": "Every tool has transport"
+          },
+          {
+            "id": "T01-03.02",
+            "group": "T01-03",
+            "requirement": "Every tool has handler"
+          },
+          {
+            "id": "T01-03.03",
+            "group": "T01-03",
+            "requirement": "Every tool has permissions"
+          },
+          {
+            "id": "T01-03.04",
+            "group": "T01-03",
+            "requirement": "Every tool has effects"
+          },
+          {
+            "id": "T01-03.05",
+            "group": "T01-03",
+            "requirement": "Every tool has operation owner"
+          },
+          {
+            "id": "T01-03.06",
+            "group": "T01-03",
+            "requirement": "Every tool has error shape"
+          },
+          {
+            "id": "T01-03.07",
+            "group": "T01-03",
+            "requirement": "Every tool has full serialized byte limit"
+          },
+          {
+            "id": "T01-03.08",
+            "group": "T01-03",
+            "requirement": "Every tool has characterized normalization/defaults"
+          },
+          {
+            "id": "T01-03.09",
+            "group": "T01-03",
+            "requirement": "Every tool has inherited/explicit deadlines"
+          },
+          {
+            "id": "T01-04.01",
+            "group": "T01-04",
+            "requirement": "Baseline parent SHA and tree retained"
+          },
+          {
+            "id": "T01-04.02",
+            "group": "T01-04",
+            "requirement": "Actual toolchain and module dependency pins retained"
+          },
+          {
+            "id": "T01-04.03",
+            "group": "T01-04",
+            "requirement": "Used library HEAD values retained"
+          },
+          {
+            "id": "T01-04.04",
+            "group": "T01-04",
+            "requirement": "Used library initial dirty states retained"
+          },
+          {
+            "id": "T01-05.01",
+            "group": "T01-05",
+            "requirement": "Frozen source reproduces real service binary"
+          },
+          {
+            "id": "T01-05.02",
+            "group": "T01-05",
+            "requirement": "Frozen source reproduces synthetic STDIO fixture binary"
+          },
+          {
+            "id": "T01-05.03",
+            "group": "T01-05",
+            "requirement": "Versioned synthetic dataset and hash retained"
+          },
+          {
+            "id": "T01-05.04",
+            "group": "T01-05",
+            "requirement": "Frozen binary smoke runs without account/credentials"
+          },
+          {
+            "id": "T01-05.05",
+            "group": "T01-05",
+            "requirement": "Child process has bounded output/deadline/termination/Wait cleanup"
+          },
+          {
+            "id": "T01-06.01",
+            "group": "T01-06",
+            "requirement": "Every tool has executable catalog/wire parity assertions"
+          },
+          {
+            "id": "T01-06.02",
+            "group": "T01-06",
+            "requirement": "Every tool has exact negative-input result fixture"
+          },
+          {
+            "id": "T01-06.03",
+            "group": "T01-06",
+            "requirement": "UUID/RFC3339 strict formats characterized"
+          },
+          {
+            "id": "T01-06.04",
+            "group": "T01-06",
+            "requirement": "Opaque identifiers >2^53 characterized separately from RPC ID limitation"
+          },
+          {
+            "id": "T01-06.05",
+            "group": "T01-06",
+            "requirement": "Legacy integer-string normalization characterized"
+          },
+          {
+            "id": "T01-06.06",
+            "group": "T01-06",
+            "requirement": "Missing/null inputs characterized"
+          },
+          {
+            "id": "T01-06.07",
+            "group": "T01-06",
+            "requirement": "Explicit zero and bounds characterized"
+          },
+          {
+            "id": "T01-06.08",
+            "group": "T01-06",
+            "requirement": "Unicode UTF-8 characterized"
+          },
+          {
+            "id": "T01-06.09",
+            "group": "T01-06",
+            "requirement": "Input and response size boundaries characterized"
+          },
+          {
+            "id": "T01-07.01",
+            "group": "T01-07",
+            "requirement": "Canonical comparison preserves exact JSON numbers"
+          },
+          {
+            "id": "T01-07.02",
+            "group": "T01-07",
+            "requirement": "Canonical comparison preserves structures and array order"
+          },
+          {
+            "id": "T01-07.03",
+            "group": "T01-07",
+            "requirement": "Only specifically allowed dynamic timestamp can vary with format validation"
+          },
+          {
+            "id": "T01-07.04",
+            "group": "T01-07",
+            "requirement": "Original text and structured content both remain authoritative"
+          },
+          {
+            "id": "T01-07.05",
+            "group": "T01-07",
+            "requirement": "Negative control rejects text regression outside dynamic field"
+          },
+          {
+            "id": "T01-08.01",
+            "group": "T01-08",
+            "requirement": "Root go test ./... PASS"
+          },
+          {
+            "id": "T01-08.02",
+            "group": "T01-08",
+            "requirement": "Root go vet ./... PASS"
+          },
+          {
+            "id": "T01-08.03",
+            "group": "T01-08",
+            "requirement": "HTTP STDIO resources contracts operations suites executed"
+          },
+          {
+            "id": "T01-08.04",
+            "group": "T01-08",
+            "requirement": "Commands exit statuses versions candidate/log digests recorded"
+          },
+          {
+            "id": "T01-08.05",
+            "group": "T01-08",
+            "requirement": "Initial infrastructure failures distinguished from final results"
+          },
+          {
+            "id": "T01-09.01",
+            "group": "T01-09",
+            "requirement": "Runnable bounded baseline read/search/context measurement command retained"
+          },
+          {
+            "id": "T01-09.02",
+            "group": "T01-09",
+            "requirement": "Frozen sources can be rebuilt under T02 compiler"
+          },
+          {
+            "id": "T01-09.03",
+            "group": "T01-09",
+            "requirement": "No production behavior changes"
+          },
+          {
+            "id": "T01-09.04",
+            "group": "T01-09",
+            "requirement": "No persistence/schema changes"
+          },
+          {
+            "id": "T01-09.05",
+            "group": "T01-09",
+            "requirement": "No third_party/sibling checkout changes"
+          },
+          {
+            "id": "T01-09.06",
+            "group": "T01-09",
+            "requirement": "User-owned specification/review preserved"
+          },
+          {
+            "id": "T01-10.01",
+            "group": "T01-10",
+            "requirement": "Review candidate bound to parent/source digest"
+          },
+          {
+            "id": "T01-10.02",
+            "group": "T01-10",
+            "requirement": "Independent completeness review verifies all leaves"
+          },
+          {
+            "id": "T01-10.03",
+            "group": "T01-10",
+            "requirement": "Independent correctness review has zero unresolved findings"
+          },
+          {
+            "id": "T01-10.04",
+            "group": "T01-10",
+            "requirement": "Both review the final changed candidate"
+          },
+          {
+            "id": "T01-10.05",
+            "group": "T01-10",
+            "requirement": "Safe evidence logs durable in task commit"
+          },
+          {
+            "id": "T01-10.06",
+            "group": "T01-10",
+            "requirement": "Only one task commit with exact prescribed message after PASS"
+          }
+        ],
+        "required_total": 63,
+        "orchestration_leaf_semantics": "Commit-dependent leaves verify that exact candidate and safe logs are ready, reviewers PASS and sole commit is performed only after acceptance; SHA/tree postcheck recorded in following task, no impossible self-hash."
+      },
+      "independent_reviews": [
+        "docs/mcp-migration/evidence/T01/review-A.json",
+        "docs/mcp-migration/evidence/T01/review-B.md"
+      ]
+    },
+    {
+      "task": "T02",
+      "commit": "23b3e200e18ad0d0433f38fe4832207c01bb74d2",
+      "message": "build: pin migration toolchain and architecture checks",
+      "requirements": "docs/mcp-migration/evidence/T02/requirements.json",
+      "leaf_contract": {
+        "task": "T02",
+        "parent_sha": "a3151c6bbee589cfaa3aeb21b147afe59e2ad321",
+        "required_total": 39,
+        "formula": "100 * verified_pass / required_total",
+        "requirements": [
+          {
+            "id": "T02-01",
+            "requirement": "Record accepted T01 commit SHA and tree/source-digest/log inclusion postcheck"
+          },
+          {
+            "id": "T02-02",
+            "requirement": "Record T02 candidate parent/source digest"
+          },
+          {
+            "id": "T02-03",
+            "requirement": "Verify available pinned toolsy API in isolated GOWORK=off consumer"
+          },
+          {
+            "id": "T02-04",
+            "requirement": "Verify available pinned metry API in isolated GOWORK=off consumer"
+          },
+          {
+            "id": "T02-05",
+            "requirement": "Verify available pinned evaly API in isolated GOWORK=off consumer"
+          },
+          {
+            "id": "T02-06",
+            "requirement": "Verify pinned arch-go/v2 v2.1.2 compatibility"
+          },
+          {
+            "id": "T02-07",
+            "requirement": "No absolute sibling replace or unauthorized publication"
+          },
+          {
+            "id": "T02-08",
+            "requirement": "Raise source Go directive to minimum compatible patch >=1.27.1"
+          },
+          {
+            "id": "T02-09",
+            "requirement": "Synchronize CI toolchain/build/development documentation"
+          },
+          {
+            "id": "T02-10",
+            "requirement": "Pin arch-go install outside production runtime dependencies"
+          },
+          {
+            "id": "T02-11",
+            "requirement": "Introduce active A01 domain boundaries"
+          },
+          {
+            "id": "T02-12",
+            "requirement": "Introduce active A02 application boundaries"
+          },
+          {
+            "id": "T02-13",
+            "requirement": "Introduce active A03 MCP concrete-dependency boundaries"
+          },
+          {
+            "id": "T02-14",
+            "requirement": "Introduce active A04 runtime/toolsy boundaries"
+          },
+          {
+            "id": "T02-15",
+            "requirement": "Introduce active A05 adapter boundaries"
+          },
+          {
+            "id": "T02-16",
+            "requirement": "Introduce active A06 metry/OTel boundaries"
+          },
+          {
+            "id": "T02-17",
+            "requirement": "Introduce active A07 evaluation-only boundaries"
+          },
+          {
+            "id": "T02-18",
+            "requirement": "Introduce active A08 contracts/SDK boundaries"
+          },
+          {
+            "id": "T02-19",
+            "requirement": "Introduce active A09 entrypoint/composition boundaries"
+          },
+          {
+            "id": "T02-20",
+            "requirement": "All production packages covered by meaningful rules with100% compliance/coverage"
+          },
+          {
+            "id": "T02-21",
+            "requirement": "Exact migration exceptions with rationale/removal T04-T07, no broad exclusions"
+          },
+          {
+            "id": "T02-22",
+            "requirement": "Negative control domain->SQL exits nonzero by expected rule"
+          },
+          {
+            "id": "T02-23",
+            "requirement": "Negative control app->SDK exits nonzero by expected rule"
+          },
+          {
+            "id": "T02-24",
+            "requirement": "Negative control mcpserver->storage exits nonzero by expected rule"
+          },
+          {
+            "id": "T02-25",
+            "requirement": "Negative control production->evaluation exits nonzero by expected rule"
+          },
+          {
+            "id": "T02-26",
+            "requirement": "Root/subpackage glob and new-package coverage controls enforced"
+          },
+          {
+            "id": "T02-27",
+            "requirement": "Production go list -deps graph checked independently"
+          },
+          {
+            "id": "T02-28",
+            "requirement": "Root go test ./... PASS"
+          },
+          {
+            "id": "T02-29",
+            "requirement": "Root go test -race ./... PASS"
+          },
+          {
+            "id": "T02-30",
+            "requirement": "Root go vet ./... PASS"
+          },
+          {
+            "id": "T02-31",
+            "requirement": "Nested zcago go test ./... PASS"
+          },
+          {
+            "id": "T02-32",
+            "requirement": "Nested zcago go test -race ./... PASS"
+          },
+          {
+            "id": "T02-33",
+            "requirement": "Nested zcago go vet ./... PASS"
+          },
+          {
+            "id": "T02-34",
+            "requirement": "CGO-free darwin/arm64 build PASS"
+          },
+          {
+            "id": "T02-35",
+            "requirement": "CGO-free darwin/amd64 build PASS"
+          },
+          {
+            "id": "T02-36",
+            "requirement": "CGO-free linux/amd64 build PASS"
+          },
+          {
+            "id": "T02-37",
+            "requirement": "Dependency matrix records pins/revisions/API probe commands/status, no undocumented drift"
+          },
+          {
+            "id": "T02-38",
+            "requirement": "Retain user edits and production/persistence/third_party/sibling scope"
+          },
+          {
+            "id": "T02-39",
+            "requirement": "Two independent same-candidate reviews: completeness100% and correctnessPASS before sole exact-message commit"
+          }
+        ],
+        "model_gate": "NOT_RUN",
+        "live_gate": "NOT_RUN",
+        "non_goals": [
+          "production migration T03-T10",
+          "account/deployment/model execution",
+          "sibling or third_party source changes",
+          "library publication"
+        ]
+      },
+      "independent_reviews": [
+        "docs/mcp-migration/evidence/T02/review-A.json",
+        "docs/mcp-migration/evidence/T02/review-B.md"
+      ]
+    },
+    {
+      "task": "T03",
+      "commit": "da3d7b6f0369f85e58d17b546c933b362c342224",
+      "message": "test(eval): add evaly harness and reproducible MCP baseline",
+      "requirements": "docs/mcp-migration/evidence/T03/requirements.json",
+      "leaf_contract": {
+        "task": "T03",
+        "parent_sha": "23b3e200e18ad0d0433f38fe4832207c01bb74d2",
+        "required_total": 52,
+        "formula": "100 * verified_pass / required_total",
+        "requirements": [
+          {
+            "id": "T03-01",
+            "requirement": "Accepted T02 SHA/tree and source digest postcheck; initial clean worktree"
+          },
+          {
+            "id": "T03-02",
+            "requirement": "Record initial/final candidate parent and source digest"
+          },
+          {
+            "id": "T03-03",
+            "requirement": "Pin public evaly v0.4.2 without sibling or internal-example imports"
+          },
+          {
+            "id": "T03-04",
+            "requirement": "Create internal/evaluation typed target through real MCP entry"
+          },
+          {
+            "id": "T03-05",
+            "requirement": "Create cmd/zl-mcp-eval CLI and make eval-offline"
+          },
+          {
+            "id": "T03-06",
+            "requirement": "Versioned sealed synthetic dataset and fixture hashes; at least22 named cases"
+          },
+          {
+            "id": "T03-07",
+            "requirement": "Case01 normal search data and source IDs"
+          },
+          {
+            "id": "T03-08",
+            "requirement": "Case02 same-name conversations stay distinct"
+          },
+          {
+            "id": "T03-09",
+            "requirement": "Case03 direct/group same ID stay typed"
+          },
+          {
+            "id": "T03-10",
+            "requirement": "Case04 empty corpus does not claim complete history"
+          },
+          {
+            "id": "T03-11",
+            "requirement": "Case05 gaps/incomplete history assertions"
+          },
+          {
+            "id": "T03-12",
+            "requirement": "Case06 large text full resource and citation"
+          },
+          {
+            "id": "T03-13",
+            "requirement": "Case07 paging cursors bind unchanged filters"
+          },
+          {
+            "id": "T03-14",
+            "requirement": "Case08 archive source and mandatory date window"
+          },
+          {
+            "id": "T03-15",
+            "requirement": "Case09 empty archive page preserves has_more"
+          },
+          {
+            "id": "T03-16",
+            "requirement": "Case10 TTL/tombstone/current-policy revoke cases"
+          },
+          {
+            "id": "T03-17",
+            "requirement": "Case11 injection remains untrusted with no unauthorized effects"
+          },
+          {
+            "id": "T03-18",
+            "requirement": "Case12 malformed args, format and normalization"
+          },
+          {
+            "id": "T03-19",
+            "requirement": "Case13 numeric IDs precision and known SDK limitation characterized"
+          },
+          {
+            "id": "T03-20",
+            "requirement": "Case14 allowed send uses real durable owner exactly once"
+          },
+          {
+            "id": "T03-21",
+            "requirement": "Case15 forbidden send dispatch0"
+          },
+          {
+            "id": "T03-22",
+            "requirement": "Case16 cross-conversation quote rejected dispatch0"
+          },
+          {
+            "id": "T03-23",
+            "requirement": "Case17 duplicate UUID no resend and fingerprint conflict"
+          },
+          {
+            "id": "T03-24",
+            "requirement": "Case18 timeout/unknown/restart does not resend"
+          },
+          {
+            "id": "T03-25",
+            "requirement": "Case19 join without/with trusted prior approval"
+          },
+          {
+            "id": "T03-26",
+            "requirement": "Case20 history cancel/restart terminal without imported Events"
+          },
+          {
+            "id": "T03-27",
+            "requirement": "Case21 Events read/ACK redelivery durable ordering"
+          },
+          {
+            "id": "T03-28",
+            "requirement": "Case22 malformed resource URI rejected"
+          },
+          {
+            "id": "T03-29",
+            "requirement": "Each case declares expected evidence, allowed tools/effects and60s timeout"
+          },
+          {
+            "id": "T03-30",
+            "requirement": "Existing business implementation reused; no alternative business logic in fixture"
+          },
+          {
+            "id": "T03-31",
+            "requirement": "Typed evaly lifecycle prepares/reset/cleanup isolated fresh state"
+          },
+          {
+            "id": "T03-32",
+            "requirement": "Independent upstream effects recorded durably before replies; failed effects retained"
+          },
+          {
+            "id": "T03-33",
+            "requirement": "Baseline and candidate use independent copies of identical fixture"
+          },
+          {
+            "id": "T03-34",
+            "requirement": "Hard external wall watchdog bounded stdout/stderr, termination/Wait and finally cleanup"
+          },
+          {
+            "id": "T03-35",
+            "requirement": "Explicit global run budget, budget exceed failed/incomplete neverPASS"
+          },
+          {
+            "id": "T03-36",
+            "requirement": "Model explicit opt-in and180s/30call budgets; skipped profile NOT_RUN"
+          },
+          {
+            "id": "T03-37",
+            "requirement": "CLI exit0 only full assertions/evidence/lifecycle; failure1 incomplete2; report always saved"
+          },
+          {
+            "id": "T03-38",
+            "requirement": "Completeness counts all expected cases/graders, failed/skipped retained"
+          },
+          {
+            "id": "T03-39",
+            "requirement": "Deterministic graders validate schemas,error/data/citations/gaps/permissions/dispatch"
+          },
+          {
+            "id": "T03-40",
+            "requirement": "Offline100% assertions, unauthorized effects0 and duplicate unknown dispatch0"
+          },
+          {
+            "id": "T03-41",
+            "requirement": "Manifest SHA/tree/toolchain/libs/SDK, dataset/fixture/seed/repeats/elapsed/calls/bytes"
+          },
+          {
+            "id": "T03-42",
+            "requirement": "Tokens null with unavailable reason; timeouts/failures/raw traces/grader revisions"
+          },
+          {
+            "id": "T03-43",
+            "requirement": "Functional baseline from frozen T01 business sources beforeT04 and build overlay disclosed"
+          },
+          {
+            "id": "T03-44",
+            "requirement": "Original T01 binary retained for behavior/rollback; new toolchain build manifest"
+          },
+          {
+            "id": "T03-45",
+            "requirement": "Performance baseline same machine/Go/fixture/exportersdisabled/concurrency"
+          },
+          {
+            "id": "T03-46",
+            "requirement": "Performance5independent warmed runs each>=1000 read/search/context calls; errors/bytes/p95/alloc"
+          },
+          {
+            "id": "T03-47",
+            "requirement": "CPU/OS/counts recorded; future thresholds1.15p95/1.20alloc fixed before baseline"
+          },
+          {
+            "id": "T03-48",
+            "requirement": "No credentials/externalnetwork/model/live/deployment/publication"
+          },
+          {
+            "id": "T03-49",
+            "requirement": "Harness unit/integration/negative controls including stuck/flood/missing/assertionfailure"
+          },
+          {
+            "id": "T03-50",
+            "requirement": "Offline evaluation and repeated isolation check PASS"
+          },
+          {
+            "id": "T03-51",
+            "requirement": "Architecture100/100 and production dependency isolation PASS"
+          },
+          {
+            "id": "T03-52",
+            "requirement": "Two samecandidate independent reviews completeness100% correctnessPASS beforesolecommit"
+          }
+        ],
+        "non_goals": [
+          "T04-T10 production migration",
+          "model/live execution",
+          "production persistence changes"
+        ],
+        "model_gate": "NOT_RUN",
+        "live_gate": "NOT_RUN"
+      },
+      "independent_reviews": [
+        "docs/mcp-migration/evidence/T03/review-A.json",
+        "docs/mcp-migration/evidence/T03/review-B.json"
+      ]
+    },
+    {
+      "task": "T04",
+      "commit": "775d3a271110b2771a9cc0ac63d3f51151481e53",
+      "message": "refactor(search): extract application handlers and read ports",
+      "requirements": "docs/mcp-migration/evidence/T04/requirements.json",
+      "leaf_contract": {
+        "task": "T04",
+        "parent_sha": "da3d7b6f0369f85e58d17b546c933b362c342224",
+        "required_total": 40,
+        "formula": "100 * verified_pass / required_total",
+        "requirements": [
+          {
+            "id": "T04-01",
+            "requirement": "Accepted T03 SHA/tree/source digest verified; no previous task reopened"
+          },
+          {
+            "id": "T04-02",
+            "requirement": "Initial/final candidate parent and source digest recorded before review"
+          },
+          {
+            "id": "T04-03",
+            "requirement": "Contract/ADR and consumer-owned typed read DTOs/ports fixed before implementation"
+          },
+          {
+            "id": "T04-04",
+            "requirement": "Normative internal/app/search and internal/app/conversations packages exist"
+          },
+          {
+            "id": "T04-05",
+            "requirement": "Normative internal/adapters/store implements both capability read ports"
+          },
+          {
+            "id": "T04-06",
+            "requirement": "App imports only domain/shared/pure standard types; no MCP/SQL/storage/managers/ai-libs"
+          },
+          {
+            "id": "T04-07",
+            "requirement": "No universal map[string]any app API or generic bus/repository"
+          },
+          {
+            "id": "T04-08",
+            "requirement": "Both group and typed-conversation search invoke app handlers"
+          },
+          {
+            "id": "T04-09",
+            "requirement": "Both group and typed-conversation context invoke app handlers"
+          },
+          {
+            "id": "T04-10",
+            "requirement": "Group and typed-conversation full-message resources invoke same app read ports"
+          },
+          {
+            "id": "T04-11",
+            "requirement": "Consumer-owned search page and native continuation remain invocation-owned"
+          },
+          {
+            "id": "T04-12",
+            "requirement": "FTS executes once; response shrink uses native continuation without new FTS query"
+          },
+          {
+            "id": "T04-13",
+            "requirement": "Group search hit order/IDs/excerpts/citations unchanged"
+          },
+          {
+            "id": "T04-14",
+            "requirement": "Typed direct/group search namespaces and opaque IDs remain distinct and precise"
+          },
+          {
+            "id": "T04-15",
+            "requirement": "Signed cursor fingerprint/high-water/snapshot continuation preserved"
+          },
+          {
+            "id": "T04-16",
+            "requirement": "Group coverage deduplication, empty explicit group and summary preserved"
+          },
+          {
+            "id": "T04-17",
+            "requirement": "Typed coverage deduplication/empty selected conversation and summary preserved"
+          },
+          {
+            "id": "T04-18",
+            "requirement": "Empty reasons/no-collected-data versus no-matches preserved"
+          },
+          {
+            "id": "T04-19",
+            "requirement": "Context anchor/neighbor order/reply handling preserved"
+          },
+          {
+            "id": "T04-20",
+            "requirement": "Context clipping20KiB/omitted IDs/next_action unchanged"
+          },
+          {
+            "id": "T04-21",
+            "requirement": "Typed message/coverage projection and null/empty array semantics preserved"
+          },
+          {
+            "id": "T04-22",
+            "requirement": "Existing64KiB wire response sizing/schema validation/resource links preserved"
+          },
+          {
+            "id": "T04-23",
+            "requirement": "Full-text resource1MiB cap and URI grammar unchanged"
+          },
+          {
+            "id": "T04-24",
+            "requirement": "Resource access rechecks current collection policy independent of prior search"
+          },
+          {
+            "id": "T04-25",
+            "requirement": "Bounded error projection sanitizes storage errors; NOT_FOUND parity preserved"
+          },
+          {
+            "id": "T04-26",
+            "requirement": "Existing input schema formats/defaults/numeric-string normalization/zero bounds unchanged"
+          },
+          {
+            "id": "T04-27",
+            "requirement": "Admission and cancellation remain single original gates"
+          },
+          {
+            "id": "T04-28",
+            "requirement": "Descriptors/catalog/annotations/text and structured projection unchanged"
+          },
+          {
+            "id": "T04-29",
+            "requirement": "No DB/schema/cursor/grant/ledger/queue persistence contract change"
+          },
+          {
+            "id": "T04-30",
+            "requirement": "No second DB/session/workers or reads ownership/shutdown added"
+          },
+          {
+            "id": "T04-31",
+            "requirement": "Service and fixture compose borrowed adapter and typed handlers; wire has no adapter import"
+          },
+          {
+            "id": "T04-32",
+            "requirement": "Internal construction callsites updated atomically; external MCP protocol preserved"
+          },
+          {
+            "id": "T04-33",
+            "requirement": "Archive/source_id routes remain exact legacy ControlPort; common source read contract documented"
+          },
+          {
+            "id": "T04-34",
+            "requirement": "Other read/command/Event routes remain baseline with existing exact exceptions"
+          },
+          {
+            "id": "T04-35",
+            "requirement": "Frozen T01 business baseline/T03 harness builds retain versioned overlay, independent fixture"
+          },
+          {
+            "id": "T04-36",
+            "requirement": "Relevant contract/storage/MCP HTTP/STDIO/resource tests PASS"
+          },
+          {
+            "id": "T04-37",
+            "requirement": "Application/fake-port boundary/FTS-trim counters and permission controls PASS"
+          },
+          {
+            "id": "T04-38",
+            "requirement": "Offline evaluation required search/context/resources subset and existing safety suite PASS"
+          },
+          {
+            "id": "T04-39",
+            "requirement": "Architecture100/100 and production dependency isolation PASS with no new backend exception"
+          },
+          {
+            "id": "T04-40",
+            "requirement": "Two independent same-candidate reviews completeness100% and correctnessPASS before sole taskcommit"
+          }
+        ],
+        "non_goals": [
+          "T05 toolsy runtime integration",
+          "T06 full read/archive/Event migration",
+          "T07 commands migration",
+          "T08 telemetry",
+          "SDK-01 IDfix",
+          "model/live execution",
+          "performance comparison (T09)"
+        ],
+        "model_gate": "NOT_RUN",
+        "live_gate": "NOT_RUN",
+        "sdk_id_gate": "DEFERRED_TO_SDK-01"
+      },
+      "independent_reviews": [
+        "docs/mcp-migration/evidence/T04/review-A.json",
+        "docs/mcp-migration/evidence/T04/review-B.json"
+      ]
+    },
+    {
+      "task": "T05",
+      "commit": "45230af90f90cf27358f41e5ff52949fd686525d",
+      "message": "feat(runtime): execute search tools through scoped toolsy registry",
+      "requirements": "docs/mcp-migration/evidence/T05/requirements.json",
+      "leaf_contract": {
+        "task": "T05",
+        "parent_sha": "775d3a271110b2771a9cc0ac63d3f51151481e53",
+        "required_total": 42,
+        "formula": "100 * verified_pass / required_total",
+        "requirements": [
+          {
+            "id": "T05-01",
+            "requirement": "Accepted T04 SHA/tree/source verified; earlier task evidence not reopened"
+          },
+          {
+            "id": "T05-02",
+            "requirement": "Consumer runtime contract fixed before implementation; initial/final candidate recorded"
+          },
+          {
+            "id": "T05-03",
+            "requirement": "Pinned public toolsy v0.20.0 root module consumer, no sibling replace/vendor edits"
+          },
+          {
+            "id": "T05-04",
+            "requirement": "Normative internal/toolruntime exclusively owns toolsy integration"
+          },
+          {
+            "id": "T05-05",
+            "requirement": "Native SDK AddTool and transport/resource registrations retained"
+          },
+          {
+            "id": "T05-06",
+            "requirement": "Four first-slice search/context tools execute through RegistryView.Execute"
+          },
+          {
+            "id": "T05-07",
+            "requirement": "Immutable root registry/view built once; invocation-owned call/environment"
+          },
+          {
+            "id": "T05-08",
+            "requirement": "Trusted subject/scope resolved by host, never from model args/message content"
+          },
+          {
+            "id": "T05-09",
+            "requirement": "Account/current collection policy enforced; untrusted/direct invocation denied before app dispatch"
+          },
+          {
+            "id": "T05-10",
+            "requirement": "Call from other capability owner/scope cannot reuse authorization"
+          },
+          {
+            "id": "T05-11",
+            "requirement": "Compatibility binder only baseline limit/before/after numeric strings and defaults"
+          },
+          {
+            "id": "T05-12",
+            "requirement": "Schema source docs/contracts retained byte-for-byte, no generated substitute"
+          },
+          {
+            "id": "T05-13",
+            "requirement": "Host strict AssertFormat validation remains authoritative"
+          },
+          {
+            "id": "T05-14",
+            "requirement": "Malformed/null/missing/unknown fields rejected before handler"
+          },
+          {
+            "id": "T05-15",
+            "requirement": "RFC3339 format, alias/ref/additionalProperties remain enforced"
+          },
+          {
+            "id": "T05-16",
+            "requirement": "Explicit zero and numeric bounds retain baseline behavior"
+          },
+          {
+            "id": "T05-17",
+            "requirement": "Opaque IDs above2^53 and Unicode remain exact"
+          },
+          {
+            "id": "T05-18",
+            "requirement": "First-slice app handler invocation count exactly one"
+          },
+          {
+            "id": "T05-19",
+            "requirement": "FTS/budget trimming remain single-query continuation, not repeated execution"
+          },
+          {
+            "id": "T05-20",
+            "requirement": "Other reads/commands/archive/source_id routes remain previous paths untilT06/T07"
+          },
+          {
+            "id": "T05-21",
+            "requirement": "Native full-message resources independently recheck current policy via app ports"
+          },
+          {
+            "id": "T05-22",
+            "requirement": "Existing admission/rate-limit called exactly once before dispatch"
+          },
+          {
+            "id": "T05-23",
+            "requirement": "Existing deadlines/cancellation propagate through view and app ports"
+          },
+          {
+            "id": "T05-24",
+            "requirement": "Domain errors survive toolsy wrapping, safe existing wire mapper retained"
+          },
+          {
+            "id": "T05-25",
+            "requirement": "Runtime validation/policy/internal errors map to bounded existing domain envelopes"
+          },
+          {
+            "id": "T05-26",
+            "requirement": "Existing result schemas and text/structured/resource-link projection retain parity"
+          },
+          {
+            "id": "T05-27",
+            "requirement": "Original64KiB wire sizing/context clipping/resource1MiB budgets remain unchanged"
+          },
+          {
+            "id": "T05-28",
+            "requirement": "Annotations/descriptions/catalog sorting exactly baseline"
+          },
+          {
+            "id": "T05-29",
+            "requirement": "OperationProfile/filejournal/result cache/retry dispatch not introduced"
+          },
+          {
+            "id": "T05-30",
+            "requirement": "No persistence/DB/session/worker/ledger ownership change"
+          },
+          {
+            "id": "T05-31",
+            "requirement": "Runtime lifetime composition borrowed; no percall shutdown/shared cancellation leak"
+          },
+          {
+            "id": "T05-32",
+            "requirement": "No MCP/SQL/storage/managers/ai-libs imports in app/domain"
+          },
+          {
+            "id": "T05-33",
+            "requirement": "No SDK export/protocol parser/new transport introduced in runtime"
+          },
+          {
+            "id": "T05-34",
+            "requirement": "No widened backend architecture exceptions; architecture100/100+negative controls"
+          },
+          {
+            "id": "T05-35",
+            "requirement": "Relevant HTTP/STDIO/resources/discovery/input/contract tests PASS"
+          },
+          {
+            "id": "T05-36",
+            "requirement": "Meaningful runtime invocation/unauthorized/malformed counters PASS"
+          },
+          {
+            "id": "T05-37",
+            "requirement": "Race checks on shared registry/concurrent distinct calls PASS"
+          },
+          {
+            "id": "T05-38",
+            "requirement": "Root tests/vet and production graph isolation PASS"
+          },
+          {
+            "id": "T05-39",
+            "requirement": "Frozen baseline remains original business with accepted T03 overlay"
+          },
+          {
+            "id": "T05-40",
+            "requirement": "Offline evaluation search/context/resources and existing safety suite PASS"
+          },
+          {
+            "id": "T05-41",
+            "requirement": "Raw command/source/binary/eval evidence retained with NOT_RUN model/live and SDK deferred"
+          },
+          {
+            "id": "T05-42",
+            "requirement": "Two independent samecandidate reviewers100% completeness and correctnessPASS before sole task commit"
+          }
+        ],
+        "non_goals": [
+          "T06 all reads/archive/Events",
+          "T07 commands",
+          "T08 metrics",
+          "T09 performance",
+          "SDK-01 ID fix",
+          "model/live execution"
+        ],
+        "model_gate": "NOT_RUN",
+        "live_gate": "NOT_RUN",
+        "sdk_id_gate": "DEFERRED_TO_SDK-01"
+      },
+      "independent_reviews": [
+        "docs/mcp-migration/evidence/T05/review-A.json",
+        "docs/mcp-migration/evidence/T05/review-B.json"
+      ]
+    },
+    {
+      "task": "T06",
+      "commit": "a0ed93568dd3dae388e4bc65142becceb5085890",
+      "message": "refactor(mcp): migrate reads archives and resources to application ports",
+      "requirements": "docs/mcp-migration/evidence/T06/requirements.json",
+      "leaf_contract": {
+        "task": "T06",
+        "parent_sha": "45230af90f90cf27358f41e5ff52949fd686525d",
+        "required_total": 56,
+        "formula": "100 * verified_pass / required_total",
+        "requirements": [
+          {
+            "id": "T06-01",
+            "requirement": "Accepted T05 SHA/tree/source verified; previous evidence not reset"
+          },
+          {
+            "id": "T06-02",
+            "requirement": "Full17read/4resource/3template manifest fixed and typed contracts before implementation"
+          },
+          {
+            "id": "T06-03",
+            "requirement": "zalo_get_conversation routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-04",
+            "requirement": "zalo_get_conversation_message_context routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-05",
+            "requirement": "zalo_get_group routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-06",
+            "requirement": "zalo_get_history_import_status routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-07",
+            "requirement": "zalo_get_join_status routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-08",
+            "requirement": "zalo_get_message_context routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-09",
+            "requirement": "zalo_get_send_status routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-10",
+            "requirement": "zalo_get_status routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-11",
+            "requirement": "zalo_inspect_invite routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-12",
+            "requirement": "zalo_list_archive_sources routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-13",
+            "requirement": "zalo_list_conversation_messages routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-14",
+            "requirement": "zalo_list_conversations routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-15",
+            "requirement": "zalo_list_event_subscriptions routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-16",
+            "requirement": "zalo_list_groups routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-17",
+            "requirement": "zalo_read_subscription_events routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-18",
+            "requirement": "zalo_search_conversation_messages routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-19",
+            "requirement": "zalo_search_messages routes through scoped toolruntime and its declared typed app read handler"
+          },
+          {
+            "id": "T06-20",
+            "requirement": "zalo://capabilities uses typed app read/diagnostic port (static capabilities retains wire text) and independent admission/current access"
+          },
+          {
+            "id": "T06-21",
+            "requirement": "zalo://catalog/diagnostics uses typed app read/diagnostic port (static capabilities retains wire text) and independent admission/current access"
+          },
+          {
+            "id": "T06-22",
+            "requirement": "zalo://collection uses typed app read/diagnostic port (static capabilities retains wire text) and independent admission/current access"
+          },
+          {
+            "id": "T06-23",
+            "requirement": "zalo://events/diagnostics uses typed app read/diagnostic port (static capabilities retains wire text) and independent admission/current access"
+          },
+          {
+            "id": "T06-24",
+            "requirement": "zalo://archives/{token} uses app read ports, sameURI/MIME/limits/current policy"
+          },
+          {
+            "id": "T06-25",
+            "requirement": "zalo://conversations/{conversation_type}/{conversation_id}/messages/{message_id} uses app read ports, sameURI/MIME/limits/current policy"
+          },
+          {
+            "id": "T06-26",
+            "requirement": "zalo://groups/{group_id}/messages/{message_id} uses app read ports, sameURI/MIME/limits/current policy"
+          },
+          {
+            "id": "T06-27",
+            "requirement": "No universal map/RawJSON app bus; explicit bounded DTOs/capability ports with domain types"
+          },
+          {
+            "id": "T06-28",
+            "requirement": "Catalog/group/conversation ordering/cursors/empty/completeness/coverage preserved"
+          },
+          {
+            "id": "T06-29",
+            "requirement": "Legacy get_group live-read timeout/fallback/stale/error behavior preserved"
+          },
+          {
+            "id": "T06-30",
+            "requirement": "Status/inspect use fixed read-only operation ports and original deadlines; never dispatch command"
+          },
+          {
+            "id": "T06-31",
+            "requirement": "Source_id omission current corpus, explicit archive selection account-bound and no fallback"
+          },
+          {
+            "id": "T06-32",
+            "requirement": "Archive IDs distinct from Zalo IDs and unusable as outgoing quote identity"
+          },
+          {
+            "id": "T06-33",
+            "requirement": "Archive date-window/source metadata/snapshot/coverage/timestamp/null semantics preserved"
+          },
+          {
+            "id": "T06-34",
+            "requirement": "Archive catalogue/browse continuation empty page/dedup/ordering/limits preserved"
+          },
+          {
+            "id": "T06-35",
+            "requirement": "Archive source TTL/expiry/tombstones/policy revoke/account checks preserved"
+          },
+          {
+            "id": "T06-36",
+            "requirement": "Archive resource token/URI/MIME/full-body/schema/1MiB limits preserved"
+          },
+          {
+            "id": "T06-37",
+            "requirement": "Archive read does not import/sync/start sessions/workers or mutate source messages"
+          },
+          {
+            "id": "T06-38",
+            "requirement": "Event subscription/list/read principal and current grant/profile checks preserved"
+          },
+          {
+            "id": "T06-39",
+            "requirement": "Event read receipts/order/redelivery/gaps/durable state unchanged; ACK remains T07command"
+          },
+          {
+            "id": "T06-40",
+            "requirement": "Diagnostic catalog/profile/preload/collection/delivery DTOs preserve exact schema/byte budget"
+          },
+          {
+            "id": "T06-41",
+            "requirement": "HTTP Events subscription/webhook protocol remains separate native adapter with same authority/lifecycle"
+          },
+          {
+            "id": "T06-42",
+            "requirement": "MCP no longer imports concrete events subsystem; exact T06exception removed, otherT07exceptions unchanged"
+          },
+          {
+            "id": "T06-43",
+            "requirement": "STDIO does not advertise false Events capability; HTTP discovery/frame/extension parity preserved"
+          },
+          {
+            "id": "T06-44",
+            "requirement": "Admission/rate limits remain once per call and independently once per resource"
+          },
+          {
+            "id": "T06-45",
+            "requirement": "Invocation-owned continuation preserves shrink behavior without repeating tool dispatch or any write"
+          },
+          {
+            "id": "T06-46",
+            "requirement": "One borrowed owner for store/managers/archive handles; no second DB/ledger/session/worker"
+          },
+          {
+            "id": "T06-47",
+            "requirement": "Public schema/catalog/annotations/error/text-structured/opaque IDs precision unchanged"
+          },
+          {
+            "id": "T06-48",
+            "requirement": "Composition injects all read/diagnostic/admission/protocol ports; wire has no read backend construction"
+          },
+          {
+            "id": "T06-49",
+            "requirement": "All relevant read/resource/archive/HTTP/STDIO/operation-status tests PASS"
+          },
+          {
+            "id": "T06-50",
+            "requirement": "Meaningful scope/negative-access/status-no-command/resource-revocation counters PASS"
+          },
+          {
+            "id": "T06-51",
+            "requirement": "Relevant runtime/adapter/service/events/storage races and root tests/vet PASS"
+          },
+          {
+            "id": "T06-52",
+            "requirement": "Architecture100/100 and isolated/all-build negative controls PASS without wideningexceptions"
+          },
+          {
+            "id": "T06-53",
+            "requirement": "Frozen original business/T03 overlay remains independent of candidate and builds reproducibly"
+          },
+          {
+            "id": "T06-54",
+            "requirement": "Complete required offline suite PASS with durable independent effects and lifecycle evidence"
+          },
+          {
+            "id": "T06-55",
+            "requirement": "Candidate/source/build/rawcommands/index retained; model/liveNOT_RUN and SDKdeferred explicit"
+          },
+          {
+            "id": "T06-56",
+            "requirement": "Two independent samecandidate reviewers100% completeness and correctnessPASS before sole T06commit"
+          }
+        ],
+        "non_goals": [
+          "T07fivecommandmigration/finalnativeStoreandControlremoval",
+          "T08telemetry",
+          "T09performancecomparison",
+          "SDK-01IDfix",
+          "model/liveexecution"
+        ],
+        "model_gate": "NOT_RUN",
+        "live_gate": "NOT_RUN",
+        "sdk_id_gate": "DEFERRED_TO_SDK-01"
+      },
+      "independent_reviews": [
+        "docs/mcp-migration/evidence/T06/reviewer-completeness.json",
+        "docs/mcp-migration/evidence/T06/reviewer-correctness.json"
+      ]
+    },
+    {
+      "task": "T07",
+      "commit": "bcab7133d00a34db8bfc148fee80480d05c1126f",
+      "message": "refactor(operations): route commands through toolsy preserving durable owners",
+      "requirements": "docs/mcp-migration/evidence/T07/requirements.json",
+      "leaf_contract": {
+        "task": "T07",
+        "parent_sha": "a0ed93568dd3dae388e4bc65142becceb5085890",
+        "required_total": 46,
+        "formula": "100 * verified_pass / required_total",
+        "requirements": [
+          {
+            "id": "T07-01",
+            "requirement": "Accepted T06 commit/tree/source and durable evidence independently verified; prior tasks not reopened"
+          },
+          {
+            "id": "T07-02",
+            "requirement": "Five command manifest and explicit consumer-owned typed contracts fixed before implementation"
+          },
+          {
+            "id": "T07-03",
+            "requirement": "All22 tools execute via scoped toolsy registry; full public catalog unchanged"
+          },
+          {
+            "id": "T07-04",
+            "requirement": "zalo_send_direct_message uses typed messaging command and borrowed native owner"
+          },
+          {
+            "id": "T07-05",
+            "requirement": "zalo_join_group uses typed membership command and borrowed native owner"
+          },
+          {
+            "id": "T07-06",
+            "requirement": "zalo_import_conversation_history uses typed history start command and borrowed native owner"
+          },
+          {
+            "id": "T07-07",
+            "requirement": "zalo_cancel_history_import uses typed history cancel command and borrowed native owner"
+          },
+          {
+            "id": "T07-08",
+            "requirement": "zalo_ack_subscription_events uses typed Events acknowledgement command and borrowed native owner"
+          },
+          {
+            "id": "T07-09",
+            "requirement": "Command arguments/results explicit business types; no universal map/RawJSON application bus"
+          },
+          {
+            "id": "T07-10",
+            "requirement": "Command annotations/effect metadata preserve exact readOnly/idempotency/open-world semantics"
+          },
+          {
+            "id": "T07-11",
+            "requirement": "Trusted principal/account/current policy cannot come from caller JSON"
+          },
+          {
+            "id": "T07-12",
+            "requirement": "Invalid/foreign/stale scope rejected before command handler and effects"
+          },
+          {
+            "id": "T07-13",
+            "requirement": "Host binder preserves UUID/RFC3339/null/missing/numeric strings/Unicode/opaque IDs"
+          },
+          {
+            "id": "T07-14",
+            "requirement": "One independent native admission per tool and resource; no extra charge on runtime dispatch"
+          },
+          {
+            "id": "T07-15",
+            "requirement": "Original35s send/history and6s join deadlines/cancellation/error projection retained"
+          },
+          {
+            "id": "T07-16",
+            "requirement": "Existing native domain validation retained for MCP and CLI approve/control"
+          },
+          {
+            "id": "T07-17",
+            "requirement": "CLI approve/control preserves local authority; no MCP approval or hidden grant introduced"
+          },
+          {
+            "id": "T07-18",
+            "requirement": "Send existing durable owner/permission/recipient checks retained"
+          },
+          {
+            "id": "T07-19",
+            "requirement": "Send duplicate identical request UUID preserves identity; conflicting effective request rejected"
+          },
+          {
+            "id": "T07-20",
+            "requirement": "Send unknown/ambiguous outcome never retried implicitly"
+          },
+          {
+            "id": "T07-21",
+            "requirement": "Send quote authority still native and archive IDs cannot authorize quotes"
+          },
+          {
+            "id": "T07-22",
+            "requirement": "Join approval plan-token binds request/preview/account/current approval"
+          },
+          {
+            "id": "T07-23",
+            "requirement": "Join duplicate/conflicting UUID and expired/revoked approval behavior retained"
+          },
+          {
+            "id": "T07-24",
+            "requirement": "Join operation ledger/worker ownership/restart/concurrency retained"
+          },
+          {
+            "id": "T07-25",
+            "requirement": "History start required native conversation/time window/source/message bounds retained"
+          },
+          {
+            "id": "T07-26",
+            "requirement": "History retry request UUID effective-argument equivalence/conflict retained"
+          },
+          {
+            "id": "T07-27",
+            "requirement": "History cancellation terminal/idempotent and queued/inflight pages cannot persist after cancel"
+          },
+          {
+            "id": "T07-28",
+            "requirement": "History imported messages remain silent: no Events/subscription/notification effects"
+          },
+          {
+            "id": "T07-29",
+            "requirement": "History partial/exhaustion/progress/completeness and restart behavior retained"
+          },
+          {
+            "id": "T07-30",
+            "requirement": "Events ACK uses host principal, current subscription grant/profile/generation and receipt"
+          },
+          {
+            "id": "T07-31",
+            "requirement": "Events ACK ordered prefix/idempotence/stale concurrent receipt/revocation semantics retained"
+          },
+          {
+            "id": "T07-32",
+            "requirement": "Events reads do not ACK; ACK does not send notifications or start delivery"
+          },
+          {
+            "id": "T07-33",
+            "requirement": "Exactly one owner per operation/store/ledger/session/worker; no second durable implementation"
+          },
+          {
+            "id": "T07-34",
+            "requirement": "No toolsy retry/cache/OperationProfile pipeline or speculative outgoing effect added"
+          },
+          {
+            "id": "T07-35",
+            "requirement": "Relocated five switch branches removed from MCP; no concrete backend imports remain"
+          },
+          {
+            "id": "T07-36",
+            "requirement": "Architecture A03 temporary MCP exceptions removed, without widening other exceptions"
+          },
+          {
+            "id": "T07-37",
+            "requirement": "Production and offline/test composition inject complete read and command ports"
+          },
+          {
+            "id": "T07-38",
+            "requirement": "Public schemas/catalog/annotations/structured-text/error/resource parity unchanged"
+          },
+          {
+            "id": "T07-39",
+            "requirement": "Persistence schema/migrations/rows and third_party/sibling scope unchanged"
+          },
+          {
+            "id": "T07-40",
+            "requirement": "Messaging/collector/history/events/service/storage relevant tests and race PASS"
+          },
+          {
+            "id": "T07-41",
+            "requirement": "Meaningful crash/restart subprocess, concurrency, cancellation and revoked-auth suites PASS"
+          },
+          {
+            "id": "T07-42",
+            "requirement": "Complete required offline eval and independent durable effects/parity PASS"
+          },
+          {
+            "id": "T07-43",
+            "requirement": "Root tests/vet and architecture100/100 isolated/all-build controls PASS"
+          },
+          {
+            "id": "T07-44",
+            "requirement": "Frozen original business/T03 harness independence and candidate hashes/raw evidence/index retained"
+          },
+          {
+            "id": "T07-45",
+            "requirement": "Model/live NOT_RUN and SDK ID gate deferred to SDK-01 explicitly retained"
+          },
+          {
+            "id": "T07-46",
+            "requirement": "Two independent same-candidate reviewers100% completeness and correctnessPASS before sole T07commit"
+          }
+        ]
+      },
+      "independent_reviews": [
+        "docs/mcp-migration/evidence/T07/reviewer-completeness.json",
+        "docs/mcp-migration/evidence/T07/reviewer-correctness.json"
+      ]
+    },
+    {
+      "task": "T08",
+      "commit": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+      "message": "feat(observability): instrument MCP execution and workers with metry",
+      "requirements": "docs/mcp-migration/evidence/T08/requirements.json",
+      "leaf_contract": {
+        "task": "T08",
+        "parent_sha": "bcab7133d00a34db8bfc148fee80480d05c1126f",
+        "required_total": 44,
+        "formula": "100 * verified_pass / required_total",
+        "requirements": [
+          {
+            "id": "T08-01",
+            "requirement": "Accepted T07 commit/tree/source and durable evidence verified; prior tasks not reopened"
+          },
+          {
+            "id": "T08-02",
+            "requirement": "Pinned metryv0.10.1 public API/INTEGRATION/PRIVACY contract verified; no sibling/third_party edits"
+          },
+          {
+            "id": "T08-03",
+            "requirement": "Telemetry contract, safe signal manifest, ownership/config schema and fixed leaf requirements before implementation"
+          },
+          {
+            "id": "T08-04",
+            "requirement": "One service-owned metry provider via New; no second provider or mutable global SDK ownership"
+          },
+          {
+            "id": "T08-05",
+            "requirement": "Exporter opt-in; default configuration creates no external network dependency or changed service network behavior"
+          },
+          {
+            "id": "T08-06",
+            "requirement": "Additive config fields validated with executable JSON schema and documented defaults"
+          },
+          {
+            "id": "T08-07",
+            "requirement": "Exporter queue/export timeout/shutdown bounded; API keys/headers never logged"
+          },
+          {
+            "id": "T08-08",
+            "requirement": "metry.ExecutorWrap wraps application execution exactly once for all22tools"
+          },
+          {
+            "id": "T08-09",
+            "requirement": "HTTP/STDIO transport instrumentation does not duplicate execution span"
+          },
+          {
+            "id": "T08-10",
+            "requirement": "Built-in technical status remains actual Go success/error/panic"
+          },
+          {
+            "id": "T08-11",
+            "requirement": "Host typed domain outcome finite mapping independent from technical status"
+          },
+          {
+            "id": "T08-12",
+            "requirement": "Business error inside typed result classified error with nil Go error"
+          },
+          {
+            "id": "T08-13",
+            "requirement": "Unknown/partial/cancelled distinct domain outcomes; no synthetic Go error to fake metrics"
+          },
+          {
+            "id": "T08-14",
+            "requirement": "executor calls metric observable with bounded stable operation/tool and technical status"
+          },
+          {
+            "id": "T08-15",
+            "requirement": "executor duration metric observable in seconds with bounded stable operation/tool and technical status"
+          },
+          {
+            "id": "T08-16",
+            "requirement": "zl_mcp_domain_calls calls/tool/domainoutcome observable"
+          },
+          {
+            "id": "T08-17",
+            "requirement": "zl_mcp_response_bytes histogram bytes/tool/transport observable with actual encoded wire bytes"
+          },
+          {
+            "id": "T08-18",
+            "requirement": "zl_mcp_upstream_calls counter bounded operation kind/outcome observable"
+          },
+          {
+            "id": "T08-19",
+            "requirement": "zl_mcp_operation_transitions counter kind/finite from/to observable"
+          },
+          {
+            "id": "T08-20",
+            "requirement": "zl_mcp_worker_queue_depth gauge/queue name observable"
+          },
+          {
+            "id": "T08-21",
+            "requirement": "zl_mcp_operation_age_seconds histogram or gauge explicit ADR semantics kind/state observable"
+          },
+          {
+            "id": "T08-22",
+            "requirement": "Typed outcome and worker state enums reject unknown arbitrary strings as metric attributes"
+          },
+          {
+            "id": "T08-23",
+            "requirement": "No account/chat/message/request/operation IDs/query/text/raw URI/token/error in metric labels"
+          },
+          {
+            "id": "T08-24",
+            "requirement": "Logs/spans only safe enumerated fields and random correlation IDs; no raw error/quote/session/upstream causes"
+          },
+          {
+            "id": "T08-25",
+            "requirement": "Privacy sentinel absent in all memory metric/span/log sinks including panic and formatting paths"
+          },
+          {
+            "id": "T08-26",
+            "requirement": "Request->operation->worker correlation via bounded in-memory opaque trace references with IDs kept distinct"
+          },
+          {
+            "id": "T08-27",
+            "requirement": "Trace correlation introduces no persistence schema/record changes and bounded memory lifecycle"
+          },
+          {
+            "id": "T08-28",
+            "requirement": "Telemetry/upstream instrumentation does not change business result, permission, send count or retry behavior"
+          },
+          {
+            "id": "T08-29",
+            "requirement": "Exporter failure isolated from application outcome; no blocked send or retry"
+          },
+          {
+            "id": "T08-30",
+            "requirement": "Exporter timeout failure-injection test isolates outcome and bounds shutdown"
+          },
+          {
+            "id": "T08-31",
+            "requirement": "Nil provider safe and disabled provider safe across execution/resource/worker paths"
+          },
+          {
+            "id": "T08-32",
+            "requirement": "Provider cleanup owned by service and orderly relative to worker/DB lifetime"
+          },
+          {
+            "id": "T08-33",
+            "requirement": "Shutdown idempotent and bounded under cancelled context/exporter stall"
+          },
+          {
+            "id": "T08-34",
+            "requirement": "Existing operational diagnostics/redaction preserved; duplicate execution logging removed"
+          },
+          {
+            "id": "T08-35",
+            "requirement": "Native send/join/history/Events worker owners remain unchanged; no second ledger/session"
+          },
+          {
+            "id": "T08-36",
+            "requirement": "In-memory exporters observe exact required signals and technical/business status distinction"
+          },
+          {
+            "id": "T08-37",
+            "requirement": "Meaningful privacy/failure/lifecycle/outcome tests PASS"
+          },
+          {
+            "id": "T08-38",
+            "requirement": "Relevant observability/runtime/service/worker race tests PASS"
+          },
+          {
+            "id": "T08-39",
+            "requirement": "Root tests/vet PASS and no public/persistence/wire regressions"
+          },
+          {
+            "id": "T08-40",
+            "requirement": "Architecture100/100 and negative controls PASS; metry/OTel imports only permitted observability/composition"
+          },
+          {
+            "id": "T08-41",
+            "requirement": "Complete required offline eval and independent durable effects PASS"
+          },
+          {
+            "id": "T08-42",
+            "requirement": "Frozen baseline/independent harness retained; candidate/build/rawcommands/versions/source hashes/index retained"
+          },
+          {
+            "id": "T08-43",
+            "requirement": "Model/live NOT_RUN and SDK IDs deferred SDK-01 explicit; no deployed/live/paid actions"
+          },
+          {
+            "id": "T08-44",
+            "requirement": "Two independent samecandidate reviewers100% completeness and correctnessPASS before soleT08commit"
+          }
+        ]
+      },
+      "independent_reviews": [
+        "docs/mcp-migration/evidence/T08/reviewer-completeness-v5.json",
+        "docs/mcp-migration/evidence/T08/reviewer-correctness-v5.json"
+      ]
+    },
+    {
+      "task": "T09",
+      "commit": "bb3eadc785366588b88bdc83c4d7693c89b96090",
+      "message": "refactor(mcp): remove migration glue and verify behavior parity",
+      "requirements": "docs/mcp-migration/evidence/T09/requirements-v3.json",
+      "leaf_contract": {
+        "task": "T09",
+        "parent_sha": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+        "requirements_total": 62,
+        "equal_weight": true,
+        "frozen_before_implementation": true,
+        "leaf_requirements": [
+          {
+            "id": "T09-01",
+            "requirement": "Accepted T08 commit/tree/source and every indexed committed artifact verified; T01–T08 not reopened",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-02",
+            "requirement": "Leaf requirements and initial candidate fixed before T09 implementation",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-03",
+            "requirement": "Cleanup scope inventoried; no supported legacy tools, backend owners or edges removed",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-04",
+            "requirement": "No unused migration shims or temporary production branches remain",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-05",
+            "requirement": "Toolruntime naming describes all scoped read/command capabilities; no read-only migration naming misleading the final API",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-06",
+            "requirement": "All architecture exceptions closed; consciously retained backend edges documented",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-07",
+            "requirement": "Architecture and development docs reflect final composition and executable commands",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-08",
+            "requirement": "CI runs required architecture/offline/root/nested gates with correct pinned toolchain",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-09",
+            "requirement": "Pinned Go/toolsy/metry/evaly/SDK and compatible dependency matrix retained; no sibling or third_party edits",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-10",
+            "requirement": "Bring Your Own Types boundaries retained; no SDK or infrastructure DTO in app/domain",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-11",
+            "requirement": "All22 tool names/descriptions/input/output/annotations and resource/template contracts preserved",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-12",
+            "requirement": "Numeric-string/zero/null/missing/Unicode/RFC3339/UUID input parity preserved",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-13",
+            "requirement": "Current trusted identity/policy binding and caller-forged authority rejection preserved",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-14",
+            "requirement": "Strict input and output validation plus bounded error shaping preserved",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-15",
+            "requirement": "Current policy revalidated for subsequent reads/resources/status and shortening",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-16",
+            "requirement": "One admitted app execution per MCP call; no duplicate upstream effect or mutation",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-17",
+            "requirement": "Native read ordering/cursors/snapshot/page-shortening and precise string IDs preserved",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-18",
+            "requirement": "Native admission remains outside app execution with no bypass or second admission",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-19",
+            "requirement": "Send account lock, prepare/claim/complete ownership and idempotency unchanged",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-20",
+            "requirement": "Ambiguous send unknown cannot dispatch again with same UUID; conflicting payload rejected",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-21",
+            "requirement": "Send cancellation/panic/restart paths preserve durable state and fresh bounded completion",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-22",
+            "requirement": "Join approval/policy/local lock and durable request/result ownership retained",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-23",
+            "requirement": "History checkpoint/pause/cancel/limits/source semantics and no-late-page-commit retained",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-24",
+            "requirement": "History import creates no synthetic Events and does not weaken source completeness claims",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-25",
+            "requirement": "Events verification/signing/address/lease/receipt/retry/ordering/journal ownership retained",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-26",
+            "requirement": "Archive account/source/visibility/TTL/tombstone/identity contracts retained; no quote anchors",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-27",
+            "requirement": "Persistence schemas/mixed-version ownership unchanged; no tracing persistence or fabricated creation timestamps",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-28",
+            "requirement": "One service-owned metry provider; default no network or second bridge provider",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-29",
+            "requirement": "Exactly one metry app ExecutorWrap and independent typed business outcomes",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-30",
+            "requirement": "Request-operation-worker memory correlation bounded and distinct from native IDs",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-31",
+            "requirement": "All seven host signals and executor calls/duration observed with finite dimensions",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-32",
+            "requirement": "Logs/spans/exporters exclude forbidden content including nested fields, malformed resource env and hostile formatter/panic",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-33",
+            "requirement": "Authorized bounded Events diagnostic contract and single final MCP audit retained",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-34",
+            "requirement": "Exporter failure/timeout never changes business result, blocks send or retries command",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-35",
+            "requirement": "Telemetry shutdown bounded after workers join and before shared DB close; nil/disabled paths safe",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-36",
+            "requirement": "Actual HTTP/STDIO/resource bytes measured without rewriting wire or IDs",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-37",
+            "requirement": "Full offline candidate evaluation 100% and all assertions PASS; safety violations0",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-38",
+            "requirement": "Frozen baseline independent evaluation 100% PASS with original business source and disclosed T03 harness overlay",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-39",
+            "requirement": "Paired baseline/candidate evaluation executed; equivalent outputs/effects across all mandatory synthetic cases",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-40",
+            "requirement": "All normalized/raw captures preserve exact JSON numbers via UseNumber; current SDK large numeric-ID limitation explicit until SDK-01",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-41",
+            "requirement": "Root Go tests PASS",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-42",
+            "requirement": "Root Go vet PASS",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-43",
+            "requirement": "Relevant root race tests PASS for authority/runtime/native workers/storage/telemetry/transport/evaluation",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-44",
+            "requirement": "Existing nested third_party module tests/vet/race PASS without edits",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-45",
+            "requirement": "arch-go pinned v2.1.2 compliance100 and coverage100 PASS",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-46",
+            "requirement": "All isolated negative architecture controls nonzero and all-build source controls PASS",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-47",
+            "requirement": "Production go list -deps excludes evaly/evaluation/evalfixture and observes restricted SDK/ai library boundaries",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-48",
+            "requirement": "CGO-free darwin/arm64 build PASS",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-49",
+            "requirement": "CGO-free linux/amd64 build PASS",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-50",
+            "requirement": "Old/new frozen/candidate synthetic-state restart compatibility verified both directions with persisted records/effects",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-51",
+            "requirement": "Performance same Apple M1 Max/OS/Go/fixture/concurrency/exporters-disabled settings disclosed",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-52",
+            "requirement": "Five independent post-warmup runs >=1000 calls each for read/search/context; counts/errors/response bytes/CPU recorded",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-53",
+            "requirement": "Median-of-five p95 within fixed absolute read .0078683s, search .0070726337s, context .0069967799s limits; user authorized retrospective candidate +10% recalibration, original frozen-relative latency FAIL retained/disclosed",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-54",
+            "requirement": "Allocations/op candidate<=2.0 frozen baseline for each read/search/context, per explicit user amendment2026-10-12; zero baseline implieszero",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-55",
+            "requirement": "No unilateral threshold changes; explicit user object/byte and retrospective latency amendments versioned; original raw records and historical FAIL preserved; reused measurements disclosed without claiming fresh runs or original-relative latency parity",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-56",
+            "requirement": "Performance baseline original frozen source rebuilt T02 compiler distinguished from original rollback binary",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-57",
+            "requirement": "Regression findings corrected in T09 with relevant revalidation, no acceptance narrowing",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-58",
+            "requirement": "Model gate explicitly NOT_RUN and no claim of full model/live acceptance",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-59",
+            "requirement": "No deployment/LaunchAgent restart/live account/paid eval/publication performed",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-60",
+            "requirement": "Candidate source/build hashes, exact commands, versions, raw parity/effects/performance artifacts durably indexed",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-61",
+            "requirement": "Two independent samecandidate reviewers completeness100% and correctnessPASS before sole T09 commit",
+            "status": "PENDING"
+          },
+          {
+            "id": "T09-62",
+            "requirement": "Median allocated bytes/op candidate<=1.20 frozen baseline for each read/search/context, independently gated from object count; zero baseline implieszero; malformed/missing/nonfinite byte evidence fails closed",
+            "status": "PENDING"
+          }
+        ],
+        "revision": 3,
+        "amendment": "performance-gate-contract-v3.json",
+        "original_requirements": "requirements.json:61leaves fixed before initialT09implementation",
+        "frozen_before_new_pin_and_gate_implementation": false,
+        "contract_fixed_before_verifier_implementation": true
+      },
+      "independent_reviews": [
+        "docs/mcp-migration/evidence/T09/reviewer-completeness-v5.json",
+        "docs/mcp-migration/evidence/T09/reviewer-correctness-v5.json"
+      ]
+    },
+    {
+      "task": "SDK-01",
+      "commit": "88b723bc37abdf9f3f50c69dfc4d7115af330be2",
+      "message": "fix(mcp): preserve JSON-RPC IDs across SDK and wrappers",
+      "requirements": "docs/mcp-migration/evidence/SDK-01/requirements-v4.json",
+      "leaf_contract": {
+        "task": "SDK-01",
+        "parent_sha": "bb3eadc785366588b88bdc83c4d7693c89b96090",
+        "requirements_total": 20,
+        "equal_weight": true,
+        "frozen_before_implementation": true,
+        "leaf_requirements": [
+          {
+            "id": "ID01",
+            "requirement": "SDK request and response decode/encode preserve exact signed int64 at 2^53-1/2^53/2^53+1/2^53+2 and int64 min/max; string/numeric distinct; integral decimal/exponent exact",
+            "status": "PENDING"
+          },
+          {
+            "id": "ID02",
+            "requirement": "Raw HTTP neighboring large IDs, concurrent handlers and out-of-order replies correlate exactly",
+            "status": "PENDING"
+          },
+          {
+            "id": "ID03",
+            "requirement": "Actual STDIO bridge subprocess roundtrip/concurrent IDs preserve external correlation",
+            "status": "PENDING"
+          },
+          {
+            "id": "ID04",
+            "requirement": "Supported cancellation paths affect only selected invocation; reused IDs not damaged by old completion; SDK codec and STDIO cancellation mandatory; typed json.Number checked",
+            "status": "PENDING"
+          },
+          {
+            "id": "ID05",
+            "requirement": "Fractional/outside-int64 and excessive length/exponent rejected boundedly without dispatch/panic/unbounded resources; error id null; budgets and framing executable",
+            "status": "PENDING"
+          },
+          {
+            "id": "ID06",
+            "requirement": "Discover, resources, protocol errors and Events HTTP wrapper preserve valid envelope IDs and enforce same numeric contract",
+            "status": "PENDING"
+          },
+          {
+            "id": "ID07",
+            "requirement": "Synthetic write with lost response followed by same domain UUID/new envelope ID produces no duplicate native dispatch",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-08",
+            "requirement": "Before-fix original SDK reproduction retained; clients use raw JSON/json.Number",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-09",
+            "requirement": "Official fixed release preferred; inspect actual code and current issue/PR/release state",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-10",
+            "requirement": "Explicit user-authorized remote fork replace github.com/modelcontextprotocol/go-sdk=>github.com/skosovsky/go-sdk v1.8.1-0.20261012184819-4347cd438f3c and officialtoolsyv0.20.5; actualprovenance/licenses/tests/numericcontract/removal verified; no localvendor/sibling/fork edits",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-11",
+            "requirement": "Wrappers updated losslessly with minimal existing DTO/decode changes; no second MCP transport/parser, no business number rewrite",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-12",
+            "requirement": "Domain IDs, persistence/authority/permissions/durable owners and no-resend contract preserved; no zcago/sibling edits",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-13",
+            "requirement": "Root tests/race/vet, wire suite and CGO-free targets PASS",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-14",
+            "requirement": "Full offline eval and parity PASS except explicitly corrected numeric envelope baseline",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-15",
+            "requirement": "For patched SDK full nested tests/race/vet/build PASS; immutable pin and removal gates",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-16",
+            "requirement": "Repeat affected performance on dependency change against authorized v3 budget and frozen allocation baseline",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-17",
+            "requirement": "Dependency matrix and before/after evidence synchronized; source/candidate hashes and all evidence indexed",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-18",
+            "requirement": "Model/live NOT_RUN; no deployment/LaunchAgent/live account/paid eval/publication",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-19",
+            "requirement": "Two independent samecandidate reviewers completeness100% and correctnessPASS before sole exact SDK-01 commit",
+            "status": "PENDING"
+          },
+          {
+            "id": "SDK-20",
+            "requirement": "One atomic commit fix(mcp): preserve JSON-RPC IDs across SDK and wrappers; only after accepted T09, before T10",
+            "status": "PENDING"
+          }
+        ],
+        "revision": 4,
+        "amendment": "authorized-fork-contract-v3.json",
+        "original_requirements": "requirements.json",
+        "frozen_before_pin_changes": true
+      },
+      "independent_reviews": [
+        "docs/mcp-migration/evidence/SDK-01/final-review-A-4347-v1.json",
+        "docs/mcp-migration/evidence/SDK-01/final-review-B-4347-v1.json"
+      ]
+    }
+  ],
+  "T10_parent": "88b723bc37abdf9f3f50c69dfc4d7115af330be2",
+  "T10_commit": "pending sole finalcommit after new independentreviewers",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

@@ -1,0 +1,4 @@
+GOWORK=off go run ./cmd/zl-mcp-eval --root "/workspace/zl-mcp" --profile model --model-driver "" --output "/tmp/zl-t10-model-not-run-v1" --run-budget 30m
+INCOMPLETE cases0/0 assertions0/0; model=NOT_RUN live=NOT_RUN
+exit status 2
+make: *** [eval-model] Error 1

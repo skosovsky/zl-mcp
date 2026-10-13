@@ -1,0 +1,14 @@
+{
+  "sdk_source_digest": "1f903b7acd219cda0a97a769e4157ad00b0633204c0ade1a661d47dee29cf43e",
+  "final_source_digest": "8289011cda3e36cb05276f1954f426f12aaa5fcdf150828c350994c715d48aeb",
+  "changed_paths": [
+    "Makefile",
+    "docs/development.md",
+    "docs/mcp-migration/final-report.md",
+    "docs/mcp-migration/rollback.md",
+    "scripts/mcp-migration/test_make_gates.py"
+  ],
+  "production_Go_and_dependencies_unchanged": true,
+  "SDK_ID01_ID07_nested_checks_and_performance": "Reusable from accepted SDK-01; exact production code/dependency unchanged. Latest fresh performance9/9PASS retained; no budget recalibration.",
+  "T10_revalidated": "make check exercises root/nested/architecture/platform/offline/parity and separate no-driver model NOT_RUN; Python make failure propagation"
+}

@@ -1,0 +1,232 @@
+{
+  "task": "T10",
+  "parent_sha": "88b723bc37abdf9f3f50c69dfc4d7115af330be2",
+  "required_total": 24,
+  "equal_weight": true,
+  "frozen_before_implementation": true,
+  "leaf_requirements": [
+    {
+      "id": "F01",
+      "requirement": "Accepted ordered task history T01-T09 andSDK01 exact messages, oneatomiccommit each; T10 solecommit ready",
+      "status": "PENDING",
+      "evidence": [
+        "task-history-and-requirements.json",
+        "SDK-01-postcommit.json"
+      ]
+    },
+    {
+      "id": "F02",
+      "requirement": "Final source digest and candidate-bound independent reviews",
+      "status": "PENDING",
+      "evidence": [
+        "candidate-v1.json"
+      ]
+    },
+    {
+      "id": "F03",
+      "requirement": "Frozen original behavior/performance baseline retained, original SDK limitation and authorized correction explicit",
+      "status": "PENDING",
+      "evidence": [
+        "../T01/requirements.json",
+        "../T03/baseline-build-manifest-v2.json",
+        "../SDK-01/codec-before.jsonl"
+      ]
+    },
+    {
+      "id": "F04",
+      "requirement": "All tool catalog/schema/annotations/resources/Events/HTTP/STDIO public contracts preserved except explicitauthorized amendments",
+      "status": "PENDING",
+      "evidence": [
+        "../../manifest.json",
+        "../../paired-offline-contract.md",
+        "paired-v1/report.json"
+      ]
+    },
+    {
+      "id": "F05",
+      "requirement": "Ports/adapters/application/toolruntime/composition architecture and executable arch100/100 including negativecontrols",
+      "status": "PENDING",
+      "evidence": [
+        "architecture-v1.json",
+        "../../architecture.md",
+        "../../architecture-exceptions.json"
+      ]
+    },
+    {
+      "id": "F06",
+      "requirement": "Dependency matrix immutable provenance licenses consumerprobe and remoteSDK exception/removal policy",
+      "status": "PENDING",
+      "evidence": [
+        "../../dependency-matrix.json",
+        "../SDK-01/authorized-fork-contract-v3.json"
+      ]
+    },
+    {
+      "id": "F07",
+      "requirement": "ID01-ID07 accepted exact identity/cancellation/no duplicateeffects with beforeafter evidence",
+      "status": "PENDING",
+      "evidence": [
+        "../SDK-01/acceptance.json",
+        "SDK-01-postcommit.json"
+      ]
+    },
+    {
+      "id": "F08",
+      "requirement": "Singleaccount/session/DB ownership durableledger/persistence policies andstate transitions preserved",
+      "status": "PENDING",
+      "evidence": [
+        "task-history-and-requirements.json",
+        "checks-v1.json",
+        "../SDK-01/restart-old-new-4347-v1.log",
+        "../SDK-01/restart-new-old-4347-v1.log"
+      ]
+    },
+    {
+      "id": "F09",
+      "requirement": "Privacy boundedlogs/spans andoptinrotation nofulltrace, callbackcontract synchronized",
+      "status": "PENDING",
+      "evidence": [
+        "../../telemetry-boundary.md",
+        "../T08/reviewer-completeness-v5.json",
+        "../T08/reviewer-correctness-v5.json"
+      ]
+    },
+    {
+      "id": "F10",
+      "requirement": "Mandatory root test/race/vet PASS",
+      "status": "PENDING",
+      "evidence": [
+        "checks-v1.json",
+        "make-check-v1.log"
+      ]
+    },
+    {
+      "id": "F11",
+      "requirement": "Mandatory nestedzcago test/race/vet PASS",
+      "status": "PENDING",
+      "evidence": [
+        "checks-v1.json",
+        "make-check-v1.log"
+      ]
+    },
+    {
+      "id": "F12",
+      "requirement": "PatchedSDK nestedtest/race/vet/build and227source integrity PASS",
+      "status": "PENDING",
+      "evidence": [
+        "../SDK-01/selected-sdk-4347-source-manifest-v1.json",
+        "evidence-reuse-basis.json"
+      ]
+    },
+    {
+      "id": "F13",
+      "requirement": "CGOfree darwinarm64/darwinamd64/linuxamd64 builds and existing Linux/nativeMac CI preserved",
+      "status": "PENDING",
+      "evidence": [
+        "platforms-v1.json",
+        "make-check-v1.log"
+      ]
+    },
+    {
+      "id": "F14",
+      "requirement": "Mandatory full standalone offline50cases480assertions PASS",
+      "status": "PENDING",
+      "evidence": [
+        "offline-v1/report.json"
+      ]
+    },
+    {
+      "id": "F15",
+      "requirement": "Full paired50canonicalpairs PASS, onlynamedSDK numericbaseline correction",
+      "status": "PENDING",
+      "evidence": [
+        "paired-v1/report.json"
+      ]
+    },
+    {
+      "id": "F16",
+      "requirement": "Fresh dependencyaffectedperformance15000calls0errors all9authorizedgatesPASS oldFAIL retained",
+      "status": "PENDING",
+      "evidence": [
+        "../SDK-01/performance-comparison-4347-v1.json",
+        "evidence-reuse-basis.json"
+      ]
+    },
+    {
+      "id": "F17",
+      "requirement": "make architecture/eval-offline/bench-mcp/check-mcp-parity/check documented executable targets",
+      "status": "PENDING",
+      "evidence": [
+        "checks-v1.json",
+        "python-v1.log",
+        "make-check-v1.log"
+      ]
+    },
+    {
+      "id": "F18",
+      "requirement": "make eval-model explicitoptin outsideCI; default NOT_RUN no paidmodelexecution",
+      "status": "PENDING",
+      "evidence": [
+        "model-not-run-v1.json",
+        "checks-v1.json"
+      ]
+    },
+    {
+      "id": "F19",
+      "requirement": "Model/live gates and historicalnontransferability explicit infinalreports; offlineacceptanceonly",
+      "status": "PENDING",
+      "evidence": [
+        "model-not-run-v1.json",
+        "../../final-report.md"
+      ]
+    },
+    {
+      "id": "F20",
+      "requirement": "Rollbackrunbook cleancheckoutbuild native statecompatibility bothrestartorders stopreturnoldbinary livecheckhandoff no rollout",
+      "status": "PENDING",
+      "evidence": [
+        "../../rollback.md",
+        "../SDK-01/restart-old-new-4347-v1.log",
+        "../SDK-01/restart-new-old-4347-v1.log"
+      ]
+    },
+    {
+      "id": "F21",
+      "requirement": "All normative task/generalrequirements mapped to authoritative evidence andzero unresolvedfindings",
+      "status": "PENDING",
+      "evidence": [
+        "task-history-and-requirements.json"
+      ]
+    },
+    {
+      "id": "F22",
+      "requirement": "Final acceptance report statuseslimitations architecture matrix parity/eval/perf rollback preserved",
+      "status": "PENDING",
+      "evidence": [
+        "../../final-report.md",
+        "../../rollback.md",
+        "checks-v1.json"
+      ]
+    },
+    {
+      "id": "F23",
+      "requirement": "Two NEW independent final reviewers100%completeness/correctnessPASS samecandidate noimplementationparticipation",
+      "status": "PENDING",
+      "evidence": [
+        "candidate-v1.json"
+      ]
+    },
+    {
+      "id": "F24",
+      "requirement": "Preserveuserchanges no outofscope sibling/thirdparty edits no deploy/LaunchAgent/liveaccount/publication",
+      "status": "PENDING",
+      "evidence": [
+        "evidence-reuse-basis.json",
+        "SDK-01-postcommit.json"
+      ]
+    }
+  ],
+  "commit_message": "chore(mcp): finalize architecture migration acceptance",
+  "source_digest_sha256": "8289011cda3e36cb05276f1954f426f12aaa5fcdf150828c350994c715d48aeb",
+  "status": "FINAL_CHECKS_READY_REVIEW_PENDING"
+}

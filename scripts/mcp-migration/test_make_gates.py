@@ -25,11 +25,13 @@ exit 1
             env = dict(os.environ, PATH=directory + os.pathsep + os.environ['PATH'],
                        ZL_GATE_PROBE_MARKER=str(marker))
             # Act.
-            result = subprocess.run(['make', 'eval-paired'], cwd=ROOT, env=env,
-                                    capture_output=True, text=True, timeout=10)
-            # Assert.
-            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertFalse(marker.exists(), 'candidate executed despite build failure')
+            for target in ['eval-paired', 'check-mcp-parity']:
+                with self.subTest(target=target):
+                    result = subprocess.run(['make', target], cwd=ROOT, env=env,
+                                            capture_output=True, text=True, timeout=10)
+                    # Assert.
+                    self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertFalse(marker.exists(), 'candidate executed despite build failure')
 
 
 if __name__ == '__main__':

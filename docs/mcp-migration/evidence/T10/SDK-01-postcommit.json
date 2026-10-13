@@ -1,0 +1,10 @@
+{
+  "task": "SDK-01",
+  "commit": "88b723bc37abdf9f3f50c69dfc4d7115af330be2",
+  "subject": "fix(mcp): preserve JSON-RPC IDs across SDK and wrappers",
+  "committed_tree": "96868b3a9c1fa139e0ada96b3c39a88128eaacd8",
+  "source_digest_sha256": "1f903b7acd219cda0a97a769e4157ad00b0633204c0ade1a661d47dee29cf43e",
+  "indexed_artifacts_verified": 2660,
+  "status": "PASS",
+  "tracked_worktree_clean": true
+}

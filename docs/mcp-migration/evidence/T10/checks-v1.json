@@ -1,0 +1,43 @@
+{
+  "task": "T10",
+  "source_digest_sha256": "8289011cda3e36cb05276f1954f426f12aaa5fcdf150828c350994c715d48aeb",
+  "status": "PASS_REQUIRED_OFFLINE_CHECKS",
+  "records": [
+    {
+      "command": "make check EVAL_OUTPUT=/tmp/zl-t10-offline-v1 ARCHITECTURE_EVIDENCE=docs/mcp-migration/evidence/T10/architecture-v1.json",
+      "exit_status": 0,
+      "log": "make-check-v1.log",
+      "sha256": "86780ab348e31f9c0c5c0cbef7d192b98c387dfecb0fe5a7b25a3b1da0e944ef",
+      "scope": [
+        "root tests/race/vet",
+        "nestedzcago tests/race/vet",
+        "architecture100/100 allcontrols",
+        "CGO-free3platforms",
+        "two-repeatoffline50/480",
+        "make check-mcp-parity\u2192paired50/480"
+      ]
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts/mcp-migration -p test_*.py -v",
+      "exit_status": 0,
+      "log": "python-v1.log",
+      "sha256": "858bd649020fbb8a0c086ad99a2d3c96acec622bd5f3b687e69296d340b05889"
+    },
+    {
+      "command": "make eval-model EVAL_OUTPUT=/tmp/zl-t10-model-not-run-v1 (no driver)",
+      "exit_status": 2,
+      "expected_exit_status": 2,
+      "verification_status": "PASS_NO_MODEL_EXECUTED",
+      "model_gate": "NOT_RUN",
+      "live_gate": "NOT_RUN",
+      "report": "model-not-run-v1.json",
+      "log": "model-not-run-v1.log",
+      "sha256": "81e9aadca9a300b152d264d072a8add4e138ef259f9ca8ca0cf62b0c64e73266"
+    }
+  ],
+  "reuse": "evidence-reuse-basis.json",
+  "SDK": "../SDK-01/acceptance.json",
+  "performance": "../SDK-01/performance-comparison-4347-v1.json PASS9/9",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

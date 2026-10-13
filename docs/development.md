@@ -143,16 +143,19 @@ and checks the active import rules at compliance=100%/coverage=100%, the product
 `go list -deps` graph and isolated negative/positive controls. The pinned executable
 reports "master" via --version; build information (`go version -m`) is the verified pin.
 `make dependency-probe` recreates the isolated GOWORK=off consumer (no replace).
-`make check` currently runs root/nested test/race/vet, architecture, and three CGO-free
-platform builds. Mandatory offline eval joins it in T03; paired parity/performance
-acceptance joins it in T09. Model evaluation stays opt-in and NOT_RUN without authorization.
+`make check` runs root/nested test/race/vet, architecture, three CGO-free platform
+builds, two-repeat offline evaluation and `make check-mcp-parity` (the paired
+frozen/candidate runner). Performance acceptance is a separate host-bound gate.
+`make eval-model` is excluded from check/CI: without a separately authorized
+`MODEL_DRIVER=/absolute/driver` it writes NOT_RUN and exits nonzero. Model execution
+requires a separate instruction; no model/live run is included in this migration.
 
 Dependency pins and contracts: docs/mcp-migration/dependency-matrix.json.
 Exact temporary migration edges: docs/mcp-migration/architecture-exceptions.json.
 Evidence: docs/mcp-migration/evidence/T02. Architecture static imports do not prove
 account ownership, no resend, persistence, authorization or lifecycle: behavioral gates remain.
 
-## Final architecture migration checks (T09)
+## Final architecture migration checks (T10)
 
 `make check` runs root and nested tests/race/vet, executable architecture controls,
 CGO-free platform builds, offline evaluation and paired frozen/candidate eval.
@@ -193,3 +196,7 @@ Run `go test ./internal/mcpserver -run TestSDK01 -count=1` for the raw identity,
 HTTP lifecycle, actual STDIO subprocess, privacy and durable-UUID fixtures.
 The full task also requires unmodified SDK nested checks, root checks,
 offline/paired evaluation and fresh affected performance measurements.
+
+Final acceptance and rollback handoff: `docs/mcp-migration/final-report.md` and
+`docs/mcp-migration/rollback.md`. Machine-readable acceptance and independent
+reviews are under `docs/mcp-migration/evidence/T10/`.

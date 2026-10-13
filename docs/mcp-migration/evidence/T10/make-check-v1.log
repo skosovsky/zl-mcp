@@ -1,0 +1,120 @@
+go test ./...
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp	[no test files]
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval	[no test files]
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval-fixture	[no test files]
+ok  	github.com/skosovsky/zl-mcp/docs/contracts	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/operations	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/store	(cached)
+?   	github.com/skosovsky/zl-mcp/internal/app/archives	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/app/eventaccess	(cached)
+?   	github.com/skosovsky/zl-mcp/internal/app/history	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/membership	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/messaging	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/search	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/shared	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/collector	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/config	(cached)
+?   	github.com/skosovsky/zl-mcp/internal/control	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/domain	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/evaluation	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/events	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/local	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/logging	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/messaging	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/mobilebackup	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/netpolicy	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/observability	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/service	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/storage	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/zalo	(cached)
+go test -race ./...
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp	[no test files]
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval	[no test files]
+?   	github.com/skosovsky/zl-mcp/cmd/zl-mcp-eval-fixture	[no test files]
+ok  	github.com/skosovsky/zl-mcp/docs/contracts	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/operations	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/adapters/store	(cached)
+?   	github.com/skosovsky/zl-mcp/internal/app/archives	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/app/conversations	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/app/eventaccess	(cached)
+?   	github.com/skosovsky/zl-mcp/internal/app/history	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/membership	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/messaging	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/search	[no test files]
+?   	github.com/skosovsky/zl-mcp/internal/app/shared	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/collector	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/config	(cached)
+?   	github.com/skosovsky/zl-mcp/internal/control	[no test files]
+ok  	github.com/skosovsky/zl-mcp/internal/domain	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/evalfixture	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/evaluation	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/events	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/historyimport	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/local	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/logging	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/mcpserver	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/messaging	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/mobilebackup	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/netpolicy	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/observability	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/service	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/storage	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/toolruntime	(cached)
+ok  	github.com/skosovsky/zl-mcp/internal/zalo	(cached)
+go vet ./...
+cd third_party/zcago && go test ./...
+go: downloading golang.org/x/mod v0.21.0
+go: downloading golang.org/x/sync v0.17.0
+?   	github.com/amrakk/zcago	[no test files]
+ok  	github.com/amrakk/zcago/api	0.606s
+?   	github.com/amrakk/zcago/config	[no test files]
+?   	github.com/amrakk/zcago/errs	[no test files]
+?   	github.com/amrakk/zcago/internal/cryptox	[no test files]
+?   	github.com/amrakk/zcago/internal/httpx	[no test files]
+?   	github.com/amrakk/zcago/internal/jsonx	[no test files]
+?   	github.com/amrakk/zcago/internal/logger	[no test files]
+?   	github.com/amrakk/zcago/internal/timex	[no test files]
+ok  	github.com/amrakk/zcago/internal/websocketx	0.423s
+ok  	github.com/amrakk/zcago/listener	0.458s
+ok  	github.com/amrakk/zcago/listener/events	0.398s
+ok  	github.com/amrakk/zcago/model	0.385s
+?   	github.com/amrakk/zcago/session	[no test files]
+ok  	github.com/amrakk/zcago/session/auth	0.417s
+?   	github.com/amrakk/zcago/version	[no test files]
+cd third_party/zcago && go test -race ./...
+?   	github.com/amrakk/zcago	[no test files]
+ok  	github.com/amrakk/zcago/api	5.612s
+?   	github.com/amrakk/zcago/config	[no test files]
+?   	github.com/amrakk/zcago/errs	[no test files]
+?   	github.com/amrakk/zcago/internal/cryptox	[no test files]
+?   	github.com/amrakk/zcago/internal/httpx	[no test files]
+?   	github.com/amrakk/zcago/internal/jsonx	[no test files]
+?   	github.com/amrakk/zcago/internal/logger	[no test files]
+?   	github.com/amrakk/zcago/internal/timex	[no test files]
+ok  	github.com/amrakk/zcago/internal/websocketx	1.443s
+ok  	github.com/amrakk/zcago/listener	1.513s
+ok  	github.com/amrakk/zcago/listener/events	1.427s
+ok  	github.com/amrakk/zcago/model	1.402s
+?   	github.com/amrakk/zcago/session	[no test files]
+ok  	github.com/amrakk/zcago/session/auth	1.438s
+?   	github.com/amrakk/zcago/version	[no test files]
+cd third_party/zcago && go vet ./...
+mkdir -p "/workspace/zl-mcp/.tools"
+GOWORK=off GOBIN="/workspace/zl-mcp/.tools" go install github.com/arch-go/arch-go/v2@v2.1.2
+GOWORK=off python3 scripts/mcp-migration/architecture.py --binary "/workspace/zl-mcp/.tools/arch-go" --evidence "docs/mcp-migration/evidence/T10/architecture-v1.json"
+architecture PASS: active compliance/coverage100%, production graph, 10 isolated controls plus all-build source controls
+mkdir -p bin
+CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -trimpath -o bin/zl-mcp-darwin-arm64 ./cmd/zl-mcp
+CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -trimpath -o bin/zl-mcp-darwin-amd64 ./cmd/zl-mcp
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o bin/zl-mcp-linux-amd64 ./cmd/zl-mcp
+GOWORK=off go run ./cmd/zl-mcp-eval --root "/workspace/zl-mcp" --profile offline --output "/tmp/zl-t10-offline-v1" --run-budget 30m --repeats 2
+PASS cases50/50 assertions480/480; model=NOT_RUN live=NOT_RUN
+set -eu; task_pair_root=$(mktemp -d /tmp/zl-mcp-paired.XXXXXX); \
+	GOWORK=off python3 scripts/mcp-migration/build_eval.py --output "$task_pair_root/build"; \
+	"$task_pair_root/build/zl-mcp-eval-candidate" --root "/workspace/zl-mcp" --baseline-binary "$task_pair_root/build/zl-mcp-eval-baseline" --output "$task_pair_root/paired" --repeats 2
+PASS cases50/50 assertions480/480; model=NOT_RUN live=NOT_RUN

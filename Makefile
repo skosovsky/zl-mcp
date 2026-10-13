@@ -34,12 +34,12 @@ build-platforms:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o bin/zl-mcp-linux-amd64 ./cmd/zl-mcp
 
 # Full synthetic offline parity is mandatory; performance uses the recorded host baseline.
-check: test race vet nested-test nested-race nested-vet architecture build-platforms eval-offline eval-paired
+check: test race vet nested-test nested-race nested-vet architecture build-platforms eval-offline check-mcp-parity
 
 EVAL_OUTPUT ?= /tmp/zl-mcp-offline-$$(date +%s)-$$$$
 .PHONY: eval-offline
 eval-offline:
-	GOWORK=off go run ./cmd/zl-mcp-eval --root "$(CURDIR)" --profile offline --output "$(EVAL_OUTPUT)" --run-budget 30m
+	GOWORK=off go run ./cmd/zl-mcp-eval --root "$(CURDIR)" --profile offline --output "$(EVAL_OUTPUT)" --run-budget 30m --repeats 2
 
 .PHONY: bench-mcp
 BENCH_ROLE ?= candidate
@@ -61,3 +61,12 @@ PERFORMANCE_CANDIDATE ?=
 PERFORMANCE_REPORT ?= /tmp/zl-mcp-performance-comparison.json
 performance-acceptance:
 	python3 scripts/mcp-migration/compare_performance.py --baseline "$(PERFORMANCE_BASELINE)" --candidate "$(PERFORMANCE_CANDIDATE)" --baseline-build "$(PERFORMANCE_BASELINE_BUILD)" --output "$(PERFORMANCE_REPORT)"
+
+.PHONY: check-mcp-parity eval-model
+check-mcp-parity: eval-paired
+
+# A missing separately authorized driver produces NOT_RUN and a nonzero exit.
+# This opt-in target is excluded from check and CI.
+MODEL_DRIVER ?=
+eval-model:
+	GOWORK=off go run ./cmd/zl-mcp-eval --root "$(CURDIR)" --profile model --model-driver "$(MODEL_DRIVER)" --output "$(EVAL_OUTPUT)" --run-budget 30m

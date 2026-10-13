@@ -1,0 +1,2 @@
+2026/10/12 19:24:35 INFO mcp_call tool=zalo_list_conversation_messages correlation_id=KGLO4GJTRG5RZIGKYRFVXMSFZS code=OK outcome=success duration_ms=2
+2026/10/12 19:24:35 INFO mcp_call tool=zalo_list_conversation_messages correlation_id=KPPBZJ7O6STPJHWQGOBYCRUY5A code=PERMISSION_DENIED outcome=error duration_ms=1
