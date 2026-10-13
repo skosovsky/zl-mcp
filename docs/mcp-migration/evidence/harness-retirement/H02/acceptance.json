@@ -1,0 +1,17 @@
+{
+  "candidate": "efaa06b3096210c15d2a401d6613658f720a8810d4277b6732728b366ad4acaa",
+  "completeness": {
+    "agent": "arch_go_architecture_review",
+    "passed": 8,
+    "total": 8,
+    "percent": 100
+  },
+  "correctness": {
+    "agent": "cleanup_correctness",
+    "status": "PASS"
+  },
+  "checks": "CLI/evaluation unit/race/vet PASS",
+  "finding": "fixed exact per-control report status",
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}

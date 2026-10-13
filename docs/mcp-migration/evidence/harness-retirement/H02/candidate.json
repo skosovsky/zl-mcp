@@ -1,0 +1,9 @@
+{
+  "sha256": "efaa06b3096210c15d2a401d6613658f720a8810d4277b6732728b366ad4acaa",
+  "checks": "CLI and evaluation unit/race/vet PASS",
+  "changed_source": {
+    "cmd/zl-mcp-eval/main_test.go": "1b2dabb44f1c0492cd3222a132e6063f4ed3fb386e9e638fc89fd51c7cd24b6a",
+    "internal/evaluation/process_test.go": "5f535fc45038d3f7e1dfc938c270ffdd020f9a675a5621481b9eb667c25d3238",
+    "docs/harness-maintenance.md": "d10b21e63f4e1228fb5c811da735973650617b2dc01dbbb8e74507a32352ef43"
+  }
+}

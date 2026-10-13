@@ -24,3 +24,5 @@ Use a separate checkout of the immutable T10 commit above to run its documented 
 Each H01–H06 has one atomic commit after leaf requirements/candidate fingerprint, relevant checks and two independent reviews (completeness 100%, correctness PASS). Existing dirty cleanup/dependency work is preserved and not included automatically. Current root pins remain toolsy v0.20.6 / SDK fork 4a7b89fe086f.
 
 Permanent checks do not execute model/live paths. Those gates remain NOT_RUN. No service installation, LaunchAgent restart, live account, paid model run, publication, sibling library edit or third_party edit is authorized.
+
+CLI acceptance controls are Go tests alongside the evaluation command. They require no model CLI or account: failure, missing child, timeout and model preflight are exercised offline. Process watchdog tests enforce bounded output and cleanup of the owned process group, including descendants.

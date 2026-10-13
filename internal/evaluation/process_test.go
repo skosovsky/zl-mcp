@@ -5,8 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -33,9 +36,71 @@ func TestProcessHelper(t *testing.T) {
 		}
 	case "normal":
 		fmt.Print(`{"ok":true}`)
+	case "descendant":
+		for {
+			time.Sleep(time.Hour)
+		}
+	case "descendant-normal", "descendant-timeout":
+		binary, err := os.Executable()
+		if err != nil {
+			os.Exit(1)
+		}
+		child := exec.Command(binary, "-test.run=^TestProcessHelper$", "--", "helper=descendant")
+		// Inherit the watchdog-owned group, without holding its output pipes.
+		if err := child.Start(); err != nil {
+			os.Exit(1)
+		}
+		fmt.Print(child.Process.Pid)
+		if mode == "descendant-timeout" {
+			time.Sleep(time.Hour)
+		}
 	}
 	// Assert: parent tests verify termination; exit before test runner prints PASS.
 	os.Exit(0)
+}
+
+func TestWatchdogTerminatesDescendantsAfterNormalExitAndTimeout(t *testing.T) {
+	for _, mode := range []string{"descendant-normal", "descendant-timeout"} {
+		t.Run(mode, func(t *testing.T) {
+			// Arrange: the helper spawns a descendant in its owned process group.
+			binary, err := os.Executable()
+			if err != nil {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+			started := time.Now()
+			// Act.
+			stdout, _, processErr := Process(ctx, binary, []string{"-test.run=^TestProcessHelper$", "--", "helper=" + mode}, 4096)
+			// Assert: Wait is bounded and both exit paths terminate the owned group.
+			pid, err := strconv.Atoi(string(stdout))
+			if err != nil || pid <= 0 || time.Since(started) > 3*time.Second {
+				t.Fatalf("helper did not spawn/finish: %q; %v; %v", stdout, err, processErr)
+			}
+			defer syscall.Kill(pid, syscall.SIGKILL)
+			if mode == "descendant-normal" && processErr != nil {
+				t.Fatal(processErr)
+			}
+			if mode == "descendant-timeout" && !errors.Is(processErr, context.DeadlineExceeded) {
+				t.Fatal(processErr)
+			}
+			deadline := time.Now().Add(2 * time.Second)
+			for {
+				if errors.Is(syscall.Kill(pid, 0), syscall.ESRCH) {
+					break
+				}
+				// A reparented zombie has terminated; reaping belongs to the host.
+				state, _ := exec.Command("ps", "-o", "stat=", "-p", strconv.Itoa(pid)).Output()
+				if strings.HasPrefix(strings.TrimSpace(string(state)), "Z") {
+					break
+				}
+				if time.Now().After(deadline) {
+					t.Fatalf("owned descendant %d still running", pid)
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+		})
+	}
 }
 func TestExternalWatchdogAndOutputBounds(t *testing.T) {
 	for _, mode := range []string{"hang", "flood", "normal"} {

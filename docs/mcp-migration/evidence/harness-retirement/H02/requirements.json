@@ -1,0 +1,14 @@
+{
+  "leaves": [
+    "Go actual CLI tests replace Python controls",
+    "assertion failure exits1 with failedreport",
+    "missing child exits1",
+    "timeout exits2 incomplete",
+    "missing and unauthorized model drivers neverexecute exits2 NOT_RUN",
+    "unknownprofile exits2",
+    "partial/flood/watchdog and descendant cleanup covered",
+    "permanent offline/root/nested/platform gates retained"
+  ],
+  "model": "NOT_RUN",
+  "live": "NOT_RUN"
+}
