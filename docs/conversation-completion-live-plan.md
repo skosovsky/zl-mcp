@@ -12,17 +12,31 @@ sends or prove first-only/incoming-only subscription filtering. The no-deletion
 rule below applies to an unapproved attempt to manufacture a new peer, not that
 separately approved reset. Do not repeat the reset or silently broaden its scope.
 
+## Fresh-account priority (October 15)
+
+The user has one newly registered test account. Preserve its genuinely first
+incoming contact: do not send from either account, add friendship, seed the local
+conversation catalogue or trigger history preload for this peer before the
+receiver and subscriptions are ready. Read-only identity verification must not
+create a conversation or first-incoming fact. Do not request another new account.
+
+The sequence below prioritizes the first incoming/Strangers scenario over the
+outside-catalogue first outgoing scenario. Once incoming A is stored, subsequent
+outgoing messages are replies to a known peer. They cannot prove first sending
+to an unknown peer. A separately approved local reset could test local catalogue
+absence later, but cannot restore genuine upstream first-contact conditions.
+
 ## Required agreement
 
-Select a controlled test recipient by an exact verified Zalo ID. Before the first
-send it must be absent from the current catalogue, corpus, permanent message
+Select a controlled test recipient by an exact verified Zalo ID. Before incoming
+A it must be absent from the current catalogue, corpus, permanent message
 identities and first-incoming facts. Name similarity does not establish identity.
 An archive-only acquaintance is not necessarily a new Zalo contact; the tested
 property is locally known incoming history, not first contact in real life.
 Do not delete records, add a contact or reset novelty to manufacture eligibility.
 
-Prepare a private exact send plan: recipient, text, fresh UUID and one-recipient
-permission. Proposed text: `zl-mcp: проверка первой личной отправки.` Approval of
+Prepare a private exact send plan only for the later outgoing check: recipient,
+text, fresh UUID and one-recipient permission. Approval of
 that concrete plan is required; the previous two-message approval does not apply.
 Same-UUID retry belongs to that plan; no quoted or replacement send is needed.
 
@@ -72,35 +86,40 @@ catalogue; do not blindly create another subscription.
 
 1. Preserve a verified state/config backup. Record the peer-absence/novelty
    preconditions and private send/subscription plans. If the peer is already
-   known, retain that fact and choose another agreed peer; do not erase history.
+   known, stop and report which precondition failed; do not erase history or
+   assume another new account is available.
 2. Activate C/I/F and record successful verification, returned IDs, generations,
    activation boundaries and expiries. Coordinate the test recipient to wait
    until readiness. Unexpected earlier incoming/replay must be recorded; it can
-   invalidate the intended first-send/first-incoming precondition.
-3. Send approved outgoing Q through MCP. Record upstream status and genuine ID.
-   Repeat only the same approved UUID/arguments; require the identical receipt.
-   `unknown`/`failed` does not permit a fresh replacement UUID. A distinguishable
-   upstream restriction is a documented outcome, not permission to add friendship.
-4. Have the controlled recipient send incoming A. Record its genuine message ID
-   and the stored first-incoming fact. C must include Q and A; I includes A only;
+   invalidate the intended first-incoming precondition.
+3. Have the controlled recipient send exactly one incoming A, only after an
+   explicit readiness signal. Record catalogue discovery, conversation type,
+   sender identity and whether Strangers classification is actually observable.
+   Do not infer friendship or Strangers membership from a successful ingest.
+4. Record A's genuine message ID and the stored first-incoming fact. C/I include A;
    F must contain the actual first locally known incoming record exactly once.
    If a genuine earlier replay became the first record, record that source/time
    honestly rather than relabel A or reset the fact.
 5. Read test journals by exact IDs, compare signed callback envelopes with their
-   journal event/message identities and expected direction/first fields. Q must
-   appear in C and must create no delivery/journal record for I or F. A missing
+   journal event/message identities and expected direction/first fields. A missing
    I/F callback proves exclusion only after C/source persistence is established;
    timeouts, source silence or HTTP errors are inconclusive.
 6. Restart the same installed Go service in the agreed window, with no other
    listener. Re-read existing test records and compare event IDs/order,
    generations, activation boundaries and novelty facts. Replay must not create
-   another first fact or duplicate record. Read the saved Q status; never resend
-   with a new UUID. Preserve the existing production subscription/ledger.
+   another first fact or duplicate record. Preserve the existing production
+   subscription/ledger.
 7. Have the recipient send incoming B after recovery. Its first-incoming flag must
    be false for a known fact; C/I receive B, F does not. A genuine null/unknown
    flag must never pass F, but manufacturing uncertainty is not a live test.
    Synthetic null cases remain separate evidence if none occurs naturally.
-8. Distinguish persistence, callback acceptance and client processing. Test client
+8. Only after A/B, send approved outgoing Q through MCP. Record upstream status
+   and genuine ID. Retry only the same approved UUID/arguments and require the
+   identical receipt. Q must appear in C and create no delivery/journal record
+   for I/F. This tests direction filtering and idempotency for a now-known peer,
+   not outside-catalogue first sending. An unknown/failed result does not permit
+   a replacement UUID or adding friendship.
+9. Distinguish persistence, callback acceptance and client processing. Test client
    checkpoints only its own C/I/F records after successful processing; read-only
    diagnostics never acknowledge on behalf of the production automation. A
    notification-before-ack crash can duplicate notices and is not exactly-once.

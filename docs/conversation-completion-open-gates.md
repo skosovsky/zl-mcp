@@ -1,4 +1,4 @@
-> Current update: conversation Events v1 has been removed. Discovery exposes legacy/group and conversation v2. Payload recovery and processing checkpoints are documented in [event-recovery](contracts/event-recovery.md). Earlier observations below retain their historical version names.
+> Current update: use the [October 15 checkpoint](conversation-completion-2026-10-15.md) for the installed backend, completed publication/CI and remaining live gates, and the [live plan](conversation-completion-live-plan.md) for the single fresh-account test sequence. The October 7 installation descriptions below are historical. Conversation Events v1 has been removed. Discovery exposes legacy/group and conversation v2. Payload recovery and processing checkpoints are documented in [event-recovery](contracts/event-recovery.md).
 
 # Conversation completion: current open gates
 

@@ -86,10 +86,8 @@ or mutate subscriptions.
   A fresh send needs its exact approved recipient, text and request UUID.
 - Strict real mobile import remains unaccepted; the retained archive's read-only
   acceptance neither enables import nor proves complete upstream history.
-- Local migration commits through `6161075` were not on public main when this
-  checkpoint was prepared. Publication requires reviewing and scanning that
-  unpublished range, then successful CI; do not reuse October 7 CI as evidence
-  for the upgraded backend.
+- Publication and fresh CI are now accepted by the evidence below. Live filter,
+  restart and outside-catalogue sending gates remain separate.
 
 At test completion, reconcile the controlled peer's original known novelty state
 from the private backup without replacing newer corpus/send/delivery state or
@@ -121,4 +119,29 @@ commits have also been transformed, signed and scanned without findings; every
 original/sanitized pair preserves production sources and executable contracts.
 The checkout now follows the clean history; original history remains recoverable
 from the verified private archive. Full local `make check` passed on the identical
-tree. Publication and fresh GitHub CI are the remaining publication steps.
+tree. These were intermediate review observations; final publication follows.
+
+## Completed publication and fresh CI
+
+Public main reached
+[`09de2a1`](https://github.com/skosovsky/zl-mcp/commit/09de2a1b03dba77879b885c8de0df9d28fb1cbda).
+The final 29-commit published range passed secret scanning after history sanitation;
+the private original history remains recoverable. Both Ubuntu and macOS jobs in
+[CI run 38632094257](https://github.com/skosovsky/zl-mcp/actions/runs/38632094257)
+completed successfully, including root/nested tests, race/vet, lint, architecture,
+offline synthetic checks, CGO-free builds and native service startup acceptance.
+This is fresh publication evidence, not additional live Zalo acceptance.
+
+## Fresh-account readiness
+
+The user now has one newly registered test account. The
+[live plan](conversation-completion-live-plan.md) prioritizes its genuine first
+incoming before any outgoing or friendship changes. Subsequent outgoing cannot
+also prove first sending to an unknown peer without a separately scoped test.
+
+A read-only check through the actual connected MCP client still reports
+authenticated/connected, no last error and 83 stored messages. Exactly one active
+v2 subscription covers all direct chats in both directions, without first-only
+filtering. No temporary subscriptions were created, no journal was acknowledged,
+and no message was sent. A verified peer identity and independently routed trusted
+test receiver are still required before the first incoming readiness signal.
