@@ -107,3 +107,7 @@ provenance/checksum references remain coherent. Sanitizing generated evidence
 must not silently relabel historical results as fresh verification or alter the
 executable schemas and synthetic fixture inputs. No credential revocation is
 claimed necessary from these synthetic findings alone.
+
+The [current-tree publication copies](publication-evidence-sanitization.md) are
+now sanitized, checksum-linked and checked independently. The unpublished
+history still needs the equivalent transformation before push.
