@@ -6,7 +6,7 @@ One persistent `service` process owns the Zalo listener, SQLite database, MCP en
 
 ## Getting started
 
-Source installation is supported on macOS. Install Go **1.26.5** or a compatible newer version, then:
+Source installation is supported on macOS. Use the Go version required by `go.mod` (**1.27.2** currently), then:
 
 ```sh
 git clone https://github.com/skosovsky/zl-mcp.git

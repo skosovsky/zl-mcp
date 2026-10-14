@@ -133,7 +133,7 @@ successful import of private history.
 
 ## Architecture migration toolchain (T02)
 
-Root Go directive: 1.27.1, the minimum compiler required by verified public pins.
+Root Go directive: 1.27.2; use the exact pinned toolchain for reproducible performance builds.
 CI setup-go reads go.mod on Linux and native macOS; all existing tests/race/vet,
 nested patched zcago checks, native startup acceptance and CGO-free builds remain.
 The nested patched module is not modified; run it with the same selected root Go binary.

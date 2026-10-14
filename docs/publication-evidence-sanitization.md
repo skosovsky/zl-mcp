@@ -23,21 +23,28 @@ The transformation:
   executable contracts, fixture inputs, real account state and installed binaries
   are not modified by this documentation transformation.
 
-The current-tree transformation covers 567 files and 217 synthetic approval-token
+The current-tree transformation covers 571 files and 217 synthetic approval-token
 occurrences. The private original/published inventory verifies every transformed
 file. The transformed docs passed gitleaks 8.30.1 with no findings; performance
 harness tests passed against their updated build-manifest/checksum references.
 Those focused checks do not replace full CI or real Zalo acceptance.
 
 Removing these values from the final tree alone does not remove them from Git
-history. All 27 unpublished commits after `8d913c4` have now received the same
-transformation and been signed again, preserving order, authorship and messages.
+history. The unpublished development commits after `8d913c4` have received the
+same transformation and been signed again, preserving order, authorship and
+messages. Final review also corrected paths used as overlay JSON keys and
+hostnames embedded in uname strings; the transformation covers keys and values.
 The [history map](publication-history-map.json) records original/sanitized IDs;
 original IDs are retained privately and may not resolve on GitHub. The reviewed
 new history passes gitleaks with no findings, and each original/sanitized pair
 differs only in documentation. The sanitized head `f93869a` matches the
 independently checked current-tree publication copy, before adding the history
 map and this completion note.
+
+The reviewed chain contains 28 signed commits. Secret scanning found no matches;
+manual scanning of 10,385 unique historical text blobs found no remaining private
+home paths, machine names or known personal-chat markers. Performance manifest
+tests also passed after the final metadata corrections.
 
 Full `make check` passed locally: pinned lint, root/harness/zcago test/race/vet,
 architecture, platform builds and offline contracts. No model evals or live Zalo

@@ -26,7 +26,7 @@ real phone acceptance are tracked in [open gates](conversation-completion-open-g
 
 ## Build and configure
 
-Install Go 1.26.5 or a compatible newer version. From the repository root:
+Use the Go version required by `go.mod` (currently 1.27.2). From the repository root:
 
 ```sh
 go build -o bin/zl-mcp ./cmd/zl-mcp
