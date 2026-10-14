@@ -30,6 +30,17 @@ harness tests passed against their updated build-manifest/checksum references.
 Those focused checks do not replace full CI or real Zalo acceptance.
 
 Removing these values from the final tree alone does not remove them from Git
-history. The unpublished commit range must receive the same review/sanitization
-before public push. Do not suppress broad secret-scanner rules to publish raw
-fixture capabilities, or relabel sanitized historical output as a new test run.
+history. All 27 unpublished commits after `8d913c4` have now received the same
+transformation and been signed again, preserving order, authorship and messages.
+The [history map](publication-history-map.json) records original/sanitized IDs;
+original IDs are retained privately and may not resolve on GitHub. The reviewed
+new history passes gitleaks with no findings, and each original/sanitized pair
+differs only in documentation. The sanitized head `f93869a` matches the
+independently checked current-tree publication copy, before adding the history
+map and this completion note.
+
+Full `make check` passed locally: pinned lint, root/harness/zcago test/race/vet,
+architecture, platform builds and offline contracts. No model evals or live Zalo
+effects were performed by those checks. GitHub CI still must pass on the published
+head. Do not suppress broad secret-scanner rules to publish raw fixture
+capabilities, or relabel sanitized historical output as a new test run.

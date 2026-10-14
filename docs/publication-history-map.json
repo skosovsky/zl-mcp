@@ -1,0 +1,119 @@
+{
+  "format_version": 1,
+  "public_base_commit": "8d913c48b797f54f277ffc1106e6bf28be9e697d",
+  "original_unpublished_head": "cdb2b68cbc7de9d6388d66a3c5e8e8254137a146",
+  "sanitized_unpublished_head": "f93869ae00805fd58279a420a19245b2cac9b20a",
+  "original_history_retention": "verified_private_archive",
+  "original_commits_may_not_resolve_on_github": true,
+  "only_documentation_changed_per_commit": true,
+  "commits": [
+    {
+      "original": "a3151c6bbee589cfaa3aeb21b147afe59e2ad321",
+      "sanitized": "96889a0fc56b10e8cbdfea0feba0df43c46986c0"
+    },
+    {
+      "original": "23b3e200e18ad0d0433f38fe4832207c01bb74d2",
+      "sanitized": "f4084a6a881a4a60a0c35ed10458f808ec680d3f"
+    },
+    {
+      "original": "da3d7b6f0369f85e58d17b546c933b362c342224",
+      "sanitized": "ca60524a6d8fba79c6aa37ffddeef85f0dc43a6b"
+    },
+    {
+      "original": "775d3a271110b2771a9cc0ac63d3f51151481e53",
+      "sanitized": "39e4d1a9f197179a6cc7e3f0255411b70b178890"
+    },
+    {
+      "original": "45230af90f90cf27358f41e5ff52949fd686525d",
+      "sanitized": "656bd4f52637584a4b8e6444dac78b362970b663"
+    },
+    {
+      "original": "a0ed93568dd3dae388e4bc65142becceb5085890",
+      "sanitized": "ecd654a0bfea638652fa2311ac01d0026b18e685"
+    },
+    {
+      "original": "bcab7133d00a34db8bfc148fee80480d05c1126f",
+      "sanitized": "7d938e9b6524a9cba7d74f5501d48091257d5621"
+    },
+    {
+      "original": "61d8b6c31ccdcbc107ae92114000ba677e53110d",
+      "sanitized": "5323bf18334a1efb94c6f55bef3cac166d0fa63b"
+    },
+    {
+      "original": "bb3eadc785366588b88bdc83c4d7693c89b96090",
+      "sanitized": "13fce9b0cb7800129ad174f3f932232578ffc0c7"
+    },
+    {
+      "original": "88b723bc37abdf9f3f50c69dfc4d7115af330be2",
+      "sanitized": "eb8583607a8012c8181e722bb86dca7bbd2b9924"
+    },
+    {
+      "original": "518f7e9af861e46a840bd71a7a410acaf43e05c6",
+      "sanitized": "6295c0a266ac4b6f88c27e947ded30822b02ca5f"
+    },
+    {
+      "original": "e58eda224b811c36274beb007035cd47a6d20241",
+      "sanitized": "d54f1c7741e059a0d7dd9f977c196ee0fa4754e4"
+    },
+    {
+      "original": "a6ad05d1c4682523167779c4feff007fb2da5549",
+      "sanitized": "45e8685f2beeda6a2b20a2de1206608c87fb2633"
+    },
+    {
+      "original": "784f98113e3ef08400611b4563865feedd8b7882",
+      "sanitized": "c5b8cdd3f81c1e8170867136bafd0545ff902ece"
+    },
+    {
+      "original": "0b653b77ae2124d2fcb1e6dd720365f6978954d2",
+      "sanitized": "1ad40b15ca62f412e866a8b170ecf53d8c8d01d2"
+    },
+    {
+      "original": "d475db4112583fc90678cc19c40a815ed058310a",
+      "sanitized": "eaf830899a3a6cb6dfc0abcec96b4d4307c4971a"
+    },
+    {
+      "original": "6ee44a9dc7449694614934b0fae390a343fd516d",
+      "sanitized": "0fab2d0a2bde9e45bda19c50819ff186869b574a"
+    },
+    {
+      "original": "35c6fa3210f430edeb774cfce20c311d54fac440",
+      "sanitized": "99319a4856e3731f4a8519f865d5675f8fda88bd"
+    },
+    {
+      "original": "6fb116611d4f557971fb354a0ff312640c9bbf97",
+      "sanitized": "b6d311c46fefb5e6e32f136dcde4a363f53a89d3"
+    },
+    {
+      "original": "4bd21b313545a6b90e78ddba0f23ad8309027199",
+      "sanitized": "a3ff93741c7876c66ab536bf50248947ed68d28c"
+    },
+    {
+      "original": "44b44e10dd8d0a042eed1c3f2b699ba8585e2feb",
+      "sanitized": "26f0eca94a0655ab8d971b358fdfc8d068f97c12"
+    },
+    {
+      "original": "114f567b09dc1566bcc8f6d51ee1b54fe1a1417f",
+      "sanitized": "0b026a79160046e0220aed2d8b9fd3cd271bb238"
+    },
+    {
+      "original": "9e8865e3b16550378ebf8849c275c9f8f8f13a8e",
+      "sanitized": "193a895bd0e2eb7ce63cfe036d4bff2e77433934"
+    },
+    {
+      "original": "9a01f7e5995a0ec10831b397703d69ca4a3510cd",
+      "sanitized": "f4d34405cbc1032270a7ea323eab407508107876"
+    },
+    {
+      "original": "6161075565affe2992d12928f2c75481a717b141",
+      "sanitized": "b393282c28d935d6e74bbdba8463a8125871b863"
+    },
+    {
+      "original": "b518deb80f0fbdf1a8ddd30cd4f782abe694a868",
+      "sanitized": "43fe5eda956143ca8bae9fe1d2002c27164aa4be"
+    },
+    {
+      "original": "cdb2b68cbc7de9d6388d66a3c5e8e8254137a146",
+      "sanitized": "f93869ae00805fd58279a420a19245b2cac9b20a"
+    }
+  ]
+}

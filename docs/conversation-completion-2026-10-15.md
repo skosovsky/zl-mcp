@@ -12,6 +12,13 @@ CGO disabled and trimpath. Installed arm64 SHA-256:
 `5e6cc81694bd2d8f678c35af1a887f9a62c3aa0b688f0c83fa49655ddc761e2a`.
 The candidate was ad hoc signed and its signature verified.
 
+Publication sanitation maps that original code commit to
+[`b393282`](https://github.com/skosovsky/zl-mcp/commit/b393282c28d935d6e74bbdba8463a8125871b863).
+Their production sources and executable contracts are identical. Installed VCS
+metadata remains the original `6161075`; rewriting documentation/history does not
+change the running binary or justify restarting it. See the
+[complete original/sanitized map](publication-history-map.json).
+
 The focused `go test` command passed for `internal/service` and
 `internal/mcpserver`; `cmd/zl-mcp` reported no test files.
 The exact candidate passed `TestNativeBinaryTerminalStartupAcceptance` with
@@ -109,5 +116,9 @@ executable schemas and synthetic fixture inputs. No credential revocation is
 claimed necessary from these synthetic findings alone.
 
 The [current-tree publication copies](publication-evidence-sanitization.md) are
-now sanitized, checksum-linked and checked independently. The unpublished
-history still needs the equivalent transformation before push.
+now sanitized, checksum-linked and checked independently. All 27 unpublished
+commits have also been transformed, signed and scanned without findings; every
+original/sanitized pair preserves production sources and executable contracts.
+The checkout now follows the clean history; original history remains recoverable
+from the verified private archive. Full local `make check` passed on the identical
+tree. Publication and fresh GitHub CI are the remaining publication steps.
