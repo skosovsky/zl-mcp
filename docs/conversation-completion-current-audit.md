@@ -1,5 +1,10 @@
 # Conversation completion: current requirement audit
 
+The [October 15 checkpoint](conversation-completion-2026-10-15.md) supersedes the
+installation details and first-incoming observation below. The October 7 table
+is retained as dated acceptance evidence; it is not a description of the latest
+installed backend or fresh CI coverage.
+
 Date: 2026-10-07. The goal remains in progress. This audit follows the full
 [task](task-conversation-completion.md), including its earlier direct-send gates.
 Historical reports retain their original observations; they are not current

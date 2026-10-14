@@ -4,6 +4,14 @@ Status: prepared, not executed or authorized for a selected peer/receiver.
 Follows the [current audit](conversation-completion-current-audit.md). The accepted
 October 6 plain/quote acknowledgement trial is not repeated. No model evals.
 
+The user subsequently authorized a controlled existing-chat history/novelty reset.
+Its exact preservation and partial results are in the
+[October 15 checkpoint](conversation-completion-2026-10-15.md). That variation
+does not meet the outside-catalogue first-send precondition below, authorize fresh
+sends or prove first-only/incoming-only subscription filtering. The no-deletion
+rule below applies to an unapproved attempt to manufacture a new peer, not that
+separately approved reset. Do not repeat the reset or silently broaden its scope.
+
 ## Required agreement
 
 Select a controlled test recipient by an exact verified Zalo ID. Before the first

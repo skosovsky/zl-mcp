@@ -2,7 +2,9 @@
 
 Status: work in progress. Tracks [the combined task](task-conversation-completion.md). No model evals are used.
 
-Current requirement status is in the [October 7 audit](conversation-completion-current-audit.md)
+The latest installed-backend and partial first-incoming result is in the
+[October 15 checkpoint](conversation-completion-2026-10-15.md).
+Earlier requirement status is in the [October 7 audit](conversation-completion-current-audit.md)
 and [installed checkpoint](conversation-completion-open-gates.md). The historical
 entries below retain the capabilities and pending gates of their dated versions;
 they do not override later acceptance. The current archive is fully paged through
