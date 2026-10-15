@@ -1,9 +1,39 @@
 # Conversation completion: current requirement audit
 
-The [October 15 checkpoint](conversation-completion-2026-10-15.md) supersedes the
-installation details and first-incoming observation below. The October 7 table
-is retained as dated acceptance evidence; it is not a description of the latest
-installed backend or fresh CI coverage.
+## Current update: October 15 live filter acceptance
+
+The [signed local callback acceptance](local-callback-acceptance.md) supersedes
+the installation and pending filter/restart labels in the older reports below.
+Installed clean code is `754f91056f853c8bc88a73821bef4a58a643e225`, binary SHA-256
+`09f82dfdfd0c9f57b349007768bda2ba83501e009751f98a369ecb5f387a666a`.
+Its full local checks, exact native startup acceptance and
+[Linux/macOS CI](https://github.com/skosovsky/zl-mcp/actions/runs/38697162754) passed.
+
+| Gate | Current evidence and outcome |
+| --- | --- |
+| Incoming/outgoing filtering | Known-peer live incoming reached both controls; main-account outgoing reached `all` and created no delivery in `incoming` after source fanout. Signed receiver and actual MCP journals agreed. Accepted. |
+| First-only positive and repeat exclusion | Genuine fresh peer was absent from the private pre-message catalogue/corpus/permanent-identity/directory/novelty snapshot. First live message reached all three subscriptions with `first_incoming=true`; repeat reached only `all`/`incoming` with false. Accepted. |
+| Restart recovery | Same service restarted between first and second messages. Original generations/boundaries, first fact, exact event/message IDs and one delivery per source were retained. Actual client recovered the unacknowledged first records before ordered test-only ack. Accepted. |
+| Test cleanup | Six exact test subscriptions cancelled; two receivers stopped; exact local callback permissions removed. Only original production direct/all subscription remains active, with unchanged definition and processing checkpoint. Connected/authenticated, no error; SQLite integrity passed. Accepted. |
+| Strangers classification | New direct peer ingestion and catalogue discovery accepted. Friendship metadata was unknown; no complete upstream Strangers inbox or exact classification is inferred. |
+
+No model evals, extra Zalo sends or phone sync were used for these trials.
+Private identities, payloads, signing keys and callback URLs remain outside Git.
+Both skills retain their existing valid v2 direction/first-known, journal recovery
+and archive boundaries; local receiver configuration adds no agent workflow.
+
+Remaining gates: first sending to a peer absent from catalogue/corpus (the fresh
+incoming peer is now known and cannot prove this); strict real mobile import;
+unavailable deeper source history and missing metadata as documented below.
+Do not repeat accepted plain/quote sends or request another phone capture of the
+retained bytes to refresh evidence. The complete task remains open; these filter
+results do not silently narrow its scope.
+
+## Historical October 7 audit
+
+The [earlier October 15 checkpoint](conversation-completion-2026-10-15.md) records
+intermediate publication and preflight results. The October 7 table below is
+retained as dated evidence, not current pending status or installation details.
 
 Date: 2026-10-07. The goal remains in progress. This audit follows the full
 [task](task-conversation-completion.md), including its earlier direct-send gates.

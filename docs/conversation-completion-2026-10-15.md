@@ -1,5 +1,11 @@
 # Conversation completion: October 15 checkpoint
 
+Later same-day [local callback acceptance](local-callback-acceptance.md) and
+[current audit](conversation-completion-current-audit.md) supersede the installed
+version, fresh-account readiness and pending incoming/first-only/restart labels
+in this intermediate checkpoint. Those live gates passed and test infrastructure
+was cleaned up. Earlier observations below remain dated evidence.
+
 Status: partial live acceptance. The full [task](task-conversation-completion.md)
 remains open. This checkpoint supersedes older installation descriptions, not
 the remaining requirements. No model evals were run for this checkpoint.

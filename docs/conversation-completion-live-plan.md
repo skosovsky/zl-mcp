@@ -1,6 +1,9 @@
 # Remaining conversation live acceptance
 
-Status: prepared, not executed or authorized for a selected peer/receiver.
+Status: known-peer direction/repeat filters and genuine fresh-peer first incoming,
+restart recovery and second-incoming exclusion passed. Six local test
+subscriptions were cancelled and both receivers stopped after acceptance.
+See [local callback acceptance](local-callback-acceptance.md) for executed evidence.
 Follows the [current audit](conversation-completion-current-audit.md). The accepted
 October 6 plain/quote acknowledgement trial is not repeated. No model evals.
 
@@ -63,9 +66,27 @@ subscribe through authenticated MCP HTTP; no automation or Ann handoff is needed
 Local mode requires an upgraded service and exact operator allowlist; its presence
 in source is not proof of deployment or of created live subscriptions.
 
-The user agreed to three temporary direct-wide subscriptions for 30 minutes when
-the fresh peer ID is unavailable. That consent does not make them active. For the
+The user agreed to three test direct-wide subscriptions when the fresh peer ID
+is unavailable, and later explicitly removed test-window deadlines. That consent
+does not make them active. For the
 initial existing-peer preflight, narrower exact conversation scopes suffice.
+
+The subsequently completed fresh-account trial used three distinct signed local
+receiver routes with direct-wide subscriptions (`scope=direct`): `direction=all`,
+`direction=incoming`, and `direction=incoming, first_incoming_only=true`, all
+with `ttlMs=null`. Direct-wide arguments omit conversation type/ID. Actual MCP
+reads confirmed all three active and their journals empty and unblocked;
+collector status was connected/authenticated without errors. Existing production
+and known-peer subscriptions, processing checkpoints and novelty facts were
+preserved through the single configuration restart and verified state backup.
+
+The exact fresh peer ID was unknown before its first event. A private
+account-wide snapshot of catalogue, corpus, permanent identities, directory and
+novelty records was saved before readiness. Comparison with the first marker's
+genuine sender ID subsequently confirmed absence from those sources. This
+evidence does not rely on a display-name lookup. Before the first message, no
+request, friendship, history preload, send or state reset was performed against
+the fresh account.
 
 The user supplied the fresh account's phone privately. Official Zalo UI lookup
 found a profile marked STRANGER, joined today, with no mutual groups. Searching
@@ -78,9 +99,17 @@ name and eventual peer ID must remain outside this public plan.
 
 These are argument templates, not executable subscriptions. Replace the peer
 placeholder only from the approved private plan. The event name is
-`zalo.conversation.message.created.v2`; use `cursor=null`, `ttlMs=1800000` and
+`zalo.conversation.message.created.v2`; use `cursor=null`, `ttlMs=null` and
 the trusted client's private `delivery`. Each subscription has its own returned
 ID, generation and activation boundary.
+
+The user explicitly removed time limits for test windows. Test subscriptions run
+until explicit cancellation; the independent local receiver must not stop on a
+timer. Network request timeouts and signature freshness checks still apply. An
+already expired subscription cannot retain its old activation boundary when
+reactivated: archive the old generation/checkpoint evidence and record the new
+boundary honestly. Do not replay prior corpus or reuse silence during an expired
+window as evidence of direction filtering.
 
 Control C (proves the test source actually emitted each direction):
 
@@ -114,7 +143,7 @@ catalogue; do not blindly create another subscription.
    known, stop and report which precondition failed; do not erase history or
    assume another new account is available.
 2. Activate C/I/F and record successful verification, returned IDs, generations,
-   activation boundaries and expiries. Coordinate the test recipient to wait
+   activation boundaries and indefinite lifetime. Coordinate the test recipient to wait
    until readiness. Unexpected earlier incoming/replay must be recorded; it can
    invalidate the intended first-incoming precondition.
 3. Have the controlled recipient send exactly one incoming A, only after an
@@ -151,7 +180,7 @@ catalogue; do not blindly create another subscription.
 
 ## Cleanup and acceptance
 
-In finally/expiry reconciliation, cancel only the captured C/I/F IDs. Verify no
+At scenario cleanup, cancel only the captured C/I/F IDs. Verify no
 test subscription remains active, and restore the exact original sending policy.
 Do not restore an old corpus over accepted send receipts. Compare prior production
 subscription definitions and preserve all new messages/identities, send results
