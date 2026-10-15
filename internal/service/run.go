@@ -694,10 +694,15 @@ func configuredEndpoints(
 	port *membershipPort,
 	token string,
 ) (*mcpserver.HTTPService, *events.Worker, *logging.File, error) {
+	callbacks, err := events.NewCallbackPolicy(c.Events.LocalCallbackURLs)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	protocol, err := events.NewSubscriptionManager(store, c.StateDir)
 	if err != nil {
 		return nil, nil, nil, err
 	}
+	protocol.Callbacks, protocol.Client = callbacks, callbacks.Client()
 	handler, err := mcpserver.NewHTTP(token, mcpReadPorts(store, port), protocol)
 	if err != nil {
 		return nil, nil, nil, err
@@ -706,6 +711,7 @@ func configuredEndpoints(
 	if err != nil {
 		return nil, nil, nil, err
 	}
+	worker.Callbacks, worker.Client = callbacks, callbacks.Client()
 	var eventTrace *logging.File
 	if c.Logging.EventTraceFile != "" {
 		eventTrace, err = logging.Open(c.Logging.EventTraceFile, c.Logging.MaxSizeMB, c.Logging.MaxBackups, os.Stderr)

@@ -52,7 +52,7 @@ filtering evidence, stop reason and newly imported time bounds. See the
 
 ## Events and limitations
 
-Events use a pinned webhook draft profile, requiring a compatible HTTP client and a public HTTPS receiver with verification and signature support. STDIO does not deliver Events. The service rejects loopback and private callback addresses. Tunnels, reverse proxies, receiver infrastructure, and agent notification delivery are outside the application.
+Events use a pinned webhook draft profile, requiring a compatible HTTP client and a receiver with verification and signature support. Public HTTPS is the default. For a receiver on the same host, an operator can explicitly allow exact loopback HTTP/HTTPS URLs using [`events.local_callback_urls`](docs/contracts/local-callbacks.md); signatures remain mandatory and no tunnel is needed. Other private targets remain rejected. STDIO does not deliver Events. Receiver infrastructure and agent notification delivery remain outside the application.
 
 `zalo.conversation.message.created.v2` version 2 supports exact/all/direct/group scopes and includes typed conversation identity, an available name, the message ID, author, time, and up to 2048 Unicode code points of text. Truncated text has a flag and a resource URI for the full record. By default, subscriptions begin with the first insertion after activation and remain active until cancelled; queued delivery survives restarts, within documented retry and capacity limits. See the [Events contract](docs/contracts/events.md).
 

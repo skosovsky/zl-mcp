@@ -22,6 +22,9 @@ type Config struct {
 		Listen    string `toml:"listen"`
 		TokenFile string `toml:"token_file"`
 	} `toml:"mcp"`
+	Events struct {
+		LocalCallbackURLs []string `toml:"local_callback_urls"`
+	} `toml:"events"`
 	Collection struct {
 		GroupIDs      []string                 `toml:"group_ids"`
 		Mode          string                   `toml:"mode"`
@@ -66,6 +69,9 @@ func Load(path string) (Config, error) {
 		return c, err
 	}
 	if err = validateMCP(c); err != nil {
+		return c, err
+	}
+	if err = c.validateEvents(); err != nil {
 		return c, err
 	}
 	if err = configureLogging(&c, path); err != nil {

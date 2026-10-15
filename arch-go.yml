@@ -90,6 +90,7 @@ dependenciesRules:
       internal:
         - '^github[.]com/skosovsky/zl-mcp/docs/contracts.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/domain.**'
+        - '^github[.]com/skosovsky/zl-mcp/internal/netpolicy.**'
       external:
         - '^github[.]com/pelletier/go-toml/v2$'
       standard:
@@ -191,6 +192,7 @@ dependenciesRules:
       external:
         - '^github[.]com/santhosh-tekuri/jsonschema/v6$'
       standard:
+        - '^net$'
         - '^bytes$'
         - '^context$'
         - '^crypto/hmac$'
@@ -376,6 +378,9 @@ dependenciesRules:
       internal:
         - '^github[.]com/skosovsky/zl-mcp/internal/netpolicy.**'
       standard:
+        - '^net/url$'
+        - '^path$'
+        - '^strconv$'
         - '^context$'
         - '^errors$'
         - '^net$'

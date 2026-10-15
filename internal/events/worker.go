@@ -30,6 +30,7 @@ type Queue interface {
 type Worker struct {
 	Queue       Queue
 	Client      *http.Client
+	Callbacks   CallbackPolicy
 	Policy      storage.DeliveryPolicy
 	Encoder     *MessageEncoder
 	Logger      *slog.Logger
@@ -115,7 +116,16 @@ func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.Ev
 		requestCtx,
 		domain.WorkEvents,
 		func(ctx context.Context) (*http.Response, error) {
-			return postCallback(ctx, w.Client, d.Callback, d.Secret, d.SubscriptionID, d.EventID, d.Payload)
+			return postCallbackWithPolicy(
+				ctx,
+				w.Client,
+				d.Callback,
+				d.Secret,
+				d.SubscriptionID,
+				d.EventID,
+				d.Payload,
+				w.Callbacks,
+			)
 		},
 	)
 	//nolint:exhaustruct_v5 // DeliveryOutcome preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.

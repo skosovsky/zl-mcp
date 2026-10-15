@@ -41,13 +41,38 @@ that concrete plan is required; the previous two-message approval does not apply
 Same-UUID retry belongs to that plan; no quoted or replacement send is needed.
 
 Separately agree three temporary, conversation-scoped v2 subscriptions, a trusted
-test client/HTTPS receiver, and a short restart window. The client supplies its
+independent test receiver, and a short restart window. The client supplies its
 callback URL and signing material privately, performs verification and routes
 by subscription ID. Credentials are never copied into this document or chat.
-Production disallows loopback/private callbacks. Local TLS fixture receivers
-prove synthetic tests only; they are not a replacement for a live receiver.
+Use the [explicit local callback mode](contracts/local-callbacks.md) on the same
+Mac once the verified build and exact URL allowlist are installed. Public HTTPS
+remains an alternative. Test-only injected TLS transports prove synthetic tests
+only; actual live delivery must use the configured production transport.
 Do not reuse the production automation's callback unless its owner explicitly
 supports independent test-subscription routing and processing.
+
+Receiver infrastructure check (October 15): the installed OpenAI Tunnel profile
+forwards MCP requests to the existing service. It is not an arbitrary public
+webhook ingress for a separate local test receiver. The
+[official tunnel documentation](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels)
+describes queued MCP JSON-RPC forwarding; its allowlisted HTTP callout feature is
+not a general-purpose proxy. No tunnel configuration or access was changed.
+The user selected independent subscription/receiver evidence rather than the
+assistant's selective user notifications. Provision the local signed receiver and
+subscribe through authenticated MCP HTTP; no automation or Ann handoff is needed.
+Local mode requires an upgraded service and exact operator allowlist; its presence
+in source is not proof of deployment or of created live subscriptions.
+
+The user agreed to three temporary direct-wide subscriptions for 30 minutes when
+the fresh peer ID is unavailable. That consent does not make them active. For the
+initial existing-peer preflight, narrower exact conversation scopes suffice.
+
+The user supplied the fresh account's phone privately. Official Zalo UI lookup
+found a profile marked STRANGER, joined today, with no mutual groups. Searching
+its displayed name in the local MCP catalogue returned no matches. This is
+useful preliminary evidence, not proof of absence by exact peer ID from all
+identity/novelty tables. No send or friendship action occurred. Private phone,
+name and eventual peer ID must remain outside this public plan.
 
 ## Exact subscription arguments
 

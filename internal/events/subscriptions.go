@@ -46,6 +46,7 @@ func (e *RPCError) RPCDetails() (int, string, map[string]any) {
 type SubscriptionManager struct {
 	Store     Subscriptions
 	Client    *http.Client
+	Callbacks CallbackPolicy
 	namespace string
 	input     map[string]*jsonschema.Schema
 	output    map[string]*jsonschema.Schema
@@ -252,8 +253,10 @@ func (m *SubscriptionManager) changeSubscription(
 	if !permitted && method == methodEventsSubscribe {
 		return nil, eventRPCError(-32000, "Group is not enabled.", "access_denied")
 	}
-	if _, err := ValidateCallbackURL(p.Delivery.URL); err != nil {
-		return nil, eventRPCError(-32602, "Invalid callback URL.", "invalid_callback")
+	if method == methodEventsSubscribe {
+		if _, err := m.Callbacks.validate(p.Delivery.URL); err != nil {
+			return nil, eventRPCError(-32602, "Invalid callback URL.", "invalid_callback")
+		}
 	}
 	id := m.subscriptionID(principal, p)
 	if method == methodEventsUnsubscribe {
@@ -290,7 +293,14 @@ func (m *SubscriptionManager) verifySubscriptionCallback(ctx context.Context, p 
 	m.mu.Unlock()
 	if !verified || time.Since(verifiedAt) > time.Minute {
 		verifyCtx, cancel := context.WithTimeout(ctx, subscriptionManagerverifySubscriptionCallbackVerifyTimeout)
-		verifyCallbackErr := VerifyCallback(verifyCtx, m.Client, p.Delivery.URL, p.Delivery.Secret, id)
+		verifyCallbackErr := verifyCallbackWithPolicy(
+			verifyCtx,
+			m.Client,
+			p.Delivery.URL,
+			p.Delivery.Secret,
+			id,
+			m.Callbacks,
+		)
 		cancel()
 		if verifyCallbackErr != nil {
 			return eventRPCError(-32015, "Callback verification failed.", "challenge_failed")

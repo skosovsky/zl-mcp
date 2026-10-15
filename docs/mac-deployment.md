@@ -104,7 +104,7 @@ Application JSON logs rotate in Go: default maximum 5 MiB and three backups. Mai
 - Lock or port error: check for an existing foreground service or LaunchAgent before retrying.
 - Empty search results: check the collection mode and typed scope, first persistence time, and corpus coverage.
 - Storage permission error: verify ownership and private permissions; do not run the service with sudo.
-- Events failure: inspect `zalo://events/diagnostics` and the callback policy. The client must supply a supported public HTTPS receiver.
+- Events failure: inspect `zalo://events/diagnostics` and the callback policy. The client must supply a signed receiver: public HTTPS by default, or an exact operator-allowlisted same-host HTTP/HTTPS URL. See [local callbacks](contracts/local-callbacks.md); restart after editing `events.local_callback_urls`. The service does not create the receiver.
 
 Do not include tokens, configuration secrets, session files, or private messages in bug reports.
 

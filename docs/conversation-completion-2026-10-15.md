@@ -74,9 +74,37 @@ or mutate subscriptions.
 
 ## Remaining evidence
 
-- A second new incoming message must have `first_incoming=false`; it is not yet
-  present in the observed corpus. After an agreed restart, the fact must remain
-  known and another incoming must not become first again. Do not reset repeatedly
+### Known-peer delivery preflight, October 15
+
+The user selected an existing controlled direct peer for a preflight before using
+the sole fresh account. A read-only baseline captured the exact peer, known
+first-incoming fact, subscription generation/start boundary, corpus/delivery
+high-water marks and processing checkpoint. The real client saw one active
+all-direction direct v2 subscription and two older unprocessed delivered records.
+No subscription was changed and no record was acknowledged by diagnostics.
+
+The user then sent the agreed unique marker once from that peer. Exactly one new
+matching message was stored from `live`, with matching sender/peer identity:
+sent `2026-10-15T06:42:48.537Z`, received `06:42:49.856249Z`. Its exact message ID
+matches one callback payload with `direction=incoming`, `first_incoming=false`
+and the full marker text. Delivery completed on attempt one at
+`06:42:54.114311Z`. The prior first-incoming fact and subscription generation/start
+boundary are unchanged. Collector status remains authenticated/connected without
+errors. This accepts this message's ingestion, repeat-peer classification and
+callback acceptance; it is not a filtered-subscription trial.
+
+The actual connected MCP client independently recovered the same marker and
+flags through the exact subscription journal. There are now three unprocessed
+delivered records, including the two older records, no delivery block and no next
+page. The processing checkpoint has not advanced relative to baseline. Actual
+assistant notification and processing acknowledgement remain unconfirmed; neither
+HTTP acceptance nor journal readability proves them. The fresh account was not
+used. Private peer/message/event IDs and callback credentials are omitted.
+
+- The known-peer preflight above now confirms another new incoming with
+  `first_incoming=false`. The post-first-message agreed restart trial remains
+  open: after restart the fact must remain known and another incoming must not
+  become first again. Do not reset repeatedly
   merely to repeat the already accepted first=true observation.
 - Real incoming-only and first-only delivery require separately agreed temporary
   scopes and a client/receiver that processes those exact subscriptions. The

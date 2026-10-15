@@ -67,10 +67,17 @@ func postCallback(
 	rawURL, secret, subscription, id string,
 	body []byte,
 ) (*http.Response, error) {
+	return postCallbackWithPolicy(ctx, client, rawURL, secret, subscription, id, body, CallbackPolicy{local: nil})
+}
+
+func postCallbackWithPolicy(
+	ctx context.Context, client *http.Client,
+	rawURL, secret, subscription, id string, body []byte, policy CallbackPolicy,
+) (*http.Response, error) {
 	if len(body) > maximumCallbackBodyBytes {
 		return nil, errors.New("callback payload exceeds 256 KiB")
 	}
-	u, err := callbackURL(rawURL)
+	u, err := policy.validate(rawURL)
 	if err != nil {
 		return nil, err
 	}
@@ -99,13 +106,28 @@ func postCallback(
 }
 
 func verifyCallback(ctx context.Context, client *http.Client, rawURL, secret, subscription string) error {
+	return verifyCallbackWithPolicy(ctx, client, rawURL, secret, subscription, CallbackPolicy{local: nil})
+}
+
+func verifyCallbackWithPolicy(
+	ctx context.Context, client *http.Client, rawURL, secret, subscription string, policy CallbackPolicy,
+) error {
 	challengeBytes := make([]byte, callbackChallengeBytes)
 	if _, err := rand.Read(challengeBytes); err != nil {
 		return errors.New("callback challenge generation failed")
 	}
 	challenge := base64.RawURLEncoding.EncodeToString(challengeBytes)
 	body, _ := json.Marshal(map[string]string{"type": "verification", "challenge": challenge})
-	response, err := postCallback(ctx, client, rawURL, secret, subscription, "verification_"+challenge, body)
+	response, err := postCallbackWithPolicy(
+		ctx,
+		client,
+		rawURL,
+		secret,
+		subscription,
+		"verification_"+challenge,
+		body,
+		policy,
+	)
 	if err != nil {
 		return err
 	}
