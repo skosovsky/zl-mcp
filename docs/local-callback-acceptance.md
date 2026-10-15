@@ -283,3 +283,21 @@ production direct/all subscription. All six test subscriptions were inactive;
 SQLite quick_check passed. First/repeat messages, novelty facts and test evidence
 remain preserved. Indefinite test lifetime ended by explicit scenario cleanup,
 not expiry or a user-response deadline. No new send or phone sync was used.
+
+### Original known-peer state reconciliation
+
+The earlier authorized artificial reset had left the known peer's first-incoming
+fact pointing to a test record. The original private backup was reconciled after
+test cleanup. All 17 original message identities were present; all 16 original
+quote-metadata tuples already matched, so no messages or quote rows were written.
+The permanent identity still retained the original first sequence.
+
+After a stopped-service, hash-verified backup, exactly that peer's known novelty
+fact was restored to its original sequence/certainty. Message, permanent-identity,
+quote, send, subscription, delivery and processing tables were compared unchanged
+across this write. New test data and the fresh peer's novelty evidence remain
+preserved. After restart, original-fact equality and SQLite integrity passed;
+the production subscription definition and processing checkpoint were unchanged.
+Initial client calls failed during readiness; a later actual MCP status returned
+connected/authenticated without an error, without another restart in response
+to those observation failures. No send or phone synchronization occurred.

@@ -29,6 +29,34 @@ Do not repeat accepted plain/quote sends or request another phone capture of the
 retained bytes to refresh evidence. The complete task remains open; these filter
 results do not silently narrow its scope.
 
+### Remaining import gate: local inspection follow-up
+
+The installed MCP inventory still returned one permanent source with 56 files
+(54 direct, two group). A read-only owner CLI coverage sweep using three planned
+25-file batches terminated unsuccessfully before returning aggregate evidence;
+its failure cause was not established, so no complete inspection is claimed.
+A subsequent one-file owner inspection of the same explicit library source
+succeeded: the selected file was readable SQLite, marked WAL, with one source
+row and no source controls. There were no rows inside the September 1 through
+October 6 Vietnam-end-date diagnostic interval. This is selected-file evidence,
+not a classification of all 56 files or proof of complete account history.
+
+`internal/mobilebackup/history_page.go` rejects `SourceWAL` before returning
+writable history records; `message_conversion.go` also enforces that gate.
+The existing `TestSQLiteImmutableMainImageCannotProveWALCompleteness` demonstrates
+why integrity success alone does not establish producer checkpoint completeness.
+No source gate was relaxed, mobile import enabled, or phone request dispatched.
+Current facts do not supply the missing producer/WAL or remaining control proof.
+The [SQLite contract](contracts/mobile-backup-sqlite.md) and
+[producer diagnostics](contracts/mobile-backup-producer-counts.md) retain those
+explicit limitations. Read-only access to retained bytes remains separate.
+
+The known-peer test reset was also reconciled against its original private
+backup: 17 original messages and 16 quote tuples were already present; only the
+original known first-incoming sequence was restored after a verified backup.
+Other corpus/send/subscription/delivery/processing records were unchanged.
+See [reconciliation evidence](local-callback-acceptance.md#original-known-peer-state-reconciliation).
+
 ## Historical October 7 audit
 
 The [earlier October 15 checkpoint](conversation-completion-2026-10-15.md) records
