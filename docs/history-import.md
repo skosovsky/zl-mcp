@@ -98,5 +98,6 @@ Authentication waiting remains outside active work.
 Group cloud continuation preserves the exact cursor together with the source's
 recent/old phase. Missing continuation metadata stops with partial coverage;
 never describe a successful recent page as proof that older pages were fetched.
-Phase-aware traversal is implemented in the current source candidate but still
-requires installation and live acceptance. Historical imports remain silent.
+Phase-aware traversal is installed. The [current audit](conversation-completion-current-audit.md)
+records accepted bounded source/client checks; a terminal recent page does not
+prove nonempty older-phase traversal. Historical imports remain silent.

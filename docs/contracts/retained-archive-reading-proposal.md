@@ -1,8 +1,12 @@
-# Retained archive reading: decision proposal
+# Retained archive reading: historical decision proposal
 
-Status: proposed, not implemented or accepted. The existing corpus and import
-contracts remain authoritative until this proposal is agreed and executable
-schemas are added.
+Status: historical proposal, superseded for implemented read-only access by the
+[MCP reading contract](archive-mcp-reading.md) and
+[permanent archive task/evidence](../task-retained-mobile-archive.md).
+Reading all 56 retained conversations was accepted independently through the
+installed endpoint and connected client. This history preserves the rationale;
+its original pending labels below are not current feature availability.
+Strict corpus-import admission remains separate and is not granted by reading.
 
 ## Problem and evidence
 

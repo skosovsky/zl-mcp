@@ -1,9 +1,11 @@
 # Explicit history import operation
 
-Status: implemented in source with executable schemas, a durable SQLite journal,
-a guarded worker and HTTP/STDIO MCP tools. Installed/live acceptance remains
-pending. Existing offline replay and subscriptions are unchanged. The user
-selected silent historical import on 2026-10-04.
+Status: implemented and installed with executable schemas, a durable SQLite
+journal, a guarded worker and HTTP/STDIO MCP tools. Source-specific acceptance
+and limits are recorded in the [current audit](../conversation-completion-current-audit.md).
+Public sources are `group_cloud` and `conversation_preload`; strict mobile source
+admission remains disabled. Existing offline replay and subscriptions are
+unchanged. The user selected silent historical import on 2026-10-04.
 
 Schemas: `history_import_request.input.json`,
 `history_import_operation.input.json` (status/cancel identity), and
@@ -20,9 +22,11 @@ to reject it until driver and source acceptance. Legacy workers exclude its queu
 
 The operation imports available messages into the existing account's local
 corpus. It uses the single service's guarded authenticated source, not another
-listener, login or native-client database reader. The currently implemented page
-candidate supports group cloud history only. Direct history must report
-`unsupported`; known-ID profile enrichment is not a history source.
+listener, login or native-client database reader. The default `group_cloud`
+source supports groups only; direct requests with that source report
+`unsupported`. Explicit `conversation_preload` supports a bounded available
+direct/group snapshot, as specified below, without deeper-history pagination.
+Known-ID profile enrichment is not a history source.
 
 Tools are `zalo_import_conversation_history`,
 `zalo_get_history_import_status` and `zalo_cancel_history_import`. Their contracts
@@ -135,9 +139,9 @@ matches `first_incoming_only`. Existing known facts remain known. This rule also
 applies to historical outgoing records; neither an outgoing import nor a later
 live duplicate may fabricate a newly discovered peer.
 
-The confirmed source candidate is group-only; the direct novelty rule is a
-storage invariant for any later supported direct source, not an announcement
-that direct history is currently available. Historical insertion does not
+The group-cloud source is group-only. The direct novelty rule also applies to
+the supported explicit preload snapshot; it does not imply deeper direct or
+Strangers history. Historical insertion does not
 fabricate collector collection-start times or close known collector gaps.
 
 ## Required acceptance evidence

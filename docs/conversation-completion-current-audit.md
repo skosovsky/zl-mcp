@@ -1,5 +1,11 @@
 # Conversation completion: current requirement audit
 
+Final requirement reconciliation: [October 15 final audit](conversation-completion-final-audit.md).
+The user clarified the retained archive's repeatable-testing role. Permanent
+offline reading is verified; strict mobile corpus import remains an unavailable
+separate capability, not an extra blocker for reading/testing retained bytes.
+The final audit maps the complete task to evidence and preserves upstream limits.
+
 ## Current update: October 15 live filter acceptance
 
 The [signed local callback acceptance](local-callback-acceptance.md) supersedes
@@ -18,21 +24,24 @@ Its full local checks, exact native startup acceptance and
 | Send without local catalogue/corpus | Separately approved artificial absence of the controlled peer: two records and catalogue entry temporarily removed, actual MCP catalogue plus SQL absence verified, one exact plain send accepted with ID; same-UUID repeat and post-restart status returned the identical receipt. Original rows/quotes/config restored, sends disabled. Accepted for the approved local precondition; first upstream acquaintance is not claimed. |
 | Strangers classification | New direct peer ingestion and catalogue discovery accepted. Friendship metadata was unknown; no complete upstream Strangers inbox or exact classification is inferred. |
 
-No model evals, extra Zalo sends or phone sync were used for these trials.
+No model evals, unapproved Zalo sends or phone sync were used for these trials.
 Private identities, payloads, signing keys and callback URLs remain outside Git.
 Both skills retain their existing valid v2 direction/first-known, journal recovery
 and archive boundaries; local receiver configuration adds no agent workflow.
 
-Remaining gates: strict real mobile import; unavailable deeper source history
-and missing metadata as documented below. The user subsequently approved
+Retained capability limits: strict mobile corpus import, unavailable deeper
+source history and missing metadata as documented below. These are not claimed
+as implemented. The retained archive is for repeatable reading/testing without
+phone sync; its separate import gates do not block that result. The user approved
 [an artificial local-absence send](remaining-live-send-plan.md), which passed
 without another account. This is not evidence of first upstream contact, and
 the original genuine first-incoming trial remains independently preserved.
 Do not repeat accepted plain/quote sends or request another phone capture of the
-retained bytes to refresh evidence. The complete task remains open; these filter
-results do not silently narrow its scope.
+retained bytes to refresh evidence. The final audit preserves the full task's
+available-source scope and the exact limits of these results; publication is
+verified by CI for the commit containing that audit.
 
-### Remaining import gate: local inspection follow-up
+### Unaccepted strict mobile import: local inspection follow-up
 
 The installed MCP inventory still returned one permanent source with 56 files
 (54 direct, two group). A read-only owner CLI coverage sweep using three planned

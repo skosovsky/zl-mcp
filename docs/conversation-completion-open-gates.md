@@ -1,6 +1,12 @@
-> Current update: the [current audit](conversation-completion-current-audit.md) and [local callback acceptance](local-callback-acceptance.md) record completed incoming/first-only/restart trials, genuine fresh-peer evidence, cleanup and the separately approved artificial local-absence send with restoration/disabled sending. First upstream acquaintance is not inferred from that local test. Strict real mobile import remains open. The October 7 descriptions below and intermediate [October 15 checkpoint](conversation-completion-2026-10-15.md) are historical. Conversation Events v1 has been removed. Discovery exposes legacy/group and conversation v2. Payload recovery and processing checkpoints are documented in [event-recovery](contracts/event-recovery.md).
+> Current update: the [current audit](conversation-completion-current-audit.md) and [local callback acceptance](local-callback-acceptance.md) record completed incoming/first-only/restart trials, genuine fresh-peer evidence, cleanup and the separately approved artificial local-absence send with restoration/disabled sending. First upstream acquaintance is not inferred from that local test. Strict mobile corpus import remains disabled and unaccepted; it is separate from the delivered retained-source reading/testing result. The October 7 descriptions below and intermediate [October 15 checkpoint](conversation-completion-2026-10-15.md) are historical. Conversation Events v1 has been removed. Discovery exposes legacy/group and conversation v2. Payload recovery and processing checkpoints are documented in [event-recovery](contracts/event-recovery.md).
 
 # Conversation completion: current open gates
+
+The [final requirement audit](conversation-completion-final-audit.md) supersedes
+the pending completion labels below. Available-source behavior and the approved
+live tests are verified. Strict mobile corpus import and broader upstream
+completeness remain unclaimed; the retained testing/reading archive does not
+require importing those bytes into the corpus.
 
 Current checkpoint: 2026-10-07; the dated entries below preserve prior evidence. The full scope is
 [task-conversation-completion.md](task-conversation-completion.md). This report does

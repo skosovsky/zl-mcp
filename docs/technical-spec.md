@@ -2,16 +2,16 @@
 
 Статус: единый сервис и legacy Events ранее приняты; доказательства этой версии — [unified-service-completion-audit.md](archive/unified-service-completion-audit.md). Расширение direct/group реализовано и развёрнуто; отдельная приёмка — [all-conversations-acceptance.md](all-conversations-acceptance.md).
 Дата: 30 сентября 2026 года.
-Обновлено: 3 октября 2026 года — общая модель direct/group, additive MCP tools и версия 1 conversation Events.
+Обновлено: 15 октября 2026 года — direct/group, filtered Events v2, личная отправка, browse/history и отдельный сохранённый архив. Conversation Events v1 удалён; legacy group Events сохранён.
 Проект: `zl-mcp`.
 
-Расширение от 3 октября 2026 года: [сбор и обработка всех личных чатов и групп](task-all-conversations.md). Актуальные контракты ниже описывают исходники расширения; результаты разработки и непроверенные части — [conversation-research.md](conversation-research.md). Архивная приёмка не доказывает его развёртывание или восстановление пропущенных личных сообщений.
+Расширение от 3 октября 2026 года: [сбор и обработка всех личных чатов и групп](task-all-conversations.md). Текущая установленная версия и доказательства — [актуальный аудит](conversation-completion-current-audit.md), [live-проверки](local-callback-acceptance.md). Историческое [исследование](conversation-research.md) сохраняет наблюдения своих версий и не задаёт текущий статус реализации.
 
 ## Актуальное расширение direct/group
 
-Расширение личной отправки и filtered Events реализуется по [task-direct-messaging.md](task-direct-messaging.md). Контракты — [contracts/direct-messaging.md](contracts/direct-messaging.md), инструкция — [direct-messaging.md](direct-messaging.md), доказательства — [direct-messaging-research.md](direct-messaging-research.md). Развёртывание и live-приёмка этого расширения ещё не подтверждены.
+Расширение личной отправки и filtered Events реализовано и развёрнуто по [task-direct-messaging.md](task-direct-messaging.md). Контракты — [contracts/direct-messaging.md](contracts/direct-messaging.md), инструкция — [direct-messaging.md](direct-messaging.md). Plain/quote, first/repeat/restart, direction-фильтры и отдельно разрешённая отправка при искусственном локальном отсутствии подтверждены в [live-приёмке](local-callback-acceptance.md). Первое знакомство за всю историю Zalo из локального теста не выводится.
 
-Добавляются zalo_send_direct_message / zalo_get_send_status, UUID request_id, отдельные allow_send/send_recipient_ids и постоянный журнал без текста. Unknown не повторяется автоматически; sent означает принятие Zalo, не прочтение. Цитата требует сохранённого сообщения того же direct-диалога и protocol metadata. Лимит отправки — 2048 Unicode code points, предел приложения. Events v2 — zalo.conversation.message.created.v2, schema_version=2, с direction/first_incoming_only; first-only требует incoming direct. Nullable first_incoming означает первую локально известную входящую вставку, а не первое обращение за всю историю. Маркер не сбрасывается retention/undo; неполные сведения остаются unknown. Старые профили, подписки и queued bytes сохраняются.
+Реализованы zalo_send_direct_message / zalo_get_send_status, UUID request_id, отдельные allow_send/send_recipient_ids и постоянный журнал без текста. Unknown не повторяется автоматически; sent означает принятие Zalo, не прочтение. Цитата требует сохранённого сообщения того же direct-диалога и protocol metadata. Лимит отправки — 2048 Unicode code points, предел приложения. Events v2 — zalo.conversation.message.created.v2, schema_version=2, с direction/first_incoming_only; first-only требует incoming direct. Nullable first_incoming означает первую локально известную входящую вставку, а не первое обращение за всю историю. Маркер не сбрасывается retention/undo; неполные сведения остаются unknown. Старые профили, подписки и queued bytes сохраняются.
 
 Идентичность диалога — `(conversation_type, conversation_id)`, сообщения — эта пара плюс `message_id`. Личный ID обозначает собеседника независимо от направления; автор хранится отдельно. Одинаковые ID разных типов не смешиваются в FTS, контексте, URI, курсорах и доставке. Single-account state не допускает объединения разных аккаунтов.
 
@@ -35,8 +35,11 @@ SQLite migration 4 сохраняет seq/high-water mark, identities, FTS, cove
 notification_policy=none; Events и задания доставки не создаются. Постоянные
 typed identities подавляют уведомление позднего live/replay-дубликата.
 
-Подтверждённый кандидат источника — только group cloud. Direct/Strangers history
-возвращает unsupported. Completed означает исчерпание доступного источника;
+Установленный источник group_cloud читает ограниченные страницы групповой истории;
+direct с этим источником возвращает unsupported. Явный source=conversation_preload
+импортирует доступное окно выбранного direct/group-диалога и всегда сообщает
+partial/source_window_limited; увеличение max_pages не даёт более старую историю.
+Completed означает исчерпание доступного источника;
 history_complete=false, фильтры/лимиты/разрывы остаются видимыми. Полные правила
 и исполняемые схемы: [контракт импорта](contracts/history-import-operation.md).
 Установленная live-проверка и обновление каталога клиента учитываются отдельно

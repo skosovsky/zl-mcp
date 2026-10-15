@@ -1,11 +1,16 @@
-# Direct messaging acceptance — work in progress
+# Direct messaging acceptance
+
+October 15 update: filtered v2 first/repeat/restart checks and the separately
+approved artificial local-absence send passed, with exact restoration and
+disabled sending. See [current evidence](local-callback-acceptance.md).
+The pending labels in the October 7 checkpoint below are historical.
 
 Tracks [the direct task](task-direct-messaging.md) and its remaining gates in
 [conversation completion](task-conversation-completion.md). The current
 [requirement audit](conversation-completion-current-audit.md) supersedes the
 historical checkpoint summaries below. No model evals were run.
 
-## Current evidence (2026-10-07)
+## Historical checkpoint (2026-10-07)
 
 The separately authorized October 6 plain/quote trial returned two accepted
 message IDs and identical saved results on both UUID retries. The quoted record
