@@ -3,6 +3,8 @@
 Status: known-peer direction/repeat filters and genuine fresh-peer first incoming,
 restart recovery and second-incoming exclusion passed. Six local test
 subscriptions were cancelled and both receivers stopped after acceptance.
+The separately approved [artificial local-absence send](remaining-live-send-plan.md)
+also passed; original rows/configuration were restored and sending disabled.
 See [local callback acceptance](local-callback-acceptance.md) for executed evidence.
 Follows the [current audit](conversation-completion-current-audit.md). The accepted
 October 6 plain/quote acknowledgement trial is not repeated. No model evals.
@@ -28,6 +30,11 @@ outside-catalogue first outgoing scenario. Once incoming A is stored, subsequent
 outgoing messages are replies to a known peer. They cannot prove first sending
 to an unknown peer. A separately approved local reset could test local catalogue
 absence later, but cannot restore genuine upstream first-contact conditions.
+
+That separate local-reset exception was subsequently explicitly approved and
+executed with the existing controlled peer. Its accepted result covers absent
+local catalogue/corpus at send time, not genuine upstream first contact. The
+no-reset defaults below remain in force for any additional unapproved attempt.
 
 ## Required agreement
 

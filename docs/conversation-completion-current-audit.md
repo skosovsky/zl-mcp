@@ -15,6 +15,7 @@ Its full local checks, exact native startup acceptance and
 | First-only positive and repeat exclusion | Genuine fresh peer was absent from the private pre-message catalogue/corpus/permanent-identity/directory/novelty snapshot. First live message reached all three subscriptions with `first_incoming=true`; repeat reached only `all`/`incoming` with false. Accepted. |
 | Restart recovery | Same service restarted between first and second messages. Original generations/boundaries, first fact, exact event/message IDs and one delivery per source were retained. Actual client recovered the unacknowledged first records before ordered test-only ack. Accepted. |
 | Test cleanup | Six exact test subscriptions cancelled; two receivers stopped; exact local callback permissions removed. Only original production direct/all subscription remains active, with unchanged definition and processing checkpoint. Connected/authenticated, no error; SQLite integrity passed. Accepted. |
+| Send without local catalogue/corpus | Separately approved artificial absence of the controlled peer: two records and catalogue entry temporarily removed, actual MCP catalogue plus SQL absence verified, one exact plain send accepted with ID; same-UUID repeat and post-restart status returned the identical receipt. Original rows/quotes/config restored, sends disabled. Accepted for the approved local precondition; first upstream acquaintance is not claimed. |
 | Strangers classification | New direct peer ingestion and catalogue discovery accepted. Friendship metadata was unknown; no complete upstream Strangers inbox or exact classification is inferred. |
 
 No model evals, extra Zalo sends or phone sync were used for these trials.
@@ -22,9 +23,11 @@ Private identities, payloads, signing keys and callback URLs remain outside Git.
 Both skills retain their existing valid v2 direction/first-known, journal recovery
 and archive boundaries; local receiver configuration adds no agent workflow.
 
-Remaining gates: first sending to a peer absent from catalogue/corpus (the fresh
-incoming peer is now known and cannot prove this); strict real mobile import;
-unavailable deeper source history and missing metadata as documented below.
+Remaining gates: strict real mobile import; unavailable deeper source history
+and missing metadata as documented below. The user subsequently approved
+[an artificial local-absence send](remaining-live-send-plan.md), which passed
+without another account. This is not evidence of first upstream contact, and
+the original genuine first-incoming trial remains independently preserved.
 Do not repeat accepted plain/quote sends or request another phone capture of the
 retained bytes to refresh evidence. The complete task remains open; these filter
 results do not silently narrow its scope.
@@ -56,6 +59,18 @@ backup: 17 original messages and 16 quote tuples were already present; only the
 original known first-incoming sequence was restored after a verified backup.
 Other corpus/send/subscription/delivery/processing records were unchanged.
 See [reconciliation evidence](local-callback-acceptance.md#original-known-peer-state-reconciliation).
+
+### Approved local-absence send follow-up
+
+At `2026-10-15T09:58:45.799479Z`, SQL and two actual MCP catalogue pages confirmed
+the exact approved peer absent from corpus/catalogue after the authorized
+temporary deletion. The MCP send was accepted at `09:58:45.943807Z`. Same-UUID
+retry and cleanup-restart status returned the identical sent receipt; actual
+connected-client status independently matched its request/recipient/message.
+The two original messages and quote tuples were restored exactly, original
+configuration/agent/binary matched the backup, sending was disabled, prior
+subscription definitions/processing rows and send receipts were preserved.
+See [complete evidence](local-callback-acceptance.md#approved-local-absence-send-accepted).
 
 ## Historical October 7 audit
 

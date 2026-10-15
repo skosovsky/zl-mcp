@@ -301,3 +301,52 @@ the production subscription definition and processing checkpoint were unchanged.
 Initial client calls failed during readiness; a later actual MCP status returned
 connected/authenticated without an error, without another restart in response
 to those observation failures. No send or phone synchronization occurred.
+
+## Approved local-absence send accepted
+
+The user separately approved the exact [local-absence plan](remaining-live-send-plan.md),
+including temporary removal, one plain text, its stable request UUID, restoration
+and disabling sends. This is an explicit exception to the live plan's no-reset
+default. It does not claim first upstream contact or genuine local novelty.
+
+Preparation stopped safely before any deletion/send when an omitted default
+permission field was not handled, when initial preload outlasted the diagnostic
+wait, and when optional startup priority tuning was checked too early. These
+maintenance-helper defects were corrected; no replacement request UUID or test
+message was spent. Every aborted preparation restored disabled sending.
+
+The successful run made a stopped-service, hash-verified full private backup,
+temporarily enabled sending to only the exact approved peer, and used the same
+installed Go binary/single LaunchAgent. After preload completion, one transaction
+removed exactly the two approved corpus rows, their two quote-metadata rows and
+the direct conversation catalogue row. Permanent identities, novelty evidence,
+send/event/subscription journals were retained. The actual MCP catalogue was
+paged and did not contain that exact peer; direct SQL immediately before the
+tool call independently confirmed empty typed corpus and catalogue.
+
+The installed HTTP MCP `zalo_send_direct_message` returned `sent` with a genuine
+message ID. Retrying the exact same recipient/text/UUID returned the identical
+receipt. The retained ledger contains exactly one new send operation for this
+peer, and exactly one outgoing corpus record with the accepted message ID.
+This is upstream acceptance and idempotent saved-result recovery, not read
+receipt or recipient acknowledgement.
+
+Both original messages and quote tuples were restored at their exact sequences;
+new outgoing data and newer catalogue observations were preserved, with the
+original known name filling an otherwise absent name. Original novelty and
+permanent identities were verified unchanged. The original configuration,
+LaunchAgent and binary matched the backup byte for byte after cleanup; sending
+was disabled again. Temporary process-priority relaxation did not change the
+agent's Background policy and ended with the maintenance process restart.
+
+After the cleanup restart, the saved receipt was identical. The actual connected
+MCP client independently read that same request/recipient/message result and
+found the exact restored conversation. Status was connected/authenticated with
+no error; SQLite quick_check passed. Prior send receipts and subscription
+definitions were preserved. No production journal acknowledgement, phone sync,
+friendship change or additional outgoing UUID was used.
+
+This accepts the user-approved artificially absent catalogue/corpus scenario.
+It does not retroactively turn the earlier incoming peer into a never-observed
+account, prove sending to a genuinely new upstream stranger, or enable mobile
+archive import.
