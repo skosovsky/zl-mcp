@@ -56,7 +56,12 @@ func TestServicePreservesMCPWhenAuthenticationIsRequired(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer os.RemoveAll(dir)
+			removeState := true
+			defer func() {
+				if removeState {
+					os.RemoveAll(dir)
+				}
+			}()
 			var c config.Config
 			c.StateDir = dir
 			c.Collection.GroupIDs = []string{"g"}
@@ -105,10 +110,26 @@ func TestServicePreservesMCPWhenAuthenticationIsRequired(t *testing.T) {
 					return client, nil
 				}, func(collector.ListenerUpstream) error { return nil }, func(addr net.Addr) { bound <- addr })
 			}()
+			// Join on every exit, including a failed readiness assertion. Otherwise
+			// the next subtest can race service cleanup/global logger restoration.
+			finished := false
+			defer func() {
+				cancel()
+				if finished {
+					return
+				}
+				select {
+				case <-done:
+				case <-time.After(5 * time.Second):
+					removeState = false
+					t.Errorf("service cleanup hung; preserving temporary state at %s", dir)
+				}
+			}()
 			var address net.Addr
 			select {
 			case address = <-bound:
 			case operationErr := <-done:
+				finished = true
 				t.Fatalf("startup failed: %v", operationErr)
 			case <-time.After(5 * time.Second):
 				t.Fatal("startup timed out")
@@ -222,6 +243,7 @@ func TestServicePreservesMCPWhenAuthenticationIsRequired(t *testing.T) {
 			cancel()
 			select {
 			case shutdownErr := <-done:
+				finished = true
 				if shutdownErr != nil {
 					t.Fatal(shutdownErr)
 				}

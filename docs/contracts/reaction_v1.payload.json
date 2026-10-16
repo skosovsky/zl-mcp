@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "conversation_type": {
+      "enum": [
+        "direct",
+        "group"
+      ]
+    },
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "conversation_name": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 256
+    },
+    "actor_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "actor_name": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 256
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "direction": {
+      "enum": [
+        "incoming",
+        "outgoing",
+        "unknown"
+      ]
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "identity_basis": {
+      "enum": [
+        "upstream_action_id",
+        "observed_fingerprint"
+      ]
+    },
+    "source": {
+      "enum": [
+        "live",
+        "replay"
+      ]
+    },
+    "native_type": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "family": {
+      "const": "reaction"
+    },
+    "reaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "target_message_ids": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "reaction": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "action": {
+          "enum": [
+            "add",
+            "remove",
+            "update",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "target_message_ids",
+        "reaction",
+        "action"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "conversation_type",
+    "conversation_id",
+    "conversation_name",
+    "actor_id",
+    "actor_name",
+    "occurred_at",
+    "direction",
+    "source_id",
+    "identity_basis",
+    "source",
+    "native_type",
+    "family",
+    "reaction"
+  ]
+}

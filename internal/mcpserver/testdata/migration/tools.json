@@ -1222,6 +1222,175 @@
           "Hit": {
             "additionalProperties": false,
             "properties": {
+              "content": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "additionalProperties": false,
+                "properties": {
+                  "availability": {
+                    "enum": [
+                      "text",
+                      "metadata_only",
+                      "unavailable"
+                    ]
+                  },
+                  "elements": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "bytes_available": {
+                          "const": false
+                        },
+                        "duration_ms": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "file_name": {
+                          "maxLength": 256,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "height": {
+                          "maximum": 100000,
+                          "minimum": 1,
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "kind": {
+                          "enum": [
+                            "text",
+                            "image",
+                            "sticker",
+                            "audio",
+                            "video",
+                            "file",
+                            "link",
+                            "contact",
+                            "location",
+                            "mixed",
+                            "unsupported"
+                          ]
+                        },
+                        "label": {
+                          "maxLength": 512,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "mime_type": {
+                          "maxLength": 128,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "size_bytes": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "sticker_id": {
+                          "maxLength": 128,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "width": {
+                          "maximum": 100000,
+                          "minimum": 1,
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "label",
+                        "mime_type",
+                        "file_name",
+                        "size_bytes",
+                        "duration_ms",
+                        "width",
+                        "height",
+                        "sticker_id",
+                        "bytes_available"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 16,
+                    "type": "array"
+                  },
+                  "kind": {
+                    "enum": [
+                      "text",
+                      "image",
+                      "sticker",
+                      "audio",
+                      "video",
+                      "file",
+                      "link",
+                      "contact",
+                      "location",
+                      "mixed",
+                      "unsupported"
+                    ]
+                  },
+                  "native_type": {
+                    "maxLength": 64,
+                    "pattern": "^[A-Za-z0-9_.-]+$",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "reason": {
+                    "enum": [
+                      null,
+                      "legacy_projection",
+                      "empty_content",
+                      "unknown_native_type",
+                      "unsupported_shape",
+                      "metadata_limited",
+                      "invalid_metadata"
+                    ]
+                  },
+                  "summary": {
+                    "maxLength": 256,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "text_role": {
+                    "enum": [
+                      "author",
+                      "none",
+                      "legacy_projection"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "native_type",
+                  "summary",
+                  "availability",
+                  "reason",
+                  "elements",
+                  "text_role"
+                ],
+                "type": "object"
+              },
               "conversation_id": {
                 "description": "Opaque identifier",
                 "minLength": 1,
@@ -1299,6 +1468,175 @@
                   "type": "string"
                 },
                 "type": "array"
+              },
+              "content": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "additionalProperties": false,
+                "properties": {
+                  "availability": {
+                    "enum": [
+                      "text",
+                      "metadata_only",
+                      "unavailable"
+                    ]
+                  },
+                  "elements": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "bytes_available": {
+                          "const": false
+                        },
+                        "duration_ms": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "file_name": {
+                          "maxLength": 256,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "height": {
+                          "maximum": 100000,
+                          "minimum": 1,
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "kind": {
+                          "enum": [
+                            "text",
+                            "image",
+                            "sticker",
+                            "audio",
+                            "video",
+                            "file",
+                            "link",
+                            "contact",
+                            "location",
+                            "mixed",
+                            "unsupported"
+                          ]
+                        },
+                        "label": {
+                          "maxLength": 512,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "mime_type": {
+                          "maxLength": 128,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "size_bytes": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "sticker_id": {
+                          "maxLength": 128,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "width": {
+                          "maximum": 100000,
+                          "minimum": 1,
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "label",
+                        "mime_type",
+                        "file_name",
+                        "size_bytes",
+                        "duration_ms",
+                        "width",
+                        "height",
+                        "sticker_id",
+                        "bytes_available"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 16,
+                    "type": "array"
+                  },
+                  "kind": {
+                    "enum": [
+                      "text",
+                      "image",
+                      "sticker",
+                      "audio",
+                      "video",
+                      "file",
+                      "link",
+                      "contact",
+                      "location",
+                      "mixed",
+                      "unsupported"
+                    ]
+                  },
+                  "native_type": {
+                    "maxLength": 64,
+                    "pattern": "^[A-Za-z0-9_.-]+$",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "reason": {
+                    "enum": [
+                      null,
+                      "legacy_projection",
+                      "empty_content",
+                      "unknown_native_type",
+                      "unsupported_shape",
+                      "metadata_limited",
+                      "invalid_metadata"
+                    ]
+                  },
+                  "summary": {
+                    "maxLength": 256,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "text_role": {
+                    "enum": [
+                      "author",
+                      "none",
+                      "legacy_projection"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "native_type",
+                  "summary",
+                  "availability",
+                  "reason",
+                  "elements",
+                  "text_role"
+                ],
+                "type": "object"
               },
               "conversation_id": {
                 "description": "Opaque identifier",
@@ -6168,6 +6506,175 @@
           "Hit": {
             "additionalProperties": false,
             "properties": {
+              "content": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "additionalProperties": false,
+                "properties": {
+                  "availability": {
+                    "enum": [
+                      "text",
+                      "metadata_only",
+                      "unavailable"
+                    ]
+                  },
+                  "elements": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "bytes_available": {
+                          "const": false
+                        },
+                        "duration_ms": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "file_name": {
+                          "maxLength": 256,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "height": {
+                          "maximum": 100000,
+                          "minimum": 1,
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "kind": {
+                          "enum": [
+                            "text",
+                            "image",
+                            "sticker",
+                            "audio",
+                            "video",
+                            "file",
+                            "link",
+                            "contact",
+                            "location",
+                            "mixed",
+                            "unsupported"
+                          ]
+                        },
+                        "label": {
+                          "maxLength": 512,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "mime_type": {
+                          "maxLength": 128,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "size_bytes": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "sticker_id": {
+                          "maxLength": 128,
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "width": {
+                          "maximum": 100000,
+                          "minimum": 1,
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "label",
+                        "mime_type",
+                        "file_name",
+                        "size_bytes",
+                        "duration_ms",
+                        "width",
+                        "height",
+                        "sticker_id",
+                        "bytes_available"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 16,
+                    "type": "array"
+                  },
+                  "kind": {
+                    "enum": [
+                      "text",
+                      "image",
+                      "sticker",
+                      "audio",
+                      "video",
+                      "file",
+                      "link",
+                      "contact",
+                      "location",
+                      "mixed",
+                      "unsupported"
+                    ]
+                  },
+                  "native_type": {
+                    "maxLength": 64,
+                    "pattern": "^[A-Za-z0-9_.-]+$",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "reason": {
+                    "enum": [
+                      null,
+                      "legacy_projection",
+                      "empty_content",
+                      "unknown_native_type",
+                      "unsupported_shape",
+                      "metadata_limited",
+                      "invalid_metadata"
+                    ]
+                  },
+                  "summary": {
+                    "maxLength": 256,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "text_role": {
+                    "enum": [
+                      "author",
+                      "none",
+                      "legacy_projection"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "native_type",
+                  "summary",
+                  "availability",
+                  "reason",
+                  "elements",
+                  "text_role"
+                ],
+                "type": "object"
+              },
               "conversation_id": {
                 "description": "Opaque identifier",
                 "minLength": 1,
@@ -6700,7 +7207,10 @@
                 "event_name": {
                   "enum": [
                     "zalo.message.created",
-                    "zalo.conversation.message.created.v2"
+                    "zalo.conversation.message.created.v2",
+                    "zalo.conversation.message.created.v3",
+                    "zalo.conversation.reaction.observed.v1",
+                    "zalo.conversation.call.observed.v1"
                   ]
                 },
                 "first_incoming_only": {
@@ -7544,6 +8054,672 @@
                     },
                     {
                       "type": "null"
+                    },
+                    {
+                      "$schema": "https://json-schema.org/draft/2020-12/schema",
+                      "additionalProperties": false,
+                      "properties": {
+                        "cursor": {
+                          "type": "null"
+                        },
+                        "data": {
+                          "$schema": "https://json-schema.org/draft/2020-12/schema",
+                          "additionalProperties": false,
+                          "allOf": [
+                            {
+                              "if": {
+                                "properties": {
+                                  "text_truncated": {
+                                    "const": true
+                                  }
+                                },
+                                "required": [
+                                  "text_truncated"
+                                ]
+                              },
+                              "then": {
+                                "properties": {
+                                  "text_resource_uri": {
+                                    "format": "uri",
+                                    "maxLength": 4096,
+                                    "pattern": "^zalo://conversations/(direct|group)/",
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          ],
+                          "properties": {
+                            "content": {
+                              "$schema": "https://json-schema.org/draft/2020-12/schema",
+                              "additionalProperties": false,
+                              "properties": {
+                                "availability": {
+                                  "enum": [
+                                    "text",
+                                    "metadata_only",
+                                    "unavailable"
+                                  ]
+                                },
+                                "elements": {
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "bytes_available": {
+                                        "const": false
+                                      },
+                                      "duration_ms": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": 0,
+                                        "type": [
+                                          "integer",
+                                          "null"
+                                        ]
+                                      },
+                                      "file_name": {
+                                        "maxLength": 256,
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "height": {
+                                        "maximum": 100000,
+                                        "minimum": 1,
+                                        "type": [
+                                          "integer",
+                                          "null"
+                                        ]
+                                      },
+                                      "kind": {
+                                        "enum": [
+                                          "text",
+                                          "image",
+                                          "sticker",
+                                          "audio",
+                                          "video",
+                                          "file",
+                                          "link",
+                                          "contact",
+                                          "location",
+                                          "mixed",
+                                          "unsupported"
+                                        ]
+                                      },
+                                      "label": {
+                                        "maxLength": 512,
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "mime_type": {
+                                        "maxLength": 128,
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "size_bytes": {
+                                        "maximum": 9007199254740991,
+                                        "minimum": 0,
+                                        "type": [
+                                          "integer",
+                                          "null"
+                                        ]
+                                      },
+                                      "sticker_id": {
+                                        "maxLength": 128,
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ]
+                                      },
+                                      "width": {
+                                        "maximum": 100000,
+                                        "minimum": 1,
+                                        "type": [
+                                          "integer",
+                                          "null"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "label",
+                                      "mime_type",
+                                      "file_name",
+                                      "size_bytes",
+                                      "duration_ms",
+                                      "width",
+                                      "height",
+                                      "sticker_id",
+                                      "bytes_available"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "maxItems": 16,
+                                  "type": "array"
+                                },
+                                "kind": {
+                                  "enum": [
+                                    "text",
+                                    "image",
+                                    "sticker",
+                                    "audio",
+                                    "video",
+                                    "file",
+                                    "link",
+                                    "contact",
+                                    "location",
+                                    "mixed",
+                                    "unsupported"
+                                  ]
+                                },
+                                "native_type": {
+                                  "maxLength": 64,
+                                  "pattern": "^[A-Za-z0-9_.-]+$",
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "reason": {
+                                  "enum": [
+                                    null,
+                                    "legacy_projection",
+                                    "empty_content",
+                                    "unknown_native_type",
+                                    "unsupported_shape",
+                                    "metadata_limited",
+                                    "invalid_metadata"
+                                  ]
+                                },
+                                "summary": {
+                                  "maxLength": 256,
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "text_role": {
+                                  "enum": [
+                                    "author",
+                                    "none",
+                                    "legacy_projection"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "native_type",
+                                "summary",
+                                "availability",
+                                "reason",
+                                "elements",
+                                "text_role"
+                              ],
+                              "type": "object"
+                            },
+                            "content_resource_uri": {
+                              "format": "uri",
+                              "maxLength": 4096,
+                              "pattern": "^zalo://conversations/(direct|group)/.+/messages/.+/content$",
+                              "type": "string"
+                            },
+                            "conversation_id": {
+                              "maxLength": 256,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "conversation_name": {
+                              "maxLength": 256,
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "conversation_type": {
+                              "enum": [
+                                "direct",
+                                "group"
+                              ],
+                              "type": "string"
+                            },
+                            "direction": {
+                              "enum": [
+                                "incoming",
+                                "outgoing",
+                                "unknown"
+                              ]
+                            },
+                            "first_incoming": {
+                              "type": [
+                                "boolean",
+                                "null"
+                              ]
+                            },
+                            "message_id": {
+                              "maxLength": 256,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "schema_version": {
+                              "const": 3
+                            },
+                            "sender_id": {
+                              "maxLength": 256,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "sender_name": {
+                              "maxLength": 256,
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "sent_at": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "text": {
+                              "maxLength": 2048,
+                              "type": "string"
+                            },
+                            "text_resource_uri": {
+                              "format": "uri",
+                              "maxLength": 4096,
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "text_truncated": {
+                              "type": "boolean"
+                            },
+                            "content_truncated": {
+                              "type": "boolean",
+                              "description": "True when event content omits trailing elements to fit recovery; read the full metadata resource. Absent on older retained v3 events means false."
+                            }
+                          },
+                          "required": [
+                            "conversation_id",
+                            "message_id",
+                            "sender_id",
+                            "sender_name",
+                            "sent_at",
+                            "text",
+                            "text_truncated",
+                            "text_resource_uri",
+                            "conversation_type",
+                            "conversation_name",
+                            "schema_version",
+                            "direction",
+                            "first_incoming",
+                            "content",
+                            "content_resource_uri"
+                          ],
+                          "type": "object"
+                        },
+                        "eventId": {
+                          "maxLength": 128,
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "name": {
+                          "const": "zalo.conversation.message.created.v3"
+                        },
+                        "timestamp": {
+                          "format": "date-time",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "eventId",
+                        "name",
+                        "timestamp",
+                        "data",
+                        "cursor"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$schema": "https://json-schema.org/draft/2020-12/schema",
+                      "additionalProperties": false,
+                      "properties": {
+                        "cursor": {
+                          "type": "null"
+                        },
+                        "data": {
+                          "$schema": "https://json-schema.org/draft/2020-12/schema",
+                          "additionalProperties": false,
+                          "properties": {
+                            "actor_id": {
+                              "maxLength": 256,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "actor_name": {
+                              "maxLength": 256,
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "conversation_id": {
+                              "maxLength": 256,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "conversation_name": {
+                              "maxLength": 256,
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "conversation_type": {
+                              "enum": [
+                                "direct",
+                                "group"
+                              ]
+                            },
+                            "direction": {
+                              "enum": [
+                                "incoming",
+                                "outgoing",
+                                "unknown"
+                              ]
+                            },
+                            "family": {
+                              "const": "reaction"
+                            },
+                            "identity_basis": {
+                              "enum": [
+                                "upstream_action_id",
+                                "observed_fingerprint"
+                              ]
+                            },
+                            "native_type": {
+                              "maxLength": 64,
+                              "pattern": "^[A-Za-z0-9_.-]+$",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "occurred_at": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "reaction": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "action": {
+                                  "enum": [
+                                    "add",
+                                    "remove",
+                                    "update",
+                                    "unknown"
+                                  ]
+                                },
+                                "reaction": {
+                                  "maxLength": 128,
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "target_message_ids": {
+                                  "items": {
+                                    "maxLength": 64,
+                                    "minLength": 1,
+                                    "type": "string"
+                                  },
+                                  "maxItems": 16,
+                                  "type": "array",
+                                  "uniqueItems": true
+                                }
+                              },
+                              "required": [
+                                "target_message_ids",
+                                "reaction",
+                                "action"
+                              ],
+                              "type": "object"
+                            },
+                            "schema_version": {
+                              "const": 1
+                            },
+                            "source": {
+                              "enum": [
+                                "live",
+                                "replay"
+                              ]
+                            },
+                            "source_id": {
+                              "maxLength": 256,
+                              "minLength": 1,
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "schema_version",
+                            "conversation_type",
+                            "conversation_id",
+                            "conversation_name",
+                            "actor_id",
+                            "actor_name",
+                            "occurred_at",
+                            "direction",
+                            "source_id",
+                            "identity_basis",
+                            "source",
+                            "native_type",
+                            "family",
+                            "reaction"
+                          ],
+                          "type": "object"
+                        },
+                        "eventId": {
+                          "maxLength": 128,
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "name": {
+                          "const": "zalo.conversation.reaction.observed.v1"
+                        },
+                        "timestamp": {
+                          "format": "date-time",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "eventId",
+                        "name",
+                        "timestamp",
+                        "data",
+                        "cursor"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "$schema": "https://json-schema.org/draft/2020-12/schema",
+                      "additionalProperties": false,
+                      "properties": {
+                        "cursor": {
+                          "type": "null"
+                        },
+                        "data": {
+                          "$schema": "https://json-schema.org/draft/2020-12/schema",
+                          "additionalProperties": false,
+                          "properties": {
+                            "actor_id": {
+                              "maxLength": 256,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "actor_name": {
+                              "maxLength": 256,
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "call": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "call_id": {
+                                  "maxLength": 256,
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "duration_ms": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ]
+                                },
+                                "mode": {
+                                  "enum": [
+                                    "voice",
+                                    "video",
+                                    "unknown"
+                                  ]
+                                },
+                                "native_status": {
+                                  "maximum": 2147483647,
+                                  "minimum": -2147483648,
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ]
+                                },
+                                "status": {
+                                  "enum": [
+                                    "unknown",
+                                    "started",
+                                    "ringing",
+                                    "answered",
+                                    "ended",
+                                    "missed",
+                                    "cancelled",
+                                    "declined"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "call_id",
+                                "status",
+                                "native_status",
+                                "mode",
+                                "duration_ms"
+                              ],
+                              "type": "object"
+                            },
+                            "conversation_id": {
+                              "maxLength": 256,
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "conversation_name": {
+                              "maxLength": 256,
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "conversation_type": {
+                              "enum": [
+                                "direct",
+                                "group"
+                              ]
+                            },
+                            "direction": {
+                              "enum": [
+                                "incoming",
+                                "outgoing",
+                                "unknown"
+                              ]
+                            },
+                            "family": {
+                              "const": "call"
+                            },
+                            "identity_basis": {
+                              "enum": [
+                                "upstream_action_id",
+                                "observed_fingerprint"
+                              ]
+                            },
+                            "native_type": {
+                              "maxLength": 64,
+                              "pattern": "^[A-Za-z0-9_.-]+$",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "occurred_at": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "schema_version": {
+                              "const": 1
+                            },
+                            "source": {
+                              "enum": [
+                                "live",
+                                "replay"
+                              ]
+                            },
+                            "source_id": {
+                              "maxLength": 256,
+                              "minLength": 1,
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "schema_version",
+                            "conversation_type",
+                            "conversation_id",
+                            "conversation_name",
+                            "actor_id",
+                            "actor_name",
+                            "occurred_at",
+                            "direction",
+                            "source_id",
+                            "identity_basis",
+                            "source",
+                            "native_type",
+                            "family",
+                            "call"
+                          ],
+                          "type": "object"
+                        },
+                        "eventId": {
+                          "maxLength": 128,
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "name": {
+                          "const": "zalo.conversation.call.observed.v1"
+                        },
+                        "timestamp": {
+                          "format": "date-time",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "eventId",
+                        "name",
+                        "timestamp",
+                        "data",
+                        "cursor"
+                      ],
+                      "type": "object"
                     }
                   ]
                 },

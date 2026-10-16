@@ -126,6 +126,1412 @@
         "invalid_group_history_isFilteredByTimeJoin",
         "invalid_group_history_isOld"
       ]
+    },
+    "record_probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "matched": {
+          "type": "boolean"
+        },
+        "ambiguous": {
+          "type": "boolean"
+        },
+        "shape": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "action_token": {
+                  "enum": [
+                    null,
+                    "sendBubbleMessage",
+                    "recommened.calltime",
+                    "recommened.misscall",
+                    "recommened.groupcall",
+                    "recommened.link",
+                    "recommened.user"
+                  ]
+                },
+                "type_token": {
+                  "enum": [
+                    null,
+                    "call",
+                    "voice",
+                    "video",
+                    "link",
+                    "contact",
+                    "image",
+                    "file",
+                    "location"
+                  ]
+                },
+                "description_present": {
+                  "type": "boolean"
+                },
+                "params_shape": {
+                  "enum": [
+                    "absent",
+                    "object",
+                    "array",
+                    "string",
+                    "scalar",
+                    "invalid",
+                    "oversized"
+                  ]
+                },
+                "params_keys": {
+                  "type": "array",
+                  "maxItems": 32,
+                  "uniqueItems": true,
+                  "items": {
+                    "enum": [
+                      "callId",
+                      "callType",
+                      "callTime",
+                      "duration",
+                      "status",
+                      "reason",
+                      "type",
+                      "mode",
+                      "event",
+                      "data",
+                      "ext",
+                      "startTime",
+                      "endTime",
+                      "isVideo",
+                      "call_type",
+                      "call_id",
+                      "calltime",
+                      "calltype",
+                      "call_time",
+                      "call_status",
+                      "duration_ms",
+                      "photoId",
+                      "clientId",
+                      "desc",
+                      "width",
+                      "height",
+                      "toid",
+                      "grid",
+                      "rawUrl",
+                      "hdUrl",
+                      "thumbUrl",
+                      "oriUrl",
+                      "normalUrl",
+                      "hdSize",
+                      "zsource",
+                      "ttl",
+                      "jcp",
+                      "groupLayoutId",
+                      "isGroupLayout",
+                      "idInGroup",
+                      "totalItemInGroup",
+                      "extMsgProp",
+                      "mentionInfo",
+                      "fileName",
+                      "fileSize",
+                      "totalSize",
+                      "extention"
+                    ]
+                  }
+                },
+                "keys_truncated": {
+                  "type": "boolean"
+                },
+                "action_present": {
+                  "type": "boolean"
+                },
+                "type_present": {
+                  "type": "boolean"
+                },
+                "unknown_key_count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 65536
+                },
+                "param_shapes": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "callId": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "calltype": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "duration": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "reason": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "desc": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "width": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "height": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "fileName": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "fileSize": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "totalSize": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "extention": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "groupLayoutId": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "isGroupLayout": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "idInGroup": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "totalItemInGroup": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "null",
+                            "string",
+                            "number",
+                            "boolean",
+                            "object",
+                            "array"
+                          ]
+                        },
+                        "empty": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "empty"
+                      ],
+                      "allOf": [
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "const": "null"
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": true
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "number",
+                                  "boolean"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "const": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "if": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "string",
+                                  "array",
+                                  "object"
+                                ]
+                              }
+                            }
+                          },
+                          "then": {
+                            "properties": {
+                              "empty": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                "description_matches_title": {
+                  "type": "boolean"
+                },
+                "param_desc_matches_title": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "action_token",
+                "type_token",
+                "description_present",
+                "params_shape",
+                "params_keys",
+                "keys_truncated",
+                "action_present",
+                "type_present",
+                "unknown_key_count"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "matched",
+        "ambiguous",
+        "shape"
+      ]
     }
   },
   "additionalProperties": false,

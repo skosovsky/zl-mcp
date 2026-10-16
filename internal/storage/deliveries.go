@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -121,8 +120,7 @@ func (s *Store) FanoutProfileEvents(
 		if err != nil {
 			return 0, err
 		}
-		var message domain.Message
-		encodeErr := json.Unmarshal([]byte(event.body), &message)
+		message, encodeErr := decodeContentMessage([]byte(event.body))
 		message.Conversation = domain.ConversationRef{Type: event.kind, ID: event.group}
 		message.Direction = event.direction
 		message.FirstIncoming = event.firstIncoming
@@ -135,7 +133,7 @@ func (s *Store) FanoutProfileEvents(
 		}
 		rows, err := tx.QueryContext(
 			ctx,
-			"SELECT id,generation,profile FROM event_subscriptions WHERE active=1 AND (scope='all' OR scope=? OR (scope='conversation' AND group_id=? AND conversation_type=?)) AND (direction='all' OR direction=?) AND (first_incoming_only=0 OR ?=1) AND start_seq<? AND (expires_at IS NULL OR julianday(expires_at)>julianday(?))",
+			"SELECT id,generation,profile FROM event_subscriptions WHERE active=1 AND profile IN ('zalo.message.created','zalo.conversation.message.created.v2','zalo.conversation.message.created.v3') AND (scope='all' OR scope=? OR (scope='conversation' AND group_id=? AND conversation_type=?)) AND (direction='all' OR direction=?) AND (first_incoming_only=0 OR ?=1) AND start_seq<? AND (expires_at IS NULL OR julianday(expires_at)>julianday(?))",
 			event.kind,
 			event.group,
 			event.kind,
@@ -178,7 +176,7 @@ func (s *Store) FanoutProfileEvents(
 			case !s.AllowsConversation(message.Ref()):
 				state, reason = stateCancelledText, "access_revoked"
 			case payloadErr != nil:
-				state, reason = stateFailedText, "invalid_payload"
+				state, reason = stateFailedText, reasonInvalidPayload
 			case !at.Before(created.Add(p.MaxAge)):
 				state, reason = stateFailedText, "deadline"
 			case jobs >= p.MaxJobs || payloadBytes+int64(len(payload)) > p.MaxBytes:
@@ -288,7 +286,7 @@ func (s *Store) ClaimDelivery(ctx context.Context, at time.Time, p DeliveryPolic
 		var deadline, profile, scope, kind string
 		var created *string
 		var ref domain.ConversationRef
-		err := tx.QueryRowContext(ctx, `SELECT d.id,d.event_id,d.subscription_id,d.generation,d.payload,d.attempts,d.deadline,s.callback,s.secret,s.principal,s.group_id,s.profile,s.scope,s.conversation_type,COALESCE(m.conversation_type,s.conversation_type),COALESCE(m.conversation_id,s.group_id),ev.created_at FROM event_deliveries d LEFT JOIN message_events ev ON ev.event_id=d.event_id JOIN event_subscriptions s ON s.id=d.subscription_id LEFT JOIN messages m ON m.seq=d.message_seq WHERE d.state='pending' AND julianday(d.next_attempt_at)<=julianday(?) AND NOT EXISTS(SELECT 1 FROM event_deliveries busy WHERE busy.subscription_id=d.subscription_id AND busy.state='sending') AND NOT EXISTS(SELECT 1 FROM event_deliveries earlier WHERE earlier.subscription_id=d.subscription_id AND earlier.id<d.id AND earlier.state IN ('pending','sending')) ORDER BY d.id LIMIT 1`, ts).
+		err := tx.QueryRowContext(ctx, `SELECT d.id,d.event_id,d.subscription_id,d.generation,d.payload,d.attempts,d.deadline,s.callback,s.secret,s.principal,s.group_id,s.profile,s.scope,s.conversation_type,CASE WHEN d.activity_seq IS NOT NULL THEN COALESCE(a.conversation_type,'') ELSE COALESCE(m.conversation_type,s.conversation_type) END,CASE WHEN d.activity_seq IS NOT NULL THEN COALESCE(a.conversation_id,'') ELSE COALESCE(m.conversation_id,s.group_id) END,COALESCE(a.created_at,ev.created_at) FROM event_deliveries d LEFT JOIN message_events ev ON ev.event_id=d.event_id JOIN event_subscriptions s ON s.id=d.subscription_id LEFT JOIN messages m ON m.seq=d.message_seq LEFT JOIN activity_observations a ON a.seq=d.activity_seq AND a.expired=0 WHERE d.state='pending' AND julianday(d.next_attempt_at)<=julianday(?) AND NOT EXISTS(SELECT 1 FROM event_deliveries busy WHERE busy.subscription_id=d.subscription_id AND busy.state='sending') AND NOT EXISTS(SELECT 1 FROM event_deliveries earlier WHERE earlier.subscription_id=d.subscription_id AND earlier.id<d.id AND earlier.state IN ('pending','sending')) ORDER BY d.id LIMIT 1`, ts).
 			Scan(&d.ID, &d.EventID, &d.SubscriptionID, &d.Generation, &d.Payload, &d.Attempts, &deadline, &d.Callback, &d.Secret, &d.Principal, &d.GroupID, &profile, &scope, &kind, &ref.Type, &ref.ID, &created)
 		if errors.Is(err, sql.ErrNoRows) {
 			if commitErr := tx.Commit(); commitErr != nil {
@@ -407,5 +405,8 @@ func (s *Store) FinishDelivery(ctx context.Context, d EventDelivery, outcome Del
 }
 
 func (s *Store) PruneDeliveries(ctx context.Context, at time.Time) error {
+	if err := s.PruneActivities(ctx, at); err != nil {
+		return err
+	}
 	return s.pruneEventJournal(ctx, at)
 }

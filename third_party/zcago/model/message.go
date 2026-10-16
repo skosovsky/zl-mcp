@@ -265,6 +265,9 @@ func (m *TMention) IsValid() bool {
 }
 
 type Content struct {
+	// Unsupported retains valid, unknown JSON shapes for bounded application projection.
+	// It must never be logged or published as raw payload.
+	Unsupported    json.RawMessage
 	String         *string
 	Attachment     *TAttachmentContent
 	DeletedContent []TDeletedContent
@@ -273,6 +276,12 @@ type Content struct {
 }
 
 func (c *Content) UnmarshalJSON(data []byte) error {
+	// Decoding may reuse the same value. Clear stale union arms, and do not
+	// mistake JSON null (accepted by encoding/json into string) for text.
+	*c = Content{}
+	if bytes.Equal(bytes.TrimSpace(data), []byte("null")) {
+		return nil
+	}
 	var s string
 	if err := json.Unmarshal(data, &s); err == nil {
 		c.String = &s
@@ -280,13 +289,27 @@ func (c *Content) UnmarshalJSON(data []byte) error {
 	}
 
 	var attach TAttachmentContent
-	if err := json.Unmarshal(data, &attach); err == nil && attach.Title != "" {
+	var fields map[string]json.RawMessage
+	_ = json.Unmarshal(data, &fields)
+	// The pinned listener treats this explicit marker as control metadata.
+	// Preserve it before attachment projection can discard unknown object keys.
+	if _, control := fields["deleteMsg"]; control {
+		var other TOtherContent
+		if err := json.Unmarshal(data, &other); err == nil {
+			c.Other = other
+			return nil
+		}
+	}
+	_, hasTitle := fields["title"]
+	_, hasHref := fields["href"]
+	_, hasThumb := fields["thumb"]
+	if err := json.Unmarshal(data, &attach); err == nil && (hasTitle || hasHref || hasThumb) {
 		c.Attachment = &attach
 		return nil
 	}
 
 	var deletedContent []TDeletedContent
-	if err := json.Unmarshal(data, &deletedContent); err == nil {
+	if err := json.Unmarshal(data, &deletedContent); err == nil && deletionControlShape(data, deletedContent) {
 		c.DeletedContent = deletedContent
 		return nil
 	}
@@ -297,7 +320,32 @@ func (c *Content) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
+	if json.Valid(data) {
+		c.Unsupported = append(json.RawMessage(nil), data...)
+		return nil
+	}
 	return errs.NewZCA("Content: data did not match any known content type", "Content.UnmarshalJSON")
+}
+
+// Do not interpret arbitrary object arrays (including [{}]) as deletion controls.
+// Field presence identifies a control-shaped record; action semantics stay with
+// the application and are not inferred from numeric values here.
+func deletionControlShape(data []byte, records []TDeletedContent) bool {
+	if len(records) == 0 {
+		return false
+	}
+	var fields []map[string]json.RawMessage
+	if json.Unmarshal(data, &fields) != nil || len(fields) != len(records) {
+		return false
+	}
+	for i, record := range records {
+		_, hasAction := fields[i]["actionType"]
+		_, hasTarget := fields[i]["globalDelMsgId"]
+		if !hasAction || !hasTarget || record.GlobalDelMsgId <= 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func (c Content) MarshalJSON() ([]byte, error) {
@@ -312,6 +360,9 @@ func (c Content) MarshalJSON() ([]byte, error) {
 	}
 	if c.Other != nil {
 		return json.Marshal(c.Other)
+	}
+	if c.Unsupported != nil {
+		return append(json.RawMessage(nil), c.Unsupported...), nil
 	}
 	return []byte("null"), nil
 }

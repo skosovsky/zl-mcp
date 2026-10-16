@@ -259,3 +259,52 @@ Archive transport: native first-party cookie setup also scopes `zpw_sek` to
 `trans-bin.zaloapp.com`, retaining public-network transport and redirect rejection.
 The jar is never expanded; no other chat cookies are forwarded. Tests cover
 other hosts, ports, unchanged request/jar and one-request transport.
+
+## Content union without a title (rich-content task)
+
+`model.Content.UnmarshalJSON` now clears stale arms when reusing a value and
+recognizes JSON null before decoding a string. Structured attachment objects are
+recognized by title/href/thumb keys rather than a nonempty title. Unknown or
+malformed attachment fields remain available as `Other`; no arbitrary native
+fields are exposed by the application normalizer. Regression tests cover a
+photo-shaped object without a caption, reuse after string content, null and
+unknown/malformed object shapes. This is parser coverage, not live media
+acceptance. Local message profile v3 work is tracked in
+`docs/task-rich-content-events.md` at the repository root.
+
+Reaction identity: `NewReaction` now captures the self sentinel before replacing
+it with the real account UID. Previously outgoing direct reactions became
+`IsSelf=false` and were assigned the owner as peer. Regression coverage checks
+incoming/outgoing direct/group identity independently. This fixes normalization;
+it does not itself enable a public reaction Events profile.
+
+Valid unknown JSON content shapes (for example a boolean or heterogeneous array)
+are retained in an internal `Unsupported` union arm rather than failing the
+entire message/frame decoder. The application publishes only a bounded explicit
+unsupported projection; it never forwards/logs those raw bytes. Invalid JSON
+remains a decoding failure. Tests check internal roundtrip without invented
+text/attachment arms.
+
+Reaction replay now emits separate homogeneous direct/group batches when both
+arrays occur in one envelope; the previous selection discarded the direct
+array whenever a group array was present. Live/replay reaction emission now
+uses the same cancellation-aware durable backpressure as message emission,
+rather than evicting queued observations. Tests cover a mixed envelope and a
+100-event burst through a one-slot channel, with no production account.
+
+- Rich-content candidate: deletion-control arrays require explicit action/target
+  shape; arbitrary object arrays remain Unsupported instead of being decoded as
+  zero-valued deletion controls. No upstream action enum meaning is inferred.
+
+Reaction content uses native `rType` and `source` JSON keys, replacing erroneous
+`r.RType`/`r.Source` tags. A nonzero codec regression checks both directions.
+Bounded, nonserialized shape diagnostics distinguish missing/null/empty `rMsg`
+from client-only/global references without retaining raw values or unknown fields.
+This does not infer add/remove semantics or explain previously observed missing
+targets retroactively.
+
+Unknown-frame diagnostics retain at most 16 numeric protocol header tuples with
+counts and explicit overflow instead of relying solely on the last command.
+Concurrent snapshots are detached; ignored actions/controls are counted without
+their names or data. This is call investigation instrumentation, not call
+classification or a new event channel. No native body/session data is retained.

@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -106,7 +105,7 @@ func appendMessageEvent(ctx context.Context, tx *sql.Tx, seq int64, m domain.Mes
 	if err != nil {
 		return err
 	}
-	body, err := json.Marshal(m)
+	body, err := encodeContentMessage(m)
 	if err != nil {
 		return err
 	}
@@ -227,7 +226,7 @@ func (s *Store) ActivateSubscription(
 		if count >= maximumSubscriptions {
 			return sub, errors.New("active subscription capacity exceeded")
 		}
-		if err = tx.QueryRowContext(ctx, "SELECT COALESCE((SELECT seq FROM sqlite_sequence WHERE name='messages'),0)").
+		if err = tx.QueryRowContext(ctx, "SELECT COALESCE((SELECT seq FROM sqlite_sequence WHERE name=?),0)", subscriptionSequence(sub.Profile)).
 			Scan(&sub.StartSeq); err != nil {
 			return sub, err
 		}

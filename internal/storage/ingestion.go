@@ -7,9 +7,11 @@ import (
 )
 
 // Counters are per open store, not a permanent ledger. They contain no upstream
-// identities or content and count persistence only after transaction commit.
+// identities or content. Persistence result counters advance after commit;
+// unsupported-content attempts advance before SQL and include failed writes.
 type ingestionCounters struct {
 	received, excluded, inserted, duplicates, errors atomic.Uint64
+	unsupportedContent                               atomic.Uint64
 }
 
 type IngestionCount struct {
@@ -18,15 +20,19 @@ type IngestionCount struct {
 	Inserted   uint64 `json:"inserted"`
 	Duplicates uint64 `json:"duplicates"`
 	Errors     uint64 `json:"errors"`
+	// UnsupportedContent counts admitted normalized attempts, including replay
+	// duplicates and failed writes; it does not count unique persisted records.
+	UnsupportedContent uint64 `json:"unsupported_content"`
 }
 
 func (c *ingestionCounters) snapshot() IngestionCount {
 	return IngestionCount{
-		Received:   c.received.Load(),
-		Excluded:   c.excluded.Load(),
-		Inserted:   c.inserted.Load(),
-		Duplicates: c.duplicates.Load(),
-		Errors:     c.errors.Load(),
+		Received:           c.received.Load(),
+		Excluded:           c.excluded.Load(),
+		Inserted:           c.inserted.Load(),
+		Duplicates:         c.duplicates.Load(),
+		Errors:             c.errors.Load(),
+		UnsupportedContent: c.unsupportedContent.Load(),
 	}
 }
 

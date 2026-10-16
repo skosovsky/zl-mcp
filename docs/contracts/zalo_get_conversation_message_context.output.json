@@ -414,6 +414,175 @@
             "direct",
             "group"
           ]
+        },
+        "content": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "text",
+                "image",
+                "sticker",
+                "audio",
+                "video",
+                "file",
+                "link",
+                "contact",
+                "location",
+                "mixed",
+                "unsupported"
+              ]
+            },
+            "native_type": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9_.-]+$"
+            },
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "availability": {
+              "enum": [
+                "text",
+                "metadata_only",
+                "unavailable"
+              ]
+            },
+            "reason": {
+              "enum": [
+                null,
+                "legacy_projection",
+                "empty_content",
+                "unknown_native_type",
+                "unsupported_shape",
+                "metadata_limited",
+                "invalid_metadata"
+              ]
+            },
+            "elements": {
+              "type": "array",
+              "maxItems": 16,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "text",
+                      "image",
+                      "sticker",
+                      "audio",
+                      "video",
+                      "file",
+                      "link",
+                      "contact",
+                      "location",
+                      "mixed",
+                      "unsupported"
+                    ]
+                  },
+                  "label": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 512
+                  },
+                  "mime_type": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 128
+                  },
+                  "file_name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 256
+                  },
+                  "size_bytes": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "duration_ms": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "width": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000
+                  },
+                  "height": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000
+                  },
+                  "sticker_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 128
+                  },
+                  "bytes_available": {
+                    "const": false
+                  }
+                },
+                "required": [
+                  "kind",
+                  "label",
+                  "mime_type",
+                  "file_name",
+                  "size_bytes",
+                  "duration_ms",
+                  "width",
+                  "height",
+                  "sticker_id",
+                  "bytes_available"
+                ]
+              }
+            },
+            "text_role": {
+              "enum": [
+                "author",
+                "none",
+                "legacy_projection"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "native_type",
+            "summary",
+            "availability",
+            "reason",
+            "elements",
+            "text_role"
+          ]
         }
       },
       "required": [
@@ -488,6 +657,175 @@
           "enum": [
             "direct",
             "group"
+          ]
+        },
+        "content": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "text",
+                "image",
+                "sticker",
+                "audio",
+                "video",
+                "file",
+                "link",
+                "contact",
+                "location",
+                "mixed",
+                "unsupported"
+              ]
+            },
+            "native_type": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9_.-]+$"
+            },
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "availability": {
+              "enum": [
+                "text",
+                "metadata_only",
+                "unavailable"
+              ]
+            },
+            "reason": {
+              "enum": [
+                null,
+                "legacy_projection",
+                "empty_content",
+                "unknown_native_type",
+                "unsupported_shape",
+                "metadata_limited",
+                "invalid_metadata"
+              ]
+            },
+            "elements": {
+              "type": "array",
+              "maxItems": 16,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "text",
+                      "image",
+                      "sticker",
+                      "audio",
+                      "video",
+                      "file",
+                      "link",
+                      "contact",
+                      "location",
+                      "mixed",
+                      "unsupported"
+                    ]
+                  },
+                  "label": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 512
+                  },
+                  "mime_type": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 128
+                  },
+                  "file_name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 256
+                  },
+                  "size_bytes": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "duration_ms": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "width": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000
+                  },
+                  "height": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000
+                  },
+                  "sticker_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 128
+                  },
+                  "bytes_available": {
+                    "const": false
+                  }
+                },
+                "required": [
+                  "kind",
+                  "label",
+                  "mime_type",
+                  "file_name",
+                  "size_bytes",
+                  "duration_ms",
+                  "width",
+                  "height",
+                  "sticker_id",
+                  "bytes_available"
+                ]
+              }
+            },
+            "text_role": {
+              "enum": [
+                "author",
+                "none",
+                "legacy_projection"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "native_type",
+            "summary",
+            "availability",
+            "reason",
+            "elements",
+            "text_role"
           ]
         }
       },

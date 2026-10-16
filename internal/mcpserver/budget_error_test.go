@@ -1,7 +1,6 @@
 package mcpserver
 
 import (
-	"context"
 	"encoding/json"
 	"path/filepath"
 	"strings"
@@ -18,8 +17,9 @@ import (
 //nolint:gocognit // This AAA test keeps arrangement, operation and boundary assertions visible as one ordered scenario.
 func TestOversizedRecordAndCoverageReturnActionableErrors(t *testing.T) {
 	// Arrange: legitimate data too large even for a single result page.
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	// This checks response budgets, not wall-clock speed. Fixture preparation
+	// must not consume an arbitrary shared deadline under the race detector.
+	ctx := t.Context()
 	dir := t.TempDir()
 	store, err := storage.Open(ctx, filepath.Join(dir, "state.sqlite"), []string{"g"}, 90)
 	if err != nil {

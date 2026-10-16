@@ -135,6 +135,7 @@ dependenciesRules:
         - '^strings$'
         - '^time$'
         - '^unicode/utf8$'
+        - '^unicode$'
     shouldNotDependsOn:
       standard:
         - '^net/http.**'
@@ -501,6 +502,8 @@ dependenciesRules:
         - '^bytes$'
         - '^context$'
         - '^crypto/rand$'
+        # Bounded rich-content metadata and privacy-preserving record identity.
+        - '^crypto/sha256$'
         - '^crypto/rsa$'
         - '^crypto/x509$'
         - '^encoding/base64$'
@@ -520,6 +523,7 @@ dependenciesRules:
         - '^strings$'
         - '^sync$'
         - '^time$'
+        - '^unicode/utf8$'
   - package: '^github[.]com/skosovsky/zl-mcp/internal/app/conversations.**'
     shouldOnlyDependsOn:
       internal:

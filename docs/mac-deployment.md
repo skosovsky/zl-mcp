@@ -80,6 +80,13 @@ launchctl print "gui/$(id -u)/com.skosovsky.zl-mcp.service"
 
 The template launches the Go binary directly, starts at login, restarts after failure, and throttles failed restarts. It needs no Python wrapper. Stop the foreground service before bootstrap. Verify `zalo_get_status` through MCP after startup; a running launchd job alone does not prove Zalo connectivity.
 
+Use `ProcessType = Standard`, as in the template. An older manually installed
+agent may specify `Background`; check that field when migrating. In the native
+rich-content check, Background severely delayed startup and MCP reads; changing
+only this field to Standard restored startup and SDK reads. A temporary
+`taskpolicy -B` change did not substitute for the LaunchAgent policy. Verify the
+actual installed plist and MCP readiness after updating; do not run two agents.
+
 ## Stop, start, and reauthenticate
 
 Stop before changing the binary, doing a consistent backup, or QR login:
@@ -121,7 +128,15 @@ mv "$HOME/.local/bin/zl-mcp.new" "$HOME/.local/bin/zl-mcp"
 
 Apply any documented config migration, bootstrap, and verify status, saved search/context, and delivery diagnostics. An update does not register MCP client settings automatically.
 
-To roll back, stop the new service and preserve a private copy of its current state. Restore the previous binary/config/plist. Restore the matching pre-update state only if required for database compatibility; this discards messages and subscription changes collected since that backup, so retain the newer copy for recovery. Bootstrap and verify again. Do not mix database files from different backups.
+To roll back, unload the service and preserve a private copy of its entire current
+state. Check the target binary's schema and processing compatibility before any
+replacement; for a pre-rich binary use the candidate's `check-rollback` gate below.
+Restore the prior binary/config/plist only when current data, subscriptions and
+processing checkpoints can remain intact. An older database snapshot alone is
+not a lossless rollback: it omits intervening messages, subscription changes and
+acknowledgements. If compatibility requires data restoration, keep the current
+runtime until a tested reconciliation preserves that interval. Do not mix database
+files from different backups or bootstrap an old binary merely to try it.
 
 ## Uninstall
 
@@ -135,7 +150,14 @@ Linux builds are checked, but this LaunchAgent setup applies only to macOS. Ther
 
 ## Upgrading a group-only corpus
 
-The conversation migration is transactional and preserves old messages as `group`, sequence numbers, identities, gaps, subscription boundaries/generations, queued payload bytes and the fanout checkpoint. Do not restore an old binary onto the upgraded schema. A compatible rollback restores the matching stopped-service backup of binary/config and the entire database state, retaining the newer state privately for later recovery. No source checkout or Zalo session reset is required.
+The conversation migration is transactional and preserves old messages as `group`,
+sequence numbers, identities, gaps, subscription boundaries/generations, queued
+payload bytes and the fanout checkpoint. Do not run an unverified old binary on
+the upgraded schema. A stopped backup preserves a recovery point, but rollback
+must also preserve messages and processing changes since that point. Follow the
+compatibility gate and lossless reconciliation requirements above; if they cannot
+be satisfied, keep the current runtime. No source checkout or Zalo session reset
+is required.
 
 Legacy configs containing only `collection.group_ids` retain their group-only meaning. To enable all conversations, remove `group_ids` and set `mode = "all"` under `[collection]`; do not combine the two forms. Collection changes do not expand existing callback scopes. The subscription start boundary is preserved, so newly recovered messages may be delivered only if they match that subscription. See [conversation collection](conversations.md).
 
@@ -173,3 +195,42 @@ unsupported. Check saved operation status and read imported records through MCP.
 History creates no Events or notification deliveries. See the
 [history workflow](history-import.md). Source registration and synthetic tests do
 not prove upstream pages are available for a particular account.
+
+## Rich-content candidate downgrade gate
+
+The rich-content candidate is deployed locally but not yet live-accepted. Before replacing
+it with a pre-rich binary, unload the LaunchAgent and keep the service stopped.
+Run the **candidate** binary, with the same absolute config path:
+
+```sh
+/Users/YOUR_USER/.local/bin/zl-mcp -config /Users/YOUR_USER/.config/zl-mcp/config.toml check-rollback
+```
+
+The command is read-only, takes the account lock temporarily and prints counts
+only. A refusal means keep the candidate: unsupported active subscriptions,
+unprocessed work, unfanned sources **or retained activity payload** cannot be
+left to an old runtime. The old binary does not enforce activity retention.
+The lock is released on exit; do not restart ingestion between the check and
+replacement. Never discard intervening messages/ack by restoring an older DB to
+make the check pass. The complete compatibility proof and limitations are in
+[the rich-content contract](contracts/rich-content-events.md). A verified stopped
+backup is still required before the original upgrade. Existing production v2
+subscriptions are not automatically replaced by this feature.
+
+### Exact-record preload investigation (candidate)
+
+The rich-content candidate extends the owner-only command with an optional exact
+selector:
+
+```sh
+"$HOME/.local/bin/zl-mcp" -config "$HOME/.config/zl-mcp/config.toml" probe-preload direct CONVERSATION_ID MESSAGE_ID
+```
+
+Without those three selector arguments it retains the aggregate-only probe.
+This reads bounded preload through the running service's current session and
+returns an allowlisted shape only for one exact typed match. No match does not
+prove absence from history; duplicate matches expose no shape. Unknown action/type
+values and param keys are withheld, and known tokens do not establish call status.
+There is no import, message sending, additional listener or phone synchronization.
+This diagnostic is owner-only and is not advertised as an MCP tool. The candidate
+must be installed before using its selector form.

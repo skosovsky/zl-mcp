@@ -33,7 +33,7 @@ func (c *Client) Listen(
 			return onDelete(ref.ID, id)
 		}
 		return nil
-	}, onConnected, false)
+	}, onConnected, false, nil)
 }
 
 func (c *Client) ListenConversations(
@@ -42,16 +42,28 @@ func (c *Client) ListenConversations(
 	onDelete func(domain.ConversationRef, string) error,
 	onConnected func() error,
 ) error {
-	return c.listenConversations(ctx, onMessage, onDelete, onConnected, true)
+	return c.listenConversations(ctx, onMessage, onDelete, onConnected, true, nil)
 }
 
-//nolint:gocognit // The closed native channel dispatch keeps terminal events and callbacks within one Start/Stop lifetime; message normalization, replay batches and initial requests are separate handlers.
+// ListenConversationActivities shares the same upstream listener and session.
+func (c *Client) ListenConversationActivities(
+	ctx context.Context,
+	onMessage func(domain.Message) error,
+	onDelete func(domain.ConversationRef, string) error,
+	onConnected func() error,
+	onActivity func(domain.Activity) error,
+) error {
+	return c.listenConversations(ctx, onMessage, onDelete, onConnected, true, onActivity)
+}
+
+//nolint:cyclop,gocognit,gocyclo // The closed native channel dispatch keeps terminal events and callbacks within one Start/Stop lifetime; message normalization, replay batches and initial requests are separate handlers.
 func (c *Client) listenConversations(
 	ctx context.Context,
 	onMessage func(domain.Message) error,
 	onDelete func(domain.ConversationRef, string) error,
 	onConnected func() error,
 	includeDirect bool,
+	onActivity func(domain.Activity) error,
 ) error {
 	ln := c.api.Listener()
 	if e := ln.Start(ctx, false); e != nil {
@@ -84,12 +96,14 @@ func (c *Client) listenConversations(
 			logListenerError(err)
 			return listenerFailure(err, "listener reported an error")
 		case v := <-ln.Message():
-			if deliveryErr := deliverIncoming(v, "live", onMessage); deliveryErr != nil {
+			if deliveryErr := deliverIncomingActivity(v, "live", onMessage, onActivity); deliveryErr != nil {
 				return deliveryErr
 			}
 		case old := <-ln.OldMessages():
-			if replayErr := deliverReplay(old.Messages, onMessage); replayErr != nil {
-				return replayErr
+			for _, message := range old.Messages {
+				if replayErr := deliverIncomingActivity(message, "replay", onMessage, onActivity); replayErr != nil {
+					return replayErr
+				}
 			}
 			if e := pager.Continue(ctx, ln, old.Replay); e != nil {
 				return listenerFailure(e, "replay continuation failed")
@@ -107,8 +121,17 @@ func (c *Client) listenConversations(
 			}
 		case <-ln.Group():
 		case <-ln.Friend():
-		case <-ln.Reaction():
-		case <-ln.OldReactions():
+		case reaction := <-ln.Reaction():
+			if err := deliverReaction(reaction, "live", onActivity); err != nil {
+				return err
+			}
+		case reactions := <-ln.OldReactions():
+			for _, reaction := range reactions.Reactions {
+				if err := deliverReaction(reaction, "replay", onActivity); err != nil {
+					return err
+				}
+			}
+
 		case <-ln.Typing():
 		case <-ln.DeliveredMessages():
 		case <-ln.SeenMessages():
@@ -198,7 +221,15 @@ func logIngestionDiagnostics(ln listener.Listener) {
 		d.Backpressure,
 		"cancelled_emissions",
 		d.CancelledEmissions,
+		"ignored_actions", d.IgnoredActions,
+		"ignored_controls", d.IgnoredControls,
+		"unhandled_header_overflow", d.UnhandledHeaderOverflow,
 	)
+	for _, header := range d.UnhandledHeaders {
+		//nolint:sloglint // Numeric protocol headers only; no body, identities or arbitrary action strings.
+		slog.Info("zalo_unhandled_header", "version", header.Version, "command", header.Command,
+			"subcommand", header.Subcommand, "count", header.Count)
+	}
 	//nolint:sloglint // Use the service-configured redacting logger; fields remain a bounded allowlist without raw errors or native identities.
 	slog.Info(
 		"zalo_ingestion_diagnostics",
@@ -239,6 +270,10 @@ func logIngestionDiagnostics(ln listener.Listener) {
 
 func deliverIncoming(message model.Message, source string, onMessage func(domain.Message) error) error {
 	normalized, err := convertIncoming(message, source)
+	if isNonMessageRecord(err) {
+		logSkippedNonMessage(source, err)
+		return nil
+	}
 	if err != nil {
 		return err
 	}

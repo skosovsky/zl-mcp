@@ -2,6 +2,7 @@ package storage
 
 // Shared wire vocabulary retains the existing serialized spellings.
 const (
+	reasonInvalidPayload            = "invalid_payload"
 	codePermissionDenied            = "PERMISSION_DENIED"
 	directionAll                    = "all"
 	stateCancelledText              = "cancelled"

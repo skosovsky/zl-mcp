@@ -272,6 +272,672 @@
               },
               {
                 "type": "null"
+              },
+              {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "name": {
+                    "const": "zalo.conversation.message.created.v3"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "data": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "type": "object",
+                    "properties": {
+                      "message_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "sender_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "sender_name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "maxLength": 256
+                      },
+                      "sent_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "text": {
+                        "type": "string",
+                        "maxLength": 2048
+                      },
+                      "text_truncated": {
+                        "type": "boolean"
+                      },
+                      "text_resource_uri": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uri",
+                        "maxLength": 4096
+                      },
+                      "conversation_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "conversation_type": {
+                        "type": "string",
+                        "enum": [
+                          "direct",
+                          "group"
+                        ]
+                      },
+                      "conversation_name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "maxLength": 256
+                      },
+                      "schema_version": {
+                        "const": 3
+                      },
+                      "direction": {
+                        "enum": [
+                          "incoming",
+                          "outgoing",
+                          "unknown"
+                        ]
+                      },
+                      "first_incoming": {
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      },
+                      "content": {
+                        "$schema": "https://json-schema.org/draft/2020-12/schema",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "text",
+                              "image",
+                              "sticker",
+                              "audio",
+                              "video",
+                              "file",
+                              "link",
+                              "contact",
+                              "location",
+                              "mixed",
+                              "unsupported"
+                            ]
+                          },
+                          "native_type": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 64,
+                            "pattern": "^[A-Za-z0-9_.-]+$"
+                          },
+                          "summary": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "availability": {
+                            "enum": [
+                              "text",
+                              "metadata_only",
+                              "unavailable"
+                            ]
+                          },
+                          "reason": {
+                            "enum": [
+                              null,
+                              "legacy_projection",
+                              "empty_content",
+                              "unknown_native_type",
+                              "unsupported_shape",
+                              "metadata_limited",
+                              "invalid_metadata"
+                            ]
+                          },
+                          "elements": {
+                            "type": "array",
+                            "maxItems": 16,
+                            "items": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "properties": {
+                                "kind": {
+                                  "enum": [
+                                    "text",
+                                    "image",
+                                    "sticker",
+                                    "audio",
+                                    "video",
+                                    "file",
+                                    "link",
+                                    "contact",
+                                    "location",
+                                    "mixed",
+                                    "unsupported"
+                                  ]
+                                },
+                                "label": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "maxLength": 512
+                                },
+                                "mime_type": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "maxLength": 128
+                                },
+                                "file_name": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "maxLength": 256
+                                },
+                                "size_bytes": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "duration_ms": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "width": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000
+                                },
+                                "height": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000
+                                },
+                                "sticker_id": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "maxLength": 128
+                                },
+                                "bytes_available": {
+                                  "const": false
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "label",
+                                "mime_type",
+                                "file_name",
+                                "size_bytes",
+                                "duration_ms",
+                                "width",
+                                "height",
+                                "sticker_id",
+                                "bytes_available"
+                              ]
+                            }
+                          },
+                          "text_role": {
+                            "enum": [
+                              "author",
+                              "none",
+                              "legacy_projection"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "native_type",
+                          "summary",
+                          "availability",
+                          "reason",
+                          "elements",
+                          "text_role"
+                        ]
+                      },
+                      "content_resource_uri": {
+                        "type": "string",
+                        "format": "uri",
+                        "pattern": "^zalo://conversations/(direct|group)/.+/messages/.+/content$",
+                        "maxLength": 4096
+                      },
+                      "content_truncated": {
+                        "type": "boolean",
+                        "description": "True when event content omits trailing elements to fit recovery; read the full metadata resource. Absent on older retained v3 events means false."
+                      }
+                    },
+                    "required": [
+                      "conversation_id",
+                      "message_id",
+                      "sender_id",
+                      "sender_name",
+                      "sent_at",
+                      "text",
+                      "text_truncated",
+                      "text_resource_uri",
+                      "conversation_type",
+                      "conversation_name",
+                      "schema_version",
+                      "direction",
+                      "first_incoming",
+                      "content",
+                      "content_resource_uri"
+                    ],
+                    "additionalProperties": false,
+                    "allOf": [
+                      {
+                        "if": {
+                          "properties": {
+                            "text_truncated": {
+                              "const": true
+                            }
+                          },
+                          "required": [
+                            "text_truncated"
+                          ]
+                        },
+                        "then": {
+                          "properties": {
+                            "text_resource_uri": {
+                              "type": "string",
+                              "format": "uri",
+                              "pattern": "^zalo://conversations/(direct|group)/",
+                              "maxLength": 4096
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "cursor": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "eventId",
+                  "name",
+                  "timestamp",
+                  "data",
+                  "cursor"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "name": {
+                    "const": "zalo.conversation.reaction.observed.v1"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "data": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "schema_version": {
+                        "const": 1
+                      },
+                      "conversation_type": {
+                        "enum": [
+                          "direct",
+                          "group"
+                        ]
+                      },
+                      "conversation_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "conversation_name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "maxLength": 256
+                      },
+                      "actor_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "actor_name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "maxLength": 256
+                      },
+                      "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "direction": {
+                        "enum": [
+                          "incoming",
+                          "outgoing",
+                          "unknown"
+                        ]
+                      },
+                      "source_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "identity_basis": {
+                        "enum": [
+                          "upstream_action_id",
+                          "observed_fingerprint"
+                        ]
+                      },
+                      "source": {
+                        "enum": [
+                          "live",
+                          "replay"
+                        ]
+                      },
+                      "native_type": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "maxLength": 64,
+                        "pattern": "^[A-Za-z0-9_.-]+$"
+                      },
+                      "family": {
+                        "const": "reaction"
+                      },
+                      "reaction": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "target_message_ids": {
+                            "type": "array",
+                            "maxItems": 16,
+                            "uniqueItems": true,
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64
+                            }
+                          },
+                          "reaction": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 128
+                          },
+                          "action": {
+                            "enum": [
+                              "add",
+                              "remove",
+                              "update",
+                              "unknown"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "target_message_ids",
+                          "reaction",
+                          "action"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "schema_version",
+                      "conversation_type",
+                      "conversation_id",
+                      "conversation_name",
+                      "actor_id",
+                      "actor_name",
+                      "occurred_at",
+                      "direction",
+                      "source_id",
+                      "identity_basis",
+                      "source",
+                      "native_type",
+                      "family",
+                      "reaction"
+                    ]
+                  },
+                  "cursor": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "eventId",
+                  "name",
+                  "timestamp",
+                  "data",
+                  "cursor"
+                ]
+              },
+              {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "name": {
+                    "const": "zalo.conversation.call.observed.v1"
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "data": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "schema_version": {
+                        "const": 1
+                      },
+                      "conversation_type": {
+                        "enum": [
+                          "direct",
+                          "group"
+                        ]
+                      },
+                      "conversation_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "conversation_name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "maxLength": 256
+                      },
+                      "actor_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "actor_name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "maxLength": 256
+                      },
+                      "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "direction": {
+                        "enum": [
+                          "incoming",
+                          "outgoing",
+                          "unknown"
+                        ]
+                      },
+                      "source_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "identity_basis": {
+                        "enum": [
+                          "upstream_action_id",
+                          "observed_fingerprint"
+                        ]
+                      },
+                      "source": {
+                        "enum": [
+                          "live",
+                          "replay"
+                        ]
+                      },
+                      "native_type": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "maxLength": 64,
+                        "pattern": "^[A-Za-z0-9_.-]+$"
+                      },
+                      "family": {
+                        "const": "call"
+                      },
+                      "call": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "call_id": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 256
+                          },
+                          "status": {
+                            "enum": [
+                              "unknown",
+                              "started",
+                              "ringing",
+                              "answered",
+                              "ended",
+                              "missed",
+                              "cancelled",
+                              "declined"
+                            ]
+                          },
+                          "native_status": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -2147483648,
+                            "maximum": 2147483647
+                          },
+                          "mode": {
+                            "enum": [
+                              "voice",
+                              "video",
+                              "unknown"
+                            ]
+                          },
+                          "duration_ms": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "call_id",
+                          "status",
+                          "native_status",
+                          "mode",
+                          "duration_ms"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "schema_version",
+                      "conversation_type",
+                      "conversation_id",
+                      "conversation_name",
+                      "actor_id",
+                      "actor_name",
+                      "occurred_at",
+                      "direction",
+                      "source_id",
+                      "identity_basis",
+                      "source",
+                      "native_type",
+                      "family",
+                      "call"
+                    ]
+                  },
+                  "cursor": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "eventId",
+                  "name",
+                  "timestamp",
+                  "data",
+                  "cursor"
+                ]
               }
             ]
           },

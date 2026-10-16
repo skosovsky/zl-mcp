@@ -52,7 +52,7 @@ func (s *Store) Browse(
 	rows, err := s.DB.QueryContext(
 		ctx,
 		//nolint:gosec // G202: SQL fragments are fixed internal predicates/operators; all client values use placeholders.
-		`SELECT m.message_id,m.sender_id,m.sender_name,g.name,m.sent_at,m.text FROM visible_messages m LEFT JOIN conversations g ON g.conversation_type=m.conversation_type AND g.conversation_id=m.group_id WHERE `+strings.Join(
+		`SELECT m.message_id,m.sender_id,m.sender_name,g.name,m.sent_at,m.text,m.content_json FROM visible_messages m LEFT JOIN conversations g ON g.conversation_type=m.conversation_type AND g.conversation_id=m.group_id WHERE `+strings.Join(
 			clauses,
 			" AND ",
 		)+" ORDER BY m.sent_at "+order+",m.message_id "+order+" LIMIT ?",
@@ -165,10 +165,20 @@ func scanBrowseRows(rows *sql.Rows, ref domain.ConversationRef) (browseRecords, 
 	for rows.Next() {
 		var id, sender, stamp, body string
 		var senderName, name *string
-		if err := rows.Scan(&id, &sender, &senderName, &name, &stamp, &body); err != nil {
+		var rawContent sql.NullString
+		if err := rows.Scan(&id, &sender, &senderName, &name, &stamp, &body, &rawContent); err != nil {
 			//nolint:gosec // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
 			rows.Close()
 			return browseRecords{}, err
+		}
+		content, contentErr := decodeStoredContent(rawContent)
+		if contentErr != nil {
+			//nolint:gosec // Preserve primary decoding error on read-only cleanup.
+			rows.Close()
+			return browseRecords{}, contentErr
+		}
+		if content != nil && content.TextRole == domain.ContentTextNone {
+			body = ""
 		}
 		runes := []rune(body)
 		truncated := len(runes) > historyPreviewRunes
@@ -193,6 +203,10 @@ func scanBrowseRows(rows *sql.Rows, ref domain.ConversationRef) (browseRecords, 
 				"direction":           stateUnknownText,
 			},
 		)
+
+		if content != nil {
+			values[len(values)-1]["content"] = content
+		}
 		times = append(times, stamp)
 		senders = append(senders, sender)
 	}

@@ -113,3 +113,16 @@ See [incoming subscriptions and direct sending](direct-messaging.md) for example
 discovery verification, separate send permissions and handling an unknown send result.
 
 For event-triggered automation, store the exact subscription ID with its rule and use [journal recovery](contracts/event-recovery.md). Refresh the client/plugin catalogue to discover the three recovery tools after updating the service. Reconcile previously completed notifications before processing an existing backlog.
+
+## Rich content discovery (candidate)
+
+After a verified candidate upgrade, refresh the actual HTTP client's discovery
+and inspect `events/list`: message v3 and reaction v1 require compatible schemas;
+STDIO still provides tools/resources only. Do not replace existing v2
+subscriptions just because v3 is listed. Preserve processing checkpoints and
+reconcile source conversation/message identities before an agreed cutover.
+Calls are not advertised. A missing automation payload is different from a typed
+nontext event with empty author text. Read the exact subscription journal,
+process in order, and acknowledge only the authorized successful action. See
+[rich-content contract](contracts/rich-content-events.md). A native candidate is deployed locally; full live acceptance and publication
+remain pending.

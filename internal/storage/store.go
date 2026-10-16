@@ -161,7 +161,16 @@ func (s *Store) migrate(ctx context.Context) error {
 	if err := s.migrateMobileHistory(ctx); err != nil {
 		return err
 	}
-	return s.migrateMobileHistoryAcquisition(ctx)
+	if err := s.migrateMobileHistoryAcquisition(ctx); err != nil {
+		return err
+	}
+	if err := s.migrateMessageContent(ctx); err != nil {
+		return err
+	}
+	if err := s.migrateActivities(ctx); err != nil {
+		return err
+	}
+	return s.migrateMessageClientIDs(ctx)
 }
 func (s *Store) BindAccount(ctx context.Context, account string) error {
 	h := sha256.Sum256([]byte(account))
@@ -238,6 +247,9 @@ func (s *Store) Put(ctx context.Context, m domain.Message) (err error) {
 	if m.Source != "live" && m.Source != "replay" {
 		return domain.Invalid("Message source must be live or replay.")
 	}
+	if m.Content != nil && m.Content.Kind == "unsupported" && m.Content.TextRole != "legacy_projection" {
+		counters.unsupportedContent.Add(1)
+	}
 	if m.AttachmentTypes == nil {
 		m.AttachmentTypes = []string{}
 	}
@@ -288,9 +300,13 @@ func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, 
 	if err != nil {
 		return false, err
 	}
+	content, err := contentJSON(m.Content)
+	if err != nil {
+		return false, err
+	}
 	result, err := tx.ExecContext(
 		ctx,
-		`INSERT OR IGNORE INTO messages(group_id,conversation_type,message_id,sender_id,sender_name,sent_at,received_at,text,reply_id,attachments,source) VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
+		`INSERT OR IGNORE INTO messages(group_id,conversation_type,message_id,sender_id,sender_name,sent_at,received_at,text,reply_id,attachments,source,content_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`,
 		ref.ID,
 		ref.Type,
 		m.ID,
@@ -302,6 +318,7 @@ func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, 
 		m.ReplyTo,
 		string(a),
 		m.Source,
+		content,
 	)
 	if err != nil {
 		return false, err
@@ -323,6 +340,9 @@ func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, 
 		if lastInsertIDErr != nil {
 			return false, lastInsertIDErr
 		}
+	}
+	if err = putMessageClientID(ctx, tx, m); err != nil {
+		return false, err
 	}
 	// A matching replay may restore missing protocol quote identifiers without
 	// changing retained text, permanent identity or event eligibility.
@@ -428,12 +448,13 @@ func (s *Store) removeMessagesTx(ctx context.Context, tx *sql.Tx, predicate, rea
 	return nil
 }
 
-const messageColumns = "group_id,message_id,sender_id,sender_name,sent_at,text,reply_id,attachments,source"
+const messageColumns = "group_id,message_id,sender_id,sender_name,sent_at,text,reply_id,attachments,source,content_json"
 
 func scanMessage(row interface{ Scan(...any) error }) (domain.Message, error) {
 	var m domain.Message
 	var ts, a string
-	err := row.Scan(&m.GroupID, &m.ID, &m.SenderID, &m.SenderName, &ts, &m.Text, &m.ReplyTo, &a, &m.Source)
+	var content sql.NullString
+	err := row.Scan(&m.GroupID, &m.ID, &m.SenderID, &m.SenderName, &ts, &m.Text, &m.ReplyTo, &a, &m.Source, &content)
 	if err != nil {
 		return m, err
 	}
@@ -441,7 +462,10 @@ func scanMessage(row interface{ Scan(...any) error }) (domain.Message, error) {
 	if err != nil {
 		return m, err
 	}
-	err = json.Unmarshal([]byte(a), &m.AttachmentTypes)
+	if err = json.Unmarshal([]byte(a), &m.AttachmentTypes); err != nil {
+		return m, err
+	}
+	m.Content, err = decodeStoredContent(content)
 	return m, err
 }
 func (s *Store) Message(ctx context.Context, g, id string) (domain.Message, error) {

@@ -2,6 +2,7 @@ package collector
 
 // Shared wire vocabulary retains the existing serialized spellings.
 const (
+	codeStorageError          = "STORAGE_ERROR"
 	codeUpstreamUnavailable   = "UPSTREAM_UNAVAILABLE"
 	reasonAuthRequired        = "auth_required"
 	reasonCancelledOrDeadline = "cancelled_or_deadline"

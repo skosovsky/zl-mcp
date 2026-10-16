@@ -25,6 +25,19 @@
 
 Протокол MCP `2026-07-28`, webhook-профиль MCP Events draft. Методы: `events/list`, `events/subscribe`, `events/unsubscribe`; capability `events` в `server/discover`. Исполняемые входы/результаты находятся в events_*.json, payload — zalo_message_created.payload.json, доставка — mcp_event.delivery.json. Эти методы не добавляются в каталог tools. Источник профиля: [MCP Events](https://developers.openai.com/plugins/build/mcp-events), проверен 2 октября 2026 года; стабильность draft за пределами зафиксированного контракта не обещается.
 
+## Новые профили: реализация кандидата
+
+`zalo.conversation.message.created.v3` добавляет обязательный типизированный
+content и metadata resource с теми же фильтрами сообщений. Отдельный
+`zalo.conversation.reaction.observed.v1` использует собственную последовательность
+источника и не создаёт message/first-incoming. Action пока unknown: семантика
+add/update/remove не подтверждена. Call v1 поддерживает узкое direct-наблюдение
+с unknown/null outcome metadata; остальные формы не подтверждены. Новые профили
+не означают миграцию старых подписок. Полный контракт, retention, переход и запрет
+небезопасного отката: [rich-content-events](rich-content-events.md). Версия native
+кандидата и незакрытые live gates — в [checkpoint](../rich-content-implementation-checkpoint.md);
+существующие delivery bytes и ack сохраняют исходный контракт.
+
 ## Событие и фильтр
 
 Фильтрованный профиль v2 — `zalo.conversation.message.created.v2`, схемы
@@ -102,3 +115,14 @@ Resource не содержит текстов, ID авторов, callback URL �
 ## Восстановление payload и постоянный checkpoint
 
 [Event recovery](event-recovery.md) описывает обычные MCP tools для точного журнала подписки, ограниченного чтения и подтверждения обработки. Они не заменяют events/subscribe и не исправляют инъекцию payload на стороне клиента.
+
+Уточнение call v1: текущий контракт допускает только direct scope и точный
+direct conversation. Подтверждён discriminator chat.recommended +
+recommened.misscall с четырьмя числовыми полями и recommened.calltime с тремя
+(без reason); публикуется наблюдение с
+unknown status/mode и null duration/native_status/call_id. Другие формы не
+классифицируются. Переход старой message-проекции в activity при replay подавляется
+через постоянный tombstone без изменения прежних callback/ack. Свежая live-цепочка
+для misscall подтверждена; calltime имеет native provenance и автономную проверку
+новой проекции. Проверка restart/ack текущей поставки фиксируется в
+[матрице приёмки](../rich-content-acceptance.md); основной контракт — [rich content](rich-content-events.md).

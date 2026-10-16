@@ -36,7 +36,11 @@ func (s *Service) addConversationResources(server *mcp.Server) error {
 	}
 	server.AddResource(
 		//nolint:exhaustruct_v5 // Resource keeps unused optional SDK metadata/representations absent; preserve existing wire defaults.
-		&mcp.Resource{URI: "zalo://collection", Name: "Conversation collection status", MIMEType: contentTypeJSON},
+		&mcp.Resource{
+			URI:      "zalo://collection",
+			Name:     "Conversation collection status",
+			MIMEType: contentTypeJSON,
+		},
 		func(ctx context.Context, r *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 			return s.readCollectionStatus(ctx, r, schema)
 		},
@@ -51,6 +55,13 @@ func (s *Service) addConversationResources(server *mcp.Server) error {
 		func(ctx context.Context, r *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 			return s.readConversationMessage(ctx, r)
 		},
+	)
+	server.AddResourceTemplate(
+		//nolint:exhaustruct_v5 // Only the JSON metadata representation is served.
+		&mcp.ResourceTemplate{
+			URITemplate: "zalo://conversations/{conversation_type}/{conversation_id}/messages/{message_id}/content",
+			Name:        "Local message content metadata", MIMEType: contentTypeJSON,
+		}, s.readConversationMessage,
 	)
 	return nil
 }
@@ -69,7 +80,8 @@ func (s *Service) readArchiveRecord(
 		return nil, errors.New("archive read budget unavailable; retry later")
 	}
 	u, allowReadErr := url.Parse(r.Params.URI)
-	if allowReadErr != nil || u.Scheme != wireZalo || u.Host != "archives" || u.RawQuery != "" || u.Fragment != "" ||
+	if allowReadErr != nil || u.Scheme != wireZalo || u.Host != "archives" || u.RawQuery != "" ||
+		u.Fragment != "" ||
 		u.User != nil {
 		return nil, errors.New("invalid archive resource URI")
 	}
@@ -137,6 +149,7 @@ func (s *Service) readCollectionStatus(
 	}, nil
 }
 
+//nolint:gocognit // Parse one typed identity and enforce identical visibility for text and metadata representations.
 func (s *Service) readConversationMessage(
 	ctx context.Context,
 	r *mcp.ReadResourceRequest,
@@ -149,12 +162,15 @@ func (s *Service) readConversationMessage(
 		return nil, errors.New("RATE_LIMITED: retry resource read later")
 	}
 	u, err := url.Parse(r.Params.URI)
-	if err != nil || u.Scheme != wireZalo || u.Host != "conversations" || u.RawQuery != "" || u.Fragment != "" ||
+	if err != nil || u.Scheme != wireZalo || u.Host != "conversations" || u.RawQuery != "" ||
+		u.Fragment != "" ||
 		u.User != nil {
 		return nil, errors.New("invalid conversation message URI")
 	}
 	parts := strings.Split(strings.TrimPrefix(u.EscapedPath(), "/"), "/")
-	if len(parts) != 4 || parts[2] != wireMessages {
+	const metadataPathParts = 5
+	metadata := len(parts) == metadataPathParts && parts[4] == "content"
+	if (len(parts) != 4 && !metadata) || parts[2] != wireMessages {
 		return nil, errors.New("invalid conversation message URI")
 	}
 	id, err := url.PathUnescape(parts[1])
@@ -176,12 +192,38 @@ func (s *Service) readConversationMessage(
 	if err != nil {
 		return nil, errors.New("message unavailable or access denied")
 	}
+	if metadata {
+		content := m.Content
+		if content == nil {
+			content = domain.LegacyContent()
+		}
+		body, encodingErr := json.Marshal(content)
+		if encodingErr != nil {
+			return nil, errors.New("content encoding failed")
+		}
+		schema, schemaErr := contracts.Compile("message_content", "output")
+		if schemaErr != nil {
+			return nil, errors.New("content contract unavailable")
+		}
+		var value any
+		if json.Unmarshal(body, &value) != nil || schema.Validate(value) != nil {
+			return nil, errors.New("content contract mismatch")
+		}
+		//nolint:exhaustruct_v5 // Serve only bounded local JSON metadata, never media bytes.
+		return &mcp.ReadResourceResult{
+			Contents: []*mcp.ResourceContents{
+				{URI: r.Params.URI, MIMEType: contentTypeJSON, Text: string(body)},
+			},
+		}, nil
+	}
 	if len(m.Text) > 1<<20 {
 		return nil, errors.New("message exceeds supported resource size")
 	}
 	//nolint:exhaustruct_v5 // ReadResourceResult keeps unused optional SDK metadata/representations absent; preserve existing wire defaults.
 	return &mcp.ReadResourceResult{
 		//nolint:exhaustruct_v5 // Only the selected text/blob resource representation is populated; the other remains absent.
-		Contents: []*mcp.ResourceContents{{URI: r.Params.URI, MIMEType: contentTypeText, Text: m.Text}},
+		Contents: []*mcp.ResourceContents{
+			{URI: r.Params.URI, MIMEType: contentTypeText, Text: m.Text},
+		},
 	}, nil
 }

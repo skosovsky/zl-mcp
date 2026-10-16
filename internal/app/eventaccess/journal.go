@@ -3,6 +3,8 @@ package eventaccess
 import (
 	"context"
 	"encoding/json"
+
+	"github.com/skosovsky/zl-mcp/internal/domain"
 )
 
 // Subscription represents either retained event profile explicitly. Optional
@@ -31,6 +33,12 @@ type Message struct {
 type EventData struct {
 	Message
 
+	Activity *domain.Activity `json:"-"`
+
+	ContentTruncated   *bool                  `json:"content_truncated,omitempty"`
+	ContentResourceURI string                 `json:"content_resource_uri,omitempty"`
+	Content            *domain.MessageContent `json:"content,omitempty"`
+
 	GroupID          *string `json:"group_id,omitempty"`
 	ConversationID   *string `json:"conversation_id,omitempty"`
 	ConversationType *string `json:"conversation_type,omitempty"`
@@ -42,17 +50,23 @@ type EventData struct {
 
 // MarshalJSON preserves v2 nullable fields that the legacy profile does not contain.
 func (d EventData) MarshalJSON() ([]byte, error) {
+	if d.Activity != nil {
+		return json.Marshal(d.Activity)
+	}
 	if d.SchemaVersion != nil {
 		return json.Marshal(struct {
 			Message
 
-			ConversationID   *string `json:"conversation_id"`
-			ConversationType *string `json:"conversation_type"`
-			ConversationName *string `json:"conversation_name"`
-			SchemaVersion    *int    `json:"schema_version"`
-			Direction        *string `json:"direction"`
-			FirstIncoming    *bool   `json:"first_incoming"`
-		}{d.Message, d.ConversationID, d.ConversationType, d.ConversationName, d.SchemaVersion, d.Direction, d.FirstIncoming})
+			ConversationID     *string                `json:"conversation_id"`
+			ConversationType   *string                `json:"conversation_type"`
+			ConversationName   *string                `json:"conversation_name"`
+			SchemaVersion      *int                   `json:"schema_version"`
+			Direction          *string                `json:"direction"`
+			FirstIncoming      *bool                  `json:"first_incoming"`
+			Content            *domain.MessageContent `json:"content,omitempty"`
+			ContentResourceURI string                 `json:"content_resource_uri,omitempty"`
+			ContentTruncated   *bool                  `json:"content_truncated,omitempty"`
+		}{d.Message, d.ConversationID, d.ConversationType, d.ConversationName, d.SchemaVersion, d.Direction, d.FirstIncoming, d.Content, d.ContentResourceURI, d.ContentTruncated})
 	}
 	return json.Marshal(struct {
 		Message
@@ -90,4 +104,30 @@ func (h *Handler) Subscriptions(ctx context.Context, principal string) (Subscrip
 }
 func (h *Handler) ReadEvents(ctx context.Context, principal, id string, limit int) (Page, error) {
 	return h.Journal.ReadEvents(ctx, principal, id, limit)
+}
+
+// UnmarshalJSON distinguishes the closed activity union from the retained
+// message profiles. A reaction/call is never projected through Message fields.
+func (d *EventData) UnmarshalJSON(raw []byte) error {
+	var discriminator struct {
+		Family string `json:"family"`
+	}
+	if err := json.Unmarshal(raw, &discriminator); err != nil {
+		return err
+	}
+	var empty EventData
+	*d = empty
+	if discriminator.Family != "" {
+		var activity domain.Activity
+		if err := json.Unmarshal(raw, &activity); err != nil {
+			return err
+		}
+		if err := activity.Validate(); err != nil {
+			return err
+		}
+		d.Activity = &activity
+		return nil
+	}
+	type plainEventData EventData
+	return json.Unmarshal(raw, (*plainEventData)(d))
 }

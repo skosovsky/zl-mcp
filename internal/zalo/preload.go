@@ -68,6 +68,10 @@ func readConversationPreload(
 	}{{domain.ConversationDirect, raw.DirectMessages}, {domain.ConversationGroup, raw.GroupMessages}} {
 		for _, item := range batch.records {
 			msg, messageErr := parsePreloadMessage(item, batch.kind, own)
+			if isNonMessageRecord(messageErr) {
+				logSkippedNonMessage("preload", messageErr)
+				continue
+			}
 			if messageErr != nil {
 				return domain.PreloadSnapshot{}, messageErr
 			}
@@ -106,7 +110,7 @@ func normalizePreloadMessage(raw json.RawMessage) ([]byte, error) {
 	}
 	for _, key := range []string{nativeActionIDField, "msgId", nativeClientMessageIDField, "uidFrom", "idTo", "ts", nativeUserIDField, nativeRealMessageIDField} {
 		value := bytes.TrimSpace(fields[key])
-		if len(value) == 0 || bytes.Equal(value, []byte("null")) {
+		if len(value) == 0 || bytes.Equal(value, []byte(wireNull)) {
 			continue
 		}
 		// Optional SDK fields may be absent or an empty string. They are not
@@ -177,7 +181,7 @@ func parsePreloadEntry(
 	}
 	seen[ref] = true
 	var last *string
-	if len(wire.Last) > 0 && string(wire.Last) != "null" {
+	if len(wire.Last) > 0 && string(wire.Last) != wireNull {
 		v, e := preloadID(wire.Last)
 		if e != nil {
 			return domain.PreloadEntry{}, invalidHistoryPage("invalid preload last message identifier")
@@ -206,6 +210,9 @@ func parsePreloadMessage(item json.RawMessage, kind, own string) (domain.Message
 		return domain.Message{}, peerErr
 	}
 	msg, e := convertMessage(wire.TMessage, domain.ConversationRef{Type: kind, ID: id}, "")
+	if isNonMessageRecord(e) {
+		return domain.Message{}, e
+	}
 	if e != nil || len(msg.Text) > 1<<20 {
 		return domain.Message{}, invalidHistoryPage("invalid preload message metadata")
 	}
@@ -213,7 +220,8 @@ func parsePreloadMessage(item json.RawMessage, kind, own string) (domain.Message
 	if outgoing {
 		msg.Direction = directionOutgoing
 	}
-	if kind == domain.ConversationDirect && wire.Content.String != nil && wire.MsgType == "webchat" &&
+	refineDirectContent(&msg, wire.TMessage)
+	if kind == domain.ConversationDirect && wire.Content.String != nil && wire.MsgType == nativeWebchat &&
 		wire.CliMsgID != "" {
 		msg.QuoteMetadata = &domain.QuoteMetadata{
 			ClientMessageID: wire.CliMsgID,
@@ -222,6 +230,7 @@ func parsePreloadMessage(item json.RawMessage, kind, own string) (domain.Message
 			TTL:             wire.TTL,
 		}
 	}
+	msg.ProtocolContentShape = contentShape(wire.TMessage)
 	return msg, nil
 }
 

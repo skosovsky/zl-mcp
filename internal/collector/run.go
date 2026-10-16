@@ -271,10 +271,23 @@ func controlPreloadResult(ctx context.Context, j *JoinManager, body []byte) (map
 	if err != nil || json.Unmarshal(body, &raw) != nil || input.Validate(raw) != nil {
 		return nil, domain.Invalid("Probe request does not match its contract.")
 	}
+	var request struct {
+		Arguments preloadProbeTarget `json:"arguments"`
+	}
+	if err = json.Unmarshal(body, &request); err != nil {
+		return nil, domain.Invalid("Invalid preload selector.")
+	}
+	var target *preloadProbeTarget
+	if request.Arguments.ConversationType != "" {
+		target = &request.Arguments
+	}
 	source, _ := j.API.(domain.ConversationPreloadSource)
-	result := probePreload(ctx, source)
+	result := probePreloadRecord(ctx, source, target)
 	output, err := contracts.Compile("cli_probe_preload", "output")
-	if err != nil || output.Validate(result) != nil {
+	encoded, encodingErr := json.Marshal(result)
+	var projected any
+	if err != nil || encodingErr != nil || json.Unmarshal(encoded, &projected) != nil ||
+		output.Validate(projected) != nil {
 		return nil, domain.Invalid("Probe result does not match its contract.")
 	}
 	return result, nil
@@ -322,7 +335,7 @@ func (state *collectorState) message(m domain.Message) error {
 	if err != nil {
 		_ = state.set(
 			"last_error",
-			map[string]any{fieldCode: "STORAGE_ERROR", fieldMessage: "A message could not be persisted."},
+			map[string]any{fieldCode: codeStorageError, fieldMessage: "A message could not be persisted."},
 		)
 		_ = state.store.BeginGap(state.ctx, "storage_error")
 		return &storageError{cause: err}
@@ -340,7 +353,7 @@ func (state *collectorState) deleted(ref domain.ConversationRef, id string) erro
 	if err := state.store.DeleteConversation(state.ctx, ref, id); err != nil {
 		_ = state.set(
 			"last_error",
-			map[string]any{fieldCode: "STORAGE_ERROR", fieldMessage: "A deletion could not be persisted."},
+			map[string]any{fieldCode: codeStorageError, fieldMessage: "A deletion could not be persisted."},
 		)
 		_ = state.store.BeginGap(state.ctx, "storage_error")
 		return &storageError{cause: err}
@@ -434,10 +447,10 @@ func listenCollector(
 	delay := time.Second
 	for {
 		_ = set("collector_state", "connecting")
-		e = listenConversations(runCtx, client, state.message, state.deleted, func() error {
+		e = listenConversationActivities(runCtx, client, state.message, state.deleted, func() error {
 			delay = time.Second
 			return state.connected()
-		})
+		}, state.activity)
 		if runCtx.Err() != nil {
 			//nolint:nilerr // Owner cancellation is normal collector shutdown; do not retry the listener.
 			return nil

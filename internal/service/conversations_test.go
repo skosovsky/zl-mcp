@@ -114,6 +114,7 @@ func TestUnifiedConversationServiceCollectionMCPEventsRestartAndCancel(t *testin
 		version int
 	}{
 		{domain.ConversationMessageCreatedV2, 2},
+		{domain.ConversationMessageCreatedV3, 3},
 	} {
 		t.Run(profile.name, func(t *testing.T) { testConversationServiceProfile(t, profile.name, profile.version) })
 	}

@@ -137,3 +137,75 @@ func TestTrustedPreloadProbeNormalizationReasonsAreClosed(t *testing.T) {
 		}
 	}
 }
+
+func TestExactPreloadProbeUsesTypedIdentityAndWithholdsAmbiguity(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		copies             int
+		matched, ambiguous bool
+	}{
+		{"unique", 1, true, false}, {"missing", 0, false, false}, {"ambiguous", 2, false, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Arrange: a colliding group ID must never match the direct selector.
+			shape := &domain.ContentShape{
+				ActionToken: new("sendBubbleMessage"),
+				ParamsShape: "object",
+				ParamsKeys:  []string{"status"},
+			}
+			messages := []domain.Message{
+				{
+					Conversation:         domain.ConversationRef{Type: "group", ID: "private-peer"},
+					ID:                   "private-message",
+					ProtocolContentShape: shape,
+				},
+			}
+			for range tc.copies {
+				messages = append(
+					messages,
+					domain.Message{
+						Conversation:         domain.ConversationRef{Type: "direct", ID: "private-peer"},
+						ID:                   "private-message",
+						Text:                 "private-body",
+						ProtocolContentShape: shape,
+					},
+				)
+			}
+			source := &preloadListener{scriptedListener: &scriptedListener{fakeZalo: &fakeZalo{}}}
+			source.fetch = func(context.Context) (domain.PreloadSnapshot, error) {
+				return domain.PreloadSnapshot{Messages: messages}, nil
+			}
+			guard := newSessionGuard(t.Context(), source)
+			defer guard.cancel()
+			manager := NewJoin(t.Context(), nil, guard, false)
+			request := httptest.NewRequest(
+				http.MethodPost,
+				"/rpc",
+				strings.NewReader(
+					`{"method":"cli_probe_preload","arguments":{"conversation_type":"direct","conversation_id":"private-peer","message_id":"private-message"}}`,
+				),
+			)
+			response := httptest.NewRecorder()
+			// Act: actual local control route validates the executable output contract.
+			ControlHandler(manager).ServeHTTP(response, request)
+			// Assert: no target IDs/text leak, and duplicate matches expose no shape.
+			if response.Code != http.StatusOK || strings.Contains(response.Body.String(), "private-") {
+				t.Fatal("invalid or leaking exact probe", response.Code)
+			}
+			var result struct {
+				Record struct {
+					Matched   bool                 `json:"matched"`
+					Ambiguous bool                 `json:"ambiguous"`
+					Shape     *domain.ContentShape `json:"shape"`
+				} `json:"record_probe"`
+			}
+			if err := json.Unmarshal(response.Body.Bytes(), &result); err != nil {
+				t.Fatal(err)
+			}
+			if result.Record.Matched != tc.matched || result.Record.Ambiguous != tc.ambiguous ||
+				(result.Record.Shape != nil) != tc.matched {
+				t.Fatal("exact probe identity mismatch")
+			}
+		})
+	}
+}

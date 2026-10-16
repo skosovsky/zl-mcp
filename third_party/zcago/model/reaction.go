@@ -144,14 +144,13 @@ type Reaction struct {
 }
 
 func NewReaction(uid string, data TReaction, threadType ThreadType) Reaction {
+	isSelf := data.UIDFrom == config.DefaultUIDSelf
 	if data.IDTo == config.DefaultUIDSelf {
 		data.IDTo = uid
 	}
 	if data.UIDFrom == config.DefaultUIDSelf {
 		data.UIDFrom = uid
 	}
-
-	isSelf := data.UIDFrom == config.DefaultUIDSelf
 
 	threadID := data.UIDFrom
 	if threadType == ThreadTypeGroup || isSelf {
@@ -193,8 +192,8 @@ type TReaction struct {
 
 type ReactionData struct {
 	RIcon  ReactionIcon `json:"rIcon"`
-	RType  int          `json:"r.RType"`
-	Source int          `json:"r.Source"`
+	RType  int          `json:"rType"`
+	Source int          `json:"source"`
 }
 
 func NewReactionData(icon ReactionIcon) ReactionData {
@@ -212,6 +211,61 @@ func (rid ReactionData) IsValid() bool {
 type ReactionContent struct {
 	RMsg []ReactionMessageRef `json:"rMsg"`
 	ReactionData
+	// Shape contains bounded diagnostics only; never native values or payload.
+	Shape ReactionContentShape `json:"-"`
+}
+
+type ReactionContentShape struct {
+	References     string
+	Count          int
+	PositiveGlobal int
+	PositiveClient int
+	HasType        bool
+	HasSource      bool
+	UnknownFields  int
+}
+
+func (c *ReactionContent) UnmarshalJSON(data []byte) error {
+	type plain ReactionContent
+	var decoded plain
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fields); err != nil {
+		return err
+	}
+	shape := ReactionContentShape{References: "missing"}
+	if raw, ok := fields["rMsg"]; ok {
+		shape.References = "array"
+		if string(raw) == "null" {
+			shape.References = "null"
+		}
+	}
+	_, shape.HasType = fields["rType"]
+	_, shape.HasSource = fields["source"]
+	for key := range fields {
+		switch key {
+		case "rMsg", "rIcon", "rType", "source":
+		default:
+			shape.UnknownFields++
+		}
+	}
+	for _, ref := range decoded.RMsg {
+		if ref.GMsgID > 0 {
+			shape.PositiveGlobal++
+		}
+		if ref.CMsgID > 0 {
+			shape.PositiveClient++
+		}
+	}
+	shape.Count = min(len(decoded.RMsg), 16)
+	shape.PositiveGlobal = min(shape.PositiveGlobal, 16)
+	shape.PositiveClient = min(shape.PositiveClient, 16)
+	shape.UnknownFields = min(shape.UnknownFields, 16)
+	decoded.Shape = shape
+	*c = ReactionContent(decoded)
+	return nil
 }
 
 type ReactionMessageRef struct {

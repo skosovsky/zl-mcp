@@ -7,6 +7,23 @@
 
 Расширение от 3 октября 2026 года: [сбор и обработка всех личных чатов и групп](task-all-conversations.md). Текущая установленная версия и доказательства — [актуальный аудит](conversation-completion-current-audit.md), [live-проверки](local-callback-acceptance.md). Историческое [исследование](conversation-research.md) сохраняет наблюдения своих версий и не задаёт текущий статус реализации.
 
+## Содержательные события: кандидат, ещё без live-приёмки
+
+По [задаче rich content](task-rich-content-events.md) реализуются отдельные
+message v3 и reaction observations, общий нормализованный content в typed reads
+и JSON metadata resource, независимый activity ledger и миграции 15/16.
+В рабочем дереве дополнительно подготовлена миграция 17: приватные protocol
+client-ID aliases для сообщений личных чатов и групп, включая вложения. Они
+используются только для точного сопоставления реакций, не расширяют quote/send
+права и не попадают в публичный JSON. Проверки и статус установки указаны в
+[checkpoint](rich-content-implementation-checkpoint.md).
+Исполняемые схемы и точная граница поддержки —
+[rich-content-events](contracts/rich-content-events.md). Summary/label не являются
+речью автора; v2 сохраняет прежнюю проекцию. Calls без доказанного источника не
+публикуются. Рабочая подписка не расширяется и не переводится автоматически.
+Текущий прогресс и недостающие доказательства —
+[checkpoint](rich-content-implementation-checkpoint.md); это не замена приёмки.
+
 ## Актуальное расширение direct/group
 
 Расширение личной отправки и filtered Events реализовано и развёрнуто по [task-direct-messaging.md](task-direct-messaging.md). Контракты — [contracts/direct-messaging.md](contracts/direct-messaging.md), инструкция — [direct-messaging.md](direct-messaging.md). Plain/quote, first/repeat/restart, direction-фильтры и отдельно разрешённая отправка при искусственном локальном отсутствии подтверждены в [live-приёмке](local-callback-acceptance.md). Первое знакомство за всю историю Zalo из локального теста не выводится.
@@ -448,3 +465,16 @@ FTS5 использует `unicode61` с удалением диакритики
 Исходные источники по Zalo проверены 30 сентября 2026 года, описание Events — 2 октября 2026 года. Утверждения об upstream не заменяют интеграционные проверки; особенно это касается истории, replay и ответов на вступление.
 
 Изменение от 2 октября 2026 года синхронизировано с [задачей единого сервиса](archive/task-unified-ann-service.md). Историческая приёмка MVP не доказывает выполнение новых требований.
+
+
+### Узкая форма наблюдения звонка
+
+Точные direct discriminator `chat.recommended` с action `recommened.misscall`
+и `recommened.calltime` проверены на native records. У первого четыре
+numeric-поля, у второго три без reason; они не дают оснований для
+преобразования в missed/answered, режим или миллисекунды. Call v1 поддерживает
+только личные чаты и unknown/null для этих сведений; остальные формы остаются
+неподтверждёнными. Classifier общий для live/replay и silent history: activity
+не создаёт message/novelty фактов. Cross-ledger tombstone подавляет повторную
+доставку старой message-проекции после обновления; прежние payload не меняются.
+Контракт и ограничения: [rich-content-events](contracts/rich-content-events.md).

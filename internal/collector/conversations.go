@@ -2,6 +2,7 @@ package collector
 
 import (
 	"context"
+	"time"
 
 	"github.com/skosovsky/zl-mcp/internal/domain"
 )
@@ -42,4 +43,57 @@ func (g *sessionGuard) ListenConversations(
 	}
 	defer stop()
 	return g.observe(listenConversations(ctx, g.upstream, message, deletion, connected))
+}
+
+type activityListener interface {
+	ListenConversationActivities(
+		context.Context,
+		func(domain.Message) error,
+		func(domain.ConversationRef, string) error,
+		func() error,
+		func(domain.Activity) error,
+	) error
+}
+
+func listenConversationActivities(
+	ctx context.Context,
+	client ListenerUpstream,
+	message func(domain.Message) error,
+	deletion func(domain.ConversationRef, string) error,
+	connected func() error,
+	activity func(domain.Activity) error,
+) error {
+	if source, ok := client.(activityListener); ok {
+		return source.ListenConversationActivities(ctx, message, deletion, connected, activity)
+	}
+	return listenConversations(ctx, client, message, deletion, connected)
+}
+
+func (g *sessionGuard) ListenConversationActivities(
+	parent context.Context,
+	message func(domain.Message) error,
+	deletion func(domain.ConversationRef, string) error,
+	connected func() error,
+	activity func(domain.Activity) error,
+) error {
+	ctx, stop, err := g.request(parent)
+	if err != nil {
+		return err
+	}
+	defer stop()
+	return g.observe(listenConversationActivities(ctx, g.upstream, message, deletion, connected, activity))
+}
+func (state *collectorState) activity(a domain.Activity) error {
+	_ = state.set("last_event_at", time.Now().UTC().Format(time.RFC3339Nano))
+	if err := state.store.PutActivity(state.ctx, a); err != nil {
+		_ = state.set(
+			"last_error",
+			map[string]any{fieldCode: codeStorageError, fieldMessage: "An activity could not be persisted."},
+		)
+		return &storageError{cause: err}
+	}
+	if state.store.AllowsConversation(a.Ref()) {
+		return state.set("last_persisted_at", time.Now().UTC().Format(time.RFC3339Nano))
+	}
+	return nil
 }

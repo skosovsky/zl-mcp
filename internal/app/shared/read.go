@@ -8,18 +8,19 @@ import (
 )
 
 type ConversationMessage struct {
-	ConversationType string    `json:"conversation_type"`
-	ConversationID   string    `json:"conversation_id"`
-	ID               string    `json:"message_id"`
-	SenderID         string    `json:"sender_id"`
-	SenderName       *string   `json:"sender_name"`
-	SentAt           time.Time `json:"sent_at"`
-	Text             string    `json:"text"`
-	ReplyTo          *string   `json:"reply_to_message_id"`
-	AttachmentTypes  []string  `json:"attachment_types"`
-	Source           string    `json:"source"`
-	TextTruncated    bool      `json:"text_truncated"`
-	TextResourceURI  *string   `json:"text_resource_uri"`
+	Content          *domain.MessageContent `json:"content,omitempty"`
+	ConversationType string                 `json:"conversation_type"`
+	ConversationID   string                 `json:"conversation_id"`
+	ID               string                 `json:"message_id"`
+	SenderID         string                 `json:"sender_id"`
+	SenderName       *string                `json:"sender_name"`
+	SentAt           time.Time              `json:"sent_at"`
+	Text             string                 `json:"text"`
+	ReplyTo          *string                `json:"reply_to_message_id"`
+	AttachmentTypes  []string               `json:"attachment_types"`
+	Source           string                 `json:"source"`
+	TextTruncated    bool                   `json:"text_truncated"`
+	TextResourceURI  *string                `json:"text_resource_uri"`
 }
 
 type ConversationHit struct {

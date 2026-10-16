@@ -10,6 +10,20 @@ import (
 
 // probePreload is a trusted local read, not an MCP tool or ingestion operation.
 func probePreload(parent context.Context, source domain.ConversationPreloadSource) map[string]any {
+	return probePreloadRecord(parent, source, nil)
+}
+
+type preloadProbeTarget struct {
+	ConversationType string `json:"conversation_type"`
+	ConversationID   string `json:"conversation_id"`
+	MessageID        string `json:"message_id"`
+}
+
+func probePreloadRecord(
+	parent context.Context,
+	source domain.ConversationPreloadSource,
+	target *preloadProbeTarget,
+) map[string]any {
 	result := map[string]any{
 		"source_status":             stateUnsupportedText,
 		"error_category":            reasonSourceUnsupported,
@@ -25,6 +39,9 @@ func probePreload(parent context.Context, source domain.ConversationPreloadSourc
 		"messages_persisted":        false,
 		"catalog_complete":          false,
 		"history_complete":          false,
+	}
+	if target != nil {
+		result["record_probe"] = map[string]any{"matched": false, "ambiguous": false, "shape": nil}
 	}
 	if source == nil {
 		return result
@@ -55,6 +72,7 @@ func probePreload(parent context.Context, source domain.ConversationPreloadSourc
 			return result
 		}
 	}
+	projectExactPreloadRecord(result, page.Messages, target)
 	result["source_status"] = "available"
 	result["error_category"] = nil
 	result["metadata_count"] = len(page.Entries)
@@ -64,6 +82,25 @@ func probePreload(parent context.Context, source domain.ConversationPreloadSourc
 	result["direct_messages_available"] = page.DirectMessagesAvailable
 	result["group_messages_available"] = page.GroupMessagesAvailable
 	return result
+}
+
+func projectExactPreloadRecord(result map[string]any, messages []domain.Message, target *preloadProbeTarget) {
+	if target == nil {
+		return
+	}
+	matched := 0
+	var shape *domain.ContentShape
+	for _, message := range messages {
+		if message.Ref().Type == target.ConversationType && message.Ref().ID == target.ConversationID &&
+			message.ID == target.MessageID {
+			matched++
+			shape = message.ProtocolContentShape
+		}
+	}
+	if matched != 1 {
+		shape = nil
+	}
+	result["record_probe"] = map[string]any{"matched": matched == 1, "ambiguous": matched > 1, "shape": shape}
 }
 
 func projectPreloadFailure(result map[string]any, err error) {

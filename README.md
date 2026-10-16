@@ -50,6 +50,19 @@ the available bounded source, never a complete archive. Inspect counts, nullable
 filtering evidence, stop reason and newly imported time bounds. See the
 [history workflow](docs/history-import.md) and [operation contract](docs/contracts/history-import-operation.md).
 
+## Rich content candidate
+
+The current worktree adds [message Events v3 and separate reaction observations](docs/contracts/rich-content-events.md).
+V3 and typed conversation reads distinguish author text from service summaries
+and attachment labels. Empty author text can accompany explicit image/sticker/
+audio/file metadata; media bytes are not downloaded. Unknown/legacy content stays
+explicit. Existing v2 subscriptions keep their original format and are not
+upgraded automatically. The call profile has a narrow direct-chat summary classifier for one verified
+native discriminator; call outcome, mode and duration remain unknown. Other
+forms and complete call coverage are unsupported. Fresh native activity delivery
+is still awaiting acceptance. The native candidate is deployed locally but not yet live-accepted or published; see
+[implementation evidence and remaining gates](docs/rich-content-implementation-checkpoint.md).
+
 ## Events and limitations
 
 Events use a pinned webhook draft profile, requiring a compatible HTTP client and a receiver with verification and signature support. Public HTTPS is the default. For a receiver on the same host, an operator can explicitly allow exact loopback HTTP/HTTPS URLs using [`events.local_callback_urls`](docs/contracts/local-callbacks.md); signatures remain mandatory and no tunnel is needed. Other private targets remain rejected. STDIO does not deliver Events. Receiver infrastructure and agent notification delivery remain outside the application.

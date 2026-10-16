@@ -21,7 +21,7 @@ func (o Outcome) String() string {
 	case OutcomePartial:
 		return "partial"
 	case OutcomeCancelled:
-		return "cancelled"
+		return activityCancelled
 	case OutcomePanic:
 		return "panic"
 	case OutcomeUnknown:
@@ -103,7 +103,7 @@ func (s OperationState) String() string {
 	case StatePartial:
 		return "partial"
 	case StateCancelled:
-		return "cancelled"
+		return activityCancelled
 	case StateUnsupported:
 		return "unsupported"
 	case StateJoined:

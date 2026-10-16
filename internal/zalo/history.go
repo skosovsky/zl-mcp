@@ -133,6 +133,10 @@ func readGroupHistoryPage(
 			return domain.HistoryPage{}, invalidHistoryPage("history page exceeds normalization budget")
 		}
 		msg, err := decodeHistoryRecord(record, own, ref)
+		if isNonMessageRecord(err) {
+			logSkippedNonMessage("history", err)
+			continue
+		}
 		if err != nil {
 			return domain.HistoryPage{}, err
 		}
@@ -199,6 +203,9 @@ func decodeHistoryRecord(raw []byte, own string, ref domain.ConversationRef) (do
 		return domain.Message{}, invalidHistoryPage("history record does not match requested conversation")
 	}
 	msg, err := Convert(model.NewGroupMessage(own, wire), "")
+	if isNonMessageRecord(err) {
+		return domain.Message{}, err
+	}
 	if err != nil {
 		return domain.Message{}, invalidHistoryPage("unsupported history message metadata")
 	}

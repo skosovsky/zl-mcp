@@ -9,10 +9,13 @@ type Group struct {
 	CollectionEnabled bool   `json:"collection_enabled"`
 }
 type Message struct {
-	Direction        string         `json:"-"`
-	FirstIncoming    *bool          `json:"-"`
-	QuoteMetadata    *QuoteMetadata `json:"-"`
-	ConversationName *string        `json:"-"`
+	Content                 *MessageContent `json:"-"`
+	Direction               string          `json:"-"`
+	FirstIncoming           *bool           `json:"-"`
+	QuoteMetadata           *QuoteMetadata  `json:"-"`
+	ProtocolContentShape    *ContentShape   `json:"-"`
+	ProtocolClientMessageID string          `json:"-"`
+	ConversationName        *string         `json:"-"`
 	// Conversation is the internal typed identity. Legacy JSON remains group-only;
 	// conversation tools/events use their dedicated response contracts.
 	Conversation    ConversationRef `json:"-"`

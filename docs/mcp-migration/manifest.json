@@ -1105,460 +1105,45 @@
       },
       "name": "zalo_get_conversation_message_context",
       "outputSchema": {
-        "$defs": {
-          "Coverage": {
-            "additionalProperties": false,
-            "properties": {
-              "collection_started_at": {
-                "anyOf": [
-                  {
-                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                    "format": "date-time",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "conversation_id": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "conversation_type": {
-                "enum": [
-                  "direct",
-                  "group"
-                ],
-                "type": "string"
-              },
-              "earliest_stored_at": {
-                "anyOf": [
-                  {
-                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                    "format": "date-time",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "history_complete": {
-                "const": false
-              },
-              "known_gaps": {
-                "items": {
-                  "$ref": "#/$defs/Gap"
-                },
-                "type": "array"
-              },
-              "latest_stored_at": {
-                "anyOf": [
-                  {
-                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                    "format": "date-time",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "retention_days": {
-                "anyOf": [
-                  {
-                    "minimum": 1,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "conversation_id",
-              "collection_started_at",
-              "earliest_stored_at",
-              "latest_stored_at",
-              "known_gaps",
-              "history_complete",
-              "retention_days",
-              "conversation_type"
-            ],
-            "type": "object"
-          },
-          "Error": {
-            "additionalProperties": false,
-            "properties": {
-              "code": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "details": {
-                "type": "object"
-              },
-              "message": {
-                "type": "string"
-              },
-              "next_action": {
-                "$ref": "#/$defs/NextAction"
-              },
-              "retryable": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "code",
-              "message",
-              "retryable",
-              "next_action",
-              "details"
-            ],
-            "type": "object"
-          },
-          "Gap": {
-            "additionalProperties": false,
-            "properties": {
-              "from": {
-                "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                "format": "date-time",
-                "minLength": 1,
-                "type": "string"
-              },
-              "reason": {
-                "type": "string"
-              },
-              "to": {
-                "anyOf": [
-                  {
-                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                    "format": "date-time",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "from",
-              "to",
-              "reason"
-            ],
-            "type": "object"
-          },
-          "Group": {
-            "additionalProperties": false,
-            "properties": {
-              "collection_enabled": {
-                "type": "boolean"
-              },
-              "conversation_id": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "conversation_type": {
-                "enum": [
-                  "direct",
-                  "group"
-                ],
-                "type": "string"
-              },
-              "member_count": {
-                "anyOf": [
-                  {
-                    "minimum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "name": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "conversation_id",
-              "name",
-              "member_count",
-              "collection_enabled",
-              "conversation_type"
-            ],
-            "type": "object"
-          },
-          "Hit": {
-            "additionalProperties": false,
-            "properties": {
-              "conversation_id": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "conversation_name": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "conversation_type": {
-                "enum": [
-                  "direct",
-                  "group"
-                ],
-                "type": "string"
-              },
-              "excerpt": {
-                "maxLength": 150,
-                "type": "string"
-              },
-              "message_id": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "sender_id": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "sender_name": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "sent_at": {
-                "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                "format": "date-time",
-                "minLength": 1,
-                "type": "string"
-              },
-              "text_truncated": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "conversation_id",
-              "message_id",
-              "sender_id",
-              "conversation_name",
-              "sender_name",
-              "sent_at",
-              "excerpt",
-              "text_truncated",
-              "conversation_type"
-            ],
-            "type": "object"
-          },
-          "Message": {
-            "additionalProperties": false,
-            "properties": {
-              "attachment_types": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "conversation_id": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "conversation_type": {
-                "enum": [
-                  "direct",
-                  "group"
-                ],
-                "type": "string"
-              },
-              "message_id": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "reply_to_message_id": {
-                "anyOf": [
-                  {
-                    "description": "Opaque identifier",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "sender_id": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "sender_name": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "sent_at": {
-                "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                "format": "date-time",
-                "minLength": 1,
-                "type": "string"
-              },
-              "source": {
-                "enum": [
-                  "live",
-                  "replay",
-                  "history"
-                ],
-                "type": "string"
-              },
-              "text": {
-                "type": "string"
-              },
-              "text_resource_uri": {
-                "anyOf": [
-                  {
-                    "description": "Opaque identifier",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "text_truncated": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "conversation_id",
-              "message_id",
-              "sender_id",
-              "sender_name",
-              "sent_at",
-              "text",
-              "reply_to_message_id",
-              "attachment_types",
-              "source",
-              "text_truncated",
-              "text_resource_uri",
-              "conversation_type"
-            ],
-            "type": "object"
-          },
-          "NextAction": {
-            "additionalProperties": false,
-            "properties": {
-              "arguments": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "instruction": {
-                "type": "string"
-              },
-              "tool": {
-                "anyOf": [
-                  {
-                    "description": "Opaque identifier",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "tool",
-              "arguments",
-              "instruction"
-            ],
-            "type": "object"
-          },
-          "Summary": {
-            "additionalProperties": false,
-            "properties": {
-              "conversation_count": {
-                "minimum": 0,
-                "type": "integer"
-              },
-              "conversations_with_known_gaps": {
-                "minimum": 0,
-                "type": "integer"
-              },
-              "history_complete": {
-                "const": false
-              }
-            },
-            "required": [
-              "conversation_count",
-              "history_complete",
-              "conversations_with_known_gaps"
-            ],
-            "type": "object"
-          }
-        },
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": false,
+        "type": "object",
         "properties": {
-          "after": {
-            "items": {
-              "$ref": "#/$defs/Message"
-            },
-            "type": "array"
-          },
           "anchor": {
             "$ref": "#/$defs/Message"
           },
           "before": {
+            "type": "array",
             "items": {
               "$ref": "#/$defs/Message"
-            },
-            "type": "array"
+            }
           },
-          "context_truncated": {
-            "type": "boolean"
+          "after": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Message"
+            }
+          },
+          "reply_to": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Message"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "coverage": {
             "$ref": "#/$defs/Coverage"
           },
-          "next_action": {
+          "context_truncated": {
+            "type": "boolean"
+          },
+          "omitted_before_id": {
             "anyOf": [
               {
-                "$ref": "#/$defs/NextAction"
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
               },
               {
                 "type": "null"
@@ -1568,31 +1153,19 @@
           "omitted_after_id": {
             "anyOf": [
               {
-                "description": "Opaque identifier",
+                "type": "string",
                 "minLength": 1,
-                "type": "string"
+                "description": "Opaque identifier"
               },
               {
                 "type": "null"
               }
             ]
           },
-          "omitted_before_id": {
+          "next_action": {
             "anyOf": [
               {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "reply_to": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/Message"
+                "$ref": "#/$defs/NextAction"
               },
               {
                 "type": "null"
@@ -1611,7 +1184,772 @@
           "omitted_after_id",
           "next_action"
         ],
-        "type": "object"
+        "additionalProperties": false,
+        "$defs": {
+          "Group": {
+            "type": "object",
+            "properties": {
+              "conversation_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "name": {
+                "type": "string"
+              },
+              "member_count": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "collection_enabled": {
+                "type": "boolean"
+              },
+              "conversation_type": {
+                "type": "string",
+                "enum": [
+                  "direct",
+                  "group"
+                ]
+              }
+            },
+            "required": [
+              "conversation_id",
+              "name",
+              "member_count",
+              "collection_enabled",
+              "conversation_type"
+            ],
+            "additionalProperties": false
+          },
+          "NextAction": {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Opaque identifier"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "arguments": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "instruction": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "tool",
+              "arguments",
+              "instruction"
+            ],
+            "additionalProperties": false
+          },
+          "Error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              },
+              "next_action": {
+                "$ref": "#/$defs/NextAction"
+              },
+              "details": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable",
+              "next_action",
+              "details"
+            ],
+            "additionalProperties": false
+          },
+          "Gap": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "minLength": 1,
+                "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                "format": "date-time"
+              },
+              "to": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          "Coverage": {
+            "type": "object",
+            "properties": {
+              "conversation_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "collection_started_at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "earliest_stored_at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "latest_stored_at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "known_gaps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Gap"
+                }
+              },
+              "history_complete": {
+                "const": false
+              },
+              "retention_days": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "conversation_type": {
+                "type": "string",
+                "enum": [
+                  "direct",
+                  "group"
+                ]
+              }
+            },
+            "required": [
+              "conversation_id",
+              "collection_started_at",
+              "earliest_stored_at",
+              "latest_stored_at",
+              "known_gaps",
+              "history_complete",
+              "retention_days",
+              "conversation_type"
+            ],
+            "additionalProperties": false
+          },
+          "Summary": {
+            "type": "object",
+            "properties": {
+              "conversation_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "history_complete": {
+                "const": false
+              },
+              "conversations_with_known_gaps": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "conversation_count",
+              "history_complete",
+              "conversations_with_known_gaps"
+            ],
+            "additionalProperties": false
+          },
+          "Message": {
+            "type": "object",
+            "properties": {
+              "conversation_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "message_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "sender_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "sender_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sent_at": {
+                "type": "string",
+                "minLength": 1,
+                "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                "format": "date-time"
+              },
+              "text": {
+                "type": "string"
+              },
+              "reply_to_message_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Opaque identifier"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "attachment_types": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "live",
+                  "replay",
+                  "history"
+                ]
+              },
+              "text_truncated": {
+                "type": "boolean"
+              },
+              "text_resource_uri": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Opaque identifier"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "conversation_type": {
+                "type": "string",
+                "enum": [
+                  "direct",
+                  "group"
+                ]
+              },
+              "content": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "text",
+                      "image",
+                      "sticker",
+                      "audio",
+                      "video",
+                      "file",
+                      "link",
+                      "contact",
+                      "location",
+                      "mixed",
+                      "unsupported"
+                    ]
+                  },
+                  "native_type": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 64,
+                    "pattern": "^[A-Za-z0-9_.-]+$"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "availability": {
+                    "enum": [
+                      "text",
+                      "metadata_only",
+                      "unavailable"
+                    ]
+                  },
+                  "reason": {
+                    "enum": [
+                      null,
+                      "legacy_projection",
+                      "empty_content",
+                      "unknown_native_type",
+                      "unsupported_shape",
+                      "metadata_limited",
+                      "invalid_metadata"
+                    ]
+                  },
+                  "elements": {
+                    "type": "array",
+                    "maxItems": 16,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "enum": [
+                            "text",
+                            "image",
+                            "sticker",
+                            "audio",
+                            "video",
+                            "file",
+                            "link",
+                            "contact",
+                            "location",
+                            "mixed",
+                            "unsupported"
+                          ]
+                        },
+                        "label": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 512
+                        },
+                        "mime_type": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 128
+                        },
+                        "file_name": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 256
+                        },
+                        "size_bytes": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "duration_ms": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "width": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "height": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "sticker_id": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 128
+                        },
+                        "bytes_available": {
+                          "const": false
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "label",
+                        "mime_type",
+                        "file_name",
+                        "size_bytes",
+                        "duration_ms",
+                        "width",
+                        "height",
+                        "sticker_id",
+                        "bytes_available"
+                      ]
+                    }
+                  },
+                  "text_role": {
+                    "enum": [
+                      "author",
+                      "none",
+                      "legacy_projection"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "native_type",
+                  "summary",
+                  "availability",
+                  "reason",
+                  "elements",
+                  "text_role"
+                ]
+              }
+            },
+            "required": [
+              "conversation_id",
+              "message_id",
+              "sender_id",
+              "sender_name",
+              "sent_at",
+              "text",
+              "reply_to_message_id",
+              "attachment_types",
+              "source",
+              "text_truncated",
+              "text_resource_uri",
+              "conversation_type"
+            ],
+            "additionalProperties": false
+          },
+          "Hit": {
+            "type": "object",
+            "properties": {
+              "conversation_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "message_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "sender_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "conversation_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sender_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sent_at": {
+                "type": "string",
+                "minLength": 1,
+                "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                "format": "date-time"
+              },
+              "excerpt": {
+                "type": "string",
+                "maxLength": 150
+              },
+              "text_truncated": {
+                "type": "boolean"
+              },
+              "conversation_type": {
+                "type": "string",
+                "enum": [
+                  "direct",
+                  "group"
+                ]
+              },
+              "content": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "text",
+                      "image",
+                      "sticker",
+                      "audio",
+                      "video",
+                      "file",
+                      "link",
+                      "contact",
+                      "location",
+                      "mixed",
+                      "unsupported"
+                    ]
+                  },
+                  "native_type": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 64,
+                    "pattern": "^[A-Za-z0-9_.-]+$"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "availability": {
+                    "enum": [
+                      "text",
+                      "metadata_only",
+                      "unavailable"
+                    ]
+                  },
+                  "reason": {
+                    "enum": [
+                      null,
+                      "legacy_projection",
+                      "empty_content",
+                      "unknown_native_type",
+                      "unsupported_shape",
+                      "metadata_limited",
+                      "invalid_metadata"
+                    ]
+                  },
+                  "elements": {
+                    "type": "array",
+                    "maxItems": 16,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "enum": [
+                            "text",
+                            "image",
+                            "sticker",
+                            "audio",
+                            "video",
+                            "file",
+                            "link",
+                            "contact",
+                            "location",
+                            "mixed",
+                            "unsupported"
+                          ]
+                        },
+                        "label": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 512
+                        },
+                        "mime_type": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 128
+                        },
+                        "file_name": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 256
+                        },
+                        "size_bytes": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "duration_ms": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "width": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "height": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "sticker_id": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 128
+                        },
+                        "bytes_available": {
+                          "const": false
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "label",
+                        "mime_type",
+                        "file_name",
+                        "size_bytes",
+                        "duration_ms",
+                        "width",
+                        "height",
+                        "sticker_id",
+                        "bytes_available"
+                      ]
+                    }
+                  },
+                  "text_role": {
+                    "enum": [
+                      "author",
+                      "none",
+                      "legacy_projection"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "native_type",
+                  "summary",
+                  "availability",
+                  "reason",
+                  "elements",
+                  "text_role"
+                ]
+              }
+            },
+            "required": [
+              "conversation_id",
+              "message_id",
+              "sender_id",
+              "conversation_name",
+              "sender_name",
+              "sent_at",
+              "excerpt",
+              "text_truncated",
+              "conversation_type"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
       },
       "transports": [
         "authenticated stateless Streamable HTTP",
@@ -6064,13 +6402,570 @@
       },
       "name": "zalo_list_conversation_messages",
       "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Hit"
+                },
+                {
+                  "$ref": "#/$defs/ArchiveHit"
+                }
+              ]
+            }
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "empty_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "unknown_conversation",
+                  "no_collected_data",
+                  "no_records_in_period",
+                  "no_supported_text_in_page"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "coverage": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Coverage"
+              },
+              {
+                "$ref": "#/$defs/ArchiveCoverage"
+              }
+            ]
+          },
+          "snapshot_at": {
+            "type": "string",
+            "minLength": 1,
+            "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+            "format": "date-time"
+          },
+          "coverage_observed_at": {
+            "type": "string",
+            "minLength": 1,
+            "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+            "format": "date-time"
+          },
+          "requested_since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "description": "RFC3339 instant; inclusive lower bound, e.g. 2026-10-01T00:00:00Z.",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requested_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "description": "RFC3339 instant; exclusive upper bound, e.g. 2026-10-01T00:00:00Z.",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "$ref": "#/$defs/ArchiveSource"
+          }
+        },
+        "additionalProperties": false,
         "$defs": {
-          "ArchiveCoverage": {
-            "additionalProperties": false,
+          "Coverage": {
+            "type": "object",
             "properties": {
               "conversation_id": {
+                "type": "string",
                 "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "collection_started_at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "earliest_stored_at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "latest_stored_at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "known_gaps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Gap"
+                }
+              },
+              "history_complete": {
+                "const": false
+              },
+              "retention_days": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "conversation_type": {
+                "type": "string",
+                "enum": [
+                  "direct",
+                  "group"
+                ]
+              }
+            },
+            "required": [
+              "conversation_id",
+              "collection_started_at",
+              "earliest_stored_at",
+              "latest_stored_at",
+              "known_gaps",
+              "history_complete",
+              "retention_days",
+              "conversation_type"
+            ],
+            "additionalProperties": false
+          },
+          "Gap": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "minLength": 1,
+                "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                "format": "date-time"
+              },
+              "to": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reason": {
                 "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          "Hit": {
+            "type": "object",
+            "properties": {
+              "conversation_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "message_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "sender_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Opaque identifier"
+              },
+              "conversation_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sender_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sent_at": {
+                "type": "string",
+                "minLength": 1,
+                "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
+                "format": "date-time"
+              },
+              "excerpt": {
+                "type": "string",
+                "maxLength": 150
+              },
+              "text_truncated": {
+                "type": "boolean"
+              },
+              "conversation_type": {
+                "type": "string",
+                "enum": [
+                  "direct",
+                  "group"
+                ]
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "incoming",
+                  "outgoing",
+                  "unknown"
+                ]
+              },
+              "text_resource_uri": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "content": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "text",
+                      "image",
+                      "sticker",
+                      "audio",
+                      "video",
+                      "file",
+                      "link",
+                      "contact",
+                      "location",
+                      "mixed",
+                      "unsupported"
+                    ]
+                  },
+                  "native_type": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 64,
+                    "pattern": "^[A-Za-z0-9_.-]+$"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "availability": {
+                    "enum": [
+                      "text",
+                      "metadata_only",
+                      "unavailable"
+                    ]
+                  },
+                  "reason": {
+                    "enum": [
+                      null,
+                      "legacy_projection",
+                      "empty_content",
+                      "unknown_native_type",
+                      "unsupported_shape",
+                      "metadata_limited",
+                      "invalid_metadata"
+                    ]
+                  },
+                  "elements": {
+                    "type": "array",
+                    "maxItems": 16,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "enum": [
+                            "text",
+                            "image",
+                            "sticker",
+                            "audio",
+                            "video",
+                            "file",
+                            "link",
+                            "contact",
+                            "location",
+                            "mixed",
+                            "unsupported"
+                          ]
+                        },
+                        "label": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 512
+                        },
+                        "mime_type": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 128
+                        },
+                        "file_name": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 256
+                        },
+                        "size_bytes": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "duration_ms": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "width": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "height": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "sticker_id": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 128
+                        },
+                        "bytes_available": {
+                          "const": false
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "label",
+                        "mime_type",
+                        "file_name",
+                        "size_bytes",
+                        "duration_ms",
+                        "width",
+                        "height",
+                        "sticker_id",
+                        "bytes_available"
+                      ]
+                    }
+                  },
+                  "text_role": {
+                    "enum": [
+                      "author",
+                      "none",
+                      "legacy_projection"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "native_type",
+                  "summary",
+                  "availability",
+                  "reason",
+                  "elements",
+                  "text_role"
+                ]
+              }
+            },
+            "required": [
+              "conversation_id",
+              "message_id",
+              "sender_id",
+              "conversation_name",
+              "sender_name",
+              "sent_at",
+              "excerpt",
+              "text_truncated",
+              "conversation_type",
+              "direction",
+              "text_resource_uri"
+            ],
+            "additionalProperties": false
+          },
+          "ArchiveSource": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "source_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "captured_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "capture_cache_expires_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "preserved_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "retention": {
+                "const": "until_owner_deletion"
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "file_count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1000
+              },
+              "direct_files": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "group_files": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "history_complete": {
+                "const": false
+              },
+              "read_scope": {
+                "const": "collection_policy"
+              }
+            },
+            "required": [
+              "source_id",
+              "captured_at",
+              "capture_cache_expires_at",
+              "preserved_at",
+              "retention",
+              "digest",
+              "file_count",
+              "direct_files",
+              "group_files",
+              "history_complete",
+              "read_scope"
+            ]
+          },
+          "ArchiveHit": {
+            "description": "Read-only archived text projection. Archive identity is separate from genuine Zalo ID; never an outgoing quote anchor.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "archive_row_id": {
+                "type": "string",
+                "pattern": "^ar:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:(0|[1-9][0-9]{0,2}):(0|-?[1-9][0-9]{0,18})$"
+              },
+              "zalo_message_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]{0,19}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "conversation_type": {
                 "enum": [
@@ -6078,111 +6973,267 @@
                   "group"
                 ]
               },
-              "coverage_scope": {
-                "const": "examined_page"
+              "conversation_id": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]{0,19}$"
               },
-              "examined": {
-                "minimum": 0,
-                "type": "integer"
+              "sender_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]{0,19}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
-              "expired": {
-                "minimum": 0,
-                "type": "integer"
+              "sender_mapping": {
+                "enum": [
+                  "verified",
+                  "unavailable"
+                ]
               },
-              "history_complete": {
+              "direction": {
+                "enum": [
+                  "incoming",
+                  "outgoing",
+                  "unknown"
+                ]
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 2048,
+                "minLength": 1
+              },
+              "text_kind": {
+                "enum": [
+                  "plain",
+                  "rich"
+                ]
+              },
+              "quote_anchor_eligible": {
                 "const": false
               },
-              "invalid_timestamp_rows": {
-                "minimum": 0,
-                "type": "integer"
+              "text_truncated": {
+                "type": "boolean"
               },
-              "live_visibility": {
-                "const": "global_ids_only"
+              "resource_uri": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "archive_row_id",
+              "zalo_message_id",
+              "conversation_type",
+              "conversation_id",
+              "sender_id",
+              "sender_mapping",
+              "direction",
+              "timestamp",
+              "text",
+              "text_kind",
+              "quote_anchor_eligible",
+              "text_truncated",
+              "resource_uri"
+            ],
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "sender_mapping": {
+                      "const": "unavailable"
+                    }
+                  },
+                  "required": [
+                    "sender_mapping"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "sender_id": {
+                      "type": "null"
+                    },
+                    "direction": {
+                      "const": "unknown"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "sender_id": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]{0,19}$"
+                    },
+                    "direction": {
+                      "enum": [
+                        "incoming",
+                        "outgoing"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "text_truncated": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "text_truncated"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "resource_uri": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "resource_uri": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "ArchiveCoverage": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "conversation_type": {
+                "enum": [
+                  "direct",
+                  "group"
+                ]
+              },
+              "conversation_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_rows": {
+                "type": "integer",
+                "minimum": 0
               },
               "period_rows": {
-                "minimum": 0,
-                "type": "integer"
+                "type": "integer",
+                "minimum": 0
               },
-              "rejected": {
-                "minimum": 0,
-                "type": "integer"
+              "invalid_timestamp_rows": {
+                "type": "integer",
+                "minimum": 0
               },
               "source_earliest_at": {
                 "anyOf": [
                   {
-                    "format": "date-time",
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                   },
                   {
                     "type": "null"
                   }
                 ]
-              },
-              "source_information_rows": {
-                "description": "Whole-file count of type-20 records classified by the exact native msginfo.actionlist attachment action. Their content is never rendered; examined-page omissions appear as native_information in unsupported_content. This is not a recall count or complete-history assertion.",
-                "minimum": 0,
-                "type": "integer"
               },
               "source_latest_at": {
                 "anyOf": [
                   {
-                    "format": "date-time",
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                   },
                   {
                     "type": "null"
                   }
                 ]
               },
-              "source_native_excluded_rows": {
-                "description": "Whole-file count of format-1 type-20 rows omitted according to the native query. Includes source_information_rows; not a period/page count.",
-                "minimum": 0,
-                "type": "integer"
-              },
-              "source_recall_rows": {
-                "description": "Whole-file count of validated type-36/status-3 recall targets, not recall timestamps or notifications.",
-                "minimum": 0,
-                "type": "integer"
-              },
-              "source_rows": {
-                "minimum": 0,
-                "type": "integer"
-              },
-              "suppressed_live": {
-                "minimum": 0,
-                "type": "integer"
-              },
-              "suppressed_source": {
-                "description": "Examined-page rows hidden by the immutable source recall set, including control rows and matching ordinary copies.",
-                "minimum": 0,
-                "type": "integer"
-              },
-              "unresolved_mentions": {
-                "minimum": 0,
-                "type": "integer"
-              },
-              "unresolved_quotes": {
-                "minimum": 0,
-                "type": "integer"
-              },
-              "unresolved_senders": {
-                "minimum": 0,
-                "type": "integer"
-              },
-              "unsupported_content": {
-                "additionalProperties": {
-                  "minimum": 0,
-                  "type": "integer"
-                },
-                "maxProperties": 16,
-                "type": "object"
-              },
-              "unsupported_metadata_fields": {
-                "minimum": 0,
-                "type": "integer"
-              },
               "wal_mode": {
                 "type": "boolean"
+              },
+              "history_complete": {
+                "const": false
+              },
+              "examined": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "rejected": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "expired": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "suppressed_live": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unresolved_senders": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unsupported_metadata_fields": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unresolved_quotes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unresolved_mentions": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unsupported_content": {
+                "type": "object",
+                "maxProperties": 16,
+                "additionalProperties": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "coverage_scope": {
+                "const": "examined_page"
+              },
+              "live_visibility": {
+                "const": "global_ids_only"
+              },
+              "source_information_rows": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Whole-file count of type-20 records classified by the exact native msginfo.actionlist attachment action. Their content is never rendered; examined-page omissions appear as native_information in unsupported_content. This is not a recall count or complete-history assertion."
+              },
+              "source_native_excluded_rows": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Whole-file count of format-1 type-20 rows omitted according to the native query. Includes source_information_rows; not a period/page count."
+              },
+              "source_recall_rows": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Whole-file count of validated type-36/status-3 recall targets, not recall timestamps or notifications."
+              },
+              "suppressed_source": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Examined-page rows hidden by the immutable source recall set, including control rows and matching ordinary copies."
               }
             },
             "required": [
@@ -6206,583 +7257,7 @@
               "unsupported_content",
               "coverage_scope",
               "live_visibility"
-            ],
-            "type": "object"
-          },
-          "ArchiveHit": {
-            "additionalProperties": false,
-            "allOf": [
-              {
-                "else": {
-                  "properties": {
-                    "direction": {
-                      "enum": [
-                        "incoming",
-                        "outgoing"
-                      ]
-                    },
-                    "sender_id": {
-                      "pattern": "^[1-9][0-9]{0,19}$",
-                      "type": "string"
-                    }
-                  }
-                },
-                "if": {
-                  "properties": {
-                    "sender_mapping": {
-                      "const": "unavailable"
-                    }
-                  },
-                  "required": [
-                    "sender_mapping"
-                  ]
-                },
-                "then": {
-                  "properties": {
-                    "direction": {
-                      "const": "unknown"
-                    },
-                    "sender_id": {
-                      "type": "null"
-                    }
-                  }
-                }
-              },
-              {
-                "else": {
-                  "properties": {
-                    "resource_uri": {
-                      "type": "null"
-                    }
-                  }
-                },
-                "if": {
-                  "properties": {
-                    "text_truncated": {
-                      "const": true
-                    }
-                  },
-                  "required": [
-                    "text_truncated"
-                  ]
-                },
-                "then": {
-                  "properties": {
-                    "resource_uri": {
-                      "format": "uri",
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            ],
-            "description": "Read-only archived text projection. Archive identity is separate from genuine Zalo ID; never an outgoing quote anchor.",
-            "properties": {
-              "archive_row_id": {
-                "pattern": "^ar:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:(0|[1-9][0-9]{0,2}):(0|-?[1-9][0-9]{0,18})$",
-                "type": "string"
-              },
-              "conversation_id": {
-                "pattern": "^[1-9][0-9]{0,19}$",
-                "type": "string"
-              },
-              "conversation_type": {
-                "enum": [
-                  "direct",
-                  "group"
-                ]
-              },
-              "direction": {
-                "enum": [
-                  "incoming",
-                  "outgoing",
-                  "unknown"
-                ]
-              },
-              "quote_anchor_eligible": {
-                "const": false
-              },
-              "resource_uri": {
-                "anyOf": [
-                  {
-                    "format": "uri",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "sender_id": {
-                "anyOf": [
-                  {
-                    "pattern": "^[1-9][0-9]{0,19}$",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "sender_mapping": {
-                "enum": [
-                  "verified",
-                  "unavailable"
-                ]
-              },
-              "text": {
-                "maxLength": 2048,
-                "minLength": 1,
-                "type": "string"
-              },
-              "text_kind": {
-                "enum": [
-                  "plain",
-                  "rich"
-                ]
-              },
-              "text_truncated": {
-                "type": "boolean"
-              },
-              "timestamp": {
-                "format": "date-time",
-                "type": "string"
-              },
-              "zalo_message_id": {
-                "anyOf": [
-                  {
-                    "pattern": "^[1-9][0-9]{0,19}$",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "archive_row_id",
-              "zalo_message_id",
-              "conversation_type",
-              "conversation_id",
-              "sender_id",
-              "sender_mapping",
-              "direction",
-              "timestamp",
-              "text",
-              "text_kind",
-              "quote_anchor_eligible",
-              "text_truncated",
-              "resource_uri"
-            ],
-            "type": "object"
-          },
-          "ArchiveSource": {
-            "additionalProperties": false,
-            "properties": {
-              "capture_cache_expires_at": {
-                "format": "date-time",
-                "type": "string"
-              },
-              "captured_at": {
-                "format": "date-time",
-                "type": "string"
-              },
-              "digest": {
-                "pattern": "^[0-9a-f]{64}$",
-                "type": "string"
-              },
-              "direct_files": {
-                "minimum": 0,
-                "type": "integer"
-              },
-              "file_count": {
-                "maximum": 1000,
-                "minimum": 1,
-                "type": "integer"
-              },
-              "group_files": {
-                "minimum": 0,
-                "type": "integer"
-              },
-              "history_complete": {
-                "const": false
-              },
-              "preserved_at": {
-                "format": "date-time",
-                "type": "string"
-              },
-              "read_scope": {
-                "const": "collection_policy"
-              },
-              "retention": {
-                "const": "until_owner_deletion"
-              },
-              "source_id": {
-                "format": "uuid",
-                "type": "string"
-              }
-            },
-            "required": [
-              "source_id",
-              "captured_at",
-              "capture_cache_expires_at",
-              "preserved_at",
-              "retention",
-              "digest",
-              "file_count",
-              "direct_files",
-              "group_files",
-              "history_complete",
-              "read_scope"
-            ],
-            "type": "object"
-          },
-          "Coverage": {
-            "additionalProperties": false,
-            "properties": {
-              "collection_started_at": {
-                "anyOf": [
-                  {
-                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                    "format": "date-time",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "conversation_id": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "conversation_type": {
-                "enum": [
-                  "direct",
-                  "group"
-                ],
-                "type": "string"
-              },
-              "earliest_stored_at": {
-                "anyOf": [
-                  {
-                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                    "format": "date-time",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "history_complete": {
-                "const": false
-              },
-              "known_gaps": {
-                "items": {
-                  "$ref": "#/$defs/Gap"
-                },
-                "type": "array"
-              },
-              "latest_stored_at": {
-                "anyOf": [
-                  {
-                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                    "format": "date-time",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "retention_days": {
-                "anyOf": [
-                  {
-                    "minimum": 1,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "conversation_id",
-              "collection_started_at",
-              "earliest_stored_at",
-              "latest_stored_at",
-              "known_gaps",
-              "history_complete",
-              "retention_days",
-              "conversation_type"
-            ],
-            "type": "object"
-          },
-          "Gap": {
-            "additionalProperties": false,
-            "properties": {
-              "from": {
-                "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                "format": "date-time",
-                "minLength": 1,
-                "type": "string"
-              },
-              "reason": {
-                "type": "string"
-              },
-              "to": {
-                "anyOf": [
-                  {
-                    "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                    "format": "date-time",
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "from",
-              "to",
-              "reason"
-            ],
-            "type": "object"
-          },
-          "Hit": {
-            "additionalProperties": false,
-            "properties": {
-              "conversation_id": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "conversation_name": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "conversation_type": {
-                "enum": [
-                  "direct",
-                  "group"
-                ],
-                "type": "string"
-              },
-              "direction": {
-                "enum": [
-                  "incoming",
-                  "outgoing",
-                  "unknown"
-                ],
-                "type": "string"
-              },
-              "excerpt": {
-                "maxLength": 150,
-                "type": "string"
-              },
-              "message_id": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "sender_id": {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              "sender_name": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "sent_at": {
-                "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-                "format": "date-time",
-                "minLength": 1,
-                "type": "string"
-              },
-              "text_resource_uri": {
-                "anyOf": [
-                  {
-                    "minLength": 1,
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "text_truncated": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "conversation_id",
-              "message_id",
-              "sender_id",
-              "conversation_name",
-              "sender_name",
-              "sent_at",
-              "excerpt",
-              "text_truncated",
-              "conversation_type",
-              "direction",
-              "text_resource_uri"
-            ],
-            "type": "object"
-          }
-        },
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": false,
-        "allOf": [
-          {
-            "else": {
-              "properties": {
-                "coverage": {
-                  "$ref": "#/$defs/Coverage"
-                },
-                "messages": {
-                  "items": {
-                    "$ref": "#/$defs/Hit"
-                  }
-                }
-              }
-            },
-            "if": {
-              "required": [
-                "source"
-              ]
-            },
-            "then": {
-              "properties": {
-                "coverage": {
-                  "$ref": "#/$defs/ArchiveCoverage"
-                },
-                "messages": {
-                  "items": {
-                    "$ref": "#/$defs/ArchiveHit"
-                  }
-                }
-              }
-            }
-          }
-        ],
-        "properties": {
-          "coverage": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/Coverage"
-              },
-              {
-                "$ref": "#/$defs/ArchiveCoverage"
-              }
             ]
-          },
-          "coverage_observed_at": {
-            "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-            "format": "date-time",
-            "minLength": 1,
-            "type": "string"
-          },
-          "empty_reason": {
-            "anyOf": [
-              {
-                "enum": [
-                  "unknown_conversation",
-                  "no_collected_data",
-                  "no_records_in_period",
-                  "no_supported_text_in_page"
-                ],
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "has_more": {
-            "type": "boolean"
-          },
-          "messages": {
-            "items": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/Hit"
-                },
-                {
-                  "$ref": "#/$defs/ArchiveHit"
-                }
-              ]
-            },
-            "maxItems": 50,
-            "type": "array"
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "description": "Opaque identifier",
-                "minLength": 1,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "requested_since": {
-            "anyOf": [
-              {
-                "description": "RFC3339 instant; inclusive lower bound, e.g. 2026-10-01T00:00:00Z.",
-                "format": "date-time",
-                "minLength": 1,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "requested_until": {
-            "anyOf": [
-              {
-                "description": "RFC3339 instant; exclusive upper bound, e.g. 2026-10-01T00:00:00Z.",
-                "format": "date-time",
-                "minLength": 1,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "snapshot_at": {
-            "description": "RFC3339 time, e.g. 2026-10-01T00:00:00Z",
-            "format": "date-time",
-            "minLength": 1,
-            "type": "string"
-          },
-          "source": {
-            "$ref": "#/$defs/ArchiveSource"
           }
         },
         "required": [
@@ -6796,7 +7271,39 @@
           "requested_since",
           "requested_until"
         ],
-        "type": "object"
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "source"
+              ]
+            },
+            "then": {
+              "properties": {
+                "messages": {
+                  "items": {
+                    "$ref": "#/$defs/ArchiveHit"
+                  }
+                },
+                "coverage": {
+                  "$ref": "#/$defs/ArchiveCoverage"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "messages": {
+                  "items": {
+                    "$ref": "#/$defs/Hit"
+                  }
+                },
+                "coverage": {
+                  "$ref": "#/$defs/Coverage"
+                }
+              }
+            }
+          }
+        ]
       },
       "transports": [
         "authenticated stateless Streamable HTTP",
@@ -7121,19 +7628,42 @@
       "name": "zalo_list_event_subscriptions",
       "outputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": false,
+        "type": "object",
         "properties": {
           "subscriptions": {
+            "type": "array",
             "items": {
-              "additionalProperties": false,
+              "type": "object",
               "properties": {
-                "conversation_id": {
+                "subscription_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "event_name": {
+                  "enum": [
+                    "zalo.message.created",
+                    "zalo.conversation.message.created.v2",
+                    "zalo.conversation.message.created.v3",
+                    "zalo.conversation.reaction.observed.v1",
+                    "zalo.conversation.call.observed.v1"
+                  ]
+                },
+                "scope": {
+                  "enum": [
+                    "conversation",
+                    "all",
+                    "direct",
+                    "group"
+                  ]
+                },
+                "conversation_type": {
                   "type": [
                     "string",
                     "null"
                   ]
                 },
-                "conversation_type": {
+                "conversation_id": {
                   "type": [
                     "string",
                     "null"
@@ -7146,27 +7676,8 @@
                     "outgoing"
                   ]
                 },
-                "event_name": {
-                  "enum": [
-                    "zalo.message.created",
-                    "zalo.conversation.message.created.v2"
-                  ]
-                },
                 "first_incoming_only": {
                   "type": "boolean"
-                },
-                "scope": {
-                  "enum": [
-                    "conversation",
-                    "all",
-                    "direct",
-                    "group"
-                  ]
-                },
-                "subscription_id": {
-                  "maxLength": 2048,
-                  "minLength": 1,
-                  "type": "string"
                 }
               },
               "required": [
@@ -7178,16 +7689,15 @@
                 "direction",
                 "first_incoming_only"
               ],
-              "type": "object"
+              "additionalProperties": false
             },
-            "maxItems": 100,
-            "type": "array"
+            "maxItems": 100
           }
         },
         "required": [
           "subscriptions"
         ],
-        "type": "object"
+        "additionalProperties": false
       },
       "transports": [
         "authenticated stateless Streamable HTTP",
@@ -7772,78 +8282,97 @@
       "name": "zalo_read_subscription_events",
       "outputSchema": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "additionalProperties": false,
+        "type": "object",
         "properties": {
-          "blocked_on_delivery": {
-            "type": "boolean"
+          "subscription_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
           },
           "events": {
+            "type": "array",
             "items": {
-              "additionalProperties": false,
+              "type": "object",
               "properties": {
-                "delivery_state": {
-                  "enum": [
-                    "delivered",
-                    "failed",
-                    "cancelled",
-                    "pruned"
-                  ]
-                },
                 "event": {
                   "oneOf": [
                     {
                       "$schema": "https://json-schema.org/draft/2020-12/schema",
-                      "additionalProperties": false,
+                      "type": "object",
                       "properties": {
-                        "cursor": {
-                          "type": "null"
+                        "eventId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128
+                        },
+                        "name": {
+                          "const": "zalo.conversation.message.created.v2"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
                         },
                         "data": {
                           "$schema": "https://json-schema.org/draft/2020-12/schema",
-                          "additionalProperties": false,
-                          "allOf": [
-                            {
-                              "if": {
-                                "properties": {
-                                  "text_truncated": {
-                                    "const": true
-                                  }
-                                },
-                                "required": [
-                                  "text_truncated"
-                                ]
-                              },
-                              "then": {
-                                "properties": {
-                                  "text_resource_uri": {
-                                    "format": "uri",
-                                    "maxLength": 4096,
-                                    "pattern": "^zalo://conversations/(direct|group)/",
-                                    "type": "string"
-                                  }
-                                }
-                              }
-                            }
-                          ],
+                          "type": "object",
                           "properties": {
-                            "conversation_id": {
-                              "maxLength": 256,
+                            "message_id": {
+                              "type": "string",
                               "minLength": 1,
-                              "type": "string"
+                              "maxLength": 256
                             },
-                            "conversation_name": {
-                              "maxLength": 256,
+                            "sender_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "sender_name": {
                               "type": [
                                 "string",
                                 "null"
-                              ]
+                              ],
+                              "maxLength": 256
+                            },
+                            "sent_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "text": {
+                              "type": "string",
+                              "maxLength": 2048
+                            },
+                            "text_truncated": {
+                              "type": "boolean"
+                            },
+                            "text_resource_uri": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "uri",
+                              "maxLength": 4096
+                            },
+                            "conversation_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
                             },
                             "conversation_type": {
+                              "type": "string",
                               "enum": [
                                 "direct",
                                 "group"
+                              ]
+                            },
+                            "conversation_name": {
+                              "type": [
+                                "string",
+                                "null"
                               ],
-                              "type": "string"
+                              "maxLength": 256
+                            },
+                            "schema_version": {
+                              "const": 2
                             },
                             "direction": {
                               "enum": [
@@ -7857,45 +8386,6 @@
                                 "boolean",
                                 "null"
                               ]
-                            },
-                            "message_id": {
-                              "maxLength": 256,
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            "schema_version": {
-                              "const": 2
-                            },
-                            "sender_id": {
-                              "maxLength": 256,
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            "sender_name": {
-                              "maxLength": 256,
-                              "type": [
-                                "string",
-                                "null"
-                              ]
-                            },
-                            "sent_at": {
-                              "format": "date-time",
-                              "type": "string"
-                            },
-                            "text": {
-                              "maxLength": 2048,
-                              "type": "string"
-                            },
-                            "text_resource_uri": {
-                              "format": "uri",
-                              "maxLength": 4096,
-                              "type": [
-                                "string",
-                                "null"
-                              ]
-                            },
-                            "text_truncated": {
-                              "type": "boolean"
                             }
                           },
                           "required": [
@@ -7913,38 +8403,6 @@
                             "direction",
                             "first_incoming"
                           ],
-                          "type": "object"
-                        },
-                        "eventId": {
-                          "maxLength": 128,
-                          "minLength": 1,
-                          "type": "string"
-                        },
-                        "name": {
-                          "const": "zalo.conversation.message.created.v2"
-                        },
-                        "timestamp": {
-                          "format": "date-time",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "eventId",
-                        "name",
-                        "timestamp",
-                        "data",
-                        "cursor"
-                      ],
-                      "type": "object"
-                    },
-                    {
-                      "$schema": "https://json-schema.org/draft/2020-12/schema",
-                      "additionalProperties": false,
-                      "properties": {
-                        "cursor": {
-                          "type": "null"
-                        },
-                        "data": {
                           "additionalProperties": false,
                           "allOf": [
                             {
@@ -7961,56 +8419,88 @@
                               "then": {
                                 "properties": {
                                   "text_resource_uri": {
+                                    "type": "string",
                                     "format": "uri",
-                                    "maxLength": 4096,
-                                    "pattern": "^zalo://groups/",
-                                    "type": "string"
+                                    "pattern": "^zalo://conversations/(direct|group)/",
+                                    "maxLength": 4096
                                   }
                                 }
                               }
                             }
-                          ],
+                          ]
+                        },
+                        "cursor": {
+                          "type": "null"
+                        }
+                      },
+                      "required": [
+                        "eventId",
+                        "name",
+                        "timestamp",
+                        "data",
+                        "cursor"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "$schema": "https://json-schema.org/draft/2020-12/schema",
+                      "type": "object",
+                      "properties": {
+                        "eventId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128
+                        },
+                        "name": {
+                          "const": "zalo.message.created"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "data": {
+                          "type": "object",
                           "properties": {
                             "group_id": {
-                              "maxLength": 256,
+                              "type": "string",
                               "minLength": 1,
-                              "type": "string"
+                              "maxLength": 256
                             },
                             "message_id": {
-                              "maxLength": 256,
+                              "type": "string",
                               "minLength": 1,
-                              "type": "string"
+                              "maxLength": 256
                             },
                             "sender_id": {
-                              "maxLength": 256,
+                              "type": "string",
                               "minLength": 1,
-                              "type": "string"
+                              "maxLength": 256
                             },
                             "sender_name": {
-                              "maxLength": 256,
                               "type": [
                                 "string",
                                 "null"
-                              ]
+                              ],
+                              "maxLength": 256
                             },
                             "sent_at": {
-                              "format": "date-time",
-                              "type": "string"
+                              "type": "string",
+                              "format": "date-time"
                             },
                             "text": {
-                              "maxLength": 2048,
-                              "type": "string"
-                            },
-                            "text_resource_uri": {
-                              "format": "uri",
-                              "maxLength": 4096,
-                              "type": [
-                                "string",
-                                "null"
-                              ]
+                              "type": "string",
+                              "maxLength": 2048
                             },
                             "text_truncated": {
                               "type": "boolean"
+                            },
+                            "text_resource_uri": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "uri",
+                              "maxLength": 4096
                             }
                           },
                           "required": [
@@ -8023,19 +8513,34 @@
                             "text_truncated",
                             "text_resource_uri"
                           ],
-                          "type": "object"
+                          "additionalProperties": false,
+                          "allOf": [
+                            {
+                              "if": {
+                                "properties": {
+                                  "text_truncated": {
+                                    "const": true
+                                  }
+                                },
+                                "required": [
+                                  "text_truncated"
+                                ]
+                              },
+                              "then": {
+                                "properties": {
+                                  "text_resource_uri": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "pattern": "^zalo://groups/",
+                                    "maxLength": 4096
+                                  }
+                                }
+                              }
+                            }
+                          ]
                         },
-                        "eventId": {
-                          "maxLength": 128,
-                          "minLength": 1,
-                          "type": "string"
-                        },
-                        "name": {
-                          "const": "zalo.message.created"
-                        },
-                        "timestamp": {
-                          "format": "date-time",
-                          "type": "string"
+                        "cursor": {
+                          "type": "null"
                         }
                       },
                       "required": [
@@ -8045,11 +8550,685 @@
                         "data",
                         "cursor"
                       ],
-                      "type": "object"
+                      "additionalProperties": false
                     },
                     {
                       "type": "null"
+                    },
+                    {
+                      "$schema": "https://json-schema.org/draft/2020-12/schema",
+                      "type": "object",
+                      "properties": {
+                        "eventId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128
+                        },
+                        "name": {
+                          "const": "zalo.conversation.message.created.v3"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "data": {
+                          "$schema": "https://json-schema.org/draft/2020-12/schema",
+                          "type": "object",
+                          "properties": {
+                            "message_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "sender_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "sender_name": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "maxLength": 256
+                            },
+                            "sent_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "text": {
+                              "type": "string",
+                              "maxLength": 2048
+                            },
+                            "text_truncated": {
+                              "type": "boolean"
+                            },
+                            "text_resource_uri": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "uri",
+                              "maxLength": 4096
+                            },
+                            "conversation_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "conversation_type": {
+                              "type": "string",
+                              "enum": [
+                                "direct",
+                                "group"
+                              ]
+                            },
+                            "conversation_name": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "maxLength": 256
+                            },
+                            "schema_version": {
+                              "const": 3
+                            },
+                            "direction": {
+                              "enum": [
+                                "incoming",
+                                "outgoing",
+                                "unknown"
+                              ]
+                            },
+                            "first_incoming": {
+                              "type": [
+                                "boolean",
+                                "null"
+                              ]
+                            },
+                            "content": {
+                              "$schema": "https://json-schema.org/draft/2020-12/schema",
+                              "type": "object",
+                              "additionalProperties": false,
+                              "properties": {
+                                "kind": {
+                                  "enum": [
+                                    "text",
+                                    "image",
+                                    "sticker",
+                                    "audio",
+                                    "video",
+                                    "file",
+                                    "link",
+                                    "contact",
+                                    "location",
+                                    "mixed",
+                                    "unsupported"
+                                  ]
+                                },
+                                "native_type": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "maxLength": 64,
+                                  "pattern": "^[A-Za-z0-9_.-]+$"
+                                },
+                                "summary": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "availability": {
+                                  "enum": [
+                                    "text",
+                                    "metadata_only",
+                                    "unavailable"
+                                  ]
+                                },
+                                "reason": {
+                                  "enum": [
+                                    null,
+                                    "legacy_projection",
+                                    "empty_content",
+                                    "unknown_native_type",
+                                    "unsupported_shape",
+                                    "metadata_limited",
+                                    "invalid_metadata"
+                                  ]
+                                },
+                                "elements": {
+                                  "type": "array",
+                                  "maxItems": 16,
+                                  "items": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "kind": {
+                                        "enum": [
+                                          "text",
+                                          "image",
+                                          "sticker",
+                                          "audio",
+                                          "video",
+                                          "file",
+                                          "link",
+                                          "contact",
+                                          "location",
+                                          "mixed",
+                                          "unsupported"
+                                        ]
+                                      },
+                                      "label": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ],
+                                        "maxLength": 512
+                                      },
+                                      "mime_type": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ],
+                                        "maxLength": 128
+                                      },
+                                      "file_name": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ],
+                                        "maxLength": 256
+                                      },
+                                      "size_bytes": {
+                                        "type": [
+                                          "integer",
+                                          "null"
+                                        ],
+                                        "minimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "duration_ms": {
+                                        "type": [
+                                          "integer",
+                                          "null"
+                                        ],
+                                        "minimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "width": {
+                                        "type": [
+                                          "integer",
+                                          "null"
+                                        ],
+                                        "minimum": 1,
+                                        "maximum": 100000
+                                      },
+                                      "height": {
+                                        "type": [
+                                          "integer",
+                                          "null"
+                                        ],
+                                        "minimum": 1,
+                                        "maximum": 100000
+                                      },
+                                      "sticker_id": {
+                                        "type": [
+                                          "string",
+                                          "null"
+                                        ],
+                                        "maxLength": 128
+                                      },
+                                      "bytes_available": {
+                                        "const": false
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "label",
+                                      "mime_type",
+                                      "file_name",
+                                      "size_bytes",
+                                      "duration_ms",
+                                      "width",
+                                      "height",
+                                      "sticker_id",
+                                      "bytes_available"
+                                    ]
+                                  }
+                                },
+                                "text_role": {
+                                  "enum": [
+                                    "author",
+                                    "none",
+                                    "legacy_projection"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "native_type",
+                                "summary",
+                                "availability",
+                                "reason",
+                                "elements",
+                                "text_role"
+                              ]
+                            },
+                            "content_resource_uri": {
+                              "type": "string",
+                              "format": "uri",
+                              "pattern": "^zalo://conversations/(direct|group)/.+/messages/.+/content$",
+                              "maxLength": 4096
+                            },
+                            "content_truncated": {
+                              "type": "boolean",
+                              "description": "True when event content omits trailing elements to fit recovery; read the full metadata resource. Absent on older retained v3 events means false."
+                            }
+                          },
+                          "required": [
+                            "conversation_id",
+                            "message_id",
+                            "sender_id",
+                            "sender_name",
+                            "sent_at",
+                            "text",
+                            "text_truncated",
+                            "text_resource_uri",
+                            "conversation_type",
+                            "conversation_name",
+                            "schema_version",
+                            "direction",
+                            "first_incoming",
+                            "content",
+                            "content_resource_uri"
+                          ],
+                          "additionalProperties": false,
+                          "allOf": [
+                            {
+                              "if": {
+                                "properties": {
+                                  "text_truncated": {
+                                    "const": true
+                                  }
+                                },
+                                "required": [
+                                  "text_truncated"
+                                ]
+                              },
+                              "then": {
+                                "properties": {
+                                  "text_resource_uri": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "pattern": "^zalo://conversations/(direct|group)/",
+                                    "maxLength": 4096
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "cursor": {
+                          "type": "null"
+                        }
+                      },
+                      "required": [
+                        "eventId",
+                        "name",
+                        "timestamp",
+                        "data",
+                        "cursor"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "$schema": "https://json-schema.org/draft/2020-12/schema",
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "eventId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128
+                        },
+                        "name": {
+                          "const": "zalo.conversation.reaction.observed.v1"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "data": {
+                          "$schema": "https://json-schema.org/draft/2020-12/schema",
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "schema_version": {
+                              "const": 1
+                            },
+                            "conversation_type": {
+                              "enum": [
+                                "direct",
+                                "group"
+                              ]
+                            },
+                            "conversation_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "conversation_name": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "maxLength": 256
+                            },
+                            "actor_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "actor_name": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "maxLength": 256
+                            },
+                            "occurred_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "direction": {
+                              "enum": [
+                                "incoming",
+                                "outgoing",
+                                "unknown"
+                              ]
+                            },
+                            "source_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "identity_basis": {
+                              "enum": [
+                                "upstream_action_id",
+                                "observed_fingerprint"
+                              ]
+                            },
+                            "source": {
+                              "enum": [
+                                "live",
+                                "replay"
+                              ]
+                            },
+                            "native_type": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "maxLength": 64,
+                              "pattern": "^[A-Za-z0-9_.-]+$"
+                            },
+                            "family": {
+                              "const": "reaction"
+                            },
+                            "reaction": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "properties": {
+                                "target_message_ids": {
+                                  "type": "array",
+                                  "maxItems": 16,
+                                  "uniqueItems": true,
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  }
+                                },
+                                "reaction": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "maxLength": 128
+                                },
+                                "action": {
+                                  "enum": [
+                                    "add",
+                                    "remove",
+                                    "update",
+                                    "unknown"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "target_message_ids",
+                                "reaction",
+                                "action"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "schema_version",
+                            "conversation_type",
+                            "conversation_id",
+                            "conversation_name",
+                            "actor_id",
+                            "actor_name",
+                            "occurred_at",
+                            "direction",
+                            "source_id",
+                            "identity_basis",
+                            "source",
+                            "native_type",
+                            "family",
+                            "reaction"
+                          ]
+                        },
+                        "cursor": {
+                          "type": "null"
+                        }
+                      },
+                      "required": [
+                        "eventId",
+                        "name",
+                        "timestamp",
+                        "data",
+                        "cursor"
+                      ]
+                    },
+                    {
+                      "$schema": "https://json-schema.org/draft/2020-12/schema",
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "eventId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128
+                        },
+                        "name": {
+                          "const": "zalo.conversation.call.observed.v1"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "data": {
+                          "$schema": "https://json-schema.org/draft/2020-12/schema",
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "schema_version": {
+                              "const": 1
+                            },
+                            "conversation_type": {
+                              "enum": [
+                                "direct",
+                                "group"
+                              ]
+                            },
+                            "conversation_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "conversation_name": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "maxLength": 256
+                            },
+                            "actor_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "actor_name": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "maxLength": 256
+                            },
+                            "occurred_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "direction": {
+                              "enum": [
+                                "incoming",
+                                "outgoing",
+                                "unknown"
+                              ]
+                            },
+                            "source_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "identity_basis": {
+                              "enum": [
+                                "upstream_action_id",
+                                "observed_fingerprint"
+                              ]
+                            },
+                            "source": {
+                              "enum": [
+                                "live",
+                                "replay"
+                              ]
+                            },
+                            "native_type": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "maxLength": 64,
+                              "pattern": "^[A-Za-z0-9_.-]+$"
+                            },
+                            "family": {
+                              "const": "call"
+                            },
+                            "call": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "properties": {
+                                "call_id": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ],
+                                  "maxLength": 256
+                                },
+                                "status": {
+                                  "enum": [
+                                    "unknown",
+                                    "started",
+                                    "ringing",
+                                    "answered",
+                                    "ended",
+                                    "missed",
+                                    "cancelled",
+                                    "declined"
+                                  ]
+                                },
+                                "native_status": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": -2147483648,
+                                  "maximum": 2147483647
+                                },
+                                "mode": {
+                                  "enum": [
+                                    "voice",
+                                    "video",
+                                    "unknown"
+                                  ]
+                                },
+                                "duration_ms": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": [
+                                "call_id",
+                                "status",
+                                "native_status",
+                                "mode",
+                                "duration_ms"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "schema_version",
+                            "conversation_type",
+                            "conversation_id",
+                            "conversation_name",
+                            "actor_id",
+                            "actor_name",
+                            "occurred_at",
+                            "direction",
+                            "source_id",
+                            "identity_basis",
+                            "source",
+                            "native_type",
+                            "family",
+                            "call"
+                          ]
+                        },
+                        "cursor": {
+                          "type": "null"
+                        }
+                      },
+                      "required": [
+                        "eventId",
+                        "name",
+                        "timestamp",
+                        "data",
+                        "cursor"
+                      ]
                     }
+                  ]
+                },
+                "delivery_state": {
+                  "enum": [
+                    "delivered",
+                    "failed",
+                    "cancelled",
+                    "pruned"
                   ]
                 },
                 "gap_reason": {
@@ -8059,9 +9238,9 @@
                   ]
                 },
                 "receipt": {
-                  "maxLength": 2048,
+                  "type": "string",
                   "minLength": 1,
-                  "type": "string"
+                  "maxLength": 2048
                 }
               },
               "required": [
@@ -8070,18 +9249,15 @@
                 "gap_reason",
                 "receipt"
               ],
-              "type": "object"
+              "additionalProperties": false
             },
-            "maxItems": 20,
-            "type": "array"
+            "maxItems": 20
           },
           "has_more": {
             "type": "boolean"
           },
-          "subscription_id": {
-            "maxLength": 2048,
-            "minLength": 1,
-            "type": "string"
+          "blocked_on_delivery": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -8090,7 +9266,7 @@
           "has_more",
           "blocked_on_delivery"
         ],
-        "type": "object"
+        "additionalProperties": false
       },
       "transports": [
         "authenticated stateless Streamable HTTP",

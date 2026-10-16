@@ -39,7 +39,7 @@ func contactMetadata(user model.User) domain.Contact {
 	if name == "" {
 		name = user.ZaloName
 	}
-	friendship := "unknown"
+	friendship := nativeUnknown
 	// The upstream int field cannot distinguish an absent isFr from zero. Do
 	// not classify absent/invalid profile metadata as a confirmed non-friend.
 	if user.IsFr == 1 {

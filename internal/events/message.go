@@ -39,6 +39,9 @@ type MessageEvent struct {
 type MessageEncoder struct {
 	schema               *jsonschema.Schema
 	conversationV2Schema *jsonschema.Schema
+	conversationV3Schema *jsonschema.Schema
+	reactionSchema       *jsonschema.Schema
+	callSchema           *jsonschema.Schema
 	textLimit            int
 }
 
@@ -67,7 +70,24 @@ func NewMessageEncoder() (*MessageEncoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &MessageEncoder{schema: schema, conversationV2Schema: v2, textLimit: int(maxLength)}, nil
+	v3, err := contracts.Compile("conversation_v3_event", "delivery")
+	if err != nil {
+		return nil, err
+	}
+	reaction, err := contracts.Compile("reaction_v1_event", "delivery")
+	if err != nil {
+		return nil, err
+	}
+	call, err := contracts.Compile("call_v1_event", "delivery")
+	if err != nil {
+		return nil, err
+	}
+	return &MessageEncoder{
+		schema:               schema,
+		conversationV2Schema: v2,
+		conversationV3Schema: v3, reactionSchema: reaction, callSchema: call,
+		textLimit: int(maxLength),
+	}, nil
 }
 
 // Encode uses the journal's stable ID. The returned bytes are persisted and signed
@@ -93,12 +113,21 @@ func (e *MessageEncoder) Encode(eventID string, message domain.Message) ([]byte,
 	if len(runes) > e.textLimit {
 		data.Text = string(runes[:e.textLimit])
 		data.TextTruncated = true
-		uri := "zalo://groups/" + url.PathEscape(message.GroupID) + "/messages/" + url.PathEscape(message.ID)
+		uri := "zalo://groups/" + url.PathEscape(
+			message.GroupID,
+		) + "/messages/" + url.PathEscape(
+			message.ID,
+		)
 		data.TextResourceURI = &uri
 	}
 	wire, err := json.Marshal(
 		//nolint:exhaustruct_v5 // MessageEvent preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
-		MessageEvent{EventID: eventID, Name: MessageCreated, Timestamp: message.SentAt.UTC(), Data: data},
+		MessageEvent{
+			EventID:   eventID,
+			Name:      MessageCreated,
+			Timestamp: message.SentAt.UTC(),
+			Data:      data,
+		},
 	)
 	if err != nil || len(wire) > 256<<10 {
 		return nil, errors.New("event exceeds delivery body limit")
@@ -114,10 +143,14 @@ func (e *MessageEncoder) EncodeProfile(profile, id string, m domain.Message) ([]
 	if profile == MessageCreated {
 		return e.Encode(id, m)
 	}
-	if profile != domain.ConversationMessageCreatedV2 || !m.Ref().Valid() || !utf8.ValidString(m.Text) {
+	if !domain.IsConversationMessageProfile(profile) || !m.Ref().Valid() ||
+		!utf8.ValidString(m.Text) {
 		return nil, errors.New("invalid conversation event")
 	}
 	text := m.Text
+	if profile == domain.ConversationMessageCreatedV3 {
+		text = m.SemanticText()
+	}
 	runes := []rune(text)
 	truncated := len(runes) > e.textLimit
 	var uri *string
@@ -147,16 +180,25 @@ func (e *MessageEncoder) EncodeProfile(profile, id string, m domain.Message) ([]
 		m.Direction = "unknown"
 	}
 	data["direction"] = m.Direction
+	schema := e.conversationV2Schema
+	if profile == domain.ConversationMessageCreatedV3 {
+		schema = e.conversationV3Schema
+		data["schema_version"] = 3
+		data["content_truncated"] = false
+		content := m.Content
+		if content == nil {
+			content = domain.LegacyContent()
+		}
+		data["content"] = content
+		data["content_resource_uri"] = "zalo://conversations/" + m.Ref().Type + "/" + url.PathEscape(
+			m.Ref().ID,
+		) + "/messages/" + url.PathEscape(
+			m.ID,
+		) + "/content"
+	}
 	data["first_incoming"] = m.FirstIncoming
-	body, err := json.Marshal(
-		map[string]any{"eventId": id, fieldName: profile, "timestamp": m.SentAt.UTC(), "data": data, "cursor": nil},
-	)
-	if err != nil || len(body) > 256<<10 {
-		return nil, errors.New("event exceeds delivery body limit")
-	}
-	var value any
-	if json.Unmarshal(body, &value) != nil || e.conversationV2Schema.Validate(value) != nil {
-		return nil, errors.New("conversation message does not satisfy event contract")
-	}
-	return body, nil
+	return encodeConversationEnvelope(map[string]any{
+		"eventId": id, fieldName: profile, "timestamp": m.SentAt.UTC(),
+		"data": data, fieldCursor: nil,
+	}, schema)
 }

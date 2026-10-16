@@ -301,6 +301,9 @@ func Convert(m model.GroupMessage, source string) (domain.Message, error) {
 	if m.IsSelf() {
 		d.Direction = directionOutgoing
 	}
+	if err == nil {
+		logContentProjection(m.Data.TMessage, d.Ref(), source, *d.Content)
+	}
 	return d, err
 }
 
@@ -310,7 +313,11 @@ func ConvertDirect(m model.UserMessage, source string) (domain.Message, error) {
 	if m.IsSelf() {
 		d.Direction = directionOutgoing
 	}
-	if err == nil && m.Data.Content.String != nil && m.Data.MsgType == "webchat" && m.Data.CliMsgID != "" {
+	if err == nil {
+		refineDirectContent(&d, m.Data)
+		logContentProjection(m.Data, d.Ref(), source, *d.Content)
+	}
+	if err == nil && m.Data.Content.String != nil && m.Data.MsgType == nativeWebchat && m.Data.CliMsgID != "" {
 		d.QuoteMetadata = &domain.QuoteMetadata{
 			ClientMessageID: m.Data.CliMsgID,
 			MessageType:     m.Data.MsgType,
@@ -322,6 +329,12 @@ func ConvertDirect(m model.UserMessage, source string) (domain.Message, error) {
 }
 
 func convertMessage(d model.TMessage, ref domain.ConversationRef, source string) (domain.Message, error) {
+	if isCallContent(d, ref) {
+		return domain.Message{}, errCallRecord
+	}
+	if isControlContent(d) {
+		return domain.Message{}, errControlRecord
+	}
 	ms, e := strconv.ParseInt(d.TS, 10, 64)
 	if e != nil || ms <= 0 {
 		return domain.Message{}, errors.New("unsupported Zalo message timestamp")
@@ -341,6 +354,11 @@ func convertMessage(d model.TMessage, ref domain.ConversationRef, source string)
 	if d.DName != "" {
 		name := d.DName
 		msg.SenderName = &name
+	}
+	content := normalizeContent(d)
+	msg.Content = &content
+	if domain.ValidMessageClientID(d.CliMsgID) {
+		msg.ProtocolClientMessageID = d.CliMsgID
 	}
 	if d.Content.String != nil {
 		msg.Text = *d.Content.String

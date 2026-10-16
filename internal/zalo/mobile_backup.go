@@ -180,7 +180,7 @@ func invalidMobileOffer(reason string) (domain.MobileBackupOffer, error) {
 
 // Only explicitly selected scalar diagnostics; never format a control event.
 func logMobileControl(event model.MobileSyncEvent, public string) {
-	action := "unknown"
+	action := nativeUnknown
 	switch event.Action {
 	case "user_confirm", "transfer_error", "syncmsg_info":
 		action = event.Action

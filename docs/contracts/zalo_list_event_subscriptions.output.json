@@ -15,7 +15,10 @@
           "event_name": {
             "enum": [
               "zalo.message.created",
-              "zalo.conversation.message.created.v2"
+              "zalo.conversation.message.created.v2",
+              "zalo.conversation.message.created.v3",
+              "zalo.conversation.reaction.observed.v1",
+              "zalo.conversation.call.observed.v1"
             ]
           },
           "scope": {

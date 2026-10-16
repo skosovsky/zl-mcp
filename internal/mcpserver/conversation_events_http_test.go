@@ -26,8 +26,12 @@ func TestConversationEventsThroughHTTPAndSignedTLSReceiver(t *testing.T) {
 		version float64
 	}{
 		{domain.ConversationMessageCreatedV2, 2},
+		{domain.ConversationMessageCreatedV3, 3},
 	} {
-		t.Run(profile.name, func(t *testing.T) { testConversationProfileTLS(t, profile.name, profile.version) })
+		t.Run(
+			profile.name,
+			func(t *testing.T) { testConversationProfileTLS(t, profile.name, profile.version) },
+		)
 	}
 }
 
@@ -49,46 +53,55 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 	key := []byte("synthetic-key-for-webhook-32bytes!")
 	received := make(chan map[string]any, 4)
 	var verificationSubscription, expectedSubscription string
-	receiver := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, readAllErr := io.ReadAll(r.Body)
-		if readAllErr != nil {
-			t.Error(readAllErr)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		mac := hmac.New(sha256.New, key)
-		mac.Write([]byte(r.Header.Get("Webhook-Id") + "." + r.Header.Get("Webhook-Timestamp") + "."))
-		mac.Write(body)
-		sig, readAllErr := base64.StdEncoding.DecodeString(strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"))
-		if readAllErr != nil || !hmac.Equal(sig, mac.Sum(nil)) {
-			t.Error("invalid callback signature")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		var value map[string]any
-		if unmarshalErr := json.Unmarshal(body, &value); unmarshalErr != nil {
-			t.Error(unmarshalErr)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		if value["type"] == "verification" {
-			verificationSubscription = r.Header.Get("X-Mcp-Subscription-Id")
-			json.NewEncoder(w).Encode(map[string]any{"challenge": value["challenge"]})
-			return
-		}
-		if r.Header.Get("Content-Type") != "application/json" || r.Header.Get("Webhook-Id") != value["eventId"] ||
-			r.Header.Get("X-Mcp-Subscription-Id") != expectedSubscription ||
-			expectedSubscription == "" {
-			t.Error("callback routing headers differ from subscribed identity")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		received <- value
-		w.WriteHeader(http.StatusNoContent)
-	}))
+	receiver := httptest.NewTLSServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			body, readAllErr := io.ReadAll(r.Body)
+			if readAllErr != nil {
+				t.Error(readAllErr)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			mac := hmac.New(sha256.New, key)
+			mac.Write(
+				[]byte(r.Header.Get("Webhook-Id") + "." + r.Header.Get("Webhook-Timestamp") + "."),
+			)
+			mac.Write(body)
+			sig, readAllErr := base64.StdEncoding.DecodeString(
+				strings.TrimPrefix(r.Header.Get("Webhook-Signature"), "v1,"),
+			)
+			if readAllErr != nil || !hmac.Equal(sig, mac.Sum(nil)) {
+				t.Error("invalid callback signature")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			var value map[string]any
+			if unmarshalErr := json.Unmarshal(body, &value); unmarshalErr != nil {
+				t.Error(unmarshalErr)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			if value["type"] == "verification" {
+				verificationSubscription = r.Header.Get("X-Mcp-Subscription-Id")
+				json.NewEncoder(w).Encode(map[string]any{"challenge": value["challenge"]})
+				return
+			}
+			if r.Header.Get("Content-Type") != "application/json" ||
+				r.Header.Get("Webhook-Id") != value["eventId"] ||
+				r.Header.Get("X-Mcp-Subscription-Id") != expectedSubscription ||
+				expectedSubscription == "" {
+				t.Error("callback routing headers differ from subscribed identity")
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			received <- value
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	)
 	defer receiver.Close()
 	target, _ := url.Parse(receiver.URL)
-	client := &http.Client{Transport: localReceiverTransport{target: target, base: receiver.Client().Transport}}
+	client := &http.Client{
+		Transport: localReceiverTransport{target: target, base: receiver.Client().Transport},
+	}
 	token := strings.Repeat("t", 32)
 	service, err := migrationHTTP(t, store, dir, token)
 	if err != nil {
@@ -170,6 +183,23 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 		if resource["contents"].([]any)[0].(map[string]any)["text"] != fullText {
 			t.Fatal("full text resource mismatch")
 		}
+		if profileName == domain.ConversationMessageCreatedV3 {
+			metadata := httpRPC(
+				t,
+				endpoint.URL+"/mcp",
+				token,
+				"resources/read",
+				map[string]any{"uri": data["content_resource_uri"]},
+			)
+			var content map[string]any
+			body := metadata["contents"].([]any)[0].(map[string]any)["text"].(string)
+			if err := json.Unmarshal([]byte(body), &content); err != nil {
+				t.Fatal(err)
+			}
+			if content["reason"] != "legacy_projection" {
+				t.Fatal("synthetic legacy content misclassified")
+			}
+		}
 	}
 	if !seen[domain.ConversationDirect] || !seen[domain.ConversationGroup] {
 		t.Fatal("missing conversation type")
@@ -177,12 +207,18 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 
 	// Act: a payload-less automation recovers the exact accepted envelopes via MCP.
 	catalog := httpRPC(t, endpoint.URL+"/mcp", token, "events/list", map[string]any{})
-	if len(catalog["events"].([]any)) != 2 {
-		t.Fatal("removed v1 remains in discovery")
+	if len(catalog["events"].([]any)) != 5 {
+		t.Fatal("event profiles missing or unexpected in discovery")
 	}
 	tools := func(name string, args map[string]any) map[string]any {
 		t.Helper()
-		result := httpRPC(t, endpoint.URL+"/mcp", token, "tools/call", map[string]any{"name": name, "arguments": args})
+		result := httpRPC(
+			t,
+			endpoint.URL+"/mcp",
+			token,
+			"tools/call",
+			map[string]any{"name": name, "arguments": args},
+		)
 		if result["isError"] == true {
 			t.Fatalf("recovery failed: %v", result)
 		}
@@ -192,7 +228,10 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 	if owned["subscriptions"].([]any)[0].(map[string]any)["subscription_id"] != expectedSubscription {
 		t.Fatal("wrong journal owner")
 	}
-	recovered := tools("zalo_read_subscription_events", map[string]any{"subscription_id": expectedSubscription})
+	recovered := tools(
+		"zalo_read_subscription_events",
+		map[string]any{"subscription_id": expectedSubscription},
+	)
 	records := recovered["events"].([]any)
 	if len(records) != 2 {
 		t.Fatal("callback recovery lost events")
@@ -200,7 +239,8 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 	for _, record := range records {
 		entry := record.(map[string]any)
 		payload := entry["event"].(map[string]any)
-		if payload["name"] != profileName || payload["eventId"] == nil || entry["delivery_state"] != "delivered" {
+		if payload["name"] != profileName || payload["eventId"] == nil ||
+			entry["delivery_state"] != "delivered" {
 			t.Fatal("recovery did not return exact envelope")
 		}
 		result := tools(
@@ -237,7 +277,8 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 		t.Fatal(err)
 	}
 	// Assert: cancellation stops actual callbacks for the broad scope.
-	if worked, err := worker.DeliverOne(ctx, time.Now()); err != nil || worked || len(received) != 0 {
+	if worked, err := worker.DeliverOne(ctx, time.Now()); err != nil || worked ||
+		len(received) != 0 {
 		t.Fatalf("cancelled delivery worked=%v error=%v", worked, err)
 	}
 }

@@ -52,8 +52,7 @@ func (ln *listener) router(ctx context.Context, version, cmd, sub uint, body Bas
 		ln.handleDuplicateConnection()
 
 	default:
-		ln.diagnostics.unhandled.Add(1)
-		ln.diagnostics.lastUnhandledCommand.Store(uint64(cmd))
+		ln.diagnostics.recordUnhandled(version, cmd, sub)
 	}
 }
 
@@ -291,14 +290,18 @@ func (ln *listener) handleReactions(ctx context.Context, body BaseWSMessage) {
 		if reaction.IsSelf && !ln.selfListen {
 			continue
 		}
-		emit(ctx, ln.ch.Reaction, reaction)
+		if !emitDurable(ctx, ln.ch.Reaction, reaction, &ln.diagnostics) {
+			return
+		}
 	}
 	for _, r := range eventData.Data.GroupReactions {
 		reaction := model.NewReaction(uid, r, model.ThreadTypeGroup)
 		if reaction.IsSelf && !ln.selfListen {
 			continue
 		}
-		emit(ctx, ln.ch.Reaction, reaction)
+		if !emitDurable(ctx, ln.ch.Reaction, reaction, &ln.diagnostics) {
+			return
+		}
 	}
 }
 
@@ -310,22 +313,31 @@ func (ln *listener) handleOldReactions(ctx context.Context, body BaseWSMessage) 
 		return
 	}
 
-	reactions := make([]model.Reaction, 0, len(eventData.Data.Reactions)+len(eventData.Data.GroupReactions))
-
-	threadType := model.ThreadTypeUser
-	selected := eventData.Data.Reactions
-	if len(eventData.Data.GroupReactions) > 0 {
-		threadType = model.ThreadTypeGroup
-		selected = eventData.Data.GroupReactions
+	if len(eventData.Data.Reactions) == 0 && len(eventData.Data.GroupReactions) == 0 {
+		emitDurable(ctx, ln.ch.OldReactions, model.NewOldReactions([]model.Reaction{}, model.ThreadTypeUser), &ln.diagnostics)
+		return
 	}
+	if !ln.emitOldReactionBatch(ctx, eventData.Data.Reactions, model.ThreadTypeUser) {
+		return
+	}
+	ln.emitOldReactionBatch(ctx, eventData.Data.GroupReactions, model.ThreadTypeGroup)
 
+}
+
+func (ln *listener) emitOldReactionBatch(ctx context.Context, source []model.TReaction, kind model.ThreadType) bool {
+	reactions := make([]model.Reaction, 0, len(source))
 	uid := ln.sc.UID()
-	for _, r := range selected {
-		reactionObject := model.NewReaction(uid, r, threadType)
-		reactions = append(reactions, reactionObject)
+	for _, r := range source {
+		reaction := model.NewReaction(uid, r, kind)
+		if reaction.IsSelf && !ln.selfListen {
+			continue
+		}
+		reactions = append(reactions, reaction)
 	}
-
-	emit(ctx, ln.ch.OldReactions, model.NewOldReactions(reactions, threadType))
+	if len(reactions) == 0 {
+		return true
+	}
+	return emitDurable(ctx, ln.ch.OldReactions, model.NewOldReactions(reactions, kind), &ln.diagnostics)
 }
 
 func (ln *listener) handleActions(ctx context.Context, body BaseWSMessage) {
@@ -347,8 +359,11 @@ func (ln *listener) handleActions(ctx context.Context, body BaseWSMessage) {
 			case "gtyping":
 				typingObject := model.NewGroupTyping(action.Data.GroupTyping)
 				emit(ctx, ln.ch.Typing, model.Typing(typingObject))
+			default:
+				ln.diagnostics.ignoredActions.Add(1)
 			}
 		default:
+			ln.diagnostics.ignoredActions.Add(1)
 			continue
 		}
 	}
@@ -374,6 +389,8 @@ func (ln *listener) handleControls(ctx context.Context, body BaseWSMessage) {
 			ln.handleGroupEvent(ctx, content)
 		case "fr":
 			ln.handleFriendEvent(ctx, content)
+		default:
+			ln.diagnostics.ignoredControls.Add(1)
 		}
 	}
 }

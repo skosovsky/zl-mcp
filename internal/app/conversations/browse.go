@@ -33,17 +33,18 @@ type BrowseRequest struct {
 // BrowseHit keeps the native stored timestamp spelling; search/context use
 // their existing domain time values and different projections.
 type BrowseHit struct {
-	ConversationType string  `json:"conversation_type"`
-	ConversationID   string  `json:"conversation_id"`
-	ConversationName *string `json:"conversation_name"`
-	MessageID        string  `json:"message_id"`
-	SenderID         string  `json:"sender_id"`
-	SenderName       *string `json:"sender_name"`
-	SentAt           string  `json:"sent_at"`
-	Excerpt          string  `json:"excerpt"`
-	TextTruncated    bool    `json:"text_truncated"`
-	TextResourceURI  *string `json:"text_resource_uri"`
-	Direction        string  `json:"direction"`
+	Content          *domain.MessageContent `json:"content,omitempty"`
+	ConversationType string                 `json:"conversation_type"`
+	ConversationID   string                 `json:"conversation_id"`
+	ConversationName *string                `json:"conversation_name"`
+	MessageID        string                 `json:"message_id"`
+	SenderID         string                 `json:"sender_id"`
+	SenderName       *string                `json:"sender_name"`
+	SentAt           string                 `json:"sent_at"`
+	Excerpt          string                 `json:"excerpt"`
+	TextTruncated    bool                   `json:"text_truncated"`
+	TextResourceURI  *string                `json:"text_resource_uri"`
+	Direction        string                 `json:"direction"`
 }
 type Browse struct {
 	Messages           []BrowseHit                 `json:"messages"`

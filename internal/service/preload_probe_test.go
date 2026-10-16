@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -76,6 +77,8 @@ func TestPrivatePreloadProbeUsesServiceSessionWithoutPersistingCorpus(t *testing
 	select {
 	case <-ready:
 	case <-time.After(5 * time.Second):
+		stack := make([]byte, 32<<10)
+		t.Logf("startup diagnostic stack:\n%s", stack[:runtime.Stack(stack, true)])
 		t.Fatal("probe service not ready")
 	}
 	select {

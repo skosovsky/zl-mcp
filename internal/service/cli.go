@@ -35,14 +35,14 @@ func RunCLI() error {
 	}
 	if flags.NArg() < 1 {
 		return errors.New(
-			"usage: zl-mcp -config config.toml <login|service|serve|probe-preload|mobile-backup-prepare|mobile-backup-status|mobile-backup-cancel|mobile-backup-probe-offer|mobile-backup-probe-archive|probe-recall|account-archive-prepare|account-archive-capture|account-archive-status|account-archive-preserve|account-archive-restore|account-archive-inspect|account-archive-remove|approve-join preview_id>",
+			"usage: zl-mcp -config config.toml <login|service|serve|check-rollback|probe-preload|mobile-backup-prepare|mobile-backup-status|mobile-backup-cancel|mobile-backup-probe-offer|mobile-backup-probe-archive|probe-recall|account-archive-prepare|account-archive-capture|account-archive-status|account-archive-preserve|account-archive-restore|account-archive-inspect|account-archive-remove|approve-join preview_id>",
 		)
 	}
 	c, e := config.Load(*path)
 	if e != nil {
 		return e
 	}
-	if flags.Arg(0) != "serve" && !mobileLedgerCommand(flags.Arg(0)) {
+	if flags.Arg(0) != "serve" && flags.Arg(0) != "check-rollback" && !mobileLedgerCommand(flags.Arg(0)) {
 		if e = c.Prepare(); e != nil {
 			return e
 		}
@@ -80,6 +80,11 @@ func ReportCLIError(err error) {
 
 func runCLICommand(ctx context.Context, c config.Config, flags *flag.FlagSet) error {
 	switch flags.Arg(0) {
+	case "check-rollback":
+		if flags.NArg() != 1 {
+			return errors.New("check-rollback takes no arguments")
+		}
+		return checkLegacyRollbackCommand(ctx, c.StateDir, os.Stdout)
 	case commandProbeRecall,
 		commandMobileBackupPrepare,
 		commandMobileBackupStatus,
@@ -122,12 +127,21 @@ func runCLICommand(ctx context.Context, c config.Config, flags *flag.FlagSet) er
 }
 
 func runPreloadProbeCommand(ctx context.Context, c config.Config, flags *flag.FlagSet) error {
-	if flags.NArg() != 1 {
-		return errors.New("probe-preload takes no arguments")
+	const selectorArgumentCount = 4
+	const selectorMessageIDIndex = 3
+	args := map[string]any{}
+	switch flags.NArg() {
+	case 1:
+	case selectorArgumentCount:
+		args["conversation_type"] = flags.Arg(1)
+		args["conversation_id"] = flags.Arg(2)
+		args["message_id"] = flags.Arg(selectorMessageIDIndex)
+	default:
+		return errors.New("probe-preload accepts no arguments or exact conversation_type conversation_id message_id")
 	}
 	probeCtx, cancel := context.WithTimeout(ctx, runPreloadProbeCommandProbeTimeout)
 	defer cancel()
-	result, err := control.New(c.StateDir).Call(probeCtx, "cli_probe_preload", map[string]any{})
+	result, err := control.New(c.StateDir).Call(probeCtx, "cli_probe_preload", args)
 	if err != nil {
 		return err
 	}

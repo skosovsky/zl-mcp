@@ -15,3 +15,15 @@ Each record includes author, time, typed identity, available conversation/author
 Empty results distinguish `unknown_conversation`, `no_collected_data` (known catalogue entry, no retained messages), and `no_records_in_period`. An empty continuation after retention is also allowed. None proves absence of Zalo history. Permission is checked on every page before inspecting catalogue/data, so policy revocation also invalidates access using an old cursor. The standard read budget and 64 KiB MCP response ceiling apply; an oversized result produces a safe `RESPONSE_TOO_LARGE` rather than silent omission.
 
 Acceptance covers exact time boundaries and offsets, stable same-time ordering, late replay insertion, namespace collisions, restart continuation, direction, Unicode excerpt/resource retrieval, filter/order cursor binding, empty reasons and collection-policy checks. Actual installed capability discovery and client use remain a separate gate.
+
+## Rich content candidate
+
+Typed context and conversation browse add optional `content` described by
+[the executable content contract](message_content.output.json). New records
+separate `text_role=author|none|legacy_projection`. For `none`, text/excerpt is
+empty and attachment labels remain metadata. Older rows may lack content;
+absence does not prove a text message. Plain-text resources and FTS/search keep
+the legacy projection: inspect typed context before attributing a title to its
+author. The new `.../messages/{message_id}/content` resource returns bounded
+JSON metadata under the same collection, recall and TTL checks, never media
+bytes. [Profile/version details](rich-content-events.md). Not yet live-accepted.

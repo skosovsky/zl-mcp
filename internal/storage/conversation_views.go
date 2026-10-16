@@ -23,6 +23,14 @@ func ConversationMessageView(m domain.Message) map[string]any {
 	delete(v, "group_id")
 	v[fieldConversationType] = m.Ref().Type
 	v[fieldConversationID] = m.Ref().ID
+	if m.Content != nil {
+		v["content"] = m.Content
+		if m.Content.TextRole == domain.ContentTextNone {
+			v["text"] = ""
+			v["text_truncated"] = false
+			v["text_resource_uri"] = nil
+		}
+	}
 	return v
 }
 func coverageView(c domain.Coverage, ref domain.ConversationRef) map[string]any {

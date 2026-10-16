@@ -20,6 +20,11 @@
       "uriTemplate": "zalo://conversations/{conversation_type}/{conversation_id}/messages/{message_id}"
     },
     {
+      "mimeType": "application/json",
+      "name": "Local message content metadata",
+      "uriTemplate": "zalo://conversations/{conversation_type}/{conversation_id}/messages/{message_id}/content"
+    },
+    {
       "mimeType": "text/plain",
       "name": "Local Zalo message",
       "uriTemplate": "zalo://groups/{group_id}/messages/{message_id}"

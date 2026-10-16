@@ -101,3 +101,15 @@ never describe a successful recent page as proof that older pages were fetched.
 Phase-aware traversal is installed. The [current audit](conversation-completion-current-audit.md)
 records accepted bounded source/client checks; a terminal recent page does not
 prove nonempty older-phase traversal. Historical imports remain silent.
+
+## Rich content candidate and historical limits
+
+Newly decoded web group-history/preload messages share the live/replay normalizer.
+The permanent mobile SQLite archive has a separate numeric-type parser; this
+change does not establish media mappings for that source. This cannot recover
+native content already discarded from old projections or archives. Unknown old
+content remains unknown; silent import stays silent and does not establish
+first-incoming or produce activity observations. Archive rows remain a separate
+source and cannot become send/quote anchors. See
+[rich-content contracts and source evidence](contracts/rich-content-events.md).
+A native candidate is deployed locally; full live acceptance remains pending.

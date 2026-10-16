@@ -172,7 +172,7 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 	}
 	rows, err := tx.QueryContext(
 		ctx,
-		`SELECT d.id,d.payload,d.state,m.conversation_type,m.conversation_id FROM event_deliveries d LEFT JOIN messages m ON m.seq=d.message_seq WHERE d.subscription_id=? AND d.generation=? AND d.id>? ORDER BY d.id LIMIT ?`,
+		`SELECT d.id,d.payload,d.state,CASE WHEN d.activity_seq IS NOT NULL THEN a.conversation_type ELSE m.conversation_type END,CASE WHEN d.activity_seq IS NOT NULL THEN a.conversation_id ELSE m.conversation_id END,d.activity_seq IS NOT NULL FROM event_deliveries d LEFT JOIN messages m ON m.seq=d.message_seq LEFT JOIN activity_observations a ON a.seq=d.activity_seq AND a.expired=0 WHERE d.subscription_id=? AND d.generation=? AND d.id>? ORDER BY d.id LIMIT ?`,
 		id,
 		gen,
 		from,
@@ -273,16 +273,24 @@ func (s *Store) pruneEventJournal(ctx context.Context, at time.Time) error {
 	return tx.Commit()
 }
 
-func (s *Store) projectRecoveryEvent(payload []byte, state string, kind, peer sql.NullString) (any, any) {
+func (s *Store) projectRecoveryEvent(
+	payload []byte,
+	state string,
+	kind, peer sql.NullString,
+	activity bool,
+) (any, any) {
 	var event any
 	var reason any
 	switch {
 	case !kind.Valid || !s.AllowsConversation(domain.ConversationRef{Type: kind.String, ID: peer.String}):
 		reason = "message_unavailable_or_access_revoked"
+		if activity {
+			reason = "activity_unavailable_or_access_revoked"
+		}
 	case len(payload) == 0:
 		reason = "payload_unavailable"
 	case json.Unmarshal(payload, &event) != nil:
-		reason = "invalid_payload"
+		reason = reasonInvalidPayload
 		event = nil
 	}
 	if state != stateDeliveredText {
@@ -306,7 +314,8 @@ func (s *Store) readRecoveryEntries(
 		var payload []byte
 		var state string
 		var kind, peer sql.NullString
-		if err := rows.Scan(&n, &payload, &state, &kind, &peer); err != nil {
+		var activity bool
+		if err := rows.Scan(&n, &payload, &state, &kind, &peer, &activity); err != nil {
 			//nolint:gosec // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
 			rows.Close()
 			return nil, false, false, err
@@ -319,7 +328,7 @@ func (s *Store) readRecoveryEntries(
 			more = true
 			break
 		}
-		event, reason := s.projectRecoveryEvent(payload, state, kind, peer)
+		event, reason := s.projectRecoveryEvent(payload, state, kind, peer, activity)
 		entry := map[string]any{
 			"event":          event,
 			"delivery_state": state,

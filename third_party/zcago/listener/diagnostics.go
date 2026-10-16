@@ -1,6 +1,16 @@
 package listener
 
-import "sync/atomic"
+import (
+	"sync"
+	"sync/atomic"
+)
+
+const unhandledHeaderLimit = 16
+
+// ProtocolHeaderCount contains binary protocol header numbers only.
+type ProtocolHeaderCount struct {
+	Version, Command, Subcommand, Count uint64
+}
 
 // Diagnostics contains counts and protocol header numbers only, never payloads,
 // identifiers, URLs, keys or credentials. Counts are per Listener instance.
@@ -13,6 +23,8 @@ type Diagnostics struct {
 	ReplayShape                                                                  uint64
 	DirectFrames, DecodedDirect, EmittedDirect, Backpressure, CancelledEmissions uint64
 	DirectErrors, GroupErrors, ReplayErrors                                      uint64
+	IgnoredActions, IgnoredControls, UnhandledHeaderOverflow                     uint64
+	UnhandledHeaders                                                             []ProtocolHeaderCount
 }
 type diagnosticCounters struct {
 	frames, nonBinary, unhandled, cipherKeys, groupFrames, replayFrames          atomic.Uint64
@@ -23,6 +35,36 @@ type diagnosticCounters struct {
 	replayShape                                                                  atomic.Uint64
 	directFrames, decodedDirect, emittedDirect, backpressure, cancelledEmissions atomic.Uint64
 	directErrors, groupErrors, replayErrors                                      atomic.Uint64
+	ignoredActions, ignoredControls, unhandledHeaderOverflow                     atomic.Uint64
+	headerMu                                                                     sync.Mutex
+	unhandledHeaders                                                             []ProtocolHeaderCount
+}
+
+func (d *diagnosticCounters) recordUnhandled(version, command, subcommand uint) {
+	d.unhandled.Add(1)
+	d.lastUnhandledCommand.Store(uint64(command))
+	d.headerMu.Lock()
+	defer d.headerMu.Unlock()
+	for i := range d.unhandledHeaders {
+		h := &d.unhandledHeaders[i]
+		if h.Version == uint64(version) && h.Command == uint64(command) && h.Subcommand == uint64(subcommand) {
+			h.Count++
+			return
+		}
+	}
+	if len(d.unhandledHeaders) >= unhandledHeaderLimit {
+		d.unhandledHeaderOverflow.Add(1)
+		return
+	}
+	d.unhandledHeaders = append(d.unhandledHeaders, ProtocolHeaderCount{
+		Version: uint64(version), Command: uint64(command), Subcommand: uint64(subcommand), Count: 1,
+	})
+}
+
+func (d *diagnosticCounters) headerSnapshot() []ProtocolHeaderCount {
+	d.headerMu.Lock()
+	defer d.headerMu.Unlock()
+	return append([]ProtocolHeaderCount(nil), d.unhandledHeaders...)
 }
 
 func (ln *listener) Diagnostics() Diagnostics {
@@ -34,5 +76,7 @@ func (ln *listener) Diagnostics() Diagnostics {
 		ReplayUsers: d.replayUsers.Load(), ReplayCode: d.replayCode.Load(), ReplayShape: d.replayShape.Load(),
 		DirectFrames: d.directFrames.Load(), DecodedDirect: d.decodedDirect.Load(), EmittedDirect: d.emittedDirect.Load(), Backpressure: d.backpressure.Load(), CancelledEmissions: d.cancelledEmissions.Load(),
 		DirectErrors: d.directErrors.Load(), GroupErrors: d.groupErrors.Load(), ReplayErrors: d.replayErrors.Load(),
+		IgnoredActions: d.ignoredActions.Load(), IgnoredControls: d.ignoredControls.Load(),
+		UnhandledHeaderOverflow: d.unhandledHeaderOverflow.Load(), UnhandledHeaders: d.headerSnapshot(),
 	}
 }

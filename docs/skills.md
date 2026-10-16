@@ -67,3 +67,14 @@ change a client's copied skills automatically. Structural checks and synthetic M
 tests are evidence for the contract, not model behavior; no new model evals are run.
 
 The Events skill now uses the exact subscription journal and durable acknowledgement tools for triggered runs, including runs with missing payloads. See [recovery contract](contracts/event-recovery.md). A copied/installed skill must be updated separately; repository changes do not update cloud automation instructions. Conversation v1 is removed. Historical acceptance reports describe the version exercised at their date.
+
+## Rich content candidate
+
+The Events skill conditionally handles message v3 content and separate reaction
+observations through the trusted subscription journal. It separates author text,
+summary and metadata; reactions do not use message-only context/first-incoming
+or reply steps. Native call support remains unavailable. The research skill
+checks typed content provenance before quoting a legacy search projection.
+Repository and installed copies must match; this does not update cloud automation
+instructions or migrate existing subscriptions. No model evals validate this
+revision. See [rich-content contract](contracts/rich-content-events.md).

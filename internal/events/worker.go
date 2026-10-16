@@ -206,7 +206,17 @@ func (w *Worker) fanout(ctx context.Context, at time.Time) (int, error) {
 	if q, ok := w.Queue.(interface {
 		FanoutProfileEvents(context.Context, time.Time, storage.DeliveryPolicy, func(string, string, domain.Message) ([]byte, error)) (int, error)
 	}); ok {
-		return q.FanoutProfileEvents(ctx, at, w.Policy, w.Encoder.EncodeProfile)
+		messages, err := q.FanoutProfileEvents(ctx, at, w.Policy, w.Encoder.EncodeProfile)
+		if err != nil {
+			return messages, err
+		}
+		if activities, ok := w.Queue.(interface {
+			FanoutActivityEvents(context.Context, time.Time, storage.DeliveryPolicy, func(string, string, domain.Activity) ([]byte, error)) (int, error)
+		}); ok {
+			n, activityErr := activities.FanoutActivityEvents(ctx, at, w.Policy, w.Encoder.EncodeActivity)
+			return messages + n, activityErr
+		}
+		return messages, nil
 	}
 	return w.Queue.FanoutEvents(ctx, at, w.Policy, w.Encoder.Encode)
 }

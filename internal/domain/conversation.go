@@ -11,6 +11,7 @@ const (
 	ConversationDirect           = "direct"
 	ConversationGroup            = "group"
 	LegacyMessageCreated         = "zalo.message.created"
+	ConversationMessageCreatedV3 = "zalo.conversation.message.created.v3"
 	ConversationMessageCreatedV2 = "zalo.conversation.message.created.v2"
 )
 
@@ -34,4 +35,9 @@ type CollectionPolicy struct {
 
 func (p CollectionPolicy) Allows(r ConversationRef) bool {
 	return r.Valid() && (p.All || p.Selected[r])
+}
+
+// IsConversationMessageProfile excludes legacy group and non-message events.
+func IsConversationMessageProfile(name string) bool {
+	return name == ConversationMessageCreatedV2 || name == ConversationMessageCreatedV3
 }

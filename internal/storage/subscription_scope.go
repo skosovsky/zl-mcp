@@ -16,8 +16,12 @@ func normalizeSubscription(s EventSubscription) (EventSubscription, error) {
 		if s.Scope != wireConversation || s.ConversationType != domain.ConversationGroup {
 			return s, domain.Invalid("Legacy event requires one group.")
 		}
-	} else if s.Profile != domain.ConversationMessageCreatedV2 {
+	} else if !domain.IsTypedEventProfile(s.Profile) {
 		return s, domain.Invalid("Unknown event profile.")
+	}
+	if s.Profile == domain.CallObservedV1 && s.Scope != domain.ConversationDirect &&
+		(s.Scope != wireConversation || s.ConversationType != domain.ConversationDirect) {
+		return s, domain.Invalid("Call observations currently support direct chats only.")
 	}
 	if err := validateSubscriptionScope(s); err != nil {
 		return s, err
@@ -70,7 +74,10 @@ func validateSubscriptionDirection(s EventSubscription) error {
 	if s.Direction != directionAll && s.Direction != directionIncoming && s.Direction != directionOutgoing {
 		return domain.Invalid("Invalid direction filter.")
 	}
-	if s.Profile != domain.ConversationMessageCreatedV2 && (s.Direction != directionAll || s.FirstIncomingOnly) {
+	if domain.IsActivityProfile(s.Profile) && s.FirstIncomingOnly {
+		return domain.Invalid("Activity has no first incoming message fact.")
+	}
+	if !domain.IsTypedEventProfile(s.Profile) && (s.Direction != directionAll || s.FirstIncomingOnly) {
 		return domain.Invalid("Filtered Events require version 2.")
 	}
 	if s.FirstIncomingOnly &&
