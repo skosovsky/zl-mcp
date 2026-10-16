@@ -1,6 +1,8 @@
 # Rich content: current acceptance status
 
-Updated: 2026-10-16. Whole-goal acceptance is **pending**. The authoritative scope
+Updated: 2026-10-16. Implementation and local runtime checks are complete;
+both independent reviewers accepted the documented scope. Publication checks are
+tracked separately in [GitHub Actions](https://github.com/skosovsky/zl-mcp/actions/workflows/go.yml). The authoritative scope
 is [the task](task-rich-content-events.md); limitations do not turn unperformed
 checks into successful acceptance. Historical investigations are retained in the
 [implementation worklog](rich-content-implementation-checkpoint.md) and
@@ -13,14 +15,15 @@ action is currently required.
 
 | Item | Current evidence |
 | --- | --- |
-| Installed SHA-256 | `3fc627d79f37651933f331bd7374e9e25041b7bb91c3df9475c7ab2fbb1f1af4` |
+| Installed SHA-256 | `25d906ab19f3a6649602b99d02b55220e0924647a0ee4cbbf8b2ff443da7a9dd` |
+| Runtime source | Clean signed commit `9b03dc026b47db2e6325f0b4ddf0711c013f7686`, `vcs.modified=false`; subsequent documentation-only changes do not change runtime code |
 | Schema | 17; additive content/activity/client-alias migrations |
 | Service | Direct native Go binary, one account listener, LaunchAgent Standard |
-| Actual MCP | Current project-pinned Go SDK client initialize/status passed; new group journals were read empty through MCP |
-| Native startup smoke | Preceding diagnostic candidate passed terminal acceptance on temporary state; current native service start verified through MCP |
-| Preservation after diagnostic upgrade | All prior corpus/activity facts retained; all subscription definitions, retained signed payloads and processing checkpoints compared unchanged |
-| New test subscription | Separate exact-test-peer incoming call profile, no expiry; signed challenge verified; unsigned callback rejected; journal initially empty |
-| Group stand | User selected an available group through the assistant; Test has two exact-group outgoing subscriptions, no expiry, signed challenge and unsigned rejection verified |
+| Actual MCP | Project-pinned Go SDK client initialize/status passed after both final restarts; five controlled message context/resources matched original projections |
+| Native startup smoke | Exact final native binary passed terminal startup/cleanup acceptance on temporary state; installed service verified through MCP |
+| Preservation after diagnostic upgrade | Prior corpus/activity facts and retained signed payloads preserved; subscription definitions unchanged before intentional test cancellation; ack checkpoints monotonic |
+| Call test | Native Activity and original calltime message survived restart with exact payload/receipt digests; ordered/repeated ack passed; subscription now inactive |
+| Group stand | Two exact-group outgoing subscriptions verified Test media/reaction; ordered/repeated ack passed; subscriptions now inactive |
 | Production consumer | Existing Ann v2 subscription preserved; no client cutover performed |
 | Skills | Both validated; all six files each matched their installed copies |
 
@@ -42,19 +45,22 @@ hash-verified state backups are private and retained outside the repository.
 | Direct reaction and client-only target | Native + offline proved | Incoming/outgoing, target resolution and exact signed journal/callback; action remains unknown |
 | Group/media reaction targets | Direct and outgoing group media native proved | Direct observations resolve to the controlled direct photo; the outgoing Test reaction resolves to one exact group photo, through source/read/resource/journal/signed callback. Incoming group remains offline evidence |
 | Call discriminator | Both native forms proved | Exact direct chat.recommended actions misscall (four numeric params) and calltime (three, without reason); no values interpreted |
-| Fresh call delivery | One native call activity proved; restart/ack pending | Fresh user calls produced one live incoming Activity plus one calltime message still in its original unsupported projection. Both verified against signed bodies/journal and left unacknowledged for upgrade; calltime refinement is offline verified, not yet installed |
+| Fresh call delivery | Native Activity plus immutable old message proved; restart/ack complete | Both retained payload/receipt digests survived final upgrade; ordered/repeated ack and empty journals verified. The calltime-as-Activity refinement is installed with native source provenance + offline proof, not a fresh transformed native callback |
 | Other call outcomes/forms | Explicit limitation | Status/mode unknown; duration/native status/call ID null; no answered/ringing/lifecycle guarantee |
 | First incoming media / no activity novelty | Offline proved | Temporary-store assertions; a new live account is not required for this storage invariant |
-| Journal/signatures/retry/restart/ack | Proved for tested families; native call pending | Exact retained payloads, restart/ordered/repeated ack and independent HMAC; HTTP acceptance is not model processing |
+| Journal/signatures/retry/restart/ack | Proved for tested families including native call | Exact retained payloads, restart/ordered/repeated ack and independent HMAC; HTTP acceptance is not model processing |
 | Resource policy/recall/TTL/control/limits | Offline proved | Actual MCP resource route with denial/expiry/recall and maximally escaped legal payload tests |
 | Unknown-content counter | Verified and installed | Atomic per-store unsupported-attempt diagnostic, with exclusion/duplicate/failure semantics; root race/vet/lint passed |
 | Migration/cross-ledger replay | Offline + preservation proved | Old call-as-message replay becomes silent tombstone; old callback and processing checkpoint regression; no old body rewrite |
 | Downgrade | Conditional offline proof | Actual prior runtime compatible-state check and refusal for incompatible work; never restore an old database and discard new processing facts |
 | v2/v3 consumer migration | Prepared | Reconciliation/dedup runbook; actual Ann cutover is not required by this goal |
-| Final checks/review/publication | Pending | Freeze final source; root/nested race/vet, native/cross builds, secret scan, both final reviews, commit/push and green CI |
-| Stand cleanup | Pending | After acceptance cancel only task-owned subscriptions, stop temporary receivers and remove only their exact callback allowlist entries |
+| Final checks/review/publication | Local checks and both independent reviews accepted | Full make check; post-fix storage/events race/vet/lint; three platform builds; exact clean native startup; secret scans. Publication CI is reported by GitHub Actions, separately from this local proof |
+| Stand cleanup | Complete | Five task-owned subscriptions cancelled after empty journals; three exact callback allowlist entries removed; only three temporary receivers stopped. All other subscription definitions preserved |
 
-## Current verification boundary
+## Earlier diagnostic verification (historical)
+
+The following stage notes describe earlier candidates. Current runtime and
+cleanup status are in the table above and the final verification section below.
 
 For the preceding diagnostic snapshot, full root race tests with serialized
 packages, root vet, full lint (zero issues), native terminal acceptance and
@@ -100,6 +106,9 @@ from the two connection generations must not be combined.
 
 ## Controlled direct media batch
 
+Historical stage record. Pending statements below describe this stage before
+the final upgrade/ack/cleanup; the final verification section records completion.
+
 On 2026-10-16 the user completed the six requested actions. They produced five
 messages (photo, voice, file, recommendation-link, location) and two separate
 reaction observations. All seven original source projections matched actual MCP
@@ -136,6 +145,9 @@ recorded below.
 
 ## Controlled group multi-photo batch
 
+Historical stage record. Pending statements below describe this stage before
+the final upgrade/ack/cleanup; the final verification section records completion.
+
 The user then sent two images together from the main account to the selected
 existing Test group and reacted to one. The source emitted two independent
 `chat.photo` records, each with one image element, and one outgoing reaction.
@@ -151,6 +163,9 @@ representation. The separate
 call gate and final whole-goal review/publication are still pending.
 
 ## Call time correlation and fresh stand
+
+Historical stage record. Pending statements below describe this stage before
+the final upgrade/ack/cleanup; the final verification section records completion.
 
 The user confirmed that both original calls were from the test peer to the main
 account at approximately 00:12 Vietnam on 2026-10-16. The retained unknown
@@ -211,4 +226,31 @@ expired call marker without linked deliveries during maintenance. Real retained
 payloads still block downgrade; the guard remains read-only. Post-correction
 full storage/events race, three platform builds, lint (zero issues) and vet passed.
 The final formatting-only test adjustment passed focused race regressions again.
-Final deployment and publication remain pending.
+The clean final artifact was installed after a stopped, hash-verified complete
+private backup and SQLite integrity check. Configuration and plist were unchanged
+at replacement. Post-upgrade comparisons retained corpus/identity/activity facts,
+all subscription definitions and signed bodies; checkpoints did not regress.
+Only the exact empty legacy suppression marker may be canonicalized.
+
+The two deliberately unacknowledged call-related records retained exact callback
+payload and opaque receipt digests. Ordered acknowledgement, repeated identical
+acknowledgement and empty/unblocked journals passed. No old calltime message or
+signed envelope was rewritten; the new calltime Activity mapping remains native
+source provenance plus offline proof.
+
+After those checks, only five task-owned subscriptions were cancelled. Only the
+three task-added loopback callback URLs were removed; all other configuration and
+subscription definitions, including Ann's production v2 subscription, were
+preserved. Only the three temporary receivers were stopped. A second restart
+passed actual project-pinned SDK initialize/status, connected/authenticated checks,
+SQLite integrity and monotonic ack checks. Actual MCP context/resources for the
+five controlled media messages still matched original retained projections.
+Both installed skills still match their six source files each.
+
+Both independent reviewers accepted the final local scope without blocking
+findings: `rich_events_review_contract` checked contracts/compatibility and
+`rich_events_review_evidence` checked native evidence and its limits. They read
+the final aggregate proofs and verified the implementation/documentation boundary.
+Publication and CI are separate external gates, reported by GitHub Actions; this
+packet establishes local acceptance. No additional manual call, message, group
+join or phone synchronization is required.

@@ -255,8 +255,9 @@ Message metadata migration 15 is additive (`messages.content_json`); migration 1
 is additive too. Previous readers select explicit columns. SQL compatibility is
 necessary but insufficient: old event encoders cannot consume new profiles.
 The native candidate is installed; the existing production v2 subscription is unchanged.
-Two separate incoming-only local test subscriptions are prepared. See
-[deployment evidence](../rich-content-candidate-deployment.md).
+The separate local test subscriptions completed the controlled native cases and
+were cancelled after acknowledgement. See the [current acceptance report](../rich-content-acceptance.md);
+[earlier deployment evidence](../rich-content-candidate-deployment.md) is historical.
 
 ### Author-text projection and legacy compatibility
 

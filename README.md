@@ -94,6 +94,7 @@ One account uses one state directory. Private file permissions restrict local ac
 - [Technical specification](docs/technical-spec.md) and [service contract](docs/contracts/service.md)
 - [Conversation collection, compatibility and recovery](docs/conversations.md) and [extension task](docs/task-all-conversations.md) and [acceptance evidence](docs/all-conversations-acceptance.md)
 - [Incoming-message filters and direct messaging](docs/task-direct-messaging.md)
+- [Planned explicit read receipts](docs/task-mark-messages-read.md)
 - [Remaining acceptance, Strangers discovery, and conversation browsing/history task](docs/task-conversation-completion.md)
 - [Final requirement audit, live acceptance and retained upstream limits](docs/conversation-completion-final-audit.md)
 - [Owner-only mobile diagnostics and retained account exports](docs/mobile-backup-diagnostics.md)
