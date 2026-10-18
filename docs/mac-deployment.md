@@ -286,6 +286,16 @@ is explicitly configured by the trusted host for the existing business subscript
 and exact generation; installing the binary does not activate it. Control rounds
 share the original business journal/checkpoint and never alter read/react grants.
 
+R01's primary race fix is a separate opt-in journal representation:
+`readiness_mode=persisted` reads retained valid envelopes before callback receipt,
+without calling their transport state delivered. It requires no companion for
+that read/ack path. Verify the newly installed revision and loaded schema before
+updating the saved workflow; the previously installed backend is not assumed to
+support this source-level change. Legacy default behavior, existing grants,
+empty-payload gaps and inactive-generation restrictions remain unchanged. See
+[processing readiness](contracts/journal-processing-readiness.md).
+
+The optional companion is insurance for a missing/interrupted workflow run.
 The server's durable continuation has signed synthetic-receiver coverage,
 including blocked delivery, restart, repeated rounds and ack suppression. Inspect
 `include_diagnostics=true` recovery mode/state/reason to distinguish unsupported,

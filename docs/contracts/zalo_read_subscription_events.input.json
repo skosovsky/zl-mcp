@@ -16,6 +16,15 @@
       "type": "boolean",
       "default": false,
       "description": "Opt in to safe delivery reasons, stable diagnostic references and retry hints. Omitted/false preserves the legacy result shape."
+    },
+    "readiness_mode": {
+      "type": "string",
+      "enum": [
+        "delivery_terminal",
+        "persisted"
+      ],
+      "default": "delivery_terminal",
+      "description": "Persisted reads retained events before HTTP callback acceptance; delivery_terminal preserves the legacy terminal-delivery gate. Both views share one ordered processing checkpoint."
     }
   },
   "required": [

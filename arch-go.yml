@@ -831,6 +831,7 @@ dependenciesRules:
   - package: '^github[.]com/skosovsky/zl-mcp/internal/adapters/store.**'
     shouldOnlyDependsOn:
       internal:
+        - '^github[.]com/skosovsky/zl-mcp/docs/contracts$'
         - '^github[.]com/skosovsky/zl-mcp/internal/adapters/store.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/storage.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/domain.**'
@@ -843,6 +844,7 @@ dependenciesRules:
         - '^github[.]com/skosovsky/zl-mcp/internal/app/membership.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/app/history.**'
       standard:
+        - '^maps$'
         - '^context$'
         - '^database/sql$'
         - '^encoding/json$'

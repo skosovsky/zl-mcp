@@ -37,7 +37,11 @@ notification rule, language, channel and write restrictions, and apply the curre
 [automation fragment](../skills/handling-zalo-message-events/reference/automation-rule.md).
 Do not recreate subscriptions, discard backlog or assume old events are new.
 Updating a local skill does not change a cloud automation prompt or receiver.
-For durable continuation, the trusted host explicitly configures the optional
+For the ordinary callback/read race, select `readiness_mode=persisted` when
+the current schema advertises it; no new subscription is required. A retained
+event is processable before HTTP 2xx while delivery_state remains truthful.
+For separate missing/interrupted-run insurance, the trusted host may explicitly
+configure the optional
 `zalo.subscription.journal.ready.v1` companion for that exact existing business
 subscription and generation. Both wakeup types run the same saved workflow and
 business journal cursor; the control payload is never a Zalo message or receipt.
@@ -88,13 +92,22 @@ v2/v3 and the unchanged group-only
 `zalo.message.created`. Conversation v1 is removed. It uses the subscription
 journal for both visible and missing callback payloads, processes in order and
 acks only after the permitted action succeeds or the record is accounted for.
-On `blocked_on_delivery`, the skill honors an available `retry_after_ms` within
-a bounded budget (at most three rereads and 30 seconds of waiting). It then awaits
-a verified durable companion wakeup; without that configured and proven host
-path, it reports that automatic continuation is not established. It never busy
-polls or marks a blocked record processed. Empty control wakeups complete quietly;
-only authorized business-journal content can produce a notification. Server-side
-control tests and actual host workflow acceptance remain separate evidence.
+The preferred journal representation is explicit `readiness_mode=persisted`
+when the current input schema supports it. A retained envelope can be
+`processing_state=ready` while transport is pending/sending/failed. Early ack
+advances only the shared business checkpoint; it neither marks delivered nor
+removes the unfinished HTTP worker's bytes. Retry retains its original identity,
+and rereading the same journal does not replay acknowledged work. Missing,
+invalid or withdrawn bytes remain explicit gaps.
+
+Default `delivery_terminal` preserves old visibility/keys. When using that older
+representation and blocked, the skill first opts into persisted if available.
+Only if that capability is unavailable does it use bounded rereads (at most three
+and 30 seconds waiting), followed by an optional confirmed companion path.
+Without that optional path it reports the continuation limitation; it never
+requires a new subscription merely to process a retained callback. Empty control
+wakeups complete quietly. Server-side proof and actual saved-host-task adoption
+remain separate evidence. See [processing-readiness contract](contracts/journal-processing-readiness.md).
 A read-only journal operation is not a Zalo read receipt. `first_incoming=true`
 means first **locally known** incoming message, not first-ever contact. Old
 `sent_at` after upstream replay is not itself an invalid event.

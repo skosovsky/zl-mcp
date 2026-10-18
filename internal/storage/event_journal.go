@@ -92,6 +92,11 @@ func (s *Store) EventSubscriptions(ctx context.Context, principal string) (map[s
 	return map[string]any{"subscriptions": values}, nil
 }
 
+type journalReadView struct {
+	diagnostics, persisted bool
+	project                func(map[string]any) error
+}
+
 type processingReceipt struct {
 	Subscription string `json:"s"`
 	Generation   string `json:"g"`
@@ -150,6 +155,29 @@ func (s *Store) journalSubscription(ctx context.Context, tx *sql.Tx, id, princip
 // ReadSubscriptionEvents never advances processing. Each receipt confirms an ordered prefix of
 // exactly this page; optimistic acknowledgement rejects stale parallel pages.
 func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string, limit int) (map[string]any, error) {
+	return s.readSubscriptionEvents(ctx, principal, id, limit, nil)
+}
+
+// ReadSubscriptionEventsProjected lets the application adapter validate/project
+// each persisted record before response budgeting. project must be pure: no I/O,
+// database access or acknowledgement; it may replace corrupt event data with an
+// explicit gap while preserving the record's receipt and delivery metadata.
+// Legacy views ignore the optional projector and keep their exact representation.
+func (s *Store) ReadSubscriptionEventsProjected(
+	ctx context.Context,
+	principal, id string,
+	limit int,
+	project func(map[string]any) error,
+) (map[string]any, error) {
+	return s.readSubscriptionEvents(ctx, principal, id, limit, project)
+}
+
+func (s *Store) readSubscriptionEvents(
+	ctx context.Context,
+	principal, id string,
+	limit int,
+	project func(map[string]any) error,
+) (map[string]any, error) {
 	if limit < 1 || limit > 20 {
 		return nil, domain.Invalid("Limit must be between 1 and 20.")
 	}
@@ -184,7 +212,7 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 	}
 	rows, err := tx.QueryContext(
 		ctx,
-		`SELECT d.id,d.payload,d.state,CASE WHEN d.activity_seq IS NOT NULL THEN a.conversation_type ELSE m.conversation_type END,CASE WHEN d.activity_seq IS NOT NULL THEN a.conversation_id ELSE m.conversation_id END,d.activity_seq IS NOT NULL,COALESCE(d.last_reason,'') FROM event_deliveries d LEFT JOIN messages m ON m.seq=d.message_seq LEFT JOIN activity_observations a ON a.seq=d.activity_seq AND a.expired=0 WHERE d.subscription_id=? AND d.generation=? AND d.id>? ORDER BY d.id LIMIT ?`,
+		`SELECT d.id,d.payload,d.state,CASE WHEN d.activity_seq IS NOT NULL THEN a.conversation_type ELSE m.conversation_type END,CASE WHEN d.activity_seq IS NOT NULL THEN a.conversation_id ELSE m.conversation_id END,d.activity_seq IS NOT NULL,COALESCE(d.last_reason,''),d.event_id,sub.profile FROM event_deliveries d JOIN event_subscriptions sub ON sub.id=d.subscription_id AND sub.generation=d.generation LEFT JOIN messages m ON m.seq=d.message_seq LEFT JOIN activity_observations a ON a.seq=d.activity_seq AND a.expired=0 WHERE d.subscription_id=? AND d.generation=? AND d.id>? ORDER BY d.id LIMIT ?`,
 		id,
 		gen,
 		from,
@@ -200,7 +228,11 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 		from,
 		limit,
 		entries,
-		domain.EventDiagnostics(ctx),
+		journalReadView{
+			diagnostics: domain.EventDiagnostics(ctx),
+			persisted:   domain.PersistedEventReadiness(ctx),
+			project:     project,
+		},
 	)
 	if scanErr != nil {
 		return nil, scanErr
@@ -210,6 +242,9 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 	}
 	result := map[string]any{
 		"subscription_id": id, "events": entries, fieldHasMore: more, "blocked_on_delivery": blocked,
+	}
+	if domain.PersistedEventReadiness(ctx) {
+		result["readiness_mode"] = domain.EventReadinessPersisted
 	}
 	if domain.EventDiagnostics(ctx) {
 		var retry any
@@ -339,22 +374,33 @@ func (s *Store) readRecoveryEntries(
 	from int64,
 	limit int,
 	entries []map[string]any,
-	diagnostics bool,
+	view journalReadView,
 ) ([]map[string]any, bool, bool, error) {
+	view.annotateEntries(entries)
 	more, blocked := false, false
 	used := 0
 	for rows.Next() {
 		var n int64
 		var payload []byte
-		var state, lastReason string
+		var state, lastReason, eventID, profile string
 		var kind, peer sql.NullString
 		var activity bool
-		if err := rows.Scan(&n, &payload, &state, &kind, &peer, &activity, &lastReason); err != nil {
+		if err := rows.Scan(
+			&n,
+			&payload,
+			&state,
+			&kind,
+			&peer,
+			&activity,
+			&lastReason,
+			&eventID,
+			&profile,
+		); err != nil {
 			//nolint:gosec // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
 			rows.Close()
 			return nil, false, false, err
 		}
-		if state == statePendingText || state == "sending" {
+		if !view.persisted && (state == statePendingText || state == "sending") {
 			blocked = true
 			break
 		}
@@ -362,16 +408,18 @@ func (s *Store) readRecoveryEntries(
 			more = true
 			break
 		}
-		event, reason := s.projectRecoveryEvent(payload, state, kind, peer, activity)
+		event, reason := s.projectJournalEvent(payload, state, kind, peer, activity, view.persisted, eventID, profile)
 		entry := map[string]any{
 			"event":          event,
 			"delivery_state": state,
 			"gap_reason":     reason,
 			"receipt":        s.receipt(processingReceipt{id, gen, from, n}),
 		}
-		if diagnostics {
-			entry["delivery_reason"] = safeDeliveryReason(lastReason)
-			entry["delivery_reference"] = s.DeliveryReference(n)
+		view.annotateEntry(s, entry, n, lastReason)
+		if err := view.projectEntry(entry); err != nil {
+			//nolint:gosec // Preserve the pure projector error after closing its read-only cursor.
+			rows.Close()
+			return nil, false, false, err
 		}
 		b, _ := json.Marshal(entry)
 		if used+len(b) > 28<<10 {

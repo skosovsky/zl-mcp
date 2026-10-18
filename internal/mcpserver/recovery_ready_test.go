@@ -41,6 +41,7 @@ type recoveryReadyHarness struct {
 	params                          map[string]any
 	mu                              sync.Mutex
 	consume                         bool
+	businessHook                    func(http.ResponseWriter, *http.Request, map[string]any, []byte)
 	actions                         map[string]int
 	businessPages                   chan recoveryReadResult
 	controls                        chan recoveryControlResult
@@ -252,6 +253,13 @@ func (h *recoveryReadyHarness) receive(w http.ResponseWriter, r *http.Request) {
 	}
 	if event["name"] == domain.JournalReadyV1 {
 		h.receiveControl(w, r, event, body)
+		return
+	}
+	h.mu.Lock()
+	hook := h.businessHook
+	h.mu.Unlock()
+	if hook != nil {
+		hook(w, r, event, body)
 		return
 	}
 	page, err := h.read()

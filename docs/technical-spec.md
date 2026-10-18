@@ -57,13 +57,28 @@ status/mode unknown, duration null; полное покрытие звонков
   выбранного чата/периода после пустого буквального поиска. Исходные/установленные
   копии и сохранённое задание host обновляются отдельно: [skills](skills.md).
 
-### R01: отдельное управляющее продолжение
+### R01: готовность обработки отдельно от callback
+
+Основное исправление causal race — opt-in `readiness_mode=persisted`: retained
+валидный envelope читается и подтверждается до callback receipt. `delivery_state`
+сохраняет реальный transport state, `processing_state` различает ready и gap;
+default `delivery_terminal` сохраняет прежнюю видимость и форму. Early ack меняет
+только общий ordered checkpoint; leased outbox и последующий FinishDelivery
+сохраняют независимый lifecycle. Пустые admission/invalid/cleared payload остаются
+gaps; HTTP410 и доступ к inactive generation не меняются. Это не новый
+неограниченный journal storage: [контракт](contracts/journal-processing-readiness.md).
+Наличие решения в исходниках не доказывает его установку: текущую схему и revision
+проверять через MCP после обновления backend.
+
+### R01: страховочное управляющее продолжение
 
 Опциональный профиль `zalo.subscription.journal.ready.v1` реализует отдельный
 control outbox для точной существующей бизнес-подписки и generation. Его
 `data={subscription_id,generation_reference,recovery_reference}` не содержит
 сообщения и не является receipt. Доверенный host явно создаёт companion и
 направляет оба вида запуска в прежний workflow: читать и ack только бизнес-журнал.
+Companion страхует потерянный/прерванный запуск; для чтения ready envelope до
+callback в persisted mode он не нужен.
 
 Worker независимо следит за unacked head. После доступности головы выпускаются
 control rounds с новым ID; retry внутри round сохраняет ID. Повторы, перезапуск,

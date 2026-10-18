@@ -86,6 +86,7 @@ type Event struct {
 	Cursor    *string   `json:"cursor"`
 }
 type Entry struct {
+	ProcessingState   string  `json:"processing_state,omitempty"`
 	Event             *Event  `json:"event"`
 	DeliveryState     string  `json:"delivery_state"`
 	GapReason         *string `json:"gap_reason"`
@@ -94,6 +95,7 @@ type Entry struct {
 	DeliveryReference string  `json:"delivery_reference,omitempty"`
 }
 type Page struct {
+	ReadinessMode     string  `json:"readiness_mode,omitempty"`
 	SubscriptionID    string  `json:"subscription_id"`
 	Events            []Entry `json:"events"`
 	HasMore           bool    `json:"has_more"`

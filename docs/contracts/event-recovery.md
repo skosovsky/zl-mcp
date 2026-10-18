@@ -1,100 +1,127 @@
 # Recovering event payloads after an automation trigger
 
-The callback receiver may accept an event and trigger an automation without
-making its payload visible to the agent. Recovery reads the exact persisted
-callback envelope, including its stable eventId, rather than inferring it from
-recent messages. This application extension uses ordinary MCP tools; it does not
-change MCP Events delivery, batching, or the receiver's model context.
+A callback receiver may start an automation without exposing its payload to the
+agent. The journal returns the exact retained envelope and stable eventId;
+it never guesses an event from recent messages. These ordinary MCP tools are
+available through HTTP and STDIO. Only HTTP has Events subscription methods.
 
-## Tools and executable schemas
+The [processing-readiness contract](journal-processing-readiness.md) separates
+three facts: retained envelope, HTTP delivery outcome and processing ack. The
+preferred opt-in `persisted` view closes the callback/read race **without a new
+subscription**. The optional companion remains insurance for missing or
+interrupted runs, not the prerequisite for processing retained event data.
 
-- `zalo_list_event_subscriptions {}` lists active subscriptions owned by the
-  authenticated single-account transport. Output includes scope, direction and
-  first-incoming filter, never callback URLs or secrets. Save the exact ID with
-  the automation rule. If several subscriptions match, resolve the association
-  before processing; do not select one by recency.
-- `zalo_read_subscription_events {"subscription_id":"…","limit":20}` returns
-  unacknowledged records in delivery order. Reads do not acknowledge anything.
-  Every record has the exact callback `event` envelope or null, `delivery_state`,
-  nullable `gap_reason`, and an opaque `receipt`. A response is bounded by both
-  record count and byte budget; `has_more` requests another page after processing
-  the current one. `blocked_on_delivery` means an earlier callback is still
-  pending/sending. With `include_diagnostics=true`, use the bounded retry hint
-  and recovery status described below; never poll indefinitely.
-- `zalo_ack_subscription_events {"subscription_id":"…","receipt":"…"}` persists
-  completion of that one record and its ordered prefix. Acknowledge receipts in
-  page order, only after the authorized action succeeds or an irrelevant record
-  or explicit gap has been accounted for. A repeated acknowledgement is safe.
-  Out-of-order/stale receipts cannot skip unprocessed work; reread the journal.
+## Tools and compatible representations
 
-Input/output contracts are the corresponding `.input.json` / `.output.json`
-files. This is available through HTTP and the STDIO bridge of the running service.
-Only HTTP has Events subscription methods.
+- `zalo_list_event_subscriptions {}` lists the caller's active business
+  subscriptions with scope/direction/first-incoming filters, never callback URLs
+  or secrets. Save the exact ID with the workflow; resolve ambiguous matches
+  rather than choosing by recency. Optional `include_recovery=true` adds
+  generation/companion metadata for explicit companion setup only.
+- `zalo_read_subscription_events` reads ordered unacknowledged records, without
+  acknowledging them. Each record contains an exact envelope or explicit gap,
+  truthful `delivery_state`, nullable `gap_reason` and opaque `receipt`.
+- `zalo_ack_subscription_events {"subscription_id":"…","receipt":"…"}` advances
+  that business subscription's processing checkpoint only after the authorized
+  action succeeds or the irrelevant/gap record has been accounted for. Process
+  page receipts in order. Repeated ack is safe; stale/out-of-order receipts do
+  not authorize skipping work.
 
-## Blocked reads and durable continuation
+Select the new view only after loading a schema that advertises `readiness_mode`:
 
-`include_diagnostics=true` on journal reads exposes `retry_after_ms` and closed
-recovery status fields without exposing pending business payloads. Use at most
-three rereads after the initial read and at most 30 seconds of total waiting,
-respecting the server hint. If the host cannot wait, do not busy-loop.
+```json
+{"subscription_id":"<exact-business-id>","limit":20,"readiness_mode":"persisted"}
+```
 
-For durable continuation beyond that budget, an explicitly attached
-[`zalo.subscription.journal.ready.v1` companion](subscription-recovery-ready.md)
-can wake the workflow for the same business subscription and generation.
-`zalo_list_event_subscriptions {"include_recovery":true}` exposes the generation
-and attachment metadata; the default list shape is unchanged. The service watches
-unacknowledged heads autonomously, including when the original workflow never
-read its journal. A control wakeup reads the same ordered business journal; it
-is never a message payload or permission to act. An empty journal ends quietly.
+In `persisted`, the response explicitly carries `readiness_mode=persisted` and
+entry `processing_state=ready|gap`. A retained valid envelope is ready even when
+HTTP delivery is pending, sending or failed. `ready` means non-null event and
+null gap reason; `gap` means event=null and a reason. Transport state is never
+renamed to delivered. `blocked_on_delivery=false` in this view; diagnostic
+`retry_after_ms` is null. A failed delivery with retained envelope is processable;
+an empty or invalid envelope is an explicit gap.
 
-Without an attached and host-verified continuation route, report the limitation
-rather than promising later execution. HTTP acceptance, synthetic receiver tests,
-and updated skill files do not prove that the real host will resume its task.
-The companion has bounded reminders, explicit exhaustion and cancellation;
-it does not promise infinite delivery or exactly-once external notifications.
+Omitted/default `delivery_terminal` preserves old keys and behavior for strict
+clients: pending/sending can block; terminal failed/cancelled entries expose a
+gap. These are views of **one** processing cursor, not independent consumers.
+Switching readiness modes does not replay acknowledged records. Inputs, outputs,
+limits and strict property rules are in the corresponding executable schemas.
 
-## Processing and scope
+## Early processing and transport remain independent
 
-Use the journal for event-triggered runs whether the initial payload is visible
-or absent, so the same durable cursor handles both routes. If a visible event is
-already acknowledged, do not notify from its payload again. A run can recover
-several callbacks (including callbacks whose triggers were batched or missed).
-Scope and direction are those captured by the subscription at fanout. Collection
-policy and retained-message access are checked again on reads. Historical imports
-never enter this journal. The first insertion after activation remains the event
-boundary; event timestamp is not that boundary.
+Count/byte budgets, order, receipts and `has_more` are unchanged. Process the
+retained event before returning receiver HTTP 2xx when appropriate; do not wait
+for a future delivery commit merely to read already committed data. Early ack
+updates only processing progress. It neither claims HTTP acceptance nor marks a
+Zalo message read and must not clear pending/sending bytes still owned by the
+HTTP worker. That worker retains its lease, retry policy and original event
+ID/body. Its later success, 503, timeout or restart cannot rewind the ack cursor.
+A retry wakeup rereads the same journal and finds no already-acknowledged item.
 
-The cursor is stored in SQLite per subscription and generation. Refresh and
-restart preserve it; cancellation and reactivation create a new generation and
-reject old receipts. Existing retained callbacks are initially unacknowledged:
-when adopting recovery for an existing subscription, explicitly reconcile the
-backlog with known completed notifications before enabling the new rule. Do not
-silently mark old callbacks processed or replay their notifications blindly.
-Different automation rules need separate subscriptions/cursors. The existing
-single-account transport identifies the owner as the local account; this is not
-isolation between different clients sharing its credential.
+Generation, principal, current access, recall, retention and schema checks still
+apply. Persisted mode does not reopen cancelled/expired subscriptions, replace
+activation/filter boundaries or reconstruct deleted payload from the current
+corpus. Capacity/deadline admission gaps, invalid/cleared payloads, activity
+expiry and retained pruning watermarks remain explicit. There is no unlimited
+second journal or fabricated historical event.
 
-## Retention, gaps and delivery guarantees
+## Legacy blocking and optional continuation
 
-Delivered means HTTP acceptance, not agent processing. Pending/sending callbacks
-block later journal records. Failed/cancelled terminal records expose a gap,
-not an invented event. Completed delivery records retain their existing seven-day
-lifetime. Pruning saves a durable gap watermark before deleting rows. If that
-watermark exceeds processing progress, the next read returns an explicit
-`retention_expired` gap with its own receipt. Deleted messages or revoked access
-never return their former callback text. Full text for a clipped event uses its
-normal resource URI and corpus retention policy.
+When the current schema supports persisted, prefer that mode to avoid the
+ordinary callback/read race. Do not attach a new subscription as its workaround.
+If the client cannot use the new representation, the old default may still
+return `blocked_on_delivery`. With `include_diagnostics=true`, honor a positive
+`retry_after_ms` only through a waiting mechanism actually supplied by the host:
+at most three rereads after the first and 30 seconds of total waiting. Never
+shorten an over-budget server hint or busy-loop when waiting is unavailable.
 
-Acknowledgement does not atomically send a ChatGPT notification. Concurrent runs
-can perform the same external action before one acknowledges; a crash after
-notification and before acknowledgement can also repeat it. Serial processing
-and a channel-supported idempotency key based on subscription/generation/eventId
-are needed to strengthen this guarantee. The durable cursor alone does not
-provide exactly-once notifications. It does eliminate replay of acknowledged
-records after restart and offers exact recovery within retention.
+For separate durable insurance beyond that budget or a missing/interrupted run,
+a trusted host may explicitly attach
+[`zalo.subscription.journal.ready.v1`](subscription-recovery-ready.md) to the
+same existing business subscription/generation. Control wakeups run the same
+workflow and read that business journal; control references are not messages or
+ack receipts. Companion setup does not widen scope or permissions. A quiet empty
+journal is not a reason to send a notification or inspect an unrelated chat.
 
-The workaround was inspired by a first-person Things/dot experiment published
-on [4 October 2026](https://note.com/unco3/n/nb5426444e496?hl=en).
-That report observed a startup without a immediately visible body; it did not
-establish an official platform root cause. Our journal additionally persists
-processing progress. It is not a fix to ChatGPT's payload injection.
+Without a configured and host-verified companion, do not promise that separate
+continuation path. It is optional, bounded and observable on exhaustion or
+cancellation. Ordinary retained-envelope processing in persisted mode does not
+require it. Synthetic adapter proof and actual saved-host-task adoption are
+different evidence: installing skills or receiving HTTP 2xx does not prove that
+the host saved the new read arguments or executed its workflow.
+
+## Processing, scope, retention and notification limits
+
+Use the journal whether trigger payload is visible or absent. Do not notify
+again from an already-acknowledged trigger payload. Multiple callbacks may be
+recovered in one run. Scope/direction come from the fanout generation and current
+policy is checked again. Historical imports never enter this journal; first
+insertion after activation, not event timestamp, remains the boundary.
+
+SQLite stores the cursor per business subscription/generation. Refresh/restart
+preserve it; cancellation/reactivation changes generation and rejects old
+receipts. When adopting recovery for existing callbacks, reconcile backlog with
+known completed notifications. Do not blindly replay notifications or mark the
+whole backlog done. Different rules need separate subscriptions/cursors. Clients
+sharing the same local credential are not isolated tenants.
+
+Completed delivery records retain their existing seven-day lifetime. Pruning
+writes a durable watermark before deletion. A watermark ahead of processing
+returns an explicit `retention_expired` gap and receipt. Deleted messages or
+revoked access never return their former callback text. Clipped author text uses
+its normal issued resource URI and current retention policy; a tools-only host
+can use `zalo_read_message_content` with that exact URI.
+
+External notification and processing ack are not atomic. Concurrent runs or a
+crash after notification/before ack can duplicate the external effect. Serialize
+processing and use a channel-supported idempotency key based on subscription,
+generation and eventId when available; exactly-once notification is not promised.
+Journal reads/ack, control wakeups and ordinary message reads never send Zalo
+messages, read receipts or reactions without their separate explicit workflow.
+
+## Historical motivation
+
+A first-person Things/dot [report from 4 October 2026](https://note.com/unco3/n/nb5426444e496?hl=en)
+described a trigger without an immediately visible body. It did not establish an
+official platform root cause. The journal provides exact data and durable
+processing progress; neither readiness mode changes ChatGPT payload injection.

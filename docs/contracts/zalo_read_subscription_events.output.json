@@ -946,7 +946,9 @@
               "delivered",
               "failed",
               "cancelled",
-              "pruned"
+              "pruned",
+              "pending",
+              "sending"
             ]
           },
           "gap_reason": {
@@ -981,6 +983,12 @@
           "delivery_reference": {
             "type": "string",
             "pattern": "^dlv_[A-Za-z0-9_-]{43}$"
+          },
+          "processing_state": {
+            "enum": [
+              "ready",
+              "gap"
+            ]
           }
         },
         "required": [
@@ -989,7 +997,62 @@
           "gap_reason",
           "receipt"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "processing_state"
+              ],
+              "properties": {
+                "processing_state": {
+                  "const": "ready"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "event": {
+                  "type": "object"
+                },
+                "gap_reason": {
+                  "type": "null"
+                },
+                "delivery_state": {
+                  "enum": [
+                    "pending",
+                    "sending",
+                    "delivered",
+                    "failed"
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "processing_state"
+              ],
+              "properties": {
+                "processing_state": {
+                  "const": "gap"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "event": {
+                  "type": "null"
+                },
+                "gap_reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        ]
       },
       "maxItems": 20
     },
@@ -1059,6 +1122,10 @@
         "capacity",
         "unknown"
       ]
+    },
+    "readiness_mode": {
+      "const": "persisted",
+      "description": "Explicit processing view; HTTP transport completion is independent."
     }
   },
   "required": [
@@ -1067,5 +1134,47 @@
     "has_more",
     "blocked_on_delivery"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "readiness_mode"
+        ]
+      },
+      "then": {
+        "properties": {
+          "blocked_on_delivery": {
+            "const": false
+          },
+          "events": {
+            "items": {
+              "required": [
+                "processing_state"
+              ]
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "events": {
+            "items": {
+              "properties": {
+                "delivery_state": {
+                  "enum": [
+                    "delivered",
+                    "failed",
+                    "cancelled",
+                    "pruned"
+                  ]
+                },
+                "processing_state": false
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

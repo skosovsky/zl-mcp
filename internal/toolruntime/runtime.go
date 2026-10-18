@@ -635,6 +635,9 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 		if diagnostics, _ := args["include_diagnostics"].(bool); diagnostics {
 			ctx = domain.WithEventDiagnostics(ctx)
 		}
+		if stringArg(args, "readiness_mode") == domain.EventReadinessPersisted {
+			ctx = domain.WithPersistedEventReadiness(ctx)
+		}
 		identity, e := r.authority.ReadIdentity(ctx)
 		if e != nil {
 			return nil, e

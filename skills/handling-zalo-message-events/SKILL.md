@@ -22,6 +22,8 @@ description: >-
 2. Прочитай [восстановление](reference/event-recovery.md) при каждом запуске.
    Используй `zalo_list_event_subscriptions`, `zalo_read_subscription_events`,
    `zalo_ack_subscription_events` и точную доверенную привязку подписки.
+   Если фактическая схема допускает `readiness_mode=persisted`, выбери этот
+   режим: сохранённое событие обрабатывается до HTTP 2xx, без новой подписки.
    Журнал является общим checkpoint при видимом и отсутствующем payload.
    Не ищи последнее сообщение вместо потерянного события.
 3. Перед анализом прочитай [процесс обработки](reference/event-workflow.md).

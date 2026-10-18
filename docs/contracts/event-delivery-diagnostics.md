@@ -6,7 +6,10 @@ Status: implemented; final revision and acceptance evidence are tracked in
 ## Opt-in journal representation
 
 `zalo_read_subscription_events` accepts `include_diagnostics: boolean`, default
-false. Omission/false preserves the previous JSON result and entry keys. When
+false. With omitted/default `readiness_mode=delivery_terminal`, omission/false
+preserves the previous JSON result and entry keys. The independent
+`readiness_mode=persisted` opt-in adds its own explicit view/processing fields
+even without diagnostics; it does not require `include_diagnostics=true`. When
 true, retained business-delivery entries also contain:
 
 - `delivery_reference`: `dlv_` followed by a base64url HMAC-SHA256. The state key
@@ -16,8 +19,11 @@ true, retained business-delivery entries also contain:
   Unclassified/internal strings become `unknown`; never return raw errors.
 - The page may include `retry_after_ms` (milliseconds). A blocked delivery
   currently suggests 1000 ms. It is advice, not a scheduled continuation or a
-  guarantee of completion within that time. Bounded rereads do not replace the
-  [durable companion flow](subscription-recovery-ready.md).
+  guarantee of completion within that time. Prefer advertised
+  `readiness_mode=persisted`: retained envelopes do not wait for callback receipt,
+  blocked_on_delivery is false and this retry hint is null. No new subscription
+  is needed for the ordinary race. The [companion](subscription-recovery-ready.md)
+  is optional insurance for missing/interrupted runs.
 
 With diagnostics enabled, the page also includes continuation status:
 
@@ -45,7 +51,9 @@ The generation reference binds explicit companion setup to an existing owned
 business subscription. Omitting/false preserves that list's old strict shape.
 These fields do not enable a companion or alter the business scope.
 
-Control rounds use the dedicated profile `zalo.subscription.journal.ready.v1`;
+The companion is not the primary fix for callback/read races: explicit persisted
+reads make already-retained envelopes independently processable. Control rounds
+use the optional dedicated profile `zalo.subscription.journal.ready.v1`;
 they are not inserted into the business message journal. Its payload references
 the exact business subscription/generation and recovery episode. Both kinds of
 agent wakeup reread the same business journal and use its original receipts.
@@ -54,8 +62,12 @@ activation and processing remain **NOT_RUN** until separately evidenced.
 
 Pruned watermark entries have no retained delivery row and omit the delivery
 reference/reason. Existing `delivery_state` and `gap_reason` semantics remain
-unchanged. A terminal failed delivery remains a gap; diagnostics do not make its
-payload available or advance the processing checkpoint.
+unchanged in the default view. A terminal failed delivery remains a gap there;
+in persisted mode a retained valid failed-delivery envelope is ready, while
+missing/invalid/withdrawn bytes remain gaps. Diagnostics alone neither changes
+readiness nor advances the processing checkpoint. Early ack never marks the
+transport delivered or clears unfinished worker bytes. See
+[independent processing readiness](journal-processing-readiness.md).
 
 Examples of distinct categories: `queue_capacity`, `deadline`, `attempts`,
 `payload_too_large`, `http_rejected`, `http_transient`, `network`,

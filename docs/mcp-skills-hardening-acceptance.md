@@ -8,10 +8,10 @@
 
 | Критерий | Ожидаемое доказательство | Статус | Фактическое доказательство |
 | --- | --- | --- | --- |
-| R01.1 | Контракт блокировки/retry и совместимость зафиксированы | NOT_RUN | — |
-| R01.2 | До2xx/между2xxиcommit: последнее событие возобновляется без нового сообщения | NOT_RUN | — |
-| R01.3 | Блокировка дольше retry-окна и перезапуск сохраняют продолжение | NOT_RUN | — |
-| R01.4 | Повтор/ошибка/отмена не создают busy loop, пропуск ack или ложный delivered | NOT_RUN | — |
+| R01.1 | Контракт persisted/default; независимые ready/transport/ack и совместимость зафиксированы | NOT_RUN | — |
+| R01.2 | До2xx/между2xxиcommit: read+ack без companion, честный pending/sending и без нового сообщения | NOT_RUN | — |
+| R01.3 | Early ack, retry/restart сохраняют прогресс; отдельно проверено продолжение потерянного/прерванного запуска | NOT_RUN | — |
+| R01.4 | Ошибка/отмена/gap/pruning сохраняют checkpoint/leases; нет busy loop, пропуска ack или ложного delivered | NOT_RUN | — |
 | R02.1 | Компактный режим явный; старые запросы сохраняют полное представление | NOT_RUN | — |
 | R02.2 | Anchor/search/browse доступны при800+gaps в бюджете ответа | NOT_RUN | — |
 | R02.3 | Все gaps читаются по snapshot; append/update/delete/expiry определены | NOT_RUN | — |
@@ -176,3 +176,61 @@ frontmatter, ссылки, 24 зависимости tools, актуальные
 проверки и ограничения перечислены выше. Повторный gitleaks 8.24.3 после всех
 правок: no leaks found. Это локальные доказательства кандидата до подписанного
 коммита, CI и runtime rollout, а не финальный verdict двух reviewers.
+
+## Выпущенная промежуточная ревизия 715faf5e
+
+[Коммит](https://github.com/skosovsky/zl-mcp/commit/715faf5ec23dd9b35059584d90fba11fd16ea3b6)
+подписан (GitHub verified=true, reason=valid).
+[CI39112765094](https://github.com/skosovsky/zl-mcp/actions/runs/39112765094)
+завершён успешно на macOS и Ubuntu. Чистый CGO0 Go-бинарник установлен тем же
+LaunchAgent после проверенного полного приватного backup state/config/plist/
+предыдущего бинарника. Config, plist и grants не менялись; companion не создан.
+
+HTTP2026 и STDIO2025: 27 tools с точными descriptors, 6 Events через HTTP,
+подтверждённые backend/bridge revision и dirty=false. Collector authenticated/
+connected, 119 сохранённых сообщений и 18 результатов message actions; все
+исходные строки 12 защищённых таблиц и checkpoints сохранены. Schema20,
+установленные skills 8+9 файлов совпадают с исходниками этой ревизии.
+
+Временный runtime-check первоначально ошибочно проверял /readyz (этот маршрут
+принадлежит tunnel-client) и смешивал stateless HTTP2026 с legacy initialize.
+Скрипт исправлен по фактическим transport-контрактам; корректные read-only
+проверки независимо повторены обоими рецензентами. Это ошибки проверки,
+а не обнаруженные отказы backend. Секреты и переписка в отчёт не включены.
+
+Независимые замороженные отчёты: [A](reviews/mcp-skills-hardening-release-715faf5-a.md)
+(38/43,88,37%,0ошибок) и [B](reviews/mcp-skills-hardening-release-715faf5-b.md)
+(39/43,90,70%,0ошибок), оба NOT ACCEPTED. Различие связано с трактовкой
+операционного критерия продолжения; финальные gate не пройдены.
+
+После выпуска пользователь уточнил причинное исправление R01: готовность
+сохранённого события не должна зависеть от callback receipt. Новый
+[контракт persisted readiness](contracts/journal-processing-readiness.md)
+и формулировки четырёх R01-строк выше отражают это уточнение, сохраняя все43
+критерия и отдельную приёмку crash recovery. В715faf5 этот режим ещё отсутствует;
+старые отчёты не засчитывают его реализацию. Текущий этап — его реализация и
+повторная приёмка; source/installed и release/runtime нужно сверить заново.
+
+## Причинное исправление R01: локальная проверка кандидата
+
+`readiness_mode=persisted` реализован отдельным совместимым представлением
+существующего журнала. Без companion actual SDK/TLS тесты подтверждают чтение
+и ordered ack до HTTP ответа и после 2xx до transport commit; pending/sending
+не выдаются за delivered. Ранний ack не очищает outbox и не препятствует
+retry после503/timeout и перезапуска с исходными ID/body. Старый default
+сохраняет прежний wire contract и блокировку.
+
+Полная schema и typed Event/Activity validation выполняются после owner/privacy
+проверок, до бюджета страницы. Повреждённые вложенные данные, включая100КБ,
+становятся bounded invalid_payload gap; ordered ack открывает следующую запись.
+Валидный oversized v3 сохраняет RESPONSE_TOO_LARGE и исходные bytes, а не
+превращается в gap. Оба независимых reviewers закрыли замечание о poison head.
+
+Для интегрированного кандидата PASS: root test/race с -p2, vet, lint (0issues),
+architecture (100%,14isolated+6source controls), CGO0darwinarm64/amd64 и
+linuxamd64; существующий offline suite50/50cases,480/480assertions. Новые
+модельные evals и live Zalo actions не выполнялись. Reference checker:
+27tools,6Events,118local links;5generator tests; обе skill validation PASS.
+Gitleaks8.24.3: no leaks found. Статический skill walkthrough:12сценариев.
+Это локальная проверка кандидата; публикация, CI, установка и saved-host
+workflow новой ревизии засчитываются только по отдельным доказательствам.

@@ -202,6 +202,18 @@ has passed the new hardening acceptance. See the [task and final gate](task-mcp-
 for exact revision/test evidence. Refresh discovery before assuming that source
 code availability means a host can call the new tools.
 
+## Processing readiness before callback receipt
+
+After a release update, first inspect the actual backend revision and loaded
+`zalo_read_subscription_events` schema. If it advertises `readiness_mode`, use
+`readiness_mode=persisted` for a trusted journal workflow. Retained valid events
+can then be read/acked while their callback is pending/sending; delivery is never
+reported as successful merely because processing completed. Omitted/default
+`delivery_terminal` preserves the old representation. Empty/invalid/admission
+payload gaps and inactive-generation restrictions remain explicit. Do not infer
+this mode is installed from documentation alone. See the
+[readiness contract](contracts/journal-processing-readiness.md).
+
 ## Optional durable journal continuation
 
 The additional control profile `zalo.subscription.journal.ready.v1` attaches to
@@ -215,8 +227,10 @@ subscription and do not treat a control payload as a message or receipt.
 
 The worker independently observes the unacknowledged head and issues bounded
 control rounds; retry within a round keeps its event ID, later rounds have new
-IDs. The agent's bounded rereads honor `retry_after_ms`; after that budget it
-awaits the configured companion. `include_diagnostics=true` exposes recovery
+IDs. Persisted-mode reading does not wait for callback completion and needs no
+companion to close that race. The companion is insurance for missing/interrupted
+runs; bounded rereads in the legacy mode honor `retry_after_ms`, then await the
+configured continuation. `include_diagnostics=true` exposes recovery
 mode/state/reference/reason, including explicit cancellation or exhaustion. An
 unsupported/unconfigured mode does not provide automatic continuation.
 

@@ -121,10 +121,10 @@
       "result": "Долговечный message-action result; completed_steps — число подтверждённых вызовов, а не прочитанных сообщений."
     },
     "zalo_read_subscription_events": {
-      "purpose": "Получить точные необработанные события после запуска автоматизации.",
+      "purpose": "Прочитать точные необработанные сохранённые события конкретной подписки.",
       "effect": "Читает журнал конкретной подписки; не двигает processing cursor и не ставит read receipt.",
-      "implementation": "Нельзя искать «самое свежее сообщение» вместо отсутствующего payload. Журнал упорядочен: pending/sending блокирует поздние записи; terminal/retention gap описывается явно. event может быть null.",
-      "result": "events с envelope/receipt/gap/delivery state, has_more и blocked_on_delivery."
+      "implementation": "Предпочтителен readiness_mode=persisted: сохранённый разрешённый payload доступен до HTTP receipt, а delivery_state остаётся фактическим. Omitted/delivery_terminal сохраняет старую блокировку pending/sending. Два режима используют один ordered checkpoint. Очищенный/недоступный payload — явный gap; не искать последнее сообщение вместо события.",
+      "result": "events с envelope/receipt/gap/delivery state, has_more и blocked_on_delivery; persisted дополнительно сообщает readiness_mode и processing_state=ready|gap."
     },
     "zalo_search_conversation_messages": {
       "purpose": "Искать текст в доступных личных чатах и группах.",

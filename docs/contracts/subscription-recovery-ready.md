@@ -8,19 +8,26 @@ application extension, not an MCP guarantee that a callback executes an agent.
 
 ## Purpose and compatibility
 
-A business callback can start a workflow before its HTTP outcome is committed.
-Journal reads correctly block at pending/sending deliveries. Bounded rereads
-alone cannot guarantee continuation after cancellation, restart or a long delay;
-retrying the original callback may be deduplicated by its stable event ID.
+The main callback/read race is addressed separately by
+[processing readiness](journal-processing-readiness.md): explicit
+`readiness_mode=persisted` reads an already retained valid envelope without
+waiting for callback receipt and never changes the true delivery state. This
+path requires **no companion**. Verify its loaded schema and backend revision;
+this document is not evidence that the new mode is already installed.
 
-The optional `zalo.subscription.journal.ready.v1` profile signals that an existing
-business journal has readable unacknowledged work. It has a separate control
-outbox and does not change business subscription filters, event IDs, payloads,
-processing checkpoints or receipts. It never exposes sending as delivered.
+The optional `zalo.subscription.journal.ready.v1` profile is insurance for an
+absent/interrupted workflow run. It signals that the existing business journal
+has readable unacknowledged work under its current control-profile contract. It
+has a separate outbox and does not change business filters, event IDs, payloads,
+processing checkpoints or receipts. Its existing head-terminal wakeup semantics
+are not silently changed by the new journal representation.
+
 Installing updated skills does not attach a companion or update a saved host
-workflow. Existing subscriptions remain usable without it, but that configuration
-explicitly reports unsupported durable continuation and cannot claim R01's
-last-event continuation guarantee.
+workflow. Existing subscriptions remain usable without it. An unconfigured
+companion reports unsupported **recovery wakeups**, not inability to read a valid
+persisted-mode event. Durable continuation after a missing run remains a separate
+criterion requiring a proved continuation channel; successful early reading alone
+does not establish that criterion.
 
 ## Registration and executable contracts
 
@@ -152,7 +159,9 @@ Use `zalo_read_subscription_events` with `include_diagnostics=true` to add
 `retry_after_ms`, `recovery_mode`, `recovery_state`, `recovery_reference` and
 `recovery_reason`. `retry_after_ms=1000` is a short reread hint only when delivery
 is blocked, otherwise null. `has_more` retains ordinary page semantics;
-`blocked_on_delivery` separately identifies an earlier pending/sending blocker.
+`blocked_on_delivery` separately identifies an earlier pending/sending blocker
+in default delivery-terminal mode. Persisted mode does not block on transport
+and its retry hint is null.
 A false `has_more` does not cancel a blocker or prove no later work exists.
 
 Modes: `unsupported` or `companion`. States: `unsupported`, `idle`, `armed`,
@@ -169,8 +178,9 @@ its trigger payload is missing. On business or companion wakeup, read that journ
 process in order, and ack each receipt only after successful authorized handling.
 A terminal failed/cancelled item may be an explicit gap with `event=null`;
 account for the gap instead of fabricating message delivery. A retention gap
-cannot restore deleted content. Short bounded rereads can bridge a normal race;
-companion continuation supplies the separate durable resumption route.
+cannot restore deleted content. Explicit persisted-mode reading closes the callback/read causal race without
+waiting. Bounded rereads are only a compatibility fallback; companion continuation
+supplies the independent insurance route for a missing/interrupted run.
 
 ## Evidence and current operational limit
 

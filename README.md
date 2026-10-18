@@ -91,10 +91,20 @@ Events use a pinned webhook draft profile, requiring a compatible HTTP client an
 
 `zalo.conversation.message.created.v2` version 2 supports exact/all/direct/group scopes and includes typed conversation identity, an available name, the message ID, author, time, and up to 2048 Unicode code points of text. Truncated text has a flag and a resource URI for the full record. By default, subscriptions begin with the first insertion after activation and remain active until cancelled; queued delivery survives restarts, within documented retry and capacity limits. See the [Events contract](docs/contracts/events.md).
 
+The R01 causal fix separates stored processing readiness from callback receipt.
+When the loaded schema advertises `readiness_mode=persisted`, a workflow can read
+and acknowledge a retained valid event before the callback returns 2xx; its real
+`delivery_state` stays unchanged. Omitted mode preserves legacy terminal-delivery
+visibility. This source-level change is **not evidence that the installed backend
+already supports it**; verify the loaded schema/build after the release update.
+See [processing-readiness contract](docs/contracts/journal-processing-readiness.md).
+
 The optional `zalo.subscription.journal.ready.v1` companion provides durable
 control wakeups for one existing business-subscription generation. It carries
 references, not message content; the agent always rereads and acknowledges the
-same business journal. A trusted host explicitly configures the companion and
+same business journal. It is insurance for missing/interrupted runs, not a
+prerequisite for reading a retained event in persisted mode. A trusted host
+explicitly configures the companion and
 binds its wakeups to the existing saved workflow. Server/receiver synthetic tests
 cover blocked delivery, restart and repeated control rounds; actual target-host
 activation and Ann processing remain **NOT_RUN**. Rounds are finite and can end
