@@ -1,6 +1,6 @@
 # Processing readiness independent of callback receipt
 
-Status: published and installed in release `c67567c5`; final acceptance remains pending; external-host workflows are not changed automatically. Supersedes the use of
+Status: accepted, published and installed in product release `fab50b01`; external-host workflows are not changed automatically. Supersedes the use of
 companion wakeups as the primary fix for the R01 callback/read race.
 
 ## Independent facts
