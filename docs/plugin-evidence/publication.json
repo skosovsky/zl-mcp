@@ -1,0 +1,250 @@
+{
+  "source_revision": "20127019abe45dcfe26f7beeb98ce29d90e2229b",
+  "release_url": "https://github.com/skosovsky/zl-mcp/releases/tag/plugin-v0.1.0-rc.1",
+  "prerelease": true,
+  "archive": {
+    "url": "https://github.com/skosovsky/zl-mcp/releases/download/plugin-v0.1.0-rc.1/zl-mcp-plugin-0.1.0.zip",
+    "bytes": 53889,
+    "sha256": "f855ab3d6b77aadd8b1d7cd5cd286c399f19b09f9de80f86e16ce6b464b4ff54",
+    "public_unauthenticated_download": "PASS"
+  },
+  "ci": {
+    "url": "https://github.com/skosovsky/zl-mcp/actions/runs/39124811100",
+    "head_sha": "20127019abe45dcfe26f7beeb98ce29d90e2229b",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "test (ubuntu-latest)",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-go@v5",
+            "conclusion": "success"
+          },
+          {
+            "name": "Check generated MCP reference and negative controls",
+            "conclusion": "success"
+          },
+          {
+            "name": "Validate distributable plugin and negative controls",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload public plugin package",
+            "conclusion": "success"
+          },
+          {
+            "name": "Install pinned golangci-lint",
+            "conclusion": "success"
+          },
+          {
+            "name": "Lint both modules without autofix",
+            "conclusion": "success"
+          },
+          {
+            "name": "Check architectural boundaries and negative controls",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run mandatory synthetic offline evaluation",
+            "conclusion": "success"
+          },
+          {
+            "name": "Test Go architecture tooling",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run go test ./...",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run go test -race ./...",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run go vet ./...",
+            "conclusion": "success"
+          },
+          {
+            "name": "Test patched zcago module",
+            "conclusion": "success"
+          },
+          {
+            "name": "Race-check patched zcago module",
+            "conclusion": "success"
+          },
+          {
+            "name": "Vet patched zcago module",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o bin/zl-mcp-darwin-arm64 ./cmd/zl-mcp",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bin/zl-mcp-darwin-amd64 ./cmd/zl-mcp",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/zl-mcp-linux-amd64 ./cmd/zl-mcp",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build native service acceptance binary",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build same-source replacement candidate",
+            "conclusion": "success"
+          },
+          {
+            "name": "Check native service startup cleanup",
+            "conclusion": "success"
+          },
+          {
+            "name": "Check native per-account service isolation and shared binary replacement",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-go@v5",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "test (macos-latest)",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-go@v5",
+            "conclusion": "success"
+          },
+          {
+            "name": "Check generated MCP reference and negative controls",
+            "conclusion": "success"
+          },
+          {
+            "name": "Validate distributable plugin and negative controls",
+            "conclusion": "success"
+          },
+          {
+            "name": "Upload public plugin package",
+            "conclusion": "success"
+          },
+          {
+            "name": "Install pinned golangci-lint",
+            "conclusion": "success"
+          },
+          {
+            "name": "Lint both modules without autofix",
+            "conclusion": "success"
+          },
+          {
+            "name": "Check architectural boundaries and negative controls",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run mandatory synthetic offline evaluation",
+            "conclusion": "success"
+          },
+          {
+            "name": "Test Go architecture tooling",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run go test ./...",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run go test -race ./...",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run go vet ./...",
+            "conclusion": "success"
+          },
+          {
+            "name": "Test patched zcago module",
+            "conclusion": "success"
+          },
+          {
+            "name": "Race-check patched zcago module",
+            "conclusion": "success"
+          },
+          {
+            "name": "Vet patched zcago module",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o bin/zl-mcp-darwin-arm64 ./cmd/zl-mcp",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bin/zl-mcp-darwin-amd64 ./cmd/zl-mcp",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/zl-mcp-linux-amd64 ./cmd/zl-mcp",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build native service acceptance binary",
+            "conclusion": "success"
+          },
+          {
+            "name": "Build same-source replacement candidate",
+            "conclusion": "success"
+          },
+          {
+            "name": "Check native service startup cleanup",
+            "conclusion": "success"
+          },
+          {
+            "name": "Check native per-account service isolation and shared binary replacement",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-go@v5",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  "user_chatgpt_clean_reinstall": "PENDING_USER_RUN",
+  "final_18_of_18_acceptance": false,
+  "production_installation_changed": false,
+  "server_binaries_in_release": false
+}

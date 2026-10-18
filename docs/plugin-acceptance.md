@@ -71,9 +71,9 @@ ZL_MCP_UPGRADE_BINARY=/tmp/zl-plugin-upgrade \
 | A01/A05 | Codex install/discovery/bridge proven; actual onboarding host turn and ChatGPT installation remain pending |
 | A07 | Real loading of the newly packaged skills and setup in ChatGPT is not yet demonstrated; existing tools are separate evidence |
 | A08 | Two native service instances are isolated; two independently named ChatGPT tunnel connections still require host verification |
-| A11–A13 | Ten independent behavioral dry runs recorded; actual host setup remains distinct and pending |
-| A14/A15 | Real Codex package upgrade/rollback/removal, service restart isolation and shared-binary operational replacement/rollback proven; separate tunnel lifecycle remains to be assessed |
-| A17/A18 | Final complete checks, two independent reviews and GitHub publication remain pending |
+| A11 | Ten independent behavioral dry runs recorded; actual repeated host setup remains pending (reviewers distinguish dry-run evidence from real host outcomes) |
+| A12–A16 | Local dry runs, package and native lifecycle checks and separate service/tunnel verification instructions are recorded; no production tunnel crash/reboot outcomes are claimed |
+| A18 | Final two-review 18/18 acceptance remains pending the user-run host checks; candidate publication and CI are complete |
 
 No current review score is a final 18/18 acceptance. Tests and host probes must
 identify the reviewed revision/archive hash; do not turn untested host behavior
@@ -81,12 +81,22 @@ into PASS by changing the wording of a requirement.
 
 ## Candidate publication
 
-Implementation commit: `e22dfbc53a6fe4823970b9be1ea4b56ea984ba92`.
+Implementation began at `e22dfbc53a6fe4823970b9be1ea4b56ea984ba92`;
+current published candidate: `20127019abe45dcfe26f7beeb98ce29d90e2229b`.
 Public archive SHA-256: `f855ab3d6b77aadd8b1d7cd5cd286c399f19b09f9de80f86e16ce6b464b4ff54`.
 The signed commit was exported without local runtime files and rebuilt; schema,
 package negative controls and the archive hash matched. Gitleaks scanned both a
 clean indexed tree (136 MB) and the published commit diff: no leaks found.
 
 The [clean reinstall checklist](plugin-reinstall-checklist.md) is the next
-user-run acceptance stage once the candidate's CI is green. Existing ChatGPT
+user-run acceptance stage. The candidate CI is green on both platforms. Existing ChatGPT
 files were inspected read-only: no account plugin update was applied.
+
+[Publication proof](plugin-evidence/publication.json) pins the public release,
+unauthenticated asset download hash and the successful Linux/macOS CI jobs and
+steps to the exact candidate commit. [CI run](https://github.com/skosovsky/zl-mcp/actions/runs/39124811100)
+includes the seven package controls, full root and nested-module test/race/vet,
+architecture/lint checks, offline synthetic checks, three platform builds and
+both native acceptance tests. A17 is confirmed for this implementation revision;
+this does not close the separate user-host criteria. Documentation-only follow-up
+records these already completed checks without changing the plugin artifact.
