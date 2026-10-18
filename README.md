@@ -136,7 +136,8 @@ One account uses one state directory. Private file permissions restrict local ac
 The Agent Plugins package includes research, event-handling and setup skills.
 Each Zalo account uses a separate Go service instance; the plugin only connects
 to it. Follow [manual plugin installation](docs/plugin-installation.md) and check
-[current acceptance limits](docs/plugin-acceptance.md). Distribution is through
+[current acceptance limits](docs/plugin-acceptance.md). Use the
+[clean reinstall checklist](docs/plugin-reinstall-checklist.md) for host acceptance. Distribution is through
 GitHub; installing the package does not create subscriptions or install a server.
 
 ## Documentation and development

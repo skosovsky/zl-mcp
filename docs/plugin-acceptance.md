@@ -78,3 +78,15 @@ ZL_MCP_UPGRADE_BINARY=/tmp/zl-plugin-upgrade \
 No current review score is a final 18/18 acceptance. Tests and host probes must
 identify the reviewed revision/archive hash; do not turn untested host behavior
 into PASS by changing the wording of a requirement.
+
+## Candidate publication
+
+Implementation commit: `e22dfbc53a6fe4823970b9be1ea4b56ea984ba92`.
+Public archive SHA-256: `f855ab3d6b77aadd8b1d7cd5cd286c399f19b09f9de80f86e16ce6b464b4ff54`.
+The signed commit was exported without local runtime files and rebuilt; schema,
+package negative controls and the archive hash matched. Gitleaks scanned both a
+clean indexed tree (136 MB) and the published commit diff: no leaks found.
+
+The [clean reinstall checklist](plugin-reinstall-checklist.md) is the next
+user-run acceptance stage once the candidate's CI is green. Existing ChatGPT
+files were inspected read-only: no account plugin update was applied.

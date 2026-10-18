@@ -40,10 +40,19 @@ These hashes identify the package, not later edits to review reports or tooling.
   lifecycle, not replacement of the shared service binary.
 - Reviewed independent forward dry-run record `onboarding-dry-run.json`; its
   skill-tree digest `b4eb0db8f80ba995902f1002b49f95849878cdfec8217b2d32abdf06e96cd2d7`
-  matches current skill files. Seven fixture-based behavioral cases exercised
+  matches current skill files. Ten fixture-based behavioral cases exercised
   no-Mac, pending QR, port collision, lazy tools, repeat/existing setup, unrelated
-  research and untrusted chat-name instructions. This is model reasoning over
+  research, untrusted chat-name instructions, clean installation with unspecified
+  collection policy, successful QR continuation and connection refusal. This is model reasoning over
   fixtures, not automatic invocation by the actual Codex/ChatGPT onboarding host.
+- Independently built a distinct stripped candidate binary and ran both native
+  isolation and shared replacement tests with race detection: PASS9.455s.
+  Stopped backups include all state; rollback restores the matching snapshots
+  before restarting either account. Removal retains the common binary and B.
+- Parsed the new tunnel LaunchAgent template and checked installed
+  tunnel-client0.0.14 `run --help`; profile-file/health flags are supported.
+  Operator instructions now distinguish each component’s exact start, stop,
+  status and authorized crash test; no live tunnel/reboot test was performed.
 - The CI originally targeted the new native service test in the wrong Go
   package. This was reported and fixed during review; the final workflow now
   has a dedicated `./internal/service` step with its exact test name.
@@ -65,16 +74,16 @@ Only complete criteria count. Missing evidence is BLOCKED, not PASS.
 | A09 | PASS | Real independent temporary service processes, separate state/tokens/listeners, 401 on foreign token, duplicate port/state rejection; independent plist labels/config/log paths verified synthetically. |
 | A10 | PASS | Native race test uses identical conversation/message/action/subscription IDs; context, stored operation status, journal content, receipt rejection and checkpoints remain per-instance across restart. |
 | A11 | PASS | Independent repeat-existing and pending-QR forward dry runs preserve existing layout, service, binding and pending login. Instructions prohibit duplicate tunnels/subscriptions; actual host invocation remains separately gated by A05. |
-| A12 | BLOCKED | Seven executed forward dry-run cases now cover pending-QR/no-tools/no-Mac/occupied-port, but clean-install and connection-failure dry runs are still absent. Pending QR is not approved-QR continuation evidence. |
+| A12 | PASS | Ten independent fixture-based forward dry runs cover clean installation, pending/approved QR continuation, absent tools/Mac access, occupied port and connection refusal. They do not claim real login or actual-host automatic invocation. |
 | A13 | PASS | Independent forward dry run covers connect/setup wording, repeat/reinstall/resume wording, unrelated research, and malicious chat-name instructions. No observed authorization or secret-handling error; this does not prove automatic host selection. |
-| A14 | BLOCKED | Service/tunnel distinctions and no-reboot claims are correct. Instructions describe independent readiness, but complete separate start/stop/recovery verification evidence is missing. |
-| A15 | BLOCKED | Independent package upgrade/rollback/removal now preserve the neighboring package/service. Shared Go binary replacement/rollback and one service-instance removal are not exercised by that probe; criterion remains incomplete. |
+| A14 | PASS | Separate exact-target service/tunnel status, bootout/bootstrap and authorized crash-recovery instructions now specify independent readiness checks. Tunnel plist parses; installed tunnel-client0.0.14 run help confirms --profile-file and health flag support. No production tunnel/reboot/login success claimed. |
+| A15 | PASS | Independently reran both native race tests: distinct shared-binary replacement while both stopped, full stopped-state backups/restore, rollback and removal of one synthetic instance preserve the neighbor and shared executable. Codex package upgrade/rollback/removal separately passes. This proves same-source binary lifecycle; arbitrary schema-version rollback remains unsupported without compatible snapshot. |
 | A16 | PASS | Links/reference generation pass; duplicate-skill migration and host-vs-server rights documented. Stale task status was corrected during review and independently re-read. |
 | A17 | BLOCKED | Relevant local package/native checks pass; corrected GitHub CI has not run for this uncommitted source revision. |
 | A18 | BLOCKED | Full two-review 18/18 acceptance and publication of accepted package are not achieved. This review must not be presented as final acceptance. |
 
-**Complete: 9/18 = 50.00%. Zero unresolved observed code/documentation defects;
-nine criteria have evidence/host/publication gates.** No production behavior defect
+**Complete: 12/18 = 66.67%. Zero unresolved observed code/documentation defects;
+six criteria have evidence/host/publication gates.** No production behavior defect
 was found in the limited tested scope.
 
 ## Resolved finding
@@ -89,8 +98,9 @@ was found in the limited tested scope.
 
 This report does not certify ChatGPT package loading, automatic onboarding
 execution, multi-account UI, real Zalo login, tunnel restart, reboot/login,
-shared-binary update/rollback/service-instance removal or GitHub publication.
-Codex package upgrade/rollback/removal is independently verified. The user
+arbitrary cross-version schema migrations or GitHub publication.
+Codex package upgrade/rollback/removal and same-source native shared-binary
+replacement/rollback/service-instance removal are independently verified. The user
 explicitly reserved current ChatGPT plugin replacement for their own later
 GitHub installation; no current ChatGPT connection was changed for this review. Closing those gates requires the
 specific evidence above, not removal or weakening of the original criteria.

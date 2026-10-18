@@ -6,7 +6,9 @@ installation on macOS is supported; a plugin install does not install the server
 log in to Zalo, create subscriptions or keep a sleeping Mac awake.
 
 The package is distributed through GitHub, not the public ChatGPT directory.
-See [acceptance evidence](plugin-acceptance.md) for exactly what has been tested.
+See [acceptance evidence](plugin-acceptance.md) for exactly what has been tested
+and the [clean reinstall checklist](plugin-reinstall-checklist.md) for the user-run
+acceptance.
 Do not interpret a documented configuration as a verified host capability.
 
 ## Build the public package

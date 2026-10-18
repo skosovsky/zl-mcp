@@ -78,3 +78,37 @@ Independently reran the real isolated Codex lifecycle probe at 11:35:22 UTC: two
 | A18 | PENDING | Candidate publication and both final 18/18 reviews cannot be claimed before external ChatGPT acceptance. |
 
 **Updated fully confirmed completeness: 8/18 = 44.44%. Known unresolved implementation defects: 0. Acceptance remains incomplete; no claim of final 18/18.** Candidate publication may communicate these explicit pending gates, but must not label the original goal complete. Production state and the current ChatGPT plugin remain unchanged by this reviewer.
+
+## Prepublication candidate review B — final local additions
+
+Reviewed the expanded ten-case independent onboarding dry run, direct tunnel-agent template and separate lifecycle instructions, and the shared-binary replacement acceptance test. Public archive SHA remains `f855ab3d6b77aadd8b1d7cd5cd286c399f19b09f9de80f86e16ce6b464b4ff54`.
+
+Independent rerun:
+
+```text
+ZL_MCP_ACCEPTANCE_BINARY=/tmp/zl-plugin-isolation-native \
+ZL_MCP_UPGRADE_BINARY=/tmp/zl-plugin-upgrade-native \
+go test -race ./internal/service \
+  -run '^TestNativePlugin(InstanceIsolation|SharedBinaryReplacement)$' -count=1 -v
+TestNativePluginInstanceIsolation PASS (3.46s)
+TestNativePluginSharedBinaryReplacement PASS (3.98s)
+package PASS (8.958s)
+plutil -lint deploy/macos/com.skosovsky.zl-mcp.INSTANCE.tunnel.plist.example: OK
+```
+
+Evidence bindings:
+
+- Baseline binary: `f583da494a6178ce104b8a37f101c54548a948adedbe0219dae5521225e5aef5`.
+- Replacement binary: `d002cfff53a7efba428864d5f1155046b510499d8a79baa82ff43f635297b488`.
+- Native test source: `fce42f002f1f7d9562751c26aba7d9705b300a38136dc5cb762112e1562a6c5c`.
+- Ten-case dry-run evidence: `cca66e4bff7da258a70c6b2c872c7c371d8d8dfd5bf262b57512ac6bcccf3d36`.
+
+Three additional criteria now pass literally within their defined scope:
+
+- **A12 PASS:** ten forward dry runs now include clean install/policy gate, approved-QR continuation and connection refusal as well as missing tools/Mac and port collision. These are intentionally synthetic dry runs, not actual host installation proof.
+- **A14 PASS:** instructions now provide distinct service/tunnel status checks, health/readiness, intentional stop/start and exact-target crash recovery; direct-Go/direct-tunnel templates validate. Reboot/login and production tunnel crash checks are explicitly not claimed. This criterion concerns correct verification instructions, not unperformed live outcomes.
+- **A15 PASS:** actual native test stops both shared-binary users, snapshots each complete stopped instance, atomically installs a distinct executable, verifies both corpora/bridges, stops both again, restores baseline plus matching snapshots, verifies both, removes A and confirms B and the shared executable remain intact. This is a same-source compatible-binary replacement proof, not arbitrary schema downgrade compatibility. Codex package upgrade/rollback/removal was independently verified separately.
+
+**Current complete criteria:** A02, A03, A04, A06, A09, A10, A12, A13, A14, A15, A16 — **11/18 = 61.11%**. **Known unresolved implementation defects: 0.** Remaining: A01/A05 real ChatGPT/onboarding host evidence, A07 external user installation, A08 ChatGPT two-connection route, A11 actual repeated onboarding resource outcome, A17 final revision CI, A18 final review/publication gate. Earlier score tables above are historical; this is the current candidate verdict.
+
+**Candidate publication: acceptable with explicit pending acceptance status. Full objective: not yet accepted or complete.** Do not replace the user's current ChatGPT plugin in place; their planned GitHub reinstall remains external follow-up. No production data, configuration, running services, tunnels or subscriptions were changed by this review.
