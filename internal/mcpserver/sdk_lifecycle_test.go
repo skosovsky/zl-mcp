@@ -289,7 +289,7 @@ func TestSDK01LostReplyRetainsDurableUUIDAndNeverResends(t *testing.T) {
 			}
 			ports := migrationReadPorts(owner)
 			adapter := operationsadapter.NewReader(manager)
-			ports.Operations.Messaging = &messagingapp.Handler{Reads: adapter, Commands: adapter}
+			ports.Operations.Messaging = &messagingapp.Handler{Reads: adapter, Commands: adapter, Actions: adapter}
 			protocol, err := events.NewSubscriptionManager(owner, t.TempDir())
 			if err != nil {
 				t.Fatal(err)

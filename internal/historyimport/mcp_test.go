@@ -48,7 +48,7 @@ func TestMCPHistoryImportDiscoveryStatusAndReads(t *testing.T) {
 	server, err := mcpserver.New(
 		mcpserver.Ports{
 			Operations: toolruntime.Capabilities{
-				Messaging:  &messaging.Handler{Reads: operations, Commands: operations},
+				Messaging:  &messaging.Handler{Reads: operations, Commands: operations, Actions: operations},
 				History:    &history.Handler{Reads: operations, Commands: operations},
 				Membership: &membership.Handler{Reads: operations, Commands: operations},
 			},

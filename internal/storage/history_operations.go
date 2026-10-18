@@ -417,13 +417,13 @@ func (s *Store) commitHistoryOperationPage(
 		op.WorkDuration += elapsed
 		op.ReservedDuration = 0
 		if op.WorkDuration > HistoryWorkBudget {
-			historyStopped(&op, "partial", "time_limit")
+			historyStopped(&op, statePartialText, "time_limit")
 		} else if err = s.commitHistoryRecords(ctx, tx, &op, page, records); err != nil {
 			return HistoryOperation{}, err
 		}
 		op.WorkDuration += time.Since(started)
 		if op.WorkDuration >= HistoryWorkBudget && op.Status.State == stateRunningText {
-			historyStopped(&op, "partial", "time_limit")
+			historyStopped(&op, statePartialText, "time_limit")
 		}
 	}
 	if records != nil {
@@ -509,21 +509,21 @@ func (s *Store) commitHistoryRecords(
 	positive := func(v *bool) bool { return v != nil && *v }
 	switch {
 	case page.LimitedSnapshot:
-		historyStopped(op, "partial", "source_window_limited")
+		historyStopped(op, statePartialText, "source_window_limited")
 	case positive(page.IsFiltered) || positive(page.IsFilteredByPhase) || positive(page.IsFilteredByTimeJoin):
-		historyStopped(op, "partial", "source_filtered")
+		historyStopped(op, statePartialText, "source_filtered")
 	case page.HasMore == nil:
-		historyStopped(op, "partial", "missing_continuation")
+		historyStopped(op, statePartialText, "missing_continuation")
 	case !*page.HasMore:
 		historyStopped(op, "completed", "available_source_exhausted")
 	case len(page.Messages) == 0:
-		historyStopped(op, "partial", "empty_continuing_page")
+		historyStopped(op, statePartialText, "empty_continuing_page")
 	case page.Cursor == nil:
-		historyStopped(op, "partial", "missing_continuation")
+		historyStopped(op, statePartialText, "missing_continuation")
 	case page.PhaseRequired && page.IsOld == nil:
-		historyStopped(op, "partial", "missing_continuation")
+		historyStopped(op, statePartialText, "missing_continuation")
 	case seen > 0:
-		historyStopped(op, "partial", "repeated_cursor")
+		historyStopped(op, statePartialText, "repeated_cursor")
 	default:
 		op.Cursor = *page.Cursor
 		if _, err = tx.ExecContext(
@@ -536,11 +536,11 @@ func (s *Store) commitHistoryRecords(
 		}
 		switch {
 		case status.PagesObserved >= status.MaxPages:
-			historyStopped(op, "partial", "page_limit")
+			historyStopped(op, statePartialText, "page_limit")
 		case status.RecordsObserved >= status.MaxMessages:
-			historyStopped(op, "partial", "message_limit")
+			historyStopped(op, statePartialText, "message_limit")
 		case op.WorkDuration >= HistoryWorkBudget:
-			historyStopped(op, "partial", "time_limit")
+			historyStopped(op, statePartialText, "time_limit")
 		}
 	}
 	return nil
@@ -603,7 +603,7 @@ func (s *Store) RecoverInterruptedHistory(ctx context.Context) error {
 			op.WorkDuration += op.ReservedDuration
 			op.ReservedDuration = 0
 			if op.WorkDuration >= historyWorkBudget(op) {
-				historyStopped(&op, "partial", "time_limit")
+				historyStopped(&op, statePartialText, "time_limit")
 			} else {
 				op.Status.State, op.Status.StopReason = stateQueuedText, nil
 			}
@@ -676,8 +676,8 @@ func (s *Store) StopHistoryOperation(
 	valid := (state == statePausedText && reason == "auth_required") ||
 		(state == stateUnsupportedText && reason == "source_unsupported") ||
 		(state == stateFailedText && (reason == "upstream_unavailable" || reason == "invalid_source_page" || reason == "storage_error")) ||
-		(state == "partial" && reason == "time_limit")
-	mobileStop := state == "partial" && (reason == "source_unavailable" || reason == "source_gaps")
+		(state == statePartialText && reason == "time_limit")
+	mobileStop := state == statePartialText && (reason == "source_unavailable" || reason == "source_gaps")
 	if (!valid && !mobileStop) || elapsed < 0 || elapsed > MobileHistoryWorkBudget {
 		return HistoryOperation{}, domain.Invalid("Invalid history stop transition.")
 	}

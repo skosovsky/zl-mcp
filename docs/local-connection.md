@@ -114,15 +114,39 @@ discovery verification, separate send permissions and handling an unknown send r
 
 For event-triggered automation, store the exact subscription ID with its rule and use [journal recovery](contracts/event-recovery.md). Refresh the client/plugin catalogue to discover the three recovery tools after updating the service. Reconcile previously completed notifications before processing an existing backlog.
 
-## Rich content discovery (candidate)
+## Rich content discovery
 
 After a verified candidate upgrade, refresh the actual HTTP client's discovery
 and inspect `events/list`: message v3 and reaction v1 require compatible schemas;
 STDIO still provides tools/resources only. Do not replace existing v2
 subscriptions just because v3 is listed. Preserve processing checkpoints and
 reconcile source conversation/message identities before an agreed cutover.
-Calls are not advertised. A missing automation payload is different from a typed
+Call observations use a narrow direct-chat profile; they do not establish call
+outcome, mode, duration or a complete lifecycle. A missing automation payload is different from a typed
 nontext event with empty author text. Read the exact subscription journal,
 process in order, and acknowledge only the authorized successful action. See
-[rich-content contract](contracts/rich-content-events.md). A native candidate is deployed locally; full live acceptance and publication
-remain pending.
+[rich-content contract](contracts/rich-content-events.md). For the accepted rich-content scope and remaining upstream limits, see
+[rich-content acceptance](rich-content-acceptance.md).
+
+## Explicit reaction choices and read-receipt preparation
+
+When the backend advertises `zalo://catalog/reactions`, read it through standard
+`resources/read` over HTTP or STDIO to obtain finite reaction codes, names and display labels.
+Listing choices sends no reaction and grants no write permission. Arbitrary
+emoji and raw protocol type/source fields are not catalogue inputs. Discover
+available write tools and their current schemas rather than assuming that a
+catalogue entry proves replacement or removal semantics.
+
+Receipt/reaction write tools have explicit input/output schemas and verified
+native cases. See the [action guide](message-actions.md),
+[task](task-mark-messages-read.md) and [current evidence](message-actions-acceptance.md).
+Ordinary searches, context/resources, archive reads, Events and journal ack do
+not change Zalo read state or reactions. These actions require a separate explicit
+user instruction on exact targets; the current workflow does not automate them.
+Journal acknowledgement confirms processing, independently of Zalo read receipts.
+
+After upgrading, refresh the client/plugin tool catalogue to discover
+`zalo_mark_messages_read`, `zalo_set_message_reaction` and
+`zalo_get_message_action_status`. Existing registered clients can retain an older
+catalogue even while server-side tools/list already exposes 25 tools. Discovery
+does not grant write access; read/react allowlists default to empty.

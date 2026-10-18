@@ -18,7 +18,7 @@ const (
 	ReactionCry         ReactionIcon = `:-((`
 	ReactionAngry       ReactionIcon = `:-h`
 	ReactionKiss        ReactionIcon = `:-*`
-	ReactionTearsOfJoy  ReactionIcon = `:\')`
+	ReactionTearsOfJoy  ReactionIcon = `:')`
 	ReactionShit        ReactionIcon = `/-shit`
 	ReactionRose        ReactionIcon = `/-rose`
 	ReactionBrokenHeart ReactionIcon = `/-break`
@@ -205,7 +205,9 @@ func NewReactionData(icon ReactionIcon) ReactionData {
 }
 
 func (rid ReactionData) IsValid() bool {
-	return len(rid.RIcon) != 0
+	// NONE uses the upstream removal encoding; a zero-value ReactionData must
+	// not accidentally remove a reaction. Custom nonempty icons remain supported.
+	return len(rid.RIcon) != 0 || (rid.RType == -1 && rid.Source == DefaultReactionSource)
 }
 
 type ReactionContent struct {

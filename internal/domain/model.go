@@ -9,6 +9,7 @@ type Group struct {
 	CollectionEnabled bool   `json:"collection_enabled"`
 }
 type Message struct {
+	SeenMetadata            *SeenMetadata   `json:"-"`
 	Content                 *MessageContent `json:"-"`
 	Direction               string          `json:"-"`
 	FirstIncoming           *bool           `json:"-"`

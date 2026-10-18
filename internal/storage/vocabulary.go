@@ -42,3 +42,6 @@ const (
 	stateWaitingForBackupText       = "waiting_for_backup"
 	stateWaitingForConfirmationText = "waiting_for_confirmation"
 )
+
+// statePartialText denotes a terminal operation with confirmed partial progress.
+const statePartialText = "partial"

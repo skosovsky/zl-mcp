@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "conversation_type": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "group"
+      ]
+    },
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "message_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "action": {
+      "enum": [
+        "set",
+        "remove"
+      ]
+    },
+    "reaction": {
+      "type": "string",
+      "enum": [
+        "heart",
+        "like",
+        "haha",
+        "wow",
+        "cry",
+        "angry",
+        "kiss",
+        "tears_of_joy",
+        "shit",
+        "rose",
+        "broken_heart",
+        "dislike",
+        "love",
+        "confused",
+        "wink",
+        "fade",
+        "sun",
+        "birthday",
+        "bomb",
+        "ok",
+        "peace",
+        "thanks",
+        "punch",
+        "share",
+        "pray",
+        "no",
+        "bad",
+        "love_you",
+        "sad",
+        "very_sad",
+        "cool",
+        "nerd",
+        "big_smile",
+        "sunglasses",
+        "neutral",
+        "sad_face",
+        "bye",
+        "sleepy",
+        "wipe",
+        "dig",
+        "anguish",
+        "handclap",
+        "angry_face",
+        "f_chair",
+        "l_chair",
+        "r_chair",
+        "silent",
+        "surprise",
+        "embarrassed",
+        "afraid",
+        "sad_2",
+        "big_laugh",
+        "rich",
+        "beer"
+      ]
+    }
+  },
+  "required": [
+    "request_id",
+    "conversation_type",
+    "conversation_id",
+    "message_id",
+    "action"
+  ],
+  "description": "Explicit own-reaction change. Set clears existing own reactions before adding the selected code; two non-atomic steps. Remove clears own reactions. No other sender reactions are changed.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "set"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "reaction"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "reaction"
+          ]
+        }
+      }
+    }
+  ]
+}

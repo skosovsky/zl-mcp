@@ -49,7 +49,7 @@ func TestDiscoveryLogsActualCatalogueWithoutRequestSecrets(t *testing.T) {
 			Tools []json.RawMessage `json:"tools"`
 		} `json:"result"`
 	}
-	if response.Code != 200 || json.Unmarshal(response.Body.Bytes(), &result) != nil || len(result.Result.Tools) != 22 {
+	if response.Code != 200 || json.Unmarshal(response.Body.Bytes(), &result) != nil || len(result.Result.Tools) != 25 {
 		t.Fatal("actual catalogue unavailable")
 	}
 	var log map[string]any
@@ -63,7 +63,7 @@ func TestDiscoveryLogsActualCatalogueWithoutRequestSecrets(t *testing.T) {
 	if err := schema.Validate(log); err != nil {
 		t.Fatal(err)
 	}
-	if log["tool_count"] != float64(22) || log["archive_inventory_present"] != true || log["has_more"] != false ||
+	if log["tool_count"] != float64(25) || log["archive_inventory_present"] != true || log["has_more"] != false ||
 		log["response_bytes"] != float64(response.Body.Len()) {
 		t.Fatal("discovery evidence differs from the actual catalogue")
 	}

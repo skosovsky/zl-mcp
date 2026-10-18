@@ -33,7 +33,7 @@ func mcpReadPorts(owner *storage.Store, backend operationsadapter.Backend) mcpse
 		Events:    &eventaccess.Handler{Diagnostics: reader, Journal: reader, Commands: reader},
 		//nolint:exhaustruct_v5 // Capabilities preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 		Operations: toolruntime.Capabilities{
-			Messaging:  &messaging.Handler{Reads: operations, Commands: operations},
+			Messaging:  &messaging.Handler{Reads: operations, Commands: operations, Actions: operations},
 			History:    &history.Handler{Reads: operations, Commands: operations},
 			Membership: &membership.Handler{Reads: operations, Commands: operations},
 		},

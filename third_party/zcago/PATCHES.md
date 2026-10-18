@@ -308,3 +308,39 @@ counts and explicit overflow instead of relying solely on the last command.
 Concurrent snapshots are detached; ignored actions/controls are counted without
 their names or data. This is call investigation instrumentation, not call
 classification or a new event channel. No native body/session data is retained.
+
+## Explicit message actions preparation, 2026-10-16
+
+`AddReaction` now rejects invalid thread destinations and noncanonical/nonpositive
+or overflowing int64 target IDs before HTTP. Valid IDs remain exact above 2^53.
+`ReactionData` accepts the explicit upstream NONE encoding (empty icon, type -1,
+source 6) while rejecting an accidental zero value and preserving nonempty custom
+icons. The MCP adapter must additionally enforce its bounded catalog. Synthetic
+wire tests decrypt both routes and check the chosen icon/removal encoding; they
+do not prove native replace/remove semantics.
+
+`TMessage` records whether ST/AT/CMD were actually present and non-null. Explicit
+group decoding preserves outer mentions despite the embedded decoder. This
+internal flag is not serialized and does not invent fields for older records.
+Evidence and open semantics: [message actions research](../../docs/contracts/message-actions-research.md).
+
+`SendSeenEvent` now rejects unsupported thread types, incomplete targets,
+nonpositive/noncanonical/overflowing message IDs and missing timestamps before
+HTTP; its wire test verifies nonzero ST/CMD and zero AT are preserved, with
+separate direct/group routing. This does not settle conversation read-watermark
+semantics or sender-visible read confirmation.
+
+Full comparison against pinned zca-js found one reaction literal mismatch:
+`ReactionTearsOfJoy` now encodes `:')` without an extra literal backslash. All 54
+numeric type mappings matched. Exact icon regression and synthetic wire coverage
+are included. `SendSeenEventResponse` now records whether `status` was present;
+missing/null differs from observed zero, without assigning success semantics.
+
+### Reaction response representations (2026-10-18)
+
+Pinned zca-js addReaction accepts msgIds as an array or JSON-encoded array string.
+The local decoder previously rejected native arrays. It now accepts both without
+float conversion; malformed representations still fail. Closed shape/decode/count
+diagnostics omit native bodies, IDs and error text. Regression tests cover both
+response shapes through encrypted direct/group wire fixtures. This correction does
+not reinterpret persisted unknown operations or trigger retries.

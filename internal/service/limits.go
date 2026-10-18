@@ -1,6 +1,10 @@
 package service
 
-import "time"
+import (
+	"time"
+
+	messagingapp "github.com/skosovsky/zl-mcp/internal/app/messaging"
+)
 
 // Local limits preserve existing codec, executable and synthetic contracts.
 const (
@@ -8,7 +12,7 @@ const (
 	membershipByteBits               = 8
 	membershipBitRoundUp             = 7
 	archiveExcerptRunes              = 2048
-	stdioProxyTimeout                = 40 * time.Second
+	stdioProxyTimeout                = mcpWriteTimeout + 5*time.Second
 	maximumStdioToolNameBytes        = 256
 	maximumStdioRequests             = 4096
 	stdioRequestLifetime             = 24 * time.Hour
@@ -33,7 +37,7 @@ const (
 	accountArchiveLibraryBudgetBytes = 1 << 30
 	serverHeaderTimeout              = 5 * time.Second
 	mcpReadTimeout                   = 15 * time.Second
-	mcpWriteTimeout                  = 45 * time.Second
+	mcpWriteTimeout                  = messagingapp.ReactionTimeout + 10*time.Second
 	mcpIdleTimeout                   = 30 * time.Second
 	ownerReadTimeout                 = 10 * time.Second
 	ownerWriteTimeout                = 450 * time.Second

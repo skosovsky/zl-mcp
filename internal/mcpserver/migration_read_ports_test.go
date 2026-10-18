@@ -35,7 +35,7 @@ func migrationReadPorts(owner *storage.Store, backend ...operationsadapter.Backe
 		ports.Archives = &archives.Handler{Reads: operationsadapter.NewArchiveReader(selected)}
 		ports.Conversations.LiveGroups = operations
 		ports.Operations = toolruntime.Capabilities{
-			Messaging:  &messaging.Handler{Reads: operations, Commands: operations},
+			Messaging:  &messaging.Handler{Reads: operations, Commands: operations, Actions: operations},
 			History:    &history.Handler{Reads: operations, Commands: operations},
 			Membership: &membership.Handler{Reads: operations, Commands: operations},
 		}

@@ -51,9 +51,11 @@ dependenciesRules:
       standard:
         - '^embed$'
         - '^encoding/json$'
+        - '^errors$'
         - '^fmt$'
         - '^sort$'
         - '^strings$'
+        - '^sync$'
   - package: '^github[.]com/skosovsky/zl-mcp/internal/collector.**'
     shouldOnlyDependsOn:
       internal:
@@ -132,6 +134,7 @@ dependenciesRules:
         - '^encoding/hex$'
         - '^encoding/json$'
         - '^errors$'
+        - '^strconv$'
         - '^strings$'
         - '^time$'
         - '^unicode/utf8$'
@@ -306,6 +309,19 @@ dependenciesRules:
         - '^strings$'
         - '^time$'
         - '^crypto/rand$'
+  - package: '^github[.]com/skosovsky/zl-mcp/internal/messageactions.**'
+    shouldOnlyDependsOn:
+      internal:
+        - '^github[.]com/skosovsky/zl-mcp/internal/domain.**'
+        - '^github[.]com/skosovsky/zl-mcp/internal/storage.**'
+      standard:
+        - '^context$'
+        - '^database/sql$'
+        - '^errors$'
+        - '^time$'
+    shouldNotDependsOn:
+      external:
+        - '.+'
   - package: '^github[.]com/skosovsky/zl-mcp/internal/messaging.**'
     shouldOnlyDependsOn:
       internal:
@@ -404,6 +420,7 @@ dependenciesRules:
         - '^github[.]com/skosovsky/zl-mcp/internal/logging.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/mcpserver.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/messaging.**'
+        - '^github[.]com/skosovsky/zl-mcp/internal/messageactions.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/mobilebackup.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/storage.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/zalo.**'
@@ -450,6 +467,7 @@ dependenciesRules:
         - '^bufio$'
         - '^os/signal$'
         - '^syscall$'
+        - '^unicode/utf8$'
   - package: '^github[.]com/skosovsky/zl-mcp/internal/storage.**'
     shouldOnlyDependsOn:
       internal:

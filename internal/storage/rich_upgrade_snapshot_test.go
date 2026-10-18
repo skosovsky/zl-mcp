@@ -55,7 +55,7 @@ func TestRichUpgradeOnDisposableSnapshot(t *testing.T) {
 		t.Fatal("candidate snapshot migration failed")
 	}
 	after := snapshotTableDigests(t, s.DB)
-	if len(after) != len(baseline)+1 {
+	if len(after) != len(baseline)+3 {
 		t.Fatal("migration created an unexpected table set")
 	}
 	// Assert: all original table contents survive; only schema/new alias state differs.
@@ -69,7 +69,7 @@ func TestRichUpgradeOnDisposableSnapshot(t *testing.T) {
 		t.Fatal("migrated snapshot integrity failure")
 	}
 	if err = s.DB.QueryRow(`SELECT MAX(version) FROM schema_migrations`).
-		Scan(&version); err != nil || version != 17 ||
+		Scan(&version); err != nil || version != 19 ||
 		countClientAliases(t, s) != 0 {
 		t.Fatal("candidate alias migration incomplete")
 	}

@@ -110,6 +110,20 @@ func runCLICommand(ctx context.Context, c config.Config, flags *flag.FlagSet) er
 			return errors.New("serve takes no arguments")
 		}
 		return BridgeStdio(ctx, c)
+	case "probe-message-action":
+		if flags.NArg() != 1 {
+			return errors.New("probe-message-action reads bounded request JSON from stdin")
+		}
+		args, err := messageActionProbeArguments(os.Stdin)
+		if err != nil {
+			return err
+		}
+		result, err := control.New(c.StateDir).Call(ctx, operationMessageActionProbe, args)
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(os.Stdout).Encode(result)
+
 	case "probe-preload":
 		return runPreloadProbeCommand(ctx, c, flags)
 

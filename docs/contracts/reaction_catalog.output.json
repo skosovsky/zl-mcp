@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "catalog_version",
+    "description",
+    "reactions"
+  ],
+  "properties": {
+    "catalog_version": {
+      "const": 2
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "reactions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "display"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "heart",
+              "like",
+              "haha",
+              "wow",
+              "cry",
+              "angry",
+              "kiss",
+              "tears_of_joy",
+              "shit",
+              "rose",
+              "broken_heart",
+              "dislike",
+              "love",
+              "confused",
+              "wink",
+              "fade",
+              "sun",
+              "birthday",
+              "bomb",
+              "ok",
+              "peace",
+              "thanks",
+              "punch",
+              "share",
+              "pray",
+              "no",
+              "bad",
+              "love_you",
+              "sad",
+              "very_sad",
+              "cool",
+              "nerd",
+              "big_smile",
+              "sunglasses",
+              "neutral",
+              "sad_face",
+              "bye",
+              "sleepy",
+              "wipe",
+              "dig",
+              "anguish",
+              "handclap",
+              "angry_face",
+              "f_chair",
+              "l_chair",
+              "r_chair",
+              "silent",
+              "surprise",
+              "embarrassed",
+              "afraid",
+              "sad_2",
+              "big_laugh",
+              "rich",
+              "beer"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "display": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Human-facing label. Confirmed emoji for heart and like; descriptive name for other upstream icons rather than an invented Unicode mapping."
+          }
+        }
+      }
+    }
+  }
+}

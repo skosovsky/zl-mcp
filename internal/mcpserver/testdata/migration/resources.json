@@ -20,6 +20,12 @@
       "uri": "zalo://catalog/diagnostics"
     },
     {
+      "description": "Read finite reaction codes and names without changing Zalo state.",
+      "mimeType": "application/json",
+      "name": "Explicit reaction choices",
+      "uri": "zalo://catalog/reactions"
+    },
+    {
       "mimeType": "application/json",
       "name": "Conversation collection status",
       "uri": "zalo://collection"

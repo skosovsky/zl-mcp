@@ -10,6 +10,7 @@ const (
 	contentTypeText           = "text/plain"
 	methodToolsList           = "tools/list"
 	wireZalo                  = "zalo"
+	toolSetMessageReaction    = "zalo_set_message_reaction"
 	toolAckSubscriptionEvents = "zalo_ack_subscription_events"
 	toolCancelHistoryImport   = "zalo_cancel_history_import"
 )

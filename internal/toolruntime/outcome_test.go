@@ -14,6 +14,31 @@ func TestTypedOperationOutcomes(t *testing.T) {
 		result *Result
 		want   domain.Outcome
 	}{
+		{
+			"action accepted",
+			&Result{MessageActionStatus: &domain.MessageActionOperation{Status: "accepted"}},
+			domain.OutcomeSuccess,
+		},
+		{
+			"action rejected",
+			&Result{MessageActionStatus: &domain.MessageActionOperation{Status: "rejected"}},
+			domain.OutcomeError,
+		},
+		{
+			"action partial",
+			&Result{MessageActionStatus: &domain.MessageActionOperation{Status: "partial"}},
+			domain.OutcomePartial,
+		},
+		{
+			"action unknown",
+			&Result{MessageActionStatus: &domain.MessageActionOperation{Status: "unknown"}},
+			domain.OutcomeUnknown,
+		},
+		{
+			"action dispatching",
+			&Result{MessageActionStatus: &domain.MessageActionOperation{Status: "dispatching"}},
+			domain.OutcomeUnknown,
+		},
 		{"sent", &Result{SendStatus: &domain.SendOperation{Status: "sent"}}, domain.OutcomeSuccess},
 		{"ambiguous send", &Result{SendStatus: &domain.SendOperation{Status: "unknown"}}, domain.OutcomeUnknown},
 		{"rejected send", &Result{SendStatus: &domain.SendOperation{Status: "failed"}}, domain.OutcomeError},

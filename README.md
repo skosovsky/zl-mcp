@@ -94,7 +94,8 @@ One account uses one state directory. Private file permissions restrict local ac
 - [Technical specification](docs/technical-spec.md) and [service contract](docs/contracts/service.md)
 - [Conversation collection, compatibility and recovery](docs/conversations.md) and [extension task](docs/task-all-conversations.md) and [acceptance evidence](docs/all-conversations-acceptance.md)
 - [Incoming-message filters and direct messaging](docs/task-direct-messaging.md)
-- [Planned explicit read receipts](docs/task-mark-messages-read.md)
+- [Explicit read receipts and reactions](docs/message-actions.md) — contracts, permissions and verified native cases
+- [Read/reaction task and remaining acceptance](docs/task-mark-messages-read.md)
 - [Remaining acceptance, Strangers discovery, and conversation browsing/history task](docs/task-conversation-completion.md)
 - [Final requirement audit, live acceptance and retained upstream limits](docs/conversation-completion-final-audit.md)
 - [Owner-only mobile diagnostics and retained account exports](docs/mobile-backup-diagnostics.md)
@@ -116,3 +117,10 @@ Automated tests use synthetic data and fake upstreams. Linux tests and builds ar
 Licensed under [MIT](LICENSE). The vendored dependency retains its own license and patch provenance.
 
 Event-triggered clients can recover missing payloads through the [subscription journal](docs/contracts/event-recovery.md), with an explicit durable acknowledgement cursor. Conversation Events v1 was removed; v2 and the legacy group profile remain.
+
+
+Explicit message actions use `zalo_mark_messages_read`,
+`zalo_set_message_reaction`, and `zalo_get_message_action_status`, with separate
+exact-chat permissions and durable request UUIDs. They are never invoked by
+ordinary reads, Events or journal acknowledgement. See the
+[guide and current acceptance limits](docs/message-actions.md).

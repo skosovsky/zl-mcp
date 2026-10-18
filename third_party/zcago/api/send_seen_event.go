@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/amrakk/zcago/config"
@@ -12,9 +13,12 @@ import (
 	"github.com/amrakk/zcago/session"
 )
 
+var ErrInvalidSeenData = errs.NewZCA("invalid seen event data", "api.SendSeenEvent")
+
 type (
 	SendSeenEventResponse struct {
-		Status int `json:"status"`
+		Status    int  `json:"status"`
+		HasStatus bool `json:"-"`
 	}
 	SendSeenEventFn = func(ctx context.Context, messages []model.OutboundMessage, threadType model.ThreadType) (*SendSeenEventResponse, error)
 )
@@ -39,6 +43,9 @@ var sendSeenEventFactory = apiFactory[*SendSeenEventResponse, SendSeenEventFn]()
 				return nil, errs.ErrInvalidMessageCount
 			}
 
+			if threadType != model.ThreadTypeUser && threadType != model.ThreadTypeGroup {
+				return nil, ErrInvalidSeenData
+			}
 			isGroup := threadType == model.ThreadTypeGroup
 
 			key := "senderId"
@@ -50,6 +57,15 @@ var sendSeenEventFactory = apiFactory[*SendSeenEventResponse, SendSeenEventFn]()
 
 			data := make([]map[string]any, len(messages))
 			for i, msg := range messages {
+				if _, err := positiveActionMessageID(msg.MsgID); err != nil {
+					return nil, ErrInvalidSeenData
+				}
+				if _, err := positiveActionMessageID(msg.CliMsgID); err != nil {
+					return nil, ErrInvalidSeenData
+				}
+				if msg.UIDFrom == "" || msg.IDTo == "" || msg.MsgType == "" || msg.TS <= 0 {
+					return nil, ErrInvalidSeenData
+				}
 				currThreadID := msg.UIDFrom
 				if isGroup {
 					currThreadID = msg.IDTo
@@ -108,3 +124,20 @@ var sendSeenEventFactory = apiFactory[*SendSeenEventResponse, SendSeenEventFn]()
 		}, nil
 	},
 )
+
+// UnmarshalJSON distinguishes an omitted status from a real zero. Callers must
+// establish native status semantics before interpreting it as acceptance.
+func (r *SendSeenEventResponse) UnmarshalJSON(data []byte) error {
+	var wire struct {
+		Status *int `json:"status"`
+	}
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	*r = SendSeenEventResponse{}
+	if wire.Status != nil {
+		r.Status = *wire.Status
+		r.HasStatus = true
+	}
+	return nil
+}

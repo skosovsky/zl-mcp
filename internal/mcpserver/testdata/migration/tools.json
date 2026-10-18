@@ -3224,6 +3224,296 @@
       "annotations": {
         "destructiveHint": false,
         "idempotentHint": true,
+        "openWorldHint": false,
+        "readOnlyHint": true
+      },
+      "description": "Read the durable result for an exact message-action request_id UUID. Never sends, retries or resumes actions. Works without current write permission or collector authentication while the typed chat remains in collection policy. Inspect unknown/partial results before another explicit action; no automatic resend.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "request_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id"
+        ],
+        "type": "object"
+      },
+      "name": "zalo_get_message_action_status",
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "enum": [
+              "read",
+              "reaction"
+            ]
+          },
+          "plan": {
+            "enum": [
+              "read",
+              "add",
+              "clear",
+              "clear_add"
+            ]
+          },
+          "conversation": {
+            "type": "object",
+            "properties": {
+              "conversation_type": {
+                "type": "string",
+                "enum": [
+                  "direct",
+                  "group"
+                ]
+              },
+              "conversation_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "conversation_type",
+              "conversation_id"
+            ],
+            "additionalProperties": false
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "dispatching",
+              "accepted",
+              "rejected",
+              "unknown",
+              "partial"
+            ]
+          },
+          "stage": {
+            "enum": [
+              "none",
+              "read",
+              "clear",
+              "add"
+            ]
+          },
+          "completed_steps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2,
+            "description": "Confirmed upstream calls, not the number of messages read or sender-visible UI outcomes."
+          },
+          "reason": {
+            "enum": [
+              null,
+              "interrupted",
+              "upstream_rejected",
+              "upstream_ambiguous",
+              "upstream_unverified",
+              "permission_denied",
+              "metadata_unavailable",
+              "storage_unavailable",
+              "cancelled",
+              "not_authenticated"
+            ]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retry_safe": {
+            "const": false
+          },
+          "upstream_status": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "request_id",
+          "kind",
+          "plan",
+          "conversation",
+          "status",
+          "stage",
+          "completed_steps",
+          "reason",
+          "updated_at",
+          "retry_safe",
+          "upstream_status"
+        ],
+        "additionalProperties": false,
+        "description": "Durable operation, not sender-visible UI confirmation. accepted means the upstream calls were accepted. unknown is never automatically resent; partial may mean clear succeeded but add failed.",
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "read"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "plan": {
+                  "const": "read"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "plan": {
+                  "enum": [
+                    "add",
+                    "clear",
+                    "clear_add"
+                  ]
+                },
+                "upstream_status": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "accepted"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "stage": {
+                  "const": "none"
+                },
+                "reason": {
+                  "type": "null"
+                },
+                "completed_steps": {
+                  "minimum": 1
+                }
+              }
+            },
+            "else": {
+              "if": {
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "rejected",
+                      "unknown",
+                      "partial"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "partial"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "plan": {
+                  "const": "clear_add"
+                },
+                "completed_steps": {
+                  "const": 1
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "pending",
+                    "dispatching"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "reason": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "accepted"
+                },
+                "plan": {
+                  "const": "clear_add"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "completed_steps": {
+                  "const": 2
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "accepted"
+                },
+                "plan": {
+                  "enum": [
+                    "read",
+                    "clear",
+                    "add"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "completed_steps": {
+                  "const": 1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
         "openWorldHint": true,
         "readOnlyHint": true
       },
@@ -7750,6 +8040,323 @@
       "annotations": {
         "destructiveHint": false,
         "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "description": "Explicitly send read receipts for 1–50 retained incoming messages in one exact typed chat. Call only on the user's explicit instruction for this action; never automatically from reads, Events or journal acknowledgement. May advance the chat read watermark through earlier messages; per-message isolation and other-device counters are not guaranteed. Requires separate per-chat read permission and observed native metadata; archives/unknown metadata cannot be used. Use a stable request_id UUID. accepted means upstream acceptance, not sender-visible UI proof; inspect zalo_get_message_action_status after an unknown result without a new UUID.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "description": "Explicit read receipt for 1–50 retained incoming messages in one exact chat. Native chat watermark effects may include earlier messages; no promise of per-message isolation. No automatic use from reads, Events or journal acknowledgement.",
+        "properties": {
+          "conversation_id": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "conversation_type": {
+            "enum": [
+              "direct",
+              "group"
+            ],
+            "type": "string"
+          },
+          "message_ids": {
+            "items": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "request_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "conversation_type",
+          "conversation_id",
+          "message_ids"
+        ],
+        "type": "object"
+      },
+      "name": "zalo_mark_messages_read",
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "enum": [
+              "read",
+              "reaction"
+            ]
+          },
+          "plan": {
+            "enum": [
+              "read",
+              "add",
+              "clear",
+              "clear_add"
+            ]
+          },
+          "conversation": {
+            "type": "object",
+            "properties": {
+              "conversation_type": {
+                "type": "string",
+                "enum": [
+                  "direct",
+                  "group"
+                ]
+              },
+              "conversation_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "conversation_type",
+              "conversation_id"
+            ],
+            "additionalProperties": false
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "dispatching",
+              "accepted",
+              "rejected",
+              "unknown",
+              "partial"
+            ]
+          },
+          "stage": {
+            "enum": [
+              "none",
+              "read",
+              "clear",
+              "add"
+            ]
+          },
+          "completed_steps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2,
+            "description": "Confirmed upstream calls, not the number of messages read or sender-visible UI outcomes."
+          },
+          "reason": {
+            "enum": [
+              null,
+              "interrupted",
+              "upstream_rejected",
+              "upstream_ambiguous",
+              "upstream_unverified",
+              "permission_denied",
+              "metadata_unavailable",
+              "storage_unavailable",
+              "cancelled",
+              "not_authenticated"
+            ]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retry_safe": {
+            "const": false
+          },
+          "upstream_status": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "request_id",
+          "kind",
+          "plan",
+          "conversation",
+          "status",
+          "stage",
+          "completed_steps",
+          "reason",
+          "updated_at",
+          "retry_safe",
+          "upstream_status"
+        ],
+        "additionalProperties": false,
+        "description": "Durable operation, not sender-visible UI confirmation. accepted means the upstream calls were accepted. unknown is never automatically resent; partial may mean clear succeeded but add failed.",
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "read"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "plan": {
+                  "const": "read"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "plan": {
+                  "enum": [
+                    "add",
+                    "clear",
+                    "clear_add"
+                  ]
+                },
+                "upstream_status": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "accepted"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "stage": {
+                  "const": "none"
+                },
+                "reason": {
+                  "type": "null"
+                },
+                "completed_steps": {
+                  "minimum": 1
+                }
+              }
+            },
+            "else": {
+              "if": {
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "rejected",
+                      "unknown",
+                      "partial"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "partial"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "plan": {
+                  "const": "clear_add"
+                },
+                "completed_steps": {
+                  "const": 1
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "pending",
+                    "dispatching"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "reason": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "accepted"
+                },
+                "plan": {
+                  "const": "clear_add"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "completed_steps": {
+                  "const": 2
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "accepted"
+                },
+                "plan": {
+                  "enum": [
+                    "read",
+                    "clear",
+                    "add"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "completed_steps": {
+                  "const": 1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
         "openWorldHint": false,
         "readOnlyHint": true
       },
@@ -8265,6 +8872,10 @@
                               "pattern": "^zalo://conversations/(direct|group)/.+/messages/.+/content$",
                               "type": "string"
                             },
+                            "content_truncated": {
+                              "description": "True when event content omits trailing elements to fit recovery; read the full metadata resource. Absent on older retained v3 events means false.",
+                              "type": "boolean"
+                            },
                             "conversation_id": {
                               "maxLength": 256,
                               "minLength": 1,
@@ -8335,10 +8946,6 @@
                             },
                             "text_truncated": {
                               "type": "boolean"
-                            },
-                            "content_truncated": {
-                              "type": "boolean",
-                              "description": "True when event content omits trailing elements to fit recovery; read the full metadata resource. Absent on older retained v3 events means false."
                             }
                           },
                           "required": [
@@ -9983,6 +10590,406 @@
           "retry_safe"
         ],
         "type": "object"
+      }
+    },
+    {
+      "annotations": {
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      },
+      "description": "Explicitly set or remove this account's own reactions on one exact retained message in a direct chat or group. Call only on the user's explicit instruction, never automatically from Events, reading or journal ack. Choose a code from zalo://catalog/reactions. Set clears existing own reactions then adds the selected one; replacement is two non-atomic calls and may end partial or unknown. Remove requests clearing this account's own reactions. Removal targets this account's reactions, including accumulated counts; other participants' reactions are preserved. Requires separate per-chat reaction permission. Use a stable request_id UUID; do not resend unknown operations with a new UUID. accepted is protocol acceptance, not UI or callback proof.",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "else": {
+              "not": {
+                "required": [
+                  "reaction"
+                ]
+              }
+            },
+            "if": {
+              "properties": {
+                "action": {
+                  "const": "set"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "reaction"
+              ]
+            }
+          }
+        ],
+        "description": "Explicit own-reaction change. Set clears existing own reactions before adding the selected code; two non-atomic steps. Remove clears own reactions. No other sender reactions are changed.",
+        "properties": {
+          "action": {
+            "enum": [
+              "set",
+              "remove"
+            ]
+          },
+          "conversation_id": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "conversation_type": {
+            "enum": [
+              "direct",
+              "group"
+            ],
+            "type": "string"
+          },
+          "message_id": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reaction": {
+            "enum": [
+              "heart",
+              "like",
+              "haha",
+              "wow",
+              "cry",
+              "angry",
+              "kiss",
+              "tears_of_joy",
+              "shit",
+              "rose",
+              "broken_heart",
+              "dislike",
+              "love",
+              "confused",
+              "wink",
+              "fade",
+              "sun",
+              "birthday",
+              "bomb",
+              "ok",
+              "peace",
+              "thanks",
+              "punch",
+              "share",
+              "pray",
+              "no",
+              "bad",
+              "love_you",
+              "sad",
+              "very_sad",
+              "cool",
+              "nerd",
+              "big_smile",
+              "sunglasses",
+              "neutral",
+              "sad_face",
+              "bye",
+              "sleepy",
+              "wipe",
+              "dig",
+              "anguish",
+              "handclap",
+              "angry_face",
+              "f_chair",
+              "l_chair",
+              "r_chair",
+              "silent",
+              "surprise",
+              "embarrassed",
+              "afraid",
+              "sad_2",
+              "big_laugh",
+              "rich",
+              "beer"
+            ],
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "conversation_type",
+          "conversation_id",
+          "message_id",
+          "action"
+        ],
+        "type": "object"
+      },
+      "name": "zalo_set_message_reaction",
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "enum": [
+              "read",
+              "reaction"
+            ]
+          },
+          "plan": {
+            "enum": [
+              "read",
+              "add",
+              "clear",
+              "clear_add"
+            ]
+          },
+          "conversation": {
+            "type": "object",
+            "properties": {
+              "conversation_type": {
+                "type": "string",
+                "enum": [
+                  "direct",
+                  "group"
+                ]
+              },
+              "conversation_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "conversation_type",
+              "conversation_id"
+            ],
+            "additionalProperties": false
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "dispatching",
+              "accepted",
+              "rejected",
+              "unknown",
+              "partial"
+            ]
+          },
+          "stage": {
+            "enum": [
+              "none",
+              "read",
+              "clear",
+              "add"
+            ]
+          },
+          "completed_steps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2,
+            "description": "Confirmed upstream calls, not the number of messages read or sender-visible UI outcomes."
+          },
+          "reason": {
+            "enum": [
+              null,
+              "interrupted",
+              "upstream_rejected",
+              "upstream_ambiguous",
+              "upstream_unverified",
+              "permission_denied",
+              "metadata_unavailable",
+              "storage_unavailable",
+              "cancelled",
+              "not_authenticated"
+            ]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retry_safe": {
+            "const": false
+          },
+          "upstream_status": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "request_id",
+          "kind",
+          "plan",
+          "conversation",
+          "status",
+          "stage",
+          "completed_steps",
+          "reason",
+          "updated_at",
+          "retry_safe",
+          "upstream_status"
+        ],
+        "additionalProperties": false,
+        "description": "Durable operation, not sender-visible UI confirmation. accepted means the upstream calls were accepted. unknown is never automatically resent; partial may mean clear succeeded but add failed.",
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "read"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "plan": {
+                  "const": "read"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "plan": {
+                  "enum": [
+                    "add",
+                    "clear",
+                    "clear_add"
+                  ]
+                },
+                "upstream_status": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "accepted"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "stage": {
+                  "const": "none"
+                },
+                "reason": {
+                  "type": "null"
+                },
+                "completed_steps": {
+                  "minimum": 1
+                }
+              }
+            },
+            "else": {
+              "if": {
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "rejected",
+                      "unknown",
+                      "partial"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "partial"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "plan": {
+                  "const": "clear_add"
+                },
+                "completed_steps": {
+                  "const": 1
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "pending",
+                    "dispatching"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "reason": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "accepted"
+                },
+                "plan": {
+                  "const": "clear_add"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "completed_steps": {
+                  "const": 2
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "accepted"
+                },
+                "plan": {
+                  "enum": [
+                    "read",
+                    "clear",
+                    "add"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "completed_steps": {
+                  "const": 1
+                }
+              }
+            }
+          }
+        ]
       }
     }
   ]

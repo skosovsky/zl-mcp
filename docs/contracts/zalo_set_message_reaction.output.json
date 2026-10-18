@@ -1,0 +1,266 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "kind": {
+      "enum": [
+        "read",
+        "reaction"
+      ]
+    },
+    "plan": {
+      "enum": [
+        "read",
+        "add",
+        "clear",
+        "clear_add"
+      ]
+    },
+    "conversation": {
+      "type": "object",
+      "properties": {
+        "conversation_type": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "group"
+          ]
+        },
+        "conversation_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "conversation_type",
+        "conversation_id"
+      ],
+      "additionalProperties": false
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "dispatching",
+        "accepted",
+        "rejected",
+        "unknown",
+        "partial"
+      ]
+    },
+    "stage": {
+      "enum": [
+        "none",
+        "read",
+        "clear",
+        "add"
+      ]
+    },
+    "completed_steps": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2,
+      "description": "Confirmed upstream calls, not the number of messages read or sender-visible UI outcomes."
+    },
+    "reason": {
+      "enum": [
+        null,
+        "interrupted",
+        "upstream_rejected",
+        "upstream_ambiguous",
+        "upstream_unverified",
+        "permission_denied",
+        "metadata_unavailable",
+        "storage_unavailable",
+        "cancelled",
+        "not_authenticated"
+      ]
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "retry_safe": {
+      "const": false
+    },
+    "upstream_status": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "request_id",
+    "kind",
+    "plan",
+    "conversation",
+    "status",
+    "stage",
+    "completed_steps",
+    "reason",
+    "updated_at",
+    "retry_safe",
+    "upstream_status"
+  ],
+  "additionalProperties": false,
+  "description": "Durable operation, not sender-visible UI confirmation. accepted means the upstream calls were accepted. unknown is never automatically resent; partial may mean clear succeeded but add failed.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "read"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "plan": {
+            "const": "read"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "plan": {
+            "enum": [
+              "add",
+              "clear",
+              "clear_add"
+            ]
+          },
+          "upstream_status": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "accepted"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "stage": {
+            "const": "none"
+          },
+          "reason": {
+            "type": "null"
+          },
+          "completed_steps": {
+            "minimum": 1
+          }
+        }
+      },
+      "else": {
+        "if": {
+          "properties": {
+            "status": {
+              "enum": [
+                "rejected",
+                "unknown",
+                "partial"
+              ]
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "reason": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "partial"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "plan": {
+            "const": "clear_add"
+          },
+          "completed_steps": {
+            "const": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "pending",
+              "dispatching"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "reason": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "plan": {
+            "const": "clear_add"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "completed_steps": {
+            "const": 2
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "accepted"
+          },
+          "plan": {
+            "enum": [
+              "read",
+              "clear",
+              "add"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "completed_steps": {
+            "const": 1
+          }
+        }
+      }
+    }
+  ]
+}

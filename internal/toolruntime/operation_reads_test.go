@@ -44,7 +44,18 @@ func TestOperationReadsUseScopedExecutorAndNeverReplaceFailuresWithCommands(t *t
 	base, authority := readRuntime(t)
 	id := "00000000-0000-4000-8000-000000000001"
 	at := "2026-10-01T00:00:00Z"
+	reason := "upstream_unverified"
 	backend := &operationReadBackend{results: map[string]any{
+		"zalo_get_message_action_status": domain.MessageActionOperation{
+			RequestID:    id,
+			Kind:         "read",
+			Reason:       &reason,
+			Plan:         "read",
+			Conversation: domain.ConversationRef{Type: "direct", ID: "peer"},
+			Status:       "unknown",
+			Stage:        "read",
+			UpdatedAt:    time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
+		},
 		"zalo_get_send_status": domain.SendOperation{
 			RequestID:   id,
 			RecipientID: "9007199254740993",
@@ -83,7 +94,7 @@ func TestOperationReadsUseScopedExecutorAndNeverReplaceFailuresWithCommands(t *t
 		base.conversations,
 		authority,
 		Capabilities{
-			Messaging:  &messaging.Handler{Reads: reader},
+			Messaging:  &messaging.Handler{Reads: reader, Actions: reader},
 			History:    &history.Handler{Reads: reader},
 			Membership: &membership.Handler{Reads: reader},
 		},
@@ -93,6 +104,7 @@ func TestOperationReadsUseScopedExecutorAndNeverReplaceFailuresWithCommands(t *t
 	}
 	binding := bound(t, r)
 	for _, test := range []struct{ name, raw string }{
+		{"zalo_get_message_action_status", `{"request_id":"` + id + `"}`},
 		{"zalo_get_send_status", `{"request_id":"` + id + `"}`},
 		{"zalo_get_history_import_status", `{"operation_id":"` + id + `"}`},
 		{"zalo_get_join_status", `{"operation_id":"` + id + `"}`},
@@ -127,7 +139,12 @@ func TestOperationReadsUseScopedExecutorAndNeverReplaceFailuresWithCommands(t *t
 	// Act.
 	_, invalid := r.Execute(context.Background(), binding, "zalo_get_send_status", []byte(`{"request_id":"invalid"}`))
 	authority.revision.Add(1)
-	_, stale := r.Execute(context.Background(), binding, "zalo_get_join_status", []byte(`{"operation_id":"`+id+`"}`))
+	_, stale := r.Execute(
+		context.Background(),
+		binding,
+		"zalo_get_message_action_status",
+		[]byte(`{"request_id":"`+id+`"}`),
+	)
 	// Assert.
 	if domainCode(invalid) != "INVALID_ARGUMENT" || domainCode(stale) != "PERMISSION_DENIED" ||
 		len(backend.calls) != before {

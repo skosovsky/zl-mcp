@@ -104,6 +104,7 @@ func NewOldMessage(messages []Message, threadType ThreadType) OldMessages {
 }
 
 type TMessage struct {
+	SeenFieldsPresent bool         `json:"-"`
 	ActionID          string       `json:"actionId"`
 	MsgID             string       `json:"msgId"`
 	CliMsgID          string       `json:"cliMsgId"`

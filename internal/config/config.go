@@ -31,9 +31,11 @@ type Config struct {
 		Conversations []domain.ConversationRef `toml:"conversations"`
 	} `toml:"collection"`
 	Permissions struct {
-		AllowJoin        bool     `toml:"allow_join"`
-		AllowSend        bool     `toml:"allow_send"`
-		SendRecipientIDs []string `toml:"send_recipient_ids"`
+		AllowJoin        bool                     `toml:"allow_join"`
+		AllowSend        bool                     `toml:"allow_send"`
+		SendRecipientIDs []string                 `toml:"send_recipient_ids"`
+		ReadReceiptChats []domain.ConversationRef `toml:"read_receipt_chats"`
+		ReactionChats    []domain.ConversationRef `toml:"reaction_chats"`
 	} `toml:"permissions"`
 	Storage struct {
 		RetentionDays int `toml:"retention_days"`
@@ -98,11 +100,15 @@ func (c Config) validatePermissions() error {
 	for _, id := range c.Permissions.SendRecipientIDs {
 		ids = append(ids, id)
 	}
+	readChats := permissionChatValues(c.Permissions.ReadReceiptChats)
+	reactionChats := permissionChatValues(c.Permissions.ReactionChats)
 	if err = schema.Validate(
 		map[string]any{
 			"allow_join":         c.Permissions.AllowJoin,
 			"allow_send":         c.Permissions.AllowSend,
 			"send_recipient_ids": ids,
+			"read_receipt_chats": readChats,
+			"reaction_chats":     reactionChats,
 		},
 	); err != nil {
 		return fmt.Errorf("invalid sending permission configuration: %w", err)
@@ -265,4 +271,12 @@ func validateRuntimeOptions(c Config) error {
 		seen[id] = true
 	}
 	return nil
+}
+
+func permissionChatValues(refs []domain.ConversationRef) []any {
+	values := make([]any, 0, len(refs))
+	for _, ref := range refs {
+		values = append(values, map[string]any{"type": ref.Type, "id": ref.ID})
+	}
+	return values
 }

@@ -54,6 +54,8 @@ func TestCommandsRejectUntrustedScopeBeforeEffectsAndNeverRetryOwnerFailure(t *t
 		name, raw string
 		seconds   int
 	}{
+		{"zalo_mark_messages_read", `{"conversation_type":"direct","conversation_id":"9007199254740993","message_ids":["9007199254740995"],"request_id":"` + id + `"}`, 35},
+		{"zalo_set_message_reaction", `{"conversation_type":"direct","conversation_id":"9007199254740993","message_id":"9007199254740995","action":"set","reaction":"heart","request_id":"` + id + `"}`, 70},
 		{"zalo_send_direct_message", `{"recipient_id":"9007199254740993","text":"Cà phê 🍀","request_id":"` + id + `"}`, 35},
 		{"zalo_join_group", `{"plan_token":"opaque-plan","request_id":"` + id + `"}`, 6},
 		{"zalo_import_conversation_history", `{"conversation_type":"group","conversation_id":"g","request_id":"` + id + `","since":"2026-10-01T00:00:00Z","until":"2026-10-02T00:00:00Z"}`, 35},
@@ -71,6 +73,7 @@ func TestCommandsRejectUntrustedScopeBeforeEffectsAndNeverRetryOwnerFailure(t *t
 				Messaging: &messaging.Handler{
 					Reads:    operations,
 					Commands: operations,
+					Actions:  operations,
 				},
 				History:    &history.Handler{Reads: operations, Commands: operations},
 				Membership: &membership.Handler{Reads: operations, Commands: operations},

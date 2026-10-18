@@ -360,6 +360,17 @@ func convertMessage(d model.TMessage, ref domain.ConversationRef, source string)
 	if domain.ValidMessageClientID(d.CliMsgID) {
 		msg.ProtocolClientMessageID = d.CliMsgID
 	}
+	// Only native decoding can attest presence. An omitted/null counter is not
+	// evidence of zero; old/archive projections must remain unavailable.
+	if d.SeenFieldsPresent && domain.ValidMessageClientID(d.CliMsgID) && d.IDTo != "" && d.MsgType != "" {
+		msg.SeenMetadata = &domain.SeenMetadata{
+			ClientMessageID: d.CliMsgID,
+			RecipientID:     d.IDTo,
+			MessageType:     d.MsgType,
+			Timestamp:       d.TS,
+			ST:              d.ST, AT: d.AT, CMD: d.CMD,
+		}
+	}
 	if d.Content.String != nil {
 		msg.Text = *d.Content.String
 	} else if d.Content.Attachment != nil {

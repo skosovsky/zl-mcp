@@ -78,3 +78,20 @@ checks typed content provenance before quoting a legacy search projection.
 Repository and installed copies must match; this does not update cloud automation
 instructions or migrate existing subscriptions. No model evals validate this
 revision. See [rich-content contract](contracts/rich-content-events.md).
+
+## Explicit read state and reactions
+
+Both source skills now distinguish processing from Zalo account changes:
+research, Events handling, notifications and journal ack do not mark messages
+read or set/replace/remove reactions. Technical per-chat permission does not
+supply the user's instruction. These writes require a separate explicit request
+for exact targets and are not added to recurring automation rules. This policy
+update does not claim native acceptance of the upcoming write tools. Copied
+skills and saved automation prompts require their own update after final rollout.
+
+
+Both skills explicitly separate read/search/Event handling from user-requested
+read receipts and own-reaction changes. Their action guidance uses the finite
+catalogue, exact typed targets, stable UUID, independent permissions and status
+inspection; no automatic rule or old model-eval result authorizes these actions.
+See [message actions](message-actions.md).

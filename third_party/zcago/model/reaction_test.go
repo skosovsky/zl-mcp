@@ -108,3 +108,12 @@ func TestReactionIdentityKeepsOutgoingBeforeUIDReplacement(t *testing.T) {
 		})
 	}
 }
+
+func TestTearsOfJoyEncodingMatchesPinnedUpstream(t *testing.T) {
+	// Arrange / Act: use the exact icon string, not an escaped backslash.
+	data := NewReactionData(ReactionTearsOfJoy)
+	// Assert.
+	if string(data.RIcon) != ":')" || data.RType != 7 || data.Source != 6 {
+		t.Fatal("tears of joy does not match pinned zca-js")
+	}
+}

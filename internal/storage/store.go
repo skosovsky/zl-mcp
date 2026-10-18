@@ -170,7 +170,13 @@ func (s *Store) migrate(ctx context.Context) error {
 	if err := s.migrateActivities(ctx); err != nil {
 		return err
 	}
-	return s.migrateMessageClientIDs(ctx)
+	if err := s.migrateMessageClientIDs(ctx); err != nil {
+		return err
+	}
+	if err := s.migrateSeenMetadata(ctx); err != nil {
+		return err
+	}
+	return s.migrateMessageActions(ctx)
 }
 func (s *Store) BindAccount(ctx context.Context, account string) error {
 	h := sha256.Sum256([]byte(account))
@@ -342,6 +348,9 @@ func (s *Store) putMessageTx(ctx context.Context, tx *sql.Tx, m domain.Message, 
 		}
 	}
 	if err = putMessageClientID(ctx, tx, m); err != nil {
+		return false, err
+	}
+	if err = putSeenMetadata(ctx, tx, m); err != nil {
 		return false, err
 	}
 	// A matching replay may restore missing protocol quote identifiers without

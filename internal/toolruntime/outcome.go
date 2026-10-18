@@ -14,6 +14,17 @@ func (r *Result) Outcome() domain.Outcome {
 		return domain.OutcomeUnknown
 	}
 	switch {
+	case r.MessageActionStatus != nil:
+		switch r.MessageActionStatus.Status {
+		case "accepted":
+			return domain.OutcomeSuccess
+		case "rejected":
+			return domain.OutcomeError
+		case "partial":
+			return domain.OutcomePartial
+		default:
+			return domain.OutcomeUnknown
+		}
 	case r.SendStatus != nil:
 		return stateOutcome(domain.ObserveState(r.SendStatus.Status))
 	case r.ImportStatus != nil:

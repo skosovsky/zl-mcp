@@ -25,6 +25,7 @@ import (
 	"github.com/skosovsky/zl-mcp/internal/historyimport"
 	"github.com/skosovsky/zl-mcp/internal/local"
 	"github.com/skosovsky/zl-mcp/internal/mcpserver"
+	"github.com/skosovsky/zl-mcp/internal/messageactions"
 	"github.com/skosovsky/zl-mcp/internal/messaging"
 	"github.com/skosovsky/zl-mcp/internal/mobilebackup"
 	"github.com/skosovsky/zl-mcp/internal/observability"
@@ -53,21 +54,31 @@ func Run(ctx context.Context, c config.Config) error {
 // membershipPort blocks network operations while the collector lacks a session.
 // Reading a saved operation needs no upstream client.
 type membershipPort struct {
-	stateDir   string
-	mu         sync.RWMutex
-	current    *collector.JoinManager
-	store      *storage.Store
-	sender     messaging.Sender
-	allowSend  bool
-	recipients map[string]bool
-	lifecycle  context.Context
-	snapshots  *mobilebackup.SnapshotStore
-	archives   *mobilebackup.RetainedArchiveStore
-	library    *mobilebackup.RetainedArchiveStore
+	stateDir      string
+	mu            sync.RWMutex
+	current       *collector.JoinManager
+	store         *storage.Store
+	sender        messaging.Sender
+	actions       messageactions.Upstream
+	actionContext context.Context
+	readChats     map[domain.ConversationRef]bool
+	reactionChats map[domain.ConversationRef]bool
+	allowSend     bool
+	recipients    map[string]bool
+	lifecycle     context.Context
+	snapshots     *mobilebackup.SnapshotStore
+	archives      *mobilebackup.RetainedArchiveStore
+	library       *mobilebackup.RetainedArchiveStore
 }
 
 func (p *membershipPort) set(j *collector.JoinManager) { p.mu.Lock(); p.current = j; p.mu.Unlock() }
 func (p *membershipPort) setSender(s messaging.Sender) { p.mu.Lock(); p.sender = s; p.mu.Unlock() }
+func (p *membershipPort) setActions(ctx context.Context, source messageactions.Upstream) {
+	p.mu.Lock()
+	p.actions = source
+	p.actionContext = ctx
+	p.mu.Unlock()
+}
 func (p *membershipPort) Call(ctx context.Context, method string, args any) (map[string]any, error) {
 	// SDK request contexts can outlive the originating HTTP request. The domain
 	// port must also follow service shutdown before it acquires session ownership.
@@ -91,6 +102,10 @@ func (p *membershipPort) Call(ctx context.Context, method string, args any) (map
 	if method == "zalo_import_conversation_history" || method == "zalo_get_history_import_status" ||
 		method == "zalo_cancel_history_import" {
 		return (&historyimport.Manager{Store: p.store}).Call(ctx, method, args)
+	}
+	if method == "zalo_mark_messages_read" || method == "zalo_set_message_reaction" ||
+		method == "zalo_get_message_action_status" {
+		return p.messageActionCall(ctx, method, args)
 	}
 	if method == "zalo_send_direct_message" || method == "zalo_get_send_status" {
 		return (&messaging.Manager{Store: p.store, Sender: p.sender, Enabled: p.allowSend, Recipients: p.recipients}).Call(
@@ -123,8 +138,12 @@ func (p *membershipPort) cliHandler() http.Handler {
 			Method string `json:"method"`
 		}
 		if err != nil || json.Unmarshal(b, &request) != nil ||
-			(request.Method != "cli_preview" && request.Method != "cli_approve" && request.Method != "cli_probe_preload" && !mobileLedgerMethod(request.Method) && request.Method != operationProbeRecall) {
+			(request.Method != "cli_preview" && request.Method != "cli_approve" && request.Method != "cli_probe_preload" && !mobileLedgerMethod(request.Method) && request.Method != operationProbeRecall && request.Method != operationMessageActionProbe) {
 			http.Error(w, "Only trusted CLI routes are available.", http.StatusBadRequest)
+			return
+		}
+		if request.Method == operationMessageActionProbe {
+			p.messageActionProbeControl(w, r, b)
 			return
 		}
 		if request.Method == operationProbeRecall {
@@ -233,6 +252,9 @@ func runConfigured(
 	if err = store.RecoverInterruptedSends(ctx); err != nil {
 		return err
 	}
+	if err = store.RecoverInterruptedMessageActions(ctx); err != nil {
+		return err
+	}
 	if err = store.RecoverMobileBackupAttempts(ctx); err != nil {
 		return err
 	}
@@ -279,14 +301,16 @@ func runConfigured(
 	}
 	//nolint:exhaustruct_v5 // membershipPort initializes only this owner/phase; optional collaborators, buffers and counters keep their zero defaults.
 	port := &membershipPort{
-		stateDir:   c.StateDir,
-		store:      store,
-		allowSend:  c.Permissions.AllowSend,
-		recipients: recipients,
-		lifecycle:  ctx,
-		snapshots:  snapshots,
-		archives:   archives,
-		library:    library,
+		stateDir:      c.StateDir,
+		store:         store,
+		allowSend:     c.Permissions.AllowSend,
+		recipients:    recipients,
+		readChats:     allowedActionChats(c.Permissions.ReadReceiptChats),
+		reactionChats: allowedActionChats(c.Permissions.ReactionChats),
+		lifecycle:     ctx,
+		snapshots:     snapshots,
+		archives:      archives,
+		library:       library,
 	}
 	if err = port.CleanupHistorySnapshots(ctx); err != nil {
 		return errors.New("private mobile snapshot cleanup unavailable")
@@ -316,7 +340,7 @@ func runConfigured(
 	if err = os.Chmod(socket, 0600); err != nil {
 		return err
 	}
-	// Allow the 30s upstream send plus independent result persistence to finish.
+	// Allow the bounded two-step reaction plan and durable finalization to finish.
 	// Shutdown cancels requests before waiting for session ports and closing SQLite.
 	httpServer := &http.Server{
 		Handler:           handler,
@@ -463,6 +487,9 @@ func runActiveCollector(
 		if sender, ok := client.(messaging.Sender); ok {
 			port.setSender(sender)
 		}
+		if actions, ok := client.(messageactions.Upstream); ok {
+			port.setActions(sessionCtx, actions)
+		}
 		if port.snapshots != nil {
 			mobileDone = make(chan error, 1)
 			go func() {
@@ -486,6 +513,7 @@ func runActiveCollector(
 			}
 		}
 	}
+	port.setActions(sessionCtx, nil)
 	port.setSender(nil)
 	port.set(nil)
 	return err

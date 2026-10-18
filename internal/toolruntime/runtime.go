@@ -87,6 +87,7 @@ type Result struct {
 	CollectorStatus     *conversations.CollectorStatus
 	GroupDetail         *conversations.GroupDetail
 	GroupList           *conversations.GroupExecution
+	MessageActionStatus *domain.MessageActionOperation
 	SendStatus          *domain.SendOperation
 	ImportStatus        *domain.HistoryImportStatus
 	JoinStatus          *membership.JoinStatus
@@ -129,6 +130,8 @@ func (r *Result) value() any {
 		return *r.GroupDetail
 	case r.GroupList != nil:
 		return r.GroupList.Result
+	case r.MessageActionStatus != nil:
+		return *r.MessageActionStatus
 	case r.SendStatus != nil:
 		return *r.SendStatus
 	case r.ImportStatus != nil:
@@ -201,6 +204,9 @@ func New(
 				"zalo_get_join_status",
 				"zalo_inspect_invite",
 			)
+		}
+		if v.Messaging != nil && v.Messaging.Actions != nil {
+			names = append(names, toolMarkMessagesRead, toolSetMessageReaction, toolGetMessageActionStatus)
 		}
 		if commandsPresent(v) {
 			if v.Messaging == nil || v.History == nil || v.Membership == nil || v.Events == nil ||
@@ -424,7 +430,9 @@ func (r *Runtime) decide(ctx context.Context, req toolsy.PolicyRequest) toolsy.D
 		err = r.authority.CheckGroupContext(ctx, contextRequest(args, true))
 	case toolGetConversationMessageContext:
 		err = r.authority.CheckConversationContext(ctx, contextRequest(args, false))
-	case toolSendDirectMessage,
+	case toolMarkMessagesRead,
+		toolSetMessageReaction,
+		toolSendDirectMessage,
 		toolJoinGroup,
 		toolImportConversationHistory,
 		toolCancelHistoryImport,
@@ -438,6 +446,7 @@ func (r *Runtime) decide(ctx context.Context, req toolsy.PolicyRequest) toolsy.D
 		"zalo_get_status",
 		"zalo_list_groups",
 		"zalo_get_group",
+		toolGetMessageActionStatus,
 		"zalo_get_send_status",
 		"zalo_get_history_import_status",
 		"zalo_get_join_status",
@@ -476,6 +485,40 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 	out := &Result{}
 	var err error
 	switch name {
+	case toolMarkMessagesRead:
+		ids, parseErr := messageActionIDs(args)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		var v domain.MessageActionOperation
+		v, err = r.operations.Messaging.MarkMessagesRead(
+			ctx,
+			messaging.MarkReadRequest{
+				RequestID:        stringArg(args, "request_id"),
+				ConversationType: stringArg(args, "conversation_type"),
+				ConversationID:   stringArg(args, "conversation_id"),
+				MessageIDs:       ids,
+			},
+		)
+		out.MessageActionStatus = &v
+	case toolSetMessageReaction:
+		var v domain.MessageActionOperation
+		v, err = r.operations.Messaging.SetMessageReaction(
+			ctx,
+			messaging.ReactionRequest{
+				RequestID:        stringArg(args, "request_id"),
+				ConversationType: stringArg(args, "conversation_type"),
+				ConversationID:   stringArg(args, "conversation_id"),
+				MessageID:        stringArg(args, "message_id"),
+				Action:           stringArg(args, "action"),
+				Reaction:         stringArg(args, "reaction"),
+			},
+		)
+		out.MessageActionStatus = &v
+	case toolGetMessageActionStatus:
+		var v domain.MessageActionOperation
+		v, err = r.operations.Messaging.MessageActionStatus(ctx, stringArg(args, "request_id"))
+		out.MessageActionStatus = &v
 	case toolSendDirectMessage:
 		var reply *string
 		if text, ok := args["reply_to_message_id"].(string); ok {
@@ -674,7 +717,9 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 
 func isCommand(name string) bool {
 	switch name {
-	case toolSendDirectMessage,
+	case toolMarkMessagesRead,
+		toolSetMessageReaction,
+		toolSendDirectMessage,
 		toolJoinGroup,
 		toolImportConversationHistory,
 		toolCancelHistoryImport,
@@ -694,4 +739,20 @@ func optionalInt(args map[string]any, key string) *int {
 	}
 	n := intArg(args, key, 0)
 	return &n
+}
+
+func messageActionIDs(args map[string]any) ([]string, error) {
+	values, ok := args["message_ids"].([]any)
+	if !ok {
+		return nil, invalidSchema()
+	}
+	ids := make([]string, len(values))
+	for i, value := range values {
+		id, valid := value.(string)
+		if !valid {
+			return nil, invalidSchema()
+		}
+		ids[i] = id
+	}
+	return ids, nil
 }

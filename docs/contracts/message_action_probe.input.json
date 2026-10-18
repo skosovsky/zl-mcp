@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "conversation_type": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "group"
+      ]
+    },
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "message_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "plan": {
+      "type": "string",
+      "enum": [
+        "read",
+        "add",
+        "clear"
+      ]
+    },
+    "reaction": {
+      "type": "string",
+      "enum": [
+        "heart",
+        "like",
+        "haha",
+        "wow",
+        "cry",
+        "angry",
+        "kiss",
+        "tears_of_joy",
+        "shit",
+        "rose",
+        "broken_heart",
+        "dislike",
+        "love",
+        "confused",
+        "wink",
+        "fade",
+        "sun",
+        "birthday",
+        "bomb",
+        "ok",
+        "peace",
+        "thanks",
+        "punch",
+        "share",
+        "pray",
+        "no",
+        "bad",
+        "love_you",
+        "sad",
+        "very_sad",
+        "cool",
+        "nerd",
+        "big_smile",
+        "sunglasses",
+        "neutral",
+        "sad_face",
+        "bye",
+        "sleepy",
+        "wipe",
+        "dig",
+        "anguish",
+        "handclap",
+        "angry_face",
+        "f_chair",
+        "l_chair",
+        "r_chair",
+        "silent",
+        "surprise",
+        "embarrassed",
+        "afraid",
+        "sad_2",
+        "big_laugh",
+        "rich",
+        "beer"
+      ]
+    }
+  },
+  "required": [
+    "request_id",
+    "conversation_type",
+    "conversation_id",
+    "message_ids",
+    "plan"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "plan": {
+            "const": "add"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "reaction"
+        ],
+        "properties": {
+          "message_ids": {
+            "maxItems": 1
+          }
+        }
+      },
+      "else": {
+        "not": {
+          "required": [
+            "reaction"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "plan": {
+            "const": "clear"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "message_ids": {
+            "maxItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

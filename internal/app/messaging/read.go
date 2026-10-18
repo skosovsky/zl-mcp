@@ -13,6 +13,7 @@ type StatusPort interface {
 }
 
 type Handler struct {
+	Actions  MessageActionPort
 	Reads    StatusPort
 	Commands CommandPort
 }

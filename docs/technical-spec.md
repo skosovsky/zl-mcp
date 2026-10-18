@@ -478,3 +478,20 @@ numeric-поля, у второго три без reason; они не дают �
 не создаёт message/novelty фактов. Cross-ledger tombstone подавляет повторную
 доставку старой message-проекции после обновления; прежние payload не меняются.
 Контракт и ограничения: [rich-content-events](contracts/rich-content-events.md).
+
+
+## Явные отметки прочтения и собственные реакции
+
+Действующий добавочный контракт описан в [message-actions](message-actions.md)
+и исполняемых schemas `zalo_mark_messages_read`, `zalo_set_message_reaction`,
+`zalo_get_message_action_status`. Отдельные exact-chat permissions не вытекают из
+collection или разрешения отправлять текст. Агент вызывает действия только по
+явному поручению, никогда из обычного чтения, Events или journal ack. Status —
+самостоятельный read-only инструмент, работает без текущего write grant/сессии.
+
+Прочтение может продвигать watermark чата; изоляция отдельных сообщений не
+обещается. Set реакции — clear+add с долговечными checkpoints и возможными
+partial/unknown; UUID нельзя заменять ради слепого повтора. Сервер получает
+наблюдённые protocol metadata сам, не синтезирует отсутствующие поля и не
+синхронизирует телефон. Native-покрытие и ограничения перечислены в
+[отчёте приёмки](message-actions-acceptance.md), не выводятся из старых evals.
