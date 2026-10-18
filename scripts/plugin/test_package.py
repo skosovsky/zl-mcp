@@ -64,6 +64,17 @@ class PackageTests(unittest.TestCase):
         self.assertEqual(descriptor['env'], {'ZL_MCP_BINARY': '/opt/local/bin/zl-mcp',
                                              'ZL_MCP_CONFIG': '/opt/private/work.toml'})
 
+    def test_portable_data_bindings_have_disjoint_server_keys(self):
+        # Arrange: two private package names use host PLUGIN_DATA, without env bindings.
+        a = PACKAGE.files(instance='personal')
+        b = PACKAGE.files(instance='work')
+        # Act
+        servers_a = json.loads(a['mcp.json'])['mcpServers']
+        servers_b = json.loads(b['mcp.json'])['mcpServers']
+        # Assert: Codex must not suppress the neighbor through a duplicate server key.
+        self.assertTrue(set(servers_a).isdisjoint(servers_b))
+        self.assertNotIn('env', next(iter(servers_a.values())))
+
     def test_bridge_is_literal_and_never_starts_service(self):
         # Arrange
         with tempfile.TemporaryDirectory() as temp:

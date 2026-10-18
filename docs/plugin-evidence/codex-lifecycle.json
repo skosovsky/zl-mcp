@@ -1,14 +1,14 @@
 {
-  "checked_at": "2026-10-18T11:32:56.556525+00:00",
+  "checked_at": "2026-10-18T11:47:02.223043+00:00",
   "codex_version": "codex-cli 0.160.0",
   "native_binary_sha256": "f583da494a6178ce104b8a37f101c54548a948adedbe0219dae5521225e5aef5",
   "probe_script_sha256": "cc800b7043fe1840827eee51289fdcb8c7c7239c8b8a891e0e607fddd3a61a8a",
-  "builder_script_sha256": "1a9c47eaecd16e3757ee34e60d813d433181ddc46b2f77819281b23bf921aa5f",
+  "builder_script_sha256": "806c2418f70faf8e9a40024b23cb179148b4bdbbd89782d198ed60e4c2cee8cc",
   "public_archive_sha256": "f855ab3d6b77aadd8b1d7cd5cd286c399f19b09f9de80f86e16ce6b464b4ff54",
   "private_fixture_archive_sha256": {
-    "a_0.1.0": "36f4f486107e283e2fb73fd456058c33f685ef88c79467937d862d103d30ff25",
-    "b_0.1.0": "175880e0190d852559c99ea71643b9e7fbd119ba3b86ec4f0de6655b5f44f37e",
-    "a_0.1.1": "759d2a7e62d87d38fb94db0ee78622d756fd305623b3bd2a073291d347becd2e"
+    "a_0.1.0": "4409fe44a4d135253e153732b3821eec1233b02641881b9a63b740e2ebf136a0",
+    "b_0.1.0": "ec2ee28e28bc2ecde2cdb944436a559561f293db03809369138d37c8644a2966",
+    "a_0.1.1": "cf5d8396b983ea4e8b6ae8a728e782b47dc5e408ecd0720339ff654bc02b8ce7"
   },
   "source_input_tree_sha256": "6b9a64cdcc0964a80bb8606434a4d079dc037198fda9c26798596b5790ed1e78",
   "two_real_native_services_without_session": "PASS",

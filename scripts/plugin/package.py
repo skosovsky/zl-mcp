@@ -42,13 +42,12 @@ def files(root=ROOT, instance=None, binary=None, config=None, apps=None):
     if instance:
         manifest['name'] += '-' + instance
         manifest['extensions']['com.openai']['interface']['displayName'] += ' (' + instance + ')'
+        mcp['mcpServers']['zalo-' + instance] = mcp['mcpServers'].pop('zalo')
     if binary:
         for value in [binary, config]:
             if not Path(value).is_absolute() or any(c in value for c in '\r\n\x00'):
                 raise ValueError('binary/config must be absolute paths without newlines')
-        server = mcp['mcpServers'].pop('zalo')
-        server['env'] = {'ZL_MCP_BINARY': binary, 'ZL_MCP_CONFIG': config}
-        mcp['mcpServers']['zalo-' + instance] = server
+        mcp['mcpServers']['zalo-' + instance]['env'] = {'ZL_MCP_BINARY': binary, 'ZL_MCP_CONFIG': config}
     output = {'plugin.json': encode(manifest), 'mcp.json': encode(mcp),
               'LICENSE': source(root, 'LICENSE').read_bytes(),
               'scripts/bridge.sh': source(root, 'scripts/plugin/bridge.sh').read_bytes()}

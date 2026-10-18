@@ -112,3 +112,13 @@ Three additional criteria now pass literally within their defined scope:
 **Current complete criteria:** A02, A03, A04, A06, A09, A10, A12, A13, A14, A15, A16 — **11/18 = 61.11%**. **Known unresolved implementation defects: 0.** Remaining: A01/A05 real ChatGPT/onboarding host evidence, A07 external user installation, A08 ChatGPT two-connection route, A11 actual repeated onboarding resource outcome, A17 final revision CI, A18 final review/publication gate. Earlier score tables above are historical; this is the current candidate verdict.
 
 **Candidate publication: acceptable with explicit pending acceptance status. Full objective: not yet accepted or complete.** Do not replace the user's current ChatGPT plugin in place; their planned GitHub reinstall remains external follow-up. No production data, configuration, running services, tunnels or subscriptions were changed by this review.
+
+## Narrow re-review B — instance-qualified PLUGIN_DATA packages
+
+Candidate base HEAD: `2ad55fd14158eb5ee8eb5da6c279751233d63b08`, plus the reviewed builder/test changes. Builder SHA-256: `806c2418f70faf8e9a40024b23cb179148b4bdbbd89782d198ed60e4c2cee8cc`; test source SHA-256: `a0cd2833b94b3f0bb3a560e755524fc2526bbf62046306947d64c61e32a77cc4`. Public archive remains `f855ab3d6b77aadd8b1d7cd5cd286c399f19b09f9de80f86e16ce6b464b4ff54`.
+
+Reviewed the narrow fix: every explicit `--instance` qualifies the server key as `zalo-<instance>` before deciding between environment binding and host `PLUGIN_DATA` binding. Thus two portable instance variants cannot collide on the unqualified `zalo` key. The public unbound package retains its original key; private ChatGPT variants still intentionally remove STDIO servers.
+
+Independently reran all **7 package tests: PASS** (0.273s), including `test_portable_data_bindings_have_disjoint_server_keys`. The negative control builds personal/work without environment bindings, asserts disjoint server keys and verifies that the PLUGIN_DATA path did not accidentally acquire an env binding.
+
+No additional defects found in this diff. This update changes no host acceptance gates or prior score: **11/18 = 61.11%, 0 known unresolved implementation defects; candidate publication acceptable with pending external/host acceptance, full goal not complete.**
