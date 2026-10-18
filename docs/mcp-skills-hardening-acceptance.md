@@ -293,3 +293,16 @@ readback, callback → read/ack до2xx и повторное чтение по�
 контроль без advertised capability оставляет файл побайтно прежним. Локальный
 целевой race PASS, lint0issues; независимая приёмка и CI итогового выпуска
 выполняются отдельно, текущий тест не выдаётся за модельный eval.
+
+### Исправление ожидания остановки в интеграционном тесте
+
+Предыдущий документационный run39116337542 выявил гонку самого теста на macOS:
+`TestUnifiedConversationServiceCollectionMCPEventsRestartAndCancel` ждал остановки
+ровно5с при production graceful-shutdown budget5с, затем после t.Error пытался
+запустить второго владельца ещё занятого account lock. В логе service stopped
+появился примерно через5,012с. Тест теперь ждёт production budget плюс отдельный
+bounded cleanup allowance10с и завершает сценарий через t.Fatal при timeout.
+Реальное завершение runConfigured, закрытие SQLite и освобождение lock по-прежнему
+обязательны до restart. Production timeout и логика сервиса не изменены.
+Пять повторных race-прогонов исправленного сценария PASS; lint0issues.
+Оба независимых reviewers проверяют причину и повторяют сценарий отдельно.

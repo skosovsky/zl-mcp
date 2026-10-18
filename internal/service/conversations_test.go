@@ -192,8 +192,11 @@ func testConversationServiceProfile(t *testing.T, profile string, version int) {
 				if err != nil {
 					t.Error(err)
 				}
-			case <-time.After(5 * time.Second):
-				t.Error("service did not stop")
+			// The service may use its entire graceful-shutdown budget before
+			// closing SQLite and releasing the account lock. The test must not
+			// race that same deadline or start a second owner after a timeout.
+			case <-time.After(serviceLooprunShutdownTimeout + 10*time.Second):
+				t.Fatal("service did not stop after its shutdown budget and cleanup allowance")
 			}
 		}
 		var endpoint string
