@@ -1,6 +1,6 @@
 # Processing readiness independent of callback receipt
 
-Status: implemented candidate; final acceptance and deployment pending. Supersedes the use of
+Status: published and installed in release `c67567c5`; real-host workflow migration and final acceptance remain pending. Supersedes the use of
 companion wakeups as the primary fix for the R01 callback/read race.
 
 ## Independent facts

@@ -1,6 +1,6 @@
 # Skills hardening: safe static walkthrough
 
-Checked: 2026-10-18, 09:08 UTC. Scope: R04, R09 and the skills-facing parts of
+Checked: 2026-10-18, 09:42 UTC. Scope: R04, R09 and the skills-facing parts of
 R01/R03/R05/R10 in [the hardening task](../task-mcp-skills-hardening.md).
 
 **Method:** deterministic instruction/contract walkthrough and structural checks
@@ -16,18 +16,16 @@ host, or actual Ann continuation acceptance.
 | Package | Source/installed files | Source package SHA-256 | Installed package SHA-256 | Equality |
 | --- | --- | --- | --- | --- |
 | `researching-zalo-groups` | 8 / 8 | `446478c5f5cbd8ae8e8e6e72b593315338ca56b5eb6d3402ffd5a37df1f240f0` | Same | Exact match |
-| `handling-zalo-message-events` | 9 / 9 | `1e5f72d59c514b34d4ff1244d801104f4f389f8ba00318e5a47a23bcb80fde85` | `020cfa801beb307a0f2364b3f58c669fecb7423e5b4307bdeabcfaa2e2f411d0` | Four files differ; persisted rollout pending |
+| `handling-zalo-message-events` | 9 / 9 | `1e5f72d59c514b34d4ff1244d801104f4f389f8ba00318e5a47a23bcb80fde85` | Same | Exact match after verified rollout |
 
 Source root: repository `skills/`. Installed root: `~/.codex/skills/`.
 A package digest is SHA-256 of UTF-8 JSON mapping each relative file path to its
 SHA-256, serialized with sorted keys and separators `(',', ':')`. Complete file
-sets were compared. Research remains equal; Events source changed `SKILL.md`,
-`reference/event-recovery.md`, `reference/automation-rule.md` and
-`reference/event-workflow.md` for the new persisted representation. The installed
-copy was deliberately left untouched pending the new release/CI/rollout. Thus
-**13/17 files match and four require rollout**, not a claim of current complete
-installed acceptance. Recheck all bytes after deployment; these digests pin this
-source walkthrough, not a future installation.
+sets were compared. After installation of release `c67567c5`, all **17/17 files
+match**. The four changed Events files were installed with a verified private
+backup; both independent reviewers repeated byte-for-byte comparison. These
+package identities prove installed instruction parity, not migration of a saved
+host automation or future model behavior.
 
 Executed checks:
 
@@ -97,5 +95,5 @@ The [server continuation contract](../contracts/subscription-recovery-ready.md)
 separately records executable synthetic-harness coverage. Actual target-host
 activation, fresh control-wakeup acceptance, saved automation update and Ann
 processing remain **NOT_RUN** until separately evidenced. No static package check
-closes that host gate. The four changed installed files also remain pending rollout. External notification and
+closes that host gate. All source/installed files now match; saved host migration remains pending. External notification and
 journal ack are not atomic; exactly-once notification is not promised.
