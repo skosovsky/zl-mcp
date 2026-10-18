@@ -92,8 +92,14 @@ contradictions found in this scoped walkthrough.** This is not 100% acceptance
 of the whole R01–R12 task, a model-eval score, or a claim of zero runtime bugs.
 
 The [server continuation contract](../contracts/subscription-recovery-ready.md)
-separately records executable synthetic-harness coverage. Actual target-host
-activation, fresh control-wakeup acceptance, saved automation update and Ann
-processing remain **NOT_RUN** until separately evidenced. No static package check
-closes that host gate. All source/installed files now match; saved host migration remains pending. External notification and
-journal ack are not atomic; exactly-once notification is not promised.
+separately records executable synthetic-harness coverage. Actual external-host
+activation, saved cloud automation update and Ann processing remain unverified;
+the user clarified that Ann is an example client rather than the required
+acceptance host. No static package check establishes those integrations.
+All source/installed files match. Executable generic SDK-adapter migration is
+verified separately by `workflow_readiness_migration_test.go` and the
+[readiness contract](../contracts/journal-processing-readiness.md): actual discovery,
+saved workflow/readback after restart, preserved authority and callback-driven
+read/ack before 2xx. This is integration-test evidence, not a model walkthrough
+or cloud-host claim. External notification and journal ack are not atomic;
+exactly-once notification is not promised.

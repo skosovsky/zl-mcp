@@ -1,6 +1,6 @@
 # Processing readiness independent of callback receipt
 
-Status: published and installed in release `c67567c5`; real-host workflow migration and final acceptance remain pending. Supersedes the use of
+Status: published and installed in release `c67567c5`; final acceptance remains pending; external-host workflows are not changed automatically. Supersedes the use of
 companion wakeups as the primary fix for the R01 callback/read race.
 
 ## Independent facts
@@ -129,3 +129,28 @@ If the host's cached schema lacks the input, refresh discovery using a supported
 host mechanism; do not invent API methods, inspect private host storage or use
 an unadvertised argument blindly. No new Zalo message or write permission is
 needed for this configuration check.
+
+### Reproducible client-adapter acceptance
+
+The user clarified that Ann is an example consumer, not a required acceptance
+host. The documented SDK test client owns a temporary saved workflow and uses
+actual MCP discovery before updating its readiness argument. It saves and reloads
+the configuration, preserves the subscription/filter/rule/channel/language and
+write prohibitions, and executes callback → journal read/ordered ack using those
+saved arguments. This validates client migration without claiming to edit a
+cloud-host automation or to improve model behavior. Every external host still
+requires its own supported discovery and saved-task migration mechanism.
+
+Run the checked-in adapter proof without external accounts or a model:
+
+```sh
+go test -race ./internal/mcpserver -run '^TestSyntheticClient(SavedWorkflow|WorkflowMigration)' -count=1
+```
+
+The implementation is in
+[`workflow_readiness_migration_test.go`](../../internal/mcpserver/workflow_readiness_migration_test.go).
+The positive case checks the real published SDK catalogue, preserved saved rule
+and shared durable checkpoint across restart. The negative control removes the
+advertised readiness capability and requires the saved workflow to stay byte-for-byte
+unchanged; it never sends an unadvertised argument. The receiver verifies callback
+signatures; the only authorized action is its local test counter.

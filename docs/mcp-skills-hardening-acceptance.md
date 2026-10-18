@@ -37,7 +37,7 @@
 | R09.1 | Ограниченный browse после пустого поиска при известном чате/периоде | PASS | Two literal searches then bounded known-chat/known-period browse3x20; no synonym/translation crawl or account dump. |
 | R09.2 | Entrypoints маршрутизируют в references без потери trust/permission правил | PASS | Entrypoints route to references conditionally; trust, explicit permissions, stable UUID, unknown/partial and no auto-read/react retained. |
 | R09.3 | Frontmatter/ссылки и safe walkthrough всех перечисленных сценариев проверены | PASS | Both quick_validate PASS; links/reference checks PASS; static safe workflow walkthroughs direct context, deferred tools, multilingual browse, blocked/resume, duplicate/unknown/rights/hostile text; synthetic resume independently race-tested. No model-quality claim. |
-| R09.4 | Исходные/установленные skills совпадают; сохранённое задание обновлено поддерживаемым путём | NOT_RUN | Source/install skills independently byte-identical17files; saved real-host task migration to explicit readiness_mode=persisted unavailable/not performed. File synchronization alone cannot satisfy combinedcriterion. |
+| R09.4 | Исходные/установленные skills совпадают; миграция сохранённого workflow документированного SDK-адаптера проверена через discovery/save/readback/callback с сохранением правила и прав | NOT_RUN | Source/install skills independently byte-identical17files; saved real-host task migration to explicit readiness_mode=persisted unavailable/not performed. File synchronization alone cannot satisfy combinedcriterion. |
 | R10.1 | Legacy search/context описаны как group-only compatibility | PASS | Live27tool descriptors exactly match manifest; legacy search/context identify group-only compatibility and typed alternatives. |
 | R10.2 | Typed предпочтительный путь виден; metadata tools и legacy consumers сохранены | PASS | Typed route documented; live group metadata remains separate; old consumers and resources retained with regression tests. |
 | R11.1 | Генератор/верификатор живёт в repo, не зависит от/tmp или private runtime | PASS | scripts/reference workflow lives in repository; no private runtime/network/tmp dependency; independent checker PASS. |
@@ -250,8 +250,10 @@ SQLite integrity/schema20; исходные строки12защищённых �
 checkpoints сохранены. Config/plist не менялись, grants закрыты, companion
 не создавался. Все17файлов установленных skills совпадают с исходниками.
 
-Единственный содержательный открытый критерий R09.4: актуальный каталог и
-сохранённое задание реального host. Загруженный в этом чате connector всё ещё
+На момент этих двух замороженных отчётов R09.4 трактовался как каталог и
+сохранённое задание реального host. Последующее уточнение пользователя и
+актуальный маршрут приёмки приведены ниже; это исторический gate, не новое
+требование проверить именно Ann. Загруженный в этом чате connector всё ещё
 объявляет старый journal input без readiness_mode; это не доказывает состояние
 отдельного запуска Ann. Поддерживаемых automation-update/refresh инструментов
 здесь нет; private host storage/API не использовались.
@@ -263,3 +265,31 @@ checkpoints сохранены. Config/plist не менялись, grants за�
 задание и подтвердить режим. Новая подписка или новое Zalo-сообщение для этой
 проверки конфигурации не нужны. После доказательства R09.4 оба рецензента
 повторяют финальный verdict; до этого R12.7/R12.8 остаются NOT_RUN.
+
+## Уточнение маршрута приёмки и отмена подписок
+
+Пользователь уточнил: Ann — только пример подключённого клиента; проверку
+нужно выполнить самостоятельно. Требование изменять именно её автоматизацию
+было лишним ограничением нашей матрицы, а не требованием исходной цели. Оба
+независимых reviewers подтвердили это по разделам4/5.3 задачи. Все43критерия
+сохранены. R09.4 проверяется через документированный SDK-адаптер с действительно
+сохраняемым workflow, schema discovery, миграцией одного поля, readback после
+перезапуска и выполнением callback → read/ack по этой конфигурации. Одного
+шаблона или skill-правки недостаточно. Подключение любого внешнего host остаётся
+отдельной эксплуатационной интеграцией; его поддержку не объявляем проверенной.
+
+По последующему прямому поручению пользователя отменены все активные Zalo
+подписки через events/unsubscribe: одна business, ноль control. MCP list и
+глобальная read-only проверка SQLite подтвердили ноль активных подписок и
+ноль pending/sending доставок в обеих очередях. Сообщения, сохранённые message
+actions и processing checkpoints побайтно эквивалентны исходным строкам.
+Это ожидаемое порученное изменение, а не регрессия сохранности. Новые
+проверки используют только временные БД/подписки и не восстанавливают рабочие.
+
+Новый исполняемый сценарий `workflow_readiness_migration_test.go` проверяет
+actual SDK discovery → изменение единственного readiness_mode → сохранение и
+readback, callback → read/ack до2xx и повторное чтение после перезапуска.
+Подписка/generation, фильтры, правило, канал, язык и запреты не меняются;
+контроль без advertised capability оставляет файл побайтно прежним. Локальный
+целевой race PASS, lint0issues; независимая приёмка и CI итогового выпуска
+выполняются отдельно, текущий тест не выдаётся за модельный eval.
