@@ -92,3 +92,13 @@ Reviewer B accepts the complete agreed R01–R12 scope for product revision fab5
 The final two review rows record the completion of two already independent full technical/operational audits. Peer completion was inspected only after B's own implementation findings were final, so no peer conclusion was used to derive B's technical judgment. This mutual recording requires no additional product action and does not substitute for missing technical evidence.
 
 There are no required product, CI, installation or verification tasks remaining in this agreed scope. Documented limitations remain: partial upstream history and collection during Mac sleep, optional companion integration for missing-run insurance, external host-specific catalogue/workflow setup, possible notification/ack crash duplicates, and no claim of mathematical absence of every defect or improved model behavior. These limitations are documented rather than hidden acceptance failures.
+
+## Addendum: subsequent annex CI and test synchronization
+
+A subsequent publication of the documentation annex (`703`) exposed an Ubuntu race-test failure in `TestNativeHistoryWorkerKeepsLedgerAndRequestLink`: the test saw the committed completed ledger state and cancelled the worker before its final transition observation. This is a test synchronization race, not a Go data-race report or evidence of lost ledger data. It does not change the frozen fab50b product verdict above.
+
+Reviewer B independently inspected and accepted the test-only correction: before cancellation, wait for both completed ledger state and the end of the actual synchronously exported `zl_mcp.worker` span. Span export occurs after the operation callback and its transition observation. All transition, upstream-call, request-link and privacy assertions remain unchanged, as does the original three-second deadline. No production Go implementation, executable JSON contract or skill input changes.
+
+B independently ran the corrected test under `-race` for 20 repetitions: PASS in 8.340 seconds. The root's 50 corrected repetitions passed in 21.778 seconds with lint reporting zero issues. The root's 50 repetitions of the old test also passed locally in 21.842 seconds; therefore this addendum does not claim a local reproduction of the CI failure. The CI log and source ordering establish the observed cancellation window.
+
+The combined current publication must still obtain a successful CI run for its new exact revision. That later publication result is not assumed or claimed by this addendum before it is available. No new runtime, production subscription, acknowledgement or Zalo action was performed for this review.

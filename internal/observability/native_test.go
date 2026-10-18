@@ -183,12 +183,22 @@ func TestNativeHistoryWorkerKeepsLedgerAndRequestLink(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if op.Status.State == "completed" {
+		// The ledger commit precedes transition telemetry. Wait for the real
+		// synchronous worker span to end before cancellation can suppress that
+		// final observation; durable completion alone is not a worker join.
+		workerEnded := false
+		for _, span := range exporter.GetSpans() {
+			if span.Name == "zl_mcp.worker" {
+				workerEnded = true
+				break
+			}
+		}
+		if op.Status.State == "completed" && workerEnded {
 			break
 		}
 		select {
 		case <-deadline:
-			t.Fatal("native history did not complete")
+			t.Fatal("native history ledger and worker observation did not complete")
 		case <-ticker.C:
 		}
 	}
