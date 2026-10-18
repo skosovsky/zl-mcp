@@ -185,13 +185,8 @@ func (s *Store) ActivateSubscription(
 	}
 	//nolint:errcheck // Rollback is fallback cleanup; preserve the primary operation or Commit error.
 	defer tx.Rollback()
-	var current int64
-	if err = tx.QueryRowContext(ctx, "SELECT revision FROM event_subscription_revisions WHERE id=?", sub.ID).
-		Scan(&current); err != nil {
+	if err = checkBusinessSubscriptionRevision(ctx, tx, sub.ID, revision); err != nil {
 		return sub, err
-	}
-	if current != revision {
-		return sub, ErrSubscriptionCancelled
 	}
 	var principal, group, callback, generation, profile, scope, kind, direction string
 	var firstOnly bool

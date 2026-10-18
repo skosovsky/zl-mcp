@@ -16,6 +16,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/skosovsky/zl-mcp/internal/app/shared"
+	"github.com/skosovsky/zl-mcp/internal/buildinfo"
 	"github.com/skosovsky/zl-mcp/internal/config"
 	"github.com/skosovsky/zl-mcp/internal/domain"
 	"github.com/skosovsky/zl-mcp/internal/local"
@@ -56,7 +57,10 @@ func BridgeStdio(ctx context.Context, c config.Config) error {
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 	}
 	//nolint:exhaustruct_v5 // Optional implementation metadata is absent; preserve the advertised name/version contract.
-	client := mcp.NewClient(&mcp.Implementation{Name: "zl-mcp-stdio-bridge", Version: "0.1.0-dev"}, nil)
+	client := mcp.NewClient(
+		&mcp.Implementation{Name: "zl-mcp-stdio-bridge", Version: buildinfo.Current().DisplayVersion()},
+		nil,
+	)
 	session, err := client.Connect(
 		ctx,
 		//nolint:exhaustruct_v5 // StreamableClientTransport keeps unused optional SDK metadata/representations absent; preserve existing wire defaults.
@@ -73,7 +77,7 @@ func BridgeStdio(ctx context.Context, c config.Config) error {
 	}
 	defer session.Close()
 	//nolint:exhaustruct_v5 // Optional implementation metadata is absent; preserve the advertised name/version contract.
-	bridge := mcp.NewServer(&mcp.Implementation{Name: "zl-mcp", Version: "0.1.0-dev"}, nil)
+	bridge := mcp.NewServer(&mcp.Implementation{Name: "zl-mcp", Version: buildinfo.Current().DisplayVersion()}, nil)
 	for tool, err := range session.Tools(ctx, nil) {
 		if err != nil {
 			return err
@@ -81,7 +85,8 @@ func BridgeStdio(ctx context.Context, c config.Config) error {
 		name := tool.Name
 		bridge.AddTool(tool, func(ctx context.Context, r *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			//nolint:exhaustruct_v5 // Unused optional SDK metadata/progress fields remain absent for this invocation.
-			return session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: r.Params.Arguments})
+			result, callErr := session.CallTool(ctx, &mcp.CallToolParams{Name: name, Arguments: r.Params.Arguments})
+			return withBridgeIdentity(result), callErr
 		})
 	}
 	read := func(ctx context.Context, r *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
@@ -256,4 +261,25 @@ func (c *observedStdioConnection) Close() error {
 	clear(c.requests)
 	c.mu.Unlock()
 	return c.Connection.Close()
+}
+
+func withBridgeIdentity(result *mcp.CallToolResult) *mcp.CallToolResult {
+	if result == nil {
+		return nil
+	}
+	if result.Meta == nil {
+		result.Meta = make(mcp.Meta)
+	}
+	identity, ok := result.Meta[buildinfo.MetadataKey].(map[string]any)
+	if !ok {
+		identity = make(map[string]any)
+	}
+	// Never infer the serving backend from the bridge executable. An older backend
+	// without identity metadata is explicitly unknown; preserve modern metadata.
+	if _, exists := identity["backend"]; !exists {
+		identity["backend"] = buildinfo.Identity{Version: "unknown", Revision: "unknown", Dirty: nil}
+	}
+	identity["bridge"] = buildinfo.Current()
+	result.Meta[buildinfo.MetadataKey] = identity
+	return result
 }

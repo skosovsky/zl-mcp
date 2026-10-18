@@ -59,7 +59,8 @@ Pass that ID to `zalo_list_conversations`, then to
 `zalo_list_conversation_messages` with an exact conversation type/ID and explicit
 RFC3339 `since`/`until` interval. Omitting `source_id` keeps normal corpus reads.
 Follow cursors even when a page has no supported text but `has_more=true`.
-Read truncated text using the server-issued `zalo://archives/<token>` resource.
+Read truncated text using the server-issued `zalo://archives/<token>` resource
+or `zalo_read_message_content` with that exact URI and its continuation cursor.
 Archive rows have their own identity and cannot serve as outgoing quote anchors.
 
 These reads work offline without a phone request, corpus import or Events.
@@ -99,8 +100,9 @@ Discovery includes the additive `zalo.conversation.message.created.v2` version 2
 
 The new payload includes typed identity, message ID, author, time, at most 2048 Unicode code points, and a full-text URI when truncated. Both profiles use the same verification, signature, persistence, retry and cancellation rules in the [Events contract](contracts/events.md). Receiver acceptance and an agent notification remain separately verifiable outcomes.
 
-For migration, activate the new all-scope subscription with `ttlMs: null`, then
-cancel the legacy group subscription by its ID. Obtain delivery settings from the
+For an explicitly agreed migration, activate a subscription with the same
+intended scope and `ttlMs: null`, then cancel the superseded subscription by its ID.
+Do not widen a group/direct scope to all without the user instruction. Obtain delivery settings from the
 trusted client integration rather than copying credentials into documentation or
 chat. Handle overlapping group deliveries by event ID and the agreed processing
 rule. Previously stored messages remain available through reads and are not sent
@@ -116,7 +118,7 @@ For event-triggered automation, store the exact subscription ID with its rule an
 
 ## Rich content discovery
 
-After a verified candidate upgrade, refresh the actual HTTP client's discovery
+After an upgrade, refresh the actual HTTP client's discovery
 and inspect `events/list`: message v3 and reaction v1 require compatible schemas;
 STDIO still provides tools/resources only. Do not replace existing v2
 subscriptions just because v3 is listed. Preserve processing checkpoints and
@@ -128,7 +130,7 @@ process in order, and acknowledge only the authorized successful action. See
 [rich-content contract](contracts/rich-content-events.md). For the accepted rich-content scope and remaining upstream limits, see
 [rich-content acceptance](rich-content-acceptance.md).
 
-## Explicit reaction choices and read-receipt preparation
+## Explicit reaction choices and read receipts
 
 When the backend advertises `zalo://catalog/reactions`, read it through standard
 `resources/read` over HTTP or STDIO to obtain finite reaction codes, names and display labels.
@@ -148,5 +150,78 @@ Journal acknowledgement confirms processing, independently of Zalo read receipts
 After upgrading, refresh the client/plugin tool catalogue to discover
 `zalo_mark_messages_read`, `zalo_set_message_reaction` and
 `zalo_get_message_action_status`. Existing registered clients can retain an older
-catalogue even while server-side tools/list already exposes 25 tools. Discovery
+catalogue even while server-side `tools/list` exposes the updated tools. Discovery
 does not grant write access; read/react allowlists default to empty.
+
+## Bounded tools-only reads and coverage
+
+Discover `zalo_read_message_content` and use its current schema. Supply the exact
+`resource_uri` returned by context/browse; never manufacture an archive token.
+Pages default to 2048 Unicode scalar values (maximum 8192) and may be shorter to
+fit the serialized budget. Repeat the same URI with `next_cursor` until
+`has_more=false`. Cursors expire and are invalidated by a service restart;
+retention, recall and permissions are rechecked on every page. `/content` metadata
+URIs and media bytes are not text targets. See [contract](contracts/message-content-read.md).
+
+When the advertised schema supports `coverage_mode`, pass `compact` to corpus
+reads when detailed gap history is unnecessary. `coverage_details` explicitly
+reports total gaps, truncation, snapshot and nullable cursor. For the complete
+observed gap snapshot, discover `zalo_list_coverage_gaps` and paginate with the
+exact conversation type/ID. Old clients continue using default full coverage;
+loading the new output schema is required before opting into compact mode.
+Archive coverage remains separate. See [coverage contract](contracts/coverage-pagination.md).
+
+## Identify the running backend and correlate failures
+
+Inspect the actual unnormalized tool result `_meta["zl-mcp/build"]`: `backend`
+contains safe version/revision/dirty fields; STDIO also reports `bridge`.
+`serverInfo.version` identifies the executable at that transport boundary, so
+STDIO initialize alone identifies its bridge, not a potentially different backend.
+Unknown metadata must not be interpreted as a clean/current build. Protocol
+negotiation is independent. See [build contract](contracts/schema-publication-and-build.md).
+
+For a failed tool call, retain its safe correlation reference and compare it with
+service logs; do not include tokens or raw private payloads. For journal diagnosis,
+opt into `include_diagnostics=true` on `zalo_read_subscription_events` after
+loading the new schema. Default journal replies retain the old strict shape.
+Reasons distinguish delivery failure categories without exposing callback URLs,
+message IDs or signing values. Callback HTTP 2xx proves receiver acceptance,
+not model payload visibility or notification completion.
+
+## Client capability and evidence matrix
+
+| Client/path | Tools | Resources | Events subscription methods | Agent continuation evidence |
+| --- | --- | --- | --- | --- |
+| HTTP SDK harness, negotiated 2026-07-28 for Events | Supported | Supported | Pinned webhook profile plus optional journal-ready companion | Signed synthetic receiver covers server continuation; actual target-host activation/Ann processing NOT_RUN |
+| Native STDIO bridge and SDK client | Supported | Supported | Unavailable by design | Journal reads/ack supported; bridge does not wake an agent |
+| Target ChatGPT/plugin connection | Must verify loaded catalogue | Host-dependent; bounded text tool is the alternative | Requires compatible plugin/receiver discovery | Do not infer from HTTP 2xx or ordinary tool support; final target-host recovery acceptance remains required |
+| Other MCP clients | Verify current schemas | Verify host resource support | Unverified unless profile tested | Unverified unless exact host mechanism is tested |
+
+These are capability boundaries, not a claim that every current client/version
+has passed the new hardening acceptance. See the [task and final gate](task-mcp-skills-hardening.md)
+for exact revision/test evidence. Refresh discovery before assuming that source
+code availability means a host can call the new tools.
+
+## Optional durable journal continuation
+
+The additional control profile `zalo.subscription.journal.ready.v1` attaches to
+one existing owned business subscription and its exact generation. Discover the
+current contract; request `zalo_list_event_subscriptions(include_recovery=true)`
+for the trusted generation reference and configured mode. The trusted host
+explicitly creates the companion using the normal verified delivery lifecycle
+and binds business and control wakeups to the **same saved workflow**, scope,
+rule and business-journal cursor. Do not recreate or widen the business
+subscription and do not treat a control payload as a message or receipt.
+
+The worker independently observes the unacknowledged head and issues bounded
+control rounds; retry within a round keeps its event ID, later rounds have new
+IDs. The agent's bounded rereads honor `retry_after_ms`; after that budget it
+awaits the configured companion. `include_diagnostics=true` exposes recovery
+mode/state/reference/reason, including explicit cancellation or exhaustion. An
+unsupported/unconfigured mode does not provide automatic continuation.
+
+Synthetic signed-receiver scenarios now cover the server flow. Actual target-host
+configuration, saved-task update and Ann control-wakeup processing remain
+**NOT_RUN**, so do not declare that connection recovered merely from server tests
+or a 2xx callback. See [canonical contract](contracts/subscription-recovery-ready.md)
+and [separate skill/task migration](skills.md).

@@ -116,6 +116,9 @@ func (h *Handler) Conversation(ctx context.Context, r ConversationRequest) (*Con
 	return &ConversationExecution{Result: result, request: r, page: p, reads: h.Reads}, nil
 }
 func (e *GroupExecution) Shorten(ctx context.Context) error {
+	if len(e.Result.Coverage) > 0 && e.Result.Coverage[0].CoverageDetails != nil {
+		ctx = domain.WithCompactCoverage(ctx)
+	}
 	if len(e.page.Hits) < 2 {
 		return domain.ResponseTooLarge(
 			"One search record or its coverage exceeds the response budget.",
@@ -132,6 +135,9 @@ func (e *GroupExecution) Shorten(ctx context.Context) error {
 	return err
 }
 func (e *ConversationExecution) Shorten(ctx context.Context) error {
+	if len(e.Result.Coverage) > 0 && e.Result.Coverage[0].CoverageDetails != nil {
+		ctx = domain.WithCompactCoverage(ctx)
+	}
 	if len(e.page.Hits) < 2 {
 		return domain.ResponseTooLarge(
 			"One search record or coverage exceeds the response budget.",

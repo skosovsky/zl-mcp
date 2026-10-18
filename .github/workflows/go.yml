@@ -15,6 +15,10 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Check generated MCP reference and negative controls
+        run: |
+          python3 scripts/reference/reference.py --check
+          python3 -m unittest discover -s scripts/reference -p 'test_*.py'
       - name: Install pinned golangci-lint
         run: GOBIN="$(go env GOPATH)/bin" go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0
       - name: Lint both modules without autofix

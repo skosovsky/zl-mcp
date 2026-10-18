@@ -13,6 +13,9 @@ type RollbackReport struct {
 	UnsupportedUnprocessedDeliveries int64 `json:"unsupported_unprocessed_deliveries"`
 	UnfannedActivitySources          int64 `json:"unfanned_activity_sources"`
 	RetainedActivityPayloads         int64 `json:"retained_activity_payloads"`
+	ActiveRecoverySubscriptions      int64 `json:"active_recovery_subscriptions"`
+	UndrainedRecoveryWork            int64 `json:"undrained_recovery_work"`
+	RetainedRecoveryPayloads         int64 `json:"retained_recovery_payloads"`
 }
 
 // CheckLegacyRollback is read-only. Its result is valid for a stopped state only;
@@ -44,7 +47,69 @@ func CheckLegacyRollback(ctx context.Context, db *sql.DB) (RollbackReport, error
 			return report, err
 		}
 	}
+	if err := recoveryRollbackCounts(ctx, db, &report); err != nil {
+		return report, err
+	}
 	report.Compatible = report.UnsupportedActiveSubscriptions == 0 && report.UnsupportedUnprocessedDeliveries == 0 &&
-		report.UnfannedActivitySources == 0 && report.RetainedActivityPayloads == 0
+		report.UnfannedActivitySources == 0 && report.RetainedActivityPayloads == 0 &&
+		report.ActiveRecoverySubscriptions == 0 && report.UndrainedRecoveryWork == 0 && report.RetainedRecoveryPayloads == 0
 	return report, nil
+}
+
+// recoveryRollbackCounts checks optional tables independently, including orphaned
+// delivery rows. The legacy runtime cannot reconcile or retain these records.
+func recoveryRollbackCounts(ctx context.Context, db *sql.DB, report *RollbackReport) error {
+	active, err := optionalRollbackCount(
+		ctx,
+		db,
+		"recovery_subscriptions",
+		`SELECT count(*) FROM recovery_subscriptions WHERE active=1`,
+	)
+	if err != nil {
+		return err
+	}
+	episodes, err := optionalRollbackCount(
+		ctx,
+		db,
+		"recovery_episodes",
+		`SELECT count(*) FROM recovery_episodes WHERE state IN ('armed','ready','exhausted')`,
+	)
+	if err != nil {
+		return err
+	}
+	deliveries, err := optionalRollbackCount(
+		ctx,
+		db,
+		"recovery_deliveries",
+		`SELECT count(*) FROM recovery_deliveries WHERE state IN ('pending','sending')`,
+	)
+	if err != nil {
+		return err
+	}
+	payloads, err := optionalRollbackCount(
+		ctx,
+		db,
+		"recovery_deliveries",
+		`SELECT count(*) FROM recovery_deliveries WHERE length(payload)>0`,
+	)
+	if err != nil {
+		return err
+	}
+	report.ActiveRecoverySubscriptions = active
+	report.UndrainedRecoveryWork = episodes + deliveries
+	report.RetainedRecoveryPayloads = payloads
+	return nil
+}
+func optionalRollbackCount(ctx context.Context, db *sql.DB, table, query string) (int64, error) {
+	var present int
+	if err := db.QueryRowContext(ctx, `SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?`, table).
+		Scan(&present); err != nil {
+		return 0, err
+	}
+	if present == 0 {
+		return 0, nil
+	}
+	var count int64
+	err := db.QueryRowContext(ctx, query).Scan(&count)
+	return count, err
 }

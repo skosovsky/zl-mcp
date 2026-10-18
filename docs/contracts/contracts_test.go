@@ -5,8 +5,8 @@ import "testing"
 func TestAllSchemasCompile(t *testing.T) {
 	// Arrange
 	names := Names()
-	if len(names) != 25 {
-		t.Fatalf("expected twenty-five tools, got %d", len(names))
+	if len(names) != 27 {
+		t.Fatalf("expected twenty-seven tools, got %d", len(names))
 	}
 	for _, name := range names {
 		for _, suffix := range []string{"input", "output"} {

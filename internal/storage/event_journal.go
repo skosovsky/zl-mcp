@@ -38,7 +38,7 @@ INSERT OR IGNORE INTO schema_migrations VALUES(12);`,
 func (s *Store) EventSubscriptions(ctx context.Context, principal string) (map[string]any, error) {
 	rows, err := s.DB.QueryContext(
 		ctx,
-		`SELECT id,profile,scope,conversation_type,group_id,direction,first_incoming_only FROM event_subscriptions WHERE principal=? AND active=1 AND profile!='zalo.conversation.message.created' AND (expires_at IS NULL OR julianday(expires_at)>julianday(?)) ORDER BY id`,
+		`SELECT id,profile,scope,conversation_type,group_id,direction,first_incoming_only,generation FROM event_subscriptions WHERE principal=? AND active=1 AND profile!='zalo.conversation.message.created' AND (expires_at IS NULL OR julianday(expires_at)>julianday(?)) ORDER BY id`,
 		principal,
 		now(),
 	)
@@ -49,9 +49,9 @@ func (s *Store) EventSubscriptions(ctx context.Context, principal string) (map[s
 	defer rows.Close()
 	values := []map[string]any{}
 	for rows.Next() {
-		var id, profile, scope, kind, peer, dir string
+		var id, profile, scope, kind, peer, dir, generation string
 		var first bool
-		if err = rows.Scan(&id, &profile, &scope, &kind, &peer, &dir, &first); err != nil {
+		if err = rows.Scan(&id, &profile, &scope, &kind, &peer, &dir, &first, &generation); err != nil {
 			return nil, err
 		}
 		if scope == wireConversation && !s.AllowsConversation(domain.ConversationRef{Type: kind, ID: peer}) {
@@ -64,20 +64,32 @@ func (s *Store) EventSubscriptions(ctx context.Context, principal string) (map[s
 		if peer != "" {
 			p = peer
 		}
-		values = append(
-			values,
-			map[string]any{
-				"subscription_id":     id,
-				"event_name":          profile,
-				"scope":               scope,
-				fieldConversationType: k,
-				fieldConversationID:   p,
-				"direction":           dir,
-				"first_incoming_only": first,
-			},
-		)
+		entry := map[string]any{
+			"subscription_id":     id,
+			"event_name":          profile,
+			"scope":               scope,
+			fieldConversationType: k,
+			fieldConversationID:   p,
+			"direction":           dir,
+			"first_incoming_only": first,
+		}
+		if domain.RecoveryDetails(ctx) {
+			entry["generation_reference"] = generation
+		}
+		values = append(values, entry)
 	}
-	return map[string]any{"subscriptions": values}, rows.Err()
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	if err = rows.Close(); err != nil {
+		return nil, err
+	}
+	if domain.RecoveryDetails(ctx) {
+		if err = s.addRecoverySubscriptionDetails(ctx, principal, values); err != nil {
+			return nil, err
+		}
+	}
+	return map[string]any{"subscriptions": values}, nil
 }
 
 type processingReceipt struct {
@@ -172,7 +184,7 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 	}
 	rows, err := tx.QueryContext(
 		ctx,
-		`SELECT d.id,d.payload,d.state,CASE WHEN d.activity_seq IS NOT NULL THEN a.conversation_type ELSE m.conversation_type END,CASE WHEN d.activity_seq IS NOT NULL THEN a.conversation_id ELSE m.conversation_id END,d.activity_seq IS NOT NULL FROM event_deliveries d LEFT JOIN messages m ON m.seq=d.message_seq LEFT JOIN activity_observations a ON a.seq=d.activity_seq AND a.expired=0 WHERE d.subscription_id=? AND d.generation=? AND d.id>? ORDER BY d.id LIMIT ?`,
+		`SELECT d.id,d.payload,d.state,CASE WHEN d.activity_seq IS NOT NULL THEN a.conversation_type ELSE m.conversation_type END,CASE WHEN d.activity_seq IS NOT NULL THEN a.conversation_id ELSE m.conversation_id END,d.activity_seq IS NOT NULL,COALESCE(d.last_reason,'') FROM event_deliveries d LEFT JOIN messages m ON m.seq=d.message_seq LEFT JOIN activity_observations a ON a.seq=d.activity_seq AND a.expired=0 WHERE d.subscription_id=? AND d.generation=? AND d.id>? ORDER BY d.id LIMIT ?`,
 		id,
 		gen,
 		from,
@@ -181,19 +193,40 @@ func (s *Store) ReadSubscriptionEvents(ctx context.Context, principal, id string
 	if err != nil {
 		return nil, err
 	}
-	entries, more, blocked, scanErr := s.readRecoveryEntries(rows, id, gen, from, limit, entries)
+	entries, more, blocked, scanErr := s.readRecoveryEntries(
+		rows,
+		id,
+		gen,
+		from,
+		limit,
+		entries,
+		domain.EventDiagnostics(ctx),
+	)
 	if scanErr != nil {
 		return nil, scanErr
 	}
 	if err = tx.Commit(); err != nil {
 		return nil, err
 	}
-	return map[string]any{
-		"subscription_id":     id,
-		"events":              entries,
-		fieldHasMore:          more,
-		"blocked_on_delivery": blocked,
-	}, nil
+	result := map[string]any{
+		"subscription_id": id, "events": entries, fieldHasMore: more, "blocked_on_delivery": blocked,
+	}
+	if domain.EventDiagnostics(ctx) {
+		var retry any
+		if blocked {
+			retry = 1000
+		}
+		result["retry_after_ms"] = retry
+		status, statusErr := s.recoveryMetadata(ctx, principal, id)
+		if statusErr != nil {
+			return nil, statusErr
+		}
+		result["recovery_mode"] = status["mode"]
+		result["recovery_state"] = status["state"]
+		result["recovery_reference"] = status["reference"]
+		result["recovery_reason"] = status["reason"]
+	}
+	return result, nil
 }
 func (s *Store) AckSubscriptionEvents(ctx context.Context, principal, id, token string) (map[string]any, error) {
 	r, err := s.parseReceipt(token)
@@ -306,16 +339,17 @@ func (s *Store) readRecoveryEntries(
 	from int64,
 	limit int,
 	entries []map[string]any,
+	diagnostics bool,
 ) ([]map[string]any, bool, bool, error) {
 	more, blocked := false, false
 	used := 0
 	for rows.Next() {
 		var n int64
 		var payload []byte
-		var state string
+		var state, lastReason string
 		var kind, peer sql.NullString
 		var activity bool
-		if err := rows.Scan(&n, &payload, &state, &kind, &peer, &activity); err != nil {
+		if err := rows.Scan(&n, &payload, &state, &kind, &peer, &activity, &lastReason); err != nil {
 			//nolint:gosec // G104: Close the read-only query immediately on error; later paths close before reuse of the connection.
 			rows.Close()
 			return nil, false, false, err
@@ -334,6 +368,10 @@ func (s *Store) readRecoveryEntries(
 			"delivery_state": state,
 			"gap_reason":     reason,
 			"receipt":        s.receipt(processingReceipt{id, gen, from, n}),
+		}
+		if diagnostics {
+			entry["delivery_reason"] = safeDeliveryReason(lastReason)
+			entry["delivery_reference"] = s.DeliveryReference(n)
 		}
 		b, _ := json.Marshal(entry)
 		if used+len(b) > 28<<10 {

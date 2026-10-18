@@ -49,6 +49,8 @@ dependenciesRules:
       external:
         - '^github[.]com/santhosh-tekuri/jsonschema/v6$'
       standard:
+        - '^net/url$'
+        - '^strconv$'
         - '^embed$'
         - '^encoding/json$'
         - '^errors$'
@@ -272,6 +274,7 @@ dependenciesRules:
   - package: '^github[.]com/skosovsky/zl-mcp/internal/mcpserver.**'
     shouldOnlyDependsOn:
       internal:
+        - '^github[.]com/skosovsky/zl-mcp/internal/buildinfo$'
         - '^github[.]com/skosovsky/zl-mcp/docs/contracts.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/domain.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/toolruntime.**'
@@ -410,6 +413,7 @@ dependenciesRules:
   - package: '^github[.]com/skosovsky/zl-mcp/internal/service.**'
     shouldOnlyDependsOn:
       internal:
+        - '^github[.]com/skosovsky/zl-mcp/internal/buildinfo$'
         - '^github[.]com/skosovsky/zl-mcp/docs/contracts.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/collector.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/config.**'
@@ -542,6 +546,36 @@ dependenciesRules:
         - '^sync$'
         - '^time$'
         - '^unicode/utf8$'
+  - package: '^github[.]com/skosovsky/zl-mcp/internal/app/contentread.**'
+    shouldOnlyDependsOn:
+      internal:
+        - '^github[.]com/skosovsky/zl-mcp/internal/app/contentread.**'
+        - '^github[.]com/skosovsky/zl-mcp/internal/app/conversations.**'
+        - '^github[.]com/skosovsky/zl-mcp/internal/app/archives.**'
+        - '^github[.]com/skosovsky/zl-mcp/internal/app/shared.**'
+        - '^github[.]com/skosovsky/zl-mcp/internal/domain.**'
+      standard:
+        - '^context$'
+        - '^crypto/hmac$'
+        - '^crypto/rand$'
+        - '^crypto/sha256$'
+        - '^encoding/base64$'
+        - '^encoding/hex$'
+        - '^encoding/json$'
+        - '^errors$'
+        - '^net/url$'
+        - '^strings$'
+        - '^time$'
+        - '^unicode/utf8$'
+    shouldNotDependsOn:
+      standard:
+        - '^database/sql$'
+        - '^net/http$'
+        - '^net$'
+        - '^os$'
+        - '^os/exec$'
+      external:
+        - '.+'
   - package: '^github[.]com/skosovsky/zl-mcp/internal/app/conversations.**'
     shouldOnlyDependsOn:
       internal:
@@ -779,6 +813,7 @@ dependenciesRules:
         - '^github[.]com/skosovsky/zl-mcp/internal/app/history.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/app/archives.**'
         - '^github[.]com/skosovsky/zl-mcp/internal/app/eventaccess.**'
+        - '^github[.]com/skosovsky/zl-mcp/internal/app/contentread.**'
       external:
         - '^github[.]com/skosovsky/toolsy.**'
         - '^github[.]com/santhosh-tekuri/jsonschema/v6.**'
@@ -903,5 +938,16 @@ dependenciesRules:
         - '^path/filepath$'
         - '^time$'
     shouldNotDependsOn:
+      external:
+        - '.+'
+
+  - package: '^github[.]com/skosovsky/zl-mcp/internal/buildinfo$'
+    shouldOnlyDependsOn:
+      standard:
+        - '^runtime/debug$'
+        - '^strings$'
+    shouldNotDependsOn:
+      internal:
+        - '.+'
       external:
         - '.+'

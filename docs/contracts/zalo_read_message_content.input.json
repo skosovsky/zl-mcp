@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "resource_uri": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 6000,
+      "description": "Exact text resource URI returned by typed context/browse, legacy group context/Events (zalo://groups/{group_id}/messages/{message_id}), or archive browse. Legacy group text preserves its original projection. No external URLs or /content metadata URI."
+    },
+    "cursor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 12000,
+      "description": "Opaque continuation, bound to identity, policy, URI and unchanged text; expires 15 minutes after first page or on service restart."
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8192,
+      "default": 2048,
+      "description": "Maximum Unicode scalar values per page. Structured page at most 48 KiB; structured plus escaped text representations and envelope reserve fit 64 KiB, so effective length may be smaller."
+    }
+  },
+  "required": [
+    "resource_uri"
+  ],
+  "additionalProperties": false
+}

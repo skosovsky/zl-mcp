@@ -46,6 +46,15 @@
         "direct",
         "group"
       ]
+    },
+    "coverage_mode": {
+      "type": "string",
+      "enum": [
+        "full",
+        "compact"
+      ],
+      "default": "full",
+      "description": "full preserves complete known_gaps (default). compact returns no inline gaps, exact snapshot count and explicit coverage_details continuation for zalo_list_coverage_gaps; request compact to keep large coverage within response budget."
     }
   },
   "required": [

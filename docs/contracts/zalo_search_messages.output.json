@@ -262,6 +262,72 @@
               "type": "null"
             }
           ]
+        },
+        "coverage_details": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "const": "compact"
+            },
+            "total_known_gaps": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "gaps_truncated": {
+              "type": "boolean"
+            },
+            "gaps_cursor": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "snapshot_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "mode",
+            "total_known_gaps",
+            "gaps_truncated",
+            "gaps_cursor",
+            "snapshot_at"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "total_known_gaps": {
+                    "const": 0
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "gaps_truncated": {
+                    "const": false
+                  },
+                  "gaps_cursor": {
+                    "type": "null"
+                  }
+                }
+              },
+              "else": {
+                "properties": {
+                  "gaps_truncated": {
+                    "const": true
+                  },
+                  "gaps_cursor": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  }
+                }
+              }
+            }
+          ]
         }
       },
       "required": [
@@ -273,7 +339,23 @@
         "history_complete",
         "retention_days"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "coverage_details"
+            ]
+          },
+          "then": {
+            "properties": {
+              "known_gaps": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
     },
     "Summary": {
       "type": "object",

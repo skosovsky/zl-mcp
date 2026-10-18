@@ -238,17 +238,19 @@ func TestBoundedDiagnosticsExcludePrivateContentInEverySink(t *testing.T) {
 		t.Fatal("callback delivery changed")
 	}
 	allowed := map[string]bool{
-		"time":              true,
-		"level":             true,
-		"msg":               true,
-		"correlation_id":    true,
-		"attempt":           true,
-		"body_bytes":        true,
-		"elapsed_ms":        true,
-		"http_status":       true,
-		"outcome":           true,
-		"reason":            true,
-		"receipt_persisted": true,
+		"time":               true,
+		"level":              true,
+		"msg":                true,
+		"correlation_id":     true,
+		"delivery_reference": true,
+		"attempt":            true,
+		"body_bytes":         true,
+		"delivery_kind":      true,
+		"elapsed_ms":         true,
+		"http_status":        true,
+		"outcome":            true,
+		"reason":             true,
+		"receipt_persisted":  true,
 	}
 	var correlation string
 	for _, sink := range []struct {
@@ -268,6 +270,9 @@ func TestBoundedDiagnosticsExcludePrivateContentInEverySink(t *testing.T) {
 				if !allowed[key] {
 					t.Fatalf("unapproved diagnostic field: %s", key)
 				}
+			}
+			if v["delivery_kind"] != "business" {
+				t.Fatal("unexpected delivery kind")
 			}
 			id, ok := v["correlation_id"].(string)
 			if !ok || len(id) != 26 {

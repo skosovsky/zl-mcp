@@ -1,0 +1,22 @@
+{
+ "type":"object",
+ "description":"Value of CallToolResult._meta[\"zl-mcp/build\"]. Does not modify strict successful output DTOs or stored operation outcomes.",
+ "properties":{
+  "backend":{"$ref":"#/$defs/identity"},
+  "bridge":{"$ref":"#/$defs/identity"}
+ },
+ "required":["backend"],
+ "additionalProperties":false,
+ "$defs":{
+  "identity":{
+   "type":"object",
+   "properties":{
+    "version":{"type":"string","minLength":1,"maxLength":128},
+    "revision":{"type":"string","pattern":"^(unknown|[0-9a-f]{40}|[0-9a-f]{64})$"},
+    "dirty":{"type":["boolean","null"]}
+   },
+   "required":["version","revision","dirty"],
+   "additionalProperties":false
+  }
+ }
+}

@@ -1,12 +1,10 @@
 {
-  "resultType": "complete",
   "_meta": {
     "io.modelcontextprotocol/serverInfo": {
       "name": "zl-mcp",
-      "version": "0.1.0-dev"
+      "version": "build-identity-tested-separately"
     }
   },
-  "ttlMs": 0,
   "cacheScope": "public",
   "resources": [
     {
@@ -35,5 +33,7 @@
       "name": "MCP Events delivery diagnostics",
       "uri": "zalo://events/diagnostics"
     }
-  ]
+  ],
+  "resultType": "complete",
+  "ttlMs": 0
 }

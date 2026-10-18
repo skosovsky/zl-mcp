@@ -67,7 +67,7 @@ func TestMCPDiscoverySearchContextAndResourceAuthorization(t *testing.T) {
 		&mcp.CallToolParams{Name: "zalo_search_messages", Arguments: map[string]any{"query": "РЕМОНТ", "limit": "10"}},
 	)
 	// Assert
-	if len(tools.Tools) != 25 {
+	if len(tools.Tools) != 27 {
 		t.Fatalf("tools=%d", len(tools.Tools))
 	}
 	if e != nil || result.IsError {

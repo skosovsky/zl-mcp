@@ -20,3 +20,23 @@ func (r *Reader) Browse(ctx context.Context, q conversations.BrowseRequest) (con
 		r.owner.Browse(ctx, q.Conversation, q.Since, q.Until, q.Order, q.Limit, q.Cursor),
 	)
 }
+
+func (r *Reader) BrowsePage(
+	ctx context.Context,
+	q conversations.BrowseRequest,
+) (*conversations.BrowseExecution, error) {
+	native, err := r.owner.BrowsePage(ctx, q.Conversation, q.Since, q.Until, q.Order, q.Limit, q.Cursor)
+	if err != nil {
+		return nil, readError(err)
+	}
+	value, err := catalogValue[conversations.Browse](native.Value, nil)
+	if err != nil {
+		return nil, err
+	}
+	return conversations.NewBrowseExecution(value, func(ctx context.Context, n int) (conversations.Browse, error) {
+		if err := native.Shorten(ctx, n); err != nil {
+			return conversations.Browse{}, readError(err)
+		}
+		return catalogValue[conversations.Browse](native.Value, nil)
+	}), nil
+}

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 
 	"github.com/skosovsky/zl-mcp/docs/contracts"
@@ -97,6 +98,12 @@ func TestFinalAuditIncludesPreflightAndPostExecutionFailures(t *testing.T) {
 		if json.Unmarshal([]byte(lines[0]), &entry) != nil || entry["code"] != code || entry["outcome"] != "error" ||
 			entry["correlation_id"] == "" {
 			t.Fatalf("incorrect final audit: %s", lines[0])
+		}
+		var clientError map[string]any
+		text := result.Content[0].(*mcp.TextContent).Text
+		if json.Unmarshal([]byte(text), &clientError) != nil ||
+			clientError["details"].(map[string]any)["correlation_id"] != entry["correlation_id"] {
+			t.Fatal("client error cannot be linked to final audit")
 		}
 		if strings.Contains(logs.String(), "PRIVATE_SENTINEL") {
 			t.Fatal("private value in audit")

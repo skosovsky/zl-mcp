@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "io.modelcontextprotocol/serverInfo": {
+      "name": "zl-mcp",
+      "version": "build-identity-tested-separately"
+    },
+    "zl-mcp/build": {
+      "backend": {
+        "dirty": null,
+        "revision": "unknown",
+        "version": "unknown"
+      }
+    }
+  },
+  "content": [
+    {
+      "text": "{\"code\":\"INVALID_ARGUMENT\",\"details\":{\"correlation_id\":\"correlation-tested-separately\"},\"message\":\"Arguments do not match the tool schema; check types, required fields, ranges and RFC3339 dates.\",\"next_action\":{\"arguments\":null,\"instruction\":\"Correct the arguments using the tool input schema.\",\"tool\":null},\"retryable\":false}",
+      "type": "text"
+    }
+  ],
+  "isError": true,
+  "resultType": "complete"
+}

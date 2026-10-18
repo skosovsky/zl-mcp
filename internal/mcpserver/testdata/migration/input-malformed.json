@@ -1,8 +1,8 @@
 {
   "content": [
     {
-      "type": "text",
-      "text": "{\"code\":\"INVALID_ARGUMENT\",\"message\":\"Arguments must be a JSON object.\",\"retryable\":false,\"next_action\":{\"tool\":null,\"arguments\":null,\"instruction\":\"Correct the arguments using the tool input schema.\"},\"details\":{}}"
+      "text": "{\"code\":\"INVALID_ARGUMENT\",\"details\":{\"correlation_id\":\"correlation-tested-separately\"},\"message\":\"Arguments must be a JSON object.\",\"next_action\":{\"arguments\":null,\"instruction\":\"Correct the arguments using the tool input schema.\",\"tool\":null},\"retryable\":false}",
+      "type": "text"
     }
   ],
   "isError": true

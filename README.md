@@ -50,24 +50,59 @@ the available bounded source, never a complete archive. Inspect counts, nullable
 filtering evidence, stop reason and newly imported time bounds. See the
 [history workflow](docs/history-import.md) and [operation contract](docs/contracts/history-import-operation.md).
 
-## Rich content candidate
+## Bounded reads and diagnostics
 
-The current worktree adds [message Events v3 and separate reaction observations](docs/contracts/rich-content-events.md).
-V3 and typed conversation reads distinguish author text from service summaries
-and attachment labels. Empty author text can accompany explicit image/sticker/
-audio/file metadata; media bytes are not downloaded. Unknown/legacy content stays
-explicit. Existing v2 subscriptions keep their original format and are not
-upgraded automatically. The call profile has a narrow direct-chat summary classifier for one verified
-native discriminator; call outcome, mode and duration remain unknown. Other
-forms and complete call coverage are unsupported. Fresh native activity delivery
-is still awaiting acceptance. The native candidate is deployed locally but not yet live-accepted or published; see
-[implementation evidence and remaining gates](docs/rich-content-implementation-checkpoint.md).
+When current discovery advertises `coverage_mode`, request `compact` on corpus
+search/context/detail/browse calls to prevent a large gap history from filling
+the response. Compact coverage explicitly reports omitted gap count and an opaque
+continuation; use `zalo_list_coverage_gaps` for details. Default `full` keeps the
+previous strict response. Archive coverage has its own contract. See
+[coverage representation](docs/contracts/coverage-pagination.md).
+
+A client without `resources/read` can use `zalo_read_message_content` with the
+exact text resource URI issued by context/browse or an archive read. Follow the
+opaque cursor with the same URI for bounded Unicode pages; current access,
+retention and recall are checked again. This reads text, not media or attachment
+metadata. Existing resources remain supported. See [content-read contract](docs/contracts/message-content-read.md).
+
+Tool result metadata `_meta["zl-mcp/build"]` identifies the servicing backend;
+STDIO additionally identifies its bridge. Unknown build metadata is explicit and
+is separate from the negotiated protocol version. Errors carry a safe correlation
+reference; subscription journal diagnostics are opt-in with
+`include_diagnostics=true` and distinguish delivery reasons. See
+[build/schema identity](docs/contracts/schema-publication-and-build.md) and
+[journal diagnostics](docs/contracts/event-recovery.md).
+
+
+## Rich content
+
+[Message Events v3 and separate reaction/call observations](docs/contracts/rich-content-events.md)
+are implemented. Typed conversation reads distinguish author text from service
+summaries and attachment labels. Empty author text can accompany explicit image,
+sticker, audio or file metadata; media bytes are not downloaded. Unknown/legacy
+content stays explicit. Existing v2 subscriptions retain their original format
+and are not upgraded automatically. The call profile has a narrow direct-chat
+summary classifier; outcome, mode and duration remain unknown. Other forms and
+complete call coverage are unsupported. See [accepted native scope and limitations](docs/rich-content-acceptance.md).
 
 ## Events and limitations
 
 Events use a pinned webhook draft profile, requiring a compatible HTTP client and a receiver with verification and signature support. Public HTTPS is the default. For a receiver on the same host, an operator can explicitly allow exact loopback HTTP/HTTPS URLs using [`events.local_callback_urls`](docs/contracts/local-callbacks.md); signatures remain mandatory and no tunnel is needed. Other private targets remain rejected. STDIO does not deliver Events. Receiver infrastructure and agent notification delivery remain outside the application.
 
 `zalo.conversation.message.created.v2` version 2 supports exact/all/direct/group scopes and includes typed conversation identity, an available name, the message ID, author, time, and up to 2048 Unicode code points of text. Truncated text has a flag and a resource URI for the full record. By default, subscriptions begin with the first insertion after activation and remain active until cancelled; queued delivery survives restarts, within documented retry and capacity limits. See the [Events contract](docs/contracts/events.md).
+
+The optional `zalo.subscription.journal.ready.v1` companion provides durable
+control wakeups for one existing business-subscription generation. It carries
+references, not message content; the agent always rereads and acknowledges the
+same business journal. A trusted host explicitly configures the companion and
+binds its wakeups to the existing saved workflow. Server/receiver synthetic tests
+cover blocked delivery, restart and repeated control rounds; actual target-host
+activation and Ann processing remain **NOT_RUN**. Rounds are finite and can end
+in an observable exhausted/cancelled state. See
+[continuation contract](docs/contracts/subscription-recovery-ready.md).
+
+Readiness of a receiver, journal processing and agent notification delivery are
+separate outcomes; ordinary MCP support or HTTP 2xx does not establish the host gate.
 
 The legacy group-only event `zalo.message.created` retains its original payload and subscription scope. Collecting all conversations does not widen callback subscriptions.
 
@@ -94,11 +129,13 @@ One account uses one state directory. Private file permissions restrict local ac
 - [Technical specification](docs/technical-spec.md) and [service contract](docs/contracts/service.md)
 - [Conversation collection, compatibility and recovery](docs/conversations.md) and [extension task](docs/task-all-conversations.md) and [acceptance evidence](docs/all-conversations-acceptance.md)
 - [Incoming-message filters and direct messaging](docs/task-direct-messaging.md)
+- [Complete system and MCP tool reference (RU)](docs/system-and-tools-reference.md) — architecture, all tools, resources, Events and CLI
 - [Explicit read receipts and reactions](docs/message-actions.md) — contracts, permissions and verified native cases
-- [Read/reaction task and remaining acceptance](docs/task-mark-messages-read.md)
+- [Read/reaction task and acceptance criteria](docs/task-mark-messages-read.md)
 - [Remaining acceptance, Strangers discovery, and conversation browsing/history task](docs/task-conversation-completion.md)
 - [Final requirement audit, live acceptance and retained upstream limits](docs/conversation-completion-final-audit.md)
 - [Owner-only mobile diagnostics and retained account exports](docs/mobile-backup-diagnostics.md)
+- [MCP/skills hardening requirements and acceptance](docs/task-mcp-skills-hardening.md)
 - [Development and checks](docs/development.md)
 - [Historical records](docs/archive/README.md)
 - [Third-party licenses](THIRD_PARTY.md)

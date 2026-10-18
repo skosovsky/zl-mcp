@@ -264,7 +264,7 @@ func TestHarnessSeedApprovalAndSkillResources(t *testing.T) {
 			}
 		}
 	}
-	if skillCount != 3 {
+	if skillCount != 8 {
 		t.Fatalf("skill resources=%d", skillCount)
 	}
 	if _, err = session.ReadResource(

@@ -266,10 +266,19 @@ func (f *Fixture) prepareApproval(runCtx context.Context, opts Options) error {
 }
 
 func (f *Fixture) addSkillResources(skillDir string) error {
-	// Expose only the three fixed skill documents so evaluations can record
-	// actual reference reads without giving the model filesystem access.
+	// Expose the fixed research skill package, including conditional references,
+	// so the harness records reads without providing filesystem access.
 	if skillDir != "" {
-		for _, name := range []string{"SKILL.md", "reference/report-format.md", "reference/eval-cases.md"} {
+		for _, name := range []string{
+			"SKILL.md",
+			"reference/report-format.md",
+			"reference/eval-cases.md",
+			"reference/service-access.md",
+			"reference/corpus-reading.md",
+			"reference/archive-reading.md",
+			"reference/history-import.md",
+			"reference/message-actions.md",
+		} {
 			contents, readErr := os.ReadFile(filepath.Join(skillDir, name))
 			if readErr != nil {
 				return readErr

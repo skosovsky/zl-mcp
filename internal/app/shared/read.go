@@ -36,18 +36,20 @@ type ConversationHit struct {
 }
 
 type ConversationCoverage struct {
-	ConversationType    string       `json:"conversation_type"`
-	ConversationID      string       `json:"conversation_id"`
-	CollectionStartedAt *time.Time   `json:"collection_started_at"`
-	EarliestStoredAt    *time.Time   `json:"earliest_stored_at"`
-	LatestStoredAt      *time.Time   `json:"latest_stored_at"`
-	KnownGaps           []domain.Gap `json:"known_gaps"`
-	HistoryComplete     bool         `json:"history_complete"`
-	RetentionDays       *int         `json:"retention_days"`
+	CoverageDetails     *domain.CoverageDetails `json:"coverage_details,omitempty"`
+	ConversationType    string                  `json:"conversation_type"`
+	ConversationID      string                  `json:"conversation_id"`
+	CollectionStartedAt *time.Time              `json:"collection_started_at"`
+	EarliestStoredAt    *time.Time              `json:"earliest_stored_at"`
+	LatestStoredAt      *time.Time              `json:"latest_stored_at"`
+	KnownGaps           []domain.Gap            `json:"known_gaps"`
+	HistoryComplete     bool                    `json:"history_complete"`
+	RetentionDays       *int                    `json:"retention_days"`
 }
 
 func Coverage(ref domain.ConversationRef, c domain.Coverage) ConversationCoverage {
 	return ConversationCoverage{
+		CoverageDetails:     c.CoverageDetails,
 		ConversationType:    ref.Type,
 		ConversationID:      ref.ID,
 		CollectionStartedAt: c.CollectionStartedAt,

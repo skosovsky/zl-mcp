@@ -74,7 +74,7 @@ func TestActualBinaryStdioLifecycle(t *testing.T) {
 	}
 	status, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "zalo_get_status", Arguments: map[string]any{}})
 	// Assert
-	if err != nil || status.IsError || len(tools.Tools) != 25 {
+	if err != nil || status.IsError || len(tools.Tools) != 27 {
 		t.Fatalf("stdio failed: %+v %v", status, err)
 	}
 	resource, err := session.ReadResource(ctx, &mcp.ReadResourceParams{URI: "zalo://capabilities"})

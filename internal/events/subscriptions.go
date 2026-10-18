@@ -73,7 +73,7 @@ func NewSubscriptionManager(store Subscriptions, namespace string) (*Subscriptio
 			target[name] = schema
 		}
 	}
-	for _, name := range []string{"conversation_v2_events_subscribe", "conversation_v2_events_unsubscribe", "conversation_v3_events_subscribe", "conversation_v3_events_unsubscribe", "reaction_v1_events_subscribe", "reaction_v1_events_unsubscribe", "call_v1_events_subscribe", "call_v1_events_unsubscribe"} {
+	for _, name := range []string{"conversation_v2_events_subscribe", "conversation_v2_events_unsubscribe", "conversation_v3_events_subscribe", "conversation_v3_events_unsubscribe", "reaction_v1_events_subscribe", "reaction_v1_events_unsubscribe", "call_v1_events_subscribe", "call_v1_events_unsubscribe", "journal_ready_v1_events_subscribe", "journal_ready_v1_events_unsubscribe"} {
 		schema, err := contracts.Compile(name, "input")
 		if err != nil {
 			return nil, err
@@ -86,12 +86,14 @@ func NewSubscriptionManager(store Subscriptions, namespace string) (*Subscriptio
 type subscriptionRequest struct {
 	Name      string `json:"name"`
 	Arguments struct {
-		GroupID           string `json:"group_id"`
-		Scope             string `json:"scope"`
-		ConversationType  string `json:"conversation_type"`
-		ConversationID    string `json:"conversation_id"`
-		Direction         string `json:"direction"`
-		FirstIncomingOnly bool   `json:"first_incoming_only"`
+		GroupID             string `json:"group_id"`
+		SubscriptionID      string `json:"subscription_id"`
+		GenerationReference string `json:"generation_reference"`
+		Scope               string `json:"scope"`
+		ConversationType    string `json:"conversation_type"`
+		ConversationID      string `json:"conversation_id"`
+		Direction           string `json:"direction"`
+		FirstIncomingOnly   bool   `json:"first_incoming_only"`
 	} `json:"arguments"`
 	Delivery struct {
 		Mode   string `json:"mode"`
@@ -123,6 +125,16 @@ func (m *SubscriptionManager) subscriptionID(principal string, p subscriptionReq
 			p.Arguments.Direction,
 			strconv.FormatBool(p.Arguments.FirstIncomingOnly),
 		)
+	}
+	if p.Name == domain.JournalReadyV1 {
+		parts = []string{
+			m.namespace,
+			principal,
+			p.Delivery.URL,
+			p.Name,
+			p.Arguments.SubscriptionID,
+			p.Arguments.GenerationReference,
+		}
 	}
 	identity, _ := json.Marshal(parts)
 	digest := sha256.Sum256(identity)
@@ -163,23 +175,7 @@ func (m *SubscriptionManager) Call(
 		Name string `json:"name"`
 	}
 	_ = json.Unmarshal(raw, &selector)
-	if domain.IsTypedEventProfile(selector.Name) {
-		prefix := "conversation_v2_events_"
-		switch selector.Name {
-		case domain.ConversationMessageCreatedV3:
-			prefix = "conversation_v3_events_"
-		case domain.ReactionObservedV1:
-			prefix = "reaction_v1_events_"
-		case domain.CallObservedV1:
-			prefix = "call_v1_events_"
-		}
-		if method == methodEventsSubscribe {
-			schema = m.input[prefix+"subscribe"]
-		}
-		if method == methodEventsUnsubscribe {
-			schema = m.input[prefix+"unsubscribe"]
-		}
-	}
+	schema = m.eventInputSchema(selector.Name, method, schema)
 	if json.Unmarshal(raw, &value) != nil || schema.Validate(value) != nil {
 		return nil, eventRPCError(-32602, "Invalid event parameters.", "invalid_params")
 	}
@@ -201,6 +197,35 @@ func (m *SubscriptionManager) Call(
 		return nil, eventRPCError(-32603, "Invalid event result.", "contract")
 	}
 	return result, nil
+}
+
+func (m *SubscriptionManager) eventInputSchema(profile, method string, schema *jsonschema.Schema) *jsonschema.Schema {
+	if domain.IsTypedEventProfile(profile) {
+		prefix := "conversation_v2_events_"
+		switch profile {
+		case domain.ConversationMessageCreatedV3:
+			prefix = "conversation_v3_events_"
+		case domain.ReactionObservedV1:
+			prefix = "reaction_v1_events_"
+		case domain.CallObservedV1:
+			prefix = "call_v1_events_"
+		}
+		if method == methodEventsSubscribe {
+			schema = m.input[prefix+"subscribe"]
+		}
+		if method == methodEventsUnsubscribe {
+			schema = m.input[prefix+"unsubscribe"]
+		}
+	}
+	if profile == domain.JournalReadyV1 {
+		if method == methodEventsSubscribe {
+			schema = m.input["journal_ready_v1_events_subscribe"]
+		}
+		if method == methodEventsUnsubscribe {
+			schema = m.input["journal_ready_v1_events_unsubscribe"]
+		}
+	}
+	return schema
 }
 
 func eventArguments(name string) (any, error) {
@@ -261,8 +286,23 @@ func listEventContracts() (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	recoveryArguments, err := eventArguments("journal_ready_v1_events_subscribe")
+	if err != nil {
+		return nil, err
+	}
+	recoveryPayload, err := contracts.Document("journal_ready_v1", "payload")
+	if err != nil {
+		return nil, err
+	}
 	return map[string]any{
 		"events": []any{
+			map[string]any{
+				fieldName:       domain.JournalReadyV1,
+				"description":   "Optional control wakeup for the unacknowledged journal of one active owned business subscription generation. Carries only opaque references; read and acknowledge the business journal in order. Subscribe explicitly through a host capable of registering this companion. Not a message, authorization, business delivery receipt or exactly-once guarantee. Retries and bounded reminders may duplicate wakeups; old generations and acknowledged heads suppress pending wakeups.",
+				"delivery":      []string{"webhook"},
+				"inputSchema":   recoveryArguments,
+				"payloadSchema": recoveryPayload,
+			},
 			map[string]any{
 				fieldName:       MessageCreated,
 				"description":   "Newly collected messages from one explicitly enabled group. Text is limited to 2048 Unicode characters; truncated text includes a resource URI for the full record. Subscriptions survive restart; prior corpus is not replayed.",
@@ -312,6 +352,9 @@ func (m *SubscriptionManager) changeSubscription(
 	var p subscriptionRequest
 	if json.Unmarshal(raw, &p) != nil {
 		return nil, eventRPCError(-32602, "Invalid event parameters.", "invalid_params")
+	}
+	if p.Name == domain.JournalReadyV1 {
+		return m.changeRecoverySubscription(ctx, method, principal, p)
 	}
 	permitted := m.subscriptionPermitted(p)
 	if !permitted && method == methodEventsSubscribe {

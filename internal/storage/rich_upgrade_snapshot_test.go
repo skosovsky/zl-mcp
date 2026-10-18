@@ -69,7 +69,7 @@ func TestRichUpgradeOnDisposableSnapshot(t *testing.T) {
 		t.Fatal("migrated snapshot integrity failure")
 	}
 	if err = s.DB.QueryRow(`SELECT MAX(version) FROM schema_migrations`).
-		Scan(&version); err != nil || version != 19 ||
+		Scan(&version); err != nil || version != 20 ||
 		countClientAliases(t, s) != 0 {
 		t.Fatal("candidate alias migration incomplete")
 	}

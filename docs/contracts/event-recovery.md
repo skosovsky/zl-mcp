@@ -19,7 +19,8 @@ change MCP Events delivery, batching, or the receiver's model context.
   nullable `gap_reason`, and an opaque `receipt`. A response is bounded by both
   record count and byte budget; `has_more` requests another page after processing
   the current one. `blocked_on_delivery` means an earlier callback is still
-  pending/sending; finish this run rather than polling indefinitely.
+  pending/sending. With `include_diagnostics=true`, use the bounded retry hint
+  and recovery status described below; never poll indefinitely.
 - `zalo_ack_subscription_events {"subscription_id":"…","receipt":"…"}` persists
   completion of that one record and its ordered prefix. Acknowledge receipts in
   page order, only after the authorized action succeeds or an irrelevant record
@@ -29,6 +30,28 @@ change MCP Events delivery, batching, or the receiver's model context.
 Input/output contracts are the corresponding `.input.json` / `.output.json`
 files. This is available through HTTP and the STDIO bridge of the running service.
 Only HTTP has Events subscription methods.
+
+## Blocked reads and durable continuation
+
+`include_diagnostics=true` on journal reads exposes `retry_after_ms` and closed
+recovery status fields without exposing pending business payloads. Use at most
+three rereads after the initial read and at most 30 seconds of total waiting,
+respecting the server hint. If the host cannot wait, do not busy-loop.
+
+For durable continuation beyond that budget, an explicitly attached
+[`zalo.subscription.journal.ready.v1` companion](subscription-recovery-ready.md)
+can wake the workflow for the same business subscription and generation.
+`zalo_list_event_subscriptions {"include_recovery":true}` exposes the generation
+and attachment metadata; the default list shape is unchanged. The service watches
+unacknowledged heads autonomously, including when the original workflow never
+read its journal. A control wakeup reads the same ordered business journal; it
+is never a message payload or permission to act. An empty journal ends quietly.
+
+Without an attached and host-verified continuation route, report the limitation
+rather than promising later execution. HTTP acceptance, synthetic receiver tests,
+and updated skill files do not prove that the real host will resume its task.
+The companion has bounded reminders, explicit exhaustion and cancellation;
+it does not promise infinite delivery or exactly-once external notifications.
 
 ## Processing and scope
 

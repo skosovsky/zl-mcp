@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "subscription_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "generation_reference": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "recovery_reference": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    }
+  },
+  "required": [
+    "subscription_id",
+    "generation_reference",
+    "recovery_reference"
+  ],
+  "additionalProperties": false
+}

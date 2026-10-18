@@ -1,7 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
-  "properties": {},
+  "properties": {
+    "include_recovery": {
+      "type": "boolean",
+      "default": false,
+      "description": "Opt in to opaque business generation and companion recovery status. Default preserves the legacy subscription shape; never returns callback credentials."
+    }
+  },
   "required": [],
   "additionalProperties": false
 }

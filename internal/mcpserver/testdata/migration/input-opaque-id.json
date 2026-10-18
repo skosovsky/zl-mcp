@@ -1,8 +1,8 @@
 {
   "content": [
     {
-      "type": "text",
-      "text": "{\"code\":\"NOT_FOUND\",\"message\":\"No accessible local record was found.\",\"retryable\":false,\"next_action\":{\"tool\":null,\"arguments\":null,\"instruction\":\"Use IDs returned by zalo_list_groups or zalo_search_messages.\"},\"details\":{}}"
+      "text": "{\"code\":\"NOT_FOUND\",\"details\":{\"correlation_id\":\"correlation-tested-separately\"},\"message\":\"No accessible local record was found.\",\"next_action\":{\"arguments\":null,\"instruction\":\"Use IDs returned by zalo_list_groups or zalo_search_messages.\",\"tool\":null},\"retryable\":false}",
+      "type": "text"
     }
   ],
   "isError": true

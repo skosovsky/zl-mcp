@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "conversation_type": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "group"
+      ]
+    },
+    "conversation_id": {
+      "type": "string"
+    },
+    "gaps": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "reason"
+        ]
+      }
+    },
+    "total_known_gaps": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "has_more": {
+      "type": "boolean"
+    },
+    "next_cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "snapshot_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "conversation_type",
+    "conversation_id",
+    "gaps",
+    "total_known_gaps",
+    "has_more",
+    "next_cursor",
+    "snapshot_at"
+  ]
+}

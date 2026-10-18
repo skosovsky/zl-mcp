@@ -11,6 +11,7 @@ import (
 
 	"github.com/skosovsky/zl-mcp/docs/contracts"
 	"github.com/skosovsky/zl-mcp/internal/app/archives"
+	"github.com/skosovsky/zl-mcp/internal/app/contentread"
 	"github.com/skosovsky/zl-mcp/internal/app/conversations"
 	"github.com/skosovsky/zl-mcp/internal/app/eventaccess"
 	"github.com/skosovsky/zl-mcp/internal/app/history"
@@ -60,6 +61,7 @@ type Capabilities struct {
 }
 
 type Runtime struct {
+	content       *contentread.Handler
 	operations    Capabilities
 	view          *toolsy.RegistryView
 	authority     Authority
@@ -71,12 +73,14 @@ type Runtime struct {
 // Result retains invocation-owned continuations; transport projects business
 // values after tool execution without executing another handler to shrink them.
 type Result struct {
+	CoverageGaps        *domain.CoverageGaps
+	CorpusBrowse        *conversations.BrowseExecution
+	Content             *contentread.Page
 	Acknowledgement     *eventaccess.Acknowledgement
 	Subscriptions       *eventaccess.Subscriptions
 	Events              *eventaccess.Page
 	Directory           *conversations.DirectoryExecution
 	ConversationDetail  *conversations.Detail
-	Browse              *conversations.Browse
 	ArchiveSources      *archives.Sources
 	ArchiveDirectory    *archives.DirectoryExecution
 	ArchiveBrowse       *archives.BrowseExecution
@@ -98,6 +102,12 @@ func (r *Result) Value() any { return r.value() }
 
 func (r *Result) value() any {
 	switch {
+	case r.CoverageGaps != nil:
+		return *r.CoverageGaps
+	case r.CorpusBrowse != nil:
+		return r.CorpusBrowse.Result
+	case r.Content != nil:
+		return *r.Content
 	case r.Acknowledgement != nil:
 		return *r.Acknowledgement
 	case r.Subscriptions != nil:
@@ -108,8 +118,6 @@ func (r *Result) value() any {
 		return r.Directory.Result
 	case r.ConversationDetail != nil:
 		return *r.ConversationDetail
-	case r.Browse != nil:
-		return *r.Browse
 	case r.ArchiveSources != nil:
 		return *r.ArchiveSources
 	case r.ArchiveDirectory != nil:
@@ -164,6 +172,9 @@ func New(
 		schemas:       map[string]*jsonschema.Schema{},
 	}
 	names := append([]string(nil), readNames...)
+	if _, ok := conversationHandler.Reads.(conversations.CoveragePort); ok {
+		names = append(names, "zalo_list_coverage_gaps")
+	}
 	if conversationHandler.Catalog != nil {
 		names = append(names, "zalo_get_status", "zalo_list_groups")
 		if conversationHandler.LiveGroups != nil {
@@ -189,7 +200,12 @@ func New(
 			if v.Archives.Reads == nil {
 				return nil, errors.New("typed archive port is required")
 			}
-			names = append(names, "zalo_list_archive_sources")
+			names = append(names, "zalo_list_archive_sources", "zalo_read_message_content")
+			var contentErr error
+			r.content, contentErr = contentread.New(conversationHandler, v.Archives)
+			if contentErr != nil {
+				return nil, contentErr
+			}
 		}
 		if v.Messaging != nil || v.History != nil || v.Membership != nil {
 			if v.Messaging == nil || v.History == nil || v.Membership == nil || v.Messaging.Reads == nil ||
@@ -430,7 +446,7 @@ func (r *Runtime) decide(ctx context.Context, req toolsy.PolicyRequest) toolsy.D
 		err = r.authority.CheckGroupContext(ctx, contextRequest(args, true))
 	case toolGetConversationMessageContext:
 		err = r.authority.CheckConversationContext(ctx, contextRequest(args, false))
-	case toolMarkMessagesRead,
+	case "zalo_list_coverage_gaps", "zalo_read_message_content", toolMarkMessagesRead,
 		toolSetMessageReaction,
 		toolSendDirectMessage,
 		toolJoinGroup,
@@ -483,8 +499,36 @@ func mapError(err error) error {
 func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any) (*Result, error) {
 	//nolint:exhaustruct_v5 // Result preserves omitted optional DTO fields and zero counters in the existing wire/persistence projection.
 	out := &Result{}
+	if stringArg(args, "coverage_mode") == "compact" {
+		ctx = domain.WithCompactCoverage(ctx)
+	}
 	var err error
 	switch name {
+	case "zalo_list_coverage_gaps":
+		var v domain.CoverageGaps
+		v, err = r.conversations.CoverageGaps(
+			ctx,
+			ref(args),
+			intArg(args, "limit", defaultCoverageLimit),
+			stringArg(args, "cursor"),
+		)
+		out.CoverageGaps = &v
+	case "zalo_read_message_content":
+		identity, identityErr := r.authority.ReadIdentity(ctx)
+		if identityErr != nil {
+			return nil, identityErr
+		}
+		var v contentread.Page
+		v, err = r.content.Read(
+			ctx,
+			identity,
+			contentread.Request{
+				ResourceURI: stringArg(args, "resource_uri"),
+				Cursor:      stringArg(args, "cursor"),
+				Limit:       intArg(args, "limit", contentread.DefaultLimit),
+			},
+		)
+		out.Content = &v
 	case toolMarkMessagesRead:
 		ids, parseErr := messageActionIDs(args)
 		if parseErr != nil {
@@ -577,6 +621,9 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 		)
 		out.Acknowledgement = &v
 	case "zalo_list_event_subscriptions":
+		if includeRecovery, _ := args["include_recovery"].(bool); includeRecovery {
+			ctx = domain.WithRecoveryDetails(ctx)
+		}
 		identity, e := r.authority.ReadIdentity(ctx)
 		if e != nil {
 			return nil, e
@@ -585,6 +632,9 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 		v, err = r.operations.Events.Subscriptions(ctx, identity.Principal)
 		out.Subscriptions = &v
 	case "zalo_read_subscription_events":
+		if diagnostics, _ := args["include_diagnostics"].(bool); diagnostics {
+			ctx = domain.WithEventDiagnostics(ctx)
+		}
 		identity, e := r.authority.ReadIdentity(ctx)
 		if e != nil {
 			return nil, e
@@ -658,8 +708,7 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 				},
 			)
 		} else {
-			var v conversations.Browse
-			v, err = r.conversations.Browse(
+			out.CorpusBrowse, err = r.conversations.BrowsePage(
 				ctx,
 				conversations.BrowseRequest{
 					Conversation: ref(args),
@@ -670,7 +719,6 @@ func (r *Runtime) dispatch(ctx context.Context, name string, args map[string]any
 					Limit:        intArg(args, "limit", defaultReadLimit),
 				},
 			)
-			out.Browse = &v
 		}
 	case "zalo_list_archive_sources":
 		var v archives.Sources

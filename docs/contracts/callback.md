@@ -34,7 +34,9 @@ its former full-content format; no full-trace or bypass mode remains.
 
 The explicit field allowlist is: standard logger time/level/message; randomly
 created per-attempt `correlation_id`; integer `attempt`, `body_bytes`,
-`elapsed_ms`, `http_status`; finite `outcome` (pending/delivered/failed) and
+`elapsed_ms`, `http_status`; closed `delivery_kind` (business/journal_recovery);
+optional state-keyed `delivery_reference` (dlv_/rdlv_) and control-only opaque
+`recovery_reference` as defined in [delivery diagnostics](event-delivery-diagnostics.md); finite `outcome` (pending/delivered/failed) and
 `reason` (network/accepted/callback_gone/payload_too_large/http_transient/
 http_rejected/attempts/deadline); boolean `receipt_persisted`. HTTP status is
 0 if unavailable, otherwise a valid 100..599 status (other values collapse to 0).

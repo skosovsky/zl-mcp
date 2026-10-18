@@ -22,6 +22,7 @@ import (
 // explicit environment variable; ordinary CI can never bless a changed catalog.
 func baselineJSON(t *testing.T, name string, value any) {
 	t.Helper()
+	value = normalizeBuildSnapshot(t, value)
 	b, err := json.MarshalIndent(value, "", "  ")
 	if err != nil {
 		t.Fatal(err)
@@ -124,6 +125,9 @@ func TestMigrationCatalogBaseline(t *testing.T) {
 	manifestBytes, err := os.ReadFile("../../docs/mcp-migration/manifest.json")
 	if err != nil {
 		t.Fatal(err)
+	}
+	if os.Getenv("ZL_MIGRATION_FREEZE") == "1" {
+		manifestBytes = freezeManifestTools(t, manifestBytes, tools.Tools)
 	}
 	var manifest struct {
 		Tools []map[string]any `json:"tools"`

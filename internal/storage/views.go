@@ -200,6 +200,11 @@ func (s *Store) conversationCoverage(ctx context.Context, ref domain.Conversatio
 	}
 	c.EarliestStoredAt = parse(earliest)
 	c.LatestStoredAt = parse(latest)
+	if domain.CompactCoverage(ctx) {
+		details, compactErr := s.compactCoverage(ctx, ref)
+		c.CoverageDetails = details
+		return c, compactErr
+	}
 	rows, e := s.DB.QueryContext(
 		ctx,
 		"SELECT started_at,ended_at,reason FROM collection_gaps WHERE conversation_type=? AND group_id=? ORDER BY started_at",

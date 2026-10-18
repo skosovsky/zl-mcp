@@ -95,3 +95,42 @@ func (h *Handler) Conversation(ctx context.Context, ref domain.ConversationRef) 
 func (h *Handler) Browse(ctx context.Context, r BrowseRequest) (Browse, error) {
 	return h.DirectoryReads.Browse(ctx, r)
 }
+
+// BrowseExecution holds the invocation snapshot when transport reduces a page.
+type BrowseExecution struct {
+	Result  Browse
+	shorten func(context.Context, int) (Browse, error)
+}
+type BrowsePagePort interface {
+	BrowsePage(context.Context, BrowseRequest) (*BrowseExecution, error)
+}
+
+func NewBrowseExecution(value Browse, shorten func(context.Context, int) (Browse, error)) *BrowseExecution {
+	return &BrowseExecution{Result: value, shorten: shorten}
+}
+func (e *BrowseExecution) Shorten(ctx context.Context) error {
+	if e.Result.Coverage.CoverageDetails != nil {
+		ctx = domain.WithCompactCoverage(ctx)
+	}
+	if len(e.Result.Messages) < 2 || e.shorten == nil {
+		return domain.ResponseTooLarge(
+			"One message record or its coverage exceeds the response budget.",
+			"Retry with coverage_mode=compact if using full coverage; if one record still cannot fit, report its metadata size limitation. Full text may be read through zalo_read_message_content.",
+		)
+	}
+	value, err := e.shorten(ctx, len(e.Result.Messages)-1)
+	if err == nil {
+		e.Result = value
+	}
+	return err
+}
+func (h *Handler) BrowsePage(ctx context.Context, r BrowseRequest) (*BrowseExecution, error) {
+	if port, ok := h.DirectoryReads.(BrowsePagePort); ok {
+		return port.BrowsePage(ctx, r)
+	}
+	value, err := h.Browse(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+	return NewBrowseExecution(value, nil), nil
+}

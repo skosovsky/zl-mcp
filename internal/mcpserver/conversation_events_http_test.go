@@ -207,7 +207,7 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 
 	// Act: a payload-less automation recovers the exact accepted envelopes via MCP.
 	catalog := httpRPC(t, endpoint.URL+"/mcp", token, "events/list", map[string]any{})
-	if len(catalog["events"].([]any)) != 5 {
+	if len(catalog["events"].([]any)) != 6 {
 		t.Fatal("event profiles missing or unexpected in discovery")
 	}
 	tools := func(name string, args map[string]any) map[string]any {
@@ -232,12 +232,23 @@ func testConversationProfileTLS(t *testing.T, profileName string, profileVersion
 		"zalo_read_subscription_events",
 		map[string]any{"subscription_id": expectedSubscription},
 	)
+	legacyRecords := recovered["events"].([]any)
+	if _, present := legacyRecords[0].(map[string]any)["delivery_reason"]; present {
+		t.Fatal("legacy diagnostics changed")
+	}
+	recovered = tools(
+		"zalo_read_subscription_events",
+		map[string]any{"subscription_id": expectedSubscription, "include_diagnostics": true},
+	)
 	records := recovered["events"].([]any)
 	if len(records) != 2 {
 		t.Fatal("callback recovery lost events")
 	}
 	for _, record := range records {
 		entry := record.(map[string]any)
+		if entry["delivery_reason"] != "accepted" || entry["delivery_reference"] == nil {
+			t.Fatal("safe diagnostics missing")
+		}
 		payload := entry["event"].(map[string]any)
 		if payload["name"] != profileName || payload["eventId"] == nil ||
 			entry["delivery_state"] != "delivered" {

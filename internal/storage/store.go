@@ -176,7 +176,10 @@ func (s *Store) migrate(ctx context.Context) error {
 	if err := s.migrateSeenMetadata(ctx); err != nil {
 		return err
 	}
-	return s.migrateMessageActions(ctx)
+	if err := s.migrateMessageActions(ctx); err != nil {
+		return err
+	}
+	return s.migrateRecovery(ctx)
 }
 func (s *Store) BindAccount(ctx context.Context, account string) error {
 	h := sha256.Sum256([]byte(account))

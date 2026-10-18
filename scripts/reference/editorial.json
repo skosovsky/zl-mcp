@@ -1,0 +1,220 @@
+{
+  "tools": {
+    "zalo_ack_subscription_events": {
+      "purpose": "Подтвердить обработку одной записи журнала подписки.",
+      "effect": "Изменяет локальный processing checkpoint. Не отправляет callback, сообщение, уведомление или отметку прочтения Zalo.",
+      "implementation": "Использует opaque receipt из read_subscription_events и проверяет порядок/generation. Повтор того же receipt безопасен; устаревший или пропущенный требует перечитать журнал. Ack выполняется после результата разрешённого действия агента.",
+      "result": "Признак acknowledged."
+    },
+    "zalo_cancel_history_import": {
+      "purpose": "Остановить конкретный импорт истории.",
+      "effect": "Терминально меняет состояние локальной операции; ранее импортированные сообщения остаются.",
+      "implementation": "Поздний ответ уже отправленной страницы не должен записать новую страницу после отмены. Повтор исходного request_id не оживляет отменённую операцию.",
+      "result": "Полный сохранённый progress/result импорта, как у get_history_import_status."
+    },
+    "zalo_get_conversation": {
+      "purpose": "Узнать metadata и наблюдаемое покрытие одного личного чата или группы.",
+      "effect": "Читает локальный каталог и coverage; не скачивает пропущенную историю.",
+      "implementation": "Использует точную пару type/ID и текущую collection policy. catalog_complete и gaps нельзя игнорировать.",
+      "result": "Объект conversation, coverage и признак полноты каталога."
+    },
+    "zalo_get_conversation_message_context": {
+      "purpose": "Прочитать сообщение, соседей и доступную цитату в typed-чате.",
+      "effect": "Читает текущий локальный корпус без внешней отметки прочтения.",
+      "implementation": "Цель берётся из поиска/просмотра. before/after ограничены 20 с каждой стороны. Отсутствующая цитата — null; обрезанный текст имеет resource URI.",
+      "result": "anchor, before/after, reply_to, coverage, признак усечения и следующая операция при необходимости."
+    },
+    "zalo_get_group": {
+      "purpose": "Получить metadata конкретной группы Zalo.",
+      "effect": "Может обновлять metadata через текущую сессию; при неудаче возвращает сохранённые данные со stale=true.",
+      "implementation": "Не читает сообщения и не вступает в группу. ID берётся из каталога групп.",
+      "result": "group, описание, membership, stale и время обновления."
+    },
+    "zalo_get_history_import_status": {
+      "purpose": "Проверить сохранённый прогресс импорта.",
+      "effect": "Только читает операцию по operation_id; не запускает/не возобновляет скачивание.",
+      "implementation": "Показывает examined/inserted/duplicate counts, интервалы, фильтрацию источника и stop_reason. Даже completed не доказывает полную историю. Поля внутренних источников в output не разрешают их как public input.",
+      "result": "Полный объект history_import_operation."
+    },
+    "zalo_get_join_status": {
+      "purpose": "Проверить результат вступления в группу.",
+      "effect": "Читает сохранённую join-операцию; не отправляет новую заявку.",
+      "implementation": "При unknown нужно сверить фактическое членство, а не создавать новый request_id. pending_approval означает ожидание модератора.",
+      "result": "Статус, группа, времена, collection_enabled, безопасная ошибка, poll_after_ms и retry_safe."
+    },
+    "zalo_get_message_action_status": {
+      "purpose": "Проверить долговечный результат прочтения или реакции.",
+      "effect": "Читает журнал message actions без новых внешних действий.",
+      "implementation": "Доступен без write-гранта и активной сессии, пока сохранённый typed-чат разрешён текущей collection policy и аккаунту. Старый unknown не повышается из-за новых знаний о протоколе.",
+      "result": "Общий message-action result: kind/plan/status/stage/steps/reason/native status."
+    },
+    "zalo_get_message_context": {
+      "purpose": "Прочитать сообщение и контекст в группе через сохранённый group-only интерфейс.",
+      "effect": "Читает локальные group-записи без отметки прочтения.",
+      "implementation": "Совместимый интерфейс с group_id; для личных чатов используется get_conversation_message_context. Не скачивает отсутствующую историю.",
+      "result": "anchor, соседи, доступная цитата, coverage и признаки усечения."
+    },
+    "zalo_get_send_status": {
+      "purpose": "Узнать результат ранее запрошенной отправки личного текста.",
+      "effect": "Только читает send-журнал; не повторяет отправку.",
+      "implementation": "sent — принятие Zalo, а не доставка/прочтение получателем. Для unknown нельзя автоматически создавать новый UUID.",
+      "result": "request_id, recipient_id, status, доступный message_id, reason и время."
+    },
+    "zalo_get_status": {
+      "purpose": "Проверить состояние collector и объём локального корпуса.",
+      "effect": "Читает безопасный status; не выполняет login и не возвращает сессию.",
+      "implementation": "connected не доказывает поступление каждого события: отдельно важны last_event_at, last_persisted_at, gaps и message count. auth_required допускает локальные reads, но не upstream-действия.",
+      "result": "Connectivity/authentication, timestamps, counts и coverage_summary."
+    },
+    "zalo_import_conversation_history": {
+      "purpose": "Явно импортировать доступную часть истории за период.",
+      "effect": "Запускает ограниченную долговечную работу через текущую сессию и пишет в корпус. История не создаёт Events.",
+      "implementation": "group_cloud — страницы истории группы; conversation_preload — один доступный snapshot direct/group с partial/source_window_limited. Не означает весь аккаунт или произвольную глубину. max_messages считает все examined records, включая дубликаты и записи вне интервала.",
+      "result": "operation_id и полный прогресс; дальше status tool."
+    },
+    "zalo_inspect_invite": {
+      "purpose": "Посмотреть приглашение в группу до вступления.",
+      "effect": "Обращается к Zalo для preview, сохраняет preview_id; само вступление не выполняется.",
+      "implementation": "Принимается HTTPS invitation Zalo. Preview имеет срок жизни и ещё не является разрешением. Локальный approve-join должен отдельно выдать plan_token.",
+      "result": "Metadata группы, membership, preview_id/expiry и approval_required."
+    },
+    "zalo_join_group": {
+      "purpose": "Вступить в точную группу, разрешённую локальным оператором.",
+      "effect": "Выполняет внешнюю join-операцию через существующую сессию.",
+      "implementation": "Нужны allow_join и одноразовый plan_token для конкретного preview. Модель не может выписать его себе. UUID связывает повтор с прежней операцией. В selected mode вступление само по себе не добавляет группу в collection policy.",
+      "result": "operation_id и join-result; running проверяется get_join_status."
+    },
+    "zalo_list_archive_sources": {
+      "purpose": "Перечислить сохранённые локальные архивы аккаунта.",
+      "effect": "Читает authenticated archive metadata; не запрашивает синхронизацию/скачивание и не импортирует сообщения.",
+      "implementation": "Возвращённый source_id явно выбирается в list_conversations/list_conversation_messages. Количество файлов архива не равно полному покрытию Zalo.",
+      "result": "sources с происхождением capture и history_complete=false."
+    },
+    "zalo_list_conversation_messages": {
+      "purpose": "Просмотреть конкретный диалог за период без поискового слова.",
+      "effect": "Читает текущий корпус либо явно выбранный локальный архив.",
+      "implementation": "Для source_id обязательны since/until. Архивные IDs отличаются от Zalo IDs и не являются quote/action targets. Доступ, TTL и tombstones проверяются заново; coverage_observed_at не заморожен вместе со страницей.",
+      "result": "messages, source, coverage, snapshot, исходный интервал и курсор."
+    },
+    "zalo_list_conversations": {
+      "purpose": "Найти доступный диалог в локальном каталоге.",
+      "effect": "Читает обнаруженные direct/group записи либо каталог выбранного архива.",
+      "implementation": "Это не обещание полного списка друзей, контактов и Strangers на серверах Zalo. Имя — наблюдаемая metadata; использовать возвращённые type/ID. source_id не вызывает новый capture.",
+      "result": "conversations, источники каталога, полнота, причина пустого ответа и пагинация."
+    },
+    "zalo_list_event_subscriptions": {
+      "purpose": "Найти активные подписки текущего локального владельца.",
+      "effect": "Читает список подписок; не создаёт, не отменяет и не меняет их.",
+      "implementation": "Не раскрывает callback URL или signing key. Точная subscription_id должна быть привязана к правилу автоматизации; при нескольких совпадениях нельзя выбирать по времени.",
+      "result": "subscriptions со scope, direction и фильтрами."
+    },
+    "zalo_list_groups": {
+      "purpose": "Найти группы, в которых состоит аккаунт.",
+      "effect": "Возвращает доступный каталог групп с metadata его свежести.",
+      "implementation": "Не ищет произвольные публичные группы. При совпадающих именах агент должен уточнить group_id. collection_enabled не равно разрешению писать или вступать.",
+      "result": "groups, stale, catalog_updated_at, empty_reason и пагинация."
+    },
+    "zalo_mark_messages_read": {
+      "purpose": "Явно отправить отметку прочтения для входящих сообщений.",
+      "effect": "Меняет внешнее состояние Zalo; требует read_receipt_chats и текущую сессию.",
+      "implementation": "1–50 уникальных message_ids одного typed-чата; нужна наблюдённая native provenance. Прежние записи без неё/архивные строки не подходят. Present status 0 подтверждён для direct/group; прочие/отсутствующие значения — unknown. Watermark может затронуть более ранние сообщения.",
+      "result": "Долговечный message-action result; completed_steps — число подтверждённых вызовов, а не прочитанных сообщений."
+    },
+    "zalo_read_subscription_events": {
+      "purpose": "Получить точные необработанные события после запуска автоматизации.",
+      "effect": "Читает журнал конкретной подписки; не двигает processing cursor и не ставит read receipt.",
+      "implementation": "Нельзя искать «самое свежее сообщение» вместо отсутствующего payload. Журнал упорядочен: pending/sending блокирует поздние записи; terminal/retention gap описывается явно. event может быть null.",
+      "result": "events с envelope/receipt/gap/delivery state, has_more и blocked_on_delivery."
+    },
+    "zalo_search_conversation_messages": {
+      "purpose": "Искать текст в доступных личных чатах и группах.",
+      "effect": "Локальный поиск по корпусу, без запроса недостающей истории.",
+      "implementation": "Для conversation_id требуется conversation_type. Фильтры по автору/времени не делают покрытие полным. Результаты содержат excerpts; полный контекст читается отдельным tool.",
+      "result": "messages, coverage/summary, snapshot и пагинация."
+    },
+    "zalo_search_messages": {
+      "purpose": "Искать текст в группах через совместимый group-only интерфейс.",
+      "effect": "Локальный поиск по групповому корпусу.",
+      "implementation": "Не ищет диалоги и не читает сохранённый архив автоматически. Для личных чатов используется search_conversation_messages. Неоднозначную дату нужно уточнить до фильтрации.",
+      "result": "Групповые excerpts и IDs, coverage/summary, snapshot и пагинация."
+    },
+    "zalo_send_direct_message": {
+      "purpose": "Отправить личный текст первым или ответить с цитатой.",
+      "effect": "Внешняя отправка через текущую сессию; требует allow_send и допуска recipient.",
+      "implementation": "Поддерживается текст до 2048 символов, не группа и не отправка фото. reply_to_message_id должен быть retained сообщением того же direct-чата с quote metadata; архив не подходит. При недоступной цитате нельзя молча отправить обычное сообщение.",
+      "result": "Долговечный send-result с sent/failed/unknown и доступным message_id."
+    },
+    "zalo_set_message_reaction": {
+      "purpose": "Поставить выбранную собственную реакцию, заменить или снять её.",
+      "effect": "Внешнее действие; требует reaction_chats, retained target и текущую сессию.",
+      "implementation": "set требует reaction из каталога и выполняет clear+add, два неатомарных шага. remove запрещает поле reaction и очищает собственные реакции. Подтверждены текст/фото, incoming/outgoing target, три своих сердца и сохранность чужой реакции. Все 54 кода не прошли отдельный live-тест.",
+      "result": "Долговечный message-action result; partial/unknown не продолжаются автоматически."
+    },
+    "zalo_read_message_content": {
+      "purpose": "Прочитать полный разрешённый текст корпуса или архива ограниченными страницами через tools.",
+      "effect": "Локальное чтение; не получает media bytes, не отмечает прочитано и не вызывает upstream writes.",
+      "implementation": "Использует точный resource_uri, выданный typed context/browse или архивным browse; внешние URL и URI metadata /content не принимаются. Курсор связан с целью, текущим текстом и доступом, действует 15 минут либо до перезапуска сервиса. Каждая страница повторно проверяет policy, retention и recall; лимит — Unicode scalar values и byte budget.",
+      "result": "Текстовая страница с provenance, доступностью, has_more и next_cursor."
+    },
+    "zalo_list_coverage_gaps": {
+      "purpose": "Прочитать подробности разрывов покрытия ограниченными страницами.",
+      "effect": "Локальное чтение разрешённого coverage без действий в Zalo.",
+      "implementation": "Snapshot и непрозрачный курсор связывают порядок и границы списка. Короткие ответы сообщений используют summary, подробности читаются отдельно.",
+      "result": "Страница gaps, полное количество, snapshot и продолжение."
+    }
+  },
+  "parameters": {
+    "conversation_type": "Тип диалога: личный чат или группа.",
+    "conversation_id": "Точный ID диалога в выбранном типе.",
+    "group_id": "Точный ID группы.",
+    "message_id": "ID retained сообщения в этом чате.",
+    "message_ids": "Уникальные ID входящих сообщений одного typed-чата.",
+    "request_id": "Стабильный UUID для этой операции и её повторов.",
+    "operation_id": "ID уже созданной операции.",
+    "subscription_id": "Точная активная подписка, связанная с правилом.",
+    "receipt": "Непрозрачный receipt из read_subscription_events.",
+    "cursor": "Непрозрачный курсор предыдущего ответа; фильтры не менять.",
+    "limit": "Максимальное число записей в ответе; действует и byte budget.",
+    "since": "Нижняя временная граница RFC3339.",
+    "until": "Верхняя временная граница RFC3339.",
+    "sender_id": "Фильтр по точному ID автора.",
+    "query": "Текст поиска/фильтр; смысл зависит от инструмента.",
+    "source_id": "Явно выбранный локальный архив; без поля — текущий корпус.",
+    "source": "Явно выбранный доступный способ импорта.",
+    "max_messages": "Лимит examined source records, а не только вставленных сообщений.",
+    "max_pages": "Лимит страниц источника.",
+    "page_size": "Размер страницы источника.",
+    "before": "Число соседних сообщений до anchor.",
+    "after": "Число соседних сообщений после anchor.",
+    "order": "Порядок сообщений на странице.",
+    "recipient_id": "Точный peer ID личного получателя.",
+    "reply_to_message_id": "Сообщение того же direct-чата для native-цитаты.",
+    "text": "Текст, явно разрешённый пользователем.",
+    "plan_token": "Одноразовое локальное разрешение конкретного вступления.",
+    "invite_url": "HTTPS-ссылка приглашения Zalo.",
+    "action": "set или remove.",
+    "reaction": "Стабильный code из каталога, не произвольный Unicode emoji."
+  },
+  "cli": {
+    "service": "Постоянный сервис",
+    "serve": "STDIO-мост к сервису",
+    "login": "Локальная авторизация",
+    "approve-join": "Разрешение конкретного preview вступления",
+    "check-rollback": "Проверка совместимости отката",
+    "probe-preload": "Ограниченное исследование доступного preload",
+    "probe-recall": "Контролируемая диагностика recall",
+    "probe-message-action": "Owner-only диагностика read/react; не обходит grants",
+    "mobile-backup-prepare": "Подготовка попытки mobile-backup workflow",
+    "mobile-backup-status": "Статус mobile-backup workflow",
+    "mobile-backup-cancel": "Допустимая отмена в mobile-backup workflow",
+    "mobile-backup-probe-offer": "Диагностика offer в подготовленном workflow",
+    "mobile-backup-probe-archive": "Диагностика полученного архивного источника",
+    "account-archive-prepare": "Подготовка account-archive workflow",
+    "account-archive-capture": "Контролируемый capture account archive",
+    "account-archive-status": "Сохранённый статус account archive",
+    "account-archive-preserve": "Сохранение источника в постоянный локальный архив",
+    "account-archive-restore": "Контролируемый restore в account-archive workflow",
+    "account-archive-inspect": "Инспекция сохранённого account archive",
+    "account-archive-remove": "Управляемое удаление источника account archive"
+  }
+}

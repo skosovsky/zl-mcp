@@ -74,13 +74,14 @@ type Gap struct {
 	Reason string     `json:"reason"`
 }
 type Coverage struct {
-	GroupID             string     `json:"group_id"`
-	CollectionStartedAt *time.Time `json:"collection_started_at"`
-	EarliestStoredAt    *time.Time `json:"earliest_stored_at"`
-	LatestStoredAt      *time.Time `json:"latest_stored_at"`
-	KnownGaps           []Gap      `json:"known_gaps"`
-	HistoryComplete     bool       `json:"history_complete"`
-	RetentionDays       *int       `json:"retention_days"`
+	CoverageDetails     *CoverageDetails `json:"coverage_details,omitempty"`
+	GroupID             string           `json:"group_id"`
+	CollectionStartedAt *time.Time       `json:"collection_started_at"`
+	EarliestStoredAt    *time.Time       `json:"earliest_stored_at"`
+	LatestStoredAt      *time.Time       `json:"latest_stored_at"`
+	KnownGaps           []Gap            `json:"known_gaps"`
+	HistoryComplete     bool             `json:"history_complete"`
+	RetentionDays       *int             `json:"retention_days"`
 }
 
 // Invite contains only domain metadata; upstream protocol types never cross this port.

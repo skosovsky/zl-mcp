@@ -94,6 +94,16 @@ func (w *Worker) DeliverOne(ctx context.Context, at time.Time) (bool, error) {
 	return handled, err
 }
 func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.EventDelivery) (bool, error) {
+	return w.deliverClaimedWithFinish(ctx, at, d, w.Queue.FinishDelivery, "business", "")
+}
+
+func (w *Worker) deliverClaimedWithFinish(
+	ctx context.Context,
+	at time.Time,
+	d *storage.EventDelivery,
+	finish func(context.Context, storage.EventDelivery, storage.DeliveryOutcome, time.Time) error,
+	kind, recoveryReference string,
+) (bool, error) {
 	created := time.Time{}
 	if d.CreatedAt != nil {
 		created = *d.CreatedAt
@@ -103,7 +113,17 @@ func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.Ev
 	if logger == nil {
 		logger = slog.Default()
 	}
-	attrs := []any{"correlation_id", rand.Text(), "attempt", d.Attempts, "body_bytes", len(d.Payload)}
+	attrs := []any{
+		"correlation_id",
+		rand.Text(),
+		"attempt",
+		d.Attempts,
+		"body_bytes",
+		len(d.Payload),
+		"delivery_kind",
+		kind,
+	}
+	attrs = append(attrs, w.deliveryReferenceAttrs(d.ID, kind, recoveryReference)...)
 	logger.InfoContext(ctx, "mcp_event_delivery_started", attrs...)
 	if w.TraceLogger != nil {
 		w.TraceLogger.InfoContext(ctx, "mcp_event_request", attrs...)
@@ -158,7 +178,7 @@ func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.Ev
 	// outcome with a short independent deadline rather than losing its receipt.
 	finishCtx, finishCancel := context.WithTimeout(context.WithoutCancel(ctx), workerdeliverClaimedFinishTimeout)
 	defer finishCancel()
-	finishErr := w.Queue.FinishDelivery(finishCtx, *d, outcome, time.Now().UTC())
+	finishErr := finish(finishCtx, *d, outcome, time.Now().UTC())
 	if finishErr == nil {
 		shared.ObserveTransition(ctx, domain.WorkEvents, "sending", outcome.State, created)
 	}
@@ -184,6 +204,9 @@ func (w *Worker) deliverClaimed(ctx context.Context, at time.Time, d *storage.Ev
 
 func (w *Worker) Run(ctx context.Context) error {
 	if err := w.Queue.PruneDeliveries(ctx, time.Now().UTC()); err != nil {
+		return err
+	}
+	if err := w.sweepRecovery(ctx, time.Now().UTC()); err != nil {
 		return err
 	}
 	runCtx, cancel := context.WithCancel(ctx)
@@ -260,7 +283,7 @@ func (w *Worker) runDeliveryWorker(
 		case <-ctx.Done():
 			return
 		case at := <-timer.C:
-			if _, err := w.DeliverOne(ctx, at.UTC()); err != nil {
+			if _, err := w.deliverBusinessAndRecovery(ctx, at.UTC()); err != nil {
 				if ctx.Err() != nil {
 					return
 				}
@@ -282,6 +305,9 @@ func (w *Worker) runFanoutWorker(ctx context.Context, errs <-chan error) error {
 		case <-ctx.Done():
 			return pendingWorkerError(errs)
 		case at := <-timer.C:
+			if err := w.sweepRecovery(ctx, at.UTC()); err != nil {
+				return err
+			}
 			if _, err := w.fanout(ctx, at.UTC()); err != nil {
 				if ctx.Err() != nil {
 					return pendingWorkerError(errs)
@@ -303,4 +329,20 @@ func pendingWorkerError(errs <-chan error) error {
 	default:
 		return nil
 	}
+}
+
+func (w *Worker) deliveryReferenceAttrs(id int64, kind, recoveryReference string) []any {
+	var attrs []any
+	if references, ok := w.Queue.(interface{ DeliveryReference(int64) string }); ok && kind == "business" {
+		attrs = append(attrs, "delivery_reference", references.DeliveryReference(id))
+	}
+	if references, ok := w.Queue.(interface{ RecoveryDeliveryReference(int64) string }); ok &&
+		kind == "journal_recovery" {
+		attrs = append(attrs, "delivery_reference", references.RecoveryDeliveryReference(id))
+	}
+	if kind == "journal_recovery" && recoveryReference != "" {
+		attrs = append(attrs, "recovery_reference", recoveryReference)
+	}
+
+	return attrs
 }

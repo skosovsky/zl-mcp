@@ -25,7 +25,7 @@
 
 Протокол MCP `2026-07-28`, webhook-профиль MCP Events draft. Методы: `events/list`, `events/subscribe`, `events/unsubscribe`; capability `events` в `server/discover`. Исполняемые входы/результаты находятся в events_*.json, payload — zalo_message_created.payload.json, доставка — mcp_event.delivery.json. Эти методы не добавляются в каталог tools. Источник профиля: [MCP Events](https://developers.openai.com/plugins/build/mcp-events), проверен 2 октября 2026 года; стабильность draft за пределами зафиксированного контракта не обещается.
 
-## Новые профили: реализация кандидата
+## Типизированные профили сообщений и наблюдений
 
 `zalo.conversation.message.created.v3` добавляет обязательный типизированный
 content и metadata resource с теми же фильтрами сообщений. Отдельный
@@ -56,9 +56,25 @@ Legacy event name — `zalo.message.created`. Аргумент `group_id` выб
 
 Новый payload содержит `schema_version: 2`, `conversation_type`, `conversation_id`, доступное `conversation_name` и общие поля сообщения. Обрезанный текст читается через `zalo://conversations/{type}/{escaped-id}/messages/{escaped-message-id}`; лимит остаётся 2048 Unicode code points. Тексты и имена недоверенные. Legacy payload не получает новых полей.
 
-Каталог возвращает оба определения только владельцу аккаунта. `_meta` допускается как протокольное поле; неизвестные прикладные поля запрещены. Principal выводится из проверенного подключения, не из параметров запроса. ID подписки детерминирован по аккаунту/principal, callback URL, event name и canonical arguments; secret в идентификатор не входит. Один journal event имеет постоянный eventId при доставке в несколько совпадающих подписок/профилей. Обычно receiver устраняет повтор по eventId; если он отдельно обрабатывает оба формата, ключ дедупликации — (name, eventId). ID подписки не передаётся в envelope.
+Каталог возвращает определения доступных профилей только владельцу аккаунта. `_meta` допускается как протокольное поле; неизвестные прикладные поля запрещены. Principal выводится из проверенного подключения, не из параметров запроса. ID подписки детерминирован по аккаунту/principal, callback URL, event name и canonical arguments; secret в идентификатор не входит. Один journal event имеет постоянный eventId при доставке в несколько совпадающих подписок/профилей. Обычно receiver устраняет повтор по eventId; если он отдельно обрабатывает оба формата, ключ дедупликации — (name, eventId). ID подписки не передаётся в envelope.
 
 `data` содержит group_id, message_id, sender_id, доступное sender_name, sent_at, text, text_truncated и text_resource_uri. Лимит text — 2048 Unicode code points, а не байтов; UTF-8 не разрывается. При обрезке URI обязателен, полная запись читается через resources/read с обычными allowlist/retention ограничениями. Текст остаётся недоверенными данными. Предел тела доставки — 256 КиБ, независимо от текстового лимита. Envelope содержит eventId, name, timestamp, data и cursor=null; eventId постоянен при повторе.
+
+## Опциональное продолжение журнала
+
+`zalo.subscription.journal.ready.v1` — отдельный служебный профиль для конкретной
+активной бизнес-подписки и её поколения. Полный контракт, executable schemas,
+ограничения напоминаний и статусы:
+[subscription-recovery-ready.md](subscription-recovery-ready.md).
+Он использует тот же проверенный webhook-транспорт, но отдельную control outbox;
+не меняет бизнес-фильтры, границу активации, event IDs, payload и checkpoints.
+В его data только subscription/generation/recovery references, без сообщения.
+Чтение `include_recovery` и journal `include_diagnostics` являются opt-in.
+Синтетическая SDK-проверка сервера не доказывает реальную активацию целевого host.
+
+Правила активации/fanout и лимит 100 ниже относятся к бизнес-профилям;
+companion имеет собственные лимиты 128 активных подписок и отдельную очередь,
+описанные в его контракте. Existing subscriptions не получают companion автоматически.
 
 ## Начало, обновление и отмена
 

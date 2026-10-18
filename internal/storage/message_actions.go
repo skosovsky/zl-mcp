@@ -188,7 +188,7 @@ func (s *Store) CompleteMessageAction(ctx context.Context, id, state, reason str
 	if err != nil {
 		return err
 	}
-	if state != "accepted" && state != "rejected" && state != "unknown" && state != statePartialText {
+	if state != "accepted" && state != "rejected" && state != stateUnknownText && state != statePartialText {
 		return ErrActionState
 	}
 	switch reason {

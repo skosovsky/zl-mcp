@@ -130,7 +130,7 @@ Apply any documented config migration, bootstrap, and verify status, saved searc
 
 To roll back, unload the service and preserve a private copy of its entire current
 state. Check the target binary's schema and processing compatibility before any
-replacement; for a pre-rich binary use the candidate's `check-rollback` gate below.
+replacement; for a pre-rich binary use the current rich-content-aware binary's `check-rollback` gate below.
 Restore the prior binary/config/plist only when current data, subscriptions and
 processing checkpoints can remain intact. An older database snapshot alone is
 not a lossless rollback: it omits intervening messages, subscription changes and
@@ -190,26 +190,43 @@ before installing. Preserve the current session, corpus, subscription boundaries
 and send journal. Keep the same LaunchAgent and state directory.
 
 Verify all three history tools in the actual client's catalogue after refresh.
-Start only explicitly requested bounded group imports; direct history remains
-unsupported. Check saved operation status and read imported records through MCP.
+Start only explicitly requested bounded imports. `group_cloud` supports groups;
+`conversation_preload` provides a bounded direct/group snapshot with
+`partial/source_window_limited`, not complete direct/Strangers history. Check saved operation status and read imported records through MCP.
 History creates no Events or notification deliveries. See the
 [history workflow](history-import.md). Source registration and synthetic tests do
 not prove upstream pages are available for a particular account.
 
-## Rich-content candidate downgrade gate
+## Rich-content downgrade compatibility gate
 
-The rich-content candidate is deployed locally but not yet live-accepted. Before replacing
-it with a pre-rich binary, unload the LaunchAgent and keep the service stopped.
-Run the **candidate** binary, with the same absolute config path:
+The rich-content feature has [recorded native acceptance](rich-content-acceptance.md).
+Before replacing a rich-content-aware binary with a pre-rich binary, unload the LaunchAgent and keep the service stopped.
+Run the **currently installed rich-content-aware** binary, with the same absolute config path:
 
 ```sh
 /Users/YOUR_USER/.local/bin/zl-mcp -config /Users/YOUR_USER/.config/zl-mcp/config.toml check-rollback
 ```
 
 The command is read-only, takes the account lock temporarily and prints counts
-only. A refusal means keep the candidate: unsupported active subscriptions,
+only. A refusal means keep the current binary: unsupported active subscriptions,
 unprocessed work, unfanned sources **or retained activity payload** cannot be
 left to an old runtime. The old binary does not enforce activity retention.
+It also cannot run journal-recovery companions or clean their control payloads.
+The report therefore includes these aggregate-only fields:
+
+| Field | Downgrade blocker |
+| --- | --- |
+| `active_recovery_subscriptions` | Companion rows still marked active, including expiry not yet reconciled by the current runtime |
+| `undrained_recovery_work` | Episodes in `armed`, `ready` or `exhausted`, plus deliveries in `pending` or `sending`; these are work-record counts and may refer to the same logical episode |
+| `retained_recovery_payloads` | Nonempty recovery-delivery payloads in any state, including terminal or orphaned deliveries |
+
+Any nonzero value refuses a pre-rich downgrade. Inactive companions with no live
+episodes, no pending deliveries and no retained control payloads do not block.
+Each recovery table is checked independently when present; an older schema
+without those tables reports zero counts, without migration or writes. Do not
+manually delete rows or clear payloads to make the gate pass: reconcile and drain
+through the current service, or retain the compatible current binary. Successful
+HTTP delivery alone does not prove that retained payloads have been cleaned up.
 The lock is released on exit; do not restart ingestion between the check and
 replacement. Never discard intervening messages/ack by restoring an older DB to
 make the check pass. The complete compatibility proof and limitations are in
@@ -217,10 +234,9 @@ make the check pass. The complete compatibility proof and limitations are in
 backup is still required before the original upgrade. Existing production v2
 subscriptions are not automatically replaced by this feature.
 
-### Exact-record preload investigation (candidate)
+### Exact-record preload investigation
 
-The rich-content candidate extends the owner-only command with an optional exact
-selector:
+The owner-only preload command supports an optional exact selector:
 
 ```sh
 "$HOME/.local/bin/zl-mcp" -config "$HOME/.config/zl-mcp/config.toml" probe-preload direct CONVERSATION_ID MESSAGE_ID
@@ -232,5 +248,54 @@ returns an allowlisted shape only for one exact typed match. No match does not
 prove absence from history; duplicate matches expose no shape. Unknown action/type
 values and param keys are withheld, and known tokens do not establish call status.
 There is no import, message sending, additional listener or phone synchronization.
-This diagnostic is owner-only and is not advertised as an MCP tool. The candidate
-must be installed before using its selector form.
+This diagnostic is owner-only and is not advertised as an MCP tool. Check the installed revision before using the selector form.
+
+## MCP and skills hardening upgrade
+
+The hardening extension preserves the same process, LaunchAgent, session and
+state directory. Before replacement, record the actual installed binary hash and
+MCP backend revision, make a stopped full-state backup and retain the existing
+configuration. Preserve subscriptions, journal acknowledgement checkpoints,
+delivery payloads, archived sources and saved operation outcomes. Do not enable
+read/react/send grants or reset a session to test discovery.
+
+After installing and restarting, inspect an actual MCP tool result's
+`_meta["zl-mcp/build"].backend`; verify its revision and dirty flag against the
+intended source. For STDIO check `bridge` independently and reconnect clients.
+The negotiated protocol version is not a backend build identity. See
+[identity contract](contracts/schema-publication-and-build.md).
+
+Refresh the client's tool catalogue, then verify a retained message using typed
+context and `coverage_mode=compact` if the new schema advertises it. Read an
+issued full-text URI with `zalo_read_message_content` and, when relevant, page
+coverage with `zalo_list_coverage_gaps`. No new live message or upstream write is
+needed for these checks. See [connection workflow](local-connection.md).
+
+Use safe correlation references from failed calls and opt-in journal
+`include_diagnostics=true` to diagnose delivery. Logs and telemetry must not
+contain message payloads, callback URLs or credentials. The server's reduced
+published schemas retain validation semantics; a smaller catalogue is not proof
+of better agent behavior.
+
+Update both installed skill directories separately from the source checkout,
+preserving local customizations and validating the complete loaded files.
+Saved host automation prompts require their own controlled update; see
+[skills and migration](skills.md). Such updates preserve scope, direction,
+notification rules, channel and permissions. The optional journal-ready companion
+is explicitly configured by the trusted host for the existing business subscription
+and exact generation; installing the binary does not activate it. Control rounds
+share the original business journal/checkpoint and never alter read/react grants.
+
+The server's durable continuation has signed synthetic-receiver coverage,
+including blocked delivery, restart, repeated rounds and ack suppression. Inspect
+`include_diagnostics=true` recovery mode/state/reason to distinguish unsupported,
+waiting and explicit exhausted/cancelled stops. Business worker logs have stable
+delivery references; control worker logs currently have only attempt correlation
+and `delivery_kind=journal_recovery`. See
+[diagnostics](contracts/event-delivery-diagnostics.md) and
+[continuation contract](contracts/subscription-recovery-ready.md).
+
+Actual target-host activation, saved-task migration and Ann processing remain
+**NOT_RUN** until independently evidenced. Installing a backend, HTTP 2xx and an
+updated skill alone do not prove that gate. Final evidence is recorded under
+[hardening task acceptance](task-mcp-skills-hardening.md).

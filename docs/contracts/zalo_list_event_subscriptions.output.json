@@ -50,6 +50,25 @@
           },
           "first_incoming_only": {
             "type": "boolean"
+          },
+          "generation_reference": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "recovery_mode": {
+            "enum": [
+              "unsupported",
+              "companion"
+            ]
+          },
+          "recovery_subscription_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 2048
           }
         },
         "required": [

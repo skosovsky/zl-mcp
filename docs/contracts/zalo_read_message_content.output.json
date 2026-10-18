@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "resource_uri": {
+      "type": "string",
+      "maxLength": 6000
+    },
+    "source": {
+      "enum": [
+        "corpus",
+        "archive"
+      ]
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 8192
+    },
+    "text_kind": {
+      "enum": [
+        "plain",
+        "rich",
+        "author",
+        "none",
+        "legacy_projection"
+      ]
+    },
+    "text_provenance": {
+      "enum": [
+        "retained_message",
+        "saved_archive_projection"
+      ]
+    },
+    "offset": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "length": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 8192
+    },
+    "total_characters": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "has_more": {
+      "type": "boolean"
+    },
+    "next_cursor": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 12000
+    },
+    "available": {
+      "const": true
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "resource_uri",
+    "source",
+    "text",
+    "text_kind",
+    "text_provenance",
+    "offset",
+    "length",
+    "total_characters",
+    "has_more",
+    "next_cursor",
+    "available"
+  ]
+}

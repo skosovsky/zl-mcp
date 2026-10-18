@@ -11,6 +11,11 @@
       "type": "integer",
       "minimum": 1,
       "maximum": 20
+    },
+    "include_diagnostics": {
+      "type": "boolean",
+      "default": false,
+      "description": "Opt in to safe delivery reasons, stable diagnostic references and retry hints. Omitted/false preserves the legacy result shape."
     }
   },
   "required": [

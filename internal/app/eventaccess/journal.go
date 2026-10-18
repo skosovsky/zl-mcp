@@ -10,13 +10,16 @@ import (
 // Subscription represents either retained event profile explicitly. Optional
 // profile fields preserve legacy omission; timestamps retain their wire spelling.
 type Subscription struct {
-	SubscriptionID    string  `json:"subscription_id"`
-	EventName         string  `json:"event_name"`
-	Scope             string  `json:"scope"`
-	ConversationType  *string `json:"conversation_type"`
-	ConversationID    *string `json:"conversation_id"`
-	Direction         string  `json:"direction"`
-	FirstIncomingOnly bool    `json:"first_incoming_only"`
+	SubscriptionID         string  `json:"subscription_id"`
+	EventName              string  `json:"event_name"`
+	Scope                  string  `json:"scope"`
+	ConversationType       *string `json:"conversation_type"`
+	ConversationID         *string `json:"conversation_id"`
+	Direction              string  `json:"direction"`
+	FirstIncomingOnly      bool    `json:"first_incoming_only"`
+	GenerationReference    string  `json:"generation_reference,omitempty"`
+	RecoveryMode           string  `json:"recovery_mode,omitempty"`
+	RecoverySubscriptionID *string `json:"recovery_subscription_id,omitempty"`
 }
 type Subscriptions struct {
 	Subscriptions []Subscription `json:"subscriptions"`
@@ -83,16 +86,23 @@ type Event struct {
 	Cursor    *string   `json:"cursor"`
 }
 type Entry struct {
-	Event         *Event  `json:"event"`
-	DeliveryState string  `json:"delivery_state"`
-	GapReason     *string `json:"gap_reason"`
-	Receipt       string  `json:"receipt"`
+	Event             *Event  `json:"event"`
+	DeliveryState     string  `json:"delivery_state"`
+	GapReason         *string `json:"gap_reason"`
+	Receipt           string  `json:"receipt"`
+	DeliveryReason    string  `json:"delivery_reason,omitempty"`
+	DeliveryReference string  `json:"delivery_reference,omitempty"`
 }
 type Page struct {
 	SubscriptionID    string  `json:"subscription_id"`
 	Events            []Entry `json:"events"`
 	HasMore           bool    `json:"has_more"`
 	BlockedOnDelivery bool    `json:"blocked_on_delivery"`
+	RetryAfterMS      *int    `json:"retry_after_ms,omitempty"`
+	RecoveryMode      string  `json:"recovery_mode,omitempty"`
+	RecoveryState     string  `json:"recovery_state,omitempty"`
+	RecoveryReference *string `json:"recovery_reference,omitempty"`
+	RecoveryReason    *string `json:"recovery_reason,omitempty"`
 }
 type JournalPort interface {
 	Subscriptions(context.Context, string) (Subscriptions, error)

@@ -959,6 +959,28 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 2048
+          },
+          "delivery_reason": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "queue_capacity",
+              "deadline",
+              "attempts",
+              "payload_too_large",
+              "http_rejected",
+              "http_transient",
+              "network",
+              "subscription_inactive",
+              "access_revoked",
+              "callback_gone",
+              "profile_removed",
+              "unknown"
+            ]
+          },
+          "delivery_reference": {
+            "type": "string",
+            "pattern": "^dlv_[A-Za-z0-9_-]{43}$"
           }
         },
         "required": [
@@ -976,6 +998,67 @@
     },
     "blocked_on_delivery": {
       "type": "boolean"
+    },
+    "retry_after_ms": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 60000
+    },
+    "recovery_mode": {
+      "enum": [
+        "unsupported",
+        "companion"
+      ]
+    },
+    "recovery_state": {
+      "enum": [
+        "unsupported",
+        "idle",
+        "armed",
+        "ready",
+        "waiting",
+        "completed",
+        "cancelled",
+        "exhausted"
+      ]
+    },
+    "recovery_reference": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 256
+    },
+    "recovery_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 64,
+      "description": "Closed safe continuation category, never raw storage/HTTP errors.",
+      "enum": [
+        null,
+        "not_configured",
+        "accepted",
+        "pending_delivery",
+        "awaiting_ack",
+        "callback_gone",
+        "payload_too_large",
+        "http_rejected",
+        "attempts",
+        "deadline",
+        "episode_expired",
+        "access_revoked",
+        "subscription_inactive",
+        "generation_changed",
+        "head_changed",
+        "acknowledged",
+        "capacity",
+        "unknown"
+      ]
     }
   },
   "required": [
