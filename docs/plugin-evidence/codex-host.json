@@ -1,0 +1,28 @@
+{
+  "checked_at": "2026-10-18T11:31:53.312068+00:00",
+  "archive_sha256": "f855ab3d6b77aadd8b1d7cd5cd286c399f19b09f9de80f86e16ce6b464b4ff54",
+  "codex_version": "codex-cli 0.160.0",
+  "plugin_name": "zl-mcp",
+  "plugin_version": "0.1.0",
+  "isolated_home": true,
+  "marketplace_install": "PASS",
+  "portable_manifest_loaded": "PASS",
+  "plugin_read_skills": [
+    "handling-zalo-message-events",
+    "researching-zalo-groups",
+    "setting-up-zalo"
+  ],
+  "skills_list": "PASS",
+  "onboarding_discovery": "PASS",
+  "onboarding_host_turn": "NOT_RUN_NO_MODEL_OR_API_TURN",
+  "chatgpt_work_host_install": "NOT_TESTED_BY_CODEX_APP_SERVER",
+  "production_installation_changed": false,
+  "plugin_data_binding": "PASS",
+  "mcp_tool_discovery": "PASS",
+  "discovered_tool_count": 27,
+  "read_only_status_call": "PASS",
+  "collector_state": "auth_required",
+  "authenticated": false,
+  "binary_sha256": "f583da494a6178ce104b8a37f101c54548a948adedbe0219dae5521225e5aef5",
+  "service_fixture": "fresh_temporary_native_no_session"
+}

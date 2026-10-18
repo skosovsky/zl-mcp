@@ -239,3 +239,10 @@ configuration, saved-task update and Ann control-wakeup processing remain
 **NOT_RUN**, so do not declare that connection recovered merely from server tests
 or a 2xx callback. See [canonical contract](contracts/subscription-recovery-ready.md)
 and [separate skill/task migration](skills.md).
+
+## Distributable plugin and multiple accounts
+
+See [plugin installation](plugin-installation.md) for the portable package,
+instance-specific config/state/port/log/LaunchAgent layout, independent tunnel
+management, and update/removal of a shared binary. Existing installations keep
+their paths. Package install does not start a second collector or create a subscription.

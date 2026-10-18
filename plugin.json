@@ -1,0 +1,37 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "zl-mcp",
+  "version": "0.1.0",
+  "description": "Research Zalo conversations and process authorized message events using your own local Go service.",
+  "author": {
+    "name": "Sergey Kosovsky"
+  },
+  "repository": "https://github.com/skosovsky/zl-mcp",
+  "homepage": "https://github.com/skosovsky/zl-mcp",
+  "license": "MIT",
+  "keywords": [
+    "zalo",
+    "messaging",
+    "local-first"
+  ],
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/setting-up-zalo/SKILL.md",
+      "interface": {
+        "displayName": "Zalo MCP",
+        "shortDescription": "Your local Zalo conversations",
+        "longDescription": "Search retained conversations, inspect message context and process explicitly configured events. Requires your own Zalo service and account. Installation does not create subscriptions or send messages.",
+        "developerName": "Sergey Kosovsky",
+        "category": "Productivity",
+        "capabilities": [
+          "Read",
+          "Write"
+        ],
+        "defaultPrompt": [
+          "Help me connect my Zalo service.",
+          "Find information in my Zalo conversations."
+        ]
+      }
+    }
+  }
+}

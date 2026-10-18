@@ -309,3 +309,10 @@ Actual target-host activation, saved-task migration and Ann processing remain
 **NOT_RUN** until independently evidenced. Installing a backend, HTTP 2xx and an
 updated skill alone do not prove that gate. Final evidence is recorded under
 [hardening task acceptance](task-mcp-skills-hardening.md).
+
+## Multiple account instances
+
+See [plugin installation](plugin-installation.md) for the portable package,
+instance-specific config/state/port/log/LaunchAgent layout, independent tunnel
+management, and update/removal of a shared binary. Existing installations keep
+their paths. Package install does not start a second collector or create a subscription.

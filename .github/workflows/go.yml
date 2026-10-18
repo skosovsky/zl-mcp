@@ -19,6 +19,18 @@ jobs:
         run: |
           python3 scripts/reference/reference.py --check
           python3 -m unittest discover -s scripts/reference -p 'test_*.py'
+      - name: Validate distributable plugin and negative controls
+        run: |
+          python3 -m venv "$RUNNER_TEMP/zl-plugin-tools"
+          "$RUNNER_TEMP/zl-plugin-tools/bin/pip" install -r scripts/plugin/requirements.txt
+          "$RUNNER_TEMP/zl-plugin-tools/bin/python" scripts/plugin/package.py --check
+          "$RUNNER_TEMP/zl-plugin-tools/bin/python" -m unittest discover -s scripts/plugin -p 'test_*.py'
+          "$RUNNER_TEMP/zl-plugin-tools/bin/python" scripts/plugin/package.py --output "$RUNNER_TEMP/zl-mcp-plugin.zip"
+      - name: Upload public plugin package
+        uses: actions/upload-artifact@v4
+        with:
+          name: zl-mcp-plugin-${{ matrix.os }}
+          path: ${{ runner.temp }}/zl-mcp-plugin.zip
       - name: Install pinned golangci-lint
         run: GOBIN="$(go env GOPATH)/bin" go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0
       - name: Lint both modules without autofix
@@ -46,7 +58,14 @@ jobs:
       - run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/zl-mcp-linux-amd64 ./cmd/zl-mcp
       - name: Build native service acceptance binary
         run: CGO_ENABLED=0 go build -trimpath -o "$RUNNER_TEMP/zl-mcp-native" ./cmd/zl-mcp
+      - name: Build same-source replacement candidate
+        run: CGO_ENABLED=0 go build -trimpath -ldflags=-w -o "$RUNNER_TEMP/zl-mcp-upgrade" ./cmd/zl-mcp
       - name: Check native service startup cleanup
         env:
           ZL_MCP_ACCEPTANCE_BINARY: ${{ runner.temp }}/zl-mcp-native
         run: go test -race ./internal/mobilebackup -run '^TestNativeBinaryTerminalStartupAcceptance$' -count=1
+      - name: Check native per-account service isolation and shared binary replacement
+        env:
+          ZL_MCP_ACCEPTANCE_BINARY: ${{ runner.temp }}/zl-mcp-native
+          ZL_MCP_UPGRADE_BINARY: ${{ runner.temp }}/zl-mcp-upgrade
+        run: go test -race ./internal/service -run '^TestNativePlugin(InstanceIsolation|SharedBinaryReplacement)$' -count=1

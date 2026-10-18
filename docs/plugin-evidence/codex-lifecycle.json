@@ -1,0 +1,30 @@
+{
+  "checked_at": "2026-10-18T11:32:56.556525+00:00",
+  "codex_version": "codex-cli 0.160.0",
+  "native_binary_sha256": "f583da494a6178ce104b8a37f101c54548a948adedbe0219dae5521225e5aef5",
+  "probe_script_sha256": "cc800b7043fe1840827eee51289fdcb8c7c7239c8b8a891e0e607fddd3a61a8a",
+  "builder_script_sha256": "1a9c47eaecd16e3757ee34e60d813d433181ddc46b2f77819281b23bf921aa5f",
+  "public_archive_sha256": "f855ab3d6b77aadd8b1d7cd5cd286c399f19b09f9de80f86e16ce6b464b4ff54",
+  "private_fixture_archive_sha256": {
+    "a_0.1.0": "36f4f486107e283e2fb73fd456058c33f685ef88c79467937d862d103d30ff25",
+    "b_0.1.0": "175880e0190d852559c99ea71643b9e7fbd119ba3b86ec4f0de6655b5f44f37e",
+    "a_0.1.1": "759d2a7e62d87d38fb94db0ee78622d756fd305623b3bd2a073291d347becd2e"
+  },
+  "source_input_tree_sha256": "6b9a64cdcc0964a80bb8606434a4d079dc037198fda9c26798596b5790ed1e78",
+  "two_real_native_services_without_session": "PASS",
+  "two_scoped_mcp_servers_and_status_calls": "PASS",
+  "discovered_tool_counts": {
+    "zl-mcp-account-a": 27,
+    "zl-mcp-account-b": 27
+  },
+  "upgrade_a_0.1.0_to_0.1.1": "PASS",
+  "rollback_a_0.1.1_to_0.1.0": "PASS",
+  "replacement_flow": "codex plugin remove then add from selected source artifact",
+  "remove_a_b_still_callable": "PASS",
+  "b_cache_config_token_and_service_pid_unchanged": "PASS",
+  "removing_a_did_not_stop_either_service": "PASS",
+  "production_installation_changed": false,
+  "chatgpt_plugin_changed": false,
+  "model_api_turns": 0,
+  "limitation": "Codex lifecycle only; no ChatGPT installation or onboarding turn proof"
+}

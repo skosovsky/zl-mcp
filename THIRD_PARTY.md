@@ -31,3 +31,10 @@ disclaimer are retained in [the license notice](docs/licenses/xz-BSD-3-Clause.tx
 Include that notice with any distribution containing this dependency.
 The separate preflight is original project code; real mobile archive support
 is not established by the offline decoder alone.
+
+## Agent Plugins validation schemas
+
+The unmodified Agent Plugins 1.0.0 plugin and MCP JSON Schemas in
+`scripts/plugin/schemas` are from https://github.com/agentplugins/agent-plugins-spec,
+licensed Apache-2.0. Source URLs and hashes are in `provenance.json`; a copy of the
+license is included. These build-time inputs are not runtime dependencies.

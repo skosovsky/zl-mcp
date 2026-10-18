@@ -83,3 +83,13 @@ lint:
 	@set -eu; task_lint_version=$$($(GOLANGCI_LINT) version --short); test "$$task_lint_version" = "$(GOLANGCI_LINT_VERSION)" || { echo "requires golangci-lint $(GOLANGCI_LINT_VERSION), got $$task_lint_version" >&2; exit 1; }
 	GOWORK=off $(GOLANGCI_LINT) run --config "$(CURDIR)/.golangci.yml" --timeout $(LINT_TIMEOUT) --max-issues-per-linter 0 --max-same-issues 0 --uniq-by-line=false ./...
 	cd tools/harness && GOWORK=off $(GOLANGCI_LINT) run --config "$(CURDIR)/.golangci.yml" --timeout $(LINT_TIMEOUT) --max-issues-per-linter 0 --max-same-issues 0 --uniq-by-line=false ./...
+
+# Build-time Python only; no installed service or client uses it at runtime.
+PLUGIN_PYTHON ?= python3
+PLUGIN_OUTPUT ?= /tmp/zl-mcp-plugin.zip
+.PHONY: plugin-check plugin-package
+plugin-check:
+	$(PLUGIN_PYTHON) scripts/plugin/package.py --check
+	$(PLUGIN_PYTHON) -m unittest discover -s scripts/plugin -p 'test_*.py'
+plugin-package: plugin-check
+	$(PLUGIN_PYTHON) scripts/plugin/package.py --output "$(PLUGIN_OUTPUT)"

@@ -1,0 +1,3 @@
+interface:
+  display_name: "Set up Zalo"
+  short_description: "Connect an isolated Zalo service instance"

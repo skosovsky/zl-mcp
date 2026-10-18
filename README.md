@@ -131,6 +131,14 @@ This service uses unofficial Zalo APIs, which can change or result in account re
 
 One account uses one state directory. Private file permissions restrict local access but do not encrypt stored messages or credentials. The local OS user is the trust boundary for CLI approvals.
 
+## Plugin package
+
+The Agent Plugins package includes research, event-handling and setup skills.
+Each Zalo account uses a separate Go service instance; the plugin only connects
+to it. Follow [manual plugin installation](docs/plugin-installation.md) and check
+[current acceptance limits](docs/plugin-acceptance.md). Distribution is through
+GitHub; installing the package does not create subscriptions or install a server.
+
 ## Documentation and development
 
 - [Installation, storage, lifecycle, updates, and recovery](docs/mac-deployment.md)

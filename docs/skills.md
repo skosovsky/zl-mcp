@@ -1,18 +1,27 @@
 # Optional agent skills
 
-These Russian-language skills define agent workflows. They do not configure MCP,
-provide credentials, authorize writes or install a receiver.
+These Russian-language skills define agent workflows. The research and event skills do not configure MCP,
+provide credentials, authorize writes or install a receiver. The setup skill
+guides an explicitly requested installation/connection; it does not grant permissions.
 
 | Skill | Trigger and input | Result |
 | --- | --- | --- |
 | [researching-zalo-groups](../skills/researching-zalo-groups/SKILL.md) | User question about retained direct/group messages or a selected saved archive | Findings with exact sources, examined range and coverage limitations |
 | [handling-zalo-message-events](../skills/handling-zalo-message-events/SKILL.md) | Trusted subscription wakeup plus an existing user rule | Ordered journal processing, permitted notification/result and acknowledgement after success |
 
+| [setting-up-zalo](../skills/setting-up-zalo/SKILL.md) | Explicit setup, account-instance selection or connection diagnosis | Verified binding or precise remaining step; no subscriptions or Zalo actions |
+
 The historical research skill name remains unchanged for existing installations.
 Ordinary research and Events processing are separate triggers. Neither workflow
 performs automatic read receipts, reactions, joins or history imports.
 
 ## Installation and updates
+
+Prefer the [distributable plugin](plugin-installation.md) for a bundled install.
+Keep independently installed skills only as an alternative; compare customizations
+before disabling duplicates. One operation stays on one explicitly selected
+account connection, including context/resources and journal ack.
+
 
 Connect [zl-mcp](local-connection.md) using the client's supported integration.
 For a Codex profile supporting local skills, copy each complete directory into
